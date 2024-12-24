@@ -2,6 +2,7 @@ import { useState } from "react";
 import { DashboardHeader } from "@/components/DashboardHeader";
 import { ProjectGrid } from "@/components/ProjectGrid";
 import { ReviewSheet } from "@/components/ReviewSheet";
+import { ProjectForm } from "@/components/ProjectForm";
 import { useToast } from "@/components/ui/use-toast";
 import { ProjectStatus, ProgressStatus } from "@/components/ProjectCard";
 import { supabase } from "@/integrations/supabase/client";
@@ -14,6 +15,11 @@ type Project = {
   progress: ProgressStatus;
   completion: number;
   lastReviewDate: string;
+  description?: string;
+  project_manager?: string;
+  start_date?: string;
+  end_date?: string;
+  priority?: string;
 };
 
 const fetchProjects = async (): Promise<Project[]> => {
@@ -35,6 +41,11 @@ const fetchProjects = async (): Promise<Project[]> => {
     lastReviewDate: new Date(project.last_review_date || "").toLocaleDateString(
       "fr-FR"
     ),
+    description: project.description,
+    project_manager: project.project_manager,
+    start_date: project.start_date,
+    end_date: project.end_date,
+    priority: project.priority,
   }));
 };
 
@@ -44,11 +55,26 @@ const Index = () => {
     id: string;
     title: string;
   } | null>(null);
+  const [projectToEdit, setProjectToEdit] = useState<Project | null>(null);
+  const [isProjectFormOpen, setIsProjectFormOpen] = useState(false);
 
   const { data: projects, isLoading, error, refetch } = useQuery({
     queryKey: ["projects"],
     queryFn: fetchProjects,
   });
+
+  const handleNewProject = () => {
+    setProjectToEdit(null);
+    setIsProjectFormOpen(true);
+  };
+
+  const handleEditProject = (id: string) => {
+    const project = projects?.find((p) => p.id === id);
+    if (project) {
+      setProjectToEdit(project);
+      setIsProjectFormOpen(true);
+    }
+  };
 
   const handleNewReview = () => {
     toast({
@@ -85,10 +111,14 @@ const Index = () => {
 
   return (
     <div className="container mx-auto py-8 px-4 min-h-screen animate-fade-in">
-      <DashboardHeader onNewReview={handleNewReview} />
+      <DashboardHeader 
+        onNewProject={handleNewProject}
+        onNewReview={handleNewReview}
+      />
       <ProjectGrid
         projects={projects || []}
         onProjectReview={handleProjectReview}
+        onProjectEdit={handleEditProject}
       />
       {selectedProject && (
         <ReviewSheet
@@ -99,6 +129,12 @@ const Index = () => {
           onReviewSubmitted={handleReviewSubmitted}
         />
       )}
+      <ProjectForm
+        isOpen={isProjectFormOpen}
+        onClose={() => setIsProjectFormOpen(false)}
+        onSubmit={refetch}
+        project={projectToEdit || undefined}
+      />
     </div>
   );
 };

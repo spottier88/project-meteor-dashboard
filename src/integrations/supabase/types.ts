@@ -13,27 +13,42 @@ export type Database = {
         Row: {
           completion: number
           created_at: string | null
+          description: string | null
+          end_date: string | null
           id: string
           last_review_date: string | null
+          priority: string | null
           progress: Database["public"]["Enums"]["progress_status"]
+          project_manager: string | null
+          start_date: string | null
           status: Database["public"]["Enums"]["project_status"]
           title: string
         }
         Insert: {
           completion?: number
           created_at?: string | null
+          description?: string | null
+          end_date?: string | null
           id?: string
           last_review_date?: string | null
+          priority?: string | null
           progress?: Database["public"]["Enums"]["progress_status"]
+          project_manager?: string | null
+          start_date?: string | null
           status?: Database["public"]["Enums"]["project_status"]
           title: string
         }
         Update: {
           completion?: number
           created_at?: string | null
+          description?: string | null
+          end_date?: string | null
           id?: string
           last_review_date?: string | null
+          priority?: string | null
           progress?: Database["public"]["Enums"]["progress_status"]
+          project_manager?: string | null
+          start_date?: string | null
           status?: Database["public"]["Enums"]["project_status"]
           title?: string
         }

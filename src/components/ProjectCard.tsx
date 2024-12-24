@@ -1,5 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Sun, Cloud, CloudLightning } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Sun, Cloud, CloudLightning, Pencil } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export type ProjectStatus = "sunny" | "cloudy" | "stormy";
@@ -13,6 +14,7 @@ interface ProjectCardProps {
   lastReviewDate: string;
   id: string;
   onReview: (id: string, title: string) => void;
+  onEdit: (id: string) => void;
 }
 
 const statusIcons = {
@@ -41,24 +43,36 @@ export const ProjectCard = ({
   lastReviewDate,
   id,
   onReview,
+  onEdit,
 }: ProjectCardProps) => {
   const StatusIcon = statusIcons[status].icon;
 
   return (
-    <Card 
-      className="w-full transition-all duration-300 hover:shadow-lg animate-fade-in cursor-pointer"
-      onClick={() => onReview(id, title)}
-    >
+    <Card className="w-full transition-all duration-300 hover:shadow-lg animate-fade-in">
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
         <CardTitle className="text-xl font-semibold">{title}</CardTitle>
         <div className="flex items-center gap-2">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={(e) => {
+              e.stopPropagation();
+              onEdit(id);
+            }}
+            className="h-8 w-8"
+          >
+            <Pencil className="h-4 w-4" />
+          </Button>
           <StatusIcon 
             className={cn("w-6 h-6", statusIcons[status].color)}
             aria-label={statusIcons[status].label}
           />
         </div>
       </CardHeader>
-      <CardContent>
+      <CardContent 
+        className="cursor-pointer"
+        onClick={() => onReview(id, title)}
+      >
         <div className="grid gap-2">
           <div className="flex items-center justify-between">
             <span className="text-sm text-muted-foreground">Progression</span>
