@@ -126,7 +126,7 @@ export const ProjectSummary = () => {
           }
           fileName={`${project.title.toLowerCase().replace(/\s+/g, "-")}-synthese.pdf`}
         >
-          {({ loading }: BlobProvider) => (
+          {({ blob, url, loading, error }) => (
             <Button disabled={loading} type="button">
               <Download className="h-4 w-4 mr-2" />
               {loading ? "Génération..." : "Exporter en PDF"}
