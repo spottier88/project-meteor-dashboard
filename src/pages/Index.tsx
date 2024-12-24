@@ -4,17 +4,31 @@ import { useToast } from "@/components/ui/use-toast";
 import { ProjectStatus, ProgressStatus } from "@/components/ProjectCard";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
+import { Database } from "@/integrations/supabase/types";
 
-const fetchProjects = async () => {
+type Project = {
+  id: string;
+  title: string;
+  status: ProjectStatus;
+  progress: ProgressStatus;
+  completion: number;
+  lastReviewDate: string;
+};
+
+const fetchProjects = async (): Promise<Project[]> => {
   const { data, error } = await supabase
     .from('projects')
     .select('*')
     .order('last_review_date', { ascending: false });
 
   if (error) throw error;
-  return data.map(project => ({
-    ...project,
-    id: project.id.toString(),
+  
+  return (data || []).map(project => ({
+    id: project.id,
+    title: project.title,
+    status: project.status,
+    progress: project.progress,
+    completion: project.completion,
     lastReviewDate: new Date(project.last_review_date).toLocaleDateString('fr-FR'),
   }));
 };

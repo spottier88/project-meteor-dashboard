@@ -39,15 +39,18 @@ export const ProjectCard = ({
   lastReviewDate,
 }: ProjectCardProps) => {
   const StatusIcon = statusIcons[status].icon;
+  const iconLabel = statusIcons[status].label;
 
   return (
     <Card className="w-full transition-all duration-300 hover:shadow-lg animate-fade-in">
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
         <CardTitle className="text-xl font-semibold">{title}</CardTitle>
-        <StatusIcon 
-          className={cn("w-6 h-6", statusIcons[status].color)} 
-          title={statusIcons[status].label}
-        />
+        <div className="flex items-center gap-2">
+          <StatusIcon 
+            className={cn("w-6 h-6", statusIcons[status].color)}
+            aria-label={iconLabel}
+          />
+        </div>
       </CardHeader>
       <CardContent>
         <div className="grid gap-2">
