@@ -11,6 +11,8 @@ interface ProjectCardProps {
   progress: ProgressStatus;
   completion: number;
   lastReviewDate: string;
+  id: string;
+  onReview: (id: string, title: string) => void;
 }
 
 const statusIcons = {
@@ -37,11 +39,16 @@ export const ProjectCard = ({
   progress,
   completion,
   lastReviewDate,
+  id,
+  onReview,
 }: ProjectCardProps) => {
   const StatusIcon = statusIcons[status].icon;
 
   return (
-    <Card className="w-full transition-all duration-300 hover:shadow-lg animate-fade-in">
+    <Card 
+      className="w-full transition-all duration-300 hover:shadow-lg animate-fade-in cursor-pointer"
+      onClick={() => onReview(id, title)}
+    >
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
         <CardTitle className="text-xl font-semibold">{title}</CardTitle>
         <div className="flex items-center gap-2">

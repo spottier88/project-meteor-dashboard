@@ -11,13 +11,18 @@ interface Project {
 
 interface ProjectGridProps {
   projects: Project[];
+  onProjectReview: (id: string, title: string) => void;
 }
 
-export const ProjectGrid = ({ projects }: ProjectGridProps) => {
+export const ProjectGrid = ({ projects, onProjectReview }: ProjectGridProps) => {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
       {projects.map((project) => (
-        <ProjectCard key={project.id} {...project} />
+        <ProjectCard
+          key={project.id}
+          {...project}
+          onReview={onProjectReview}
+        />
       ))}
     </div>
   );

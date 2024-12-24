@@ -39,6 +39,77 @@ export type Database = {
         }
         Relationships: []
       }
+      review_actions: {
+        Row: {
+          created_at: string | null
+          description: string
+          id: string
+          review_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          description: string
+          id?: string
+          review_id: string
+        }
+        Update: {
+          created_at?: string | null
+          description?: string
+          id?: string
+          review_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_review"
+            columns: ["review_id"]
+            isOneToOne: false
+            referencedRelation: "reviews"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      reviews: {
+        Row: {
+          comment: string | null
+          created_at: string | null
+          id: string
+          progress: Database["public"]["Enums"]["progress_status"]
+          project_id: string
+          weather: Database["public"]["Enums"]["project_status"]
+        }
+        Insert: {
+          comment?: string | null
+          created_at?: string | null
+          id?: string
+          progress: Database["public"]["Enums"]["progress_status"]
+          project_id: string
+          weather: Database["public"]["Enums"]["project_status"]
+        }
+        Update: {
+          comment?: string | null
+          created_at?: string | null
+          id?: string
+          progress?: Database["public"]["Enums"]["progress_status"]
+          project_id?: string
+          weather?: Database["public"]["Enums"]["project_status"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_project"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reviews_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -49,6 +120,7 @@ export type Database = {
     Enums: {
       progress_status: "better" | "stable" | "worse"
       project_status: "sunny" | "cloudy" | "stormy"
+      review_type: "weather" | "progress" | "comment" | "action"
     }
     CompositeTypes: {
       [_ in never]: never
