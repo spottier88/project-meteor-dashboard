@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { DashboardHeader } from "@/components/DashboardHeader";
 import { ProjectGrid } from "@/components/ProjectGrid";
+import { ProjectTable } from "@/components/ProjectTable";
+import { ViewToggle } from "@/components/ViewToggle";
 import { ReviewSheet } from "@/components/ReviewSheet";
 import { ProjectForm } from "@/components/ProjectForm";
 import { ReviewHistory } from "@/components/ReviewHistory";
@@ -21,6 +23,8 @@ type Project = {
   end_date?: string;
   priority?: string;
 };
+
+type ViewMode = "grid" | "table";
 
 const fetchProjects = async (): Promise<Project[]> => {
   const { data, error } = await supabase
@@ -60,6 +64,7 @@ const Index = () => {
     id: string;
     title: string;
   } | null>(null);
+  const [currentView, setCurrentView] = useState<ViewMode>("grid");
 
   const { data: projects, isLoading, error, refetch } = useQuery({
     queryKey: ["projects"],
@@ -80,7 +85,6 @@ const Index = () => {
   };
 
   const handleNewReview = () => {
-    // If there are projects, select the first one for review
     if (projects && projects.length > 0) {
       const firstProject = projects[0];
       setSelectedProject({
@@ -138,12 +142,22 @@ const Index = () => {
         onNewProject={handleNewProject}
         onNewReview={handleNewReview}
       />
-      <ProjectGrid
-        projects={projects || []}
-        onProjectReview={handleProjectReview}
-        onProjectEdit={handleEditProject}
-        onViewHistory={handleViewHistory}
-      />
+      <ViewToggle currentView={currentView} onViewChange={setCurrentView} />
+      {currentView === "grid" ? (
+        <ProjectGrid
+          projects={projects || []}
+          onProjectReview={handleProjectReview}
+          onProjectEdit={handleEditProject}
+          onViewHistory={handleViewHistory}
+        />
+      ) : (
+        <ProjectTable
+          projects={projects || []}
+          onProjectReview={handleProjectReview}
+          onProjectEdit={handleEditProject}
+          onViewHistory={handleViewHistory}
+        />
+      )}
       {selectedProject && (
         <ReviewSheet
           projectId={selectedProject.id}
