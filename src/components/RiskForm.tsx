@@ -2,13 +2,9 @@ import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-
-type RiskProbability = "low" | "medium" | "high";
-type RiskSeverity = "low" | "medium" | "high";
-type RiskStatus = "open" | "in_progress" | "resolved";
+import { RiskSelectors, RiskProbability, RiskSeverity, RiskStatus } from "./risk/RiskSelectors";
 
 interface RiskFormProps {
   isOpen: boolean;
@@ -113,62 +109,16 @@ export const RiskForm = ({ isOpen, onClose, onSubmit, projectId, risk }: RiskFor
               placeholder="Description du risque"
             />
           </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div className="grid gap-2">
-              <label htmlFor="probability" className="text-sm font-medium">
-                Probabilité
-              </label>
-              <Select 
-                value={probability} 
-                onValueChange={(value: RiskProbability) => setProbability(value)}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Sélectionner une probabilité" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="low">Faible</SelectItem>
-                  <SelectItem value="medium">Moyenne</SelectItem>
-                  <SelectItem value="high">Élevée</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="grid gap-2">
-              <label htmlFor="severity" className="text-sm font-medium">
-                Gravité
-              </label>
-              <Select 
-                value={severity} 
-                onValueChange={(value: RiskSeverity) => setSeverity(value)}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Sélectionner une gravité" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="low">Faible</SelectItem>
-                  <SelectItem value="medium">Moyenne</SelectItem>
-                  <SelectItem value="high">Élevée</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-          <div className="grid gap-2">
-            <label htmlFor="status" className="text-sm font-medium">
-              Statut
-            </label>
-            <Select 
-              value={status} 
-              onValueChange={(value: RiskStatus) => setStatus(value)}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Sélectionner un statut" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="open">Ouvert</SelectItem>
-                <SelectItem value="in_progress">En cours</SelectItem>
-                <SelectItem value="resolved">Résolu</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+          
+          <RiskSelectors
+            probability={probability}
+            setProbability={setProbability}
+            severity={severity}
+            setSeverity={setSeverity}
+            status={status}
+            setStatus={setStatus}
+          />
+
           <div className="grid gap-2">
             <label htmlFor="mitigation_plan" className="text-sm font-medium">
               Plan de mitigation
