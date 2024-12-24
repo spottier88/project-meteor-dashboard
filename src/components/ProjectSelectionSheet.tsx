@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Sun, Cloud, CloudLightning } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -82,7 +81,8 @@ export const ProjectSelectionSheet = ({
                       </TableCell>
                       <TableCell>{project.lastReviewDate}</TableCell>
                     </TableRow>
-                  ))}
+                  );
+                })}
               </TableBody>
             </Table>
           </div>
