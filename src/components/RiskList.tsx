@@ -17,12 +17,16 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
+type RiskProbability = "low" | "medium" | "high";
+type RiskSeverity = "low" | "medium" | "high";
+type RiskStatus = "open" | "in_progress" | "resolved";
+
 interface Risk {
   id: string;
   description: string;
-  probability: string;
-  severity: string;
-  status: string;
+  probability: RiskProbability;
+  severity: RiskSeverity;
+  status: RiskStatus;
   mitigation_plan?: string;
   created_at: string;
   updated_at: string;
@@ -111,15 +115,15 @@ export const RiskList = ({ projectId, projectTitle }: RiskListProps) => {
     }
   };
 
-  const getImpactLevel = (probability: string, severity: string) => {
+  const getImpactLevel = (probability: RiskProbability, severity: RiskSeverity) => {
     const levels = { low: 1, medium: 2, high: 3 };
-    const impact = levels[probability as keyof typeof levels] * levels[severity as keyof typeof levels];
+    const impact = levels[probability] * levels[severity];
     if (impact >= 6) return "Critique";
     if (impact >= 3) return "Important";
     return "Modéré";
   };
 
-  const getImpactColor = (probability: string, severity: string) => {
+  const getImpactColor = (probability: RiskProbability, severity: RiskSeverity) => {
     const impact = getImpactLevel(probability, severity);
     switch (impact) {
       case "Critique":

@@ -118,7 +118,10 @@ export const RiskForm = ({ isOpen, onClose, onSubmit, projectId, risk }: RiskFor
               <label htmlFor="probability" className="text-sm font-medium">
                 Probabilité
               </label>
-              <Select value={probability} onValueChange={setProbability}>
+              <Select 
+                value={probability} 
+                onValueChange={(value: RiskProbability) => setProbability(value)}
+              >
                 <SelectTrigger>
                   <SelectValue placeholder="Sélectionner une probabilité" />
                 </SelectTrigger>
@@ -133,7 +136,10 @@ export const RiskForm = ({ isOpen, onClose, onSubmit, projectId, risk }: RiskFor
               <label htmlFor="severity" className="text-sm font-medium">
                 Gravité
               </label>
-              <Select value={severity} onValueChange={setSeverity}>
+              <Select 
+                value={severity} 
+                onValueChange={(value: RiskSeverity) => setSeverity(value)}
+              >
                 <SelectTrigger>
                   <SelectValue placeholder="Sélectionner une gravité" />
                 </SelectTrigger>
@@ -149,7 +155,10 @@ export const RiskForm = ({ isOpen, onClose, onSubmit, projectId, risk }: RiskFor
             <label htmlFor="status" className="text-sm font-medium">
               Statut
             </label>
-            <Select value={status} onValueChange={setStatus}>
+            <Select 
+              value={status} 
+              onValueChange={(value: RiskStatus) => setStatus(value)}
+            >
               <SelectTrigger>
                 <SelectValue placeholder="Sélectionner un statut" />
               </SelectTrigger>
