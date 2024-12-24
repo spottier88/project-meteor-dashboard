@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -10,7 +10,6 @@ import { KanbanBoard } from "@/components/KanbanBoard";
 import { RiskSummary } from "@/components/RiskSummary";
 import { ProjectPDF } from "@/components/ProjectPDF";
 import { PDFDownloadLink } from "@react-pdf/renderer";
-import type { BlobProvider } from "@react-pdf/renderer";
 
 interface Project {
   id: string;
@@ -43,13 +42,13 @@ const statusIcons = {
   sunny: { icon: Sun, color: "text-warning", label: "Ensoleillé" },
   cloudy: { icon: Cloud, color: "text-neutral", label: "Nuageux" },
   stormy: { icon: CloudLightning, color: "text-danger", label: "Orageux" },
-};
+} as const;
 
 const progressLabels = {
   better: "En amélioration",
   stable: "Stable",
   worse: "En dégradation",
-};
+} as const;
 
 export const ProjectSummary = () => {
   const { projectId } = useParams<{ projectId: string }>();
@@ -99,11 +98,18 @@ export const ProjectSummary = () => {
     },
   });
 
-  if (!project) {
-    return <div>Chargement...</div>;
-  }
+  const StatusIcon = useMemo(() => {
+    if (!project) return null;
+    return statusIcons[project.status].icon;
+  }, [project?.status]);
 
-  const StatusIcon = statusIcons[project.status].icon;
+  if (!project) {
+    return (
+      <div className="container mx-auto py-8 px-4 flex items-center justify-center">
+        <p className="text-lg text-muted-foreground">Chargement...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="container mx-auto py-8 px-4">
@@ -123,7 +129,7 @@ export const ProjectSummary = () => {
           }
           fileName={`${project.title.toLowerCase().replace(/\s+/g, "-")}-synthese.pdf`}
         >
-          {({ loading }: BlobProvider) => (
+          {({ loading }) => (
             <Button disabled={loading} type="button">
               <Download className="h-4 w-4 mr-2" />
               {loading ? "Génération..." : "Exporter en PDF"}
@@ -136,10 +142,12 @@ export const ProjectSummary = () => {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-2xl font-bold">{project.title}</CardTitle>
-            <StatusIcon 
-              className={statusIcons[project.status].color}
-              aria-label={statusIcons[project.status].label}
-            />
+            {StatusIcon && (
+              <StatusIcon
+                className={statusIcons[project.status].color}
+                aria-label={statusIcons[project.status].label}
+              />
+            )}
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
