@@ -75,12 +75,10 @@ export const ProjectTable = ({
             return (
               <TableRow
                 key={project.id}
-                className="hover:bg-muted/50"
+                className="hover:bg-muted/50 cursor-pointer"
+                onClick={() => navigate(`/projects/${project.id}`)}
               >
-                <TableCell 
-                  className="font-medium cursor-pointer"
-                  onClick={() => onProjectReview(project.id, project.title)}
-                >
+                <TableCell className="font-medium">
                   {project.title}
                 </TableCell>
                 <TableCell>{project.project_manager || "-"}</TableCell>
