@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { DashboardHeader } from "@/components/DashboardHeader";
 import { ProjectGrid } from "@/components/ProjectGrid";
 import { ProjectTable } from "@/components/ProjectTable";
@@ -65,13 +65,21 @@ const Index = () => {
     id: string;
     title: string;
   } | null>(null);
-  const [currentView, setCurrentView] = useState<ViewMode>("grid");
+  const [currentView, setCurrentView] = useState<ViewMode>(() => {
+    const savedView = localStorage.getItem("preferredView");
+    return (savedView as ViewMode) || "grid";
+  });
   const [isProjectSelectionOpen, setIsProjectSelectionOpen] = useState(false);
 
   const { data: projects, isLoading, error, refetch } = useQuery({
     queryKey: ["projects"],
     queryFn: fetchProjects,
   });
+
+  // Sauvegarder la vue active dans le localStorage
+  useEffect(() => {
+    localStorage.setItem("preferredView", currentView);
+  }, [currentView]);
 
   const handleNewProject = () => {
     setProjectToEdit(null);
