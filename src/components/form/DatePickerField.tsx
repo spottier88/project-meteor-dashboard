@@ -32,7 +32,7 @@ export const DatePickerField = ({ label, value, onChange, minDate }: DatePickerF
             )}
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-auto p-0">
+        <PopoverContent className="w-auto p-0" align="start">
           <Calendar
             mode="single"
             selected={value}
@@ -40,6 +40,7 @@ export const DatePickerField = ({ label, value, onChange, minDate }: DatePickerF
             disabled={minDate ? { before: minDate } : undefined}
             initialFocus
             locale={fr}
+            className="rounded-md border"
           />
         </PopoverContent>
       </Popover>
