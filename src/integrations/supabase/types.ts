@@ -125,6 +125,50 @@ export type Database = {
           },
         ]
       }
+      risks: {
+        Row: {
+          created_at: string | null
+          description: string
+          id: string
+          mitigation_plan: string | null
+          probability: Database["public"]["Enums"]["risk_probability"]
+          project_id: string
+          severity: Database["public"]["Enums"]["risk_severity"]
+          status: Database["public"]["Enums"]["risk_status"]
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          description: string
+          id?: string
+          mitigation_plan?: string | null
+          probability?: Database["public"]["Enums"]["risk_probability"]
+          project_id: string
+          severity?: Database["public"]["Enums"]["risk_severity"]
+          status?: Database["public"]["Enums"]["risk_status"]
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string
+          id?: string
+          mitigation_plan?: string | null
+          probability?: Database["public"]["Enums"]["risk_probability"]
+          project_id?: string
+          severity?: Database["public"]["Enums"]["risk_severity"]
+          status?: Database["public"]["Enums"]["risk_status"]
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "risks_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       tasks: {
         Row: {
           assignee: string | null
@@ -180,6 +224,9 @@ export type Database = {
       progress_status: "better" | "stable" | "worse"
       project_status: "sunny" | "cloudy" | "stormy"
       review_type: "weather" | "progress" | "comment" | "action"
+      risk_probability: "low" | "medium" | "high"
+      risk_severity: "low" | "medium" | "high"
+      risk_status: "open" | "in_progress" | "resolved"
       task_status: "todo" | "in_progress" | "done"
     }
     CompositeTypes: {

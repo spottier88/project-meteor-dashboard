@@ -7,7 +7,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { Sun, Cloud, CloudLightning, Pencil, History, ListTodo } from "lucide-react";
+import { Sun, Cloud, CloudLightning, Pencil, History, ListTodo, ShieldAlert } from "lucide-react";
 import { ProjectStatus, ProgressStatus } from "./ProjectCard";
 import { cn } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
@@ -138,6 +138,17 @@ export const ProjectTable = ({
                     className="h-8 w-8"
                   >
                     <ListTodo className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      navigate(`/risks/${project.id}`);
+                    }}
+                    className="h-8 w-8"
+                  >
+                    <ShieldAlert className="h-4 w-4" />
                   </Button>
                 </TableCell>
               </TableRow>

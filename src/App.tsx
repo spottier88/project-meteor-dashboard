@@ -4,6 +4,7 @@ import { Toaster } from "@/components/ui/toaster";
 import Index from "./pages/Index";
 import { TaskManagement } from "./pages/TaskManagement";
 import { ProjectSummary } from "./pages/ProjectSummary";
+import { RiskManagement } from "./pages/RiskManagement";
 
 const queryClient = new QueryClient();
 
@@ -15,6 +16,7 @@ function App() {
           <Route path="/" element={<Index />} />
           <Route path="/tasks/:projectId" element={<TaskManagement />} />
           <Route path="/projects/:projectId" element={<ProjectSummary />} />
+          <Route path="/risks/:projectId" element={<RiskManagement />} />
         </Routes>
       </Router>
       <Toaster />
