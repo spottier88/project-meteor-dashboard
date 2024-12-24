@@ -6,6 +6,7 @@ import { ViewToggle } from "@/components/ViewToggle";
 import { ReviewSheet } from "@/components/ReviewSheet";
 import { ProjectForm } from "@/components/ProjectForm";
 import { ReviewHistory } from "@/components/ReviewHistory";
+import { ProjectSelectionSheet } from "@/components/ProjectSelectionSheet";
 import { ProjectStatus, ProgressStatus } from "@/components/ProjectCard";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
@@ -65,6 +66,7 @@ const Index = () => {
     title: string;
   } | null>(null);
   const [currentView, setCurrentView] = useState<ViewMode>("grid");
+  const [isProjectSelectionOpen, setIsProjectSelectionOpen] = useState(false);
 
   const { data: projects, isLoading, error, refetch } = useQuery({
     queryKey: ["projects"],
@@ -85,13 +87,12 @@ const Index = () => {
   };
 
   const handleNewReview = () => {
-    if (projects && projects.length > 0) {
-      const firstProject = projects[0];
-      setSelectedProject({
-        id: firstProject.id,
-        title: firstProject.title,
-      });
-    }
+    setIsProjectSelectionOpen(true);
+  };
+
+  const handleProjectSelect = (id: string, title: string) => {
+    setSelectedProject({ id, title });
+    setIsProjectSelectionOpen(false);
   };
 
   const handleProjectReview = (id: string, title: string) => {
@@ -172,6 +173,12 @@ const Index = () => {
         onClose={() => setIsProjectFormOpen(false)}
         onSubmit={refetch}
         project={projectToEdit || undefined}
+      />
+      <ProjectSelectionSheet
+        projects={projects || []}
+        isOpen={isProjectSelectionOpen}
+        onClose={() => setIsProjectSelectionOpen(false)}
+        onProjectSelect={handleProjectSelect}
       />
     </div>
   );
