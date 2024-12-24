@@ -1,16 +1,9 @@
 import { useEffect, useState } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Calendar } from "@/components/ui/calendar";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { format } from "date-fns";
-import { fr } from "date-fns/locale";
-import { CalendarIcon } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { ProjectFormFields } from "./form/ProjectFormFields";
 
 interface ProjectFormProps {
   isOpen: boolean;
@@ -37,7 +30,6 @@ export const ProjectForm = ({ isOpen, onClose, onSubmit, project }: ProjectFormP
   const [priority, setPriority] = useState("medium");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Réinitialiser le formulaire lorsque le projet change ou que le modal s'ouvre/se ferme
   useEffect(() => {
     if (isOpen) {
       setTitle(project?.title || "");
@@ -71,17 +63,19 @@ export const ProjectForm = ({ isOpen, onClose, onSubmit, project }: ProjectFormP
     setIsSubmitting(true);
 
     try {
+      const projectData = {
+        title,
+        description,
+        project_manager: projectManager,
+        start_date: startDate?.toISOString().split('T')[0],
+        end_date: endDate?.toISOString().split('T')[0],
+        priority,
+      };
+
       if (project?.id) {
         const { error } = await supabase
           .from("projects")
-          .update({
-            title,
-            description,
-            project_manager: projectManager,
-            start_date: startDate?.toISOString(),
-            end_date: endDate?.toISOString(),
-            priority,
-          })
+          .update(projectData)
           .eq("id", project.id);
 
         if (error) throw error;
@@ -91,14 +85,7 @@ export const ProjectForm = ({ isOpen, onClose, onSubmit, project }: ProjectFormP
           description: "Le projet a été mis à jour",
         });
       } else {
-        const { error } = await supabase.from("projects").insert({
-          title,
-          description,
-          project_manager: projectManager,
-          start_date: startDate?.toISOString(),
-          end_date: endDate?.toISOString(),
-          priority,
-        });
+        const { error } = await supabase.from("projects").insert(projectData);
 
         if (error) {
           if (error.code === "23505") {
@@ -139,115 +126,24 @@ export const ProjectForm = ({ isOpen, onClose, onSubmit, project }: ProjectFormP
           <DialogTitle>
             {project ? "Modifier le projet" : "Nouveau projet"}
           </DialogTitle>
+          <DialogDescription>
+            Remplissez les informations du projet. Les champs marqués d'un * sont obligatoires.
+          </DialogDescription>
         </DialogHeader>
-        <div className="grid gap-4 py-4">
-          <div className="grid gap-2">
-            <label htmlFor="title" className="text-sm font-medium">
-              Titre
-            </label>
-            <Input
-              id="title"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              placeholder="Nom du projet"
-            />
-          </div>
-          <div className="grid gap-2">
-            <label htmlFor="description" className="text-sm font-medium">
-              Description
-            </label>
-            <Textarea
-              id="description"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="Description du projet"
-            />
-          </div>
-          <div className="grid gap-2">
-            <label htmlFor="project-manager" className="text-sm font-medium">
-              Chef de projet
-            </label>
-            <Input
-              id="project-manager"
-              value={projectManager}
-              onChange={(e) => setProjectManager(e.target.value)}
-              placeholder="Nom du chef de projet"
-            />
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div className="grid gap-2">
-              <label className="text-sm font-medium">Date de début</label>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    className={`justify-start text-left font-normal ${
-                      !startDate && "text-muted-foreground"
-                    }`}
-                  >
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {startDate ? (
-                      format(startDate, "PPP", { locale: fr })
-                    ) : (
-                      <span>Choisir une date</span>
-                    )}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0">
-                  <Calendar
-                    mode="single"
-                    selected={startDate}
-                    onSelect={setStartDate}
-                    initialFocus
-                  />
-                </PopoverContent>
-              </Popover>
-            </div>
-            <div className="grid gap-2">
-              <label className="text-sm font-medium">Date de fin</label>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    className={`justify-start text-left font-normal ${
-                      !endDate && "text-muted-foreground"
-                    }`}
-                  >
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {endDate ? (
-                      format(endDate, "PPP", { locale: fr })
-                    ) : (
-                      <span>Choisir une date</span>
-                    )}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0">
-                  <Calendar
-                    mode="single"
-                    selected={endDate}
-                    onSelect={setEndDate}
-                    initialFocus
-                  />
-                </PopoverContent>
-              </Popover>
-            </div>
-          </div>
-          <div className="grid gap-2">
-            <label htmlFor="priority" className="text-sm font-medium">
-              Priorité
-            </label>
-            <Select value={priority} onValueChange={setPriority}>
-              <SelectTrigger>
-                <SelectValue placeholder="Sélectionner une priorité" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="high">Haute</SelectItem>
-                <SelectItem value="medium">Moyenne</SelectItem>
-                <SelectItem value="low">Basse</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
+        <ProjectFormFields
+          title={title}
+          setTitle={setTitle}
+          description={description}
+          setDescription={setDescription}
+          projectManager={projectManager}
+          setProjectManager={setProjectManager}
+          startDate={startDate}
+          setStartDate={setStartDate}
+          endDate={endDate}
+          setEndDate={setEndDate}
+          priority={priority}
+          setPriority={setPriority}
+        />
         <DialogFooter>
           <Button variant="outline" onClick={onClose}>
             Annuler
