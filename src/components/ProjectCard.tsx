@@ -2,7 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Sun, Cloud, CloudLightning, Pencil, History } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { TaskList } from "./TaskList";
+import { TaskSummary } from "./TaskSummary";
 
 export type ProjectStatus = "sunny" | "cloudy" | "stormy";
 export type ProgressStatus = "better" | "stable" | "worse";
@@ -106,7 +106,7 @@ export const ProjectCard = ({
               </div>
             </div>
           </div>
-          <TaskList projectId={id} />
+          <TaskSummary projectId={id} />
         </div>
       </CardContent>
     </Card>
