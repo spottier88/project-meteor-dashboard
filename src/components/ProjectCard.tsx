@@ -1,6 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Sun, Cloud, CloudLightning, Pencil } from "lucide-react";
+import { Sun, Cloud, CloudLightning, Pencil, History } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export type ProjectStatus = "sunny" | "cloudy" | "stormy";
@@ -15,6 +15,7 @@ interface ProjectCardProps {
   id: string;
   onReview: (id: string, title: string) => void;
   onEdit: (id: string) => void;
+  onViewHistory: (id: string, title: string) => void;
 }
 
 const statusIcons = {
@@ -44,6 +45,7 @@ export const ProjectCard = ({
   id,
   onReview,
   onEdit,
+  onViewHistory,
 }: ProjectCardProps) => {
   const StatusIcon = statusIcons[status].icon;
 
@@ -62,6 +64,17 @@ export const ProjectCard = ({
             className="h-8 w-8"
           >
             <Pencil className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={(e) => {
+              e.stopPropagation();
+              onViewHistory(id, title);
+            }}
+            className="h-8 w-8"
+          >
+            <History className="h-4 w-4" />
           </Button>
           <StatusIcon 
             className={cn("w-6 h-6", statusIcons[status].color)}

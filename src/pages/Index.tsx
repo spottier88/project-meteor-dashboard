@@ -3,6 +3,7 @@ import { DashboardHeader } from "@/components/DashboardHeader";
 import { ProjectGrid } from "@/components/ProjectGrid";
 import { ReviewSheet } from "@/components/ReviewSheet";
 import { ProjectForm } from "@/components/ProjectForm";
+import { ReviewHistory } from "@/components/ReviewHistory";
 import { ProjectStatus, ProgressStatus } from "@/components/ProjectCard";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
@@ -55,6 +56,10 @@ const Index = () => {
   } | null>(null);
   const [projectToEdit, setProjectToEdit] = useState<Project | null>(null);
   const [isProjectFormOpen, setIsProjectFormOpen] = useState(false);
+  const [selectedProjectForHistory, setSelectedProjectForHistory] = useState<{
+    id: string;
+    title: string;
+  } | null>(null);
 
   const { data: projects, isLoading, error, refetch } = useQuery({
     queryKey: ["projects"],
@@ -89,6 +94,10 @@ const Index = () => {
     setSelectedProject({ id, title });
   };
 
+  const handleViewHistory = (id: string, title: string) => {
+    setSelectedProjectForHistory({ id, title });
+  };
+
   const handleReviewSubmitted = () => {
     refetch();
   };
@@ -111,6 +120,18 @@ const Index = () => {
     );
   }
 
+  if (selectedProjectForHistory) {
+    return (
+      <div className="container mx-auto py-8 px-4 min-h-screen">
+        <ReviewHistory
+          projectId={selectedProjectForHistory.id}
+          projectTitle={selectedProjectForHistory.title}
+          onClose={() => setSelectedProjectForHistory(null)}
+        />
+      </div>
+    );
+  }
+
   return (
     <div className="container mx-auto py-8 px-4 min-h-screen animate-fade-in">
       <DashboardHeader 
@@ -121,6 +142,7 @@ const Index = () => {
         projects={projects || []}
         onProjectReview={handleProjectReview}
         onProjectEdit={handleEditProject}
+        onViewHistory={handleViewHistory}
       />
       {selectedProject && (
         <ReviewSheet

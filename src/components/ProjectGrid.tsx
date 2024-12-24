@@ -13,9 +13,15 @@ interface ProjectGridProps {
   projects: Project[];
   onProjectReview: (id: string, title: string) => void;
   onProjectEdit: (id: string) => void;
+  onViewHistory: (id: string, title: string) => void;
 }
 
-export const ProjectGrid = ({ projects, onProjectReview, onProjectEdit }: ProjectGridProps) => {
+export const ProjectGrid = ({
+  projects,
+  onProjectReview,
+  onProjectEdit,
+  onViewHistory,
+}: ProjectGridProps) => {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
       {projects.map((project) => (
@@ -24,6 +30,7 @@ export const ProjectGrid = ({ projects, onProjectReview, onProjectEdit }: Projec
           {...project}
           onReview={onProjectReview}
           onEdit={onProjectEdit}
+          onViewHistory={onViewHistory}
         />
       ))}
     </div>
