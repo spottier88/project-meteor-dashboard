@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -29,17 +29,25 @@ interface ProjectFormProps {
 
 export const ProjectForm = ({ isOpen, onClose, onSubmit, project }: ProjectFormProps) => {
   const { toast } = useToast();
-  const [title, setTitle] = useState(project?.title || "");
-  const [description, setDescription] = useState(project?.description || "");
-  const [projectManager, setProjectManager] = useState(project?.project_manager || "");
-  const [startDate, setStartDate] = useState<Date | undefined>(
-    project?.start_date ? new Date(project?.start_date) : undefined
-  );
-  const [endDate, setEndDate] = useState<Date | undefined>(
-    project?.end_date ? new Date(project?.end_date) : undefined
-  );
-  const [priority, setPriority] = useState(project?.priority || "medium");
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [projectManager, setProjectManager] = useState("");
+  const [startDate, setStartDate] = useState<Date | undefined>(undefined);
+  const [endDate, setEndDate] = useState<Date | undefined>(undefined);
+  const [priority, setPriority] = useState("medium");
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Réinitialiser le formulaire lorsque le projet change ou que le modal s'ouvre/se ferme
+  useEffect(() => {
+    if (isOpen) {
+      setTitle(project?.title || "");
+      setDescription(project?.description || "");
+      setProjectManager(project?.project_manager || "");
+      setStartDate(project?.start_date ? new Date(project.start_date) : undefined);
+      setEndDate(project?.end_date ? new Date(project.end_date) : undefined);
+      setPriority(project?.priority || "medium");
+    }
+  }, [isOpen, project]);
 
   const handleSubmit = async () => {
     if (!title.trim()) {
