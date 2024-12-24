@@ -24,9 +24,9 @@ interface KanbanBoardProps {
 }
 
 const columns = [
-  { id: "todo", title: "À faire" },
-  { id: "in_progress", title: "En cours" },
-  { id: "done", title: "Terminé" },
+  { id: "todo" as const, title: "À faire" },
+  { id: "in_progress" as const, title: "En cours" },
+  { id: "done" as const, title: "Terminé" },
 ];
 
 export const KanbanBoard = ({ projectId }: KanbanBoardProps) => {
@@ -46,7 +46,7 @@ export const KanbanBoard = ({ projectId }: KanbanBoardProps) => {
     },
   });
 
-  const handleStatusChange = async (taskId: string, newStatus: string) => {
+  const handleStatusChange = async (taskId: string, newStatus: Task["status"]) => {
     try {
       const { error } = await supabase
         .from("tasks")
@@ -93,7 +93,7 @@ export const KanbanBoard = ({ projectId }: KanbanBoardProps) => {
                       </div>
                       <Select
                         value={task.status}
-                        onValueChange={(value) => handleStatusChange(task.id, value)}
+                        onValueChange={(value) => handleStatusChange(task.id, value as Task["status"])}
                       >
                         <SelectTrigger className="w-[130px]">
                           <SelectValue />

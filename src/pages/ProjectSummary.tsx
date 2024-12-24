@@ -1,3 +1,4 @@
+import React from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -89,7 +90,6 @@ export const ProjectSummary = () => {
       </Button>
 
       <div className="grid gap-6">
-        {/* Project Information Card */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-2xl font-bold">{project.title}</CardTitle>
@@ -122,7 +122,6 @@ export const ProjectSummary = () => {
           </CardContent>
         </Card>
 
-        {/* Last Review Card */}
         {lastReview && (
           <Card>
             <CardHeader>
@@ -162,7 +161,6 @@ export const ProjectSummary = () => {
           </Card>
         )}
 
-        {/* Tasks Kanban Board */}
         <Card>
           <CardHeader>
             <CardTitle>Tâches</CardTitle>
