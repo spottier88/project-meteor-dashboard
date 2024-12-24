@@ -10,6 +10,7 @@ import { KanbanBoard } from "@/components/KanbanBoard";
 import { RiskSummary } from "@/components/RiskSummary";
 import { ProjectPDF } from "@/components/ProjectPDF";
 import { PDFDownloadLink } from "@react-pdf/renderer";
+import type { BlobProvider } from "@react-pdf/renderer";
 
 interface Project {
   id: string;
@@ -125,7 +126,7 @@ export const ProjectSummary = () => {
           }
           fileName={`${project.title.toLowerCase().replace(/\s+/g, "-")}-synthese.pdf`}
         >
-          {({ loading }: { loading: boolean }) => (
+          {({ loading }: BlobProvider) => (
             <Button disabled={loading} type="button">
               <Download className="h-4 w-4 mr-2" />
               {loading ? "Génération..." : "Exporter en PDF"}
