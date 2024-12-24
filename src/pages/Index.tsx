@@ -3,7 +3,6 @@ import { DashboardHeader } from "@/components/DashboardHeader";
 import { ProjectGrid } from "@/components/ProjectGrid";
 import { ReviewSheet } from "@/components/ReviewSheet";
 import { ProjectForm } from "@/components/ProjectForm";
-import { useToast } from "@/components/ui/use-toast";
 import { ProjectStatus, ProgressStatus } from "@/components/ProjectCard";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
@@ -50,7 +49,6 @@ const fetchProjects = async (): Promise<Project[]> => {
 };
 
 const Index = () => {
-  const { toast } = useToast();
   const [selectedProject, setSelectedProject] = useState<{
     id: string;
     title: string;
@@ -77,10 +75,14 @@ const Index = () => {
   };
 
   const handleNewReview = () => {
-    toast({
-      title: "Bientôt disponible",
-      description: "Le formulaire de revue sera implémenté dans la prochaine itération.",
-    });
+    // If there are projects, select the first one for review
+    if (projects && projects.length > 0) {
+      const firstProject = projects[0];
+      setSelectedProject({
+        id: firstProject.id,
+        title: firstProject.title,
+      });
+    }
   };
 
   const handleProjectReview = (id: string, title: string) => {
