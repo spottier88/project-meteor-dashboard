@@ -4,9 +4,12 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowLeft, Sun, Cloud, CloudLightning } from "lucide-react";
+import { ArrowLeft, Sun, Cloud, CloudLightning, Download } from "lucide-react";
 import { ProjectStatus, ProgressStatus } from "@/components/ProjectCard";
 import { KanbanBoard } from "@/components/KanbanBoard";
+import { RiskSummary } from "@/components/RiskSummary";
+import { ProjectPDF } from "@/components/ProjectPDF";
+import { PDFDownloadLink } from "@react-pdf/renderer";
 
 interface Project {
   id: string;
@@ -24,6 +27,15 @@ interface Review {
   progress: ProgressStatus;
   comment?: string;
   created_at: string;
+}
+
+interface Risk {
+  id: string;
+  description: string;
+  probability: "low" | "medium" | "high";
+  severity: "low" | "medium" | "high";
+  status: "open" | "in_progress" | "resolved";
+  mitigation_plan?: string;
 }
 
 const statusIcons = {
@@ -72,6 +84,20 @@ export const ProjectSummary = () => {
     },
   });
 
+  const { data: risks } = useQuery({
+    queryKey: ["risks", projectId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("risks")
+        .select("*")
+        .eq("project_id", projectId)
+        .order("created_at", { ascending: false });
+
+      if (error) throw error;
+      return data as Risk[];
+    },
+  });
+
   if (!project) {
     return <div>Chargement...</div>;
   }
@@ -80,14 +106,33 @@ export const ProjectSummary = () => {
 
   return (
     <div className="container mx-auto py-8 px-4">
-      <Button
-        variant="ghost"
-        className="mb-6"
-        onClick={() => navigate("/")}
-      >
-        <ArrowLeft className="h-4 w-4 mr-2" />
-        Retour aux projets
-      </Button>
+      <div className="flex items-center justify-between mb-6">
+        <Button
+          variant="ghost"
+          onClick={() => navigate("/")}
+        >
+          <ArrowLeft className="h-4 w-4 mr-2" />
+          Retour aux projets
+        </Button>
+
+        <PDFDownloadLink
+          document={
+            <ProjectPDF
+              project={project}
+              lastReview={lastReview}
+              risks={risks || []}
+            />
+          }
+          fileName={`${project.title.toLowerCase().replace(/\s+/g, "-")}-synthese.pdf`}
+        >
+          {({ loading }) => (
+            <Button disabled={loading}>
+              <Download className="h-4 w-4 mr-2" />
+              Exporter en PDF
+            </Button>
+          )}
+        </PDFDownloadLink>
+      </div>
 
       <div className="grid gap-6">
         <Card>
@@ -160,6 +205,8 @@ export const ProjectSummary = () => {
             </CardContent>
           </Card>
         )}
+
+        <RiskSummary projectId={projectId || ""} />
 
         <Card>
           <CardHeader>
