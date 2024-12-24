@@ -1,11 +1,14 @@
 import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+
+type RiskProbability = "low" | "medium" | "high";
+type RiskSeverity = "low" | "medium" | "high";
+type RiskStatus = "open" | "in_progress" | "resolved";
 
 interface RiskFormProps {
   isOpen: boolean;
@@ -15,9 +18,9 @@ interface RiskFormProps {
   risk?: {
     id: string;
     description: string;
-    probability: string;
-    severity: string;
-    status: string;
+    probability: RiskProbability;
+    severity: RiskSeverity;
+    status: RiskStatus;
     mitigation_plan?: string;
   };
 }
@@ -25,9 +28,9 @@ interface RiskFormProps {
 export const RiskForm = ({ isOpen, onClose, onSubmit, projectId, risk }: RiskFormProps) => {
   const { toast } = useToast();
   const [description, setDescription] = useState(risk?.description || "");
-  const [probability, setProbability] = useState(risk?.probability || "medium");
-  const [severity, setSeverity] = useState(risk?.severity || "medium");
-  const [status, setStatus] = useState(risk?.status || "open");
+  const [probability, setProbability] = useState<RiskProbability>(risk?.probability || "medium");
+  const [severity, setSeverity] = useState<RiskSeverity>(risk?.severity || "medium");
+  const [status, setStatus] = useState<RiskStatus>(risk?.status || "open");
   const [mitigationPlan, setMitigationPlan] = useState(risk?.mitigation_plan || "");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
