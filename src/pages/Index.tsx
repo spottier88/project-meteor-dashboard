@@ -1,29 +1,30 @@
 import { DashboardHeader } from "@/components/DashboardHeader";
 import { ProjectGrid } from "@/components/ProjectGrid";
 import { useToast } from "@/components/ui/use-toast";
+import { ProjectStatus, ProgressStatus } from "@/components/ProjectCard";
 
 const mockProjects = [
   {
     id: "1",
     title: "Website Redesign",
-    status: "sunny",
-    progress: "better",
+    status: "sunny" as ProjectStatus,
+    progress: "better" as ProgressStatus,
     completion: 75,
     lastReviewDate: "2024-03-15",
   },
   {
     id: "2",
     title: "Mobile App Development",
-    status: "cloudy",
-    progress: "stable",
+    status: "cloudy" as ProjectStatus,
+    progress: "stable" as ProgressStatus,
     completion: 45,
     lastReviewDate: "2024-03-10",
   },
   {
     id: "3",
     title: "Database Migration",
-    status: "stormy",
-    progress: "worse",
+    status: "stormy" as ProjectStatus,
+    progress: "worse" as ProgressStatus,
     completion: 30,
     lastReviewDate: "2024-03-05",
   },
