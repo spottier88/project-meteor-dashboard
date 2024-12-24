@@ -2,6 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Sun, Cloud, CloudLightning, Pencil, History } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { TaskList } from "./TaskList";
 
 export type ProjectStatus = "sunny" | "cloudy" | "stormy";
 export type ProgressStatus = "better" | "stable" | "worse";
@@ -82,25 +83,30 @@ export const ProjectCard = ({
           />
         </div>
       </CardHeader>
-      <CardContent 
-        className="cursor-pointer"
-        onClick={() => onReview(id, title)}
-      >
-        <div className="grid gap-2">
-          <div className="flex items-center justify-between">
-            <span className="text-sm text-muted-foreground">Progression</span>
-            <span className={cn("text-sm font-medium", progressColors[progress])}>
-              {progressLabels[progress]}
-            </span>
+      <CardContent>
+        <div className="grid gap-4">
+          <div 
+            className="cursor-pointer"
+            onClick={() => onReview(id, title)}
+          >
+            <div className="grid gap-2">
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-muted-foreground">Progression</span>
+                <span className={cn("text-sm font-medium", progressColors[progress])}>
+                  {progressLabels[progress]}
+                </span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-muted-foreground">Avancement</span>
+                <span className="text-sm font-medium">{completion}%</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-muted-foreground">Dernière Revue</span>
+                <span className="text-sm font-medium">{lastReviewDate}</span>
+              </div>
+            </div>
           </div>
-          <div className="flex items-center justify-between">
-            <span className="text-sm text-muted-foreground">Avancement</span>
-            <span className="text-sm font-medium">{completion}%</span>
-          </div>
-          <div className="flex items-center justify-between">
-            <span className="text-sm text-muted-foreground">Dernière Revue</span>
-            <span className="text-sm font-medium">{lastReviewDate}</span>
-          </div>
+          <TaskList projectId={id} />
         </div>
       </CardContent>
     </Card>
