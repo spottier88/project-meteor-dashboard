@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -33,6 +33,23 @@ export const TaskForm = ({ isOpen, onClose, onSubmit, projectId, task }: TaskFor
   );
   const [assignee, setAssignee] = useState(task?.assignee || "");
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Reset form when task changes
+  useEffect(() => {
+    if (task) {
+      setTitle(task.title);
+      setDescription(task.description || "");
+      setStatus(task.status);
+      setDueDate(task.due_date ? new Date(task.due_date) : undefined);
+      setAssignee(task.assignee || "");
+    } else {
+      setTitle("");
+      setDescription("");
+      setStatus("todo");
+      setDueDate(undefined);
+      setAssignee("");
+    }
+  }, [task]);
 
   const handleSubmit = async () => {
     if (!title.trim()) {
