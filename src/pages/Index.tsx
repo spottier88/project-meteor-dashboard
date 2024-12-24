@@ -2,48 +2,58 @@ import { DashboardHeader } from "@/components/DashboardHeader";
 import { ProjectGrid } from "@/components/ProjectGrid";
 import { useToast } from "@/components/ui/use-toast";
 import { ProjectStatus, ProgressStatus } from "@/components/ProjectCard";
+import { supabase } from "@/integrations/supabase/client";
+import { useQuery } from "@tanstack/react-query";
 
-const mockProjects = [
-  {
-    id: "1",
-    title: "Website Redesign",
-    status: "sunny" as ProjectStatus,
-    progress: "better" as ProgressStatus,
-    completion: 75,
-    lastReviewDate: "2024-03-15",
-  },
-  {
-    id: "2",
-    title: "Mobile App Development",
-    status: "cloudy" as ProjectStatus,
-    progress: "stable" as ProgressStatus,
-    completion: 45,
-    lastReviewDate: "2024-03-10",
-  },
-  {
-    id: "3",
-    title: "Database Migration",
-    status: "stormy" as ProjectStatus,
-    progress: "worse" as ProgressStatus,
-    completion: 30,
-    lastReviewDate: "2024-03-05",
-  },
-];
+const fetchProjects = async () => {
+  const { data, error } = await supabase
+    .from('projects')
+    .select('*')
+    .order('last_review_date', { ascending: false });
+
+  if (error) throw error;
+  return data.map(project => ({
+    ...project,
+    id: project.id.toString(),
+    lastReviewDate: new Date(project.last_review_date).toLocaleDateString('fr-FR'),
+  }));
+};
 
 const Index = () => {
   const { toast } = useToast();
 
+  const { data: projects, isLoading, error } = useQuery({
+    queryKey: ['projects'],
+    queryFn: fetchProjects,
+  });
+
   const handleNewReview = () => {
     toast({
-      title: "Coming Soon",
-      description: "The review form will be implemented in the next iteration.",
+      title: "Bientôt disponible",
+      description: "Le formulaire de revue sera implémenté dans la prochaine itération.",
     });
   };
+
+  if (isLoading) {
+    return (
+      <div className="container mx-auto py-8 px-4 min-h-screen flex items-center justify-center">
+        <p className="text-lg text-muted-foreground">Chargement des projets...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="container mx-auto py-8 px-4 min-h-screen flex items-center justify-center">
+        <p className="text-lg text-destructive">Une erreur est survenue lors du chargement des projets.</p>
+      </div>
+    );
+  }
 
   return (
     <div className="container mx-auto py-8 px-4 min-h-screen animate-fade-in">
       <DashboardHeader onNewReview={handleNewReview} />
-      <ProjectGrid projects={mockProjects} />
+      <ProjectGrid projects={projects || []} />
     </div>
   );
 };
