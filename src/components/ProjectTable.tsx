@@ -6,9 +6,11 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Sun, Cloud, CloudLightning } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Sun, Cloud, CloudLightning, Pencil, History, ListTodo } from "lucide-react";
 import { ProjectStatus, ProgressStatus } from "./ProjectCard";
 import { cn } from "@/lib/utils";
+import { useNavigate } from "react-router-dom";
 
 interface Project {
   id: string;
@@ -51,6 +53,8 @@ export const ProjectTable = ({
   onProjectEdit,
   onViewHistory,
 }: ProjectTableProps) => {
+  const navigate = useNavigate();
+
   return (
     <div className="rounded-md border">
       <Table>
@@ -62,6 +66,7 @@ export const ProjectTable = ({
             <TableHead>Progression</TableHead>
             <TableHead>Avancement</TableHead>
             <TableHead>Dernière revue</TableHead>
+            <TableHead className="text-right">Actions</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -70,10 +75,14 @@ export const ProjectTable = ({
             return (
               <TableRow
                 key={project.id}
-                className="cursor-pointer hover:bg-muted/50"
-                onClick={() => onProjectReview(project.id, project.title)}
+                className="hover:bg-muted/50"
               >
-                <TableCell className="font-medium">{project.title}</TableCell>
+                <TableCell 
+                  className="font-medium cursor-pointer"
+                  onClick={() => onProjectReview(project.id, project.title)}
+                >
+                  {project.title}
+                </TableCell>
                 <TableCell>{project.project_manager || "-"}</TableCell>
                 <TableCell>
                   <div className="flex items-center gap-2">
@@ -96,6 +105,41 @@ export const ProjectTable = ({
                 </TableCell>
                 <TableCell>{project.completion}%</TableCell>
                 <TableCell>{project.lastReviewDate}</TableCell>
+                <TableCell className="text-right space-x-2">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onProjectEdit(project.id);
+                    }}
+                    className="h-8 w-8"
+                  >
+                    <Pencil className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onViewHistory(project.id, project.title);
+                    }}
+                    className="h-8 w-8"
+                  >
+                    <History className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      navigate(`/tasks/${project.id}`);
+                    }}
+                    className="h-8 w-8"
+                  >
+                    <ListTodo className="h-4 w-4" />
+                  </Button>
+                </TableCell>
               </TableRow>
             );
           })}
