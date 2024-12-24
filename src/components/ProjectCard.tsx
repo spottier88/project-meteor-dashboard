@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Sun, Cloud, CloudLightning, Pencil, History } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { TaskSummary } from "./TaskSummary";
+import { useNavigate } from "react-router-dom";
 
 export type ProjectStatus = "sunny" | "cloudy" | "stormy";
 export type ProgressStatus = "better" | "stable" | "worse";
@@ -48,6 +49,7 @@ export const ProjectCard = ({
   onEdit,
   onViewHistory,
 }: ProjectCardProps) => {
+  const navigate = useNavigate();
   const StatusIcon = statusIcons[status].icon;
 
   return (
@@ -87,7 +89,7 @@ export const ProjectCard = ({
         <div className="grid gap-4">
           <div 
             className="cursor-pointer"
-            onClick={() => onReview(id, title)}
+            onClick={() => navigate(`/projects/${id}`)}
           >
             <div className="grid gap-2">
               <div className="flex items-center justify-between">

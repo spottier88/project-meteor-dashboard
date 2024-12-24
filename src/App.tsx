@@ -3,6 +3,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import Index from "./pages/Index";
 import { TaskManagement } from "./pages/TaskManagement";
+import { ProjectSummary } from "./pages/ProjectSummary";
 
 const queryClient = new QueryClient();
 
@@ -13,6 +14,7 @@ function App() {
         <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/tasks/:projectId" element={<TaskManagement />} />
+          <Route path="/projects/:projectId" element={<ProjectSummary />} />
         </Routes>
       </Router>
       <Toaster />
