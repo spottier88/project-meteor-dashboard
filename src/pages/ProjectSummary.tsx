@@ -78,10 +78,10 @@ export const ProjectSummary = () => {
         .eq("project_id", projectId)
         .order("created_at", { ascending: false })
         .limit(1)
-        .single();
+        .maybeSingle();
 
       if (error && error.code !== "PGRST116") throw error;
-      return data as Review;
+      return data as Review | null;
     },
   });
 
@@ -108,10 +108,7 @@ export const ProjectSummary = () => {
   return (
     <div className="container mx-auto py-8 px-4">
       <div className="flex items-center justify-between mb-6">
-        <Button
-          variant="ghost"
-          onClick={() => navigate("/")}
-        >
+        <Button variant="ghost" onClick={() => navigate("/")}>
           <ArrowLeft className="h-4 w-4 mr-2" />
           Retour aux projets
         </Button>
@@ -120,13 +117,13 @@ export const ProjectSummary = () => {
           document={
             <ProjectPDF
               project={project}
-              lastReview={lastReview}
+              lastReview={lastReview || undefined}
               risks={risks || []}
             />
           }
           fileName={`${project.title.toLowerCase().replace(/\s+/g, "-")}-synthese.pdf`}
         >
-          {({ blob, url, loading, error }) => (
+          {({ loading }: BlobProvider) => (
             <Button disabled={loading} type="button">
               <Download className="h-4 w-4 mr-2" />
               {loading ? "Génération..." : "Exporter en PDF"}
