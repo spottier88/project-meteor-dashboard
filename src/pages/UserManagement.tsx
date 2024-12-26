@@ -23,8 +23,9 @@ import { useNavigate } from "react-router-dom";
 import { Database } from "@/integrations/supabase/types";
 
 type Profile = Database["public"]["Tables"]["profiles"]["Row"];
+type UserRole = Database["public"]["Enums"]["user_role"];
 
-const roleLabels: Record<Database["public"]["Enums"]["user_role"], string> = {
+const roleLabels: Record<UserRole, string> = {
   admin: "Administrateur",
   direction: "Direction",
   chef_projet: "Chef de projet",
