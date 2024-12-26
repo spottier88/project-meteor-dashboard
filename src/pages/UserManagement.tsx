@@ -24,37 +24,47 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { UserProfile, UserRoleData } from "@/types/user";
 
-type Profile = {
-  id: string;
-  email: string | null;
-  first_name: string | null;
-  last_name: string | null;
-  created_at?: string | null;
-};
+interface UserWithRole extends UserProfile {
+  userRole?: UserRoleData;
+}
 
 export const UserManagement = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [selectedUser, setSelectedUser] = useState<Profile | null>(null);
+  const [selectedUser, setSelectedUser] = useState<UserWithRole | null>(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
-  const [userToDelete, setUserToDelete] = useState<Profile | null>(null);
+  const [userToDelete, setUserToDelete] = useState<UserWithRole | null>(null);
 
   const { data: profiles, isLoading } = useQuery({
     queryKey: ["profiles"],
     queryFn: async () => {
-      const { data, error } = await supabase
+      // Fetch profiles
+      const { data: profilesData, error: profilesError } = await supabase
         .from("profiles")
         .select("*")
         .order("created_at", { ascending: false });
 
-      if (error) throw error;
-      return data as Profile[];
+      if (profilesError) throw profilesError;
+
+      // Fetch user roles
+      const { data: rolesData, error: rolesError } = await supabase
+        .from("user_roles")
+        .select("*");
+
+      if (rolesError) throw rolesError;
+
+      // Combine profiles with their roles
+      return (profilesData as UserProfile[]).map(profile => ({
+        ...profile,
+        userRole: rolesData.find(role => role.user_id === profile.id)
+      }));
     },
   });
 
-  const handleEdit = (user: Profile) => {
+  const handleEdit = (user: UserWithRole) => {
     setSelectedUser(user);
     setIsFormOpen(true);
   };
@@ -139,7 +149,7 @@ export const UserManagement = () => {
               <TableCell>{profile.first_name || "-"}</TableCell>
               <TableCell>{profile.last_name || "-"}</TableCell>
               <TableCell>
-                {profile.role === "admin" ? "Administrateur" : "Chef de projet"}
+                {profile.userRole?.role === "admin" ? "Administrateur" : "Chef de projet"}
               </TableCell>
               <TableCell className="text-right space-x-2">
                 <Button
@@ -169,7 +179,10 @@ export const UserManagement = () => {
           setSelectedUser(null);
         }}
         onSubmit={handleFormSubmit}
-        user={selectedUser || undefined}
+        user={selectedUser ? {
+          ...selectedUser,
+          role: selectedUser.userRole?.role || "chef_projet"
+        } : undefined}
       />
 
       <AlertDialog open={!!userToDelete} onOpenChange={() => setUserToDelete(null)}>

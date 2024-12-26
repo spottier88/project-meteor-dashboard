@@ -46,28 +46,30 @@ export const ProjectFormFields = ({
   isAdmin,
   setOwnerId,
 }: ProjectFormFieldsProps) => {
-  // Fetch all users who are either admin or chef_projet
-  const { data: profiles } = useQuery({
-    queryKey: ["profiles"],
+  // Fetch all project managers (users with chef_projet role)
+  const { data: projectManagers } = useQuery({
+    queryKey: ["projectManagers"],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data: profiles, error } = await supabase
         .from("profiles")
-        .select("id, email, role")
-        .not("email", "is", null);
+        .select("*")
+        .order("email");
 
       if (error) throw error;
-      return data as UserProfile[];
+
+      // Filter profiles to only include those with chef_projet role
+      const { data: userRoles } = await supabase
+        .from("user_roles")
+        .select("*")
+        .eq("role", "chef_projet");
+
+      if (!userRoles) return [];
+
+      return (profiles as UserProfile[]).filter(profile =>
+        userRoles.some(ur => ur.user_id === profile.id)
+      );
     },
   });
-
-  // Mettre à jour le owner_id lorsque le chef de projet change
-  const handleProjectManagerChange = (email: string) => {
-    setProjectManager(email);
-    const selectedProfile = profiles?.find(profile => profile.email === email);
-    if (selectedProfile) {
-      setOwnerId(selectedProfile.id);
-    }
-  };
 
   return (
     <div className="grid gap-4 py-4">
@@ -98,12 +100,18 @@ export const ProjectFormFields = ({
           Chef de projet *
         </label>
         {isAdmin ? (
-          <Select value={projectManager} onValueChange={handleProjectManagerChange}>
+          <Select value={projectManager} onValueChange={(email) => {
+            setProjectManager(email);
+            const selectedProfile = projectManagers?.find(pm => pm.email === email);
+            if (selectedProfile) {
+              setOwnerId(selectedProfile.id);
+            }
+          }}>
             <SelectTrigger>
               <SelectValue placeholder="Sélectionner un chef de projet" />
             </SelectTrigger>
             <SelectContent>
-              {profiles?.filter(profile => profile.role === 'chef_projet').map((profile) => (
+              {projectManagers?.map((profile) => (
                 profile.email && (
                   <SelectItem key={profile.email} value={profile.email}>
                     {profile.email}
