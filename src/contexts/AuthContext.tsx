@@ -1,14 +1,15 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import { User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
+import { Database } from "@/integrations/supabase/types";
 
-interface Profile {
+type Profile = {
   id: string;
-  email: string;
+  email: string | null;
   first_name: string | null;
   last_name: string | null;
-  role: "admin" | "direction" | "chef_projet";
-}
+  role: Database["public"]["Enums"]["user_role"] | null;
+};
 
 interface AuthContextType {
   user: User | null;
@@ -54,7 +55,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const fetchProfile = async (userId: string) => {
     const { data, error } = await supabase
       .from("profiles")
-      .select("*")
+      .select("id, email, first_name, last_name, role")
       .eq("id", userId)
       .single();
 

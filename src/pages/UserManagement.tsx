@@ -20,8 +20,11 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import { ArrowLeft } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { Database } from "@/integrations/supabase/types";
 
-const roleLabels = {
+type Profile = Database["public"]["Tables"]["profiles"]["Row"];
+
+const roleLabels: Record<Database["public"]["Enums"]["user_role"], string> = {
   admin: "Administrateur",
   direction: "Direction",
   chef_projet: "Chef de projet",
@@ -41,11 +44,11 @@ export const UserManagement = () => {
         .order("created_at", { ascending: false });
 
       if (error) throw error;
-      return data;
+      return data as Profile[];
     },
   });
 
-  const handleRoleChange = async (userId: string, newRole: string) => {
+  const handleRoleChange = async (userId: string, newRole: Database["public"]["Enums"]["user_role"]) => {
     setUpdating(userId);
     try {
       const { error } = await supabase
@@ -105,8 +108,8 @@ export const UserManagement = () => {
                 <TableCell>{user.first_name || "-"}</TableCell>
                 <TableCell>
                   <Select
-                    value={user.role}
-                    onValueChange={(value) => handleRoleChange(user.id, value)}
+                    value={user.role || undefined}
+                    onValueChange={(value) => handleRoleChange(user.id, value as Database["public"]["Enums"]["user_role"])}
                     disabled={updating === user.id}
                   >
                     <SelectTrigger className="w-[180px]">
@@ -122,7 +125,7 @@ export const UserManagement = () => {
                   </Select>
                 </TableCell>
                 <TableCell>
-                  {new Date(user.created_at).toLocaleDateString("fr-FR")}
+                  {user.created_at ? new Date(user.created_at).toLocaleDateString("fr-FR") : "-"}
                 </TableCell>
               </TableRow>
             ))}
