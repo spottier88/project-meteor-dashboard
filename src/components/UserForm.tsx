@@ -106,15 +106,17 @@ export const UserForm = ({ isOpen, onClose, onSubmit, user }: UserFormProps) => 
         }
 
         // Add new roles
-        for (const role of rolesToAdd) {
-          const { error: insertRoleError } = await supabase
+        if (rolesToAdd.length > 0) {
+          const { error: insertRolesError } = await supabase
             .from("user_roles")
-            .insert({
-              user_id: user.id,
-              role: role,
-            });
+            .insert(
+              rolesToAdd.map(role => ({
+                user_id: user.id,
+                role: role,
+              }))
+            );
 
-          if (insertRoleError) throw insertRoleError;
+          if (insertRolesError) throw insertRolesError;
         }
 
         toast({
@@ -136,16 +138,16 @@ export const UserForm = ({ isOpen, onClose, onSubmit, user }: UserFormProps) => 
         if (profileError) throw profileError;
 
         // Add roles for the new user
-        for (const role of roles) {
-          const { error: roleError } = await supabase
-            .from("user_roles")
-            .insert({
+        const { error: rolesError } = await supabase
+          .from("user_roles")
+          .insert(
+            roles.map(role => ({
               user_id: newUserId,
               role: role,
-            });
+            }))
+          );
 
-          if (roleError) throw roleError;
-        }
+        if (rolesError) throw rolesError;
 
         toast({
           title: "Succès",
