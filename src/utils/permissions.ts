@@ -1,22 +1,19 @@
-import { Database } from "@/integrations/supabase/types";
-
-type UserRole = Database["public"]["Enums"]["user_role"];
+import { UserRole } from "@/types/user";
 
 export const canEditProject = (
-  userRole: UserRole | undefined,
+  userRoles: UserRole[] | undefined,
   userId: string | undefined,
   projectOwnerId: string | undefined,
   projectManager?: string | null,
   userEmail?: string | null,
 ): boolean => {
   if (!userId) return false;
-  if (userRole === "admin") return true;
+  if (userRoles?.includes("admin")) return true;
   if (userId === projectOwnerId) return true;
-  // Vérifie si l'utilisateur est le chef de projet assigné
   if (userEmail && projectManager && userEmail === projectManager) return true;
   return false;
 };
 
-export const canCreateProject = (userRole: UserRole | undefined): boolean => {
-  return userRole === "admin" || userRole === "chef_projet";
+export const canCreateProject = (userRoles: UserRole[] | undefined): boolean => {
+  return userRoles?.some(role => ["admin", "chef_projet"].includes(role)) ?? false;
 };

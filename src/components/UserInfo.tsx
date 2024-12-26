@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { LogOut, Users } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { useToast } from "./ui/use-toast";
+import { UserProfile, UserRoleData } from "@/types/user";
 
 export const UserInfo = () => {
   const user = useUser();
@@ -22,24 +23,37 @@ export const UserInfo = () => {
         .single();
 
       if (error) throw error;
-      return data;
+      return data as UserProfile;
     },
     enabled: !!user?.id,
   });
 
+  const { data: userRoles } = useQuery({
+    queryKey: ["userRoles", user?.id],
+    queryFn: async () => {
+      if (!user?.id) return null;
+      const { data, error } = await supabase
+        .from("user_roles")
+        .select("*")
+        .eq("user_id", user.id);
+
+      if (error) throw error;
+      return data as UserRoleData[];
+    },
+    enabled: !!user?.id,
+  });
+
+  const isAdmin = userRoles?.some(role => role.role === "admin");
+
   const handleLogout = async () => {
     try {
-      // Effectuer la déconnexion
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
 
-      // Attendre un court instant pour s'assurer que la session est bien terminée
       await new Promise(resolve => setTimeout(resolve, 100));
 
-      // Vérifier que la session est bien terminée
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
-        // Session terminée avec succès, rediriger vers la page de connexion
         navigate("/login");
         toast({
           title: "Déconnexion réussie",
@@ -65,11 +79,11 @@ export const UserInfo = () => {
       <div className="flex flex-col">
         <span className="text-sm font-medium">{user.email}</span>
         <span className="text-xs text-muted-foreground">
-          {profile?.role === "admin" ? "Administrateur" : "Chef de projet"}
+          {isAdmin ? "Administrateur" : "Chef de projet"}
         </span>
       </div>
       <div className="flex items-center gap-2">
-        {profile?.role === "admin" && (
+        {isAdmin && (
           <Button
             variant="outline"
             size="sm"

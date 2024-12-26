@@ -7,6 +7,7 @@ import { useUser } from "@supabase/auth-helpers-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { canEditProject } from "@/utils/permissions";
+import { UserRoleData } from "@/types/user";
 
 interface ProjectCardHeaderProps {
   title: string;
@@ -31,21 +32,22 @@ export const ProjectCardHeader = ({
 }: ProjectCardHeaderProps) => {
   const user = useUser();
 
-  const { data: userProfile } = useQuery({
-    queryKey: ["userProfile", user?.id],
+  const { data: userRoles } = useQuery({
+    queryKey: ["userRoles", user?.id],
     queryFn: async () => {
       if (!user?.id) return null;
       const { data, error } = await supabase
-        .from("profiles")
-        .select("role")
-        .eq("id", user.id)
-        .single();
+        .from("user_roles")
+        .select("*")
+        .eq("user_id", user.id);
 
       if (error) throw error;
-      return data;
+      return data as UserRoleData[];
     },
     enabled: !!user?.id,
   });
+
+  const roles = userRoles?.map(ur => ur.role);
 
   return (
     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -56,7 +58,7 @@ export const ProjectCardHeader = ({
         <CardTitle className="text-xl font-semibold">{title}</CardTitle>
       </div>
       <div className="flex items-center gap-2">
-        {canEditProject(userProfile?.role, user?.id, owner_id, project_manager, user?.email) && (
+        {canEditProject(roles, user?.id, owner_id, project_manager, user?.email) && (
           <Button
             variant="ghost"
             size="icon"

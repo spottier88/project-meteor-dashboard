@@ -5,6 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useUser } from "@supabase/auth-helpers-react";
 import { supabase } from "@/integrations/supabase/client";
 import { canCreateProject } from "@/utils/permissions";
+import { UserRoleData } from "@/types/user";
 
 interface DashboardHeaderProps {
   onNewProject: () => void;
@@ -14,21 +15,22 @@ interface DashboardHeaderProps {
 export const DashboardHeader = ({ onNewProject, onNewReview }: DashboardHeaderProps) => {
   const user = useUser();
 
-  const { data: userProfile } = useQuery({
-    queryKey: ["userProfile", user?.id],
+  const { data: userRoles } = useQuery({
+    queryKey: ["userRoles", user?.id],
     queryFn: async () => {
       if (!user?.id) return null;
       const { data, error } = await supabase
-        .from("profiles")
-        .select("role")
-        .eq("id", user.id)
-        .single();
+        .from("user_roles")
+        .select("*")
+        .eq("user_id", user.id);
 
       if (error) throw error;
-      return data;
+      return data as UserRoleData[];
     },
     enabled: !!user?.id,
   });
+
+  const roles = userRoles?.map(ur => ur.role);
 
   return (
     <div className="space-y-4 mb-8">
@@ -41,7 +43,7 @@ export const DashboardHeader = ({ onNewProject, onNewReview }: DashboardHeaderPr
           </p>
         </div>
         <div className="flex flex-col md:flex-row gap-2">
-          {canCreateProject(userProfile?.role) && (
+          {canCreateProject(roles) && (
             <Button
               onClick={onNewProject}
               className="w-full md:w-auto animate-fade-in"
