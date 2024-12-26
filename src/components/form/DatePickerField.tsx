@@ -34,7 +34,6 @@ export const DatePickerField = ({ label, value, onChange, minDate }: DatePickerF
         </PopoverTrigger>
         <PopoverContent className="w-auto p-0" align="start">
           <Calendar
-            mode="single"
             selected={value}
             onSelect={onChange}
             disabled={minDate ? { before: minDate } : undefined}
