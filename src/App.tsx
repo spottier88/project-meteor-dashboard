@@ -6,6 +6,7 @@ import Login from "./pages/Login";
 import { TaskManagement } from "./pages/TaskManagement";
 import { ProjectSummary } from "./pages/ProjectSummary";
 import { RiskManagement } from "./pages/RiskManagement";
+import { UserManagement } from "./pages/UserManagement";
 import { SessionContextProvider } from "@supabase/auth-helpers-react";
 import { supabase } from "@/integrations/supabase/client";
 import { ProtectedRoute } from "./components/ProtectedRoute";
@@ -48,6 +49,14 @@ function App() {
               element={
                 <ProtectedRoute>
                   <RiskManagement />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/users"
+              element={
+                <ProtectedRoute>
+                  <UserManagement />
                 </ProtectedRoute>
               }
             />

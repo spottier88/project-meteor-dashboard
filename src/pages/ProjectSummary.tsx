@@ -1,20 +1,17 @@
-import React from "react";
+import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowLeft, Download } from "lucide-react";
-import { ProjectStatus, ProgressStatus } from "@/components/ProjectCard";
-import { KanbanBoard } from "@/components/KanbanBoard";
-import { RiskSummary } from "@/components/RiskSummary";
-import { ProjectPDF } from "@/components/ProjectPDF";
-import { PDFDownloadLink } from "@react-pdf/renderer";
-import { Risk } from "@/types/risk";
+import { ArrowLeft, FileDown } from "lucide-react";
 import { ProjectSummaryHeader } from "@/components/project/ProjectSummaryHeader";
-import { statusIcons } from "@/lib/project-status";
+import { ProjectPDF } from "@/components/project/ProjectPDF";
+import { PDFDownloadLink } from "@react-pdf/renderer";
+import { RiskTable } from "@/components/risk/RiskTable";
+import { TaskTable } from "@/components/task/TaskTable";
+import { ProjectStatus, ProgressStatus } from "@/components/ProjectCard";
 
-interface Project {
+type Project = {
   id: string;
   title: string;
   description?: string;
@@ -23,27 +20,33 @@ interface Project {
   completion: number;
   project_manager?: string;
   last_review_date: string;
-}
+};
 
-interface Review {
+type Risk = {
   id: string;
-  weather: ProjectStatus;
-  progress: ProgressStatus;
-  comment?: string;
-  created_at: string;
-}
+  description: string;
+  probability: string;
+  severity: string;
+  status: string;
+  mitigation_plan?: string;
+};
 
-const progressLabels = {
-  better: "En amélioration",
-  stable: "Stable",
-  worse: "En dégradation",
-} as const;
+type Task = {
+  id: string;
+  title: string;
+  description?: string;
+  status: string;
+  assignee?: string;
+  due_date?: string;
+};
 
 export const ProjectSummary = () => {
-  const { projectId } = useParams<{ projectId: string }>();
+  const { projectId } = useParams();
   const navigate = useNavigate();
+  const [risks, setRisks] = useState<Risk[]>([]);
+  const [tasks, setTasks] = useState<Task[]>([]);
 
-  const { data: project } = useQuery({
+  const { data: project, isLoading } = useQuery({
     queryKey: ["project", projectId],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -57,123 +60,86 @@ export const ProjectSummary = () => {
     },
   });
 
-  const { data: lastReview } = useQuery({
-    queryKey: ["lastReview", projectId],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("reviews")
-        .select("*")
-        .eq("project_id", projectId)
-        .order("created_at", { ascending: false })
-        .limit(1)
-        .maybeSingle();
-
-      if (error && error.code !== "PGRST116") throw error;
-      return data as Review | null;
-    },
-  });
-
-  const { data: risks } = useQuery({
-    queryKey: ["risks", projectId],
-    queryFn: async () => {
-      const { data, error } = await supabase
+  useEffect(() => {
+    const fetchRisks = async () => {
+      const { data } = await supabase
         .from("risks")
         .select("*")
         .eq("project_id", projectId)
         .order("created_at", { ascending: false });
+      setRisks(data || []);
+    };
 
-      if (error) throw error;
-      return data as Risk[];
-    },
-  });
+    const fetchTasks = async () => {
+      const { data } = await supabase
+        .from("tasks")
+        .select("*")
+        .eq("project_id", projectId)
+        .order("created_at", { ascending: false });
+      setTasks(data || []);
+    };
 
-  if (!project) {
-    return (
-      <div className="container mx-auto py-8 px-4 flex items-center justify-center">
-        <p className="text-lg text-muted-foreground">Chargement...</p>
-      </div>
-    );
+    if (projectId) {
+      fetchRisks();
+      fetchTasks();
+    }
+  }, [projectId]);
+
+  if (isLoading || !project) {
+    return <div>Chargement...</div>;
   }
 
   return (
     <div className="container mx-auto py-8 px-4">
-      <div className="flex items-center justify-between mb-6">
+      <div className="mb-8 space-y-4">
         <Button variant="ghost" onClick={() => navigate("/")}>
-          <ArrowLeft className="h-4 w-4 mr-2" />
-          Retour aux projets
+          <ArrowLeft className="mr-2 h-4 w-4" />
+          Retour au tableau de bord
         </Button>
-
-        <PDFDownloadLink
-          document={
-            <ProjectPDF
-              project={project}
-              lastReview={lastReview}
-              risks={risks || []}
-            />
-          }
-          fileName={`${project.title.toLowerCase().replace(/\s+/g, "-")}-synthese.pdf`}
-        >
-          {({ loading }) => (
-            <Button disabled={loading} type="button">
-              <Download className="h-4 w-4 mr-2" />
-              {loading ? "Génération..." : "Exporter en PDF"}
-            </Button>
-          )}
-        </PDFDownloadLink>
+        <div className="flex items-center justify-between">
+          <h1 className="text-3xl font-bold tracking-tight">
+            Résumé du Projet
+          </h1>
+          <PDFDownloadLink
+            document={<ProjectPDF project={project} risks={risks} tasks={tasks} />}
+            fileName={`${project.title}-summary.pdf`}
+          >
+            {({ loading }) => (
+              <Button disabled={loading} variant="outline">
+                <FileDown className="mr-2 h-4 w-4" />
+                {loading ? "Génération..." : "Télécharger le PDF"}
+              </Button>
+            )}
+          </PDFDownloadLink>
+        </div>
       </div>
 
-      <div className="grid gap-6">
-        <ProjectSummaryHeader {...project} />
+      <div className="space-y-6">
+        <ProjectSummaryHeader
+          title={project.title}
+          description={project.description}
+          status={project.status}
+          progress={project.progress}
+          completion={project.completion}
+          project_manager={project.project_manager}
+          last_review_date={project.last_review_date}
+        />
 
-        {lastReview && (
-          <Card>
-            <CardHeader>
-              <CardTitle>Dernière revue</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid gap-4">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div>
-                    <span className="text-sm text-muted-foreground">Date</span>
-                    <p className="font-medium">
-                      {new Date(lastReview.created_at).toLocaleDateString("fr-FR")}
-                    </p>
-                  </div>
-                  <div>
-                    <span className="text-sm text-muted-foreground">Météo</span>
-                    <p className="font-medium flex items-center gap-2">
-                      {statusIcons[lastReview.weather].label}
-                      {React.createElement(statusIcons[lastReview.weather].icon, {
-                        className: statusIcons[lastReview.weather].color,
-                      })}
-                    </p>
-                  </div>
-                  <div>
-                    <span className="text-sm text-muted-foreground">État d'évolution</span>
-                    <p className="font-medium">{progressLabels[lastReview.progress]}</p>
-                  </div>
-                </div>
-                {lastReview.comment && (
-                  <div>
-                    <span className="text-sm text-muted-foreground">Commentaires</span>
-                    <p className="font-medium mt-1">{lastReview.comment}</p>
-                  </div>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-        )}
+        <div className="grid gap-6 md:grid-cols-2">
+          <div className="space-y-4">
+            <h2 className="text-2xl font-semibold tracking-tight">
+              Risques ({risks.length})
+            </h2>
+            <RiskTable risks={risks} projectId={project.id} />
+          </div>
 
-        <RiskSummary projectId={projectId || ""} />
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Tâches</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <KanbanBoard projectId={projectId || ""} />
-          </CardContent>
-        </Card>
+          <div className="space-y-4">
+            <h2 className="text-2xl font-semibold tracking-tight">
+              Tâches ({tasks.length})
+            </h2>
+            <TaskTable tasks={tasks} projectId={project.id} />
+          </div>
+        </div>
       </div>
     </div>
   );
