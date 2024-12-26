@@ -5,23 +5,23 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft, FileDown } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { PDFDownloadLink } from "@react-pdf/renderer";
-import { ProjectPDF } from "@/components/pdf/ProjectPDF";
+import { ProjectPDF } from "@/components/ProjectPDF";
 import { RiskList } from "@/components/RiskList";
 import { TaskList } from "@/components/TaskList";
 import { ReviewList } from "@/components/ReviewList";
 import { ProjectHeader } from "@/components/ProjectHeader";
 
 export const ProjectSummary = () => {
-  const { id } = useParams();
+  const { projectId } = useParams();
   const navigate = useNavigate();
 
   const { data: project, isLoading: isProjectLoading } = useQuery({
-    queryKey: ["project", id],
+    queryKey: ["project", projectId],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("projects")
         .select("*")
-        .eq("id", id)
+        .eq("id", projectId)
         .single();
 
       if (error) throw error;
@@ -30,12 +30,12 @@ export const ProjectSummary = () => {
   });
 
   const { data: risks, isLoading: isRisksLoading } = useQuery({
-    queryKey: ["risks", id],
+    queryKey: ["risks", projectId],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("risks")
         .select("*")
-        .eq("project_id", id);
+        .eq("project_id", projectId);
 
       if (error) throw error;
       return data;
@@ -43,12 +43,12 @@ export const ProjectSummary = () => {
   });
 
   const { data: tasks, isLoading: isTasksLoading } = useQuery({
-    queryKey: ["tasks", id],
+    queryKey: ["tasks", projectId],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("tasks")
         .select("*")
-        .eq("project_id", id);
+        .eq("project_id", projectId);
 
       if (error) throw error;
       return data;
@@ -56,12 +56,12 @@ export const ProjectSummary = () => {
   });
 
   const { data: reviews, isLoading: isReviewsLoading } = useQuery({
-    queryKey: ["reviews", id],
+    queryKey: ["reviews", projectId],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("reviews")
         .select("*, review_actions(*)")
-        .eq("project_id", id)
+        .eq("project_id", projectId)
         .order("created_at", { ascending: false });
 
       if (error) throw error;
@@ -90,7 +90,7 @@ export const ProjectSummary = () => {
       <ProjectHeader project={project} />
 
       <PDFDownloadLink
-        document={<ProjectPDF project={project} risks={risks} tasks={tasks} reviews={reviews} />}
+        document={<ProjectPDF project={project} risks={risks || []} lastReview={reviews?.[0]} />}
         fileName={`${project?.title || 'project'}-summary.pdf`}
       >
         {({ loading }) => (
@@ -103,11 +103,11 @@ export const ProjectSummary = () => {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mt-8">
         <div className="space-y-8">
-          <RiskList projectId={project.id} risks={risks || []} />
-          <TaskList projectId={project.id} tasks={tasks || []} />
+          <RiskList projectId={projectId || ""} projectTitle={project.title} />
+          <TaskList projectId={projectId || ""} />
         </div>
         <div>
-          <ReviewList projectId={project.id} reviews={reviews || []} />
+          <ReviewList projectId={projectId || ""} />
         </div>
       </div>
     </div>
