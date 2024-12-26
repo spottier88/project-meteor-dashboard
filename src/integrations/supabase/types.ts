@@ -258,7 +258,11 @@ export type Database = {
       risk_severity: "low" | "medium" | "high"
       risk_status: "open" | "in_progress" | "resolved"
       task_status: "todo" | "in_progress" | "done"
-      user_role: "admin" | "direction" | "chef_projet"
+      user_role:
+        | "admin"
+        | "direction"
+        | "chef_projet"
+        | "direction_operationnelle"
     }
     CompositeTypes: {
       [_ in never]: never
