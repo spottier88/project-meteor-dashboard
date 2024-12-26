@@ -25,7 +25,11 @@ export function DashboardHeader({ onNewProject, onNewReview }: DashboardHeaderPr
         .eq("id", user.id)
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error fetching profile:", error);
+        throw error;
+      }
+      
       return data;
     },
   });
