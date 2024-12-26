@@ -54,10 +54,11 @@ export const UserForm = ({ isOpen, onClose, onSubmit, user }: UserFormProps) => 
           description: "L'utilisateur a été mis à jour",
         });
       } else {
-        // Create new user
+        // Create new user with generated UUID
         const { error } = await supabase
           .from("profiles")
           .insert({
+            id: crypto.randomUUID(),
             email,
             first_name: firstName,
             last_name: lastName,
