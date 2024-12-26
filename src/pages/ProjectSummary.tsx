@@ -7,7 +7,7 @@ import { PDFDownloadLink } from "@react-pdf/renderer";
 import { Database } from "@/integrations/supabase/types";
 import { useToast } from "@/components/ui/use-toast";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Download } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 type Project = Database["public"]["Tables"]["projects"]["Row"];
@@ -140,13 +140,12 @@ export const ProjectSummary = () => {
           />
         }
         fileName={`${project.title.toLowerCase().replace(/\s+/g, '-')}-rapport.pdf`}
-        className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2"
       >
         {({ loading }) => (
-          <div className="flex items-center gap-2">
-            <FileDown className="h-4 w-4" />
+          <Button className="mt-4" disabled={loading}>
+            <Download className="h-4 w-4 mr-2" />
             {loading ? "Génération..." : "Télécharger le rapport"}
-          </div>
+          </Button>
         )}
       </PDFDownloadLink>
     </div>
