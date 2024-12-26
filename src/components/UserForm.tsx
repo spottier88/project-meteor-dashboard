@@ -164,7 +164,7 @@ export const UserForm = ({ isOpen, onClose, onSubmit, user }: UserFormProps) => 
         <UserFormFields
           firstName={firstName}
           setFirstName={setFirstName}
-          lastName={setLastName}
+          lastName={lastName}
           setLastName={setLastName}
           email={email}
           setEmail={setEmail}
