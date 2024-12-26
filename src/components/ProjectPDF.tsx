@@ -5,34 +5,27 @@ import { PDFProjectInfo } from "./pdf/PDFProjectInfo";
 import { PDFLastReview } from "./pdf/PDFLastReview";
 import { PDFRisks } from "./pdf/PDFRisks";
 import { PDFFooter } from "./pdf/PDFFooter";
-import { Database } from "@/integrations/supabase/types";
-
-type ProjectStatus = Database["public"]["Enums"]["project_status"];
-type ProgressStatus = Database["public"]["Enums"]["progress_status"];
-type RiskProbability = Database["public"]["Enums"]["risk_probability"];
-type RiskSeverity = Database["public"]["Enums"]["risk_severity"];
-type RiskStatus = Database["public"]["Enums"]["risk_status"];
 
 interface ProjectPDFProps {
   project: {
     title: string;
-    status: ProjectStatus;
-    progress: ProgressStatus;
+    status: string;
+    progress: string;
     completion: number;
     project_manager?: string;
     last_review_date: string;
   };
   lastReview?: {
-    weather: ProjectStatus;
-    progress: ProgressStatus;
+    weather: string;
+    progress: string;
     comment?: string;
     created_at: string;
   };
   risks: Array<{
     description: string;
-    probability: RiskProbability;
-    severity: RiskSeverity;
-    status: RiskStatus;
+    probability: string;
+    severity: string;
+    status: string;
     mitigation_plan?: string;
   }>;
 }
