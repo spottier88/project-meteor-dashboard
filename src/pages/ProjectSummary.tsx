@@ -10,6 +10,7 @@ import { KanbanBoard } from "@/components/KanbanBoard";
 import { RiskSummary } from "@/components/RiskSummary";
 import { ProjectPDF } from "@/components/ProjectPDF";
 import { PDFDownloadLink } from "@react-pdf/renderer";
+import { Database } from "@/integrations/supabase/types";
 
 interface Project {
   id: string;
@@ -122,9 +123,22 @@ export const ProjectSummary = () => {
         <PDFDownloadLink
           document={
             <ProjectPDF
-              project={project}
-              lastReview={lastReview || undefined}
-              risks={risks || []}
+              project={{
+                ...project,
+                status: project.status as ProjectStatus,
+                progress: project.progress as ProgressStatus,
+              }}
+              lastReview={lastReview ? {
+                ...lastReview,
+                weather: lastReview.weather as ProjectStatus,
+                progress: lastReview.progress as ProgressStatus,
+              } : undefined}
+              risks={risks?.map(risk => ({
+                ...risk,
+                probability: risk.probability as RiskProbability,
+                severity: risk.severity as RiskSeverity,
+                status: risk.status as RiskStatus,
+              })) || []}
             />
           }
           fileName={`${project.title.toLowerCase().replace(/\s+/g, "-")}-synthese.pdf`}
