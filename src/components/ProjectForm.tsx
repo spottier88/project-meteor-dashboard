@@ -5,6 +5,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { ProjectFormFields } from "./form/ProjectFormFields";
 import { useUser } from "@supabase/auth-helpers-react";
+import { useQuery } from "@tanstack/react-query";
 
 interface ProjectFormProps {
   isOpen: boolean;
@@ -35,17 +36,41 @@ export const ProjectForm = ({ isOpen, onClose, onSubmit, project }: ProjectFormP
   const [suiviDgs, setSuiviDgs] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  const { data: userProfile } = useQuery({
+    queryKey: ["userProfile", user?.id],
+    queryFn: async () => {
+      if (!user?.id) return null;
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("role")
+        .eq("id", user.id)
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!user?.id,
+  });
+
+  const isAdmin = userProfile?.role === 'admin';
+
   useEffect(() => {
     if (isOpen) {
       setTitle(project?.title || "");
       setDescription(project?.description || "");
-      setProjectManager(project?.project_manager || user?.email || "");
+      // Si c'est un nouveau projet et que l'utilisateur n'est pas admin,
+      // on force le chef de projet à être l'utilisateur connecté
+      if (!project && !isAdmin && user?.email) {
+        setProjectManager(user.email);
+      } else {
+        setProjectManager(project?.project_manager || "");
+      }
       setStartDate(project?.start_date ? new Date(project.start_date) : undefined);
       setEndDate(project?.end_date ? new Date(project.end_date) : undefined);
       setPriority(project?.priority || "medium");
       setSuiviDgs(project?.suivi_dgs || false);
     }
-  }, [isOpen, project, user?.email]);
+  }, [isOpen, project, user?.email, isAdmin]);
 
   const handleSubmit = async () => {
     if (!title.trim()) {
@@ -91,13 +116,7 @@ export const ProjectForm = ({ isOpen, onClose, onSubmit, project }: ProjectFormP
 
       if (project?.id) {
         // Check if user has permission to update
-        const { data: userProfile } = await supabase
-          .from('profiles')
-          .select('role')
-          .eq('id', user.id)
-          .single();
-
-        const canUpdate = userProfile?.role === 'admin' || project.owner_id === user.id;
+        const canUpdate = isAdmin || project.owner_id === user.id;
 
         if (!canUpdate) {
           toast({
@@ -180,6 +199,7 @@ export const ProjectForm = ({ isOpen, onClose, onSubmit, project }: ProjectFormP
           setPriority={setPriority}
           suiviDgs={suiviDgs}
           setSuiviDgs={setSuiviDgs}
+          isAdmin={isAdmin}
         />
         <DialogFooter>
           <Button variant="outline" onClick={onClose}>
