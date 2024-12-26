@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { PDFDownloadLink } from "@react-pdf/renderer";
 import { Button } from "@/components/ui/button";
 import { FileDown } from "lucide-react";
-import { ProjectPDF } from "@/components/pdf/ProjectPDF";
+import { ProjectPDF } from "@/components/ProjectPDF";
 import { RiskList } from "@/components/RiskList";
 import { TaskList } from "@/components/TaskList";
 import { ReviewList } from "@/components/ReviewList";
@@ -65,7 +65,7 @@ export const ProjectSummary = () => {
       <div className="flex items-center justify-between">
         <ProjectHeader project={project} />
         <PDFDownloadLink
-          document={<ProjectPDF project={project} risks={risks} tasks={tasks} />}
+          document={<ProjectPDF project={project} risks={risks || []} tasks={tasks || []} />}
           fileName={`${project.title}.pdf`}
         >
           {({ loading }) => (
@@ -79,7 +79,7 @@ export const ProjectSummary = () => {
 
       <div className="grid gap-6 md:grid-cols-2">
         <div className="space-y-6">
-          <RiskList projectId={projectId} />
+          <RiskList projectId={projectId} projectTitle={project.title} />
           <TaskList projectId={projectId} />
         </div>
         <ReviewList projectId={projectId} />
