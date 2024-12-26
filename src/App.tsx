@@ -4,7 +4,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { AuthProvider } from "./contexts/AuthContext";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import { Login } from "./pages/Login";
-import { UserManagement } from "./pages/UserManagement";
+import UserManagement from "./pages/UserManagement";
 import Index from "./pages/Index";
 import { TaskManagement } from "./pages/TaskManagement";
 import { ProjectSummary } from "./pages/ProjectSummary";
