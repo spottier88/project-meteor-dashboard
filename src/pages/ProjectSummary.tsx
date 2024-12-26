@@ -33,6 +33,7 @@ interface Review {
   comment?: string;
   created_at: string;
   completion: number;
+  project_id: string;
 }
 
 const progressLabels = {
@@ -64,14 +65,22 @@ export const ProjectSummary = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("reviews")
-        .select("*")
+        .select(`
+          *,
+          projects!inner(completion)
+        `)
         .eq("project_id", projectId)
         .order("created_at", { ascending: false })
         .limit(1)
         .maybeSingle();
 
       if (error && error.code !== "PGRST116") throw error;
-      return data as Review | null;
+      if (!data) return null;
+      
+      return {
+        ...data,
+        completion: data.projects.completion,
+      } as Review;
     },
   });
 
@@ -80,14 +89,18 @@ export const ProjectSummary = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("reviews")
-        .select("*, projects!inner(completion)")
+        .select(`
+          *,
+          projects!inner(completion)
+        `)
         .eq("project_id", projectId)
         .order("created_at", { ascending: true });
 
       if (error) throw error;
+      
       return data.map(review => ({
         ...review,
-        completion: review.projects.completion
+        completion: review.projects.completion,
       })) as Review[];
     },
   });
@@ -133,11 +146,9 @@ export const ProjectSummary = () => {
           fileName={`${project.title.toLowerCase().replace(/\s+/g, "-")}-synthese.pdf`}
         >
           {({ loading }) => (
-            <Button asChild disabled={loading} type="button">
-              <span>
-                <Download className="h-4 w-4 mr-2" />
-                {loading ? "Génération..." : "Exporter en PDF"}
-              </span>
+            <Button disabled={loading}>
+              <Download className="h-4 w-4 mr-2" />
+              {loading ? "Génération..." : "Exporter en PDF"}
             </Button>
           )}
         </PDFDownloadLink>
