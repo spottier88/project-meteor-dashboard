@@ -42,19 +42,6 @@ export const ProjectSummary = () => {
     },
   });
 
-  const { data: tasks, isLoading: isTasksLoading } = useQuery({
-    queryKey: ["tasks", projectId],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("tasks")
-        .select("*")
-        .eq("project_id", projectId);
-
-      if (error) throw error;
-      return data;
-    },
-  });
-
   const { data: reviews, isLoading: isReviewsLoading } = useQuery({
     queryKey: ["reviews", projectId],
     queryFn: async () => {
@@ -69,8 +56,7 @@ export const ProjectSummary = () => {
     },
   });
 
-  const isLoading =
-    isProjectLoading || isRisksLoading || isTasksLoading || isReviewsLoading;
+  const isLoading = isProjectLoading || isRisksLoading || isReviewsLoading;
 
   if (isLoading) {
     return <div>Chargement...</div>;
