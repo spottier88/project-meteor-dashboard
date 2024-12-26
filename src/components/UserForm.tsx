@@ -80,17 +80,17 @@ export const UserForm = ({ isOpen, onClose, onSubmit, user }: UserFormProps) => 
 
         if (deleteRolesError) throw deleteRolesError;
 
-        // Insert new roles
-        const { error: insertRolesError } = await supabase
-          .from("user_roles")
-          .insert(
-            roles.map(role => ({
+        // Insert new roles one by one to avoid RLS issues
+        for (const role of roles) {
+          const { error: insertRoleError } = await supabase
+            .from("user_roles")
+            .insert({
               user_id: user.id,
               role: role,
-            }))
-          );
+            });
 
-        if (insertRolesError) throw insertRolesError;
+          if (insertRoleError) throw insertRoleError;
+        }
 
         toast({
           title: "Succès",
