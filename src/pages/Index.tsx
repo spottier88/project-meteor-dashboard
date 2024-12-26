@@ -10,6 +10,7 @@ import { ProjectSelectionSheet } from "@/components/ProjectSelectionSheet";
 import { ProjectStatus, ProgressStatus } from "@/components/ProjectCard";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
+import { FilterToggle } from "@/components/FilterToggle";
 
 type Project = {
   id: string;
@@ -72,6 +73,7 @@ const Index = () => {
     return (savedView as ViewMode) || "grid";
   });
   const [isProjectSelectionOpen, setIsProjectSelectionOpen] = useState(false);
+  const [showDgsOnly, setShowDgsOnly] = useState(false);
 
   const { data: projects, isLoading, error, refetch } = useQuery({
     queryKey: ["projects"],
@@ -117,6 +119,10 @@ const Index = () => {
     refetch();
   };
 
+  const filteredProjects = projects?.filter(project => 
+    !showDgsOnly || project.suivi_dgs
+  );
+
   if (isLoading) {
     return (
       <div className="container mx-auto py-8 px-4 min-h-screen flex items-center justify-center">
@@ -153,17 +159,20 @@ const Index = () => {
         onNewProject={handleNewProject}
         onNewReview={handleNewReview}
       />
-      <ViewToggle currentView={currentView} onViewChange={setCurrentView} />
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+        <ViewToggle currentView={currentView} onViewChange={setCurrentView} />
+        <FilterToggle showDgsOnly={showDgsOnly} onToggle={setShowDgsOnly} />
+      </div>
       {currentView === "grid" ? (
         <ProjectGrid
-          projects={projects || []}
+          projects={filteredProjects || []}
           onProjectReview={handleProjectReview}
           onProjectEdit={handleEditProject}
           onViewHistory={handleViewHistory}
         />
       ) : (
         <ProjectTable
-          projects={projects || []}
+          projects={filteredProjects || []}
           onProjectReview={handleProjectReview}
           onProjectEdit={handleEditProject}
           onViewHistory={handleViewHistory}
@@ -185,7 +194,7 @@ const Index = () => {
         project={projectToEdit || undefined}
       />
       <ProjectSelectionSheet
-        projects={projects || []}
+        projects={filteredProjects || []}
         isOpen={isProjectSelectionOpen}
         onClose={() => setIsProjectSelectionOpen(false)}
         onProjectSelect={handleProjectSelect}
