@@ -24,28 +24,28 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { UserProfile, UserRoleData } from "@/types/user";
+import { Badge } from "@/components/ui/badge";
+import { UserProfile, UserRole, UserRoleData } from "@/types/user";
 
-interface UserWithRole extends UserProfile {
-  userRole?: UserRoleData;
+interface UserWithRoles extends UserProfile {
+  roles: UserRole[];
 }
 
 export const UserManagement = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [selectedUser, setSelectedUser] = useState<UserWithRole | null>(null);
+  const [selectedUser, setSelectedUser] = useState<UserWithRoles | null>(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
-  const [userToDelete, setUserToDelete] = useState<UserWithRole | null>(null);
+  const [userToDelete, setUserToDelete] = useState<UserWithRoles | null>(null);
 
-  const { data: profiles, isLoading } = useQuery({
-    queryKey: ["profiles"],
+  const { data: users, isLoading } = useQuery({
+    queryKey: ["users"],
     queryFn: async () => {
       // Fetch profiles
       const { data: profilesData, error: profilesError } = await supabase
         .from("profiles")
-        .select("*")
-        .order("created_at", { ascending: false });
+        .select("*");
 
       if (profilesError) throw profilesError;
 
@@ -59,12 +59,14 @@ export const UserManagement = () => {
       // Combine profiles with their roles
       return (profilesData as UserProfile[]).map(profile => ({
         ...profile,
-        userRole: rolesData.find(role => role.user_id === profile.id)
+        roles: rolesData
+          .filter((role: UserRoleData) => role.user_id === profile.id)
+          .map((role: UserRoleData) => role.role),
       }));
     },
   });
 
-  const handleEdit = (user: UserWithRole) => {
+  const handleEdit = (user: UserWithRoles) => {
     setSelectedUser(user);
     setIsFormOpen(true);
   };
@@ -85,7 +87,7 @@ export const UserManagement = () => {
         description: "L'utilisateur a été supprimé",
       });
 
-      queryClient.invalidateQueries({ queryKey: ["profiles"] });
+      queryClient.invalidateQueries({ queryKey: ["users"] });
     } catch (error) {
       console.error("Error:", error);
       toast({
@@ -99,7 +101,7 @@ export const UserManagement = () => {
   };
 
   const handleFormSubmit = () => {
-    queryClient.invalidateQueries({ queryKey: ["profiles"] });
+    queryClient.invalidateQueries({ queryKey: ["users"] });
   };
 
   if (isLoading) {
@@ -138,31 +140,37 @@ export const UserManagement = () => {
             <TableHead>Email</TableHead>
             <TableHead>Prénom</TableHead>
             <TableHead>Nom</TableHead>
-            <TableHead>Rôle</TableHead>
+            <TableHead>Rôles</TableHead>
             <TableHead className="text-right">Actions</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
-          {profiles?.map((profile) => (
-            <TableRow key={profile.id}>
-              <TableCell>{profile.email}</TableCell>
-              <TableCell>{profile.first_name || "-"}</TableCell>
-              <TableCell>{profile.last_name || "-"}</TableCell>
+          {users?.map((user) => (
+            <TableRow key={user.id}>
+              <TableCell>{user.email}</TableCell>
+              <TableCell>{user.first_name || "-"}</TableCell>
+              <TableCell>{user.last_name || "-"}</TableCell>
               <TableCell>
-                {profile.userRole?.role === "admin" ? "Administrateur" : "Chef de projet"}
+                <div className="flex gap-2">
+                  {user.roles.map((role) => (
+                    <Badge key={role} variant="secondary">
+                      {role === "admin" ? "Administrateur" : "Chef de projet"}
+                    </Badge>
+                  ))}
+                </div>
               </TableCell>
               <TableCell className="text-right space-x-2">
                 <Button
                   variant="ghost"
                   size="icon"
-                  onClick={() => handleEdit(profile)}
+                  onClick={() => handleEdit(user)}
                 >
                   <Edit className="h-4 w-4" />
                 </Button>
                 <Button
                   variant="ghost"
                   size="icon"
-                  onClick={() => setUserToDelete(profile)}
+                  onClick={() => setUserToDelete(user)}
                 >
                   <Trash2 className="h-4 w-4" />
                 </Button>
@@ -179,10 +187,7 @@ export const UserManagement = () => {
           setSelectedUser(null);
         }}
         onSubmit={handleFormSubmit}
-        user={selectedUser ? {
-          ...selectedUser,
-          role: selectedUser.userRole?.role || "chef_projet"
-        } : undefined}
+        user={selectedUser}
       />
 
       <AlertDialog open={!!userToDelete} onOpenChange={() => setUserToDelete(null)}>

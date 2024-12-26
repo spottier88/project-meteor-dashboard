@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { UserFormFields } from "./form/UserFormFields";
+import { UserRole } from "@/types/user";
 
 interface UserFormProps {
   isOpen: boolean;
@@ -20,7 +21,7 @@ interface UserFormProps {
     email: string | null;
     first_name: string | null;
     last_name: string | null;
-    role: "admin" | "chef_projet";
+    roles: UserRole[];
   };
 }
 
@@ -29,21 +30,20 @@ export const UserForm = ({ isOpen, onClose, onSubmit, user }: UserFormProps) => 
   const [firstName, setFirstName] = useState(user?.first_name || "");
   const [lastName, setLastName] = useState(user?.last_name || "");
   const [email, setEmail] = useState(user?.email || "");
-  const [role, setRole] = useState<"admin" | "chef_projet">(user?.role || "chef_projet");
+  const [roles, setRoles] = useState<UserRole[]>(user?.roles || ["chef_projet"]);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Update form fields when user prop changes
   useEffect(() => {
     if (user) {
       setFirstName(user.first_name || "");
       setLastName(user.last_name || "");
       setEmail(user.email || "");
-      setRole(user.role);
+      setRoles(user.roles);
     } else {
       setFirstName("");
       setLastName("");
       setEmail("");
-      setRole("chef_projet");
+      setRoles(["chef_projet"]);
     }
   }, [user]);
 
@@ -62,16 +62,35 @@ export const UserForm = ({ isOpen, onClose, onSubmit, user }: UserFormProps) => 
     try {
       if (user) {
         // Update existing user
-        const { error } = await supabase
+        const { error: profileError } = await supabase
           .from("profiles")
           .update({
             first_name: firstName,
             last_name: lastName,
-            role,
           })
           .eq("id", user.id);
 
-        if (error) throw error;
+        if (profileError) throw profileError;
+
+        // Delete existing roles
+        const { error: deleteRolesError } = await supabase
+          .from("user_roles")
+          .delete()
+          .eq("user_id", user.id);
+
+        if (deleteRolesError) throw deleteRolesError;
+
+        // Insert new roles
+        const { error: insertRolesError } = await supabase
+          .from("user_roles")
+          .insert(
+            roles.map(role => ({
+              user_id: user.id,
+              role: role,
+            }))
+          );
+
+        if (insertRolesError) throw insertRolesError;
 
         toast({
           title: "Succès",
@@ -79,17 +98,16 @@ export const UserForm = ({ isOpen, onClose, onSubmit, user }: UserFormProps) => 
         });
       } else {
         // Create new user
-        const { error } = await supabase
+        const { error: profileError } = await supabase
           .from("profiles")
           .insert({
             id: crypto.randomUUID(),
             email,
             first_name: firstName,
             last_name: lastName,
-            role,
           });
 
-        if (error) throw error;
+        if (profileError) throw profileError;
 
         toast({
           title: "Succès",
@@ -126,8 +144,8 @@ export const UserForm = ({ isOpen, onClose, onSubmit, user }: UserFormProps) => 
           setLastName={setLastName}
           email={email}
           setEmail={setEmail}
-          role={role}
-          setRole={setRole}
+          roles={roles}
+          setRoles={setRoles}
           isEditMode={!!user}
         />
         <DialogFooter>

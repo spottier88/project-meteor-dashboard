@@ -1,12 +1,7 @@
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
+import { UserRole } from "@/types/user";
 
 interface UserFormFieldsProps {
   firstName: string;
@@ -15,8 +10,8 @@ interface UserFormFieldsProps {
   setLastName: (value: string) => void;
   email: string;
   setEmail: (value: string) => void;
-  role: "admin" | "chef_projet";
-  setRole: (value: "admin" | "chef_projet") => void;
+  roles: UserRole[];
+  setRoles: (value: UserRole[]) => void;
   isEditMode: boolean;
 }
 
@@ -27,10 +22,18 @@ export const UserFormFields = ({
   setLastName,
   email,
   setEmail,
-  role,
-  setRole,
+  roles,
+  setRoles,
   isEditMode,
 }: UserFormFieldsProps) => {
+  const handleRoleToggle = (role: UserRole) => {
+    if (roles.includes(role)) {
+      setRoles(roles.filter(r => r !== role));
+    } else {
+      setRoles([...roles, role]);
+    }
+  };
+
   return (
     <div className="grid gap-4 py-4">
       <div className="grid gap-2">
@@ -61,16 +64,29 @@ export const UserFormFields = ({
         />
       </div>
       <div className="grid gap-2">
-        <Label htmlFor="role">Rôle</Label>
-        <Select value={role} onValueChange={setRole}>
-          <SelectTrigger>
-            <SelectValue placeholder="Sélectionnez un rôle" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="admin">Administrateur</SelectItem>
-            <SelectItem value="chef_projet">Chef de projet</SelectItem>
-          </SelectContent>
-        </Select>
+        <Label>Rôles</Label>
+        <div className="flex flex-col gap-2">
+          <div className="flex items-center space-x-2">
+            <Checkbox
+              id="admin"
+              checked={roles.includes("admin")}
+              onCheckedChange={() => handleRoleToggle("admin")}
+            />
+            <Label htmlFor="admin" className="font-normal">
+              Administrateur
+            </Label>
+          </div>
+          <div className="flex items-center space-x-2">
+            <Checkbox
+              id="chef_projet"
+              checked={roles.includes("chef_projet")}
+              onCheckedChange={() => handleRoleToggle("chef_projet")}
+            />
+            <Label htmlFor="chef_projet" className="font-normal">
+              Chef de projet
+            </Label>
+          </div>
+        </div>
       </div>
     </div>
   );
