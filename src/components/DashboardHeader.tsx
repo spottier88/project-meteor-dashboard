@@ -40,12 +40,17 @@ export function DashboardHeader({ onNewProject, onNewReview }: DashboardHeaderPr
       return data;
     },
     retry: false,
-    onError: () => {
-      toast({
-        variant: "destructive",
-        title: "Erreur",
-        description: "Impossible de récupérer votre profil",
-      });
+    meta: {
+      errorMessage: "Impossible de récupérer votre profil"
+    },
+    onSettled: (data, error) => {
+      if (error) {
+        toast({
+          variant: "destructive",
+          title: "Erreur",
+          description: "Impossible de récupérer votre profil",
+        });
+      }
     }
   });
 
