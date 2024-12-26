@@ -122,16 +122,16 @@ export const UserForm = ({ isOpen, onClose, onSubmit, user }: UserFormProps) => 
           description: "L'utilisateur a été mis à jour",
         });
       } else {
-        // Create new user with profile
-        const { data: profileData, error: profileError } = await supabase
+        // Create new user with profile and generate UUID
+        const newUserId = crypto.randomUUID();
+        const { error: profileError } = await supabase
           .from("profiles")
           .insert({
+            id: newUserId,
             email,
             first_name: firstName,
             last_name: lastName,
-          })
-          .select()
-          .single();
+          });
 
         if (profileError) throw profileError;
 
@@ -140,7 +140,7 @@ export const UserForm = ({ isOpen, onClose, onSubmit, user }: UserFormProps) => 
           const { error: roleError } = await supabase
             .from("user_roles")
             .insert({
-              user_id: profileData.id,
+              user_id: newUserId,
               role: role,
             });
 
