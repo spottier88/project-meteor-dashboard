@@ -34,6 +34,7 @@ export const ProjectForm = ({ isOpen, onClose, onSubmit, project }: ProjectFormP
   const [endDate, setEndDate] = useState<Date | undefined>(undefined);
   const [priority, setPriority] = useState("medium");
   const [suiviDgs, setSuiviDgs] = useState(false);
+  const [ownerId, setOwnerId] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const { data: userProfile } = useQuery({
@@ -58,10 +59,12 @@ export const ProjectForm = ({ isOpen, onClose, onSubmit, project }: ProjectFormP
     if (isOpen) {
       setTitle(project?.title || "");
       setDescription(project?.description || "");
+      setOwnerId(project?.owner_id || "");
       // Si c'est un nouveau projet et que l'utilisateur n'est pas admin,
       // on force le chef de projet à être l'utilisateur connecté
       if (!project && !isAdmin && user?.email) {
         setProjectManager(user.email);
+        setOwnerId(user.id);
       } else {
         setProjectManager(project?.project_manager || "");
       }
@@ -70,13 +73,22 @@ export const ProjectForm = ({ isOpen, onClose, onSubmit, project }: ProjectFormP
       setPriority(project?.priority || "medium");
       setSuiviDgs(project?.suivi_dgs || false);
     }
-  }, [isOpen, project, user?.email, isAdmin]);
+  }, [isOpen, project, user?.email, user?.id, isAdmin]);
 
   const handleSubmit = async () => {
     if (!title.trim()) {
       toast({
         title: "Erreur",
         description: "Le titre du projet est requis",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!ownerId.trim()) {
+      toast({
+        title: "Erreur",
+        description: "Le chef de projet (propriétaire) est requis",
         variant: "destructive",
       });
       return;
@@ -111,7 +123,7 @@ export const ProjectForm = ({ isOpen, onClose, onSubmit, project }: ProjectFormP
         end_date: endDate?.toISOString().split('T')[0],
         priority,
         suivi_dgs: suiviDgs,
-        owner_id: user.id,
+        owner_id: ownerId,
       };
 
       if (project?.id) {
@@ -200,6 +212,8 @@ export const ProjectForm = ({ isOpen, onClose, onSubmit, project }: ProjectFormP
           suiviDgs={suiviDgs}
           setSuiviDgs={setSuiviDgs}
           isAdmin={isAdmin}
+          ownerId={ownerId}
+          setOwnerId={setOwnerId}
         />
         <DialogFooter>
           <Button variant="outline" onClick={onClose}>

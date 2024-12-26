@@ -23,9 +23,12 @@ interface ProjectFormFieldsProps {
   suiviDgs: boolean;
   setSuiviDgs: (value: boolean) => void;
   isAdmin: boolean;
+  ownerId: string;
+  setOwnerId: (value: string) => void;
 }
 
 interface Profile {
+  id: string;
   email: string | null;
   role: 'admin' | 'chef_projet';
 }
@@ -46,6 +49,8 @@ export const ProjectFormFields = ({
   suiviDgs,
   setSuiviDgs,
   isAdmin,
+  ownerId,
+  setOwnerId,
 }: ProjectFormFieldsProps) => {
   // Fetch all users who are either admin or chef_projet
   const { data: profiles } = useQuery({
@@ -53,13 +58,16 @@ export const ProjectFormFields = ({
     queryFn: async () => {
       const { data, error } = await supabase
         .from("profiles")
-        .select("email, role")
+        .select("id, email, role")
         .not("email", "is", null);
 
       if (error) throw error;
       return data as Profile[];
     },
   });
+
+  // Filtrer pour n'avoir que les chefs de projet pour la sélection du owner
+  const projectManagers = profiles?.filter(profile => profile.role === 'chef_projet') || [];
 
   return (
     <div className="grid gap-4 py-4">
@@ -85,9 +93,30 @@ export const ProjectFormFields = ({
           placeholder="Description du projet"
         />
       </div>
+      {isAdmin && (
+        <div className="grid gap-2">
+          <label htmlFor="owner" className="text-sm font-medium">
+            Chef de projet (propriétaire) *
+          </label>
+          <Select value={ownerId} onValueChange={setOwnerId}>
+            <SelectTrigger>
+              <SelectValue placeholder="Sélectionner un chef de projet" />
+            </SelectTrigger>
+            <SelectContent>
+              {projectManagers.map((profile) => (
+                profile.email && (
+                  <SelectItem key={profile.id} value={profile.id}>
+                    {profile.email}
+                  </SelectItem>
+                )
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      )}
       <div className="grid gap-2">
         <label htmlFor="project-manager" className="text-sm font-medium">
-          Chef de projet
+          Email du chef de projet
         </label>
         {isAdmin ? (
           <Select value={projectManager} onValueChange={setProjectManager}>
