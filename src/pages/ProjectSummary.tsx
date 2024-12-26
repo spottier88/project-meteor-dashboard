@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, FileDown } from "lucide-react";
 import { ProjectSummaryHeader } from "@/components/project/ProjectSummaryHeader";
-import { ProjectPDF } from "@/components/project/ProjectPDF";
+import { ProjectPDF } from "@/components/ProjectPDF";
 import { PDFDownloadLink } from "@react-pdf/renderer";
 import { RiskTable } from "@/components/risk/RiskTable";
 import { TaskTable } from "@/components/task/TaskTable";
@@ -101,7 +101,7 @@ export const ProjectSummary = () => {
             Résumé du Projet
           </h1>
           <PDFDownloadLink
-            document={<ProjectPDF project={project} risks={risks} tasks={tasks} />}
+            document={<ProjectPDF project={project} risks={risks} />}
             fileName={`${project.title}-summary.pdf`}
           >
             {({ loading }) => (
