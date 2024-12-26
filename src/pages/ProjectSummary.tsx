@@ -1,20 +1,22 @@
-import React, { useMemo } from "react";
+import React from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowLeft, Sun, Cloud, CloudLightning, Download } from "lucide-react";
+import { ArrowLeft, Download } from "lucide-react";
 import { ProjectStatus, ProgressStatus } from "@/components/ProjectCard";
 import { KanbanBoard } from "@/components/KanbanBoard";
 import { RiskSummary } from "@/components/RiskSummary";
 import { ProjectPDF } from "@/components/ProjectPDF";
 import { PDFDownloadLink } from "@react-pdf/renderer";
-import { Database } from "@/integrations/supabase/types";
+import { Risk } from "@/types/risk";
+import { ProjectSummaryHeader } from "@/components/project/ProjectSummaryHeader";
 
 interface Project {
   id: string;
   title: string;
+  description?: string;
   status: ProjectStatus;
   progress: ProgressStatus;
   completion: number;
@@ -29,21 +31,6 @@ interface Review {
   comment?: string;
   created_at: string;
 }
-
-interface Risk {
-  id: string;
-  description: string;
-  probability: "low" | "medium" | "high";
-  severity: "low" | "medium" | "high";
-  status: "open" | "in_progress" | "resolved";
-  mitigation_plan?: string;
-}
-
-const statusIcons = {
-  sunny: { icon: Sun, color: "text-warning", label: "Ensoleillé" },
-  cloudy: { icon: Cloud, color: "text-neutral", label: "Nuageux" },
-  stormy: { icon: CloudLightning, color: "text-danger", label: "Orageux" },
-} as const;
 
 const progressLabels = {
   better: "En amélioration",
@@ -99,11 +86,6 @@ export const ProjectSummary = () => {
     },
   });
 
-  const StatusIcon = useMemo(() => {
-    if (!project) return null;
-    return statusIcons[project.status].icon;
-  }, [project?.status]);
-
   if (!project) {
     return (
       <div className="container mx-auto py-8 px-4 flex items-center justify-center">
@@ -123,28 +105,15 @@ export const ProjectSummary = () => {
         <PDFDownloadLink
           document={
             <ProjectPDF
-              project={{
-                ...project,
-                status: project.status as ProjectStatus,
-                progress: project.progress as ProgressStatus,
-              }}
-              lastReview={lastReview ? {
-                ...lastReview,
-                weather: lastReview.weather as ProjectStatus,
-                progress: lastReview.progress as ProgressStatus,
-              } : undefined}
-              risks={risks?.map(risk => ({
-                ...risk,
-                probability: risk.probability as RiskProbability,
-                severity: risk.severity as RiskSeverity,
-                status: risk.status as RiskStatus,
-              })) || []}
+              project={project}
+              lastReview={lastReview}
+              risks={risks || []}
             />
           }
           fileName={`${project.title.toLowerCase().replace(/\s+/g, "-")}-synthese.pdf`}
         >
           {({ loading }) => (
-            <Button disabled={loading} type="button">
+            <Button disabled={loading}>
               <Download className="h-4 w-4 mr-2" />
               {loading ? "Génération..." : "Exporter en PDF"}
             </Button>
@@ -153,39 +122,7 @@ export const ProjectSummary = () => {
       </div>
 
       <div className="grid gap-6">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-2xl font-bold">{project.title}</CardTitle>
-            {StatusIcon && (
-              <StatusIcon
-                className={statusIcons[project.status].color}
-                aria-label={statusIcons[project.status].label}
-              />
-            )}
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              <div>
-                <span className="text-sm text-muted-foreground">Chef de projet</span>
-                <p className="font-medium">{project.project_manager || "-"}</p>
-              </div>
-              <div>
-                <span className="text-sm text-muted-foreground">Avancement</span>
-                <p className="font-medium">{project.completion}%</p>
-              </div>
-              <div>
-                <span className="text-sm text-muted-foreground">Progression</span>
-                <p className="font-medium">{progressLabels[project.progress]}</p>
-              </div>
-              <div>
-                <span className="text-sm text-muted-foreground">Dernière revue</span>
-                <p className="font-medium">
-                  {new Date(project.last_review_date).toLocaleDateString("fr-FR")}
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        <ProjectSummaryHeader {...project} />
 
         {lastReview && (
           <Card>
