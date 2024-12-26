@@ -1,0 +1,93 @@
+import { useState } from "react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { useToast } from "@/components/ui/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import { UserFormFields } from "./form/UserFormFields";
+
+interface UserFormProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onSubmit: () => void;
+  user?: {
+    id: string;
+    email: string | null;
+    first_name: string | null;
+    last_name: string | null;
+    role: "admin" | "chef_projet";
+  };
+}
+
+export const UserForm = ({ isOpen, onClose, onSubmit, user }: UserFormProps) => {
+  const { toast } = useToast();
+  const [firstName, setFirstName] = useState(user?.first_name || "");
+  const [lastName, setLastName] = useState(user?.last_name || "");
+  const [role, setRole] = useState(user?.role || "chef_projet");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleSubmit = async () => {
+    setIsSubmitting(true);
+
+    try {
+      const { error } = await supabase
+        .from("profiles")
+        .update({
+          first_name: firstName,
+          last_name: lastName,
+          role,
+        })
+        .eq("id", user?.id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Succès",
+        description: "L'utilisateur a été mis à jour",
+      });
+
+      onSubmit();
+      onClose();
+    } catch (error) {
+      console.error("Error:", error);
+      toast({
+        title: "Erreur",
+        description: "Une erreur est survenue",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  return (
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="sm:max-w-[425px]">
+        <DialogHeader>
+          <DialogTitle>Modifier l'utilisateur</DialogTitle>
+        </DialogHeader>
+        <UserFormFields
+          firstName={firstName}
+          setFirstName={setFirstName}
+          lastName={lastName}
+          setLastName={setLastName}
+          role={role}
+          setRole={setRole}
+        />
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose}>
+            Annuler
+          </Button>
+          <Button onClick={handleSubmit} disabled={isSubmitting}>
+            {isSubmitting ? "Enregistrement..." : "Mettre à jour"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+};
