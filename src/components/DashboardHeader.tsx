@@ -18,7 +18,7 @@ export function DashboardHeader({ onNewProject, onNewReview }: DashboardHeaderPr
   const [isProfileFormOpen, setIsProfileFormOpen] = useState(false);
   const { toast } = useToast();
   
-  const { data: profile, refetch: refetchProfile, error: profileError } = useQuery({
+  const { data: profile, refetch: refetchProfile } = useQuery({
     queryKey: ["currentUserProfile"],
     queryFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
@@ -39,16 +39,15 @@ export function DashboardHeader({ onNewProject, onNewReview }: DashboardHeaderPr
       
       return data;
     },
+    retry: false,
+    onError: () => {
+      toast({
+        variant: "destructive",
+        title: "Erreur",
+        description: "Impossible de récupérer votre profil",
+      });
+    }
   });
-
-  // Handle profile error
-  if (profileError) {
-    toast({
-      variant: "destructive",
-      title: "Erreur",
-      description: "Impossible de récupérer votre profil",
-    });
-  }
 
   const handleLogout = async () => {
     const { error } = await supabase.auth.signOut();
