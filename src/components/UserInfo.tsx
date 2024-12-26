@@ -29,16 +29,25 @@ export const UserInfo = () => {
 
   const handleLogout = async () => {
     try {
+      // Effectuer la déconnexion
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
-      
-      // Only navigate after successful logout
-      navigate("/login");
-      
-      toast({
-        title: "Déconnexion réussie",
-        description: "Vous avez été déconnecté avec succès",
-      });
+
+      // Attendre un court instant pour s'assurer que la session est bien terminée
+      await new Promise(resolve => setTimeout(resolve, 100));
+
+      // Vérifier que la session est bien terminée
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        // Session terminée avec succès, rediriger vers la page de connexion
+        navigate("/login");
+        toast({
+          title: "Déconnexion réussie",
+          description: "Vous avez été déconnecté avec succès",
+        });
+      } else {
+        throw new Error("La session n'a pas été correctement terminée");
+      }
     } catch (error) {
       console.error("Erreur lors de la déconnexion:", error);
       toast({
