@@ -29,6 +29,7 @@ const Login = () => {
           supabaseClient={supabase}
           appearance={{ theme: ThemeSupa }}
           providers={[]}
+          redirectTo={window.location.origin}
           localization={{
             variables: {
               sign_in: {
