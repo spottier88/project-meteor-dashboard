@@ -5,6 +5,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogFooter,
+  DialogDescription,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
@@ -121,17 +122,30 @@ export const UserForm = ({ isOpen, onClose, onSubmit, user }: UserFormProps) => 
           description: "L'utilisateur a été mis à jour",
         });
       } else {
-        // Create new user
-        const { error: profileError } = await supabase
+        // Create new user with profile
+        const { data: profileData, error: profileError } = await supabase
           .from("profiles")
           .insert({
-            id: crypto.randomUUID(),
             email,
             first_name: firstName,
             last_name: lastName,
-          });
+          })
+          .select()
+          .single();
 
         if (profileError) throw profileError;
+
+        // Add roles for the new user
+        for (const role of roles) {
+          const { error: roleError } = await supabase
+            .from("user_roles")
+            .insert({
+              user_id: profileData.id,
+              role: role,
+            });
+
+          if (roleError) throw roleError;
+        }
 
         toast({
           title: "Succès",
@@ -145,7 +159,7 @@ export const UserForm = ({ isOpen, onClose, onSubmit, user }: UserFormProps) => 
       console.error("Error:", error);
       toast({
         title: "Erreur",
-        description: "Une erreur est survenue",
+        description: "Une erreur est survenue lors de la création/modification de l'utilisateur",
         variant: "destructive",
       });
     } finally {
@@ -160,6 +174,11 @@ export const UserForm = ({ isOpen, onClose, onSubmit, user }: UserFormProps) => 
           <DialogTitle>
             {user ? "Modifier l'utilisateur" : "Nouvel utilisateur"}
           </DialogTitle>
+          <DialogDescription>
+            {user 
+              ? "Modifiez les informations de l'utilisateur ci-dessous."
+              : "Remplissez les informations pour créer un nouvel utilisateur."}
+          </DialogDescription>
         </DialogHeader>
         <UserFormFields
           firstName={firstName}
