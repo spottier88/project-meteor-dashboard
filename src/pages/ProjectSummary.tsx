@@ -65,10 +65,7 @@ export const ProjectSummary = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("reviews")
-        .select(`
-          *,
-          projects!inner(completion)
-        `)
+        .select("*, projects!inner(id, completion)")
         .eq("project_id", projectId)
         .order("created_at", { ascending: false })
         .limit(1)
@@ -89,10 +86,7 @@ export const ProjectSummary = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("reviews")
-        .select(`
-          *,
-          projects!inner(completion)
-        `)
+        .select("*, projects!inner(id, completion)")
         .eq("project_id", projectId)
         .order("created_at", { ascending: true });
 
@@ -145,12 +139,10 @@ export const ProjectSummary = () => {
           }
           fileName={`${project.title.toLowerCase().replace(/\s+/g, "-")}-synthese.pdf`}
         >
-          {({ loading }) => (
-            <Button disabled={loading}>
-              <Download className="h-4 w-4 mr-2" />
-              {loading ? "Génération..." : "Exporter en PDF"}
-            </Button>
-          )}
+          <Button disabled={loading}>
+            <Download className="h-4 w-4 mr-2" />
+            {loading ? "Génération..." : "Exporter en PDF"}
+          </Button>
         </PDFDownloadLink>
       </div>
 
