@@ -3,11 +3,13 @@ import { Button } from "./ui/button";
 import { useNavigate } from "react-router-dom";
 import { LogOut, Users } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
+import { useToast } from "./ui/use-toast";
 
 export const UserInfo = () => {
   const user = useUser();
   const supabase = useSupabaseClient();
   const navigate = useNavigate();
+  const { toast } = useToast();
 
   const { data: profile } = useQuery({
     queryKey: ["profile", user?.id],
@@ -26,8 +28,25 @@ export const UserInfo = () => {
   });
 
   const handleLogout = async () => {
-    await supabase.auth.signOut();
-    navigate("/login");
+    try {
+      const { error } = await supabase.auth.signOut();
+      if (error) throw error;
+      
+      // Only navigate after successful logout
+      navigate("/login");
+      
+      toast({
+        title: "Déconnexion réussie",
+        description: "Vous avez été déconnecté avec succès",
+      });
+    } catch (error) {
+      console.error("Erreur lors de la déconnexion:", error);
+      toast({
+        title: "Erreur",
+        description: "Une erreur est survenue lors de la déconnexion",
+        variant: "destructive",
+      });
+    }
   };
 
   if (!user) return null;
