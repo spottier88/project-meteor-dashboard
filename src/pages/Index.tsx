@@ -23,6 +23,7 @@ type Project = {
   start_date?: string;
   end_date?: string;
   priority?: string;
+  suivi_dgs?: boolean;
 };
 
 type ViewMode = "grid" | "table";
@@ -51,6 +52,7 @@ const fetchProjects = async (): Promise<Project[]> => {
     start_date: project.start_date,
     end_date: project.end_date,
     priority: project.priority,
+    suivi_dgs: project.suivi_dgs,
   }));
 };
 
