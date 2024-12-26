@@ -2,9 +2,9 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { RiskForm } from "./RiskForm";
-import { ShieldAlert, Plus, Edit, Trash2 } from "lucide-react";
+import { Plus } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import {
   AlertDialog,
@@ -16,56 +16,51 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-
-type RiskProbability = "low" | "medium" | "high";
-type RiskSeverity = "low" | "medium" | "high";
-type RiskStatus = "open" | "in_progress" | "resolved";
-
-interface Risk {
-  id: string;
-  description: string;
-  probability: RiskProbability;
-  severity: RiskSeverity;
-  status: RiskStatus;
-  mitigation_plan?: string;
-  created_at: string;
-  updated_at: string;
-}
+import { RiskCard } from "./risk/RiskCard";
+import { useUser } from "@supabase/auth-helpers-react";
+import { canManageProjectItems } from "@/utils/permissions";
+import { UserRoleData } from "@/types/user";
 
 interface RiskListProps {
   projectId: string;
   projectTitle: string;
 }
 
-const probabilityLabels = {
-  low: "Faible",
-  medium: "Moyenne",
-  high: "Élevée",
-};
-
-const severityLabels = {
-  low: "Faible",
-  medium: "Moyenne",
-  high: "Élevée",
-};
-
-const statusLabels = {
-  open: "Ouvert",
-  in_progress: "En cours",
-  resolved: "Résolu",
-};
-
-const statusColors = {
-  open: "text-red-500",
-  in_progress: "text-yellow-500",
-  resolved: "text-green-500",
-};
-
 export const RiskList = ({ projectId, projectTitle }: RiskListProps) => {
   const { toast } = useToast();
+  const user = useUser();
   const [isFormOpen, setIsFormOpen] = useState(false);
-  const [selectedRisk, setSelectedRisk] = useState<Risk | null>(null);
-  const [riskToDelete, setRiskToDelete] = useState<Risk | null>(null);
+  const [selectedRisk, setSelectedRisk] = useState<any>(null);
+  const [riskToDelete, setRiskToDelete] = useState<any>(null);
+
+  const { data: project } = useQuery({
+    queryKey: ["project", projectId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("projects")
+        .select("*")
+        .eq("id", projectId)
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const { data: userRoles } = useQuery({
+    queryKey: ["userRoles", user?.id],
+    queryFn: async () => {
+      if (!user?.id) return null;
+      const { data, error } = await supabase
+        .from("user_roles")
+        .select("*")
+        .eq("user_id", user.id);
+
+      if (error) throw error;
+      return data as UserRoleData[];
+    },
+    enabled: !!user?.id,
+  });
 
   const { data: risks, refetch } = useQuery({
     queryKey: ["risks", projectId],
@@ -77,14 +72,12 @@ export const RiskList = ({ projectId, projectTitle }: RiskListProps) => {
         .order("created_at", { ascending: false });
 
       if (error) throw error;
-      return data as Risk[];
+      return data;
     },
   });
 
-  const handleEdit = (risk: Risk) => {
-    setSelectedRisk(risk);
-    setIsFormOpen(true);
-  };
+  const roles = userRoles?.map(ur => ur.role);
+  const canManage = canManageProjectItems(roles, user?.id, project?.owner_id);
 
   const handleDelete = async () => {
     if (!riskToDelete) return;
@@ -115,98 +108,30 @@ export const RiskList = ({ projectId, projectTitle }: RiskListProps) => {
     }
   };
 
-  const getImpactLevel = (probability: RiskProbability, severity: RiskSeverity) => {
-    const levels = { low: 1, medium: 2, high: 3 };
-    const impact = levels[probability] * levels[severity];
-    if (impact >= 6) return "Critique";
-    if (impact >= 3) return "Important";
-    return "Modéré";
-  };
-
-  const getImpactColor = (probability: RiskProbability, severity: RiskSeverity) => {
-    const impact = getImpactLevel(probability, severity);
-    switch (impact) {
-      case "Critique":
-        return "text-red-500";
-      case "Important":
-        return "text-orange-500";
-      default:
-        return "text-yellow-500";
-    }
-  };
-
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-bold">Risques du projet</h2>
-        <Button onClick={() => setIsFormOpen(true)}>
-          <Plus className="h-4 w-4 mr-2" />
-          Ajouter un risque
-        </Button>
+        {canManage && (
+          <Button onClick={() => setIsFormOpen(true)}>
+            <Plus className="h-4 w-4 mr-2" />
+            Ajouter un risque
+          </Button>
+        )}
       </div>
 
       <div className="grid gap-4">
         {risks?.map((risk) => (
-          <Card key={risk.id}>
-            <CardHeader className="pb-2">
-              <div className="flex items-start justify-between">
-                <div className="flex items-center gap-2">
-                  <ShieldAlert className="h-5 w-5 text-muted-foreground" />
-                  <CardTitle className="text-lg">{risk.description}</CardTitle>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => handleEdit(risk)}
-                  >
-                    <Edit className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => setRiskToDelete(risk)}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div>
-                  <p className="text-sm text-muted-foreground">Probabilité</p>
-                  <p className="font-medium">
-                    {probabilityLabels[risk.probability as keyof typeof probabilityLabels]}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Gravité</p>
-                  <p className="font-medium">
-                    {severityLabels[risk.severity as keyof typeof severityLabels]}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Impact global</p>
-                  <p className={`font-medium ${getImpactColor(risk.probability, risk.severity)}`}>
-                    {getImpactLevel(risk.probability, risk.severity)}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Statut</p>
-                  <p className={`font-medium ${statusColors[risk.status as keyof typeof statusColors]}`}>
-                    {statusLabels[risk.status as keyof typeof statusLabels]}
-                  </p>
-                </div>
-              </div>
-              {risk.mitigation_plan && (
-                <div className="mt-4">
-                  <p className="text-sm text-muted-foreground">Plan de mitigation</p>
-                  <p className="mt-1">{risk.mitigation_plan}</p>
-                </div>
-              )}
-            </CardContent>
-          </Card>
+          <RiskCard
+            key={risk.id}
+            risk={risk}
+            onEdit={(risk) => {
+              setSelectedRisk(risk);
+              setIsFormOpen(true);
+            }}
+            onDelete={setRiskToDelete}
+            showActions={canManage}
+          />
         ))}
 
         {risks?.length === 0 && (

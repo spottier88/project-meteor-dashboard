@@ -4,7 +4,6 @@ import { supabase } from "@/integrations/supabase/client";
 import {
   Table,
   TableBody,
-  TableCell,
   TableHead,
   TableHeader,
   TableRow,
@@ -22,38 +21,51 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Pencil, Trash2, Plus } from "lucide-react";
-
-interface Task {
-  id: string;
-  title: string;
-  description?: string;
-  status: "todo" | "in_progress" | "done";
-  due_date?: string;
-  assignee?: string;
-}
+import { Plus } from "lucide-react";
+import { TaskCard } from "./task/TaskCard";
+import { useUser } from "@supabase/auth-helpers-react";
+import { canManageProjectItems } from "@/utils/permissions";
+import { UserRoleData } from "@/types/user";
 
 interface TaskListProps {
   projectId: string;
 }
 
-const statusLabels = {
-  todo: "À faire",
-  in_progress: "En cours",
-  done: "Terminé",
-};
-
-const statusColors = {
-  todo: "text-yellow-600",
-  in_progress: "text-blue-600",
-  done: "text-green-600",
-};
-
 export const TaskList = ({ projectId }: TaskListProps) => {
   const { toast } = useToast();
+  const user = useUser();
   const [isTaskFormOpen, setIsTaskFormOpen] = useState(false);
-  const [selectedTask, setSelectedTask] = useState<Task | null>(null);
-  const [taskToDelete, setTaskToDelete] = useState<Task | null>(null);
+  const [selectedTask, setSelectedTask] = useState<any>(null);
+  const [taskToDelete, setTaskToDelete] = useState<any>(null);
+
+  const { data: project } = useQuery({
+    queryKey: ["project", projectId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("projects")
+        .select("*")
+        .eq("id", projectId)
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const { data: userRoles } = useQuery({
+    queryKey: ["userRoles", user?.id],
+    queryFn: async () => {
+      if (!user?.id) return null;
+      const { data, error } = await supabase
+        .from("user_roles")
+        .select("*")
+        .eq("user_id", user.id);
+
+      if (error) throw error;
+      return data as UserRoleData[];
+    },
+    enabled: !!user?.id,
+  });
 
   const { data: tasks, refetch } = useQuery({
     queryKey: ["tasks", projectId],
@@ -65,14 +77,12 @@ export const TaskList = ({ projectId }: TaskListProps) => {
         .order("created_at", { ascending: false });
 
       if (error) throw error;
-      return data as Task[];
+      return data;
     },
   });
 
-  const handleEditTask = (task: Task) => {
-    setSelectedTask(task);
-    setIsTaskFormOpen(true);
-  };
+  const roles = userRoles?.map(ur => ur.role);
+  const canManage = canManageProjectItems(roles, user?.id, project?.owner_id);
 
   const handleDeleteTask = async () => {
     if (!taskToDelete) return;
@@ -107,16 +117,18 @@ export const TaskList = ({ projectId }: TaskListProps) => {
     <div className="space-y-4">
       <div className="flex justify-between items-center">
         <h3 className="text-lg font-semibold">Tâches</h3>
-        <Button
-          onClick={() => {
-            setSelectedTask(null);
-            setIsTaskFormOpen(true);
-          }}
-          size="sm"
-        >
-          <Plus className="h-4 w-4 mr-2" />
-          Nouvelle tâche
-        </Button>
+        {canManage && (
+          <Button
+            onClick={() => {
+              setSelectedTask(null);
+              setIsTaskFormOpen(true);
+            }}
+            size="sm"
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            Nouvelle tâche
+          </Button>
+        )}
       </div>
 
       {tasks && tasks.length > 0 ? (
@@ -132,38 +144,16 @@ export const TaskList = ({ projectId }: TaskListProps) => {
           </TableHeader>
           <TableBody>
             {tasks.map((task) => (
-              <TableRow key={task.id}>
-                <TableCell className="font-medium">{task.title}</TableCell>
-                <TableCell>
-                  <span className={statusColors[task.status]}>
-                    {statusLabels[task.status]}
-                  </span>
-                </TableCell>
-                <TableCell>{task.assignee || "-"}</TableCell>
-                <TableCell>
-                  {task.due_date
-                    ? new Date(task.due_date).toLocaleDateString("fr-FR")
-                    : "-"}
-                </TableCell>
-                <TableCell>
-                  <div className="flex items-center gap-2">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => handleEditTask(task)}
-                    >
-                      <Pencil className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => setTaskToDelete(task)}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </TableCell>
-              </TableRow>
+              <TaskCard
+                key={task.id}
+                task={task}
+                onEdit={(task) => {
+                  setSelectedTask(task);
+                  setIsTaskFormOpen(true);
+                }}
+                onDelete={setTaskToDelete}
+                showActions={canManage}
+              />
             ))}
           </TableBody>
         </Table>
