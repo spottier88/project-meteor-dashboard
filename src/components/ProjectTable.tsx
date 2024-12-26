@@ -7,7 +7,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { Sun, Cloud, CloudLightning, Pencil, History, ListTodo, ShieldAlert } from "lucide-react";
+import { Sun, Cloud, CloudLightning, Pencil, History, ListTodo, ShieldAlert, Star } from "lucide-react";
 import { ProjectStatus, ProgressStatus } from "./ProjectCard";
 import { cn } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
@@ -20,6 +20,7 @@ interface Project {
   completion: number;
   lastReviewDate: string;
   project_manager?: string;
+  suivi_dgs?: boolean;
 }
 
 interface ProjectTableProps {
@@ -66,6 +67,7 @@ export const ProjectTable = ({
             <TableHead>Progression</TableHead>
             <TableHead>Avancement</TableHead>
             <TableHead>Dernière revue</TableHead>
+            <TableHead>Suivi DGS</TableHead>
             <TableHead className="text-right">Actions</TableHead>
           </TableRow>
         </TableHeader>
@@ -103,6 +105,11 @@ export const ProjectTable = ({
                 </TableCell>
                 <TableCell>{project.completion}%</TableCell>
                 <TableCell>{project.lastReviewDate}</TableCell>
+                <TableCell>
+                  {project.suivi_dgs && (
+                    <Star className="h-4 w-4 text-yellow-500" aria-label="Suivi DGS" />
+                  )}
+                </TableCell>
                 <TableCell className="text-right space-x-2">
                   <Button
                     variant="ghost"

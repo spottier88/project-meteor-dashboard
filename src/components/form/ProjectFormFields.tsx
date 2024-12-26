@@ -2,6 +2,8 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { DatePickerField } from "./DatePickerField";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 
 interface ProjectFormFieldsProps {
   title: string;
@@ -16,6 +18,8 @@ interface ProjectFormFieldsProps {
   setEndDate: (date: Date | undefined) => void;
   priority: string;
   setPriority: (value: string) => void;
+  suiviDgs: boolean;
+  setSuiviDgs: (value: boolean) => void;
 }
 
 export const ProjectFormFields = ({
@@ -31,12 +35,14 @@ export const ProjectFormFields = ({
   setEndDate,
   priority,
   setPriority,
+  suiviDgs,
+  setSuiviDgs,
 }: ProjectFormFieldsProps) => {
   return (
     <div className="grid gap-4 py-4">
       <div className="grid gap-2">
         <label htmlFor="title" className="text-sm font-medium">
-          Titre
+          Titre *
         </label>
         <Input
           id="title"
@@ -94,6 +100,14 @@ export const ProjectFormFields = ({
             <SelectItem value="low">Basse</SelectItem>
           </SelectContent>
         </Select>
+      </div>
+      <div className="flex items-center space-x-2">
+        <Switch
+          id="suivi-dgs"
+          checked={suiviDgs}
+          onCheckedChange={setSuiviDgs}
+        />
+        <Label htmlFor="suivi-dgs">Suivi DGS</Label>
       </div>
     </div>
   );

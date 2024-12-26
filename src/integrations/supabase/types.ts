@@ -22,6 +22,7 @@ export type Database = {
           project_manager: string | null
           start_date: string | null
           status: Database["public"]["Enums"]["project_status"]
+          suivi_dgs: boolean | null
           title: string
         }
         Insert: {
@@ -36,6 +37,7 @@ export type Database = {
           project_manager?: string | null
           start_date?: string | null
           status?: Database["public"]["Enums"]["project_status"]
+          suivi_dgs?: boolean | null
           title: string
         }
         Update: {
@@ -50,6 +52,7 @@ export type Database = {
           project_manager?: string | null
           start_date?: string | null
           status?: Database["public"]["Enums"]["project_status"]
+          suivi_dgs?: boolean | null
           title?: string
         }
         Relationships: []

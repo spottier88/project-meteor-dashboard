@@ -17,6 +17,7 @@ interface ProjectFormProps {
     start_date?: string;
     end_date?: string;
     priority?: string;
+    suivi_dgs?: boolean;
   };
 }
 
@@ -28,6 +29,7 @@ export const ProjectForm = ({ isOpen, onClose, onSubmit, project }: ProjectFormP
   const [startDate, setStartDate] = useState<Date | undefined>(undefined);
   const [endDate, setEndDate] = useState<Date | undefined>(undefined);
   const [priority, setPriority] = useState("medium");
+  const [suiviDgs, setSuiviDgs] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
@@ -38,6 +40,7 @@ export const ProjectForm = ({ isOpen, onClose, onSubmit, project }: ProjectFormP
       setStartDate(project?.start_date ? new Date(project.start_date) : undefined);
       setEndDate(project?.end_date ? new Date(project.end_date) : undefined);
       setPriority(project?.priority || "medium");
+      setSuiviDgs(project?.suivi_dgs || false);
     }
   }, [isOpen, project]);
 
@@ -70,6 +73,7 @@ export const ProjectForm = ({ isOpen, onClose, onSubmit, project }: ProjectFormP
         start_date: startDate?.toISOString().split('T')[0],
         end_date: endDate?.toISOString().split('T')[0],
         priority,
+        suivi_dgs: suiviDgs,
       };
 
       if (project?.id) {
@@ -143,6 +147,8 @@ export const ProjectForm = ({ isOpen, onClose, onSubmit, project }: ProjectFormP
           setEndDate={setEndDate}
           priority={priority}
           setPriority={setPriority}
+          suiviDgs={suiviDgs}
+          setSuiviDgs={setSuiviDgs}
         />
         <DialogFooter>
           <Button variant="outline" onClick={onClose}>

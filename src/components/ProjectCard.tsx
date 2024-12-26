@@ -1,6 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Sun, Cloud, CloudLightning, Pencil, History } from "lucide-react";
+import { Sun, Cloud, CloudLightning, Pencil, History, Star } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { TaskSummary } from "./TaskSummary";
 import { useNavigate } from "react-router-dom";
@@ -15,6 +15,7 @@ interface ProjectCardProps {
   completion: number;
   lastReviewDate: string;
   id: string;
+  suiviDgs?: boolean;
   onReview: (id: string, title: string) => void;
   onEdit: (id: string) => void;
   onViewHistory: (id: string, title: string) => void;
@@ -45,6 +46,7 @@ export const ProjectCard = ({
   completion,
   lastReviewDate,
   id,
+  suiviDgs,
   onReview,
   onEdit,
   onViewHistory,
@@ -55,7 +57,12 @@ export const ProjectCard = ({
   return (
     <Card className="w-full transition-all duration-300 hover:shadow-lg animate-fade-in">
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-xl font-semibold">{title}</CardTitle>
+        <div className="flex items-center gap-2">
+          <CardTitle className="text-xl font-semibold">{title}</CardTitle>
+          {suiviDgs && (
+            <Star className="h-4 w-4 text-yellow-500" aria-label="Suivi DGS" />
+          )}
+        </div>
         <div className="flex items-center gap-2">
           <Button
             variant="ghost"
