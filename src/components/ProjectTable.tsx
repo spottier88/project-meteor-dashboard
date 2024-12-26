@@ -7,7 +7,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { Sun, Cloud, CloudLightning, Pencil, History, ListTodo, ShieldAlert } from "lucide-react";
+import { Sun, Cloud, CloudLightning, Pencil, History, ListTodo, ShieldAlert, Star } from "lucide-react";
 import { ProjectStatus, ProgressStatus } from "./ProjectCard";
 import { cn } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
@@ -25,6 +25,7 @@ interface Project {
   lastReviewDate: string;
   project_manager?: string;
   owner_id?: string;
+  suivi_dgs?: boolean;
 }
 
 interface ProjectTableProps {
