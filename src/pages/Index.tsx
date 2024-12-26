@@ -32,11 +32,18 @@ type Project = {
 
 type ViewMode = "grid" | "table";
 
-const fetchProjects = async (): Promise<Project[]> => {
-  const { data, error } = await supabase
+const fetchProjects = async (userEmail: string | undefined, isAdmin: boolean): Promise<Project[]> => {
+  let query = supabase
     .from("projects")
     .select("*")
     .order("last_review_date", { ascending: false });
+
+  // Si l'utilisateur n'est pas admin, on filtre pour ne montrer que ses projets
+  if (!isAdmin && userEmail) {
+    query = query.eq("project_manager", userEmail);
+  }
+
+  const { data, error } = await query;
 
   if (error) {
     throw error;
@@ -81,11 +88,6 @@ const Index = () => {
   const [isProjectSelectionOpen, setIsProjectSelectionOpen] = useState(false);
   const [showDgsOnly, setShowDgsOnly] = useState(false);
 
-  const { data: projects, isLoading, error, refetch } = useQuery({
-    queryKey: ["projects"],
-    queryFn: fetchProjects,
-  });
-
   const { data: userProfile } = useQuery({
     queryKey: ["userProfile", user?.id],
     queryFn: async () => {
@@ -100,6 +102,12 @@ const Index = () => {
       return data;
     },
     enabled: !!user?.id,
+  });
+
+  const { data: projects, isLoading, error, refetch } = useQuery({
+    queryKey: ["projects", user?.email, userProfile?.role],
+    queryFn: () => fetchProjects(user?.email, userProfile?.role === 'admin'),
+    enabled: !!user?.email && !!userProfile?.role,
   });
 
   useEffect(() => {
