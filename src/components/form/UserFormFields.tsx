@@ -13,8 +13,11 @@ interface UserFormFieldsProps {
   setFirstName: (value: string) => void;
   lastName: string;
   setLastName: (value: string) => void;
+  email: string;
+  setEmail: (value: string) => void;
   role: "admin" | "chef_projet";
   setRole: (value: "admin" | "chef_projet") => void;
+  isEditMode: boolean;
 }
 
 export const UserFormFields = ({
@@ -22,11 +25,25 @@ export const UserFormFields = ({
   setFirstName,
   lastName,
   setLastName,
+  email,
+  setEmail,
   role,
   setRole,
+  isEditMode,
 }: UserFormFieldsProps) => {
   return (
     <div className="grid gap-4 py-4">
+      <div className="grid gap-2">
+        <Label htmlFor="email">Email</Label>
+        <Input
+          id="email"
+          type="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          readOnly={isEditMode}
+          className={isEditMode ? "bg-gray-100" : ""}
+        />
+      </div>
       <div className="grid gap-2">
         <Label htmlFor="firstName">Prénom</Label>
         <Input

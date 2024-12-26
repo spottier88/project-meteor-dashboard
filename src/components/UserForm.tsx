@@ -28,6 +28,7 @@ export const UserForm = ({ isOpen, onClose, onSubmit, user }: UserFormProps) => 
   const { toast } = useToast();
   const [firstName, setFirstName] = useState(user?.first_name || "");
   const [lastName, setLastName] = useState(user?.last_name || "");
+  const [email, setEmail] = useState(user?.email || "");
   const [role, setRole] = useState<"admin" | "chef_projet">(user?.role || "chef_projet");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -35,21 +36,41 @@ export const UserForm = ({ isOpen, onClose, onSubmit, user }: UserFormProps) => 
     setIsSubmitting(true);
 
     try {
-      const { error } = await supabase
-        .from("profiles")
-        .update({
-          first_name: firstName,
-          last_name: lastName,
-          role,
-        })
-        .eq("id", user?.id);
+      if (user) {
+        // Update existing user
+        const { error } = await supabase
+          .from("profiles")
+          .update({
+            first_name: firstName,
+            last_name: lastName,
+            role,
+          })
+          .eq("id", user.id);
 
-      if (error) throw error;
+        if (error) throw error;
 
-      toast({
-        title: "Succès",
-        description: "L'utilisateur a été mis à jour",
-      });
+        toast({
+          title: "Succès",
+          description: "L'utilisateur a été mis à jour",
+        });
+      } else {
+        // Create new user
+        const { error } = await supabase
+          .from("profiles")
+          .insert({
+            email,
+            first_name: firstName,
+            last_name: lastName,
+            role,
+          });
+
+        if (error) throw error;
+
+        toast({
+          title: "Succès",
+          description: "L'utilisateur a été créé",
+        });
+      }
 
       onSubmit();
       onClose();
@@ -71,6 +92,7 @@ export const UserForm = ({ isOpen, onClose, onSubmit, user }: UserFormProps) => 
         // Reset form when closing
         setFirstName("");
         setLastName("");
+        setEmail("");
         setRole("chef_projet");
       }
       onClose();
@@ -86,8 +108,11 @@ export const UserForm = ({ isOpen, onClose, onSubmit, user }: UserFormProps) => 
           setFirstName={setFirstName}
           lastName={lastName}
           setLastName={setLastName}
+          email={email}
+          setEmail={setEmail}
           role={role}
           setRole={setRole}
+          isEditMode={!!user}
         />
         <DialogFooter>
           <Button variant="outline" onClick={onClose}>
