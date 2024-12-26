@@ -85,10 +85,10 @@ export const ProjectForm = ({ isOpen, onClose, onSubmit, project }: ProjectFormP
       return;
     }
 
-    if (!ownerId.trim()) {
+    if (!projectManager.trim()) {
       toast({
         title: "Erreur",
-        description: "Le chef de projet (propriétaire) est requis",
+        description: "Le chef de projet est requis",
         variant: "destructive",
       });
       return;

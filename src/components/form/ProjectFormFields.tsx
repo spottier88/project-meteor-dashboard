@@ -49,7 +49,6 @@ export const ProjectFormFields = ({
   suiviDgs,
   setSuiviDgs,
   isAdmin,
-  ownerId,
   setOwnerId,
 }: ProjectFormFieldsProps) => {
   // Fetch all users who are either admin or chef_projet
@@ -66,8 +65,14 @@ export const ProjectFormFields = ({
     },
   });
 
-  // Filtrer pour n'avoir que les chefs de projet pour la sélection du owner
-  const projectManagers = profiles?.filter(profile => profile.role === 'chef_projet') || [];
+  // Mettre à jour le owner_id lorsque le chef de projet change
+  const handleProjectManagerChange = (email: string) => {
+    setProjectManager(email);
+    const selectedProfile = profiles?.find(profile => profile.email === email);
+    if (selectedProfile) {
+      setOwnerId(selectedProfile.id);
+    }
+  };
 
   return (
     <div className="grid gap-4 py-4">
@@ -93,41 +98,20 @@ export const ProjectFormFields = ({
           placeholder="Description du projet"
         />
       </div>
-      {isAdmin && (
-        <div className="grid gap-2">
-          <label htmlFor="owner" className="text-sm font-medium">
-            Chef de projet (propriétaire) *
-          </label>
-          <Select value={ownerId} onValueChange={setOwnerId}>
-            <SelectTrigger>
-              <SelectValue placeholder="Sélectionner un chef de projet" />
-            </SelectTrigger>
-            <SelectContent>
-              {projectManagers.map((profile) => (
-                profile.email && (
-                  <SelectItem key={profile.id} value={profile.id}>
-                    {profile.email}
-                  </SelectItem>
-                )
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-      )}
       <div className="grid gap-2">
         <label htmlFor="project-manager" className="text-sm font-medium">
-          Email du chef de projet
+          Chef de projet *
         </label>
         {isAdmin ? (
-          <Select value={projectManager} onValueChange={setProjectManager}>
+          <Select value={projectManager} onValueChange={handleProjectManagerChange}>
             <SelectTrigger>
               <SelectValue placeholder="Sélectionner un chef de projet" />
             </SelectTrigger>
             <SelectContent>
-              {profiles?.map((profile) => (
+              {profiles?.filter(profile => profile.role === 'chef_projet').map((profile) => (
                 profile.email && (
                   <SelectItem key={profile.email} value={profile.email}>
-                    {profile.email} {profile.role === 'admin' ? '(Admin)' : ''}
+                    {profile.email}
                   </SelectItem>
                 )
               ))}
