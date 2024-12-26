@@ -13,8 +13,8 @@ interface UserFormFieldsProps {
   setFirstName: (value: string) => void;
   lastName: string;
   setLastName: (value: string) => void;
-  role: string;
-  setRole: (value: string) => void;
+  role: "admin" | "chef_projet";
+  setRole: (value: "admin" | "chef_projet") => void;
 }
 
 export const UserFormFields = ({

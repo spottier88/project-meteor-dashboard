@@ -28,7 +28,7 @@ export const UserForm = ({ isOpen, onClose, onSubmit, user }: UserFormProps) => 
   const { toast } = useToast();
   const [firstName, setFirstName] = useState(user?.first_name || "");
   const [lastName, setLastName] = useState(user?.last_name || "");
-  const [role, setRole] = useState(user?.role || "chef_projet");
+  const [role, setRole] = useState<"admin" | "chef_projet">(user?.role || "chef_projet");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async () => {
@@ -66,10 +66,20 @@ export const UserForm = ({ isOpen, onClose, onSubmit, user }: UserFormProps) => 
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
+    <Dialog open={isOpen} onOpenChange={(open) => {
+      if (!open) {
+        // Reset form when closing
+        setFirstName("");
+        setLastName("");
+        setRole("chef_projet");
+      }
+      onClose();
+    }}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>Modifier l'utilisateur</DialogTitle>
+          <DialogTitle>
+            {user ? "Modifier l'utilisateur" : "Nouvel utilisateur"}
+          </DialogTitle>
         </DialogHeader>
         <UserFormFields
           firstName={firstName}
@@ -84,7 +94,7 @@ export const UserForm = ({ isOpen, onClose, onSubmit, user }: UserFormProps) => 
             Annuler
           </Button>
           <Button onClick={handleSubmit} disabled={isSubmitting}>
-            {isSubmitting ? "Enregistrement..." : "Mettre à jour"}
+            {isSubmitting ? "Enregistrement..." : user ? "Mettre à jour" : "Créer"}
           </Button>
         </DialogFooter>
       </DialogContent>
