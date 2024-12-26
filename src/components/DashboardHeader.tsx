@@ -4,6 +4,8 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { ProfileForm } from "./ProfileForm";
+import { useState } from "react";
 
 interface DashboardHeaderProps {
   onNewProject: () => void;
@@ -12,8 +14,9 @@ interface DashboardHeaderProps {
 
 export function DashboardHeader({ onNewProject, onNewReview }: DashboardHeaderProps) {
   const navigate = useNavigate();
+  const [isProfileFormOpen, setIsProfileFormOpen] = useState(false);
   
-  const { data: profile } = useQuery({
+  const { data: profile, refetch: refetchProfile } = useQuery({
     queryKey: ["currentUserProfile"],
     queryFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
@@ -67,7 +70,10 @@ export function DashboardHeader({ onNewProject, onNewReview }: DashboardHeaderPr
         </p>
       </div>
       <div className="flex items-center gap-4">
-        <div className="flex items-center gap-3 mr-4 border-r pr-4">
+        <div 
+          className="flex items-center gap-3 mr-4 border-r pr-4 cursor-pointer hover:opacity-80"
+          onClick={() => setIsProfileFormOpen(true)}
+        >
           <Avatar>
             <AvatarFallback>
               {getInitials(profile?.first_name, profile?.last_name)}
@@ -105,6 +111,12 @@ export function DashboardHeader({ onNewProject, onNewReview }: DashboardHeaderPr
           </Button>
         </div>
       </div>
+      <ProfileForm
+        isOpen={isProfileFormOpen}
+        onClose={() => setIsProfileFormOpen(false)}
+        profile={profile}
+        onProfileUpdate={refetchProfile}
+      />
     </div>
   );
 }
