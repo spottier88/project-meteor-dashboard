@@ -13,7 +13,6 @@ import { PDFDownloadLink } from "@react-pdf/renderer";
 import { Risk } from "@/types/risk";
 import { ProjectSummaryHeader } from "@/components/project/ProjectSummaryHeader";
 import { statusIcons } from "@/lib/project-status";
-import { ProjectProgressChart } from "@/components/project/ProjectProgressChart";
 
 interface Project {
   id: string;
@@ -32,8 +31,6 @@ interface Review {
   progress: ProgressStatus;
   comment?: string;
   created_at: string;
-  completion: number;
-  project_id: string;
 }
 
 const progressLabels = {
@@ -65,37 +62,14 @@ export const ProjectSummary = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("reviews")
-        .select("*, projects!inner(id, completion)")
+        .select("*")
         .eq("project_id", projectId)
         .order("created_at", { ascending: false })
         .limit(1)
         .maybeSingle();
 
       if (error && error.code !== "PGRST116") throw error;
-      if (!data) return null;
-      
-      return {
-        ...data,
-        completion: data.projects.completion,
-      } as Review;
-    },
-  });
-
-  const { data: reviews } = useQuery({
-    queryKey: ["reviews", projectId],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("reviews")
-        .select("*, projects!inner(id, completion)")
-        .eq("project_id", projectId)
-        .order("created_at", { ascending: true });
-
-      if (error) throw error;
-      
-      return data.map(review => ({
-        ...review,
-        completion: review.projects.completion,
-      })) as Review[];
+      return data as Review | null;
     },
   });
 
@@ -139,10 +113,12 @@ export const ProjectSummary = () => {
           }
           fileName={`${project.title.toLowerCase().replace(/\s+/g, "-")}-synthese.pdf`}
         >
-          <Button disabled={loading}>
-            <Download className="h-4 w-4 mr-2" />
-            {loading ? "Génération..." : "Exporter en PDF"}
-          </Button>
+          {({ loading }) => (
+            <Button disabled={loading} type="button">
+              <Download className="h-4 w-4 mr-2" />
+              {loading ? "Génération..." : "Exporter en PDF"}
+            </Button>
+          )}
         </PDFDownloadLink>
       </div>
 
@@ -186,10 +162,6 @@ export const ProjectSummary = () => {
               </div>
             </CardContent>
           </Card>
-        )}
-
-        {reviews && reviews.length > 0 && (
-          <ProjectProgressChart reviews={reviews} />
         )}
 
         <RiskSummary projectId={projectId || ""} />
