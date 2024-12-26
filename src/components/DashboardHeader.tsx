@@ -6,6 +6,7 @@ import { useNavigate } from "react-router-dom";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { ProfileForm } from "./ProfileForm";
 import { useState } from "react";
+import { useToast } from "./ui/use-toast";
 
 interface DashboardHeaderProps {
   onNewProject: () => void;
@@ -15,12 +16,15 @@ interface DashboardHeaderProps {
 export function DashboardHeader({ onNewProject, onNewReview }: DashboardHeaderProps) {
   const navigate = useNavigate();
   const [isProfileFormOpen, setIsProfileFormOpen] = useState(false);
+  const { toast } = useToast();
   
-  const { data: profile, refetch: refetchProfile } = useQuery({
+  const { data: profile, refetch: refetchProfile, error: profileError } = useQuery({
     queryKey: ["currentUserProfile"],
     queryFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return null;
+      if (!user) {
+        throw new Error("No user found");
+      }
 
       const { data, error } = await supabase
         .from("profiles")
@@ -37,8 +41,24 @@ export function DashboardHeader({ onNewProject, onNewReview }: DashboardHeaderPr
     },
   });
 
+  // Handle profile error
+  if (profileError) {
+    toast({
+      variant: "destructive",
+      title: "Erreur",
+      description: "Impossible de récupérer votre profil",
+    });
+  }
+
   const handleLogout = async () => {
-    await supabase.auth.signOut();
+    const { error } = await supabase.auth.signOut();
+    if (error) {
+      toast({
+        variant: "destructive",
+        title: "Erreur",
+        description: "Une erreur est survenue lors de la déconnexion",
+      });
+    }
   };
 
   const getInitials = (firstName?: string | null, lastName?: string | null) => {
@@ -81,7 +101,7 @@ export function DashboardHeader({ onNewProject, onNewReview }: DashboardHeaderPr
           </Avatar>
           <div className="hidden md:block">
             <p className="text-sm font-medium">
-              {profile?.first_name} {profile?.last_name}
+              {profile?.first_name} {profile?.last_name || "Non renseigné"}
             </p>
             <p className="text-xs text-muted-foreground">
               {getRoleLabel(profile?.role)}
