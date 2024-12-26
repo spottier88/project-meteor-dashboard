@@ -13,6 +13,7 @@ import { PDFDownloadLink } from "@react-pdf/renderer";
 import { Risk } from "@/types/risk";
 import { ProjectSummaryHeader } from "@/components/project/ProjectSummaryHeader";
 import { statusIcons } from "@/lib/project-status";
+import { ProjectProgressChart } from "@/components/project/ProjectProgressChart";
 
 interface Project {
   id: string;
@@ -31,6 +32,7 @@ interface Review {
   progress: ProgressStatus;
   comment?: string;
   created_at: string;
+  completion: number;
 }
 
 const progressLabels = {
@@ -70,6 +72,23 @@ export const ProjectSummary = () => {
 
       if (error && error.code !== "PGRST116") throw error;
       return data as Review | null;
+    },
+  });
+
+  const { data: reviews } = useQuery({
+    queryKey: ["reviews", projectId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("reviews")
+        .select("*, projects!inner(completion)")
+        .eq("project_id", projectId)
+        .order("created_at", { ascending: true });
+
+      if (error) throw error;
+      return data.map(review => ({
+        ...review,
+        completion: review.projects.completion
+      })) as Review[];
     },
   });
 
@@ -114,9 +133,11 @@ export const ProjectSummary = () => {
           fileName={`${project.title.toLowerCase().replace(/\s+/g, "-")}-synthese.pdf`}
         >
           {({ loading }) => (
-            <Button disabled={loading} type="button">
-              <Download className="h-4 w-4 mr-2" />
-              {loading ? "Génération..." : "Exporter en PDF"}
+            <Button asChild disabled={loading} type="button">
+              <span>
+                <Download className="h-4 w-4 mr-2" />
+                {loading ? "Génération..." : "Exporter en PDF"}
+              </span>
             </Button>
           )}
         </PDFDownloadLink>
@@ -162,6 +183,10 @@ export const ProjectSummary = () => {
               </div>
             </CardContent>
           </Card>
+        )}
+
+        {reviews && reviews.length > 0 && (
+          <ProjectProgressChart reviews={reviews} />
         )}
 
         <RiskSummary projectId={projectId || ""} />
