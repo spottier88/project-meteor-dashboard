@@ -5,29 +5,32 @@ import { PDFProjectInfo } from "./pdf/PDFProjectInfo";
 import { PDFLastReview } from "./pdf/PDFLastReview";
 import { PDFRisks } from "./pdf/PDFRisks";
 import { PDFFooter } from "./pdf/PDFFooter";
+import { ProjectStatus, ProgressStatus } from "./ProjectCard";
+
+interface Risk {
+  description: string;
+  probability: "low" | "medium" | "high";
+  severity: "low" | "medium" | "high";
+  status: "open" | "in_progress" | "resolved";
+  mitigation_plan?: string;
+}
 
 interface ProjectPDFProps {
   project: {
     title: string;
-    status: string;
-    progress: string;
+    status: ProjectStatus;
+    progress: ProgressStatus;
     completion: number;
     project_manager?: string;
     last_review_date: string;
   };
   lastReview?: {
-    weather: string;
-    progress: string;
+    weather: ProjectStatus;
+    progress: ProgressStatus;
     comment?: string;
     created_at: string;
   };
-  risks: Array<{
-    description: string;
-    probability: string;
-    severity: string;
-    status: string;
-    mitigation_plan?: string;
-  }>;
+  risks: Risk[];
 }
 
 export const ProjectPDF = ({ project, lastReview, risks }: ProjectPDFProps) => (

@@ -130,7 +130,7 @@ export const ProjectSummary = () => {
           fileName={`${project.title.toLowerCase().replace(/\s+/g, "-")}-synthese.pdf`}
         >
           {({ loading }) => (
-            <Button disabled={loading} type="button">
+            <Button disabled={loading}>
               <Download className="h-4 w-4 mr-2" />
               {loading ? "Génération..." : "Exporter en PDF"}
             </Button>
