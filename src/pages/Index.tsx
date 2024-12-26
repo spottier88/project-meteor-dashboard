@@ -13,6 +13,7 @@ import { useQuery } from "@tanstack/react-query";
 import { FilterToggle } from "@/components/FilterToggle";
 import { useUser } from "@supabase/auth-helpers-react";
 import { useToast } from "@/components/ui/use-toast";
+import { UserRoleData } from "@/types/user";
 
 type Project = {
   id: string;
@@ -88,26 +89,27 @@ const Index = () => {
   const [isProjectSelectionOpen, setIsProjectSelectionOpen] = useState(false);
   const [showDgsOnly, setShowDgsOnly] = useState(false);
 
-  const { data: userProfile } = useQuery({
-    queryKey: ["userProfile", user?.id],
+  const { data: userRoles } = useQuery({
+    queryKey: ["userRoles", user?.id],
     queryFn: async () => {
       if (!user?.id) return null;
       const { data, error } = await supabase
-        .from("profiles")
-        .select("role")
-        .eq("id", user.id)
-        .single();
+        .from("user_roles")
+        .select("*")
+        .eq("user_id", user.id);
 
       if (error) throw error;
-      return data;
+      return data as UserRoleData[];
     },
     enabled: !!user?.id,
   });
 
+  const isAdmin = userRoles?.some(ur => ur.role === 'admin');
+
   const { data: projects, isLoading, error, refetch } = useQuery({
-    queryKey: ["projects", user?.email, userProfile?.role],
-    queryFn: () => fetchProjects(user?.email, userProfile?.role === 'admin'),
-    enabled: !!user?.email && !!userProfile?.role,
+    queryKey: ["projects", user?.email, isAdmin],
+    queryFn: () => fetchProjects(user?.email, isAdmin),
+    enabled: !!user?.email && userRoles !== undefined,
   });
 
   useEffect(() => {
@@ -122,7 +124,7 @@ const Index = () => {
   const handleEditProject = async (id: string) => {
     const project = projects?.find((p) => p.id === id);
     if (project) {
-      if (userProfile?.role === 'admin' || project.owner_id === user?.id) {
+      if (isAdmin || project.owner_id === user?.id) {
         setProjectToEdit(project);
         setIsProjectFormOpen(true);
       } else {

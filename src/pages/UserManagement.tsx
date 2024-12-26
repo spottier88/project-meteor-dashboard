@@ -30,7 +30,7 @@ type Profile = {
   email: string | null;
   first_name: string | null;
   last_name: string | null;
-  role: "admin" | "chef_projet";
+  created_at?: string | null;
 };
 
 export const UserManagement = () => {

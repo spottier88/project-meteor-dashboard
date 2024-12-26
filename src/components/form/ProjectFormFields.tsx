@@ -6,6 +6,7 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { UserProfile } from "@/types/user";
 
 interface ProjectFormFieldsProps {
   title: string;
@@ -25,12 +26,6 @@ interface ProjectFormFieldsProps {
   isAdmin: boolean;
   ownerId: string;
   setOwnerId: (value: string) => void;
-}
-
-interface Profile {
-  id: string;
-  email: string | null;
-  role: 'admin' | 'chef_projet';
 }
 
 export const ProjectFormFields = ({
@@ -61,7 +56,7 @@ export const ProjectFormFields = ({
         .not("email", "is", null);
 
       if (error) throw error;
-      return data as Profile[];
+      return data as UserProfile[];
     },
   });
 

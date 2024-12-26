@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { ProjectFormFields } from "./form/ProjectFormFields";
 import { useUser } from "@supabase/auth-helpers-react";
 import { useQuery } from "@tanstack/react-query";
+import { UserRoleData } from "@/types/user";
 
 interface ProjectFormProps {
   isOpen: boolean;
@@ -37,23 +38,22 @@ export const ProjectForm = ({ isOpen, onClose, onSubmit, project }: ProjectFormP
   const [ownerId, setOwnerId] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const { data: userProfile } = useQuery({
-    queryKey: ["userProfile", user?.id],
+  const { data: userRoles } = useQuery({
+    queryKey: ["userRoles", user?.id],
     queryFn: async () => {
       if (!user?.id) return null;
       const { data, error } = await supabase
-        .from("profiles")
-        .select("role")
-        .eq("id", user.id)
-        .single();
+        .from("user_roles")
+        .select("*")
+        .eq("user_id", user.id);
 
       if (error) throw error;
-      return data;
+      return data as UserRoleData[];
     },
     enabled: !!user?.id,
   });
 
-  const isAdmin = userProfile?.role === 'admin';
+  const isAdmin = userRoles?.some(ur => ur.role === 'admin');
 
   useEffect(() => {
     if (isOpen) {
