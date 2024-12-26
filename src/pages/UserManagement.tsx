@@ -9,11 +9,21 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Edit, Plus, Trash } from "lucide-react";
+import { ArrowLeft, Edit, Plus, Trash2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { UserForm } from "@/components/UserForm";
 import { useToast } from "@/components/ui/use-toast";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 type Profile = {
   id: string;
@@ -27,8 +37,9 @@ export const UserManagement = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [selectedUser, setSelectedUser] = useState<Profile | undefined>();
+  const [selectedUser, setSelectedUser] = useState<Profile | null>(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
+  const [userToDelete, setUserToDelete] = useState<Profile | null>(null);
 
   const { data: profiles, isLoading } = useQuery({
     queryKey: ["profiles"],
@@ -48,12 +59,14 @@ export const UserManagement = () => {
     setIsFormOpen(true);
   };
 
-  const handleDelete = async (userId: string) => {
+  const handleDelete = async () => {
+    if (!userToDelete) return;
+
     try {
       const { error } = await supabase
         .from("profiles")
         .delete()
-        .eq("id", userId);
+        .eq("id", userToDelete.id);
 
       if (error) throw error;
 
@@ -70,6 +83,8 @@ export const UserManagement = () => {
         description: "Une erreur est survenue lors de la suppression",
         variant: "destructive",
       });
+    } finally {
+      setUserToDelete(null);
     }
   };
 
@@ -97,7 +112,10 @@ export const UserManagement = () => {
               Gérez les utilisateurs et leurs rôles
             </p>
           </div>
-          <Button onClick={() => setIsFormOpen(true)}>
+          <Button onClick={() => {
+            setSelectedUser(null);
+            setIsFormOpen(true);
+          }}>
             <Plus className="mr-2 h-4 w-4" />
             Nouvel utilisateur
           </Button>
@@ -134,9 +152,9 @@ export const UserManagement = () => {
                 <Button
                   variant="ghost"
                   size="icon"
-                  onClick={() => handleDelete(profile.id)}
+                  onClick={() => setUserToDelete(profile)}
                 >
-                  <Trash className="h-4 w-4" />
+                  <Trash2 className="h-4 w-4" />
                 </Button>
               </TableCell>
             </TableRow>
@@ -148,11 +166,28 @@ export const UserManagement = () => {
         isOpen={isFormOpen}
         onClose={() => {
           setIsFormOpen(false);
-          setSelectedUser(undefined);
+          setSelectedUser(null);
         }}
         onSubmit={handleFormSubmit}
-        user={selectedUser}
+        user={selectedUser || undefined}
       />
+
+      <AlertDialog open={!!userToDelete} onOpenChange={() => setUserToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Êtes-vous sûr ?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Cette action ne peut pas être annulée. L'utilisateur sera définitivement supprimé.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Annuler</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete}>
+              Supprimer
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

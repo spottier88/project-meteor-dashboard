@@ -33,6 +33,15 @@ export const UserForm = ({ isOpen, onClose, onSubmit, user }: UserFormProps) => 
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async () => {
+    if (!email || !firstName || !lastName) {
+      toast({
+        title: "Erreur",
+        description: "Veuillez remplir tous les champs obligatoires",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
@@ -54,7 +63,7 @@ export const UserForm = ({ isOpen, onClose, onSubmit, user }: UserFormProps) => 
           description: "L'utilisateur a été mis à jour",
         });
       } else {
-        // Create new user with generated UUID
+        // Create new user
         const { error } = await supabase
           .from("profiles")
           .insert({
