@@ -9,7 +9,14 @@ import { ProjectPDF } from "@/components/ProjectPDF";
 import { PDFDownloadLink } from "@react-pdf/renderer";
 import { RiskTable } from "@/components/risk/RiskTable";
 import { TaskTable } from "@/components/task/TaskTable";
-import { ProjectStatus, ProgressStatus } from "@/components/ProjectCard";
+import { Database } from "@/integrations/supabase/types";
+
+type ProjectStatus = Database["public"]["Enums"]["project_status"];
+type ProgressStatus = Database["public"]["Enums"]["progress_status"];
+type RiskProbability = Database["public"]["Enums"]["risk_probability"];
+type RiskSeverity = Database["public"]["Enums"]["risk_severity"];
+type RiskStatus = Database["public"]["Enums"]["risk_status"];
+type TaskStatus = Database["public"]["Enums"]["task_status"];
 
 type Project = {
   id: string;
@@ -25,9 +32,9 @@ type Project = {
 type Risk = {
   id: string;
   description: string;
-  probability: string;
-  severity: string;
-  status: string;
+  probability: RiskProbability;
+  severity: RiskSeverity;
+  status: RiskStatus;
   mitigation_plan?: string;
 };
 
@@ -35,7 +42,7 @@ type Task = {
   id: string;
   title: string;
   description?: string;
-  status: string;
+  status: TaskStatus;
   assignee?: string;
   due_date?: string;
 };
@@ -67,7 +74,7 @@ export const ProjectSummary = () => {
         .select("*")
         .eq("project_id", projectId)
         .order("created_at", { ascending: false });
-      setRisks(data || []);
+      setRisks(data as Risk[] || []);
     };
 
     const fetchTasks = async () => {
@@ -76,7 +83,7 @@ export const ProjectSummary = () => {
         .select("*")
         .eq("project_id", projectId)
         .order("created_at", { ascending: false });
-      setTasks(data || []);
+      setTasks(data as Task[] || []);
     };
 
     if (projectId) {
