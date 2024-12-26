@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { ProjectFormFields } from "./form/ProjectFormFields";
+import { useUser } from "@supabase/auth-helpers-react";
 
 interface ProjectFormProps {
   isOpen: boolean;
@@ -18,11 +19,13 @@ interface ProjectFormProps {
     end_date?: string;
     priority?: string;
     suivi_dgs?: boolean;
+    owner_id?: string;
   };
 }
 
 export const ProjectForm = ({ isOpen, onClose, onSubmit, project }: ProjectFormProps) => {
   const { toast } = useToast();
+  const user = useUser();
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [projectManager, setProjectManager] = useState("");
@@ -36,13 +39,13 @@ export const ProjectForm = ({ isOpen, onClose, onSubmit, project }: ProjectFormP
     if (isOpen) {
       setTitle(project?.title || "");
       setDescription(project?.description || "");
-      setProjectManager(project?.project_manager || "");
+      setProjectManager(project?.project_manager || user?.email || "");
       setStartDate(project?.start_date ? new Date(project.start_date) : undefined);
       setEndDate(project?.end_date ? new Date(project.end_date) : undefined);
       setPriority(project?.priority || "medium");
       setSuiviDgs(project?.suivi_dgs || false);
     }
-  }, [isOpen, project]);
+  }, [isOpen, project, user?.email]);
 
   const handleSubmit = async () => {
     if (!title.trim()) {
@@ -63,6 +66,15 @@ export const ProjectForm = ({ isOpen, onClose, onSubmit, project }: ProjectFormP
       return;
     }
 
+    if (!user) {
+      toast({
+        title: "Erreur",
+        description: "Vous devez être connecté pour créer ou modifier un projet",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
@@ -74,9 +86,28 @@ export const ProjectForm = ({ isOpen, onClose, onSubmit, project }: ProjectFormP
         end_date: endDate?.toISOString().split('T')[0],
         priority,
         suivi_dgs: suiviDgs,
+        owner_id: user.id,
       };
 
       if (project?.id) {
+        // Check if user has permission to update
+        const { data: userProfile } = await supabase
+          .from('profiles')
+          .select('role')
+          .eq('id', user.id)
+          .single();
+
+        const canUpdate = userProfile?.role === 'admin' || project.owner_id === user.id;
+
+        if (!canUpdate) {
+          toast({
+            title: "Erreur",
+            description: "Vous n'avez pas les droits pour modifier ce projet",
+            variant: "destructive",
+          });
+          return;
+        }
+
         const { error } = await supabase
           .from("projects")
           .update(projectData)

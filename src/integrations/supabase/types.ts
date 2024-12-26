@@ -44,6 +44,7 @@ export type Database = {
           end_date: string | null
           id: string
           last_review_date: string | null
+          owner_id: string | null
           priority: string | null
           progress: Database["public"]["Enums"]["progress_status"]
           project_manager: string | null
@@ -59,6 +60,7 @@ export type Database = {
           end_date?: string | null
           id?: string
           last_review_date?: string | null
+          owner_id?: string | null
           priority?: string | null
           progress?: Database["public"]["Enums"]["progress_status"]
           project_manager?: string | null
@@ -74,6 +76,7 @@ export type Database = {
           end_date?: string | null
           id?: string
           last_review_date?: string | null
+          owner_id?: string | null
           priority?: string | null
           progress?: Database["public"]["Enums"]["progress_status"]
           project_manager?: string | null

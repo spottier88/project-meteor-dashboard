@@ -11,6 +11,8 @@ import { ProjectStatus, ProgressStatus } from "@/components/ProjectCard";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import { FilterToggle } from "@/components/FilterToggle";
+import { useUser } from "@supabase/auth-helpers-react";
+import { useToast } from "@/components/ui/use-toast";
 
 type Project = {
   id: string;
@@ -25,6 +27,7 @@ type Project = {
   end_date?: string;
   priority?: string;
   suivi_dgs?: boolean;
+  owner_id?: string;
 };
 
 type ViewMode = "grid" | "table";
@@ -54,10 +57,13 @@ const fetchProjects = async (): Promise<Project[]> => {
     end_date: project.end_date,
     priority: project.priority,
     suivi_dgs: project.suivi_dgs,
+    owner_id: project.owner_id,
   }));
 };
 
 const Index = () => {
+  const user = useUser();
+  const { toast } = useToast();
   const [selectedProject, setSelectedProject] = useState<{
     id: string;
     title: string;
@@ -80,7 +86,22 @@ const Index = () => {
     queryFn: fetchProjects,
   });
 
-  // Sauvegarder la vue active dans le localStorage
+  const { data: userProfile } = useQuery({
+    queryKey: ["userProfile", user?.id],
+    queryFn: async () => {
+      if (!user?.id) return null;
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("role")
+        .eq("id", user.id)
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!user?.id,
+  });
+
   useEffect(() => {
     localStorage.setItem("preferredView", currentView);
   }, [currentView]);
@@ -90,11 +111,19 @@ const Index = () => {
     setIsProjectFormOpen(true);
   };
 
-  const handleEditProject = (id: string) => {
+  const handleEditProject = async (id: string) => {
     const project = projects?.find((p) => p.id === id);
     if (project) {
-      setProjectToEdit(project);
-      setIsProjectFormOpen(true);
+      if (userProfile?.role === 'admin' || project.owner_id === user?.id) {
+        setProjectToEdit(project);
+        setIsProjectFormOpen(true);
+      } else {
+        toast({
+          title: "Accès refusé",
+          description: "Vous n'avez pas les droits pour modifier ce projet",
+          variant: "destructive",
+        });
+      }
     }
   };
 
