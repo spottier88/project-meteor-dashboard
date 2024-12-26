@@ -12,7 +12,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import { FilterToggle } from "@/components/FilterToggle";
 import { useUser } from "@supabase/auth-helpers-react";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { UserRoleData } from "@/types/user";
 
 type Project = {
@@ -158,6 +158,10 @@ const Index = () => {
     refetch();
   };
 
+  const handleProjectDeleted = () => {
+    refetch();
+  };
+
   const filteredProjects = projects?.filter(project => 
     !showDgsOnly || project.suivi_dgs
   );
@@ -215,6 +219,7 @@ const Index = () => {
           onProjectReview={handleProjectReview}
           onProjectEdit={handleEditProject}
           onViewHistory={handleViewHistory}
+          onProjectDeleted={handleProjectDeleted}
         />
       )}
       {selectedProject && (

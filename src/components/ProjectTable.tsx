@@ -6,8 +6,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Button } from "@/components/ui/button";
-import { Sun, Cloud, CloudLightning, Pencil, History, ListTodo, ShieldAlert, Star } from "lucide-react";
+import { Sun, Cloud, CloudLightning, Star } from "lucide-react";
 import { ProjectStatus, ProgressStatus } from "./ProjectCard";
 import { cn } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
@@ -16,6 +15,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { canEditProject } from "@/utils/permissions";
 import { UserRoleData } from "@/types/user";
+import { ProjectActions } from "./project/ProjectActions";
 
 interface Project {
   id: string;
@@ -34,6 +34,7 @@ interface ProjectTableProps {
   onProjectReview: (id: string, title: string) => void;
   onProjectEdit: (id: string) => void;
   onViewHistory: (id: string, title: string) => void;
+  onProjectDeleted: () => void;
 }
 
 const statusIcons = {
@@ -44,9 +45,9 @@ const statusIcons = {
 
 export const ProjectTable = ({
   projects,
-  onProjectReview,
   onProjectEdit,
   onViewHistory,
+  onProjectDeleted,
 }: ProjectTableProps) => {
   const navigate = useNavigate();
   const user = useUser();
@@ -86,6 +87,8 @@ export const ProjectTable = ({
         <TableBody>
           {projects.map((project) => {
             const StatusIcon = statusIcons[project.status].icon;
+            const canEdit = canEditProject(roles, user?.id, project.owner_id, project.project_manager, user?.email);
+
             return (
               <TableRow
                 key={project.id}
@@ -123,52 +126,15 @@ export const ProjectTable = ({
                   )}
                 </TableCell>
                 <TableCell className="text-right space-x-2">
-                  {canEditProject(roles, user?.id, project.owner_id, project.project_manager, user?.email) && (
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onProjectEdit(project.id);
-                      }}
-                      className="h-8 w-8"
-                    >
-                      <Pencil className="h-4 w-4" />
-                    </Button>
-                  )}
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onViewHistory(project.id, project.title);
-                    }}
-                    className="h-8 w-8"
-                  >
-                    <History className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      navigate(`/tasks/${project.id}`);
-                    }}
-                    className="h-8 w-8"
-                  >
-                    <ListTodo className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      navigate(`/risks/${project.id}`);
-                    }}
-                    className="h-8 w-8"
-                  >
-                    <ShieldAlert className="h-4 w-4" />
-                  </Button>
+                  <ProjectActions
+                    projectId={project.id}
+                    projectTitle={project.title}
+                    onEdit={onProjectEdit}
+                    onViewHistory={onViewHistory}
+                    canEdit={canEdit}
+                    userRoles={roles}
+                    onProjectDeleted={onProjectDeleted}
+                  />
                 </TableCell>
               </TableRow>
             );
