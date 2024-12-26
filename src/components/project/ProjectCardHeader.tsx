@@ -1,9 +1,12 @@
 import { CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Pencil, History, Star } from "lucide-react";
-import { cn } from "@/lib/utils";
 import { ProjectStatus } from "../ProjectCard";
 import { StatusIcon } from "./StatusIcon";
+import { useUser } from "@supabase/auth-helpers-react";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { canEditProject } from "@/utils/permissions";
 
 interface ProjectCardHeaderProps {
   title: string;
@@ -12,6 +15,7 @@ interface ProjectCardHeaderProps {
   onEdit: (id: string) => void;
   onViewHistory: (id: string, title: string) => void;
   id: string;
+  owner_id?: string;
 }
 
 export const ProjectCardHeader = ({
@@ -21,7 +25,26 @@ export const ProjectCardHeader = ({
   onEdit,
   onViewHistory,
   id,
+  owner_id,
 }: ProjectCardHeaderProps) => {
+  const user = useUser();
+
+  const { data: userProfile } = useQuery({
+    queryKey: ["userProfile", user?.id],
+    queryFn: async () => {
+      if (!user?.id) return null;
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("role")
+        .eq("id", user.id)
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!user?.id,
+  });
+
   return (
     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
       <div className="flex items-center gap-2">
@@ -31,17 +54,19 @@ export const ProjectCardHeader = ({
         <CardTitle className="text-xl font-semibold">{title}</CardTitle>
       </div>
       <div className="flex items-center gap-2">
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={(e) => {
-            e.stopPropagation();
-            onEdit(id);
-          }}
-          className="h-8 w-8"
-        >
-          <Pencil className="h-4 w-4" />
-        </Button>
+        {canEditProject(userProfile?.role, user?.id, owner_id) && (
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={(e) => {
+              e.stopPropagation();
+              onEdit(id);
+            }}
+            className="h-8 w-8"
+          >
+            <Pencil className="h-4 w-4" />
+          </Button>
+        )}
         <Button
           variant="ghost"
           size="icon"

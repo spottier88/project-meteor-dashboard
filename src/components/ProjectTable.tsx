@@ -7,10 +7,14 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { Sun, Cloud, CloudLightning, Pencil, History, ListTodo, ShieldAlert, Star } from "lucide-react";
+import { Sun, Cloud, CloudLightning, Pencil, History, ListTodo, ShieldAlert } from "lucide-react";
 import { ProjectStatus, ProgressStatus } from "./ProjectCard";
 import { cn } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
+import { useUser } from "@supabase/auth-helpers-react";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { canEditProject } from "@/utils/permissions";
 
 interface Project {
   id: string;
@@ -20,7 +24,7 @@ interface Project {
   completion: number;
   lastReviewDate: string;
   project_manager?: string;
-  suivi_dgs?: boolean;
+  owner_id?: string;
 }
 
 interface ProjectTableProps {
@@ -36,18 +40,6 @@ const statusIcons = {
   stormy: { icon: CloudLightning, color: "text-danger", label: "Orageux" },
 };
 
-const progressLabels = {
-  better: "En amélioration",
-  stable: "Stable",
-  worse: "En dégradation",
-};
-
-const progressColors = {
-  better: "text-success",
-  stable: "text-neutral",
-  worse: "text-danger",
-};
-
 export const ProjectTable = ({
   projects,
   onProjectReview,
@@ -55,6 +47,23 @@ export const ProjectTable = ({
   onViewHistory,
 }: ProjectTableProps) => {
   const navigate = useNavigate();
+  const user = useUser();
+
+  const { data: userProfile } = useQuery({
+    queryKey: ["userProfile", user?.id],
+    queryFn: async () => {
+      if (!user?.id) return null;
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("role")
+        .eq("id", user.id)
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!user?.id,
+  });
 
   return (
     <div className="rounded-md border">
@@ -97,10 +106,10 @@ export const ProjectTable = ({
                   <span
                     className={cn(
                       "text-sm font-medium",
-                      progressColors[project.progress]
+                      project.progress === "better" ? "text-success" : project.progress === "stable" ? "text-neutral" : "text-danger"
                     )}
                   >
-                    {progressLabels[project.progress]}
+                    {project.progress === "better" ? "En amélioration" : project.progress === "stable" ? "Stable" : "En dégradation"}
                   </span>
                 </TableCell>
                 <TableCell>{project.completion}%</TableCell>
@@ -111,17 +120,19 @@ export const ProjectTable = ({
                   )}
                 </TableCell>
                 <TableCell className="text-right space-x-2">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onProjectEdit(project.id);
-                    }}
-                    className="h-8 w-8"
-                  >
-                    <Pencil className="h-4 w-4" />
-                  </Button>
+                  {canEditProject(userProfile?.role, user?.id, project.owner_id) && (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onProjectEdit(project.id);
+                      }}
+                      className="h-8 w-8"
+                    >
+                      <Pencil className="h-4 w-4" />
+                    </Button>
+                  )}
                   <Button
                     variant="ghost"
                     size="icon"
