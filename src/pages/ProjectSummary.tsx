@@ -12,6 +12,7 @@ import { ProjectPDF } from "@/components/ProjectPDF";
 import { PDFDownloadLink } from "@react-pdf/renderer";
 import { Risk } from "@/types/risk";
 import { ProjectSummaryHeader } from "@/components/project/ProjectSummaryHeader";
+import { statusIcons } from "@/lib/project-status";
 
 interface Project {
   id: string;
@@ -113,7 +114,7 @@ export const ProjectSummary = () => {
           fileName={`${project.title.toLowerCase().replace(/\s+/g, "-")}-synthese.pdf`}
         >
           {({ loading }) => (
-            <Button disabled={loading}>
+            <Button disabled={loading} type="button">
               <Download className="h-4 w-4 mr-2" />
               {loading ? "Génération..." : "Exporter en PDF"}
             </Button>
