@@ -131,12 +131,14 @@ export const ProjectSummary = () => {
           }
           fileName={downloadFileName}
         >
-          {({ loading }) => (
-            <Button disabled={loading} type="button">
-              <Download className="h-4 w-4 mr-2" />
-              {loading ? "Génération..." : "Exporter en PDF"}
-            </Button>
-          )}
+          {({ loading }) => {
+            return (
+              <Button disabled={loading} type="button">
+                <Download className="h-4 w-4 mr-2" />
+                {loading ? "Génération..." : "Exporter en PDF"}
+              </Button>
+            );
+          }}
         </PDFDownloadLink>
       </div>
 
