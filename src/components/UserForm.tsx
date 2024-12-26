@@ -11,6 +11,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { UserFormFields } from "./form/UserFormFields";
 import { UserRole } from "@/types/user";
+import { useUser } from "@supabase/auth-helpers-react";
 
 interface UserFormProps {
   isOpen: boolean;
@@ -27,6 +28,7 @@ interface UserFormProps {
 
 export const UserForm = ({ isOpen, onClose, onSubmit, user }: UserFormProps) => {
   const { toast } = useToast();
+  const currentUser = useUser();
   const [firstName, setFirstName] = useState(user?.first_name || "");
   const [lastName, setLastName] = useState(user?.last_name || "");
   const [email, setEmail] = useState(user?.email || "");
@@ -72,16 +74,38 @@ export const UserForm = ({ isOpen, onClose, onSubmit, user }: UserFormProps) => 
 
         if (profileError) throw profileError;
 
-        // Delete existing roles
-        const { error: deleteRolesError } = await supabase
+        // Get current roles to compare
+        const { data: currentRoles, error: getRolesError } = await supabase
           .from("user_roles")
-          .delete()
+          .select("role")
           .eq("user_id", user.id);
 
-        if (deleteRolesError) throw deleteRolesError;
+        if (getRolesError) throw getRolesError;
 
-        // Insert new roles one by one to avoid RLS issues
-        for (const role of roles) {
+        const currentRoleSet = new Set(currentRoles.map(r => r.role));
+        const newRoleSet = new Set(roles);
+
+        // Roles to remove (in current but not in new)
+        const rolesToRemove = currentRoles
+          .map(r => r.role)
+          .filter(role => !newRoleSet.has(role));
+
+        // Roles to add (in new but not in current)
+        const rolesToAdd = roles.filter(role => !currentRoleSet.has(role));
+
+        // Remove roles that are no longer needed
+        if (rolesToRemove.length > 0) {
+          const { error: deleteRolesError } = await supabase
+            .from("user_roles")
+            .delete()
+            .eq("user_id", user.id)
+            .in("role", rolesToRemove);
+
+          if (deleteRolesError) throw deleteRolesError;
+        }
+
+        // Add new roles
+        for (const role of rolesToAdd) {
           const { error: insertRoleError } = await supabase
             .from("user_roles")
             .insert({
@@ -140,7 +164,7 @@ export const UserForm = ({ isOpen, onClose, onSubmit, user }: UserFormProps) => 
         <UserFormFields
           firstName={firstName}
           setFirstName={setFirstName}
-          lastName={lastName}
+          lastName={setLastName}
           setLastName={setLastName}
           email={email}
           setEmail={setEmail}
