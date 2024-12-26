@@ -80,19 +80,14 @@ export const ProjectSummary = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("reviews")
-        .select(`
-          *,
-          projects (
-            completion
-          )
-        `)
+        .select("*, projects!inner(completion)")
         .eq("project_id", projectId)
         .order("created_at", { ascending: true });
 
       if (error) throw error;
       return data.map(review => ({
         ...review,
-        completion: review.projects?.completion ?? 0
+        completion: review.projects.completion
       })) as Review[];
     },
   });
@@ -138,7 +133,7 @@ export const ProjectSummary = () => {
           fileName={`${project.title.toLowerCase().replace(/\s+/g, "-")}-synthese.pdf`}
         >
           {({ loading }) => (
-            <Button asChild disabled={loading}>
+            <Button asChild disabled={loading} type="button">
               <span>
                 <Download className="h-4 w-4 mr-2" />
                 {loading ? "Génération..." : "Exporter en PDF"}

@@ -1,7 +1,10 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ChartContainer } from "@/components/ui/chart";
-import { Line, LineChart, XAxis, YAxis, Tooltip, TooltipProps } from "recharts";
-import { ValueType } from "recharts/types/component/DefaultTooltipContent";
+import {
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
+} from "@/components/ui/chart";
+import { Line, LineChart, XAxis, YAxis } from "recharts";
 
 interface Review {
   created_at: string;
@@ -19,27 +22,6 @@ export const ProjectProgressChart = ({ reviews }: ProjectProgressChartProps) => 
       date: new Date(review.created_at).toLocaleDateString("fr-FR"),
       completion: review.completion,
     }));
-
-  const CustomTooltip = ({
-    active,
-    payload,
-  }: TooltipProps<ValueType, string>) => {
-    if (active && payload && payload.length) {
-      return (
-        <div className="rounded-lg border bg-background p-2 shadow-sm">
-          <div className="grid gap-2">
-            <div className="flex items-center justify-between gap-2">
-              <span className="font-medium">Progression</span>
-              <span className="font-mono text-right">
-                {payload[0].value}%
-              </span>
-            </div>
-          </div>
-        </div>
-      );
-    }
-    return null;
-  };
 
   return (
     <Card>
@@ -80,7 +62,9 @@ export const ProjectProgressChart = ({ reviews }: ProjectProgressChartProps) => 
                 strokeWidth={2}
                 dot={{ strokeWidth: 2 }}
               />
-              <Tooltip content={<CustomTooltip />} />
+              <ChartTooltip>
+                <ChartTooltipContent />
+              </ChartTooltip>
             </LineChart>
           </ChartContainer>
         </div>
