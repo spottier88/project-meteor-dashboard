@@ -9,6 +9,33 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      profiles: {
+        Row: {
+          created_at: string | null
+          email: string | null
+          first_name: string | null
+          id: string
+          last_name: string | null
+          role: Database["public"]["Enums"]["user_role"]
+        }
+        Insert: {
+          created_at?: string | null
+          email?: string | null
+          first_name?: string | null
+          id: string
+          last_name?: string | null
+          role?: Database["public"]["Enums"]["user_role"]
+        }
+        Update: {
+          created_at?: string | null
+          email?: string | null
+          first_name?: string | null
+          id?: string
+          last_name?: string | null
+          role?: Database["public"]["Enums"]["user_role"]
+        }
+        Relationships: []
+      }
       projects: {
         Row: {
           completion: number
@@ -231,6 +258,7 @@ export type Database = {
       risk_severity: "low" | "medium" | "high"
       risk_status: "open" | "in_progress" | "resolved"
       task_status: "todo" | "in_progress" | "done"
+      user_role: "admin" | "chef_projet"
     }
     CompositeTypes: {
       [_ in never]: never
