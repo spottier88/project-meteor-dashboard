@@ -111,8 +111,6 @@ export const ProjectSummary = () => {
     );
   }
 
-  const downloadFileName = `${project.title.toLowerCase().replace(/\s+/g, "-")}-synthese.pdf`;
-
   return (
     <div className="container mx-auto py-8 px-4">
       <div className="flex items-center justify-between mb-6">
@@ -129,9 +127,9 @@ export const ProjectSummary = () => {
               risks={risks || []}
             />
           }
-          fileName={downloadFileName}
+          fileName={`${project.title.toLowerCase().replace(/\s+/g, "-")}-synthese.pdf`}
         >
-          {({ loading }: { loading: boolean }) => (
+          {({ loading }) => (
             <Button disabled={loading} type="button">
               <Download className="h-4 w-4 mr-2" />
               {loading ? "Génération..." : "Exporter en PDF"}
