@@ -12,6 +12,7 @@ type ProgressStatus = Database["public"]["Enums"]["progress_status"];
 type RiskProbability = Database["public"]["Enums"]["risk_probability"];
 type RiskSeverity = Database["public"]["Enums"]["risk_severity"];
 type RiskStatus = Database["public"]["Enums"]["risk_status"];
+type TaskStatus = Database["public"]["Enums"]["task_status"];
 
 interface ProjectPDFProps {
   project: {
@@ -35,9 +36,16 @@ interface ProjectPDFProps {
     status: RiskStatus;
     mitigation_plan?: string;
   }>;
+  tasks: Array<{
+    title: string;
+    description?: string;
+    status: TaskStatus;
+    due_date?: string;
+    assignee?: string;
+  }>;
 }
 
-export const ProjectPDF = ({ project, lastReview, risks }: ProjectPDFProps) => (
+export const ProjectPDF = ({ project, lastReview, risks, tasks }: ProjectPDFProps) => (
   <Document>
     <Page size="A4" style={styles.page}>
       <PDFHeader title={project.title} />

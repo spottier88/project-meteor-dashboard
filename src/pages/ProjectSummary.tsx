@@ -6,8 +6,8 @@ import { Button } from "@/components/ui/button";
 import { FileDown } from "lucide-react";
 import { ProjectPDF } from "@/components/ProjectPDF";
 import { RiskList } from "@/components/RiskList";
-import { TaskList } from "@/components/TaskList";
-import { ReviewList } from "@/components/ReviewList";
+import { KanbanBoard } from "@/components/KanbanBoard";
+import { LastReview } from "@/components/LastReview";
 import { ProjectHeader } from "@/components/ProjectHeader";
 
 export const ProjectSummary = () => {
@@ -23,6 +23,23 @@ export const ProjectSummary = () => {
         .single();
 
       if (error) throw error;
+      return data;
+    },
+    enabled: !!projectId,
+  });
+
+  const { data: lastReview } = useQuery({
+    queryKey: ["lastReview", projectId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("reviews")
+        .select("*")
+        .eq("project_id", projectId)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .single();
+
+      if (error) return null;
       return data;
     },
     enabled: !!projectId,
@@ -65,7 +82,14 @@ export const ProjectSummary = () => {
       <div className="flex items-center justify-between">
         <ProjectHeader project={project} />
         <PDFDownloadLink
-          document={<ProjectPDF project={project} risks={risks || []} tasks={tasks || []} />}
+          document={
+            <ProjectPDF
+              project={project}
+              lastReview={lastReview || undefined}
+              risks={risks || []}
+              tasks={tasks || []}
+            />
+          }
           fileName={`${project.title}.pdf`}
         >
           {({ loading }) => (
@@ -77,12 +101,22 @@ export const ProjectSummary = () => {
         </PDFDownloadLink>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2">
-        <div className="space-y-6">
-          <RiskList projectId={projectId} projectTitle={project.title} />
-          <TaskList projectId={projectId} />
+      <div className="grid gap-6">
+        {lastReview && (
+          <div className="max-w-xl mx-auto">
+            <LastReview review={lastReview} />
+          </div>
+        )}
+
+        <div className="space-y-4">
+          <h2 className="text-2xl font-bold">Tâches</h2>
+          <KanbanBoard projectId={projectId} />
         </div>
-        <ReviewList projectId={projectId} />
+
+        <div className="space-y-4">
+          <h2 className="text-2xl font-bold">Risques</h2>
+          <RiskList projectId={projectId} projectTitle={project.title} />
+        </div>
       </div>
     </div>
   );
