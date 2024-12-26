@@ -16,6 +16,7 @@ interface ProjectCardHeaderProps {
   onViewHistory: (id: string, title: string) => void;
   id: string;
   owner_id?: string;
+  project_manager?: string;
 }
 
 export const ProjectCardHeader = ({
@@ -26,6 +27,7 @@ export const ProjectCardHeader = ({
   onViewHistory,
   id,
   owner_id,
+  project_manager,
 }: ProjectCardHeaderProps) => {
   const user = useUser();
 
@@ -54,7 +56,7 @@ export const ProjectCardHeader = ({
         <CardTitle className="text-xl font-semibold">{title}</CardTitle>
       </div>
       <div className="flex items-center gap-2">
-        {canEditProject(userProfile?.role, user?.id, owner_id) && (
+        {canEditProject(userProfile?.role, user?.id, owner_id, project_manager, user?.email) && (
           <Button
             variant="ghost"
             size="icon"

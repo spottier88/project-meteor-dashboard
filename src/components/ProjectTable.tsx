@@ -121,7 +121,7 @@ export const ProjectTable = ({
                   )}
                 </TableCell>
                 <TableCell className="text-right space-x-2">
-                  {canEditProject(userProfile?.role, user?.id, project.owner_id) && (
+                  {canEditProject(userProfile?.role, user?.id, project.owner_id, project.project_manager, user?.email) && (
                     <Button
                       variant="ghost"
                       size="icon"

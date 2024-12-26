@@ -16,6 +16,8 @@ interface ProjectCardProps {
   lastReviewDate: string;
   id: string;
   suivi_dgs?: boolean;
+  project_manager?: string;
+  owner_id?: string;
   onReview: (id: string, title: string) => void;
   onEdit: (id: string) => void;
   onViewHistory: (id: string, title: string) => void;
@@ -30,6 +32,8 @@ export const ProjectCard = ({
   lastReviewDate,
   id,
   suivi_dgs,
+  project_manager,
+  owner_id,
   onEdit,
   onViewHistory,
 }: ProjectCardProps) => {
@@ -44,6 +48,8 @@ export const ProjectCard = ({
         onEdit={onEdit}
         onViewHistory={onViewHistory}
         id={id}
+        owner_id={owner_id}
+        project_manager={project_manager}
       />
       <CardContent>
         <div className="grid gap-4">
