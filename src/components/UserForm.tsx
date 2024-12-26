@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -31,6 +31,21 @@ export const UserForm = ({ isOpen, onClose, onSubmit, user }: UserFormProps) => 
   const [email, setEmail] = useState(user?.email || "");
   const [role, setRole] = useState<"admin" | "chef_projet">(user?.role || "chef_projet");
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Update form fields when user prop changes
+  useEffect(() => {
+    if (user) {
+      setFirstName(user.first_name || "");
+      setLastName(user.last_name || "");
+      setEmail(user.email || "");
+      setRole(user.role);
+    } else {
+      setFirstName("");
+      setLastName("");
+      setEmail("");
+      setRole("chef_projet");
+    }
+  }, [user]);
 
   const handleSubmit = async () => {
     if (!email || !firstName || !lastName) {
@@ -97,16 +112,7 @@ export const UserForm = ({ isOpen, onClose, onSubmit, user }: UserFormProps) => 
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => {
-      if (!open) {
-        // Reset form when closing
-        setFirstName("");
-        setLastName("");
-        setEmail("");
-        setRole("chef_projet");
-      }
-      onClose();
-    }}>
+    <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>
