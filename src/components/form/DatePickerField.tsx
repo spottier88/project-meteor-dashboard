@@ -43,7 +43,7 @@ export const DatePickerField = ({ label, value, onChange, minDate }: DatePickerF
         <PopoverContent className="w-auto p-0" align="start">
           <Calendar
             selected={value}
-            onSelect={handleDateSelect}
+            onDateSelect={handleDateSelect} // Utilisation de la nouvelle prop
             disabled={minDate ? { before: minDate } : undefined}
             initialFocus
             locale={fr}
