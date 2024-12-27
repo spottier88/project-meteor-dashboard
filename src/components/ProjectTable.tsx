@@ -16,6 +16,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { canEditProject } from "@/utils/permissions";
 import { UserRoleData } from "@/types/user";
 import { ProjectActions } from "./project/ProjectActions";
+import { StatusIcon } from "./project/StatusIcon";
 
 interface Project {
   id: string;
