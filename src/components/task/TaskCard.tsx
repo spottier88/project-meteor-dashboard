@@ -1,12 +1,12 @@
 import { Button } from "@/components/ui/button";
 import { TableCell, TableRow } from "@/components/ui/table";
 import { Pencil, Trash2 } from "lucide-react";
-import { cn } from "@/lib/utils";
 
 interface TaskCardProps {
   task: {
     id: string;
     title: string;
+    description?: string;
     status: "todo" | "in_progress" | "done";
     assignee?: string;
     due_date?: string;
@@ -32,6 +32,7 @@ export const TaskCard = ({ task, onEdit, onDelete, showActions }: TaskCardProps)
   return (
     <TableRow>
       <TableCell className="font-medium">{task.title}</TableCell>
+      <TableCell className="max-w-md">{task.description || "-"}</TableCell>
       <TableCell>
         <span className={statusColors[task.status]}>
           {statusLabels[task.status]}

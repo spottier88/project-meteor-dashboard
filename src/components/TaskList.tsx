@@ -136,6 +136,7 @@ export const TaskList = ({ projectId }: TaskListProps) => {
           <TableHeader>
             <TableRow>
               <TableHead>Titre</TableHead>
+              <TableHead>Description</TableHead>
               <TableHead>Statut</TableHead>
               <TableHead>Responsable</TableHead>
               <TableHead>Échéance</TableHead>

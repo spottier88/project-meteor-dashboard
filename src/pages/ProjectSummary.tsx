@@ -1,9 +1,9 @@
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { PDFDownloadLink } from "@react-pdf/renderer";
 import { Button } from "@/components/ui/button";
-import { FileDown } from "lucide-react";
+import { FileDown, ArrowLeft } from "lucide-react";
 import { ProjectPDF } from "@/components/ProjectPDF";
 import { RiskList } from "@/components/RiskList";
 import { KanbanBoard } from "@/components/KanbanBoard";
@@ -12,6 +12,7 @@ import { ProjectHeader } from "@/components/ProjectHeader";
 
 export const ProjectSummary = () => {
   const { projectId } = useParams<{ projectId: string }>();
+  const navigate = useNavigate();
 
   const { data: project } = useQuery({
     queryKey: ["project", projectId],
@@ -79,6 +80,15 @@ export const ProjectSummary = () => {
 
   return (
     <div className="container mx-auto py-6 space-y-6">
+      <Button
+        variant="ghost"
+        className="mb-4"
+        onClick={() => navigate("/")}
+      >
+        <ArrowLeft className="h-4 w-4 mr-2" />
+        Retour à l'accueil
+      </Button>
+
       <div className="flex items-center justify-between">
         <ProjectHeader project={project} />
         <PDFDownloadLink
@@ -93,7 +103,7 @@ export const ProjectSummary = () => {
           fileName={`${project.title}.pdf`}
         >
           {({ loading }) => (
-            <Button disabled={loading} type="button">
+            <Button disabled={loading}>
               <FileDown className="h-4 w-4 mr-2" />
               {loading ? "Génération..." : "Télécharger le PDF"}
             </Button>
