@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -23,12 +23,34 @@ interface RiskFormProps {
 
 export const RiskForm = ({ isOpen, onClose, onSubmit, projectId, risk }: RiskFormProps) => {
   const { toast } = useToast();
-  const [description, setDescription] = useState(risk?.description || "");
-  const [probability, setProbability] = useState<RiskProbability>(risk?.probability || "medium");
-  const [severity, setSeverity] = useState<RiskSeverity>(risk?.severity || "medium");
-  const [status, setStatus] = useState<RiskStatus>(risk?.status || "open");
-  const [mitigationPlan, setMitigationPlan] = useState(risk?.mitigation_plan || "");
+  const [description, setDescription] = useState("");
+  const [probability, setProbability] = useState<RiskProbability>("medium");
+  const [severity, setSeverity] = useState<RiskSeverity>("medium");
+  const [status, setStatus] = useState<RiskStatus>("open");
+  const [mitigationPlan, setMitigationPlan] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Charger les données du risque lors de l'édition
+  useEffect(() => {
+    if (risk) {
+      setDescription(risk.description);
+      setProbability(risk.probability);
+      setSeverity(risk.severity);
+      setStatus(risk.status);
+      setMitigationPlan(risk.mitigation_plan || "");
+    }
+  }, [risk]);
+
+  // Réinitialiser le formulaire lors de la fermeture
+  useEffect(() => {
+    if (!isOpen) {
+      setDescription("");
+      setProbability("medium");
+      setSeverity("medium");
+      setStatus("open");
+      setMitigationPlan("");
+    }
+  }, [isOpen]);
 
   const handleSubmit = async () => {
     if (!description.trim()) {
