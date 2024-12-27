@@ -41,6 +41,7 @@ export const ProjectActions = ({
           size="icon"
           onClick={(e) => handleClick(e, () => onEdit(projectId))}
           className="h-8 w-8"
+          title="Modifier le projet"
         >
           <Pencil className="h-4 w-4" />
         </Button>
@@ -52,6 +53,7 @@ export const ProjectActions = ({
           handleClick(e, () => onViewHistory(projectId, projectTitle))
         }
         className="h-8 w-8"
+        title="Historique des revues projets"
       >
         <History className="h-4 w-4" />
       </Button>
@@ -60,6 +62,7 @@ export const ProjectActions = ({
         size="icon"
         onClick={(e) => handleClick(e, () => navigate(`/tasks/${projectId}`))}
         className="h-8 w-8"
+        title="Gérer les tâches"
       >
         <ListTodo className="h-4 w-4" />
       </Button>
@@ -68,6 +71,7 @@ export const ProjectActions = ({
         size="icon"
         onClick={(e) => handleClick(e, () => navigate(`/risks/${projectId}`))}
         className="h-8 w-8"
+        title="Gérer les risques"
       >
         <ShieldAlert className="h-4 w-4" />
       </Button>
@@ -77,6 +81,7 @@ export const ProjectActions = ({
           size="icon"
           onClick={(e) => handleClick(e, () => setIsDeleteDialogOpen(true))}
           className="h-8 w-8"
+          title="Supprimer le projet"
         >
           <Trash2 className="h-4 w-4 text-destructive" />
         </Button>
