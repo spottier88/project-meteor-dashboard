@@ -34,7 +34,7 @@ export const TaskForm = ({ isOpen, onClose, onSubmit, projectId, task }: TaskFor
   const [assignee, setAssignee] = useState(task?.assignee || "");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Reset form when task changes
+  // Reset form when task changes or when form is closed
   useEffect(() => {
     if (task) {
       setTitle(task.title);
@@ -43,13 +43,17 @@ export const TaskForm = ({ isOpen, onClose, onSubmit, projectId, task }: TaskFor
       setDueDate(task.due_date ? new Date(task.due_date) : undefined);
       setAssignee(task.assignee || "");
     } else {
-      setTitle("");
-      setDescription("");
-      setStatus("todo");
-      setDueDate(undefined);
-      setAssignee("");
+      resetForm();
     }
-  }, [task]);
+  }, [task, isOpen]);
+
+  const resetForm = () => {
+    setTitle("");
+    setDescription("");
+    setStatus("todo");
+    setDueDate(undefined);
+    setAssignee("");
+  };
 
   const handleSubmit = async () => {
     if (!title.trim()) {
@@ -94,6 +98,7 @@ export const TaskForm = ({ isOpen, onClose, onSubmit, projectId, task }: TaskFor
           title: "Succès",
           description: "La tâche a été créée",
         });
+        resetForm();
       }
 
       onSubmit();
