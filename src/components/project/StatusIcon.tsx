@@ -13,7 +13,7 @@ interface StatusIconProps {
 }
 
 export const StatusIcon = ({ status }: StatusIconProps) => {
-  if (!status || !statusIcons[status]) return null;
+  if (!status) return null;
   
   const StatusIconComponent = statusIcons[status].icon;
   return (
