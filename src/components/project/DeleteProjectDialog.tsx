@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { useNavigate } from "react-router-dom";
 
 interface DeleteProjectDialogProps {
   isOpen: boolean;
@@ -27,6 +28,7 @@ export const DeleteProjectDialog = ({
   onProjectDeleted,
 }: DeleteProjectDialogProps) => {
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   const handleDelete = async () => {
     const { error } = await supabase
@@ -49,6 +51,7 @@ export const DeleteProjectDialog = ({
     });
     onProjectDeleted();
     onClose();
+    navigate("/"); // Redirection vers la page d'accueil après la suppression
   };
 
   return (
