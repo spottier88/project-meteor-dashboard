@@ -106,15 +106,17 @@ export const ProjectTable = ({
                 </TableCell>
                 <TableCell>{project.project_manager || "-"}</TableCell>
                 <TableCell>
-                  {project.status && (
+                  {project.status ? (
                     <div className="flex items-center gap-2">
                       <StatusIcon status={project.status} />
                       <span>{statusLabels[project.status]}</span>
                     </div>
+                  ) : (
+                    <span className="text-muted-foreground">Pas de revue</span>
                   )}
                 </TableCell>
                 <TableCell>
-                  {project.progress && (
+                  {project.progress ? (
                     <span
                       className={cn(
                         "text-sm font-medium",
@@ -123,11 +125,15 @@ export const ProjectTable = ({
                     >
                       {progressLabels[project.progress]}
                     </span>
+                  ) : (
+                    <span className="text-muted-foreground">Pas de revue</span>
                   )}
                 </TableCell>
                 <TableCell>{project.completion}%</TableCell>
                 <TableCell>
-                  {project.lastReviewDate || "Aucune revue"}
+                  {project.lastReviewDate || (
+                    <span className="text-muted-foreground">Pas de revue</span>
+                  )}
                 </TableCell>
                 <TableCell>
                   {project.suivi_dgs && (

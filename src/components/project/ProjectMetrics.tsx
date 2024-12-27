@@ -33,7 +33,7 @@ export const ProjectMetrics = ({
             {progressLabels[progress]}
           </span>
         ) : (
-          <span className="text-sm text-muted-foreground">Non évalué</span>
+          <span className="text-sm text-muted-foreground">Pas de revue</span>
         )}
       </div>
       <div className="flex items-center justify-between">
@@ -45,7 +45,7 @@ export const ProjectMetrics = ({
         {lastReviewDate ? (
           <span className="text-sm font-medium">{lastReviewDate}</span>
         ) : (
-          <span className="text-sm text-muted-foreground">Aucune revue</span>
+          <span className="text-sm text-muted-foreground">Pas de revue</span>
         )}
       </div>
     </div>

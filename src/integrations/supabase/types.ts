@@ -43,10 +43,10 @@ export type Database = {
           last_review_date: string | null
           owner_id: string | null
           priority: string | null
-          progress: Database["public"]["Enums"]["progress_status"]
+          progress: Database["public"]["Enums"]["progress_status"] | null
           project_manager: string | null
           start_date: string | null
-          status: Database["public"]["Enums"]["project_status"]
+          status: Database["public"]["Enums"]["project_status"] | null
           suivi_dgs: boolean | null
           title: string
         }
@@ -59,10 +59,10 @@ export type Database = {
           last_review_date?: string | null
           owner_id?: string | null
           priority?: string | null
-          progress?: Database["public"]["Enums"]["progress_status"]
+          progress?: Database["public"]["Enums"]["progress_status"] | null
           project_manager?: string | null
           start_date?: string | null
-          status?: Database["public"]["Enums"]["project_status"]
+          status?: Database["public"]["Enums"]["project_status"] | null
           suivi_dgs?: boolean | null
           title: string
         }
@@ -75,10 +75,10 @@ export type Database = {
           last_review_date?: string | null
           owner_id?: string | null
           priority?: string | null
-          progress?: Database["public"]["Enums"]["progress_status"]
+          progress?: Database["public"]["Enums"]["progress_status"] | null
           project_manager?: string | null
           start_date?: string | null
-          status?: Database["public"]["Enums"]["project_status"]
+          status?: Database["public"]["Enums"]["project_status"] | null
           suivi_dgs?: boolean | null
           title?: string
         }
