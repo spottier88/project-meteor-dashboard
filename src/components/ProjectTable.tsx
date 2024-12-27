@@ -6,7 +6,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Sun, Cloud, CloudLightning, Star } from "lucide-react";
+import { Star } from "lucide-react";
 import { ProjectStatus, ProgressStatus } from "./ProjectCard";
 import { cn } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
@@ -38,11 +38,17 @@ interface ProjectTableProps {
   onProjectDeleted: () => void;
 }
 
-const statusIcons = {
-  sunny: { icon: Sun, color: "text-warning", label: "Ensoleillé" },
-  cloudy: { icon: Cloud, color: "text-neutral", label: "Nuageux" },
-  stormy: { icon: CloudLightning, color: "text-danger", label: "Orageux" },
-};
+const statusLabels = {
+  sunny: "Ensoleillé",
+  cloudy: "Nuageux",
+  stormy: "Orageux",
+} as const;
+
+const progressLabels = {
+  better: "En amélioration",
+  stable: "Stable",
+  worse: "En dégradation",
+} as const;
 
 export const ProjectTable = ({
   projects,
@@ -103,7 +109,7 @@ export const ProjectTable = ({
                   {project.status && (
                     <div className="flex items-center gap-2">
                       <StatusIcon status={project.status} />
-                      <span>{statusIcons[project.status].label}</span>
+                      <span>{statusLabels[project.status]}</span>
                     </div>
                   )}
                 </TableCell>
@@ -115,12 +121,14 @@ export const ProjectTable = ({
                         project.progress === "better" ? "text-success" : project.progress === "stable" ? "text-neutral" : "text-danger"
                       )}
                     >
-                      {project.progress === "better" ? "En amélioration" : project.progress === "stable" ? "Stable" : "En dégradation"}
+                      {progressLabels[project.progress]}
                     </span>
                   )}
                 </TableCell>
                 <TableCell>{project.completion}%</TableCell>
-                <TableCell>{project.lastReviewDate || "Aucune revue"}</TableCell>
+                <TableCell>
+                  {project.lastReviewDate || "Aucune revue"}
+                </TableCell>
                 <TableCell>
                   {project.suivi_dgs && (
                     <Star className="h-4 w-4 text-yellow-500" aria-label="Suivi DGS" />
