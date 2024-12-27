@@ -88,7 +88,7 @@ export const ProjectTable = ({
             <TableHead>Avancement</TableHead>
             <TableHead>Dernière revue</TableHead>
             <TableHead>Suivi DGS</TableHead>
-            <TableHead className="text-right">Actions</TableHead>
+            <TableHead className="text-center">Actions</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
