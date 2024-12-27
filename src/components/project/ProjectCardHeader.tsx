@@ -67,6 +67,7 @@ export const ProjectCardHeader = ({
               onEdit(id);
             }}
             className="h-8 w-8"
+            title="Modifier le projet"
           >
             <Pencil className="h-4 w-4" />
           </Button>
@@ -79,6 +80,7 @@ export const ProjectCardHeader = ({
             onViewHistory(id, title);
           }}
           className="h-8 w-8"
+          title="Historique des revues de projet"
         >
           <History className="h-4 w-4" />
         </Button>
