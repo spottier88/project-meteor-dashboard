@@ -4,6 +4,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { CalendarIcon } from "lucide-react";
+import { useState } from "react";
 
 interface DatePickerFieldProps {
   label: string;
@@ -13,10 +14,17 @@ interface DatePickerFieldProps {
 }
 
 export const DatePickerField = ({ label, value, onChange, minDate }: DatePickerFieldProps) => {
+  const [popoverOpen, setPopoverOpen] = useState(false);
+
+  const handleDateSelect = (date: Date | undefined) => {
+    onChange(date);
+    setPopoverOpen(false); // Ferme le popover après la sélection
+  };
+
   return (
     <div className="grid gap-2">
       <label className="text-sm font-medium">{label}</label>
-      <Popover>
+      <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
         <PopoverTrigger asChild>
           <Button
             variant="outline"
@@ -35,7 +43,7 @@ export const DatePickerField = ({ label, value, onChange, minDate }: DatePickerF
         <PopoverContent className="w-auto p-0" align="start">
           <Calendar
             selected={value}
-            onSelect={onChange}
+            onSelect={handleDateSelect}
             disabled={minDate ? { before: minDate } : undefined}
             initialFocus
             locale={fr}
