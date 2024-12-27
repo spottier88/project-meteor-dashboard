@@ -44,6 +44,32 @@ export const ProjectSummary = () => {
     },
   });
 
+  const { data: risks = [] } = useQuery({
+    queryKey: ["risks", projectId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("risks")
+        .select("*")
+        .eq("project_id", projectId);
+
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const { data: tasks = [] } = useQuery({
+    queryKey: ["tasks", projectId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("tasks")
+        .select("*")
+        .eq("project_id", projectId);
+
+      if (error) throw error;
+      return data;
+    },
+  });
+
   if (isLoadingProject || isLoadingReview) {
     return (
       <div className="container mx-auto py-8 px-4">
@@ -76,6 +102,8 @@ export const ProjectSummary = () => {
             <ProjectPDF
               project={project}
               lastReview={lastReview}
+              risks={risks}
+              tasks={tasks}
             />
           }
           fileName={`${project.title.toLowerCase().replace(/\s+/g, "-")}.pdf`}
