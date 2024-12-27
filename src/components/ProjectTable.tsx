@@ -20,10 +20,10 @@ import { ProjectActions } from "./project/ProjectActions";
 interface Project {
   id: string;
   title: string;
-  status: ProjectStatus;
-  progress: ProgressStatus;
+  status: ProjectStatus | null;
+  progress: ProgressStatus | null;
   completion: number;
-  lastReviewDate: string;
+  lastReviewDate: string | null;
   project_manager?: string;
   owner_id?: string;
   suivi_dgs?: boolean;
@@ -86,7 +86,6 @@ export const ProjectTable = ({
         </TableHeader>
         <TableBody>
           {projects.map((project) => {
-            const StatusIcon = statusIcons[project.status].icon;
             const canEdit = canEditProject(roles, user?.id, project.owner_id, project.project_manager, user?.email);
 
             return (
@@ -100,26 +99,27 @@ export const ProjectTable = ({
                 </TableCell>
                 <TableCell>{project.project_manager || "-"}</TableCell>
                 <TableCell>
-                  <div className="flex items-center gap-2">
-                    <StatusIcon
-                      className={cn("w-4 h-4", statusIcons[project.status].color)}
-                      aria-label={statusIcons[project.status].label}
-                    />
-                    <span>{statusIcons[project.status].label}</span>
-                  </div>
+                  {project.status && (
+                    <div className="flex items-center gap-2">
+                      <StatusIcon status={project.status} />
+                      <span>{statusIcons[project.status].label}</span>
+                    </div>
+                  )}
                 </TableCell>
                 <TableCell>
-                  <span
-                    className={cn(
-                      "text-sm font-medium",
-                      project.progress === "better" ? "text-success" : project.progress === "stable" ? "text-neutral" : "text-danger"
-                    )}
-                  >
-                    {project.progress === "better" ? "En amélioration" : project.progress === "stable" ? "Stable" : "En dégradation"}
-                  </span>
+                  {project.progress && (
+                    <span
+                      className={cn(
+                        "text-sm font-medium",
+                        project.progress === "better" ? "text-success" : project.progress === "stable" ? "text-neutral" : "text-danger"
+                      )}
+                    >
+                      {project.progress === "better" ? "En amélioration" : project.progress === "stable" ? "Stable" : "En dégradation"}
+                    </span>
+                  )}
                 </TableCell>
                 <TableCell>{project.completion}%</TableCell>
-                <TableCell>{project.lastReviewDate}</TableCell>
+                <TableCell>{project.lastReviewDate || "Aucune revue"}</TableCell>
                 <TableCell>
                   {project.suivi_dgs && (
                     <Star className="h-4 w-4 text-yellow-500" aria-label="Suivi DGS" />

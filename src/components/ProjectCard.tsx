@@ -10,10 +10,10 @@ export type ProgressStatus = "better" | "stable" | "worse";
 interface ProjectCardProps {
   title: string;
   description?: string;
-  status: ProjectStatus;
-  progress: ProgressStatus;
+  status: ProjectStatus | null;
+  progress: ProgressStatus | null;
   completion: number;
-  lastReviewDate: string;
+  lastReviewDate: string | null;
   id: string;
   suivi_dgs?: boolean;
   project_manager?: string;

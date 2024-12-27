@@ -11,7 +11,7 @@ import { UserRoleData } from "@/types/user";
 
 interface ProjectCardHeaderProps {
   title: string;
-  status: ProjectStatus;
+  status: ProjectStatus | null;
   suivi_dgs?: boolean;
   onEdit: (id: string) => void;
   onViewHistory: (id: string, title: string) => void;
@@ -82,7 +82,7 @@ export const ProjectCardHeader = ({
         >
           <History className="h-4 w-4" />
         </Button>
-        <StatusIcon status={status} />
+        {status && <StatusIcon status={status} />}
       </div>
     </CardHeader>
   );

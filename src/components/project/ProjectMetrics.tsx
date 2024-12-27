@@ -14,9 +14,9 @@ const progressLabels = {
 } as const;
 
 interface ProjectMetricsProps {
-  progress: ProgressStatus;
+  progress: ProgressStatus | null;
   completion: number;
-  lastReviewDate: string;
+  lastReviewDate: string | null;
 }
 
 export const ProjectMetrics = ({
@@ -28,9 +28,13 @@ export const ProjectMetrics = ({
     <div className="grid gap-2">
       <div className="flex items-center justify-between">
         <span className="text-sm text-muted-foreground">Progression</span>
-        <span className={cn("text-sm font-medium", progressColors[progress])}>
-          {progressLabels[progress]}
-        </span>
+        {progress ? (
+          <span className={cn("text-sm font-medium", progressColors[progress])}>
+            {progressLabels[progress]}
+          </span>
+        ) : (
+          <span className="text-sm text-muted-foreground">Non évalué</span>
+        )}
       </div>
       <div className="flex items-center justify-between">
         <span className="text-sm text-muted-foreground">Avancement</span>
@@ -38,7 +42,11 @@ export const ProjectMetrics = ({
       </div>
       <div className="flex items-center justify-between">
         <span className="text-sm text-muted-foreground">Dernière Revue</span>
-        <span className="text-sm font-medium">{lastReviewDate}</span>
+        {lastReviewDate ? (
+          <span className="text-sm font-medium">{lastReviewDate}</span>
+        ) : (
+          <span className="text-sm text-muted-foreground">Aucune revue</span>
+        )}
       </div>
     </div>
   );

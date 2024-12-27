@@ -9,10 +9,12 @@ const statusIcons = {
 } as const;
 
 interface StatusIconProps {
-  status: ProjectStatus;
+  status: ProjectStatus | null;
 }
 
 export const StatusIcon = ({ status }: StatusIconProps) => {
+  if (!status) return null;
+  
   const StatusIconComponent = statusIcons[status].icon;
   return (
     <StatusIconComponent
