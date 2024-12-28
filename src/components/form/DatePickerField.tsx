@@ -25,6 +25,7 @@ export const DatePickerField = ({ label, value, onChange, minDate }: DatePickerF
               "w-full justify-start text-left font-normal",
               !value && "text-muted-foreground"
             )}
+            type="button" // Important pour éviter la soumission du formulaire
           >
             <CalendarIcon className="mr-2 h-4 w-4" />
             {value ? (
@@ -35,14 +36,16 @@ export const DatePickerField = ({ label, value, onChange, minDate }: DatePickerF
           </Button>
         </PopoverTrigger>
         <PopoverContent className="w-auto p-0" align="start">
-          <Calendar
-            mode="single"
-            selected={value}
-            onSelect={onChange}
-            disabled={minDate ? { before: minDate } : undefined}
-            initialFocus
-            locale={fr}
-          />
+          <div className="calendar-wrapper border rounded-lg p-3 bg-white">
+            <Calendar
+              mode="single"
+              selected={value}
+              onSelect={onChange}
+              disabled={minDate ? { before: minDate } : undefined}
+              initialFocus
+              locale={fr}
+            />
+          </div>
         </PopoverContent>
       </Popover>
     </div>
