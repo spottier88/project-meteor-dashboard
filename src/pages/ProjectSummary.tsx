@@ -14,16 +14,20 @@ export const ProjectSummary = () => {
   const { projectId } = useParams<{ projectId: string }>();
   const navigate = useNavigate();
 
-  const { data: project } = useQuery({
+  const { data: project, isError: projectError } = useQuery({
     queryKey: ["project", projectId],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("projects")
         .select("*")
         .eq("id", projectId)
-        .single();
+        .maybeSingle();
 
       if (error) throw error;
+      if (!data) {
+        navigate("/");
+        return null;
+      }
       return data;
     },
     enabled: !!projectId,
@@ -38,7 +42,7 @@ export const ProjectSummary = () => {
         .eq("project_id", projectId)
         .order("created_at", { ascending: false })
         .limit(1)
-        .single();
+        .maybeSingle();
 
       if (error) return null;
       return data;
@@ -56,7 +60,7 @@ export const ProjectSummary = () => {
         .order("created_at", { ascending: false });
 
       if (error) throw error;
-      return data;
+      return data || [];
     },
     enabled: !!projectId,
   });
@@ -71,12 +75,15 @@ export const ProjectSummary = () => {
         .order("created_at", { ascending: false });
 
       if (error) throw error;
-      return data;
+      return data || [];
     },
     enabled: !!projectId,
   });
 
-  if (!project || !projectId) return null;
+  if (!project || projectError) {
+    navigate("/");
+    return null;
+  }
 
   return (
     <div className="container mx-auto py-6 space-y-6">
