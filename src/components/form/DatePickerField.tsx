@@ -32,13 +32,15 @@ export const DatePickerField = ({ label, value, onChange, minDate }: DatePickerF
     }
 
     const [day, month, year] = dateStr.split('/').map(Number);
-    const date = new Date(year, month - 1, day);
+    
+    // Crée la date en utilisant UTC pour éviter les problèmes de fuseau horaire
+    const date = new Date(Date.UTC(year, month - 1, day));
 
-    // Vérifie si la date est valide
+    // Vérifie si la date est valide en comparant les composants
     if (
-      date.getDate() !== day ||
-      date.getMonth() !== month - 1 ||
-      date.getFullYear() !== year ||
+      date.getUTCDate() !== day ||
+      date.getUTCMonth() !== month - 1 ||
+      date.getUTCFullYear() !== year ||
       isNaN(date.getTime())
     ) {
       setError("Date invalide");
@@ -69,7 +71,9 @@ export const DatePickerField = ({ label, value, onChange, minDate }: DatePickerF
     // Si la longueur est correcte, on valide
     if (newValue.length === 10 && validateDate(newValue)) {
       const [day, month, year] = newValue.split('/').map(Number);
-      onChange(new Date(year, month - 1, day));
+      // Crée la date en UTC pour garantir la bonne date
+      const date = new Date(Date.UTC(year, month - 1, day));
+      onChange(date);
     }
   };
 
