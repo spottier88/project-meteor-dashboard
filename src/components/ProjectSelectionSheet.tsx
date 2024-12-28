@@ -2,8 +2,7 @@ import { useState } from "react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Sun, Cloud, CloudLightning } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { StatusIcon } from "./project/StatusIcon";
 import { ProjectStatus } from "./ProjectCard";
 
 interface Project {
@@ -20,12 +19,6 @@ interface ProjectSelectionSheetProps {
   onClose: () => void;
   onProjectSelect: (id: string, title: string) => void;
 }
-
-const statusIcons = {
-  sunny: { icon: Sun, color: "text-warning" },
-  cloudy: { icon: Cloud, color: "text-neutral" },
-  stormy: { icon: CloudLightning, color: "text-danger" },
-};
 
 export const ProjectSelectionSheet = ({
   projects,
@@ -64,25 +57,20 @@ export const ProjectSelectionSheet = ({
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredProjects.map((project) => {
-                  const StatusIcon = statusIcons[project.status].icon;
-                  return (
-                    <TableRow
-                      key={project.id}
-                      className="cursor-pointer hover:bg-muted/50"
-                      onClick={() => onProjectSelect(project.id, project.title)}
-                    >
-                      <TableCell className="font-medium">{project.title}</TableCell>
-                      <TableCell>{project.project_manager || "-"}</TableCell>
-                      <TableCell>
-                        <StatusIcon
-                          className={cn("w-4 h-4", statusIcons[project.status].color)}
-                        />
-                      </TableCell>
-                      <TableCell>{project.lastReviewDate}</TableCell>
-                    </TableRow>
-                  );
-                })}
+                {filteredProjects.map((project) => (
+                  <TableRow
+                    key={project.id}
+                    className="cursor-pointer hover:bg-muted/50"
+                    onClick={() => onProjectSelect(project.id, project.title)}
+                  >
+                    <TableCell className="font-medium">{project.title}</TableCell>
+                    <TableCell>{project.project_manager || "-"}</TableCell>
+                    <TableCell>
+                      <StatusIcon status={project.status} />
+                    </TableCell>
+                    <TableCell>{project.lastReviewDate}</TableCell>
+                  </TableRow>
+                ))}
               </TableBody>
             </Table>
           </div>
