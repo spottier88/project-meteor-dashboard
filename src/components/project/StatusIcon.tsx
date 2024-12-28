@@ -1,4 +1,4 @@
-import { Sun, Cloud, CloudLightning } from "lucide-react";
+import { Sun, Cloud, CloudLightning, Hourglass } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ProjectStatus } from "../ProjectCard";
 
@@ -13,7 +13,14 @@ interface StatusIconProps {
 }
 
 export const StatusIcon = ({ status }: StatusIconProps) => {
-  if (!status) return null;
+  if (!status) {
+    return (
+      <Hourglass
+        className="w-6 h-6 text-muted-foreground"
+        aria-label="En attente de revue"
+      />
+    );
+  }
   
   const StatusIconComponent = statusIcons[status].icon;
   return (
