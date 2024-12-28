@@ -51,6 +51,7 @@ export const TaskCard = ({ task, onEdit, onDelete, showActions }: TaskCardProps)
               variant="ghost"
               size="icon"
               onClick={() => onEdit(task)}
+              title="Modifier la tâche"
             >
               <Pencil className="h-4 w-4" />
             </Button>
@@ -58,6 +59,7 @@ export const TaskCard = ({ task, onEdit, onDelete, showActions }: TaskCardProps)
               variant="ghost"
               size="icon"
               onClick={() => onDelete(task)}
+              title="Supprimer la tâche"
             >
               <Trash2 className="h-4 w-4" />
             </Button>
