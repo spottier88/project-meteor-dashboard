@@ -74,7 +74,7 @@ export const OrganizationFields = ({
 
   // Initialize fields with project data
   useEffect(() => {
-    if (initialPoleId) {
+    if (initialPoleId && initialPoleId !== poleId) {
       setPoleId(initialPoleId);
     }
   }, [initialPoleId, setPoleId]);
@@ -94,13 +94,17 @@ export const OrganizationFields = ({
   // Reset dependent fields when parent field changes
   const handlePoleChange = (value: string) => {
     setPoleId(value);
-    setDirectionId("none");
-    setServiceId("none");
+    if (value !== poleId) {
+      setDirectionId("none");
+      setServiceId("none");
+    }
   };
 
   const handleDirectionChange = (value: string) => {
     setDirectionId(value);
-    setServiceId("none");
+    if (value !== directionId) {
+      setServiceId("none");
+    }
   };
 
   return (
