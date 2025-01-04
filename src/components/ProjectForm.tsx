@@ -28,6 +28,7 @@ interface ProjectFormProps {
 }
 
 export const ProjectForm = ({ isOpen, onClose, onSubmit, project }: ProjectFormProps) => {
+  console.log("ProjectForm - Initial project data:", project); // Ajout du log
   const user = useUser();
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -61,6 +62,7 @@ export const ProjectForm = ({ isOpen, onClose, onSubmit, project }: ProjectFormP
 
   useEffect(() => {
     if (isOpen) {
+      console.log("ProjectForm - Setting initial values with project:", project); // Ajout du log
       setTitle(project?.title || "");
       setDescription(project?.description || "");
       setProjectManager(project?.project_manager || "");
@@ -120,6 +122,7 @@ export const ProjectForm = ({ isOpen, onClose, onSubmit, project }: ProjectFormP
             setDirectionId={setDirectionId}
             serviceId={serviceId}
             setServiceId={setServiceId}
+            project={project} // Ajout de la prop project
           />
         </div>
         
