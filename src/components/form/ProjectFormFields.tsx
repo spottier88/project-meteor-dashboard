@@ -24,7 +24,6 @@ interface ProjectFormFieldsProps {
   suiviDgs: boolean;
   setSuiviDgs: (value: boolean) => void;
   isAdmin: boolean;
-  ownerId: string;
   setOwnerId: (value: string) => void;
   poleId?: string;
   setPoleId: (value: string) => void;
@@ -58,7 +57,6 @@ export const ProjectFormFields = ({
   serviceId,
   setServiceId,
 }: ProjectFormFieldsProps) => {
-  // Fetch all project managers (users with chef_projet role)
   const { data: projectManagers } = useQuery({
     queryKey: ["projectManagers"],
     queryFn: async () => {
@@ -69,7 +67,6 @@ export const ProjectFormFields = ({
 
       if (error) throw error;
 
-      // Filter profiles to only include those with chef_projet role
       const { data: userRoles } = await supabase
         .from("user_roles")
         .select("*")
@@ -83,7 +80,6 @@ export const ProjectFormFields = ({
     },
   });
 
-  // Fetch poles
   const { data: poles } = useQuery({
     queryKey: ["poles"],
     queryFn: async () => {
@@ -96,7 +92,6 @@ export const ProjectFormFields = ({
     },
   });
 
-  // Fetch directions based on selected pole
   const { data: directions } = useQuery({
     queryKey: ["directions", poleId],
     queryFn: async () => {
@@ -112,7 +107,6 @@ export const ProjectFormFields = ({
     enabled: !!poleId,
   });
 
-  // Fetch services based on selected direction
   const { data: services } = useQuery({
     queryKey: ["services", directionId],
     queryFn: async () => {
@@ -216,7 +210,7 @@ export const ProjectFormFields = ({
                   <SelectValue placeholder="Sélectionner un pôle" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Aucun</SelectItem>
+                  <SelectItem value="none">Aucun</SelectItem>
                   {poles?.map((pole) => (
                     <SelectItem key={pole.id} value={pole.id}>
                       {pole.name}
@@ -233,7 +227,7 @@ export const ProjectFormFields = ({
                   <SelectValue placeholder="Sélectionner une direction" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Aucun</SelectItem>
+                  <SelectItem value="none">Aucun</SelectItem>
                   {directions?.map((direction) => (
                     <SelectItem key={direction.id} value={direction.id}>
                       {direction.name}
@@ -250,7 +244,7 @@ export const ProjectFormFields = ({
                   <SelectValue placeholder="Sélectionner un service" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Aucun</SelectItem>
+                  <SelectItem value="none">Aucun</SelectItem>
                   {services?.map((service) => (
                     <SelectItem key={service.id} value={service.id}>
                       {service.name}
