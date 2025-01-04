@@ -53,17 +53,28 @@ const Index = () => {
   });
 
   const filteredProjects = projects?.filter(project => {
+    // Filter by DGS follow-up
     if (filters.showDgsOnly && !project.suivi_dgs) {
       return false;
     }
 
+    // Filter by organization
     if (filters.organization) {
       const { type, id } = filters.organization;
-      if (type === "pole" && project.pole_id !== id) return false;
-      if (type === "direction" && project.direction_id !== id) return false;
-      if (type === "service" && project.service_id !== id) return false;
+      switch (type) {
+        case "pole":
+          if (project.pole_id !== id) return false;
+          break;
+        case "direction":
+          if (project.direction_id !== id) return false;
+          break;
+        case "service":
+          if (project.service_id !== id) return false;
+          break;
+      }
     }
 
+    // Filter by project manager
     if (filters.projectManager && project.project_manager !== filters.projectManager) {
       return false;
     }
