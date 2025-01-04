@@ -141,7 +141,6 @@ export const ProjectFormFields = ({
       setDirectionId("");
       setServiceId("");
     } else {
-      setPoleId("");
       setDirectionId(value);
       setServiceId("");
     }
@@ -151,8 +150,6 @@ export const ProjectFormFields = ({
     if (value === "none") {
       setServiceId("");
     } else {
-      setPoleId("");
-      setDirectionId("");
       setServiceId(value);
     }
   };
