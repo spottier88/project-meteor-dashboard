@@ -19,6 +19,8 @@ import { UserRoleData } from "@/types/user";
 import { ProjectActions } from "./project/ProjectActions";
 import { StatusIcon } from "./project/StatusIcon";
 import { SortableHeader } from "./ui/sortable-header";
+import { format } from "date-fns";
+import { fr } from "date-fns/locale";
 
 interface Project {
   id: string;
@@ -185,7 +187,9 @@ export const ProjectTable = ({
                 </TableCell>
                 <TableCell>{project.completion}%</TableCell>
                 <TableCell>
-                  {project.lastReviewDate || (
+                  {project.lastReviewDate ? (
+                    format(new Date(project.lastReviewDate), 'dd/MM/yyyy', { locale: fr })
+                  ) : (
                     <span className="text-muted-foreground">Pas de revue</span>
                   )}
                 </TableCell>
