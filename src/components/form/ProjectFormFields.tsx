@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { UserProfile } from "@/types/user";
+import { useEffect } from "react";
 
 interface ProjectFormFieldsProps {
   title: string;
@@ -123,6 +124,41 @@ export const ProjectFormFields = ({
     },
     enabled: !!directionId && directionId !== "none",
   });
+
+  // Ajout de la requête pour récupérer la hiérarchie d'un service
+  const { data: serviceHierarchy } = useQuery({
+    queryKey: ["serviceHierarchy", serviceId],
+    queryFn: async () => {
+      if (!serviceId || serviceId === "none") return null;
+      const { data, error } = await supabase
+        .from("services")
+        .select(`
+          *,
+          direction:directions (
+            *,
+            pole:poles (*)
+          )
+        `)
+        .eq("id", serviceId)
+        .single();
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!serviceId && serviceId !== "none",
+  });
+
+  // Mise à jour de la hiérarchie lors de la sélection d'un service
+  useEffect(() => {
+    if (serviceHierarchy) {
+      const direction = serviceHierarchy.direction;
+      if (direction) {
+        setDirectionId(direction.id);
+        if (direction.pole) {
+          setPoleId(direction.pole.id);
+        }
+      }
+    }
+  }, [serviceHierarchy]);
 
   const handlePoleChange = (value: string) => {
     if (value === "none") {

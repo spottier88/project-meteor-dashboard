@@ -74,9 +74,18 @@ export const ProjectForm = ({ isOpen, onClose, onSubmit, project }: ProjectFormP
       setOwnerId(project?.owner_id || "");
       
       // Initialize organization data
-      setPoleId(project?.pole_id || "");
-      setDirectionId(project?.direction_id || "");
-      setServiceId(project?.service_id || "");
+      if (project?.service_id) {
+        setServiceId(project.service_id);
+        // Les valeurs de pole_id et direction_id seront mises à jour via l'effet dans ProjectFormFields
+      } else if (project?.direction_id) {
+        setDirectionId(project.direction_id);
+        setPoleId(project.pole_id || "");
+        setServiceId("");
+      } else {
+        setPoleId(project?.pole_id || "");
+        setDirectionId("");
+        setServiceId("");
+      }
 
       // Set default project manager for new projects
       if (!project && !isAdmin && user?.email) {
@@ -133,8 +142,26 @@ export const ProjectForm = ({ isOpen, onClose, onSubmit, project }: ProjectFormP
 
       if (serviceId && serviceId !== "none") {
         finalServiceId = serviceId;
+        // Inclure également les IDs du pôle et de la direction
+        const { data: serviceData } = await supabase
+          .from("services")
+          .select(`
+            *,
+            direction:directions (
+              *,
+              pole:poles (*)
+            )
+          `)
+          .eq("id", serviceId)
+          .single();
+
+        if (serviceData) {
+          finalDirectionId = serviceData.direction_id;
+          finalPoleId = serviceData.direction?.pole_id;
+        }
       } else if (directionId && directionId !== "none") {
         finalDirectionId = directionId;
+        finalPoleId = poleId;
       } else if (poleId && poleId !== "none") {
         finalPoleId = poleId;
       }
