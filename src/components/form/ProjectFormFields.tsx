@@ -33,6 +33,9 @@ interface ProjectFormFieldsProps {
   setDirectionId: (value: string) => void;
   serviceId: string;
   setServiceId: (value: string) => void;
+  initialPoleId?: string | null;
+  initialDirectionId?: string | null;
+  initialServiceId?: string | null;
 }
 
 export const ProjectFormFields = ({
@@ -59,6 +62,9 @@ export const ProjectFormFields = ({
   setDirectionId,
   serviceId,
   setServiceId,
+  initialPoleId,
+  initialDirectionId,
+  initialServiceId,
 }: ProjectFormFieldsProps) => {
   const { data: projectManagers } = useQuery({
     queryKey: ["projectManagers"],
@@ -150,6 +156,9 @@ export const ProjectFormFields = ({
           setDirectionId={setDirectionId}
           serviceId={serviceId}
           setServiceId={setServiceId}
+          initialPoleId={initialPoleId}
+          initialDirectionId={initialDirectionId}
+          initialServiceId={initialServiceId}
         />
 
         <div className="grid gap-4 sm:grid-cols-2">

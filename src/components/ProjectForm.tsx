@@ -73,11 +73,6 @@ export const ProjectForm = ({ isOpen, onClose, onSubmit, project }: ProjectFormP
       setSuiviDgs(project?.suivi_dgs || false);
       setOwnerId(project?.owner_id || "");
 
-      // Initialisation des champs d'organisation
-      setPoleId(project?.pole_id || "none");
-      setDirectionId(project?.direction_id || "none");
-      setServiceId(project?.service_id || "none");
-
       // Si c'est un nouveau projet et que l'utilisateur n'est pas admin
       if (!project && !isAdmin && user?.email) {
         setProjectManager(user.email);
@@ -235,6 +230,9 @@ export const ProjectForm = ({ isOpen, onClose, onSubmit, project }: ProjectFormP
             setDirectionId={setDirectionId}
             serviceId={serviceId}
             setServiceId={setServiceId}
+            initialPoleId={project?.pole_id}
+            initialDirectionId={project?.direction_id}
+            initialServiceId={project?.service_id}
           />
         </div>
         

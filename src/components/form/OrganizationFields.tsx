@@ -2,6 +2,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useEffect } from "react";
 
 interface OrganizationFieldsProps {
   poleId: string;
@@ -10,6 +11,9 @@ interface OrganizationFieldsProps {
   setDirectionId: (value: string) => void;
   serviceId: string;
   setServiceId: (value: string) => void;
+  initialPoleId?: string | null;
+  initialDirectionId?: string | null;
+  initialServiceId?: string | null;
 }
 
 export const OrganizationFields = ({
@@ -19,7 +23,11 @@ export const OrganizationFields = ({
   setDirectionId,
   serviceId,
   setServiceId,
+  initialPoleId,
+  initialDirectionId,
+  initialServiceId,
 }: OrganizationFieldsProps) => {
+  // Fetch poles
   const { data: poles } = useQuery({
     queryKey: ["poles"],
     queryFn: async () => {
@@ -32,6 +40,7 @@ export const OrganizationFields = ({
     },
   });
 
+  // Fetch directions based on selected pole
   const { data: directions } = useQuery({
     queryKey: ["directions", poleId],
     queryFn: async () => {
@@ -47,6 +56,7 @@ export const OrganizationFields = ({
     enabled: !!poleId && poleId !== "none",
   });
 
+  // Fetch services based on selected direction
   const { data: services } = useQuery({
     queryKey: ["services", directionId],
     queryFn: async () => {
@@ -62,13 +72,44 @@ export const OrganizationFields = ({
     enabled: !!directionId && directionId !== "none",
   });
 
+  // Initialize fields with project data
+  useEffect(() => {
+    if (initialPoleId) {
+      setPoleId(initialPoleId);
+    }
+  }, [initialPoleId, setPoleId]);
+
+  useEffect(() => {
+    if (initialDirectionId && directions?.some(d => d.id === initialDirectionId)) {
+      setDirectionId(initialDirectionId);
+    }
+  }, [initialDirectionId, directions, setDirectionId]);
+
+  useEffect(() => {
+    if (initialServiceId && services?.some(s => s.id === initialServiceId)) {
+      setServiceId(initialServiceId);
+    }
+  }, [initialServiceId, services, setServiceId]);
+
+  // Reset dependent fields when parent field changes
+  const handlePoleChange = (value: string) => {
+    setPoleId(value);
+    setDirectionId("none");
+    setServiceId("none");
+  };
+
+  const handleDirectionChange = (value: string) => {
+    setDirectionId(value);
+    setServiceId("none");
+  };
+
   return (
     <div className="grid gap-4">
       <label className="text-sm font-medium">Organisation</label>
       <div className="grid gap-4">
         <div className="grid gap-2">
           <Label htmlFor="pole">Pôle</Label>
-          <Select value={poleId} onValueChange={setPoleId}>
+          <Select value={poleId} onValueChange={handlePoleChange}>
             <SelectTrigger>
               <SelectValue placeholder="Sélectionner un pôle" />
             </SelectTrigger>
@@ -85,7 +126,11 @@ export const OrganizationFields = ({
 
         <div className="grid gap-2">
           <Label htmlFor="direction">Direction</Label>
-          <Select value={directionId} onValueChange={setDirectionId}>
+          <Select 
+            value={directionId} 
+            onValueChange={handleDirectionChange}
+            disabled={!poleId || poleId === "none"}
+          >
             <SelectTrigger>
               <SelectValue placeholder="Sélectionner une direction" />
             </SelectTrigger>
@@ -102,7 +147,11 @@ export const OrganizationFields = ({
 
         <div className="grid gap-2">
           <Label htmlFor="service">Service</Label>
-          <Select value={serviceId} onValueChange={setServiceId}>
+          <Select 
+            value={serviceId} 
+            onValueChange={setServiceId}
+            disabled={!directionId || directionId === "none"}
+          >
             <SelectTrigger>
               <SelectValue placeholder="Sélectionner un service" />
             </SelectTrigger>
