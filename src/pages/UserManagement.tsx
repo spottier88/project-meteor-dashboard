@@ -111,9 +111,9 @@ export const UserManagement = () => {
   return (
     <div className="container mx-auto py-8 px-4">
       <div className="mb-8">
-        <Button variant="ghost" onClick={() => navigate("/")} className="mb-4">
-          <ArrowLeft className="mr-2 h-4 w-4" />
-          Retour au tableau de bord
+        <Button variant="ghost" onClick={() => navigate("/admin")} className="mb-4">
+          <Settings className="mr-2 h-4 w-4" />
+          Retour à l'administration
         </Button>
         <div className="flex items-center justify-between">
           <div>
