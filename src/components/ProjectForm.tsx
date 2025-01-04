@@ -198,7 +198,7 @@ export const ProjectForm = ({ isOpen, onClose, onSubmit, project }: ProjectFormP
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent className="sm:max-w-[500px] max-h-[90vh] flex flex-col">
         <DialogHeader>
           <DialogTitle>
             {project ? "Modifier le projet" : "Nouveau projet"}
@@ -207,32 +207,34 @@ export const ProjectForm = ({ isOpen, onClose, onSubmit, project }: ProjectFormP
             Remplissez les informations du projet. Les champs marqués d'un * sont obligatoires.
           </DialogDescription>
         </DialogHeader>
-        <ProjectFormFields
-          title={title}
-          setTitle={setTitle}
-          description={description}
-          setDescription={setDescription}
-          projectManager={projectManager}
-          setProjectManager={setProjectManager}
-          startDate={startDate}
-          setStartDate={setStartDate}
-          endDate={endDate}
-          setEndDate={setEndDate}
-          priority={priority}
-          setPriority={setPriority}
-          suiviDgs={suiviDgs}
-          setSuiviDgs={setSuiviDgs}
-          isAdmin={isAdmin}
-          ownerId={ownerId}
-          setOwnerId={setOwnerId}
-          poleId={poleId}
-          setPoleId={setPoleId}
-          directionId={directionId}
-          setDirectionId={setDirectionId}
-          serviceId={serviceId}
-          setServiceId={setServiceId}
-        />
-        <DialogFooter>
+        <div className="flex-1 overflow-y-auto pr-2">
+          <ProjectFormFields
+            title={title}
+            setTitle={setTitle}
+            description={description}
+            setDescription={setDescription}
+            projectManager={projectManager}
+            setProjectManager={setProjectManager}
+            startDate={startDate}
+            setStartDate={setStartDate}
+            endDate={endDate}
+            setEndDate={setEndDate}
+            priority={priority}
+            setPriority={setPriority}
+            suiviDgs={suiviDgs}
+            setSuiviDgs={setSuiviDgs}
+            isAdmin={isAdmin}
+            ownerId={ownerId}
+            setOwnerId={setOwnerId}
+            poleId={poleId}
+            setPoleId={setPoleId}
+            directionId={directionId}
+            setDirectionId={setDirectionId}
+            serviceId={serviceId}
+            setServiceId={setServiceId}
+          />
+        </div>
+        <DialogFooter className="sticky bottom-0 bg-background pt-4">
           <Button variant="outline" onClick={onClose}>
             Annuler
           </Button>

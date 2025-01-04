@@ -7,7 +7,6 @@ import { Label } from "@/components/ui/label";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { UserProfile } from "@/types/user";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 
 interface ProjectFormFieldsProps {
   title: string;
@@ -131,106 +130,108 @@ export const ProjectFormFields = ({
 
   return (
     <div className="grid gap-4 py-4">
-      <div className="grid gap-2">
-        <label htmlFor="title" className="text-sm font-medium">
-          Titre *
-        </label>
-        <Input
-          id="title"
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          placeholder="Nom du projet"
-        />
-      </div>
-      <div className="grid gap-2">
-        <label htmlFor="description" className="text-sm font-medium">
-          Description
-        </label>
-        <Textarea
-          id="description"
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
-          placeholder="Description du projet"
-        />
-      </div>
-      <div className="grid gap-2">
-        <label htmlFor="project-manager" className="text-sm font-medium">
-          Chef de projet *
-        </label>
-        {isAdmin ? (
-          <Select value={projectManager} onValueChange={(email) => {
-            setProjectManager(email);
-            const selectedProfile = projectManagers?.find(pm => pm.email === email);
-            if (selectedProfile) {
-              setOwnerId(selectedProfile.id);
-            }
-          }}>
-            <SelectTrigger>
-              <SelectValue placeholder="Sélectionner un chef de projet" />
-            </SelectTrigger>
-            <SelectContent>
-              {projectManagers?.map((profile) => (
-                profile.email && (
-                  <SelectItem key={profile.email} value={profile.email}>
-                    {profile.email}
-                  </SelectItem>
-                )
-              ))}
-            </SelectContent>
-          </Select>
-        ) : (
+      <div className="space-y-4">
+        <div className="grid gap-2">
+          <label htmlFor="title" className="text-sm font-medium">
+            Titre *
+          </label>
           <Input
-            id="project-manager"
-            value={projectManager}
-            readOnly
-            className="bg-gray-100"
+            id="title"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            placeholder="Nom du projet"
           />
-        )}
-      </div>
-
-      <div className="grid gap-4">
-        <label className="text-sm font-medium">Organisation</label>
-        <div className="grid gap-4">
-          <div className="grid gap-2">
-            <Label htmlFor="pole">Pôle</Label>
-            <Select value={poleId} onValueChange={(value) => {
-              setPoleId(value);
-              setDirectionId("");
-              setServiceId("");
+        </div>
+        <div className="grid gap-2">
+          <label htmlFor="description" className="text-sm font-medium">
+            Description
+          </label>
+          <Textarea
+            id="description"
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            placeholder="Description du projet"
+          />
+        </div>
+        <div className="grid gap-2">
+          <label htmlFor="project-manager" className="text-sm font-medium">
+            Chef de projet *
+          </label>
+          {isAdmin ? (
+            <Select value={projectManager} onValueChange={(email) => {
+              setProjectManager(email);
+              const selectedProfile = projectManagers?.find(pm => pm.email === email);
+              if (selectedProfile) {
+                setOwnerId(selectedProfile.id);
+              }
             }}>
               <SelectTrigger>
-                <SelectValue placeholder="Sélectionner un pôle" />
+                <SelectValue placeholder="Sélectionner un chef de projet" />
               </SelectTrigger>
               <SelectContent>
-                {poles?.map((pole) => (
-                  <SelectItem key={pole.id} value={pole.id}>
-                    {pole.name}
-                  </SelectItem>
+                {projectManagers?.map((profile) => (
+                  profile.email && (
+                    <SelectItem key={profile.email} value={profile.email}>
+                      {profile.email}
+                    </SelectItem>
+                  )
                 ))}
               </SelectContent>
             </Select>
-          </div>
+          ) : (
+            <Input
+              id="project-manager"
+              value={projectManager}
+              readOnly
+              className="bg-gray-100"
+            />
+          )}
+        </div>
 
-          {poleId && (
+        <div className="grid gap-4">
+          <label className="text-sm font-medium">Organisation</label>
+          <div className="grid gap-4 sm:grid-cols-2">
             <div className="grid gap-2">
-              <Label htmlFor="direction">Direction</Label>
-              <Select value={directionId} onValueChange={(value) => {
-                setDirectionId(value);
+              <Label htmlFor="pole">Pôle</Label>
+              <Select value={poleId} onValueChange={(value) => {
+                setPoleId(value);
+                setDirectionId("");
                 setServiceId("");
               }}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Sélectionner une direction" />
+                  <SelectValue placeholder="Sélectionner un pôle" />
                 </SelectTrigger>
                 <SelectContent>
-                  {directions?.map((direction) => (
-                    <SelectItem key={direction.id} value={direction.id}>
-                      {direction.name}
+                  {poles?.map((pole) => (
+                    <SelectItem key={pole.id} value={pole.id}>
+                      {pole.name}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
-          )}
+
+            {poleId && (
+              <div className="grid gap-2">
+                <Label htmlFor="direction">Direction</Label>
+                <Select value={directionId} onValueChange={(value) => {
+                  setDirectionId(value);
+                  setServiceId("");
+                }}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Sélectionner une direction" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {directions?.map((direction) => (
+                      <SelectItem key={direction.id} value={direction.id}>
+                        {direction.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+          </div>
 
           {directionId && (
             <div className="grid gap-2">
@@ -250,43 +251,43 @@ export const ProjectFormFields = ({
             </div>
           )}
         </div>
-      </div>
 
-      <div className="grid grid-cols-2 gap-4">
-        <DatePickerField
-          label="Date de début"
-          value={startDate}
-          onChange={setStartDate}
-        />
-        <DatePickerField
-          label="Date de fin"
-          value={endDate}
-          onChange={setEndDate}
-          minDate={startDate}
-        />
-      </div>
-      <div className="grid gap-2">
-        <label htmlFor="priority" className="text-sm font-medium">
-          Priorité
-        </label>
-        <Select value={priority} onValueChange={setPriority}>
-          <SelectTrigger>
-            <SelectValue placeholder="Sélectionner une priorité" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="high">Haute</SelectItem>
-            <SelectItem value="medium">Moyenne</SelectItem>
-            <SelectItem value="low">Basse</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-      <div className="flex items-center space-x-2">
-        <Switch
-          id="suivi-dgs"
-          checked={suiviDgs}
-          onCheckedChange={setSuiviDgs}
-        />
-        <Label htmlFor="suivi-dgs">Suivi DGS</Label>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <DatePickerField
+            label="Date de début"
+            value={startDate}
+            onChange={setStartDate}
+          />
+          <DatePickerField
+            label="Date de fin"
+            value={endDate}
+            onChange={setEndDate}
+            minDate={startDate}
+          />
+        </div>
+        <div className="grid gap-2">
+          <label htmlFor="priority" className="text-sm font-medium">
+            Priorité
+          </label>
+          <Select value={priority} onValueChange={setPriority}>
+            <SelectTrigger>
+              <SelectValue placeholder="Sélectionner une priorité" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="high">Haute</SelectItem>
+              <SelectItem value="medium">Moyenne</SelectItem>
+              <SelectItem value="low">Basse</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="flex items-center space-x-2">
+          <Switch
+            id="suivi-dgs"
+            checked={suiviDgs}
+            onCheckedChange={setSuiviDgs}
+          />
+          <Label htmlFor="suivi-dgs">Suivi DGS</Label>
+        </div>
       </div>
     </div>
   );
