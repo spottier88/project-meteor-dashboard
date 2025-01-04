@@ -24,6 +24,18 @@ interface ProjectFormProps {
     pole_id?: string;
     direction_id?: string;
     service_id?: string;
+    poles?: {
+      id: string;
+      name: string;
+    };
+    directions?: {
+      id: string;
+      name: string;
+    };
+    services?: {
+      id: string;
+      name: string;
+    };
   };
 }
 
@@ -70,7 +82,10 @@ export const ProjectForm = ({ isOpen, onClose, onSubmit, project }: ProjectFormP
           project_manager: project.project_manager,
           pole_id: project.pole_id,
           direction_id: project.direction_id,
-          service_id: project.service_id
+          service_id: project.service_id,
+          poles: project.poles,
+          directions: project.directions,
+          services: project.services
         });
         
         setTitle(project.title || "");
