@@ -77,10 +77,6 @@ export const UserInfo = () => {
 
   if (!user) return null;
 
-  const displayName = profile ? 
-    `${profile.first_name || ''} ${profile.last_name || ''}`.trim() || user.email 
-    : user.email;
-
   return (
     <div className="flex items-center justify-between p-4 mb-4 bg-secondary/20 rounded-lg">
       <div className="flex flex-col">
@@ -88,7 +84,7 @@ export const UserInfo = () => {
           onClick={() => setIsUpdateFormOpen(true)}
           className="text-sm font-medium hover:underline text-left"
         >
-          {displayName}
+          {user.email}
         </button>
         <span className="text-xs text-muted-foreground">
           {isAdmin ? "Administrateur" : "Chef de projet"}
