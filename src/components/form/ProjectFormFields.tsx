@@ -95,7 +95,7 @@ export const ProjectFormFields = ({
   const { data: directions } = useQuery({
     queryKey: ["directions", poleId],
     queryFn: async () => {
-      if (!poleId) return [];
+      if (!poleId || poleId === "none") return [];
       const { data, error } = await supabase
         .from("directions")
         .select("*")
@@ -104,13 +104,13 @@ export const ProjectFormFields = ({
       if (error) throw error;
       return data;
     },
-    enabled: !!poleId,
+    enabled: !!poleId && poleId !== "none",
   });
 
   const { data: services } = useQuery({
     queryKey: ["services", directionId],
     queryFn: async () => {
-      if (!directionId) return [];
+      if (!directionId || directionId === "none") return [];
       const { data, error } = await supabase
         .from("services")
         .select("*")
@@ -119,24 +119,25 @@ export const ProjectFormFields = ({
       if (error) throw error;
       return data;
     },
-    enabled: !!directionId,
+    enabled: !!directionId && directionId !== "none",
   });
 
   const handlePoleChange = (value: string) => {
     setPoleId(value);
-    setDirectionId("");
-    setServiceId("");
+    if (value === "none") {
+      setDirectionId("none");
+      setServiceId("none");
+    }
   };
 
   const handleDirectionChange = (value: string) => {
-    setPoleId("");
     setDirectionId(value);
-    setServiceId("");
+    if (value === "none") {
+      setServiceId("none");
+    }
   };
 
   const handleServiceChange = (value: string) => {
-    setPoleId("");
-    setDirectionId("");
     setServiceId(value);
   };
 
