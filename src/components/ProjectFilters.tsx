@@ -74,9 +74,9 @@ export const ProjectFilters = ({ onFilterChange }: ProjectFiltersProps) => {
         />
         
         <Select
-          value={selectedOrg ? `${selectedOrg.type}-${selectedOrg.id}` : ""}
+          value={selectedOrg ? `${selectedOrg.type}-${selectedOrg.id}` : "all"}
           onValueChange={(value) => {
-            if (value === "") {
+            if (value === "all") {
               setSelectedOrg(null);
             } else {
               const [type, id] = value.split("-");
@@ -88,7 +88,7 @@ export const ProjectFilters = ({ onFilterChange }: ProjectFiltersProps) => {
             <SelectValue placeholder="Filtrer par organisation" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">Toutes les organisations</SelectItem>
+            <SelectItem value="all">Toutes les organisations</SelectItem>
             {poles?.map((pole) => (
               <SelectItem key={pole.id} value={`pole-${pole.id}`}>
                 Pôle: {pole.name}
@@ -108,14 +108,14 @@ export const ProjectFilters = ({ onFilterChange }: ProjectFiltersProps) => {
         </Select>
 
         <Select
-          value={selectedManager || ""}
-          onValueChange={(value) => setSelectedManager(value || null)}
+          value={selectedManager || "all"}
+          onValueChange={(value) => setSelectedManager(value === "all" ? null : value)}
         >
           <SelectTrigger className="w-[280px]">
             <SelectValue placeholder="Filtrer par chef de projet" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">Tous les chefs de projet</SelectItem>
+            <SelectItem value="all">Tous les chefs de projet</SelectItem>
             {projectManagers?.map((manager) => (
               <SelectItem key={manager} value={manager}>
                 {manager}
