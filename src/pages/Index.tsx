@@ -6,12 +6,12 @@ import { ProjectForm } from "@/components/ProjectForm";
 import { ProjectGrid } from "@/components/ProjectGrid";
 import { ProjectTable } from "@/components/ProjectTable";
 import { DashboardHeader } from "@/components/DashboardHeader";
-import { ViewToggle } from "@/components/ViewToggle";
+import { ViewToggle, ViewMode } from "@/components/ViewToggle";
 
 const Index = () => {
   const [isProjectFormOpen, setIsProjectFormOpen] = useState(false);
   const [selectedProject, setSelectedProject] = useState<any>(null);
-  const [view, setView] = useState<"grid" | "table">("grid");
+  const [view, setView] = useState<ViewMode>("grid");
   const user = useUser();
 
   const { data: projects, refetch: refetchProjects } = useQuery({
@@ -37,13 +37,21 @@ const Index = () => {
         .order("created_at", { ascending: false });
 
       if (error) throw error;
-      return data;
+      
+      // Transform the data to match the expected Project type
+      return data?.map(project => ({
+        ...project,
+        lastReviewDate: project.last_review_date,
+      })) || [];
     },
   });
 
-  const handleEditProject = (project: any) => {
-    setSelectedProject(project);
-    setIsProjectFormOpen(true);
+  const handleEditProject = (projectId: string) => {
+    const project = projects?.find(p => p.id === projectId);
+    if (project) {
+      setSelectedProject(project);
+      setIsProjectFormOpen(true);
+    }
   };
 
   const handleProjectFormClose = () => {
@@ -59,17 +67,26 @@ const Index = () => {
     <div className="container mx-auto py-8">
       <DashboardHeader
         onNewProject={() => setIsProjectFormOpen(true)}
-        user={user}
+        onNewReview={() => {}}
       />
 
-      <div className="mb-6">
-        <ViewToggle view={view} onViewChange={setView} />
-      </div>
+      <ViewToggle currentView={view} onViewChange={setView} />
 
       {view === "grid" ? (
-        <ProjectGrid projects={projects || []} onEdit={handleEditProject} />
+        <ProjectGrid 
+          projects={projects || []} 
+          onProjectEdit={handleEditProject}
+          onProjectReview={() => {}}
+          onViewHistory={() => {}}
+        />
       ) : (
-        <ProjectTable projects={projects || []} onEdit={handleEditProject} />
+        <ProjectTable 
+          projects={projects || []} 
+          onProjectEdit={handleEditProject}
+          onProjectReview={() => {}}
+          onViewHistory={() => {}}
+          onProjectDeleted={refetchProjects}
+        />
       )}
 
       <ProjectForm
