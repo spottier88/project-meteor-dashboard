@@ -164,7 +164,6 @@ export const UserManagement = () => {
                   variant="ghost"
                   size="icon"
                   onClick={() => handleEdit(user)}
-                  title="Modifier l'utilisateur"
                 >
                   <Edit className="h-4 w-4" />
                 </Button>
@@ -172,7 +171,6 @@ export const UserManagement = () => {
                   variant="ghost"
                   size="icon"
                   onClick={() => setUserToDelete(user)}
-                  title="Supprimer l'utilisateur"
                 >
                   <Trash2 className="h-4 w-4" />
                 </Button>

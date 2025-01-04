@@ -39,6 +39,7 @@ const fetchProjects = async (userEmail: string | undefined, isAdmin: boolean): P
     .select("*")
     .order("last_review_date", { ascending: false });
 
+  // Si l'utilisateur n'est pas admin, on filtre pour ne montrer que ses projets
   if (!isAdmin && userEmail) {
     query = query.eq("project_manager", userEmail);
   }
@@ -68,7 +69,7 @@ const fetchProjects = async (userEmail: string | undefined, isAdmin: boolean): P
   }));
 };
 
-export const Dashboard = () => {
+const Index = () => {
   const user = useUser();
   const { toast } = useToast();
   const [selectedProject, setSelectedProject] = useState<{
@@ -245,3 +246,5 @@ export const Dashboard = () => {
     </div>
   );
 };
+
+export default Index;

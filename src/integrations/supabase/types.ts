@@ -9,53 +9,6 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      directions: {
-        Row: {
-          created_at: string | null
-          id: string
-          name: string
-          pole_id: string
-        }
-        Insert: {
-          created_at?: string | null
-          id?: string
-          name: string
-          pole_id: string
-        }
-        Update: {
-          created_at?: string | null
-          id?: string
-          name?: string
-          pole_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "directions_pole_id_fkey"
-            columns: ["pole_id"]
-            isOneToOne: false
-            referencedRelation: "poles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      poles: {
-        Row: {
-          created_at: string | null
-          id: string
-          name: string
-        }
-        Insert: {
-          created_at?: string | null
-          id?: string
-          name: string
-        }
-        Update: {
-          created_at?: string | null
-          id?: string
-          name?: string
-        }
-        Relationships: []
-      }
       profiles: {
         Row: {
           created_at: string | null
@@ -85,16 +38,13 @@ export type Database = {
           completion: number
           created_at: string | null
           description: string | null
-          direction_id: string | null
           end_date: string | null
           id: string
           last_review_date: string | null
           owner_id: string | null
-          pole_id: string | null
           priority: string | null
           progress: Database["public"]["Enums"]["progress_status"] | null
           project_manager: string | null
-          service_id: string | null
           start_date: string | null
           status: Database["public"]["Enums"]["project_status"] | null
           suivi_dgs: boolean | null
@@ -104,16 +54,13 @@ export type Database = {
           completion?: number
           created_at?: string | null
           description?: string | null
-          direction_id?: string | null
           end_date?: string | null
           id?: string
           last_review_date?: string | null
           owner_id?: string | null
-          pole_id?: string | null
           priority?: string | null
           progress?: Database["public"]["Enums"]["progress_status"] | null
           project_manager?: string | null
-          service_id?: string | null
           start_date?: string | null
           status?: Database["public"]["Enums"]["project_status"] | null
           suivi_dgs?: boolean | null
@@ -123,44 +70,19 @@ export type Database = {
           completion?: number
           created_at?: string | null
           description?: string | null
-          direction_id?: string | null
           end_date?: string | null
           id?: string
           last_review_date?: string | null
           owner_id?: string | null
-          pole_id?: string | null
           priority?: string | null
           progress?: Database["public"]["Enums"]["progress_status"] | null
           project_manager?: string | null
-          service_id?: string | null
           start_date?: string | null
           status?: Database["public"]["Enums"]["project_status"] | null
           suivi_dgs?: boolean | null
           title?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "projects_direction_id_fkey"
-            columns: ["direction_id"]
-            isOneToOne: false
-            referencedRelation: "directions"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "projects_pole_id_fkey"
-            columns: ["pole_id"]
-            isOneToOne: false
-            referencedRelation: "poles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "projects_service_id_fkey"
-            columns: ["service_id"]
-            isOneToOne: false
-            referencedRelation: "services"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       review_actions: {
         Row: {
@@ -273,35 +195,6 @@ export type Database = {
             columns: ["project_id"]
             isOneToOne: false
             referencedRelation: "projects"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      services: {
-        Row: {
-          created_at: string | null
-          direction_id: string
-          id: string
-          name: string
-        }
-        Insert: {
-          created_at?: string | null
-          direction_id: string
-          id?: string
-          name: string
-        }
-        Update: {
-          created_at?: string | null
-          direction_id?: string
-          id?: string
-          name?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "services_direction_id_fkey"
-            columns: ["direction_id"]
-            isOneToOne: false
-            referencedRelation: "directions"
             referencedColumns: ["id"]
           },
         ]

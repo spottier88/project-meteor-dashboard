@@ -4,10 +4,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { useEffect } from "react";
 
-export const Login = () => {
+const Login = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
+    // Vérifier si l'utilisateur est déjà connecté
     supabase.auth.onAuthStateChange((event, session) => {
       if (session) {
         navigate("/");
@@ -50,3 +51,5 @@ export const Login = () => {
     </div>
   );
 };
+
+export default Login;
