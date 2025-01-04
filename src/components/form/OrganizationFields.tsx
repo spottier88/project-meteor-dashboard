@@ -2,7 +2,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
 interface OrganizationFieldsProps {
   poleId: string;
@@ -28,6 +28,9 @@ export const OrganizationFields = ({
   serviceId,
   setServiceId,
 }: OrganizationFieldsProps) => {
+  // État local pour suivre si l'initialisation est terminée
+  const [isInitialized, setIsInitialized] = useState(false);
+
   // Fetch poles data
   const { data: poles, isLoading: isLoadingPoles } = useQuery({
     queryKey: ["poles"],
@@ -67,49 +70,43 @@ export const OrganizationFields = ({
     },
   });
 
-  // Filter directions based on selected pole
-  const directions = allDirections?.filter(
-    d => poleId !== "none" && d.pole_id === poleId
-  ) || [];
-
-  // Filter services based on selected direction
-  const services = allServices?.filter(
-    s => directionId !== "none" && s.direction_id === directionId
-  ) || [];
-
-  // Validate selections when data is loaded
+  // Effet pour l'initialisation une seule fois quand toutes les données sont chargées
   useEffect(() => {
-    if (!isLoadingPoles && !isLoadingDirections && !isLoadingServices) {
-      // Si un pôle est sélectionné mais n'existe pas dans la liste
-      if (poleId !== "none" && !poles?.some(p => p.id === poleId)) {
-        console.log("Resetting pole because it doesn't exist:", poleId);
+    if (!isInitialized && !isLoadingPoles && !isLoadingDirections && !isLoadingServices) {
+      console.log("Initial values:", { poleId, directionId, serviceId });
+      
+      // Vérifie si le pôle existe
+      const poleExists = poles?.some(p => p.id === poleId);
+      if (!poleExists && poleId !== "none") {
+        console.log("Resetting pole - doesn't exist:", poleId);
         setPoleId("none");
         setDirectionId("none");
         setServiceId("none");
-        return;
-      }
-
-      // Si une direction est sélectionnée mais n'appartient pas au pôle sélectionné
-      if (directionId !== "none") {
-        const direction = allDirections?.find(d => d.id === directionId);
-        if (!direction || direction.pole_id !== poleId) {
-          console.log("Resetting direction because it doesn't match pole:", directionId, poleId);
+      } else if (poleId !== "none") {
+        // Vérifie si la direction appartient au pôle
+        const directionValid = allDirections?.some(
+          d => d.id === directionId && d.pole_id === poleId
+        );
+        if (!directionValid && directionId !== "none") {
+          console.log("Resetting direction - invalid for pole:", directionId);
           setDirectionId("none");
           setServiceId("none");
-          return;
+        } else if (directionId !== "none") {
+          // Vérifie si le service appartient à la direction
+          const serviceValid = allServices?.some(
+            s => s.id === serviceId && s.direction_id === directionId
+          );
+          if (!serviceValid && serviceId !== "none") {
+            console.log("Resetting service - invalid for direction:", serviceId);
+            setServiceId("none");
+          }
         }
       }
-
-      // Si un service est sélectionné mais n'appartient pas à la direction sélectionnée
-      if (serviceId !== "none") {
-        const service = allServices?.find(s => s.id === serviceId);
-        if (!service || service.direction_id !== directionId) {
-          console.log("Resetting service because it doesn't match direction:", serviceId, directionId);
-          setServiceId("none");
-        }
-      }
+      
+      setIsInitialized(true);
     }
   }, [
+    isInitialized,
     isLoadingPoles,
     isLoadingDirections,
     isLoadingServices,
@@ -120,6 +117,15 @@ export const OrganizationFields = ({
     directionId,
     serviceId,
   ]);
+
+  // Filtrer les directions et services en fonction des sélections
+  const directions = allDirections?.filter(
+    d => poleId !== "none" && d.pole_id === poleId
+  ) || [];
+
+  const services = allServices?.filter(
+    s => directionId !== "none" && s.direction_id === directionId
+  ) || [];
 
   const handlePoleChange = (value: string) => {
     console.log("Changing pole to:", value);
@@ -133,6 +139,10 @@ export const OrganizationFields = ({
     setDirectionId(value);
     setServiceId("none");
   };
+
+  if (isLoadingPoles || isLoadingDirections || isLoadingServices) {
+    return <div>Chargement des données...</div>;
+  }
 
   return (
     <div className="grid gap-4">
