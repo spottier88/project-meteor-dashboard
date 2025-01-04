@@ -28,6 +28,9 @@ interface Project {
   project_manager?: string;
   owner_id?: string;
   suivi_dgs?: boolean;
+  pole_id?: string;
+  direction_id?: string;
+  service_id?: string;
 }
 
 interface ProjectTableProps {
@@ -83,6 +86,7 @@ export const ProjectTable = ({
           <TableRow>
             <TableHead>Nom du projet</TableHead>
             <TableHead>Chef de projet</TableHead>
+            <TableHead>Organisation</TableHead>
             <TableHead>Statut</TableHead>
             <TableHead>Progression</TableHead>
             <TableHead>Avancement</TableHead>
@@ -105,6 +109,13 @@ export const ProjectTable = ({
                   {project.title}
                 </TableCell>
                 <TableCell>{project.project_manager || "-"}</TableCell>
+                <TableCell>
+                  <OrganizationCell
+                    poleId={project.pole_id}
+                    directionId={project.direction_id}
+                    serviceId={project.service_id}
+                  />
+                </TableCell>
                 <TableCell>
                   {project.status ? (
                     <div className="flex items-center gap-2">
@@ -157,5 +168,54 @@ export const ProjectTable = ({
         </TableBody>
       </Table>
     </div>
+  );
+};
+
+const OrganizationCell = ({ poleId, directionId, serviceId }: { poleId?: string, directionId?: string, serviceId?: string }) => {
+  const { data: organization } = useQuery({
+    queryKey: ["organization", poleId, directionId, serviceId],
+    queryFn: async () => {
+      let org = { name: "", level: "" };
+
+      if (serviceId) {
+        const { data } = await supabase
+          .from("services")
+          .select("name")
+          .eq("id", serviceId)
+          .single();
+        if (data) {
+          org = { name: data.name, level: "Service" };
+        }
+      } else if (directionId) {
+        const { data } = await supabase
+          .from("directions")
+          .select("name")
+          .eq("id", directionId)
+          .single();
+        if (data) {
+          org = { name: data.name, level: "Direction" };
+        }
+      } else if (poleId) {
+        const { data } = await supabase
+          .from("poles")
+          .select("name")
+          .eq("id", poleId)
+          .single();
+        if (data) {
+          org = { name: data.name, level: "Pôle" };
+        }
+      }
+
+      return org;
+    },
+    enabled: !!(poleId || directionId || serviceId),
+  });
+
+  if (!organization?.name) return <span className="text-muted-foreground">-</span>;
+
+  return (
+    <span>
+      {organization.level}: {organization.name}
+    </span>
   );
 };

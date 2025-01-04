@@ -22,6 +22,9 @@ interface ProjectFormProps {
     priority?: string;
     suivi_dgs?: boolean;
     owner_id?: string;
+    pole_id?: string;
+    direction_id?: string;
+    service_id?: string;
   };
 }
 
@@ -36,6 +39,9 @@ export const ProjectForm = ({ isOpen, onClose, onSubmit, project }: ProjectFormP
   const [priority, setPriority] = useState("medium");
   const [suiviDgs, setSuiviDgs] = useState(false);
   const [ownerId, setOwnerId] = useState("");
+  const [poleId, setPoleId] = useState("");
+  const [directionId, setDirectionId] = useState("");
+  const [serviceId, setServiceId] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const { data: userRoles } = useQuery({
@@ -60,14 +66,17 @@ export const ProjectForm = ({ isOpen, onClose, onSubmit, project }: ProjectFormP
       setTitle(project?.title || "");
       setDescription(project?.description || "");
       setOwnerId(project?.owner_id || "");
-      // Si c'est un nouveau projet et que l'utilisateur n'est pas admin,
-      // on force le chef de projet à être l'utilisateur connecté
+      setPoleId(project?.pole_id || "");
+      setDirectionId(project?.direction_id || "");
+      setServiceId(project?.service_id || "");
+      
       if (!project && !isAdmin && user?.email) {
         setProjectManager(user.email);
         setOwnerId(user.id);
       } else {
         setProjectManager(project?.project_manager || "");
       }
+      
       setStartDate(project?.start_date ? new Date(project.start_date) : undefined);
       setEndDate(project?.end_date ? new Date(project.end_date) : undefined);
       setPriority(project?.priority || "medium");
@@ -124,10 +133,12 @@ export const ProjectForm = ({ isOpen, onClose, onSubmit, project }: ProjectFormP
         priority,
         suivi_dgs: suiviDgs,
         owner_id: ownerId,
+        pole_id: poleId || null,
+        direction_id: directionId || null,
+        service_id: serviceId || null,
       };
 
       if (project?.id) {
-        // Check if user has permission to update
         const canUpdate = isAdmin || project.owner_id === user.id;
 
         if (!canUpdate) {
@@ -214,6 +225,12 @@ export const ProjectForm = ({ isOpen, onClose, onSubmit, project }: ProjectFormP
           isAdmin={isAdmin}
           ownerId={ownerId}
           setOwnerId={setOwnerId}
+          poleId={poleId}
+          setPoleId={setPoleId}
+          directionId={directionId}
+          setDirectionId={setDirectionId}
+          serviceId={serviceId}
+          setServiceId={setServiceId}
         />
         <DialogFooter>
           <Button variant="outline" onClick={onClose}>
