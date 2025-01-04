@@ -28,7 +28,6 @@ export const OrganizationFields = ({
   serviceId,
   setServiceId,
 }: OrganizationFieldsProps) => {
-  // État local pour suivre si l'initialisation est terminée
   const [isInitialized, setIsInitialized] = useState(false);
 
   // Fetch poles data
@@ -88,19 +87,22 @@ export const OrganizationFields = ({
   // Effet pour l'initialisation une seule fois quand toutes les données sont chargées
   useEffect(() => {
     if (!isInitialized && !isLoadingPoles && !isLoadingDirections && !isLoadingServices) {
-      console.log("All data loaded. Current values:", {
-        poles,
-        allDirections,
-        allServices,
-        currentSelections: {
-          poleId,
-          directionId,
-          serviceId
-        }
+      console.log("Starting initialization with props:", {
+        poleId,
+        directionId,
+        serviceId
+      });
+
+      console.log("Available data:", {
+        poles: poles?.map(p => ({ id: p.id, name: p.name })),
+        directions: allDirections?.map(d => ({ id: d.id, name: d.name, pole_id: d.pole_id })),
+        services: allServices?.map(s => ({ id: s.id, name: s.name, direction_id: s.direction_id }))
       });
       
-      // Vérifie si le pôle existe
+      // Vérifie si le pôle existe et est valide
       const poleExists = poles?.some(p => p.id === poleId);
+      console.log("Pole exists check:", { poleId, exists: poleExists });
+      
       if (!poleExists && poleId !== "none") {
         console.log("Resetting pole - doesn't exist:", poleId);
         setPoleId("none");
@@ -111,6 +113,8 @@ export const OrganizationFields = ({
         const directionValid = allDirections?.some(
           d => d.id === directionId && d.pole_id === poleId
         );
+        console.log("Direction valid check:", { directionId, poleId, valid: directionValid });
+        
         if (!directionValid && directionId !== "none") {
           console.log("Resetting direction - invalid for pole:", directionId);
           setDirectionId("none");
@@ -120,6 +124,8 @@ export const OrganizationFields = ({
           const serviceValid = allServices?.some(
             s => s.id === serviceId && s.direction_id === directionId
           );
+          console.log("Service valid check:", { serviceId, directionId, valid: serviceValid });
+          
           if (!serviceValid && serviceId !== "none") {
             console.log("Resetting service - invalid for direction:", serviceId);
             setServiceId("none");
@@ -128,6 +134,7 @@ export const OrganizationFields = ({
       }
       
       setIsInitialized(true);
+      console.log("Initialization complete. Final values:", { poleId, directionId, serviceId });
     }
   }, [
     isInitialized,
