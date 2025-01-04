@@ -5,14 +5,17 @@ import { LogOut } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { useToast } from "./ui/use-toast";
 import { UserProfile, UserRoleData } from "@/types/user";
+import { useState } from "react";
+import { ProfileUpdateForm } from "./UserForm/ProfileUpdateForm";
 
 export const UserInfo = () => {
   const user = useUser();
   const supabase = useSupabaseClient();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const [isUpdateFormOpen, setIsUpdateFormOpen] = useState(false);
 
-  const { data: profile } = useQuery({
+  const { data: profile, refetch: refetchProfile } = useQuery({
     queryKey: ["profile", user?.id],
     queryFn: async () => {
       if (!user?.id) return null;
@@ -74,10 +77,19 @@ export const UserInfo = () => {
 
   if (!user) return null;
 
+  const displayName = profile ? 
+    `${profile.first_name || ''} ${profile.last_name || ''}`.trim() || user.email 
+    : user.email;
+
   return (
     <div className="flex items-center justify-between p-4 mb-4 bg-secondary/20 rounded-lg">
       <div className="flex flex-col">
-        <span className="text-sm font-medium">{user.email}</span>
+        <button 
+          onClick={() => setIsUpdateFormOpen(true)}
+          className="text-sm font-medium hover:underline text-left"
+        >
+          {displayName}
+        </button>
         <span className="text-xs text-muted-foreground">
           {isAdmin ? "Administrateur" : "Chef de projet"}
         </span>
@@ -88,6 +100,17 @@ export const UserInfo = () => {
           Déconnexion
         </Button>
       </div>
+
+      {profile && (
+        <ProfileUpdateForm
+          isOpen={isUpdateFormOpen}
+          onClose={() => setIsUpdateFormOpen(false)}
+          currentFirstName={profile.first_name || ""}
+          currentLastName={profile.last_name || ""}
+          userId={user.id}
+          onUpdate={refetchProfile}
+        />
+      )}
     </div>
   );
 };
