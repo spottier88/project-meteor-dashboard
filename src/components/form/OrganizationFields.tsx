@@ -28,8 +28,8 @@ export const OrganizationFields = ({
   serviceId,
   setServiceId,
 }: OrganizationFieldsProps) => {
-  // Fetch all data at once
-  const { data: poles } = useQuery({
+  // Fetch poles data
+  const { data: poles, isLoading: isLoadingPoles } = useQuery({
     queryKey: ["poles"],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -41,7 +41,8 @@ export const OrganizationFields = ({
     },
   });
 
-  const { data: allDirections } = useQuery({
+  // Fetch directions data
+  const { data: allDirections, isLoading: isLoadingDirections } = useQuery({
     queryKey: ["all_directions"],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -53,7 +54,8 @@ export const OrganizationFields = ({
     },
   });
 
-  const { data: allServices } = useQuery({
+  // Fetch services data
+  const { data: allServices, isLoading: isLoadingServices } = useQuery({
     queryKey: ["all_services"],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -75,44 +77,59 @@ export const OrganizationFields = ({
     s => directionId !== "none" && s.direction_id === directionId
   ) || [];
 
-  // Validate and update selections when data changes
+  // Validate selections when data is loaded
   useEffect(() => {
-    if (poles && allDirections && allServices) {
-      // Validate pole selection
-      if (poleId !== "none" && !poles.some(p => p.id === poleId)) {
+    if (!isLoadingPoles && !isLoadingDirections && !isLoadingServices) {
+      // Si un pôle est sélectionné mais n'existe pas dans la liste
+      if (poleId !== "none" && !poles?.some(p => p.id === poleId)) {
+        console.log("Resetting pole because it doesn't exist:", poleId);
         setPoleId("none");
         setDirectionId("none");
         setServiceId("none");
         return;
       }
 
-      // Validate direction selection
+      // Si une direction est sélectionnée mais n'appartient pas au pôle sélectionné
       if (directionId !== "none") {
-        const direction = allDirections.find(d => d.id === directionId);
+        const direction = allDirections?.find(d => d.id === directionId);
         if (!direction || direction.pole_id !== poleId) {
+          console.log("Resetting direction because it doesn't match pole:", directionId, poleId);
           setDirectionId("none");
           setServiceId("none");
           return;
         }
       }
 
-      // Validate service selection
+      // Si un service est sélectionné mais n'appartient pas à la direction sélectionnée
       if (serviceId !== "none") {
-        const service = allServices.find(s => s.id === serviceId);
+        const service = allServices?.find(s => s.id === serviceId);
         if (!service || service.direction_id !== directionId) {
+          console.log("Resetting service because it doesn't match direction:", serviceId, directionId);
           setServiceId("none");
         }
       }
     }
-  }, [poles, allDirections, allServices, poleId, directionId, serviceId]);
+  }, [
+    isLoadingPoles,
+    isLoadingDirections,
+    isLoadingServices,
+    poles,
+    allDirections,
+    allServices,
+    poleId,
+    directionId,
+    serviceId,
+  ]);
 
   const handlePoleChange = (value: string) => {
+    console.log("Changing pole to:", value);
     setPoleId(value);
     setDirectionId("none");
     setServiceId("none");
   };
 
   const handleDirectionChange = (value: string) => {
+    console.log("Changing direction to:", value);
     setDirectionId(value);
     setServiceId("none");
   };
