@@ -2,7 +2,6 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useEffect, useState } from "react";
 
 interface OrganizationFieldsProps {
   poleId: string;
@@ -11,9 +10,6 @@ interface OrganizationFieldsProps {
   setDirectionId: (value: string) => void;
   serviceId: string;
   setServiceId: (value: string) => void;
-  initialPoleId?: string | null;
-  initialDirectionId?: string | null;
-  initialServiceId?: string | null;
 }
 
 interface OrganizationData {
@@ -30,12 +26,7 @@ export const OrganizationFields = ({
   setDirectionId,
   serviceId,
   setServiceId,
-  initialPoleId,
-  initialDirectionId,
-  initialServiceId,
 }: OrganizationFieldsProps) => {
-  const [isInitialized, setIsInitialized] = useState(false);
-
   // Fetch all data at once
   const { data: poles } = useQuery({
     queryKey: ["poles"],
@@ -72,48 +63,6 @@ export const OrganizationFields = ({
       return data as OrganizationData[];
     },
   });
-
-  // Initialize fields once all data is loaded
-  useEffect(() => {
-    if (!isInitialized && poles && allDirections && allServices) {
-      // Initialize pole if valid
-      if (initialPoleId && poles.some(p => p.id === initialPoleId)) {
-        setPoleId(initialPoleId);
-        
-        // Initialize direction if valid for selected pole
-        if (initialDirectionId) {
-          const validDirection = allDirections.find(
-            d => d.id === initialDirectionId && d.pole_id === initialPoleId
-          );
-          if (validDirection) {
-            setDirectionId(initialDirectionId);
-
-            // Initialize service if valid for selected direction
-            if (initialServiceId) {
-              const validService = allServices.find(
-                s => s.id === initialServiceId && s.direction_id === initialDirectionId
-              );
-              if (validService) {
-                setServiceId(initialServiceId);
-              }
-            }
-          }
-        }
-      }
-      setIsInitialized(true);
-    }
-  }, [
-    poles,
-    allDirections,
-    allServices,
-    initialPoleId,
-    initialDirectionId,
-    initialServiceId,
-    setPoleId,
-    setDirectionId,
-    setServiceId,
-    isInitialized,
-  ]);
 
   // Filter directions based on selected pole
   const directions = allDirections?.filter(

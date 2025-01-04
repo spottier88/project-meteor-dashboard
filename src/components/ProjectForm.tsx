@@ -61,6 +61,7 @@ export const ProjectForm = ({ isOpen, onClose, onSubmit, project }: ProjectFormP
 
   const isAdmin = userRoles?.some(ur => ur.role === 'admin');
 
+  // Réinitialisation complète des états à chaque ouverture du formulaire
   useEffect(() => {
     if (isOpen) {
       // Initialisation des champs basiques
@@ -71,12 +72,20 @@ export const ProjectForm = ({ isOpen, onClose, onSubmit, project }: ProjectFormP
       setEndDate(project?.end_date ? new Date(project?.end_date) : undefined);
       setPriority(project?.priority || "medium");
       setSuiviDgs(project?.suivi_dgs || false);
-      setOwnerId(project?.owner_id || "");
-
-      // Si c'est un nouveau projet et que l'utilisateur n'est pas admin
-      if (!project && !isAdmin && user?.email) {
-        setProjectManager(user.email);
+      
+      // Initialisation des champs d'organisation
+      setPoleId(project?.pole_id || "none");
+      setDirectionId(project?.direction_id || "none");
+      setServiceId(project?.service_id || "none");
+      
+      // Initialisation du propriétaire
+      if (project) {
+        setOwnerId(project.owner_id || "");
+      } else if (!isAdmin && user?.id) {
         setOwnerId(user.id);
+        setProjectManager(user.email || "");
+      } else {
+        setOwnerId("");
       }
     }
   }, [isOpen, project, user?.email, user?.id, isAdmin]);
@@ -230,13 +239,10 @@ export const ProjectForm = ({ isOpen, onClose, onSubmit, project }: ProjectFormP
             setDirectionId={setDirectionId}
             serviceId={serviceId}
             setServiceId={setServiceId}
-            initialPoleId={project?.pole_id}
-            initialDirectionId={project?.direction_id}
-            initialServiceId={project?.service_id}
           />
         </div>
         
-        <div className="flex justify-end gap-2 pt-4 mt-auto border-t">
+        <DialogFooter>
           <Button variant="outline" onClick={onClose}>
             Annuler
           </Button>
@@ -249,7 +255,7 @@ export const ProjectForm = ({ isOpen, onClose, onSubmit, project }: ProjectFormP
               "Créer"
             )}
           </Button>
-        </div>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );
