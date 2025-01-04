@@ -198,7 +198,7 @@ export const ProjectForm = ({ isOpen, onClose, onSubmit, project }: ProjectFormP
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[500px] max-h-[90vh] flex flex-col">
+      <DialogContent className="sm:max-w-[500px] h-[90vh] flex flex-col">
         <DialogHeader>
           <DialogTitle>
             {project ? "Modifier le projet" : "Nouveau projet"}
@@ -207,6 +207,7 @@ export const ProjectForm = ({ isOpen, onClose, onSubmit, project }: ProjectFormP
             Remplissez les informations du projet. Les champs marqués d'un * sont obligatoires.
           </DialogDescription>
         </DialogHeader>
+        
         <div className="flex-1 overflow-y-auto pr-2">
           <ProjectFormFields
             title={title}
@@ -234,7 +235,8 @@ export const ProjectForm = ({ isOpen, onClose, onSubmit, project }: ProjectFormP
             setServiceId={setServiceId}
           />
         </div>
-        <DialogFooter className="sticky bottom-0 bg-background pt-4">
+        
+        <div className="flex justify-end gap-2 pt-4 mt-auto border-t">
           <Button variant="outline" onClick={onClose}>
             Annuler
           </Button>
@@ -247,7 +249,7 @@ export const ProjectForm = ({ isOpen, onClose, onSubmit, project }: ProjectFormP
               "Créer"
             )}
           </Button>
-        </DialogFooter>
+        </div>
       </DialogContent>
     </Dialog>
   );
