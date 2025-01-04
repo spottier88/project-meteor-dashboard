@@ -1,11 +1,12 @@
 import { Button } from "@/components/ui/button";
-import { PlusCircle } from "lucide-react";
+import { PlusCircle, Settings } from "lucide-react";
 import { UserInfo } from "./UserInfo";
 import { useQuery } from "@tanstack/react-query";
 import { useUser } from "@supabase/auth-helpers-react";
 import { supabase } from "@/integrations/supabase/client";
 import { canCreateProject } from "@/utils/permissions";
 import { UserRoleData } from "@/types/user";
+import { useNavigate } from "react-router-dom";
 
 interface DashboardHeaderProps {
   onNewProject: () => void;
@@ -14,6 +15,7 @@ interface DashboardHeaderProps {
 
 export const DashboardHeader = ({ onNewProject, onNewReview }: DashboardHeaderProps) => {
   const user = useUser();
+  const navigate = useNavigate();
 
   const { data: userRoles } = useQuery({
     queryKey: ["userRoles", user?.id],
@@ -31,6 +33,7 @@ export const DashboardHeader = ({ onNewProject, onNewReview }: DashboardHeaderPr
   });
 
   const roles = userRoles?.map(ur => ur.role);
+  const isAdmin = roles?.includes("admin");
 
   return (
     <div className="space-y-4 mb-8">
@@ -60,6 +63,16 @@ export const DashboardHeader = ({ onNewProject, onNewReview }: DashboardHeaderPr
             <PlusCircle className="mr-2 h-4 w-4" />
             Nouvelle Revue
           </Button>
+          {isAdmin && (
+            <Button
+              variant="outline"
+              onClick={() => navigate("/admin")}
+              className="w-full md:w-auto animate-fade-in"
+            >
+              <Settings className="mr-2 h-4 w-4" />
+              Administration
+            </Button>
+          )}
         </div>
       </div>
     </div>
