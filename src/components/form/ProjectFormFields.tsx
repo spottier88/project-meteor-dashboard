@@ -1,13 +1,8 @@
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { DatePickerField } from "./DatePickerField";
-import { Switch } from "@/components/ui/switch";
-import { Label } from "@/components/ui/label";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { UserProfile } from "@/types/user";
 import { OrganizationFields } from "./OrganizationFields";
+import { BasicProjectFields } from "./BasicProjectFields";
 
 interface ProjectFormFieldsProps {
   title: string;
@@ -33,9 +28,6 @@ interface ProjectFormFieldsProps {
   setDirectionId: (value: string) => void;
   serviceId: string;
   setServiceId: (value: string) => void;
-  initialPoleId?: string | null;
-  initialDirectionId?: string | null;
-  initialServiceId?: string | null;
 }
 
 export const ProjectFormFields = ({
@@ -62,9 +54,6 @@ export const ProjectFormFields = ({
   setDirectionId,
   serviceId,
   setServiceId,
-  initialPoleId,
-  initialDirectionId,
-  initialServiceId,
 }: ProjectFormFieldsProps) => {
   const { data: projectManagers } = useQuery({
     queryKey: ["projectManagers"],
@@ -91,113 +80,32 @@ export const ProjectFormFields = ({
 
   return (
     <div className="grid gap-4 py-4">
-      <div className="space-y-4">
-        <div className="grid gap-2">
-          <label htmlFor="title" className="text-sm font-medium">
-            Titre *
-          </label>
-          <Input
-            id="title"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            placeholder="Nom du projet"
-          />
-        </div>
-        <div className="grid gap-2">
-          <label htmlFor="description" className="text-sm font-medium">
-            Description
-          </label>
-          <Textarea
-            id="description"
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            placeholder="Description du projet"
-          />
-        </div>
-        <div className="grid gap-2">
-          <label htmlFor="project-manager" className="text-sm font-medium">
-            Chef de projet *
-          </label>
-          {isAdmin ? (
-            <Select value={projectManager} onValueChange={(email) => {
-              setProjectManager(email);
-              const selectedProfile = projectManagers?.find(pm => pm.email === email);
-              if (selectedProfile) {
-                setOwnerId(selectedProfile.id);
-              }
-            }}>
-              <SelectTrigger>
-                <SelectValue placeholder="Sélectionner un chef de projet" />
-              </SelectTrigger>
-              <SelectContent>
-                {projectManagers?.map((profile) => (
-                  profile.email && (
-                    <SelectItem key={profile.email} value={profile.email}>
-                      {profile.email}
-                    </SelectItem>
-                  )
-                ))}
-              </SelectContent>
-            </Select>
-          ) : (
-            <Input
-              id="project-manager"
-              value={projectManager}
-              readOnly
-              className="bg-gray-100"
-            />
-          )}
-        </div>
+      <BasicProjectFields
+        title={title}
+        setTitle={setTitle}
+        description={description}
+        setDescription={setDescription}
+        projectManager={projectManager}
+        setProjectManager={setProjectManager}
+        startDate={startDate}
+        setStartDate={setStartDate}
+        endDate={endDate}
+        setEndDate={setEndDate}
+        priority={priority}
+        setPriority={setPriority}
+        suiviDgs={suiviDgs}
+        setSuiviDgs={setSuiviDgs}
+        isAdmin={isAdmin}
+      />
 
-        <OrganizationFields
-          poleId={poleId}
-          setPoleId={setPoleId}
-          directionId={directionId}
-          setDirectionId={setDirectionId}
-          serviceId={serviceId}
-          setServiceId={setServiceId}
-          initialPoleId={initialPoleId}
-          initialDirectionId={initialDirectionId}
-          initialServiceId={initialServiceId}
-        />
-
-        <div className="grid gap-4 sm:grid-cols-2">
-          <DatePickerField
-            label="Date de début"
-            value={startDate}
-            onChange={setStartDate}
-          />
-          <DatePickerField
-            label="Date de fin"
-            value={endDate}
-            onChange={setEndDate}
-            minDate={startDate}
-          />
-        </div>
-        <div className="grid gap-2">
-          <label htmlFor="priority" className="text-sm font-medium">
-            Priorité
-          </label>
-          <Select value={priority} onValueChange={setPriority}>
-            <SelectTrigger>
-              <SelectValue placeholder="Sélectionner une priorité" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="high">Haute</SelectItem>
-              <SelectItem value="medium">Moyenne</SelectItem>
-              <SelectItem value="low">Basse</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-        <div className="flex items-center space-x-2">
-          <Switch
-            id="suivi-dgs"
-            checked={suiviDgs}
-            onCheckedChange={setSuiviDgs}
-          />
-          <Label htmlFor="suivi-dgs">Suivi DGS</Label>
-        </div>
-      </div>
+      <OrganizationFields
+        poleId={poleId}
+        setPoleId={setPoleId}
+        directionId={directionId}
+        setDirectionId={setDirectionId}
+        serviceId={serviceId}
+        setServiceId={setServiceId}
+      />
     </div>
   );
 };

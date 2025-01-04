@@ -1,12 +1,11 @@
 import { useEffect, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { useToast } from "@/components/ui/use-toast";
-import { supabase } from "@/integrations/supabase/client";
-import { ProjectFormFields } from "./form/ProjectFormFields";
 import { useUser } from "@supabase/auth-helpers-react";
 import { useQuery } from "@tanstack/react-query";
 import { UserRoleData } from "@/types/user";
+import { supabase } from "@/integrations/supabase/client";
+import { ProjectFormFields } from "./form/ProjectFormFields";
+import { ProjectFormActions } from "./form/ProjectFormActions";
 
 interface ProjectFormProps {
   isOpen: boolean;
@@ -29,7 +28,6 @@ interface ProjectFormProps {
 }
 
 export const ProjectForm = ({ isOpen, onClose, onSubmit, project }: ProjectFormProps) => {
-  const { toast } = useToast();
   const user = useUser();
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -61,10 +59,8 @@ export const ProjectForm = ({ isOpen, onClose, onSubmit, project }: ProjectFormP
 
   const isAdmin = userRoles?.some(ur => ur.role === 'admin');
 
-  // Réinitialisation complète des états à chaque ouverture du formulaire
   useEffect(() => {
     if (isOpen) {
-      // Initialisation des champs basiques
       setTitle(project?.title || "");
       setDescription(project?.description || "");
       setProjectManager(project?.project_manager || "");
@@ -72,13 +68,10 @@ export const ProjectForm = ({ isOpen, onClose, onSubmit, project }: ProjectFormP
       setEndDate(project?.end_date ? new Date(project?.end_date) : undefined);
       setPriority(project?.priority || "medium");
       setSuiviDgs(project?.suivi_dgs || false);
-      
-      // Initialisation des champs d'organisation
       setPoleId(project?.pole_id || "none");
       setDirectionId(project?.direction_id || "none");
       setServiceId(project?.service_id || "none");
       
-      // Initialisation du propriétaire
       if (project) {
         setOwnerId(project.owner_id || "");
       } else if (!isAdmin && user?.id) {
@@ -89,118 +82,6 @@ export const ProjectForm = ({ isOpen, onClose, onSubmit, project }: ProjectFormP
       }
     }
   }, [isOpen, project, user?.email, user?.id, isAdmin]);
-
-  const handleSubmit = async () => {
-    if (!title.trim()) {
-      toast({
-        title: "Erreur",
-        description: "Le titre du projet est requis",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (!projectManager.trim()) {
-      toast({
-        title: "Erreur",
-        description: "Le chef de projet est requis",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (startDate && endDate && startDate > endDate) {
-      toast({
-        title: "Erreur",
-        description: "La date de fin doit être postérieure à la date de début",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (!user) {
-      toast({
-        title: "Erreur",
-        description: "Vous devez être connecté pour créer ou modifier un projet",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setIsSubmitting(true);
-
-    try {
-      const projectData = {
-        title,
-        description,
-        project_manager: projectManager,
-        start_date: startDate?.toISOString().split('T')[0],
-        end_date: endDate?.toISOString().split('T')[0],
-        priority,
-        suivi_dgs: suiviDgs,
-        owner_id: ownerId || null,
-        pole_id: poleId === "none" ? null : poleId,
-        direction_id: directionId === "none" ? null : directionId,
-        service_id: serviceId === "none" ? null : serviceId,
-      };
-
-      if (project?.id) {
-        const canUpdate = isAdmin || project.owner_id === user.id;
-
-        if (!canUpdate) {
-          toast({
-            title: "Erreur",
-            description: "Vous n'avez pas les droits pour modifier ce projet",
-            variant: "destructive",
-          });
-          return;
-        }
-
-        const { error } = await supabase
-          .from("projects")
-          .update(projectData)
-          .eq("id", project.id);
-
-        if (error) throw error;
-
-        toast({
-          title: "Succès",
-          description: "Le projet a été mis à jour",
-        });
-      } else {
-        const { error } = await supabase.from("projects").insert(projectData);
-
-        if (error) {
-          if (error.code === "23505") {
-            toast({
-              title: "Erreur",
-              description: "Un projet avec ce titre existe déjà",
-              variant: "destructive",
-            });
-            return;
-          }
-          throw error;
-        }
-
-        toast({
-          title: "Succès",
-          description: "Le projet a été créé",
-        });
-      }
-
-      onSubmit();
-      onClose();
-    } catch (error) {
-      console.error("Error:", error);
-      toast({
-        title: "Erreur",
-        description: "Une erreur est survenue",
-        variant: "destructive",
-      });
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -243,18 +124,27 @@ export const ProjectForm = ({ isOpen, onClose, onSubmit, project }: ProjectFormP
         </div>
         
         <DialogFooter>
-          <Button variant="outline" onClick={onClose}>
-            Annuler
-          </Button>
-          <Button onClick={handleSubmit} disabled={isSubmitting}>
-            {isSubmitting ? (
-              "Enregistrement..."
-            ) : project ? (
-              "Mettre à jour"
-            ) : (
-              "Créer"
-            )}
-          </Button>
+          <ProjectFormActions
+            isSubmitting={isSubmitting}
+            onClose={onClose}
+            onSubmit={onSubmit}
+            project={project}
+            formData={{
+              title,
+              description,
+              projectManager,
+              startDate,
+              endDate,
+              priority,
+              suiviDgs,
+              ownerId,
+              poleId,
+              directionId,
+              serviceId,
+            }}
+            user={user}
+            isAdmin={isAdmin}
+          />
         </DialogFooter>
       </DialogContent>
     </Dialog>
