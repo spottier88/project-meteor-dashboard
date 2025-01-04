@@ -39,9 +39,9 @@ export const ProjectForm = ({ isOpen, onClose, onSubmit, project }: ProjectFormP
   const [priority, setPriority] = useState("medium");
   const [suiviDgs, setSuiviDgs] = useState(false);
   const [ownerId, setOwnerId] = useState("");
-  const [poleId, setPoleId] = useState("");
-  const [directionId, setDirectionId] = useState("");
-  const [serviceId, setServiceId] = useState("");
+  const [poleId, setPoleId] = useState("none");
+  const [directionId, setDirectionId] = useState("none");
+  const [serviceId, setServiceId] = useState("none");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const { data: userRoles } = useQuery({
