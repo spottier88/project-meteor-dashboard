@@ -72,39 +72,38 @@ export const OrganizationFields = ({
     enabled: !!directionId && directionId !== "none",
   });
 
-  // Initialize fields with project data
+  // Initialize pole
   useEffect(() => {
-    if (initialPoleId && initialPoleId !== poleId) {
+    if (initialPoleId && initialPoleId !== "none") {
       setPoleId(initialPoleId);
     }
   }, [initialPoleId, setPoleId]);
 
+  // Initialize direction once directions are loaded
   useEffect(() => {
     if (initialDirectionId && directions?.some(d => d.id === initialDirectionId)) {
       setDirectionId(initialDirectionId);
     }
   }, [initialDirectionId, directions, setDirectionId]);
 
+  // Initialize service once services are loaded
   useEffect(() => {
     if (initialServiceId && services?.some(s => s.id === initialServiceId)) {
       setServiceId(initialServiceId);
     }
   }, [initialServiceId, services, setServiceId]);
 
-  // Reset dependent fields when parent field changes
   const handlePoleChange = (value: string) => {
+    if (value === poleId) return;
     setPoleId(value);
-    if (value !== poleId) {
-      setDirectionId("none");
-      setServiceId("none");
-    }
+    setDirectionId("none");
+    setServiceId("none");
   };
 
   const handleDirectionChange = (value: string) => {
+    if (value === directionId) return;
     setDirectionId(value);
-    if (value !== directionId) {
-      setServiceId("none");
-    }
+    setServiceId("none");
   };
 
   return (
