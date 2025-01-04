@@ -8,6 +8,7 @@ import { ProjectSummary } from "./pages/ProjectSummary";
 import { RiskManagement } from "./pages/RiskManagement";
 import { UserManagement } from "./pages/UserManagement";
 import { AdminDashboard } from "./pages/AdminDashboard";
+import { OrganizationManagement } from "./pages/OrganizationManagement";
 import { SessionContextProvider } from "@supabase/auth-helpers-react";
 import { supabase } from "@/integrations/supabase/client";
 import { ProtectedRoute } from "./components/ProtectedRoute";
@@ -42,6 +43,14 @@ function App() {
               element={
                 <ProtectedRoute>
                   <UserManagement />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/organization"
+              element={
+                <ProtectedRoute>
+                  <OrganizationManagement />
                 </ProtectedRoute>
               }
             />
