@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label";
 import { useState } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { useUser } from "@supabase/auth-helpers-react";
 
 interface ProfileUpdateFormProps {
   isOpen: boolean;
@@ -33,6 +34,7 @@ export const ProfileUpdateForm = ({
   const [lastName, setLastName] = useState(currentLastName);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
+  const user = useUser();
 
   const handleSubmit = async () => {
     setIsSubmitting(true);
@@ -90,7 +92,7 @@ export const ProfileUpdateForm = ({
           </div>
           <div className="grid gap-2">
             <Label>Email</Label>
-            <Input value={currentFirstName} disabled className="bg-gray-100" />
+            <Input value={user?.email || ""} disabled className="bg-gray-100" />
           </div>
         </div>
         <DialogFooter>
