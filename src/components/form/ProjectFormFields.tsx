@@ -28,6 +28,20 @@ interface ProjectFormFieldsProps {
   setDirectionId: (value: string) => void;
   serviceId: string;
   setServiceId: (value: string) => void;
+  project?: {
+    id: string;
+    title: string;
+    description?: string;
+    project_manager?: string;
+    start_date?: string;
+    end_date?: string;
+    priority?: string;
+    suivi_dgs?: boolean;
+    owner_id?: string;
+    pole_id?: string;
+    direction_id?: string;
+    service_id?: string;
+  };
 }
 
 export const ProjectFormFields = ({
@@ -54,6 +68,7 @@ export const ProjectFormFields = ({
   setDirectionId,
   serviceId,
   setServiceId,
+  project,
 }: ProjectFormFieldsProps) => {
   const { data: projectManagers } = useQuery({
     queryKey: ["projectManagers"],
@@ -105,6 +120,7 @@ export const ProjectFormFields = ({
         setDirectionId={setDirectionId}
         serviceId={serviceId}
         setServiceId={setServiceId}
+        project={project}
       />
     </div>
   );
