@@ -72,19 +72,9 @@ export const ProjectForm = ({ isOpen, onClose, onSubmit, project }: ProjectFormP
       setPriority(project?.priority || "medium");
       setSuiviDgs(project?.suivi_dgs || false);
       setOwnerId(project?.owner_id || "");
-      
-      // Initialize organization data
-      if (project?.service_id) {
-        setServiceId(project.service_id);
-      } else if (project?.direction_id) {
-        setDirectionId(project.direction_id);
-        setPoleId(project.pole_id || "");
-        setServiceId("");
-      } else {
-        setPoleId(project?.pole_id || "");
-        setDirectionId("");
-        setServiceId("");
-      }
+      setPoleId(project?.pole_id || "");
+      setDirectionId(project?.direction_id || "");
+      setServiceId(project?.service_id || "");
 
       // Set default project manager for new projects
       if (!project && !isAdmin && user?.email) {
@@ -134,37 +124,6 @@ export const ProjectForm = ({ isOpen, onClose, onSubmit, project }: ProjectFormP
     setIsSubmitting(true);
 
     try {
-      // Determine which organizational level to use
-      let finalPoleId = null;
-      let finalDirectionId = null;
-      let finalServiceId = null;
-
-      if (serviceId && serviceId !== "none") {
-        finalServiceId = serviceId;
-        // Include pole and direction IDs from the service hierarchy
-        const { data: serviceData } = await supabase
-          .from("services")
-          .select(`
-            *,
-            direction:directions (
-              *,
-              pole:poles (*)
-            )
-          `)
-          .eq("id", serviceId)
-          .single();
-
-        if (serviceData) {
-          finalDirectionId = serviceData.direction_id;
-          finalPoleId = serviceData.direction?.pole_id;
-        }
-      } else if (directionId && directionId !== "none") {
-        finalDirectionId = directionId;
-        finalPoleId = poleId;
-      } else if (poleId && poleId !== "none") {
-        finalPoleId = poleId;
-      }
-
       const projectData = {
         title,
         description,
@@ -174,9 +133,9 @@ export const ProjectForm = ({ isOpen, onClose, onSubmit, project }: ProjectFormP
         priority,
         suivi_dgs: suiviDgs,
         owner_id: ownerId || null,
-        pole_id: finalPoleId,
-        direction_id: finalDirectionId,
-        service_id: finalServiceId,
+        pole_id: poleId === "none" ? null : poleId,
+        direction_id: directionId === "none" ? null : directionId,
+        service_id: serviceId === "none" ? null : serviceId,
       };
 
       if (project?.id) {
