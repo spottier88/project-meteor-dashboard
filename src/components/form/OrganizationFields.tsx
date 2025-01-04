@@ -20,13 +20,6 @@ interface OrganizationFieldsProps {
   };
 }
 
-interface OrganizationData {
-  id: string;
-  name: string;
-  pole_id?: string;
-  direction_id?: string;
-}
-
 export const OrganizationFields = ({
   poleId,
   setPoleId,
@@ -36,23 +29,32 @@ export const OrganizationFields = ({
   setServiceId,
   project,
 }: OrganizationFieldsProps) => {
+  console.log("OrganizationFields - Component mounted with props:", {
+    poleId,
+    directionId,
+    serviceId,
+    project: project ? {
+      id: project.id,
+      title: project.title,
+      pole_id: project.pole_id,
+      direction_id: project.direction_id,
+      service_id: project.service_id
+    } : 'No project data'
+  });
+
   const [isInitialized, setIsInitialized] = useState(false);
 
   // Fetch poles data
   const { data: poles, isLoading: isLoadingPoles } = useQuery({
     queryKey: ["poles"],
     queryFn: async () => {
-      console.log("Fetching poles data...");
       const { data, error } = await supabase
         .from("poles")
         .select("*")
         .order("name");
-      if (error) {
-        console.error("Error fetching poles:", error);
-        throw error;
-      }
+      if (error) throw error;
       console.log("Poles data received:", data);
-      return data as OrganizationData[];
+      return data;
     },
   });
 
@@ -60,17 +62,13 @@ export const OrganizationFields = ({
   const { data: allDirections, isLoading: isLoadingDirections } = useQuery({
     queryKey: ["all_directions"],
     queryFn: async () => {
-      console.log("Fetching directions data...");
       const { data, error } = await supabase
         .from("directions")
         .select("*")
         .order("name");
-      if (error) {
-        console.error("Error fetching directions:", error);
-        throw error;
-      }
+      if (error) throw error;
       console.log("Directions data received:", data);
-      return data as OrganizationData[];
+      return data;
     },
   });
 
@@ -78,97 +76,50 @@ export const OrganizationFields = ({
   const { data: allServices, isLoading: isLoadingServices } = useQuery({
     queryKey: ["all_services"],
     queryFn: async () => {
-      console.log("Fetching services data...");
       const { data, error } = await supabase
         .from("services")
         .select("*")
         .order("name");
-      if (error) {
-        console.error("Error fetching services:", error);
-        throw error;
-      }
+      if (error) throw error;
       console.log("Services data received:", data);
-      return data as OrganizationData[];
+      return data;
     },
   });
 
-  // Effet pour l'initialisation une seule fois quand toutes les données sont chargées
+  // Effet pour l'initialisation
   useEffect(() => {
-    if (!isInitialized && !isLoadingPoles && !isLoadingDirections && !isLoadingServices) {
-      console.log("Starting initialization with props:", {
-        poleId,
-        directionId,
-        serviceId,
-        project: project ? {
-          id: project.id,
-          title: project.title,
-          pole_id: project.pole_id,
-          direction_id: project.direction_id,
-          service_id: project.service_id
-        } : 'No project data'
-      });
-
-      console.log("Available data:", {
-        poles: poles?.map(p => ({ id: p.id, name: p.name })),
-        directions: allDirections?.map(d => ({ id: d.id, name: d.name, pole_id: d.pole_id })),
-        services: allServices?.map(s => ({ id: s.id, name: s.name, direction_id: s.direction_id }))
-      });
+    if (!isInitialized && !isLoadingPoles && !isLoadingDirections && !isLoadingServices && project) {
+      console.log("Starting initialization with project data:", project);
       
-      // Vérifie si le pôle existe et est valide
-      const poleExists = poles?.some(p => p.id === poleId);
-      console.log("Pole exists check:", { poleId, exists: poleExists });
+      if (project.pole_id) {
+        console.log("Setting pole_id from project:", project.pole_id);
+        setPoleId(project.pole_id);
+      }
       
-      if (!poleExists && poleId !== "none") {
-        console.log("Resetting pole - doesn't exist:", poleId);
-        setPoleId("none");
-        setDirectionId("none");
-        setServiceId("none");
-      } else if (poleId !== "none") {
-        // Vérifie si la direction appartient au pôle
-        const directionValid = allDirections?.some(
-          d => d.id === directionId && d.pole_id === poleId
-        );
-        console.log("Direction valid check:", { directionId, poleId, valid: directionValid });
-        
-        if (!directionValid && directionId !== "none") {
-          console.log("Resetting direction - invalid for pole:", directionId);
-          setDirectionId("none");
-          setServiceId("none");
-        } else if (directionId !== "none") {
-          // Vérifie si le service appartient à la direction
-          const serviceValid = allServices?.some(
-            s => s.id === serviceId && s.direction_id === directionId
-          );
-          console.log("Service valid check:", { serviceId, directionId, valid: serviceValid });
-          
-          if (!serviceValid && serviceId !== "none") {
-            console.log("Resetting service - invalid for direction:", serviceId);
-            setServiceId("none");
-          }
-        }
+      if (project.direction_id) {
+        console.log("Setting direction_id from project:", project.direction_id);
+        setDirectionId(project.direction_id);
+      }
+      
+      if (project.service_id) {
+        console.log("Setting service_id from project:", project.service_id);
+        setServiceId(project.service_id);
       }
       
       setIsInitialized(true);
-      console.log("Initialization complete. Final values:", { poleId, directionId, serviceId });
     }
   }, [
     isInitialized,
     isLoadingPoles,
     isLoadingDirections,
     isLoadingServices,
-    poles,
-    allDirections,
-    allServices,
-    poleId,
-    directionId,
-    serviceId,
+    project,
     setPoleId,
     setDirectionId,
     setServiceId,
-    project,
   ]);
 
-  // Filtrer les directions et services en fonction des sélections
+  // Filtrer les directions et services
   const directions = allDirections?.filter(
     d => poleId !== "none" && d.pole_id === poleId
   ) || [];

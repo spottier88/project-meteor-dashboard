@@ -28,7 +28,6 @@ interface ProjectFormProps {
 }
 
 export const ProjectForm = ({ isOpen, onClose, onSubmit, project }: ProjectFormProps) => {
-  console.log("ProjectForm - Initial project data:", project); // Ajout du log
   const user = useUser();
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -62,25 +61,37 @@ export const ProjectForm = ({ isOpen, onClose, onSubmit, project }: ProjectFormP
 
   useEffect(() => {
     if (isOpen) {
-      console.log("ProjectForm - Setting initial values with project:", project); // Ajout du log
-      setTitle(project?.title || "");
-      setDescription(project?.description || "");
-      setProjectManager(project?.project_manager || "");
-      setStartDate(project?.start_date ? new Date(project?.start_date) : undefined);
-      setEndDate(project?.end_date ? new Date(project?.end_date) : undefined);
-      setPriority(project?.priority || "medium");
-      setSuiviDgs(project?.suivi_dgs || false);
-      setPoleId(project?.pole_id || "none");
-      setDirectionId(project?.direction_id || "none");
-      setServiceId(project?.service_id || "none");
+      console.log("ProjectForm - Setting initial values with project:", project);
       
       if (project) {
+        console.log("ProjectForm - Initializing form with project data:", {
+          title: project.title,
+          description: project.description,
+          project_manager: project.project_manager,
+          pole_id: project.pole_id,
+          direction_id: project.direction_id,
+          service_id: project.service_id
+        });
+        
+        setTitle(project.title || "");
+        setDescription(project.description || "");
+        setProjectManager(project.project_manager || "");
+        setStartDate(project.start_date ? new Date(project.start_date) : undefined);
+        setEndDate(project.end_date ? new Date(project.end_date) : undefined);
+        setPriority(project.priority || "medium");
+        setSuiviDgs(project.suivi_dgs || false);
+        setPoleId(project.pole_id || "none");
+        setDirectionId(project.direction_id || "none");
+        setServiceId(project.service_id || "none");
         setOwnerId(project.owner_id || "");
-      } else if (!isAdmin && user?.id) {
-        setOwnerId(user.id);
-        setProjectManager(user.email || "");
       } else {
-        setOwnerId("");
+        console.log("ProjectForm - Initializing new project form");
+        if (!isAdmin && user?.id) {
+          setOwnerId(user.id);
+          setProjectManager(user.email || "");
+        } else {
+          setOwnerId("");
+        }
       }
     }
   }, [isOpen, project, user?.email, user?.id, isAdmin]);
@@ -122,7 +133,7 @@ export const ProjectForm = ({ isOpen, onClose, onSubmit, project }: ProjectFormP
             setDirectionId={setDirectionId}
             serviceId={serviceId}
             setServiceId={setServiceId}
-            project={project} // Ajout de la prop project
+            project={project}
           />
         </div>
         
