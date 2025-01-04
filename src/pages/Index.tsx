@@ -8,6 +8,7 @@ import { ProjectTable } from "@/components/ProjectTable";
 import { DashboardHeader } from "@/components/DashboardHeader";
 import { ViewToggle, ViewMode } from "@/components/ViewToggle";
 import { ProjectFilters } from "@/components/ProjectFilters";
+import { useNavigate } from "react-router-dom";
 
 const Index = () => {
   const [isProjectFormOpen, setIsProjectFormOpen] = useState(false);
@@ -20,6 +21,7 @@ const Index = () => {
   });
   
   const user = useUser();
+  const navigate = useNavigate();
 
   const { data: projects, refetch: refetchProjects } = useQuery({
     queryKey: ["projects"],
@@ -53,12 +55,10 @@ const Index = () => {
   });
 
   const filteredProjects = projects?.filter(project => {
-    // Filter by DGS follow-up
     if (filters.showDgsOnly && !project.suivi_dgs) {
       return false;
     }
 
-    // Filter by organization
     if (filters.organization) {
       const { type, id } = filters.organization;
       switch (type) {
@@ -74,7 +74,6 @@ const Index = () => {
       }
     }
 
-    // Filter by project manager
     if (filters.projectManager && project.project_manager !== filters.projectManager) {
       return false;
     }
@@ -99,6 +98,10 @@ const Index = () => {
     refetchProjects();
   };
 
+  const handleViewHistory = (projectId: string, title: string) => {
+    navigate(`/projects/${projectId}/history`, { state: { projectTitle: title } });
+  };
+
   return (
     <div className="container mx-auto py-8">
       <DashboardHeader
@@ -118,14 +121,14 @@ const Index = () => {
             projects={filteredProjects || []} 
             onProjectEdit={handleEditProject}
             onProjectReview={() => {}}
-            onViewHistory={() => {}}
+            onViewHistory={handleViewHistory}
           />
         ) : (
           <ProjectTable 
             projects={filteredProjects || []} 
             onProjectEdit={handleEditProject}
             onProjectReview={() => {}}
-            onViewHistory={() => {}}
+            onViewHistory={handleViewHistory}
             onProjectDeleted={refetchProjects}
           />
         )}
