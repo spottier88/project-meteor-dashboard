@@ -3,16 +3,23 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { PDFDownloadLink } from "@react-pdf/renderer";
 import { Button } from "@/components/ui/button";
-import { FileDown, ArrowLeft } from "lucide-react";
+import { FileDown, ArrowLeft, Plus } from "lucide-react";
 import { ProjectPDF } from "@/components/ProjectPDF";
 import { RiskList } from "@/components/RiskList";
 import { KanbanBoard } from "@/components/KanbanBoard";
 import { LastReview } from "@/components/LastReview";
 import { ProjectHeader } from "@/components/ProjectHeader";
+import { TaskForm } from "@/components/TaskForm";
+import { useState } from "react";
+import { useUser } from "@supabase/auth-helpers-react";
+import { canManageProjectItems } from "@/utils/permissions";
+import { UserRoleData } from "@/types/user";
 
 export const ProjectSummary = () => {
   const { projectId } = useParams<{ projectId: string }>();
   const navigate = useNavigate();
+  const user = useUser();
+  const [isTaskFormOpen, setIsTaskFormOpen] = useState(false);
 
   const { data: project, isError: projectError } = useQuery({
     queryKey: ["project", projectId],
@@ -31,6 +38,21 @@ export const ProjectSummary = () => {
       return data;
     },
     enabled: !!projectId,
+  });
+
+  const { data: userRoles } = useQuery({
+    queryKey: ["userRoles", user?.id],
+    queryFn: async () => {
+      if (!user?.id) return null;
+      const { data, error } = await supabase
+        .from("user_roles")
+        .select("*")
+        .eq("user_id", user.id);
+
+      if (error) throw error;
+      return data as UserRoleData[];
+    },
+    enabled: !!user?.id,
   });
 
   const { data: lastReview } = useQuery({
@@ -65,7 +87,7 @@ export const ProjectSummary = () => {
     enabled: !!projectId,
   });
 
-  const { data: tasks } = useQuery({
+  const { data: tasks, refetch: refetchTasks } = useQuery({
     queryKey: ["tasks", projectId],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -85,19 +107,20 @@ export const ProjectSummary = () => {
     return null;
   }
 
+  const roles = userRoles?.map(ur => ur.role);
+  const canManage = canManageProjectItems(roles, user?.id, project.owner_id);
+
   return (
     <div className="container mx-auto py-6 space-y-6">
-      <Button
-        variant="ghost"
-        className="mb-4"
-        onClick={() => navigate("/")}
-      >
-        <ArrowLeft className="h-4 w-4 mr-2" />
-        Retour à l'accueil
-      </Button>
-
       <div className="flex items-center justify-between">
-        <ProjectHeader project={project} />
+        <Button
+          variant="ghost"
+          onClick={() => navigate("/")}
+        >
+          <ArrowLeft className="h-4 w-4 mr-2" />
+          Retour à l'accueil
+        </Button>
+
         <PDFDownloadLink
           document={
             <ProjectPDF
@@ -118,7 +141,9 @@ export const ProjectSummary = () => {
         </PDFDownloadLink>
       </div>
 
-      <div className="grid gap-6">
+      <ProjectHeader project={project} />
+
+      <div className="grid gap-8">
         {lastReview && (
           <div className="max-w-xl mx-auto">
             <LastReview review={lastReview} />
@@ -126,15 +151,29 @@ export const ProjectSummary = () => {
         )}
 
         <div className="space-y-4">
-          <h2 className="text-2xl font-bold">Tâches</h2>
-          <KanbanBoard projectId={projectId} />
+          <div className="flex items-center justify-between">
+            <h2 className="text-2xl font-bold">Tâches</h2>
+            {canManage && (
+              <Button onClick={() => setIsTaskFormOpen(true)}>
+                <Plus className="h-4 w-4 mr-2" />
+                Nouvelle tâche
+              </Button>
+            )}
+          </div>
+          <KanbanBoard projectId={projectId || ""} />
         </div>
 
         <div className="space-y-4">
-          <h2 className="text-2xl font-bold">Risques</h2>
-          <RiskList projectId={projectId} projectTitle={project.title} />
+          <RiskList projectId={projectId || ""} projectTitle={project.title} />
         </div>
       </div>
+
+      <TaskForm
+        isOpen={isTaskFormOpen}
+        onClose={() => setIsTaskFormOpen(false)}
+        onSubmit={refetchTasks}
+        projectId={projectId || ""}
+      />
     </div>
   );
 };
