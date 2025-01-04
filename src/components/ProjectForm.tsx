@@ -73,21 +73,7 @@ export const ProjectForm = ({ isOpen, onClose, onSubmit, project }: ProjectFormP
 
   useEffect(() => {
     if (isOpen) {
-      console.log("ProjectForm - Setting initial values with project:", project);
-      
       if (project) {
-        console.log("ProjectForm - Initializing form with project data:", {
-          title: project.title,
-          description: project.description,
-          project_manager: project.project_manager,
-          pole_id: project.pole_id,
-          direction_id: project.direction_id,
-          service_id: project.service_id,
-          poles: project.poles,
-          directions: project.directions,
-          services: project.services
-        });
-        
         setTitle(project.title || "");
         setDescription(project.description || "");
         setProjectManager(project.project_manager || "");
@@ -100,7 +86,6 @@ export const ProjectForm = ({ isOpen, onClose, onSubmit, project }: ProjectFormP
         setServiceId(project.service_id || "none");
         setOwnerId(project.owner_id || "");
       } else {
-        console.log("ProjectForm - Initializing new project form");
         if (!isAdmin && user?.id) {
           setOwnerId(user.id);
           setProjectManager(user.email || "");
