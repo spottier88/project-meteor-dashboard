@@ -1,6 +1,8 @@
+import { useState } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import { SortableHeader } from "../ui/sortable-header";
 
 interface Task {
   id: string;
@@ -28,15 +30,53 @@ const statusLabels = {
   done: "Terminé",
 };
 
-export const TaskTable = ({ tasks }: TaskTableProps) => {
+export const TaskTable = ({ tasks: initialTasks }: TaskTableProps) => {
+  const [sort, setSort] = useState<{ key: string; direction: 'asc' | 'desc' } | null>(null);
+
+  const handleSort = (key: string) => {
+    setSort(current => {
+      if (current?.key === key) {
+        if (current.direction === 'asc') {
+          return { key, direction: 'desc' };
+        }
+        return null;
+      }
+      return { key, direction: 'asc' };
+    });
+  };
+
+  const tasks = [...initialTasks].sort((a, b) => {
+    if (!sort) return 0;
+
+    const getValue = (obj: any, key: string) => {
+      return obj[key] || '';
+    };
+
+    const aValue = getValue(a, sort.key);
+    const bValue = getValue(b, sort.key);
+
+    if (sort.direction === 'asc') {
+      return aValue > bValue ? 1 : -1;
+    }
+    return aValue < bValue ? 1 : -1;
+  });
+
   return (
     <Table>
       <TableHeader>
         <TableRow>
-          <TableHead>Titre</TableHead>
-          <TableHead>Assigné à</TableHead>
-          <TableHead>Date limite</TableHead>
-          <TableHead>Statut</TableHead>
+          <SortableHeader sortKey="title" currentSort={sort} onSort={handleSort}>
+            Titre
+          </SortableHeader>
+          <SortableHeader sortKey="assignee" currentSort={sort} onSort={handleSort}>
+            Assigné à
+          </SortableHeader>
+          <SortableHeader sortKey="due_date" currentSort={sort} onSort={handleSort}>
+            Date limite
+          </SortableHeader>
+          <SortableHeader sortKey="status" currentSort={sort} onSort={handleSort}>
+            Statut
+          </SortableHeader>
         </TableRow>
       </TableHeader>
       <TableBody>
