@@ -35,11 +35,16 @@ export const OrganizationFields = ({
   const { data: poles, isLoading: isLoadingPoles } = useQuery({
     queryKey: ["poles"],
     queryFn: async () => {
+      console.log("Fetching poles data...");
       const { data, error } = await supabase
         .from("poles")
         .select("*")
         .order("name");
-      if (error) throw error;
+      if (error) {
+        console.error("Error fetching poles:", error);
+        throw error;
+      }
+      console.log("Poles data received:", data);
       return data as OrganizationData[];
     },
   });
@@ -48,11 +53,16 @@ export const OrganizationFields = ({
   const { data: allDirections, isLoading: isLoadingDirections } = useQuery({
     queryKey: ["all_directions"],
     queryFn: async () => {
+      console.log("Fetching directions data...");
       const { data, error } = await supabase
         .from("directions")
         .select("*")
         .order("name");
-      if (error) throw error;
+      if (error) {
+        console.error("Error fetching directions:", error);
+        throw error;
+      }
+      console.log("Directions data received:", data);
       return data as OrganizationData[];
     },
   });
@@ -61,11 +71,16 @@ export const OrganizationFields = ({
   const { data: allServices, isLoading: isLoadingServices } = useQuery({
     queryKey: ["all_services"],
     queryFn: async () => {
+      console.log("Fetching services data...");
       const { data, error } = await supabase
         .from("services")
         .select("*")
         .order("name");
-      if (error) throw error;
+      if (error) {
+        console.error("Error fetching services:", error);
+        throw error;
+      }
+      console.log("Services data received:", data);
       return data as OrganizationData[];
     },
   });
@@ -73,7 +88,16 @@ export const OrganizationFields = ({
   // Effet pour l'initialisation une seule fois quand toutes les données sont chargées
   useEffect(() => {
     if (!isInitialized && !isLoadingPoles && !isLoadingDirections && !isLoadingServices) {
-      console.log("Initial values:", { poleId, directionId, serviceId });
+      console.log("All data loaded. Current values:", {
+        poles,
+        allDirections,
+        allServices,
+        currentSelections: {
+          poleId,
+          directionId,
+          serviceId
+        }
+      });
       
       // Vérifie si le pôle existe
       const poleExists = poles?.some(p => p.id === poleId);
@@ -116,6 +140,9 @@ export const OrganizationFields = ({
     poleId,
     directionId,
     serviceId,
+    setPoleId,
+    setDirectionId,
+    setServiceId,
   ]);
 
   // Filtrer les directions et services en fonction des sélections
