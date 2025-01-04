@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -21,8 +21,8 @@ interface DirectionFormProps {
 
 export const DirectionForm = ({ isOpen, onClose, onSubmit, direction }: DirectionFormProps) => {
   const { toast } = useToast();
-  const [name, setName] = useState(direction?.name || "");
-  const [poleId, setPoleId] = useState(direction?.pole_id || "");
+  const [name, setName] = useState("");
+  const [poleId, setPoleId] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const { data: poles } = useQuery({
@@ -33,6 +33,14 @@ export const DirectionForm = ({ isOpen, onClose, onSubmit, direction }: Directio
       return data;
     },
   });
+
+  // Reset form when opening/closing or when direction changes
+  useEffect(() => {
+    if (isOpen) {
+      setName(direction?.name || "");
+      setPoleId(direction?.pole_id || "");
+    }
+  }, [isOpen, direction]);
 
   const handleSubmit = async () => {
     if (!name.trim() || !poleId) {

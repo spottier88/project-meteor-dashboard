@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -21,8 +21,8 @@ interface ServiceFormProps {
 
 export const ServiceForm = ({ isOpen, onClose, onSubmit, service }: ServiceFormProps) => {
   const { toast } = useToast();
-  const [name, setName] = useState(service?.name || "");
-  const [directionId, setDirectionId] = useState(service?.direction_id || "");
+  const [name, setName] = useState("");
+  const [directionId, setDirectionId] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const { data: directions } = useQuery({
@@ -35,6 +35,14 @@ export const ServiceForm = ({ isOpen, onClose, onSubmit, service }: ServiceFormP
       return data;
     },
   });
+
+  // Reset form when opening/closing or when service changes
+  useEffect(() => {
+    if (isOpen) {
+      setName(service?.name || "");
+      setDirectionId(service?.direction_id || "");
+    }
+  }, [isOpen, service]);
 
   const handleSubmit = async () => {
     if (!name.trim() || !directionId) {

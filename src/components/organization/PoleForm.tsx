@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -18,8 +18,15 @@ interface PoleFormProps {
 
 export const PoleForm = ({ isOpen, onClose, onSubmit, pole }: PoleFormProps) => {
   const { toast } = useToast();
-  const [name, setName] = useState(pole?.name || "");
+  const [name, setName] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Reset form when opening/closing or when pole changes
+  useEffect(() => {
+    if (isOpen) {
+      setName(pole?.name || "");
+    }
+  }, [isOpen, pole]);
 
   const handleSubmit = async () => {
     if (!name.trim()) {
