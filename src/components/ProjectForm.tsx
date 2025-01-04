@@ -76,7 +76,6 @@ export const ProjectForm = ({ isOpen, onClose, onSubmit, project }: ProjectFormP
       // Initialize organization data
       if (project?.service_id) {
         setServiceId(project.service_id);
-        // Les valeurs de pole_id et direction_id seront mises à jour via l'effet dans ProjectFormFields
       } else if (project?.direction_id) {
         setDirectionId(project.direction_id);
         setPoleId(project.pole_id || "");
@@ -142,7 +141,7 @@ export const ProjectForm = ({ isOpen, onClose, onSubmit, project }: ProjectFormP
 
       if (serviceId && serviceId !== "none") {
         finalServiceId = serviceId;
-        // Inclure également les IDs du pôle et de la direction
+        // Include pole and direction IDs from the service hierarchy
         const { data: serviceData } = await supabase
           .from("services")
           .select(`
@@ -174,7 +173,7 @@ export const ProjectForm = ({ isOpen, onClose, onSubmit, project }: ProjectFormP
         end_date: endDate?.toISOString().split('T')[0],
         priority,
         suivi_dgs: suiviDgs,
-        owner_id: ownerId,
+        owner_id: ownerId || null,
         pole_id: finalPoleId,
         direction_id: finalDirectionId,
         service_id: finalServiceId,
