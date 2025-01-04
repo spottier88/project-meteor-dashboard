@@ -24,12 +24,13 @@ interface ProjectFormFieldsProps {
   suiviDgs: boolean;
   setSuiviDgs: (value: boolean) => void;
   isAdmin: boolean;
+  ownerId: string;
   setOwnerId: (value: string) => void;
-  poleId?: string;
+  poleId: string;
   setPoleId: (value: string) => void;
-  directionId?: string;
+  directionId: string;
   setDirectionId: (value: string) => void;
-  serviceId?: string;
+  serviceId: string;
   setServiceId: (value: string) => void;
 }
 
@@ -49,6 +50,7 @@ export const ProjectFormFields = ({
   suiviDgs,
   setSuiviDgs,
   isAdmin,
+  ownerId,
   setOwnerId,
   poleId,
   setPoleId,
@@ -123,22 +125,36 @@ export const ProjectFormFields = ({
   });
 
   const handlePoleChange = (value: string) => {
-    setPoleId(value);
     if (value === "none") {
-      setDirectionId("none");
-      setServiceId("none");
+      setPoleId("");
+      setDirectionId("");
+      setServiceId("");
+    } else {
+      setPoleId(value);
+      setDirectionId("");
+      setServiceId("");
     }
   };
 
   const handleDirectionChange = (value: string) => {
-    setDirectionId(value);
     if (value === "none") {
-      setServiceId("none");
+      setDirectionId("");
+      setServiceId("");
+    } else {
+      setPoleId("");
+      setDirectionId(value);
+      setServiceId("");
     }
   };
 
   const handleServiceChange = (value: string) => {
-    setServiceId(value);
+    if (value === "none") {
+      setServiceId("");
+    } else {
+      setPoleId("");
+      setDirectionId("");
+      setServiceId(value);
+    }
   };
 
   return (
@@ -296,4 +312,4 @@ export const ProjectFormFields = ({
       </div>
     </div>
   );
-};
+});
