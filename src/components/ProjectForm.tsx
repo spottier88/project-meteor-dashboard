@@ -124,6 +124,19 @@ export const ProjectForm = ({ isOpen, onClose, onSubmit, project }: ProjectFormP
     setIsSubmitting(true);
 
     try {
+      // Determine which organizational level to use
+      let finalPoleId = null;
+      let finalDirectionId = null;
+      let finalServiceId = null;
+
+      if (serviceId && serviceId !== "none") {
+        finalServiceId = serviceId;
+      } else if (directionId && directionId !== "none") {
+        finalDirectionId = directionId;
+      } else if (poleId && poleId !== "none") {
+        finalPoleId = poleId;
+      }
+
       const projectData = {
         title,
         description,
@@ -133,9 +146,9 @@ export const ProjectForm = ({ isOpen, onClose, onSubmit, project }: ProjectFormP
         priority,
         suivi_dgs: suiviDgs,
         owner_id: ownerId,
-        pole_id: poleId || null,
-        direction_id: directionId || null,
-        service_id: serviceId || null,
+        pole_id: finalPoleId,
+        direction_id: finalDirectionId,
+        service_id: finalServiceId,
       };
 
       if (project?.id) {
