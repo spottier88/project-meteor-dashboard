@@ -7,11 +7,18 @@ import { ProjectGrid } from "@/components/ProjectGrid";
 import { ProjectTable } from "@/components/ProjectTable";
 import { DashboardHeader } from "@/components/DashboardHeader";
 import { ViewToggle, ViewMode } from "@/components/ViewToggle";
+import { ProjectFilters } from "@/components/ProjectFilters";
 
 const Index = () => {
   const [isProjectFormOpen, setIsProjectFormOpen] = useState(false);
   const [selectedProject, setSelectedProject] = useState<any>(null);
   const [view, setView] = useState<ViewMode>("grid");
+  const [filters, setFilters] = useState({
+    showDgsOnly: false,
+    organization: null as { type: string; id: string } | null,
+    projectManager: null as string | null,
+  });
+  
   const user = useUser();
 
   const { data: projects, refetch: refetchProjects } = useQuery({
@@ -38,12 +45,30 @@ const Index = () => {
 
       if (error) throw error;
       
-      // Transform the data to match the expected Project type
       return data?.map(project => ({
         ...project,
         lastReviewDate: project.last_review_date,
       })) || [];
     },
+  });
+
+  const filteredProjects = projects?.filter(project => {
+    if (filters.showDgsOnly && !project.suivi_dgs) {
+      return false;
+    }
+
+    if (filters.organization) {
+      const { type, id } = filters.organization;
+      if (type === "pole" && project.pole_id !== id) return false;
+      if (type === "direction" && project.direction_id !== id) return false;
+      if (type === "service" && project.service_id !== id) return false;
+    }
+
+    if (filters.projectManager && project.project_manager !== filters.projectManager) {
+      return false;
+    }
+
+    return true;
   });
 
   const handleEditProject = (projectId: string) => {
@@ -70,24 +95,30 @@ const Index = () => {
         onNewReview={() => {}}
       />
 
-      <ViewToggle currentView={view} onViewChange={setView} />
+      <div className="space-y-4">
+        <ViewToggle currentView={view} onViewChange={setView} />
+        
+        <ProjectFilters
+          onFilterChange={setFilters}
+        />
 
-      {view === "grid" ? (
-        <ProjectGrid 
-          projects={projects || []} 
-          onProjectEdit={handleEditProject}
-          onProjectReview={() => {}}
-          onViewHistory={() => {}}
-        />
-      ) : (
-        <ProjectTable 
-          projects={projects || []} 
-          onProjectEdit={handleEditProject}
-          onProjectReview={() => {}}
-          onViewHistory={() => {}}
-          onProjectDeleted={refetchProjects}
-        />
-      )}
+        {view === "grid" ? (
+          <ProjectGrid 
+            projects={filteredProjects || []} 
+            onProjectEdit={handleEditProject}
+            onProjectReview={() => {}}
+            onViewHistory={() => {}}
+          />
+        ) : (
+          <ProjectTable 
+            projects={filteredProjects || []} 
+            onProjectEdit={handleEditProject}
+            onProjectReview={() => {}}
+            onViewHistory={() => {}}
+            onProjectDeleted={refetchProjects}
+          />
+        )}
+      </div>
 
       <ProjectForm
         isOpen={isProjectFormOpen}
