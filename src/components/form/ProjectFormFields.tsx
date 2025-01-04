@@ -128,6 +128,24 @@ export const ProjectFormFields = ({
     enabled: !!directionId,
   });
 
+  const handlePoleChange = (value: string) => {
+    setPoleId(value);
+    setDirectionId("");
+    setServiceId("");
+  };
+
+  const handleDirectionChange = (value: string) => {
+    setPoleId("");
+    setDirectionId(value);
+    setServiceId("");
+  };
+
+  const handleServiceChange = (value: string) => {
+    setPoleId("");
+    setDirectionId("");
+    setServiceId(value);
+  };
+
   return (
     <div className="grid gap-4 py-4">
       <div className="space-y-4">
@@ -189,19 +207,16 @@ export const ProjectFormFields = ({
         </div>
 
         <div className="grid gap-4">
-          <label className="text-sm font-medium">Organisation</label>
-          <div className="grid gap-4 sm:grid-cols-2">
+          <label className="text-sm font-medium">Organisation (choisir un seul niveau)</label>
+          <div className="grid gap-4">
             <div className="grid gap-2">
               <Label htmlFor="pole">Pôle</Label>
-              <Select value={poleId} onValueChange={(value) => {
-                setPoleId(value);
-                setDirectionId("");
-                setServiceId("");
-              }}>
+              <Select value={poleId} onValueChange={handlePoleChange}>
                 <SelectTrigger>
                   <SelectValue placeholder="Sélectionner un pôle" />
                 </SelectTrigger>
                 <SelectContent>
+                  <SelectItem value="">Aucun</SelectItem>
                   {poles?.map((pole) => (
                     <SelectItem key={pole.id} value={pole.id}>
                       {pole.name}
@@ -211,36 +226,31 @@ export const ProjectFormFields = ({
               </Select>
             </div>
 
-            {poleId && (
-              <div className="grid gap-2">
-                <Label htmlFor="direction">Direction</Label>
-                <Select value={directionId} onValueChange={(value) => {
-                  setDirectionId(value);
-                  setServiceId("");
-                }}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Sélectionner une direction" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {directions?.map((direction) => (
-                      <SelectItem key={direction.id} value={direction.id}>
-                        {direction.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
-          </div>
+            <div className="grid gap-2">
+              <Label htmlFor="direction">Direction</Label>
+              <Select value={directionId} onValueChange={handleDirectionChange}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Sélectionner une direction" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">Aucun</SelectItem>
+                  {directions?.map((direction) => (
+                    <SelectItem key={direction.id} value={direction.id}>
+                      {direction.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
 
-          {directionId && (
             <div className="grid gap-2">
               <Label htmlFor="service">Service</Label>
-              <Select value={serviceId} onValueChange={setServiceId}>
+              <Select value={serviceId} onValueChange={handleServiceChange}>
                 <SelectTrigger>
                   <SelectValue placeholder="Sélectionner un service" />
                 </SelectTrigger>
                 <SelectContent>
+                  <SelectItem value="">Aucun</SelectItem>
                   {services?.map((service) => (
                     <SelectItem key={service.id} value={service.id}>
                       {service.name}
@@ -249,7 +259,7 @@ export const ProjectFormFields = ({
                 </SelectContent>
               </Select>
             </div>
-          )}
+          </div>
         </div>
 
         <div className="grid gap-4 sm:grid-cols-2">

@@ -84,9 +84,9 @@ export const OrganizationManagement = () => {
 
     try {
       const { error } = await supabase
-        .from(itemToDelete.type + "s")
+        .from(itemToDelete.type + 's' as 'poles' | 'directions' | 'services')
         .delete()
-        .eq("id", itemToDelete.id);
+        .eq('id', itemToDelete.id);
 
       if (error) throw error;
 
