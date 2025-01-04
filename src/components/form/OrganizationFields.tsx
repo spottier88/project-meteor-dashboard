@@ -11,6 +11,13 @@ interface OrganizationFieldsProps {
   setDirectionId: (value: string) => void;
   serviceId: string;
   setServiceId: (value: string) => void;
+  project?: {
+    id: string;
+    title: string;
+    pole_id?: string;
+    direction_id?: string;
+    service_id?: string;
+  };
 }
 
 interface OrganizationData {
@@ -27,6 +34,7 @@ export const OrganizationFields = ({
   setDirectionId,
   serviceId,
   setServiceId,
+  project,
 }: OrganizationFieldsProps) => {
   const [isInitialized, setIsInitialized] = useState(false);
 
@@ -90,7 +98,14 @@ export const OrganizationFields = ({
       console.log("Starting initialization with props:", {
         poleId,
         directionId,
-        serviceId
+        serviceId,
+        project: project ? {
+          id: project.id,
+          title: project.title,
+          pole_id: project.pole_id,
+          direction_id: project.direction_id,
+          service_id: project.service_id
+        } : 'No project data'
       });
 
       console.log("Available data:", {
@@ -150,6 +165,7 @@ export const OrganizationFields = ({
     setPoleId,
     setDirectionId,
     setServiceId,
+    project,
   ]);
 
   // Filtrer les directions et services en fonction des sélections
