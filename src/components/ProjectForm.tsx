@@ -63,24 +63,26 @@ export const ProjectForm = ({ isOpen, onClose, onSubmit, project }: ProjectFormP
 
   useEffect(() => {
     if (isOpen) {
+      // Reset form fields
       setTitle(project?.title || "");
       setDescription(project?.description || "");
+      setProjectManager(project?.project_manager || "");
+      setStartDate(project?.start_date ? new Date(project?.start_date) : undefined);
+      setEndDate(project?.end_date ? new Date(project?.end_date) : undefined);
+      setPriority(project?.priority || "medium");
+      setSuiviDgs(project?.suivi_dgs || false);
       setOwnerId(project?.owner_id || "");
+      
+      // Initialize organization data
       setPoleId(project?.pole_id || "");
       setDirectionId(project?.direction_id || "");
       setServiceId(project?.service_id || "");
-      
+
+      // Set default project manager for new projects
       if (!project && !isAdmin && user?.email) {
         setProjectManager(user.email);
         setOwnerId(user.id);
-      } else {
-        setProjectManager(project?.project_manager || "");
       }
-      
-      setStartDate(project?.start_date ? new Date(project.start_date) : undefined);
-      setEndDate(project?.end_date ? new Date(project.end_date) : undefined);
-      setPriority(project?.priority || "medium");
-      setSuiviDgs(project?.suivi_dgs || false);
     }
   }, [isOpen, project, user?.email, user?.id, isAdmin]);
 
