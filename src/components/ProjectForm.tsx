@@ -63,7 +63,6 @@ export const ProjectForm = ({ isOpen, onClose, onSubmit, project }: ProjectFormP
 
   useEffect(() => {
     if (isOpen) {
-      // Reset form fields
       setTitle(project?.title || "");
       setDescription(project?.description || "");
       setProjectManager(project?.project_manager || "");
@@ -72,11 +71,10 @@ export const ProjectForm = ({ isOpen, onClose, onSubmit, project }: ProjectFormP
       setPriority(project?.priority || "medium");
       setSuiviDgs(project?.suivi_dgs || false);
       setOwnerId(project?.owner_id || "");
-      setPoleId(project?.pole_id || "");
-      setDirectionId(project?.direction_id || "");
-      setServiceId(project?.service_id || "");
+      setPoleId(project?.pole_id || "none");
+      setDirectionId(project?.direction_id || "none");
+      setServiceId(project?.service_id || "none");
 
-      // Set default project manager for new projects
       if (!project && !isAdmin && user?.email) {
         setProjectManager(user.email);
         setOwnerId(user.id);
@@ -133,9 +131,9 @@ export const ProjectForm = ({ isOpen, onClose, onSubmit, project }: ProjectFormP
         priority,
         suivi_dgs: suiviDgs,
         owner_id: ownerId || null,
-        pole_id: poleId === "none" ? null : poleId,
-        direction_id: directionId === "none" ? null : directionId,
-        service_id: serviceId === "none" ? null : serviceId,
+        pole_id: poleId === "none" ? null : poleId || null,
+        direction_id: directionId === "none" ? null : directionId || null,
+        service_id: serviceId === "none" ? null : serviceId || null,
       };
 
       if (project?.id) {
