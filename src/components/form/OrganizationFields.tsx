@@ -2,7 +2,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
 interface OrganizationFieldsProps {
   poleId: string;
@@ -16,6 +16,13 @@ interface OrganizationFieldsProps {
   initialServiceId?: string | null;
 }
 
+interface OrganizationData {
+  id: string;
+  name: string;
+  pole_id?: string;
+  direction_id?: string;
+}
+
 export const OrganizationFields = ({
   poleId,
   setPoleId,
@@ -27,7 +34,9 @@ export const OrganizationFields = ({
   initialDirectionId,
   initialServiceId,
 }: OrganizationFieldsProps) => {
-  // Fetch poles
+  const [isInitialized, setIsInitialized] = useState(false);
+
+  // Fetch all data at once
   const { data: poles } = useQuery({
     queryKey: ["poles"],
     queryFn: async () => {
@@ -36,72 +45,93 @@ export const OrganizationFields = ({
         .select("*")
         .order("name");
       if (error) throw error;
-      return data;
+      return data as OrganizationData[];
     },
   });
 
-  // Fetch directions based on selected pole
-  const { data: directions } = useQuery({
-    queryKey: ["directions", poleId],
+  const { data: allDirections } = useQuery({
+    queryKey: ["all_directions"],
     queryFn: async () => {
-      if (!poleId || poleId === "none") return [];
       const { data, error } = await supabase
         .from("directions")
         .select("*")
-        .eq("pole_id", poleId)
         .order("name");
       if (error) throw error;
-      return data;
+      return data as OrganizationData[];
     },
-    enabled: !!poleId && poleId !== "none",
   });
 
-  // Fetch services based on selected direction
-  const { data: services } = useQuery({
-    queryKey: ["services", directionId],
+  const { data: allServices } = useQuery({
+    queryKey: ["all_services"],
     queryFn: async () => {
-      if (!directionId || directionId === "none") return [];
       const { data, error } = await supabase
         .from("services")
         .select("*")
-        .eq("direction_id", directionId)
         .order("name");
       if (error) throw error;
-      return data;
+      return data as OrganizationData[];
     },
-    enabled: !!directionId && directionId !== "none",
   });
 
-  // Initialize pole
+  // Initialize fields once all data is loaded
   useEffect(() => {
-    if (initialPoleId && initialPoleId !== "none") {
-      setPoleId(initialPoleId);
-    }
-  }, [initialPoleId, setPoleId]);
+    if (!isInitialized && poles && allDirections && allServices) {
+      // Initialize pole if valid
+      if (initialPoleId && poles.some(p => p.id === initialPoleId)) {
+        setPoleId(initialPoleId);
+        
+        // Initialize direction if valid for selected pole
+        if (initialDirectionId) {
+          const validDirection = allDirections.find(
+            d => d.id === initialDirectionId && d.pole_id === initialPoleId
+          );
+          if (validDirection) {
+            setDirectionId(initialDirectionId);
 
-  // Initialize direction once directions are loaded
-  useEffect(() => {
-    if (initialDirectionId && directions?.some(d => d.id === initialDirectionId)) {
-      setDirectionId(initialDirectionId);
+            // Initialize service if valid for selected direction
+            if (initialServiceId) {
+              const validService = allServices.find(
+                s => s.id === initialServiceId && s.direction_id === initialDirectionId
+              );
+              if (validService) {
+                setServiceId(initialServiceId);
+              }
+            }
+          }
+        }
+      }
+      setIsInitialized(true);
     }
-  }, [initialDirectionId, directions, setDirectionId]);
+  }, [
+    poles,
+    allDirections,
+    allServices,
+    initialPoleId,
+    initialDirectionId,
+    initialServiceId,
+    setPoleId,
+    setDirectionId,
+    setServiceId,
+    isInitialized,
+  ]);
 
-  // Initialize service once services are loaded
-  useEffect(() => {
-    if (initialServiceId && services?.some(s => s.id === initialServiceId)) {
-      setServiceId(initialServiceId);
-    }
-  }, [initialServiceId, services, setServiceId]);
+  // Filter directions based on selected pole
+  const directions = allDirections?.filter(
+    d => d.pole_id === poleId
+  ) || [];
+
+  // Filter services based on selected direction
+  const services = allServices?.filter(
+    s => s.direction_id === directionId
+  ) || [];
 
   const handlePoleChange = (value: string) => {
-    if (value === poleId) return;
     setPoleId(value);
     setDirectionId("none");
     setServiceId("none");
   };
 
   const handleDirectionChange = (value: string) => {
-    if (value === directionId) return;
     setDirectionId(value);
     setServiceId("none");
   };
@@ -139,7 +169,7 @@ export const OrganizationFields = ({
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="none">Aucun</SelectItem>
-              {directions?.map((direction) => (
+              {directions.map((direction) => (
                 <SelectItem key={direction.id} value={direction.id}>
                   {direction.name}
                 </SelectItem>
@@ -160,7 +190,7 @@ export const OrganizationFields = ({
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="none">Aucun</SelectItem>
-              {services?.map((service) => (
+              {services.map((service) => (
                 <SelectItem key={service.id} value={service.id}>
                   {service.name}
                 </SelectItem>
