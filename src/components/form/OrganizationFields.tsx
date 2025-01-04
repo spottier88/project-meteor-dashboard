@@ -2,6 +2,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useEffect } from "react";
 
 interface OrganizationFieldsProps {
   poleId: string;
@@ -66,13 +67,44 @@ export const OrganizationFields = ({
 
   // Filter directions based on selected pole
   const directions = allDirections?.filter(
-    d => d.pole_id === poleId
+    d => poleId !== "none" && d.pole_id === poleId
   ) || [];
 
   // Filter services based on selected direction
   const services = allServices?.filter(
-    s => s.direction_id === directionId
+    s => directionId !== "none" && s.direction_id === directionId
   ) || [];
+
+  // Validate and update selections when data changes
+  useEffect(() => {
+    if (poles && allDirections && allServices) {
+      // Validate pole selection
+      if (poleId !== "none" && !poles.some(p => p.id === poleId)) {
+        setPoleId("none");
+        setDirectionId("none");
+        setServiceId("none");
+        return;
+      }
+
+      // Validate direction selection
+      if (directionId !== "none") {
+        const direction = allDirections.find(d => d.id === directionId);
+        if (!direction || direction.pole_id !== poleId) {
+          setDirectionId("none");
+          setServiceId("none");
+          return;
+        }
+      }
+
+      // Validate service selection
+      if (serviceId !== "none") {
+        const service = allServices.find(s => s.id === serviceId);
+        if (!service || service.direction_id !== directionId) {
+          setServiceId("none");
+        }
+      }
+    }
+  }, [poles, allDirections, allServices, poleId, directionId, serviceId]);
 
   const handlePoleChange = (value: string) => {
     setPoleId(value);
