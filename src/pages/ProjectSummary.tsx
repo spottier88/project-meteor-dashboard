@@ -51,22 +51,6 @@ export const ProjectSummary = () => {
     enabled: !!projectId,
   });
 
-  const { data: lastReview } = useQuery({
-    queryKey: ["lastReview", projectId],
-    queryFn: async () => {
-      if (!projectId) return null;
-      const { data } = await supabase
-        .from("reviews")
-        .select("*")
-        .eq("project_id", projectId)
-        .order("created_at", { ascending: false })
-        .limit(1)
-        .single();
-      return data;
-    },
-    enabled: !!projectId,
-  });
-
   if (!project) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -79,7 +63,15 @@ export const ProjectSummary = () => {
     <div className="container mx-auto py-8">
       <div className="flex justify-between items-start mb-8">
         <div className="flex-1">
-          <ProjectSummaryHeader project={project} />
+          <ProjectSummaryHeader
+            title={project.title}
+            description={project.description}
+            status={project.status}
+            progress={project.progress}
+            completion={project.completion}
+            project_manager={project.project_manager}
+            last_review_date={project.last_review_date}
+          />
         </div>
         <div className="flex gap-2">
           <PDFDownloadLink
@@ -88,7 +80,6 @@ export const ProjectSummary = () => {
                 project={project}
                 risks={risks || []}
                 tasks={tasks || []}
-                lastReview={lastReview}
               />
             }
             fileName={`${project.title.toLowerCase().replace(/ /g, "-")}.pdf`}
