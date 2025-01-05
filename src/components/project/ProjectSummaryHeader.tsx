@@ -12,6 +12,12 @@ interface ProjectSummaryHeaderProps {
   last_review_date: string;
 }
 
+const progressLabels = {
+  better: "En amélioration",
+  stable: "Stable",
+  worse: "En dégradation",
+} as const;
+
 export const ProjectSummaryHeader = ({
   title,
   description,
@@ -64,9 +70,3 @@ export const ProjectSummaryHeader = ({
     </Card>
   );
 };
-
-const progressLabels = {
-  better: "En amélioration",
-  stable: "Stable",
-  worse: "En dégradation",
-} as const;
