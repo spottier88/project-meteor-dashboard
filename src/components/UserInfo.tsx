@@ -1,17 +1,16 @@
 import { useSupabaseClient, useUser } from "@supabase/auth-helpers-react";
 import { Button } from "./ui/button";
+import { useNavigate } from "react-router-dom";
 import { LogOut } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { useToast } from "./ui/use-toast";
 import { UserProfile, UserRoleData } from "@/types/user";
-import { useState } from "react";
-import { ProfileUpdateForm } from "./UserForm/ProfileUpdateForm";
 
 export const UserInfo = () => {
   const user = useUser();
   const supabase = useSupabaseClient();
+  const navigate = useNavigate();
   const { toast } = useToast();
-  const [isUpdateFormOpen, setIsUpdateFormOpen] = useState(false);
 
   const { data: profile } = useQuery({
     queryKey: ["profile", user?.id],
@@ -48,34 +47,37 @@ export const UserInfo = () => {
 
   const handleLogout = async () => {
     try {
-      // First clear the session
-      await supabase.auth.signOut();
-      // Clear any local storage
-      localStorage.clear();
-      // Force a page reload to clear all state
-      window.location.href = "/login";
+      const { error } = await supabase.auth.signOut();
+      if (error) throw error;
+
+      await new Promise(resolve => setTimeout(resolve, 100));
+
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        navigate("/login");
+        toast({
+          title: "Déconnexion réussie",
+          description: "Vous avez été déconnecté avec succès",
+        });
+      } else {
+        throw new Error("La session n'a pas été correctement terminée");
+      }
     } catch (error) {
       console.error("Erreur lors de la déconnexion:", error);
-      // Even if there's an error, we should still redirect to login
-      window.location.href = "/login";
+      toast({
+        title: "Erreur",
+        description: "Une erreur est survenue lors de la déconnexion",
+        variant: "destructive",
+      });
     }
   };
 
   if (!user) return null;
 
-  const displayName = profile ? 
-    `${profile.first_name || ''} ${profile.last_name || ''}`.trim() || user.email 
-    : user.email;
-
   return (
     <div className="flex items-center justify-between p-4 mb-4 bg-secondary/20 rounded-lg">
       <div className="flex flex-col">
-        <button 
-          onClick={() => setIsUpdateFormOpen(true)}
-          className="text-sm font-medium hover:underline text-left"
-        >
-          {displayName}
-        </button>
+        <span className="text-sm font-medium">{user.email}</span>
         <span className="text-xs text-muted-foreground">
           {isAdmin ? "Administrateur" : "Chef de projet"}
         </span>
@@ -86,17 +88,6 @@ export const UserInfo = () => {
           Déconnexion
         </Button>
       </div>
-
-      {profile && (
-        <ProfileUpdateForm
-          isOpen={isUpdateFormOpen}
-          onClose={() => setIsUpdateFormOpen(false)}
-          currentFirstName={profile.first_name || ""}
-          currentLastName={profile.last_name || ""}
-          userId={user.id}
-          onUpdate={() => {}}
-        />
-      )}
     </div>
   );
 };

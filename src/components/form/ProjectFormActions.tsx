@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { User } from "@supabase/auth-helpers-react";
 
 interface ProjectFormActionsProps {
   isSubmitting: boolean;
@@ -24,7 +25,7 @@ interface ProjectFormActionsProps {
     directionId: string;
     serviceId: string;
   };
-  userId: string | undefined;
+  user: User | null;
   isAdmin: boolean;
 }
 
@@ -34,7 +35,7 @@ export const ProjectFormActions = ({
   onSubmit,
   project,
   formData,
-  userId,
+  user,
   isAdmin,
 }: ProjectFormActionsProps) => {
   const { toast } = useToast();
@@ -68,7 +69,7 @@ export const ProjectFormActions = ({
       return;
     }
 
-    if (!userId) {
+    if (!user) {
       toast({
         title: "Erreur",
         description: "Vous devez être connecté pour créer ou modifier un projet",
@@ -95,7 +96,7 @@ export const ProjectFormActions = ({
       };
 
       if (project?.id) {
-        const canUpdate = isAdmin || project.owner_id === userId;
+        const canUpdate = isAdmin || project.owner_id === user.id;
 
         if (!canUpdate) {
           toast({

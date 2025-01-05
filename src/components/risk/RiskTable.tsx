@@ -1,8 +1,6 @@
-import { useState } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
-import { SortableHeader } from "../ui/sortable-header";
 
 interface Risk {
   id: string;
@@ -36,53 +34,15 @@ const statusColors = {
   resolved: "bg-green-100 text-green-800",
 };
 
-export const RiskTable = ({ risks: initialRisks }: RiskTableProps) => {
-  const [sort, setSort] = useState<{ key: string; direction: 'asc' | 'desc' } | null>(null);
-
-  const handleSort = (key: string) => {
-    setSort(current => {
-      if (current?.key === key) {
-        if (current.direction === 'asc') {
-          return { key, direction: 'desc' };
-        }
-        return null;
-      }
-      return { key, direction: 'asc' };
-    });
-  };
-
-  const risks = [...initialRisks].sort((a, b) => {
-    if (!sort) return 0;
-
-    const getValue = (obj: any, key: string) => {
-      return obj[key] || '';
-    };
-
-    const aValue = getValue(a, sort.key);
-    const bValue = getValue(b, sort.key);
-
-    if (sort.direction === 'asc') {
-      return aValue > bValue ? 1 : -1;
-    }
-    return aValue < bValue ? 1 : -1;
-  });
-
+export const RiskTable = ({ risks }: RiskTableProps) => {
   return (
     <Table>
       <TableHeader>
         <TableRow>
-          <SortableHeader sortKey="description" currentSort={sort} onSort={handleSort}>
-            Description
-          </SortableHeader>
-          <SortableHeader sortKey="probability" currentSort={sort} onSort={handleSort}>
-            Probabilité
-          </SortableHeader>
-          <SortableHeader sortKey="severity" currentSort={sort} onSort={handleSort}>
-            Gravité
-          </SortableHeader>
-          <SortableHeader sortKey="status" currentSort={sort} onSort={handleSort}>
-            Statut
-          </SortableHeader>
+          <TableHead>Description</TableHead>
+          <TableHead>Probabilité</TableHead>
+          <TableHead>Gravité</TableHead>
+          <TableHead>Statut</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>

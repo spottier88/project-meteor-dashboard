@@ -1,4 +1,3 @@
-import { useState } from "react";
 import {
   Table,
   TableBody,
@@ -18,9 +17,6 @@ import { canEditProject } from "@/utils/permissions";
 import { UserRoleData } from "@/types/user";
 import { ProjectActions } from "./project/ProjectActions";
 import { StatusIcon } from "./project/StatusIcon";
-import { SortableHeader } from "./ui/sortable-header";
-import { format } from "date-fns";
-import { fr } from "date-fns/locale";
 
 interface Project {
   id: string;
@@ -58,14 +54,13 @@ const progressLabels = {
 } as const;
 
 export const ProjectTable = ({
-  projects: initialProjects,
+  projects,
   onProjectEdit,
   onViewHistory,
   onProjectDeleted,
 }: ProjectTableProps) => {
   const navigate = useNavigate();
   const user = useUser();
-  const [sort, setSort] = useState<{ key: string; direction: 'asc' | 'desc' } | null>(null);
 
   const { data: userRoles } = useQuery({
     queryKey: ["userRoles", user?.id],
@@ -84,58 +79,18 @@ export const ProjectTable = ({
 
   const roles = userRoles?.map(ur => ur.role);
 
-  const handleSort = (key: string) => {
-    setSort(current => {
-      if (current?.key === key) {
-        if (current.direction === 'asc') {
-          return { key, direction: 'desc' };
-        }
-        return null;
-      }
-      return { key, direction: 'asc' };
-    });
-  };
-
-  const projects = [...initialProjects].sort((a, b) => {
-    if (!sort) return 0;
-
-    const getValue = (obj: any, key: string) => {
-      return obj[key] || '';
-    };
-
-    const aValue = getValue(a, sort.key);
-    const bValue = getValue(b, sort.key);
-
-    if (sort.direction === 'asc') {
-      return aValue > bValue ? 1 : -1;
-    }
-    return aValue < bValue ? 1 : -1;
-  });
-
   return (
     <div className="rounded-md border">
       <Table>
         <TableHeader>
           <TableRow>
-            <SortableHeader sortKey="title" currentSort={sort} onSort={handleSort}>
-              Nom du projet
-            </SortableHeader>
-            <SortableHeader sortKey="project_manager" currentSort={sort} onSort={handleSort}>
-              Chef de projet
-            </SortableHeader>
+            <TableHead>Nom du projet</TableHead>
+            <TableHead>Chef de projet</TableHead>
             <TableHead>Organisation</TableHead>
-            <SortableHeader sortKey="status" currentSort={sort} onSort={handleSort}>
-              Statut
-            </SortableHeader>
-            <SortableHeader sortKey="progress" currentSort={sort} onSort={handleSort}>
-              Progression
-            </SortableHeader>
-            <SortableHeader sortKey="completion" currentSort={sort} onSort={handleSort}>
-              Avancement
-            </SortableHeader>
-            <SortableHeader sortKey="lastReviewDate" currentSort={sort} onSort={handleSort}>
-              Dernière revue
-            </SortableHeader>
+            <TableHead>Statut</TableHead>
+            <TableHead>Progression</TableHead>
+            <TableHead>Avancement</TableHead>
+            <TableHead>Dernière revue</TableHead>
             <TableHead>Suivi DGS</TableHead>
             <TableHead className="text-center">Actions</TableHead>
           </TableRow>
@@ -187,9 +142,7 @@ export const ProjectTable = ({
                 </TableCell>
                 <TableCell>{project.completion}%</TableCell>
                 <TableCell>
-                  {project.lastReviewDate ? (
-                    format(new Date(project.lastReviewDate), 'dd/MM/yyyy', { locale: fr })
-                  ) : (
+                  {project.lastReviewDate || (
                     <span className="text-muted-foreground">Pas de revue</span>
                   )}
                 </TableCell>

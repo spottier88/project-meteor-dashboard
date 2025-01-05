@@ -69,27 +69,25 @@ export const ProjectForm = ({ isOpen, onClose, onSubmit, project }: ProjectFormP
     enabled: !!user?.id,
   });
 
-  const { data: userProfile } = useQuery({
-    queryKey: ["userProfile", user?.id],
-    queryFn: async () => {
-      if (!user?.id) return null;
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("email")
-        .eq("id", user.id)
-        .single();
-
-      if (error) throw error;
-      return data;
-    },
-    enabled: !!user?.id,
-  });
-
   const isAdmin = userRoles?.some(ur => ur.role === 'admin');
 
   useEffect(() => {
     if (isOpen) {
+      console.log("ProjectForm - Setting initial values with project:", project);
+      
       if (project) {
+        console.log("ProjectForm - Initializing form with project data:", {
+          title: project.title,
+          description: project.description,
+          project_manager: project.project_manager,
+          pole_id: project.pole_id,
+          direction_id: project.direction_id,
+          service_id: project.service_id,
+          poles: project.poles,
+          directions: project.directions,
+          services: project.services
+        });
+        
         setTitle(project.title || "");
         setDescription(project.description || "");
         setProjectManager(project.project_manager || "");
@@ -102,28 +100,16 @@ export const ProjectForm = ({ isOpen, onClose, onSubmit, project }: ProjectFormP
         setServiceId(project.service_id || "none");
         setOwnerId(project.owner_id || "");
       } else {
-        // Reset form for new project
-        setTitle("");
-        setDescription("");
-        setPriority("medium");
-        setSuiviDgs(false);
-        setPoleId("none");
-        setDirectionId("none");
-        setServiceId("none");
-        setStartDate(undefined);
-        setEndDate(undefined);
-        
+        console.log("ProjectForm - Initializing new project form");
         if (!isAdmin && user?.id) {
           setOwnerId(user.id);
-          // Make sure we only use the email string from the user profile
-          setProjectManager(userProfile?.email || "");
+          setProjectManager(user.email || "");
         } else {
           setOwnerId("");
-          setProjectManager("");
         }
       }
     }
-  }, [isOpen, project, user?.id, userProfile?.email, isAdmin]);
+  }, [isOpen, project, user?.email, user?.id, isAdmin]);
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -185,7 +171,7 @@ export const ProjectForm = ({ isOpen, onClose, onSubmit, project }: ProjectFormP
               directionId,
               serviceId,
             }}
-            userId={user?.id}
+            user={user}
             isAdmin={isAdmin}
           />
         </DialogFooter>

@@ -1,27 +1,18 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { useUser } from "@supabase/auth-helpers-react";
 import { supabase } from "@/integrations/supabase/client";
 import { PDFDownloadLink } from "@react-pdf/renderer";
 import { Button } from "@/components/ui/button";
-import { FileDown, ArrowLeft, Plus } from "lucide-react";
+import { FileDown, ArrowLeft } from "lucide-react";
 import { ProjectPDF } from "@/components/ProjectPDF";
 import { RiskList } from "@/components/RiskList";
 import { KanbanBoard } from "@/components/KanbanBoard";
 import { LastReview } from "@/components/LastReview";
 import { ProjectHeader } from "@/components/ProjectHeader";
-import { TaskForm } from "@/components/TaskForm";
-import { ReviewSheet } from "@/components/ReviewSheet";
-import { useState } from "react";
-import { canManageProjectItems } from "@/utils/permissions";
-import { UserRoleData } from "@/types/user";
 
 export const ProjectSummary = () => {
   const { projectId } = useParams<{ projectId: string }>();
   const navigate = useNavigate();
-  const user = useUser();
-  const [isTaskFormOpen, setIsTaskFormOpen] = useState(false);
-  const [isReviewFormOpen, setIsReviewFormOpen] = useState(false);
 
   const { data: project, isError: projectError } = useQuery({
     queryKey: ["project", projectId],
@@ -42,22 +33,7 @@ export const ProjectSummary = () => {
     enabled: !!projectId,
   });
 
-  const { data: userRoles } = useQuery({
-    queryKey: ["userRoles", user?.id],
-    queryFn: async () => {
-      if (!user?.id) return null;
-      const { data, error } = await supabase
-        .from("user_roles")
-        .select("*")
-        .eq("user_id", user.id);
-
-      if (error) throw error;
-      return data as UserRoleData[];
-    },
-    enabled: !!user?.id,
-  });
-
-  const { data: lastReview, refetch: refetchLastReview } = useQuery({
+  const { data: lastReview } = useQuery({
     queryKey: ["lastReview", projectId],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -89,7 +65,7 @@ export const ProjectSummary = () => {
     enabled: !!projectId,
   });
 
-  const { data: tasks, refetch: refetchTasks } = useQuery({
+  const { data: tasks } = useQuery({
     queryKey: ["tasks", projectId],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -109,24 +85,19 @@ export const ProjectSummary = () => {
     return null;
   }
 
-  const roles = userRoles?.map(ur => ur.role);
-  const canManage = canManageProjectItems(roles, user?.id, project.owner_id);
-
-  const handleReviewSubmitted = () => {
-    refetchLastReview();
-  };
-
   return (
     <div className="container mx-auto py-6 space-y-6">
-      <div className="flex items-center justify-between">
-        <Button
-          variant="ghost"
-          onClick={() => navigate("/")}
-        >
-          <ArrowLeft className="h-4 w-4 mr-2" />
-          Retour à l'accueil
-        </Button>
+      <Button
+        variant="ghost"
+        className="mb-4"
+        onClick={() => navigate("/")}
+      >
+        <ArrowLeft className="h-4 w-4 mr-2" />
+        Retour à l'accueil
+      </Button>
 
+      <div className="flex items-center justify-between">
+        <ProjectHeader project={project} />
         <PDFDownloadLink
           document={
             <ProjectPDF
@@ -139,20 +110,17 @@ export const ProjectSummary = () => {
           fileName={`${project.title}.pdf`}
         >
           {({ loading }) => (
-            <Button disabled={loading}>
-              <FileDown className="h-4 w-4 mr-2" />
-              {loading ? "Génération..." : "Télécharger le PDF"}
+            <Button disabled={loading} asChild>
+              <span>
+                <FileDown className="h-4 w-4 mr-2" />
+                {loading ? "Génération..." : "Télécharger le PDF"}
+              </span>
             </Button>
           )}
         </PDFDownloadLink>
       </div>
 
-      <ProjectHeader 
-        project={project}
-        onNewReview={() => setIsReviewFormOpen(true)}
-      />
-
-      <div className="grid gap-8">
+      <div className="grid gap-6">
         {lastReview && (
           <div className="max-w-xl mx-auto">
             <LastReview review={lastReview} />
@@ -160,37 +128,15 @@ export const ProjectSummary = () => {
         )}
 
         <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <h2 className="text-2xl font-bold">Tâches</h2>
-            {canManage && (
-              <Button onClick={() => setIsTaskFormOpen(true)}>
-                <Plus className="h-4 w-4 mr-2" />
-                Nouvelle tâche
-              </Button>
-            )}
-          </div>
-          <KanbanBoard projectId={projectId || ""} />
+          <h2 className="text-2xl font-bold">Tâches</h2>
+          <KanbanBoard projectId={projectId} />
         </div>
 
         <div className="space-y-4">
-          <RiskList projectId={projectId || ""} projectTitle={project.title} />
+          <h2 className="text-2xl font-bold">Risques</h2>
+          <RiskList projectId={projectId} projectTitle={project.title} />
         </div>
       </div>
-
-      <TaskForm
-        isOpen={isTaskFormOpen}
-        onClose={() => setIsTaskFormOpen(false)}
-        onSubmit={refetchTasks}
-        projectId={projectId || ""}
-      />
-
-      <ReviewSheet
-        projectId={projectId || ""}
-        projectTitle={project.title}
-        isOpen={isReviewFormOpen}
-        onClose={() => setIsReviewFormOpen(false)}
-        onReviewSubmitted={handleReviewSubmitted}
-      />
     </div>
   );
 };

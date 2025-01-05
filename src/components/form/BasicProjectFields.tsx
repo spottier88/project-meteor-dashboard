@@ -70,11 +70,10 @@ export const BasicProjectFields = ({
         </label>
         <Input
           id="project-manager"
-          value={projectManager || ""}
+          value={projectManager}
           onChange={(e) => setProjectManager(e.target.value)}
           readOnly={!isAdmin}
           className={!isAdmin ? "bg-gray-100" : ""}
-          placeholder="Email du chef de projet"
         />
       </div>
       <div className="grid gap-4 sm:grid-cols-2">

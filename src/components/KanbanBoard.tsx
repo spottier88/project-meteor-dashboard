@@ -9,23 +9,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useToast } from "@/components/ui/use-toast";
-import { Button } from "@/components/ui/button";
-import { Edit, Trash2 } from "lucide-react";
-import { useState } from "react";
-import { TaskForm } from "./TaskForm";
-import { useUser } from "@supabase/auth-helpers-react";
-import { canManageProjectItems } from "@/utils/permissions";
-import { UserRoleData } from "@/types/user";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
 
 interface Task {
   id: string;
@@ -48,39 +31,6 @@ const columns = [
 
 export const KanbanBoard = ({ projectId }: KanbanBoardProps) => {
   const { toast } = useToast();
-  const user = useUser();
-  const [selectedTask, setSelectedTask] = useState<Task | null>(null);
-  const [isTaskFormOpen, setIsTaskFormOpen] = useState(false);
-  const [taskToDelete, setTaskToDelete] = useState<Task | null>(null);
-
-  const { data: project } = useQuery({
-    queryKey: ["project", projectId],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("projects")
-        .select("*")
-        .eq("id", projectId)
-        .single();
-
-      if (error) throw error;
-      return data;
-    },
-  });
-
-  const { data: userRoles } = useQuery({
-    queryKey: ["userRoles", user?.id],
-    queryFn: async () => {
-      if (!user?.id) return null;
-      const { data, error } = await supabase
-        .from("user_roles")
-        .select("*")
-        .eq("user_id", user.id);
-
-      if (error) throw error;
-      return data as UserRoleData[];
-    },
-    enabled: !!user?.id,
-  });
 
   const { data: tasks, refetch } = useQuery({
     queryKey: ["tasks", projectId],
@@ -95,9 +45,6 @@ export const KanbanBoard = ({ projectId }: KanbanBoardProps) => {
       return data as Task[];
     },
   });
-
-  const roles = userRoles?.map(ur => ur.role);
-  const canManage = canManageProjectItems(roles, user?.id, project?.owner_id);
 
   const handleStatusChange = async (taskId: string, newStatus: Task["status"]) => {
     try {
@@ -123,35 +70,6 @@ export const KanbanBoard = ({ projectId }: KanbanBoardProps) => {
     }
   };
 
-  const handleDeleteTask = async () => {
-    if (!taskToDelete) return;
-
-    try {
-      const { error } = await supabase
-        .from("tasks")
-        .delete()
-        .eq("id", taskToDelete.id);
-
-      if (error) throw error;
-
-      toast({
-        title: "Succès",
-        description: "La tâche a été supprimée",
-      });
-
-      refetch();
-    } catch (error) {
-      console.error("Error:", error);
-      toast({
-        title: "Erreur",
-        description: "Une erreur est survenue lors de la suppression",
-        variant: "destructive",
-      });
-    } finally {
-      setTaskToDelete(null);
-    }
-  };
-
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
       {columns.map((column) => (
@@ -173,42 +91,19 @@ export const KanbanBoard = ({ projectId }: KanbanBoardProps) => {
                       <div className="text-sm text-muted-foreground">
                         {task.assignee || "Non assigné"}
                       </div>
-                      <div className="flex items-center gap-2">
-                        <Select
-                          value={task.status}
-                          onValueChange={(value) => handleStatusChange(task.id, value as Task["status"])}
-                        >
-                          <SelectTrigger className="w-[130px]">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="todo">À faire</SelectItem>
-                            <SelectItem value="in_progress">En cours</SelectItem>
-                            <SelectItem value="done">Terminé</SelectItem>
-                          </SelectContent>
-                        </Select>
-                        {canManage && (
-                          <div className="flex items-center gap-1">
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => {
-                                setSelectedTask(task);
-                                setIsTaskFormOpen(true);
-                              }}
-                            >
-                              <Edit className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => setTaskToDelete(task)}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        )}
-                      </div>
+                      <Select
+                        value={task.status}
+                        onValueChange={(value) => handleStatusChange(task.id, value as Task["status"])}
+                      >
+                        <SelectTrigger className="w-[130px]">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="todo">À faire</SelectItem>
+                          <SelectItem value="in_progress">En cours</SelectItem>
+                          <SelectItem value="done">Terminé</SelectItem>
+                        </SelectContent>
+                      </Select>
                     </div>
                   </CardContent>
                 </Card>
@@ -216,34 +111,6 @@ export const KanbanBoard = ({ projectId }: KanbanBoardProps) => {
           </div>
         </div>
       ))}
-
-      <TaskForm
-        isOpen={isTaskFormOpen}
-        onClose={() => {
-          setIsTaskFormOpen(false);
-          setSelectedTask(null);
-        }}
-        onSubmit={refetch}
-        projectId={projectId}
-        task={selectedTask || undefined}
-      />
-
-      <AlertDialog open={!!taskToDelete} onOpenChange={() => setTaskToDelete(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Êtes-vous sûr ?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Cette action ne peut pas être annulée. La tâche sera définitivement supprimée.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Annuler</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDeleteTask}>
-              Supprimer
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </div>
   );
 };
