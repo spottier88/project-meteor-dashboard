@@ -3,17 +3,10 @@ import { ProjectCard, ProjectStatus, ProgressStatus } from "./ProjectCard";
 interface Project {
   id: string;
   title: string;
-  description?: string;
   status: ProjectStatus;
   progress: ProgressStatus;
   completion: number;
   lastReviewDate: string;
-  suivi_dgs?: boolean;
-  project_manager?: string;
-  owner_id?: string;
-  pole_id?: string;
-  direction_id?: string;
-  service_id?: string;
 }
 
 interface ProjectGridProps {
