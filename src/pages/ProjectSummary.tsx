@@ -86,17 +86,19 @@ export const ProjectSummary = () => {
           >
             {({ loading }) => (
               <Button disabled={loading}>
-                {loading ? (
-                  <div className="flex items-center gap-2">
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" />
-                    Génération...
-                  </div>
-                ) : (
-                  <div className="flex items-center gap-2">
-                    <FileDown className="h-4 w-4" />
-                    Télécharger PDF
-                  </div>
-                )}
+                <div className="flex items-center gap-2">
+                  {loading ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" />
+                      <span>Génération...</span>
+                    </>
+                  ) : (
+                    <>
+                      <FileDown className="h-4 w-4" />
+                      <span>Télécharger PDF</span>
+                    </>
+                  )}
+                </div>
               </Button>
             )}
           </PDFDownloadLink>
