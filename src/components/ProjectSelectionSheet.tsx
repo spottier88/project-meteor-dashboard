@@ -4,6 +4,10 @@ import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { StatusIcon } from "./project/StatusIcon";
 import { ProjectStatus } from "./ProjectCard";
+import { useUser } from "@supabase/auth-helpers-react";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { UserRoleData } from "@/types/user";
 
 interface Project {
   id: string;
@@ -27,11 +31,37 @@ export const ProjectSelectionSheet = ({
   onProjectSelect,
 }: ProjectSelectionSheetProps) => {
   const [searchTerm, setSearchTerm] = useState("");
+  const user = useUser();
 
-  const filteredProjects = projects.filter((project) =>
-    project.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (project.project_manager?.toLowerCase() || "").includes(searchTerm.toLowerCase())
-  );
+  const { data: userRoles } = useQuery({
+    queryKey: ["userRoles", user?.id],
+    queryFn: async () => {
+      if (!user?.id) return null;
+      const { data, error } = await supabase
+        .from("user_roles")
+        .select("*")
+        .eq("user_id", user.id);
+
+      if (error) throw error;
+      return data as UserRoleData[];
+    },
+    enabled: !!user?.id,
+  });
+
+  const isAdmin = userRoles?.some(role => role.role === "admin");
+
+  // Filter projects based on user role and search term
+  const filteredProjects = projects.filter((project) => {
+    const matchesSearch = 
+      project.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (project.project_manager?.toLowerCase() || "").includes(searchTerm.toLowerCase());
+
+    // If admin, show all projects that match search
+    if (isAdmin) return matchesSearch;
+
+    // For non-admin users, only show their projects that match search
+    return matchesSearch && project.project_manager === user?.email;
+  });
 
   return (
     <Sheet open={isOpen} onOpenChange={onClose}>
@@ -71,6 +101,13 @@ export const ProjectSelectionSheet = ({
                     <TableCell>{project.lastReviewDate}</TableCell>
                   </TableRow>
                 ))}
+                {filteredProjects.length === 0 && (
+                  <TableRow>
+                    <TableCell colSpan={4} className="text-center py-4 text-muted-foreground">
+                      Aucun projet trouvé
+                    </TableCell>
+                  </TableRow>
+                )}
               </TableBody>
             </Table>
           </div>
