@@ -10,6 +10,9 @@ import { DashboardHeader } from "@/components/DashboardHeader";
 import { ViewToggle, ViewMode } from "@/components/ViewToggle";
 import { ProjectSelectionSheet } from "@/components/ProjectSelectionSheet";
 import { ReviewSheet } from "@/components/ReviewSheet";
+import { FilterToggle } from "@/components/FilterToggle";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 const Index = () => {
   const navigate = useNavigate();
@@ -21,6 +24,8 @@ const Index = () => {
     id: string;
     title: string;
   } | null>(null);
+  const [showDgsOnly, setShowDgsOnly] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
   
   // Initialize view state from localStorage or default to "grid"
   const [view, setView] = useState<ViewMode>(() => {
@@ -65,6 +70,24 @@ const Index = () => {
       })) || [];
     },
   });
+
+  // Filter projects based on DGS and search query
+  const filteredProjects = projects?.filter(project => {
+    // First apply DGS filter if active
+    if (showDgsOnly && !project.suivi_dgs) {
+      return false;
+    }
+
+    // Then apply search filter if there's a query
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase();
+      const matchesTitle = project.title?.toLowerCase().includes(query);
+      const matchesManager = project.project_manager?.toLowerCase().includes(query);
+      return matchesTitle || matchesManager;
+    }
+
+    return true;
+  }) || [];
 
   const handleEditProject = (projectId: string) => {
     const project = projects?.find(p => p.id === projectId);
@@ -113,18 +136,35 @@ const Index = () => {
         onNewReview={handleNewReview}
       />
 
+      <div className="space-y-4 mb-6">
+        <div className="flex flex-col md:flex-row gap-4 items-start md:items-center">
+          <div className="w-full md:w-1/3">
+            <Label htmlFor="search">Rechercher un projet ou un chef de projet</Label>
+            <Input
+              id="search"
+              type="text"
+              placeholder="Rechercher..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="mt-1"
+            />
+          </div>
+          <FilterToggle showDgsOnly={showDgsOnly} onToggle={setShowDgsOnly} />
+        </div>
+      </div>
+
       <ViewToggle currentView={view} onViewChange={setView} />
 
       {view === "grid" ? (
         <ProjectGrid 
-          projects={projects || []} 
+          projects={filteredProjects} 
           onProjectEdit={handleEditProject}
           onProjectReview={handleProjectSelect}
           onViewHistory={handleViewHistory}
         />
       ) : (
         <ProjectTable 
-          projects={projects || []} 
+          projects={filteredProjects} 
           onProjectEdit={handleEditProject}
           onProjectReview={handleProjectSelect}
           onViewHistory={handleViewHistory}
