@@ -115,6 +115,7 @@ export const ProjectForm = ({ isOpen, onClose, onSubmit, project }: ProjectFormP
         
         if (!isAdmin && user?.id) {
           setOwnerId(user.id);
+          // Use only the email string from userProfile
           setProjectManager(userProfile?.email || "");
         } else {
           setOwnerId("");
