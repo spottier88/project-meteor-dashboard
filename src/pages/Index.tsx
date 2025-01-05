@@ -8,10 +8,13 @@ import { ProjectTable } from "@/components/ProjectTable";
 import { DashboardHeader } from "@/components/DashboardHeader";
 import { ViewToggle, ViewMode } from "@/components/ViewToggle";
 import { ProjectFilters } from "@/components/ProjectFilters";
+import { ReviewSheet } from "@/components/ReviewSheet";
 
 const Index = () => {
   const [isProjectFormOpen, setIsProjectFormOpen] = useState(false);
+  const [isReviewFormOpen, setIsReviewFormOpen] = useState(false);
   const [selectedProject, setSelectedProject] = useState<any>(null);
+  const [selectedProjectForReview, setSelectedProjectForReview] = useState<any>(null);
   const [view, setView] = useState<ViewMode>("grid");
   const [filters, setFilters] = useState({
     showDgsOnly: false,
@@ -99,11 +102,25 @@ const Index = () => {
     refetchProjects();
   };
 
+  const handleReviewSubmitted = () => {
+    refetchProjects();
+    setIsReviewFormOpen(false);
+    setSelectedProjectForReview(null);
+  };
+
+  const handleNewReview = () => {
+    // Sélectionner le premier projet par défaut si aucun n'est sélectionné
+    if (!selectedProjectForReview && projects && projects.length > 0) {
+      setSelectedProjectForReview(projects[0]);
+    }
+    setIsReviewFormOpen(true);
+  };
+
   return (
     <div className="container mx-auto py-8">
       <DashboardHeader
         onNewProject={() => setIsProjectFormOpen(true)}
-        onNewReview={() => {}}
+        onNewReview={handleNewReview}
       />
 
       <div className="space-y-4">
@@ -137,6 +154,19 @@ const Index = () => {
         onSubmit={handleProjectFormSubmit}
         project={selectedProject}
       />
+
+      {selectedProjectForReview && (
+        <ReviewSheet
+          isOpen={isReviewFormOpen}
+          onClose={() => {
+            setIsReviewFormOpen(false);
+            setSelectedProjectForReview(null);
+          }}
+          onReviewSubmitted={handleReviewSubmitted}
+          projectId={selectedProjectForReview.id}
+          projectTitle={selectedProjectForReview.title}
+        />
+      )}
     </div>
   );
 };
