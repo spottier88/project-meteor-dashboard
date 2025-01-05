@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useUser } from "@supabase/auth-helpers-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -19,8 +19,19 @@ const Index = () => {
     id: string;
     title: string;
   } | null>(null);
-  const [view, setView] = useState<ViewMode>("grid");
+  
+  // Initialize view state from localStorage or default to "grid"
+  const [view, setView] = useState<ViewMode>(() => {
+    const savedView = localStorage.getItem("projectViewMode");
+    return (savedView as ViewMode) || "grid";
+  });
+  
   const user = useUser();
+
+  // Save view mode to localStorage whenever it changes
+  useEffect(() => {
+    localStorage.setItem("projectViewMode", view);
+  }, [view]);
 
   const { data: projects, refetch: refetchProjects } = useQuery({
     queryKey: ["projects"],
@@ -46,7 +57,6 @@ const Index = () => {
 
       if (error) throw error;
       
-      // Transform the data to match the expected Project type
       return data?.map(project => ({
         ...project,
         lastReviewDate: project.last_review_date,
