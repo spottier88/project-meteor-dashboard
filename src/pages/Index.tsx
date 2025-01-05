@@ -9,10 +9,12 @@ import { DashboardHeader } from "@/components/DashboardHeader";
 import { ViewToggle, ViewMode } from "@/components/ViewToggle";
 import { ProjectFilters } from "@/components/ProjectFilters";
 import { ReviewSheet } from "@/components/ReviewSheet";
+import { ProjectSelectionSheet } from "@/components/ProjectSelectionSheet";
 
 const Index = () => {
   const [isProjectFormOpen, setIsProjectFormOpen] = useState(false);
   const [isReviewFormOpen, setIsReviewFormOpen] = useState(false);
+  const [isProjectSelectionOpen, setIsProjectSelectionOpen] = useState(false);
   const [selectedProject, setSelectedProject] = useState<any>(null);
   const [selectedProjectForReview, setSelectedProjectForReview] = useState<any>(null);
   const [view, setView] = useState<ViewMode>("grid");
@@ -56,12 +58,10 @@ const Index = () => {
   });
 
   const filteredProjects = projects?.filter(project => {
-    // Filter by DGS follow-up
     if (filters.showDgsOnly && !project.suivi_dgs) {
       return false;
     }
 
-    // Filter by organization
     if (filters.organization) {
       const { type, id } = filters.organization;
       switch (type) {
@@ -77,7 +77,6 @@ const Index = () => {
       }
     }
 
-    // Filter by project manager
     if (filters.projectManager && project.project_manager !== filters.projectManager) {
       return false;
     }
@@ -109,11 +108,16 @@ const Index = () => {
   };
 
   const handleNewReview = () => {
-    // Sélectionner le premier projet par défaut si aucun n'est sélectionné
-    if (!selectedProjectForReview && projects && projects.length > 0) {
-      setSelectedProjectForReview(projects[0]);
+    setIsProjectSelectionOpen(true);
+  };
+
+  const handleProjectSelect = (projectId: string, projectTitle: string) => {
+    const selectedProject = projects?.find(p => p.id === projectId);
+    if (selectedProject) {
+      setSelectedProjectForReview(selectedProject);
+      setIsProjectSelectionOpen(false);
+      setIsReviewFormOpen(true);
     }
-    setIsReviewFormOpen(true);
   };
 
   return (
@@ -153,6 +157,13 @@ const Index = () => {
         onClose={handleProjectFormClose}
         onSubmit={handleProjectFormSubmit}
         project={selectedProject}
+      />
+
+      <ProjectSelectionSheet
+        projects={projects || []}
+        isOpen={isProjectSelectionOpen}
+        onClose={() => setIsProjectSelectionOpen(false)}
+        onProjectSelect={handleProjectSelect}
       />
 
       {selectedProjectForReview && (
