@@ -48,15 +48,6 @@ export const TaskSummary = ({ projectId }: TaskSummaryProps) => {
           Terminées : {taskCounts?.done || 0}
         </Badge>
       </div>
-      <Button
-        variant="outline"
-        size="sm"
-        className="w-full"
-        onClick={() => navigate(`/tasks/${projectId}`)}
-      >
-        <ClipboardList className="h-4 w-4 mr-2" />
-        Gérer les tâches
-      </Button>
     </div>
   );
 };
