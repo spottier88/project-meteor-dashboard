@@ -160,6 +160,8 @@ export const ProjectTable = ({
                     canEdit={canEdit}
                     userRoles={roles}
                     onProjectDeleted={onProjectDeleted}
+                    owner_id={project.owner_id}
+                    project_manager={project.project_manager}
                   />
                 </TableCell>
               </TableRow>

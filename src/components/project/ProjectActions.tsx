@@ -4,6 +4,8 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { DeleteProjectDialog } from "./DeleteProjectDialog";
 import { UserRole } from "@/types/user";
+import { useUser } from "@supabase/auth-helpers-react";
+import { canViewProjectHistory } from "@/utils/permissions";
 
 interface ProjectActionsProps {
   projectId: string;
@@ -13,6 +15,8 @@ interface ProjectActionsProps {
   canEdit: boolean;
   userRoles?: UserRole[];
   onProjectDeleted: () => void;
+  owner_id?: string;
+  project_manager?: string;
 }
 
 export const ProjectActions = ({
@@ -23,15 +27,20 @@ export const ProjectActions = ({
   canEdit,
   userRoles,
   onProjectDeleted,
+  owner_id,
+  project_manager,
 }: ProjectActionsProps) => {
   const navigate = useNavigate();
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const isAdmin = userRoles?.includes("admin");
+  const user = useUser();
 
   const handleClick = (e: React.MouseEvent, action: () => void) => {
     e.stopPropagation();
     action();
   };
+
+  const canViewHistory = canViewProjectHistory(userRoles, user?.id, owner_id, project_manager, user?.email);
 
   return (
     <>
@@ -46,17 +55,19 @@ export const ProjectActions = ({
           <Pencil className="h-4 w-4" />
         </Button>
       )}
-      <Button
-        variant="ghost"
-        size="icon"
-        onClick={(e) =>
-          handleClick(e, () => onViewHistory(projectId, projectTitle))
-        }
-        className="h-8 w-8"
-        title="Historique des revues projets"
-      >
-        <History className="h-4 w-4" />
-      </Button>
+      {canViewHistory && (
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={(e) =>
+            handleClick(e, () => onViewHistory(projectId, projectTitle))
+          }
+          className="h-8 w-8"
+          title="Historique des revues projets"
+        >
+          <History className="h-4 w-4" />
+        </Button>
+      )}
       <Button
         variant="ghost"
         size="icon"

@@ -6,7 +6,7 @@ import { StatusIcon } from "./StatusIcon";
 import { useUser } from "@supabase/auth-helpers-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { canEditProject } from "@/utils/permissions";
+import { canEditProject, canViewProjectHistory } from "@/utils/permissions";
 import { UserRoleData } from "@/types/user";
 
 interface ProjectCardHeaderProps {
@@ -50,6 +50,7 @@ export const ProjectCardHeader = ({
   });
 
   const roles = userRoles?.map(ur => ur.role);
+  const canViewHistory = canViewProjectHistory(roles, user?.id, owner_id, project_manager, user?.email);
 
   return (
     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -74,18 +75,20 @@ export const ProjectCardHeader = ({
             <Pencil className="h-4 w-4" />
           </Button>
         )}
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={(e) => {
-            e.stopPropagation();
-            onViewHistory(id, title);
-          }}
-          className="h-8 w-8"
-          title="Historique des revues de projet"
-        >
-          <History className="h-4 w-4" />
-        </Button>
+        {canViewHistory && (
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={(e) => {
+              e.stopPropagation();
+              onViewHistory(id, title);
+            }}
+            className="h-8 w-8"
+            title="Historique des revues de projet"
+          >
+            <History className="h-4 w-4" />
+          </Button>
+        )}
         {status && <StatusIcon status={status} />}
       </div>
     </CardHeader>
