@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button";
 import { PlusCircle, Settings } from "lucide-react";
 import { UserInfo } from "./UserInfo";
 import { useQuery } from "@tanstack/react-query";
-import { useUser } from "@supabase/auth-helpers-react";
+import { useUser, User } from "@supabase/auth-helpers-react";
 import { supabase } from "@/integrations/supabase/client";
 import { canCreateProject } from "@/utils/permissions";
 import { UserRoleData } from "@/types/user";

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
@@ -9,9 +9,8 @@ export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const navigate = useNavigate();
   const user = useUser();
   const pathname = window.location.pathname;
-  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
 
-  const { data: userRoles, isLoading: isLoadingRoles } = useQuery({
+  const { data: userRoles } = useQuery({
     queryKey: ["userRoles", user?.id],
     queryFn: async () => {
       if (!user?.id) return null;
@@ -27,56 +26,21 @@ export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   });
 
   useEffect(() => {
-    const checkAuth = async () => {
-      try {
-        const { data: { session } } = await supabase.auth.getSession();
-        if (!session) {
-          navigate("/login");
-        }
-        setIsCheckingAuth(false);
-      } catch (error) {
-        console.error("Error checking auth:", error);
-        navigate("/login");
-      }
-    };
-
-    checkAuth();
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (event === 'SIGNED_OUT' || !session) {
+    supabase.auth.onAuthStateChange((event, session) => {
+      if (!session) {
         navigate("/login");
       }
     });
-
-    return () => {
-      subscription.unsubscribe();
-    };
   }, [navigate]);
 
   useEffect(() => {
     const isAdminRoute = pathname.startsWith("/admin");
     const isAdmin = userRoles?.some(role => role.role === "admin");
 
-    if (isAdminRoute && !isAdmin && !isLoadingRoles) {
+    if (isAdminRoute && !isAdmin) {
       navigate("/");
     }
-  }, [pathname, userRoles, navigate, isLoadingRoles]);
-
-  if (isCheckingAuth || !user) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
-      </div>
-    );
-  }
-
-  if (isLoadingRoles) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
-      </div>
-    );
-  }
+  }, [pathname, userRoles, navigate]);
 
   return <>{children}</>;
 };

@@ -4,13 +4,11 @@ import { Button } from "@/components/ui/button";
 import { Sun, Cloud, CloudLightning } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
-import { useNavigate, useParams, useLocation } from "react-router-dom";
 
 interface ReviewHistoryProps {
-  projectId?: string;
-  projectTitle?: string;
-  onClose?: () => void;
-  standalone?: boolean;
+  projectId: string;
+  projectTitle: string;
+  onClose: () => void;
 }
 
 const statusIcons = {
@@ -31,15 +29,9 @@ const progressLabels = {
   worse: "En dégradation",
 };
 
-export const ReviewHistory = ({ projectId: propProjectId, projectTitle: propProjectTitle, onClose, standalone = false }: ReviewHistoryProps) => {
-  const navigate = useNavigate();
-  const { projectId: urlProjectId } = useParams();
-  const location = useLocation();
-  const projectTitle = propProjectTitle || location.state?.projectTitle;
-  const finalProjectId = propProjectId || urlProjectId;
-
+export const ReviewHistory = ({ projectId, projectTitle, onClose }: ReviewHistoryProps) => {
   const { data: reviews, isLoading } = useQuery({
-    queryKey: ["reviews", finalProjectId],
+    queryKey: ["reviews", projectId],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("reviews")
@@ -49,7 +41,7 @@ export const ReviewHistory = ({ projectId: propProjectId, projectTitle: propProj
             description
           )
         `)
-        .eq("project_id", finalProjectId)
+        .eq("project_id", projectId)
         .order("created_at", { ascending: false });
 
       if (error) throw error;
@@ -57,19 +49,11 @@ export const ReviewHistory = ({ projectId: propProjectId, projectTitle: propProj
     },
   });
 
-  const handleBack = () => {
-    if (onClose) {
-      onClose();
-    } else {
-      navigate("/");
-    }
-  };
-
   return (
-    <div className={cn("space-y-6 animate-fade-in", standalone && "container mx-auto py-8")}>
+    <div className="space-y-6 animate-fade-in">
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-bold">Historique des revues - {projectTitle}</h2>
-        <Button onClick={handleBack}>Retour</Button>
+        <Button onClick={onClose}>Retour</Button>
       </div>
 
       {isLoading ? (

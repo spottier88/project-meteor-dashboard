@@ -52,11 +52,19 @@ export const UserInfo = () => {
     try {
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
-      navigate("/login");
-      toast({
-        title: "Déconnexion réussie",
-        description: "Vous avez été déconnecté avec succès",
-      });
+
+      await new Promise(resolve => setTimeout(resolve, 100));
+
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        navigate("/login");
+        toast({
+          title: "Déconnexion réussie",
+          description: "Vous avez été déconnecté avec succès",
+        });
+      } else {
+        throw new Error("La session n'a pas été correctement terminée");
+      }
     } catch (error) {
       console.error("Erreur lors de la déconnexion:", error);
       toast({

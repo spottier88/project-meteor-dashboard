@@ -1,8 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Database } from "@/integrations/supabase/types";
-
-type ProjectStatus = Database["public"]["Enums"]["project_status"];
-type ProgressStatus = Database["public"]["Enums"]["progress_status"];
+import { ProjectStatus, ProgressStatus } from "@/components/ProjectCard";
+import { statusIcons } from "@/lib/project-status";
 
 interface ProjectSummaryHeaderProps {
   title: string;
@@ -23,6 +21,8 @@ export const ProjectSummaryHeader = ({
   project_manager,
   last_review_date,
 }: ProjectSummaryHeaderProps) => {
+  const StatusIcon = statusIcons[status].icon;
+
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -32,6 +32,12 @@ export const ProjectSummaryHeader = ({
             <p className="text-sm text-muted-foreground">{description}</p>
           )}
         </div>
+        {StatusIcon && (
+          <StatusIcon
+            className={statusIcons[status].color}
+            aria-label={statusIcons[status].label}
+          />
+        )}
       </CardHeader>
       <CardContent>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">

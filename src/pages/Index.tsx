@@ -10,7 +10,7 @@ import { ViewToggle, ViewMode } from "@/components/ViewToggle";
 import { ProjectFilters } from "@/components/ProjectFilters";
 import { useNavigate } from "react-router-dom";
 
-export const Index = () => {
+const Index = () => {
   const [isProjectFormOpen, setIsProjectFormOpen] = useState(false);
   const [selectedProject, setSelectedProject] = useState<any>(null);
   const [view, setView] = useState<ViewMode>("grid");
@@ -143,3 +143,5 @@ export const Index = () => {
     </div>
   );
 };
+
+export default Index;
