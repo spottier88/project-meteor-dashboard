@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useUser } from "@supabase/auth-helpers-react";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { ProjectForm } from "@/components/ProjectForm";
 import { ProjectGrid } from "@/components/ProjectGrid";
@@ -9,19 +10,14 @@ import { DashboardHeader } from "@/components/DashboardHeader";
 import { ViewToggle, ViewMode } from "@/components/ViewToggle";
 import { ProjectSelectionSheet } from "@/components/ProjectSelectionSheet";
 import { ReviewSheet } from "@/components/ReviewSheet";
-import { ReviewHistory } from "@/components/ReviewHistory";
 
 const Index = () => {
+  const navigate = useNavigate();
   const [isProjectFormOpen, setIsProjectFormOpen] = useState(false);
   const [isProjectSelectionOpen, setIsProjectSelectionOpen] = useState(false);
   const [isReviewSheetOpen, setIsReviewSheetOpen] = useState(false);
-  const [isReviewHistoryOpen, setIsReviewHistoryOpen] = useState(false);
   const [selectedProject, setSelectedProject] = useState<any>(null);
   const [selectedProjectForReview, setSelectedProjectForReview] = useState<{
-    id: string;
-    title: string;
-  } | null>(null);
-  const [selectedProjectForHistory, setSelectedProjectForHistory] = useState<{
     id: string;
     title: string;
   } | null>(null);
@@ -107,13 +103,7 @@ const Index = () => {
   };
 
   const handleViewHistory = (projectId: string, projectTitle: string) => {
-    setSelectedProjectForHistory({ id: projectId, title: projectTitle });
-    setIsReviewHistoryOpen(true);
-  };
-
-  const handleHistoryClose = () => {
-    setIsReviewHistoryOpen(false);
-    setSelectedProjectForHistory(null);
+    navigate(`/reviews/${projectId}`);
   };
 
   return (
@@ -163,14 +153,6 @@ const Index = () => {
           isOpen={isReviewSheetOpen}
           onClose={handleReviewClose}
           onReviewSubmitted={handleReviewSubmitted}
-        />
-      )}
-
-      {selectedProjectForHistory && (
-        <ReviewHistory
-          projectId={selectedProjectForHistory.id}
-          projectTitle={selectedProjectForHistory.title}
-          onClose={handleHistoryClose}
         />
       )}
     </div>

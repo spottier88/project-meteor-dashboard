@@ -1,15 +1,10 @@
 import { useQuery } from "@tanstack/react-query";
+import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Sun, Cloud, CloudLightning } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
-
-interface ReviewHistoryProps {
-  projectId: string;
-  projectTitle: string;
-  onClose: () => void;
-}
 
 const statusIcons = {
   sunny: { icon: Sun, color: "text-warning", label: "Ensoleillé" },
@@ -29,7 +24,24 @@ const progressLabels = {
   worse: "En dégradation",
 };
 
-export const ReviewHistory = ({ projectId, projectTitle, onClose }: ReviewHistoryProps) => {
+export const ReviewHistory = () => {
+  const navigate = useNavigate();
+  const { projectId } = useParams();
+
+  const { data: project } = useQuery({
+    queryKey: ["project", projectId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("projects")
+        .select("title")
+        .eq("id", projectId)
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+  });
+
   const { data: reviews, isLoading } = useQuery({
     queryKey: ["reviews", projectId],
     queryFn: async () => {
@@ -50,10 +62,12 @@ export const ReviewHistory = ({ projectId, projectTitle, onClose }: ReviewHistor
   });
 
   return (
-    <div className="space-y-6 animate-fade-in">
+    <div className="container mx-auto py-8 space-y-6 animate-fade-in">
       <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold">Historique des revues - {projectTitle}</h2>
-        <Button onClick={onClose}>Retour</Button>
+        <h2 className="text-2xl font-bold">
+          Historique des revues - {project?.title}
+        </h2>
+        <Button onClick={() => navigate("/")}>Retour à l'accueil</Button>
       </div>
 
       {isLoading ? (

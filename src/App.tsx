@@ -12,6 +12,7 @@ import { OrganizationManagement } from "./pages/OrganizationManagement";
 import { SessionContextProvider } from "@supabase/auth-helpers-react";
 import { supabase } from "@/integrations/supabase/client";
 import { ProtectedRoute } from "./components/ProtectedRoute";
+import { ReviewHistory } from "./components/ReviewHistory";
 
 const queryClient = new QueryClient();
 
@@ -75,6 +76,14 @@ function App() {
               element={
                 <ProtectedRoute>
                   <RiskManagement />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/reviews/:projectId"
+              element={
+                <ProtectedRoute>
+                  <ReviewHistory />
                 </ProtectedRoute>
               }
             />
