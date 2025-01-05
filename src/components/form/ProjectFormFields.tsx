@@ -42,6 +42,7 @@ interface ProjectFormFieldsProps {
     direction_id?: string;
     service_id?: string;
   };
+  projectManagers?: UserProfile[];
 }
 
 export const ProjectFormFields = ({
@@ -69,30 +70,8 @@ export const ProjectFormFields = ({
   serviceId,
   setServiceId,
   project,
+  projectManagers,
 }: ProjectFormFieldsProps) => {
-  const { data: projectManagers } = useQuery({
-    queryKey: ["projectManagers"],
-    queryFn: async () => {
-      const { data: profiles, error } = await supabase
-        .from("profiles")
-        .select("*")
-        .order("email");
-
-      if (error) throw error;
-
-      const { data: userRoles } = await supabase
-        .from("user_roles")
-        .select("*")
-        .eq("role", "chef_projet");
-
-      if (!userRoles) return [];
-
-      return (profiles as UserProfile[]).filter(profile =>
-        userRoles.some(ur => ur.user_id === profile.id)
-      );
-    },
-  });
-
   return (
     <div className="grid gap-4 py-4">
       <BasicProjectFields
@@ -111,6 +90,7 @@ export const ProjectFormFields = ({
         suiviDgs={suiviDgs}
         setSuiviDgs={setSuiviDgs}
         isAdmin={isAdmin}
+        projectManagers={projectManagers}
       />
 
       <OrganizationFields

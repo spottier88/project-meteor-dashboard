@@ -4,6 +4,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { DatePickerField } from "./DatePickerField";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
+import { UserProfile } from "@/types/user";
 
 interface BasicProjectFieldsProps {
   title: string;
@@ -21,6 +22,7 @@ interface BasicProjectFieldsProps {
   suiviDgs: boolean;
   setSuiviDgs: (value: boolean) => void;
   isAdmin: boolean;
+  projectManagers?: UserProfile[];
 }
 
 export const BasicProjectFields = ({
@@ -39,6 +41,7 @@ export const BasicProjectFields = ({
   suiviDgs,
   setSuiviDgs,
   isAdmin,
+  projectManagers,
 }: BasicProjectFieldsProps) => {
   return (
     <div className="space-y-4">
@@ -68,13 +71,30 @@ export const BasicProjectFields = ({
         <label htmlFor="project-manager" className="text-sm font-medium">
           Chef de projet *
         </label>
-        <Input
-          id="project-manager"
-          value={projectManager}
-          onChange={(e) => setProjectManager(e.target.value)}
-          readOnly={!isAdmin}
-          className={!isAdmin ? "bg-gray-100" : ""}
-        />
+        {isAdmin && projectManagers ? (
+          <Select value={projectManager} onValueChange={setProjectManager}>
+            <SelectTrigger>
+              <SelectValue placeholder="Sélectionner un chef de projet" />
+            </SelectTrigger>
+            <SelectContent>
+              {projectManagers.map((manager) => (
+                <SelectItem key={manager.id} value={manager.email || ""}>
+                  {manager.first_name && manager.last_name
+                    ? `${manager.first_name} ${manager.last_name} (${manager.email})`
+                    : manager.email}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        ) : (
+          <Input
+            id="project-manager"
+            value={projectManager}
+            onChange={(e) => setProjectManager(e.target.value)}
+            readOnly={!isAdmin}
+            className={!isAdmin ? "bg-gray-100" : ""}
+          />
+        )}
       </div>
       <div className="grid gap-4 sm:grid-cols-2">
         <DatePickerField

@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { useUser } from "@supabase/auth-helpers-react";
 import { useQuery } from "@tanstack/react-query";
-import { UserRoleData } from "@/types/user";
+import { UserRoleData, UserProfile } from "@/types/user";
 import { supabase } from "@/integrations/supabase/client";
 import { ProjectFormFields } from "./form/ProjectFormFields";
 import { ProjectFormActions } from "./form/ProjectFormActions";
@@ -67,6 +67,33 @@ export const ProjectForm = ({ isOpen, onClose, onSubmit, project }: ProjectFormP
       return data as UserRoleData[];
     },
     enabled: !!user?.id,
+  });
+
+  const { data: projectManagers } = useQuery({
+    queryKey: ["projectManagers"],
+    queryFn: async () => {
+      const { data: userRolesData, error: userRolesError } = await supabase
+        .from("user_roles")
+        .select("user_id")
+        .eq("role", "chef_projet");
+
+      if (userRolesError) throw userRolesError;
+
+      if (!userRolesData?.length) return [];
+
+      const userIds = userRolesData.map(ur => ur.user_id);
+
+      const { data: profiles, error: profilesError } = await supabase
+        .from("profiles")
+        .select("*")
+        .in("id", userIds)
+        .order("email");
+
+      if (profilesError) throw profilesError;
+
+      return profiles as UserProfile[];
+    },
+    enabled: isOpen && userRoles?.some(ur => ur.role === "admin"),
   });
 
   const isAdmin = userRoles?.some(ur => ur.role === 'admin');
@@ -149,6 +176,7 @@ export const ProjectForm = ({ isOpen, onClose, onSubmit, project }: ProjectFormP
             serviceId={serviceId}
             setServiceId={setServiceId}
             project={project}
+            projectManagers={projectManagers}
           />
         </div>
         
