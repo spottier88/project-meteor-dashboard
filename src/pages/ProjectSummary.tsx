@@ -3,16 +3,22 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { PDFDownloadLink } from "@react-pdf/renderer";
 import { Button } from "@/components/ui/button";
-import { FileDown, ArrowLeft } from "lucide-react";
+import { FileDown, ArrowLeft, Plus, ListTodo, ShieldAlert } from "lucide-react";
 import { ProjectPDF } from "@/components/ProjectPDF";
 import { RiskList } from "@/components/RiskList";
 import { KanbanBoard } from "@/components/KanbanBoard";
 import { LastReview } from "@/components/LastReview";
-import { ProjectHeader } from "@/components/ProjectHeader";
+import { ProjectSummaryHeader } from "@/components/project/ProjectSummaryHeader";
+import { useUser } from "@supabase/auth-helpers-react";
+import { canManageProjectItems } from "@/utils/permissions";
+import { ReviewSheet } from "@/components/ReviewSheet";
+import { useState } from "react";
 
 export const ProjectSummary = () => {
   const { projectId } = useParams<{ projectId: string }>();
   const navigate = useNavigate();
+  const user = useUser();
+  const [isReviewSheetOpen, setIsReviewSheetOpen] = useState(false);
 
   const { data: project, isError: projectError } = useQuery({
     queryKey: ["project", projectId],
@@ -80,24 +86,38 @@ export const ProjectSummary = () => {
     enabled: !!projectId,
   });
 
+  const { data: userRoles } = useQuery({
+    queryKey: ["userRoles", user?.id],
+    queryFn: async () => {
+      if (!user?.id) return null;
+      const { data, error } = await supabase
+        .from("user_roles")
+        .select("*")
+        .eq("user_id", user.id);
+
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!user?.id,
+  });
+
   if (!project || projectError) {
-    navigate("/");
     return null;
   }
 
+  const roles = userRoles?.map(ur => ur.role);
+  const canManage = canManageProjectItems(roles, user?.id, project.owner_id);
+
   return (
     <div className="container mx-auto py-6 space-y-6">
-      <Button
-        variant="ghost"
-        className="mb-4"
-        onClick={() => navigate("/")}
-      >
-        <ArrowLeft className="h-4 w-4 mr-2" />
-        Retour à l'accueil
-      </Button>
-
       <div className="flex items-center justify-between">
-        <ProjectHeader project={project} />
+        <Button
+          variant="ghost"
+          onClick={() => navigate("/")}
+        >
+          <ArrowLeft className="h-4 w-4 mr-2" />
+          Retour à l'accueil
+        </Button>
         <PDFDownloadLink
           document={
             <ProjectPDF
@@ -110,22 +130,67 @@ export const ProjectSummary = () => {
           fileName={`${project.title}.pdf`}
         >
           {({ loading }) => (
-            <Button disabled={loading} asChild>
-              <span>
-                <FileDown className="h-4 w-4 mr-2" />
-                {loading ? "Génération..." : "Télécharger le PDF"}
-              </span>
+            <Button disabled={loading}>
+              <FileDown className="h-4 w-4 mr-2" />
+              {loading ? "Génération..." : "Télécharger le PDF"}
             </Button>
           )}
         </PDFDownloadLink>
       </div>
 
       <div className="grid gap-6">
-        {lastReview && (
-          <div className="max-w-xl mx-auto">
-            <LastReview review={lastReview} />
+        <ProjectSummaryHeader
+          title={project.title}
+          description={project.description}
+          status={project.status}
+          progress={project.progress}
+          completion={project.completion}
+          project_manager={project.project_manager}
+          last_review_date={project.last_review_date}
+        />
+
+        <div className="grid gap-6 md:grid-cols-2">
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <h2 className="text-2xl font-bold">Dernière revue</h2>
+              {canManage && (
+                <Button onClick={() => setIsReviewSheetOpen(true)}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Nouvelle revue
+                </Button>
+              )}
+            </div>
+            {lastReview && <LastReview review={lastReview} />}
           </div>
-        )}
+
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <h2 className="text-2xl font-bold">Actions</h2>
+            </div>
+            <div className="grid gap-4">
+              {canManage && (
+                <>
+                  <Button 
+                    className="w-full justify-start" 
+                    variant="outline"
+                    onClick={() => navigate(`/tasks/${projectId}`)}
+                  >
+                    <ListTodo className="h-4 w-4 mr-2" />
+                    Gérer les tâches
+                  </Button>
+                  <Button 
+                    className="w-full justify-start" 
+                    variant="outline"
+                    onClick={() => navigate(`/risks/${projectId}`)}
+                  >
+                    <ShieldAlert className="h-4 w-4 mr-2" />
+                    Gérer les risques
+                  </Button>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
 
         <div className="space-y-4">
           <h2 className="text-2xl font-bold">Tâches</h2>
@@ -137,6 +202,15 @@ export const ProjectSummary = () => {
           <RiskList projectId={projectId} projectTitle={project.title} />
         </div>
       </div>
+
+      <ReviewSheet
+        isOpen={isReviewSheetOpen}
+        onClose={() => setIsReviewSheetOpen(false)}
+        projectId={projectId}
+        onSubmit={() => {
+          setIsReviewSheetOpen(false);
+        }}
+      />
     </div>
   );
 };
