@@ -5,7 +5,7 @@ import { useNavigate } from "react-router-dom";
 import { DeleteProjectDialog } from "./DeleteProjectDialog";
 import { UserRole } from "@/types/user";
 import { useUser } from "@supabase/auth-helpers-react";
-import { canViewProjectHistory, canManageTasks } from "@/utils/permissions";
+import { canViewProjectHistory, canManageTasks, canManageRisks } from "@/utils/permissions";
 
 interface ProjectActionsProps {
   projectId: string;
@@ -42,6 +42,7 @@ export const ProjectActions = ({
 
   const canViewHistory = canViewProjectHistory(userRoles, user?.id, owner_id, project_manager, user?.email);
   const canManageProjectTasks = canManageTasks(userRoles, user?.id, owner_id, project_manager, user?.email);
+  const canManageProjectRisks = canManageRisks(userRoles, user?.id, owner_id, project_manager, user?.email);
 
   return (
     <>
@@ -80,15 +81,17 @@ export const ProjectActions = ({
           <ListTodo className="h-4 w-4" />
         </Button>
       )}
-      <Button
-        variant="ghost"
-        size="icon"
-        onClick={(e) => handleClick(e, () => navigate(`/risks/${projectId}`))}
-        className="h-8 w-8"
-        title="Gérer les risques"
-      >
-        <ShieldAlert className="h-4 w-4" />
-      </Button>
+      {canManageProjectRisks && (
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={(e) => handleClick(e, () => navigate(`/risks/${projectId}`))}
+          className="h-8 w-8"
+          title="Gérer les risques"
+        >
+          <ShieldAlert className="h-4 w-4" />
+        </Button>
+      )}
       {isAdmin && (
         <Button
           variant="ghost"
