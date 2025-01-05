@@ -33,20 +33,7 @@ export const RiskList = ({ projectId, projectTitle }: RiskListProps) => {
   const [selectedRisk, setSelectedRisk] = useState<any>(null);
   const [riskToDelete, setRiskToDelete] = useState<any>(null);
 
-  // Add error handling for undefined projectId
-  if (!projectId) {
-    return (
-      <Card>
-        <CardContent className="py-8">
-          <div className="text-center text-muted-foreground">
-            Identifiant du projet manquant
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  const { data: project, isLoading: isLoadingProject } = useQuery({
+  const { data: project } = useQuery({
     queryKey: ["project", projectId],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -58,10 +45,9 @@ export const RiskList = ({ projectId, projectTitle }: RiskListProps) => {
       if (error) throw error;
       return data;
     },
-    enabled: !!projectId, // Only run query if projectId exists
   });
 
-  const { data: userProfile, isLoading: isLoadingProfile } = useQuery({
+  const { data: userProfile } = useQuery({
     queryKey: ["userProfile", user?.id],
     queryFn: async () => {
       if (!user?.id) return null;
@@ -77,7 +63,7 @@ export const RiskList = ({ projectId, projectTitle }: RiskListProps) => {
     enabled: !!user?.id,
   });
 
-  const { data: userRoles, isLoading: isLoadingRoles } = useQuery({
+  const { data: userRoles } = useQuery({
     queryKey: ["userRoles", user?.id],
     queryFn: async () => {
       if (!user?.id) return null;
@@ -92,7 +78,7 @@ export const RiskList = ({ projectId, projectTitle }: RiskListProps) => {
     enabled: !!user?.id,
   });
 
-  const { data: risks, refetch, isLoading: isLoadingRisks } = useQuery({
+  const { data: risks, refetch } = useQuery({
     queryKey: ["risks", projectId],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -104,21 +90,7 @@ export const RiskList = ({ projectId, projectTitle }: RiskListProps) => {
       if (error) throw error;
       return data;
     },
-    enabled: !!projectId, // Only run query if projectId exists
   });
-
-  // Show loading state
-  if (isLoadingProject || isLoadingProfile || isLoadingRoles || isLoadingRisks) {
-    return (
-      <Card>
-        <CardContent className="py-8">
-          <div className="text-center text-muted-foreground">
-            Chargement des risques...
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
 
   const roles = userRoles?.map(ur => ur.role);
   const canManage = canManageProjectItems(
