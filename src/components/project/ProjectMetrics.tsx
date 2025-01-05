@@ -43,7 +43,9 @@ export const ProjectMetrics = ({
       <div className="flex items-center justify-between">
         <span className="text-sm text-muted-foreground">Dernière Revue</span>
         {lastReviewDate ? (
-          <span className="text-sm font-medium">{lastReviewDate}</span>
+          <span className="text-sm font-medium">
+            {new Date(lastReviewDate).toLocaleDateString("fr-FR")}
+          </span>
         ) : (
           <span className="text-sm text-muted-foreground">Pas de revue</span>
         )}

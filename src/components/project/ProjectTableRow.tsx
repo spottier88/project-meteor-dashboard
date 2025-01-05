@@ -114,7 +114,9 @@ export const ProjectTableRow = ({
       </TableCell>
       <TableCell>{project.completion}%</TableCell>
       <TableCell>
-        {project.lastReviewDate || (
+        {project.lastReviewDate ? (
+          new Date(project.lastReviewDate).toLocaleDateString("fr-FR")
+        ) : (
           <span className="text-muted-foreground">Pas de revue</span>
         )}
       </TableCell>
