@@ -51,11 +51,10 @@ export const UserInfo = () => {
   const handleLogout = async () => {
     try {
       await supabase.auth.signOut();
-      navigate("/login");
-      toast({
-        title: "Déconnexion réussie",
-        description: "Vous avez été déconnecté avec succès",
-      });
+      // Clear any local storage or state if needed
+      localStorage.clear();
+      // Force navigation to login page
+      window.location.href = "/login";
     } catch (error) {
       console.error("Erreur lors de la déconnexion:", error);
       toast({
