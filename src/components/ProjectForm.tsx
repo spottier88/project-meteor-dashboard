@@ -184,7 +184,7 @@ export const ProjectForm = ({ isOpen, onClose, onSubmit, project }: ProjectFormP
               directionId,
               serviceId,
             }}
-            user={user}
+            userId={user?.id}
             isAdmin={isAdmin}
           />
         </DialogFooter>
