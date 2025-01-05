@@ -1,75 +1,22 @@
 import { UserRole } from "@/types/user";
 
-export const canEditProject = (
-  userRoles: UserRole[] | undefined,
-  userId: string | undefined,
-  projectOwnerId: string | undefined,
-  projectManager?: string | null,
-  userEmail?: string | null,
-): boolean => {
-  if (!userId) return false;
-  if (userRoles?.includes("admin")) return true;
-  if (userId === projectOwnerId) return true;
-  if (userEmail && projectManager && userEmail === projectManager) return true;
-  return false;
-};
-
-export const canCreateProject = (userRoles: UserRole[] | undefined): boolean => {
-  return userRoles?.some(role => ["admin", "chef_projet"].includes(role)) ?? false;
-};
-
 export const canManageProjectItems = (
-  userRoles: UserRole[] | undefined,
+  roles: UserRole[] | undefined,
   userId: string | undefined,
   projectOwnerId: string | undefined,
-  projectManager?: string | null,
-  userEmail?: string | null,
+  projectManagerEmail?: string | undefined,
+  userEmail?: string | undefined
 ): boolean => {
-  if (!userId) return false;
-  if (userRoles?.includes("admin")) return true;
-  if (userId === projectOwnerId) return true;
-  if (userEmail && projectManager && userEmail === projectManager) return true;
-  return false;
-};
+  if (!roles || !userId) return false;
 
-export const canViewProjectHistory = (
-  userRoles: UserRole[] | undefined,
-  userId: string | undefined,
-  projectOwnerId: string | undefined,
-  projectManager?: string | null,
-  userEmail?: string | null,
-): boolean => {
-  if (!userId) return false;
-  if (userRoles?.includes("admin")) return true;
-  if (userId === projectOwnerId) return true;
-  if (userEmail && projectManager && userEmail === projectManager) return true;
-  return false;
-};
+  // Les admins peuvent tout faire
+  if (roles.includes("admin")) return true;
 
-export const canManageTasks = (
-  userRoles: UserRole[] | undefined,
-  userId: string | undefined,
-  projectOwnerId: string | undefined,
-  projectManager?: string | null,
-  userEmail?: string | null,
-): boolean => {
-  if (!userId) return false;
-  if (userRoles?.includes("admin")) return true;
+  // Le propriétaire du projet peut tout faire
   if (userId === projectOwnerId) return true;
-  if (userEmail && projectManager && userEmail === projectManager) return true;
-  return false;
-};
 
-export const canManageRisks = (
-  userRoles: UserRole[] | undefined,
-  userId: string | undefined,
-  projectOwnerId: string | undefined,
-  projectManager?: string | null,
-  userEmail?: string | null,
-): boolean => {
-  if (!userId) return false;
-  if (userRoles?.includes("admin")) return true;
-  if (userId === projectOwnerId) return true;
-  if (userEmail && projectManager && userEmail === projectManager) return true;
+  // Le chef de projet assigné peut tout faire
+  if (projectManagerEmail && userEmail && projectManagerEmail === userEmail) return true;
+
   return false;
 };

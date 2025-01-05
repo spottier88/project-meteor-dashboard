@@ -52,6 +52,22 @@ export const TaskList = ({ projectId }: TaskListProps) => {
     },
   });
 
+  const { data: userProfile } = useQuery({
+    queryKey: ["userProfile", user?.id],
+    queryFn: async () => {
+      if (!user?.id) return null;
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("id", user.id)
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!user?.id,
+  });
+
   const { data: userRoles } = useQuery({
     queryKey: ["userRoles", user?.id],
     queryFn: async () => {
@@ -82,7 +98,13 @@ export const TaskList = ({ projectId }: TaskListProps) => {
   });
 
   const roles = userRoles?.map(ur => ur.role);
-  const canManage = canManageProjectItems(roles, user?.id, project?.owner_id);
+  const canManage = canManageProjectItems(
+    roles,
+    user?.id,
+    project?.owner_id,
+    project?.project_manager,
+    userProfile?.email
+  );
 
   const handleDeleteTask = async () => {
     if (!taskToDelete) return;
