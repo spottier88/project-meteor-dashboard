@@ -1,8 +1,16 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { Card, CardContent } from "@/components/ui/card";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useToast } from "@/components/ui/use-toast";
-import { useState } from "react";
-import { TaskForm } from "./TaskForm";
+import { Button } from "@/components/ui/button";
+import { Pencil, Trash2 } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -13,8 +21,17 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Task } from "./kanban/types";
-import { KanbanColumn } from "./kanban/KanbanColumn";
+import { useState } from "react";
+import { TaskForm } from "./TaskForm";
+
+interface Task {
+  id: string;
+  title: string;
+  description?: string;
+  status: "todo" | "in_progress" | "done";
+  due_date?: string;
+  assignee?: string;
+}
 
 interface KanbanBoardProps {
   projectId: string;
@@ -31,20 +48,6 @@ export const KanbanBoard = ({ projectId }: KanbanBoardProps) => {
   const [taskToDelete, setTaskToDelete] = useState<Task | null>(null);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [isTaskFormOpen, setIsTaskFormOpen] = useState(false);
-
-  const { data: project } = useQuery({
-    queryKey: ["project", projectId],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("projects")
-        .select("owner_id, project_manager")
-        .eq("id", projectId)
-        .single();
-
-      if (error) throw error;
-      return data;
-    },
-  });
 
   const { data: tasks, refetch } = useQuery({
     queryKey: ["tasks", projectId],
@@ -116,19 +119,64 @@ export const KanbanBoard = ({ projectId }: KanbanBoardProps) => {
     <>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {columns.map((column) => (
-          <KanbanColumn
-            key={column.id}
-            column={column}
-            tasks={tasks || []}
-            onStatusChange={handleStatusChange}
-            onEdit={(task) => {
-              setSelectedTask(task);
-              setIsTaskFormOpen(true);
-            }}
-            onDelete={setTaskToDelete}
-            projectOwnerId={project?.owner_id}
-            projectManagerEmail={project?.project_manager}
-          />
+          <div key={column.id} className="space-y-4">
+            <h3 className="font-semibold text-lg">{column.title}</h3>
+            <div className="space-y-2">
+              {tasks
+                ?.filter((task) => task.status === column.id)
+                .map((task) => (
+                  <Card key={task.id} className="bg-card">
+                    <CardContent className="p-4 space-y-2">
+                      <div className="font-medium">{task.title}</div>
+                      {task.description && (
+                        <p className="text-sm text-muted-foreground">
+                          {task.description}
+                        </p>
+                      )}
+                      <div className="flex items-center justify-between">
+                        <div className="text-sm text-muted-foreground">
+                          {task.assignee || "Non assigné"}
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => {
+                              setSelectedTask(task);
+                              setIsTaskFormOpen(true);
+                            }}
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => setTaskToDelete(task)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                          <Select
+                            value={task.status}
+                            onValueChange={(value) =>
+                              handleStatusChange(task.id, value as Task["status"])
+                            }
+                          >
+                            <SelectTrigger className="w-[130px]">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="todo">À faire</SelectItem>
+                              <SelectItem value="in_progress">En cours</SelectItem>
+                              <SelectItem value="done">Terminé</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+            </div>
+          </div>
         ))}
       </div>
 
@@ -143,16 +191,12 @@ export const KanbanBoard = ({ projectId }: KanbanBoardProps) => {
         task={selectedTask || undefined}
       />
 
-      <AlertDialog
-        open={!!taskToDelete}
-        onOpenChange={() => setTaskToDelete(null)}
-      >
+      <AlertDialog open={!!taskToDelete} onOpenChange={() => setTaskToDelete(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Êtes-vous sûr ?</AlertDialogTitle>
             <AlertDialogDescription>
-              Cette action ne peut pas être annulée. La tâche sera définitivement
-              supprimée.
+              Cette action ne peut pas être annulée. La tâche sera définitivement supprimée.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
