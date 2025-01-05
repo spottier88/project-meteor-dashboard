@@ -2,18 +2,44 @@ import { Auth } from "@supabase/auth-ui-react";
 import { ThemeSupa } from "@supabase/auth-ui-shared";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useUser } from "@supabase/auth-helpers-react";
 
 export const Login = () => {
   const navigate = useNavigate();
   const user = useUser();
+  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session) {
+          navigate("/");
+        }
+        setIsCheckingAuth(false);
+      } catch (error) {
+        console.error("Error checking auth:", error);
+        setIsCheckingAuth(false);
+      }
+    };
+
+    checkAuth();
+  }, [navigate]);
 
   useEffect(() => {
     if (user) {
       navigate("/");
     }
   }, [user, navigate]);
+
+  if (isCheckingAuth) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50">
