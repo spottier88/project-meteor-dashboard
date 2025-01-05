@@ -26,12 +26,10 @@ export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   });
 
   useEffect(() => {
-    supabase.auth.onAuthStateChange((event, session) => {
-      if (!session) {
-        navigate("/login");
-      }
-    });
-  }, [navigate]);
+    if (!user) {
+      navigate("/login");
+    }
+  }, [user, navigate]);
 
   useEffect(() => {
     const isAdminRoute = pathname.startsWith("/admin");
@@ -41,6 +39,8 @@ export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
       navigate("/");
     }
   }, [pathname, userRoles, navigate]);
+
+  if (!user) return null;
 
   return <>{children}</>;
 };
