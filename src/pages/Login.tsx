@@ -3,18 +3,17 @@ import { ThemeSupa } from "@supabase/auth-ui-shared";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { useEffect } from "react";
+import { useUser } from "@supabase/auth-helpers-react";
 
 export const Login = () => {
   const navigate = useNavigate();
+  const user = useUser();
 
   useEffect(() => {
-    // Vérifier si l'utilisateur est déjà connecté
-    supabase.auth.onAuthStateChange((event, session) => {
-      if (session) {
-        navigate("/");
-      }
-    });
-  }, [navigate]);
+    if (user) {
+      navigate("/");
+    }
+  }, [user, navigate]);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50">
