@@ -1,18 +1,29 @@
 import { Card, CardContent } from "./ui/card";
 import { Database } from "@/integrations/supabase/types";
+import { Button } from "./ui/button";
+import { Plus } from "lucide-react";
 
 type Project = Database["public"]["Tables"]["projects"]["Row"];
 
 interface ProjectHeaderProps {
   project: Project;
+  onNewReview?: () => void;
 }
 
-export const ProjectHeader = ({ project }: ProjectHeaderProps) => {
+export const ProjectHeader = ({ project, onNewReview }: ProjectHeaderProps) => {
   return (
     <Card className="mb-8">
       <CardContent className="pt-6">
         <div className="space-y-4">
-          <h1 className="text-2xl font-bold">{project.title}</h1>
+          <div className="flex items-center justify-between">
+            <h1 className="text-2xl font-bold">{project.title}</h1>
+            {onNewReview && (
+              <Button onClick={onNewReview}>
+                <Plus className="h-4 w-4 mr-2" />
+                Nouvelle revue
+              </Button>
+            )}
+          </div>
           {project.description && (
             <p className="text-muted-foreground">{project.description}</p>
           )}
