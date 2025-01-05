@@ -69,6 +69,22 @@ export const ProjectForm = ({ isOpen, onClose, onSubmit, project }: ProjectFormP
     enabled: !!user?.id,
   });
 
+  const { data: userProfile } = useQuery({
+    queryKey: ["userProfile", user?.id],
+    queryFn: async () => {
+      if (!user?.id) return null;
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("id", user.id)
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!user?.id,
+  });
+
   const isAdmin = userRoles?.some(ur => ur.role === 'admin');
 
   useEffect(() => {
@@ -88,13 +104,14 @@ export const ProjectForm = ({ isOpen, onClose, onSubmit, project }: ProjectFormP
       } else {
         if (!isAdmin && user?.id) {
           setOwnerId(user.id);
-          setProjectManager(user.email || "");
+          setProjectManager(userProfile?.email || "");
         } else {
           setOwnerId("");
+          setProjectManager("");
         }
       }
     }
-  }, [isOpen, project, user?.email, user?.id, isAdmin]);
+  }, [isOpen, project, user?.id, userProfile?.email, isAdmin]);
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
