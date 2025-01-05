@@ -7,10 +7,18 @@ import { ProjectGrid } from "@/components/ProjectGrid";
 import { ProjectTable } from "@/components/ProjectTable";
 import { DashboardHeader } from "@/components/DashboardHeader";
 import { ViewToggle, ViewMode } from "@/components/ViewToggle";
+import { ProjectSelectionSheet } from "@/components/ProjectSelectionSheet";
+import { ReviewSheet } from "@/components/ReviewSheet";
 
 const Index = () => {
   const [isProjectFormOpen, setIsProjectFormOpen] = useState(false);
+  const [isProjectSelectionOpen, setIsProjectSelectionOpen] = useState(false);
+  const [isReviewSheetOpen, setIsReviewSheetOpen] = useState(false);
   const [selectedProject, setSelectedProject] = useState<any>(null);
+  const [selectedProjectForReview, setSelectedProjectForReview] = useState<{
+    id: string;
+    title: string;
+  } | null>(null);
   const [view, setView] = useState<ViewMode>("grid");
   const user = useUser();
 
@@ -63,11 +71,30 @@ const Index = () => {
     refetchProjects();
   };
 
+  const handleNewReview = () => {
+    setIsProjectSelectionOpen(true);
+  };
+
+  const handleProjectSelect = (projectId: string, projectTitle: string) => {
+    setSelectedProjectForReview({ id: projectId, title: projectTitle });
+    setIsProjectSelectionOpen(false);
+    setIsReviewSheetOpen(true);
+  };
+
+  const handleReviewClose = () => {
+    setIsReviewSheetOpen(false);
+    setSelectedProjectForReview(null);
+  };
+
+  const handleReviewSubmitted = () => {
+    refetchProjects();
+  };
+
   return (
     <div className="container mx-auto py-8">
       <DashboardHeader
         onNewProject={() => setIsProjectFormOpen(true)}
-        onNewReview={() => {}}
+        onNewReview={handleNewReview}
       />
 
       <ViewToggle currentView={view} onViewChange={setView} />
@@ -76,14 +103,14 @@ const Index = () => {
         <ProjectGrid 
           projects={projects || []} 
           onProjectEdit={handleEditProject}
-          onProjectReview={() => {}}
+          onProjectReview={handleProjectSelect}
           onViewHistory={() => {}}
         />
       ) : (
         <ProjectTable 
           projects={projects || []} 
           onProjectEdit={handleEditProject}
-          onProjectReview={() => {}}
+          onProjectReview={handleProjectSelect}
           onViewHistory={() => {}}
           onProjectDeleted={refetchProjects}
         />
@@ -95,6 +122,23 @@ const Index = () => {
         onSubmit={handleProjectFormSubmit}
         project={selectedProject}
       />
+
+      <ProjectSelectionSheet
+        projects={projects || []}
+        isOpen={isProjectSelectionOpen}
+        onClose={() => setIsProjectSelectionOpen(false)}
+        onProjectSelect={handleProjectSelect}
+      />
+
+      {selectedProjectForReview && (
+        <ReviewSheet
+          projectId={selectedProjectForReview.id}
+          projectTitle={selectedProjectForReview.title}
+          isOpen={isReviewSheetOpen}
+          onClose={handleReviewClose}
+          onReviewSubmitted={handleReviewSubmitted}
+        />
+      )}
     </div>
   );
 };
