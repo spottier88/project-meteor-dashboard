@@ -9,13 +9,19 @@ import { DashboardHeader } from "@/components/DashboardHeader";
 import { ViewToggle, ViewMode } from "@/components/ViewToggle";
 import { ProjectSelectionSheet } from "@/components/ProjectSelectionSheet";
 import { ReviewSheet } from "@/components/ReviewSheet";
+import { ReviewHistory } from "@/components/ReviewHistory";
 
 const Index = () => {
   const [isProjectFormOpen, setIsProjectFormOpen] = useState(false);
   const [isProjectSelectionOpen, setIsProjectSelectionOpen] = useState(false);
   const [isReviewSheetOpen, setIsReviewSheetOpen] = useState(false);
+  const [isReviewHistoryOpen, setIsReviewHistoryOpen] = useState(false);
   const [selectedProject, setSelectedProject] = useState<any>(null);
   const [selectedProjectForReview, setSelectedProjectForReview] = useState<{
+    id: string;
+    title: string;
+  } | null>(null);
+  const [selectedProjectForHistory, setSelectedProjectForHistory] = useState<{
     id: string;
     title: string;
   } | null>(null);
@@ -100,6 +106,16 @@ const Index = () => {
     refetchProjects();
   };
 
+  const handleViewHistory = (projectId: string, projectTitle: string) => {
+    setSelectedProjectForHistory({ id: projectId, title: projectTitle });
+    setIsReviewHistoryOpen(true);
+  };
+
+  const handleHistoryClose = () => {
+    setIsReviewHistoryOpen(false);
+    setSelectedProjectForHistory(null);
+  };
+
   return (
     <div className="container mx-auto py-8">
       <DashboardHeader
@@ -114,14 +130,14 @@ const Index = () => {
           projects={projects || []} 
           onProjectEdit={handleEditProject}
           onProjectReview={handleProjectSelect}
-          onViewHistory={() => {}}
+          onViewHistory={handleViewHistory}
         />
       ) : (
         <ProjectTable 
           projects={projects || []} 
           onProjectEdit={handleEditProject}
           onProjectReview={handleProjectSelect}
-          onViewHistory={() => {}}
+          onViewHistory={handleViewHistory}
           onProjectDeleted={refetchProjects}
         />
       )}
@@ -147,6 +163,14 @@ const Index = () => {
           isOpen={isReviewSheetOpen}
           onClose={handleReviewClose}
           onReviewSubmitted={handleReviewSubmitted}
+        />
+      )}
+
+      {selectedProjectForHistory && (
+        <ReviewHistory
+          projectId={selectedProjectForHistory.id}
+          projectTitle={selectedProjectForHistory.title}
+          onClose={handleHistoryClose}
         />
       )}
     </div>
