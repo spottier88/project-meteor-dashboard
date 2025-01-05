@@ -4,10 +4,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { FileDown } from "lucide-react";
 import { PDFDownloadLink } from "@react-pdf/renderer";
-import { ProjectPDF } from "@/components/pdf/ProjectPDF";
+import { ProjectPDF } from "@/components/ProjectPDF";
 import { ProjectHeader } from "@/components/ProjectHeader";
 import { ProjectSummaryHeader } from "@/components/project/ProjectSummaryHeader";
-import { ProjectSummaryTabs } from "@/components/project/ProjectSummaryTabs";
 
 export const ProjectSummary = () => {
   const { projectId } = useParams();
@@ -38,13 +37,23 @@ export const ProjectSummary = () => {
     <div className="container mx-auto py-8">
       <div className="flex justify-between items-start mb-8">
         <div className="flex-1">
-          {project && <ProjectSummaryHeader project={project} />}
+          {project && (
+            <ProjectSummaryHeader
+              title={project.title}
+              description={project.description}
+              status={project.status}
+              progress={project.progress}
+              completion={project.completion}
+              project_manager={project.project_manager}
+              last_review_date={project.last_review_date}
+            />
+          )}
         </div>
         <div className="flex gap-2">
           {project && (
             <PDFDownloadLink
               document={<ProjectPDF project={project} />}
-              fileName={`${project.title.toLowerCase().replace(/ /g, '-')}.pdf`}
+              fileName={`${project.title.toLowerCase().replace(/ /g, "-")}.pdf`}
             >
               {({ loading }) => (
                 <Button disabled={loading}>
@@ -67,7 +76,6 @@ export const ProjectSummary = () => {
       </div>
 
       <ProjectHeader project={project} />
-      <ProjectSummaryTabs project={project} />
     </div>
   );
 };
