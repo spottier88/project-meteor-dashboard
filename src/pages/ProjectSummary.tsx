@@ -7,6 +7,10 @@ import { PDFDownloadLink } from "@react-pdf/renderer";
 import { ProjectPDF } from "@/components/ProjectPDF";
 import { ProjectHeader } from "@/components/ProjectHeader";
 import { ProjectSummaryHeader } from "@/components/project/ProjectSummaryHeader";
+import { Database } from "@/integrations/supabase/types";
+
+type ProjectStatus = Database["public"]["Enums"]["project_status"];
+type ProgressStatus = Database["public"]["Enums"]["progress_status"];
 
 export const ProjectSummary = () => {
   const { projectId } = useParams();
@@ -65,12 +69,12 @@ export const ProjectSummary = () => {
         <div className="flex-1">
           <ProjectSummaryHeader
             title={project.title}
-            description={project.description}
-            status={project.status}
-            progress={project.progress}
+            description={project.description || ""}
+            status={project.status as ProjectStatus}
+            progress={project.progress as ProgressStatus}
             completion={project.completion}
-            project_manager={project.project_manager}
-            last_review_date={project.last_review_date}
+            project_manager={project.project_manager || ""}
+            last_review_date={project.last_review_date || ""}
           />
         </div>
         <div className="flex gap-2">
