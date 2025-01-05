@@ -1,5 +1,6 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
+import { useUser } from "@supabase/auth-helpers-react";
 import { supabase } from "@/integrations/supabase/client";
 import { PDFDownloadLink } from "@react-pdf/renderer";
 import { Button } from "@/components/ui/button";
@@ -10,8 +11,8 @@ import { KanbanBoard } from "@/components/KanbanBoard";
 import { LastReview } from "@/components/LastReview";
 import { ProjectHeader } from "@/components/ProjectHeader";
 import { TaskForm } from "@/components/TaskForm";
+import { ReviewSheet } from "@/components/ReviewSheet";
 import { useState } from "react";
-import { useUser } from "@supabase/auth-helpers-react";
 import { canManageProjectItems } from "@/utils/permissions";
 import { UserRoleData } from "@/types/user";
 
@@ -20,6 +21,7 @@ export const ProjectSummary = () => {
   const navigate = useNavigate();
   const user = useUser();
   const [isTaskFormOpen, setIsTaskFormOpen] = useState(false);
+  const [isReviewFormOpen, setIsReviewFormOpen] = useState(false);
 
   const { data: project, isError: projectError } = useQuery({
     queryKey: ["project", projectId],
@@ -55,7 +57,7 @@ export const ProjectSummary = () => {
     enabled: !!user?.id,
   });
 
-  const { data: lastReview } = useQuery({
+  const { data: lastReview, refetch: refetchLastReview } = useQuery({
     queryKey: ["lastReview", projectId],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -110,6 +112,10 @@ export const ProjectSummary = () => {
   const roles = userRoles?.map(ur => ur.role);
   const canManage = canManageProjectItems(roles, user?.id, project.owner_id);
 
+  const handleReviewSubmitted = () => {
+    refetchLastReview();
+  };
+
   return (
     <div className="container mx-auto py-6 space-y-6">
       <div className="flex items-center justify-between">
@@ -141,7 +147,10 @@ export const ProjectSummary = () => {
         </PDFDownloadLink>
       </div>
 
-      <ProjectHeader project={project} />
+      <ProjectHeader 
+        project={project} 
+        onNewReview={() => setIsReviewFormOpen(true)}
+      />
 
       <div className="grid gap-8">
         {lastReview && (
@@ -173,6 +182,14 @@ export const ProjectSummary = () => {
         onClose={() => setIsTaskFormOpen(false)}
         onSubmit={refetchTasks}
         projectId={projectId || ""}
+      />
+
+      <ReviewSheet
+        projectId={projectId || ""}
+        projectTitle={project.title}
+        isOpen={isReviewFormOpen}
+        onClose={() => setIsReviewFormOpen(false)}
+        onReviewSubmitted={handleReviewSubmitted}
       />
     </div>
   );
