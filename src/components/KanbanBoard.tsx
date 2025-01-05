@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Task } from "./kanban/types";
 import { KanbanColumn } from "./kanban/KanbanColumn";
+import { Card, CardContent } from "./ui/card";
 
 interface KanbanBoardProps {
   projectId: string;
@@ -32,7 +33,20 @@ export const KanbanBoard = ({ projectId }: KanbanBoardProps) => {
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [isTaskFormOpen, setIsTaskFormOpen] = useState(false);
 
-  const { data: project } = useQuery({
+  // Add error handling for undefined projectId
+  if (!projectId) {
+    return (
+      <Card>
+        <CardContent className="py-8">
+          <div className="text-center text-muted-foreground">
+            Identifiant du projet manquant
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  const { data: project, isLoading: isLoadingProject } = useQuery({
     queryKey: ["project", projectId],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -44,9 +58,10 @@ export const KanbanBoard = ({ projectId }: KanbanBoardProps) => {
       if (error) throw error;
       return data;
     },
+    enabled: !!projectId, // Only run query if projectId exists
   });
 
-  const { data: tasks, refetch } = useQuery({
+  const { data: tasks, refetch, isLoading: isLoadingTasks } = useQuery({
     queryKey: ["tasks", projectId],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -58,7 +73,21 @@ export const KanbanBoard = ({ projectId }: KanbanBoardProps) => {
       if (error) throw error;
       return data as Task[];
     },
+    enabled: !!projectId, // Only run query if projectId exists
   });
+
+  // Show loading state
+  if (isLoadingProject || isLoadingTasks) {
+    return (
+      <Card>
+        <CardContent className="py-8">
+          <div className="text-center text-muted-foreground">
+            Chargement du tableau Kanban...
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   const handleStatusChange = async (taskId: string, newStatus: Task["status"]) => {
     try {
