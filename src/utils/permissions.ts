@@ -21,11 +21,14 @@ export const canCreateProject = (userRoles: UserRole[] | undefined): boolean => 
 export const canManageProjectItems = (
   userRoles: UserRole[] | undefined,
   userId: string | undefined,
-  projectOwnerId: string | undefined
+  projectOwnerId: string | undefined,
+  projectManager?: string | null,
+  userEmail?: string | null,
 ): boolean => {
   if (!userId) return false;
   if (userRoles?.includes("admin")) return true;
   if (userId === projectOwnerId) return true;
+  if (userEmail && projectManager && userEmail === projectManager) return true;
   return false;
 };
 
