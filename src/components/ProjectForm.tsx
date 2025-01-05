@@ -75,7 +75,7 @@ export const ProjectForm = ({ isOpen, onClose, onSubmit, project }: ProjectFormP
       if (!user?.id) return null;
       const { data, error } = await supabase
         .from("profiles")
-        .select("*")
+        .select("email")
         .eq("id", user.id)
         .single();
 
@@ -115,7 +115,7 @@ export const ProjectForm = ({ isOpen, onClose, onSubmit, project }: ProjectFormP
         
         if (!isAdmin && user?.id) {
           setOwnerId(user.id);
-          // Make sure we're using a string value for projectManager
+          // S'assurer qu'on utilise uniquement la chaîne email du profil utilisateur
           setProjectManager(userProfile?.email || "");
         } else {
           setOwnerId("");
