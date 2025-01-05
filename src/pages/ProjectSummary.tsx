@@ -18,6 +18,11 @@ export const ProjectSummary = () => {
   const { data: project, isError: projectError } = useQuery({
     queryKey: ["project", projectId],
     queryFn: async () => {
+      if (!projectId) {
+        navigate("/");
+        return null;
+      }
+
       const { data, error } = await supabase
         .from("projects")
         .select("*")
@@ -37,6 +42,8 @@ export const ProjectSummary = () => {
   const { data: lastReview } = useQuery({
     queryKey: ["lastReview", projectId],
     queryFn: async () => {
+      if (!projectId) return null;
+      
       const { data, error } = await supabase
         .from("reviews")
         .select("*")
@@ -54,6 +61,8 @@ export const ProjectSummary = () => {
   const { data: risks } = useQuery({
     queryKey: ["risks", projectId],
     queryFn: async () => {
+      if (!projectId) return [];
+      
       const { data, error } = await supabase
         .from("risks")
         .select("*")
@@ -69,6 +78,8 @@ export const ProjectSummary = () => {
   const { data: tasks } = useQuery({
     queryKey: ["tasks", projectId],
     queryFn: async () => {
+      if (!projectId) return [];
+      
       const { data, error } = await supabase
         .from("tasks")
         .select("*")
