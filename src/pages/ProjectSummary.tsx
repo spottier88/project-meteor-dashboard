@@ -138,7 +138,7 @@ export const ProjectSummary = () => {
           }
           fileName={`${project.title}.pdf`}
         >
-          {({ loading }) => (
+          {({ loading }: { loading: boolean }) => (
             <Button disabled={loading}>
               <FileDown className="h-4 w-4 mr-2" />
               {loading ? "Génération..." : "Télécharger le PDF"}

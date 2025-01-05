@@ -1,6 +1,5 @@
 import { useSupabaseClient, useUser } from "@supabase/auth-helpers-react";
 import { Button } from "./ui/button";
-import { useNavigate } from "react-router-dom";
 import { LogOut } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { useToast } from "./ui/use-toast";
@@ -11,11 +10,10 @@ import { ProfileUpdateForm } from "./UserForm/ProfileUpdateForm";
 export const UserInfo = () => {
   const user = useUser();
   const supabase = useSupabaseClient();
-  const navigate = useNavigate();
   const { toast } = useToast();
   const [isUpdateFormOpen, setIsUpdateFormOpen] = useState(false);
 
-  const { data: profile, refetch: refetchProfile } = useQuery({
+  const { data: profile } = useQuery({
     queryKey: ["profile", user?.id],
     queryFn: async () => {
       if (!user?.id) return null;
@@ -50,18 +48,16 @@ export const UserInfo = () => {
 
   const handleLogout = async () => {
     try {
+      // First clear the session
       await supabase.auth.signOut();
-      // Clear any local storage or state if needed
+      // Clear any local storage
       localStorage.clear();
-      // Force navigation to login page
+      // Force a page reload to clear all state
       window.location.href = "/login";
     } catch (error) {
       console.error("Erreur lors de la déconnexion:", error);
-      toast({
-        title: "Erreur",
-        description: "Une erreur est survenue lors de la déconnexion",
-        variant: "destructive",
-      });
+      // Even if there's an error, we should still redirect to login
+      window.location.href = "/login";
     }
   };
 
@@ -98,7 +94,7 @@ export const UserInfo = () => {
           currentFirstName={profile.first_name || ""}
           currentLastName={profile.last_name || ""}
           userId={user.id}
-          onUpdate={refetchProfile}
+          onUpdate={() => {}}
         />
       )}
     </div>
