@@ -102,6 +102,17 @@ export const ProjectForm = ({ isOpen, onClose, onSubmit, project }: ProjectFormP
         setServiceId(project.service_id || "none");
         setOwnerId(project.owner_id || "");
       } else {
+        // Reset form for new project
+        setTitle("");
+        setDescription("");
+        setPriority("medium");
+        setSuiviDgs(false);
+        setPoleId("none");
+        setDirectionId("none");
+        setServiceId("none");
+        setStartDate(undefined);
+        setEndDate(undefined);
+        
         if (!isAdmin && user?.id) {
           setOwnerId(user.id);
           setProjectManager(userProfile?.email || "");
