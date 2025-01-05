@@ -5,7 +5,7 @@ import { useNavigate } from "react-router-dom";
 import { DeleteProjectDialog } from "./DeleteProjectDialog";
 import { UserRole } from "@/types/user";
 import { useUser } from "@supabase/auth-helpers-react";
-import { canViewProjectHistory } from "@/utils/permissions";
+import { canViewProjectHistory, canManageTasks } from "@/utils/permissions";
 
 interface ProjectActionsProps {
   projectId: string;
@@ -41,6 +41,7 @@ export const ProjectActions = ({
   };
 
   const canViewHistory = canViewProjectHistory(userRoles, user?.id, owner_id, project_manager, user?.email);
+  const canManageProjectTasks = canManageTasks(userRoles, user?.id, owner_id, project_manager, user?.email);
 
   return (
     <>
@@ -68,15 +69,17 @@ export const ProjectActions = ({
           <History className="h-4 w-4" />
         </Button>
       )}
-      <Button
-        variant="ghost"
-        size="icon"
-        onClick={(e) => handleClick(e, () => navigate(`/tasks/${projectId}`))}
-        className="h-8 w-8"
-        title="Gérer les tâches"
-      >
-        <ListTodo className="h-4 w-4" />
-      </Button>
+      {canManageProjectTasks && (
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={(e) => handleClick(e, () => navigate(`/tasks/${projectId}`))}
+          className="h-8 w-8"
+          title="Gérer les tâches"
+        >
+          <ListTodo className="h-4 w-4" />
+        </Button>
+      )}
       <Button
         variant="ghost"
         size="icon"

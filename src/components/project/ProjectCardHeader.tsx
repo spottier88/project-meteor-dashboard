@@ -1,13 +1,14 @@
 import { CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Pencil, History, Star } from "lucide-react";
+import { Pencil, History, Star, ListTodo } from "lucide-react";
 import { ProjectStatus } from "../ProjectCard";
 import { StatusIcon } from "./StatusIcon";
 import { useUser } from "@supabase/auth-helpers-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { canEditProject, canViewProjectHistory } from "@/utils/permissions";
+import { canEditProject, canViewProjectHistory, canManageTasks } from "@/utils/permissions";
 import { UserRoleData } from "@/types/user";
+import { useNavigate } from "react-router-dom";
 
 interface ProjectCardHeaderProps {
   title: string;
@@ -27,12 +28,12 @@ export const ProjectCardHeader = ({
   suivi_dgs,
   onEdit,
   onViewHistory,
-  onReview,
   id,
   owner_id,
   project_manager,
 }: ProjectCardHeaderProps) => {
   const user = useUser();
+  const navigate = useNavigate();
 
   const { data: userRoles } = useQuery({
     queryKey: ["userRoles", user?.id],
@@ -51,6 +52,7 @@ export const ProjectCardHeader = ({
 
   const roles = userRoles?.map(ur => ur.role);
   const canViewHistory = canViewProjectHistory(roles, user?.id, owner_id, project_manager, user?.email);
+  const canManageProjectTasks = canManageTasks(roles, user?.id, owner_id, project_manager, user?.email);
 
   return (
     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -87,6 +89,20 @@ export const ProjectCardHeader = ({
             title="Historique des revues de projet"
           >
             <History className="h-4 w-4" />
+          </Button>
+        )}
+        {canManageProjectTasks && (
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={(e) => {
+              e.stopPropagation();
+              navigate(`/tasks/${id}`);
+            }}
+            className="h-8 w-8"
+            title="Gérer les tâches"
+          >
+            <ListTodo className="h-4 w-4" />
           </Button>
         )}
         {status && <StatusIcon status={status} />}
