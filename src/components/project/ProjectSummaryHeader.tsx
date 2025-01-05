@@ -1,6 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ProjectStatus, ProgressStatus } from "@/components/ProjectCard";
 import { statusIcons } from "@/lib/project-status";
+import { Hourglass } from "lucide-react";
 
 interface ProjectSummaryHeaderProps {
   title: string;
@@ -27,7 +28,18 @@ export const ProjectSummaryHeader = ({
   project_manager,
   last_review_date,
 }: ProjectSummaryHeaderProps) => {
-  const StatusIcon = statusIcons[status].icon;
+  const getStatusIcon = () => {
+    if (!status || !statusIcons[status]) {
+      return <Hourglass className="text-muted-foreground" aria-label="En attente" />;
+    }
+    const StatusIcon = statusIcons[status].icon;
+    return (
+      <StatusIcon
+        className={statusIcons[status].color}
+        aria-label={statusIcons[status].label}
+      />
+    );
+  };
 
   return (
     <Card>
@@ -38,12 +50,7 @@ export const ProjectSummaryHeader = ({
             <p className="text-sm text-muted-foreground">{description}</p>
           )}
         </div>
-        {StatusIcon && (
-          <StatusIcon
-            className={statusIcons[status].color}
-            aria-label={statusIcons[status].label}
-          />
-        )}
+        {getStatusIcon()}
       </CardHeader>
       <CardContent>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
