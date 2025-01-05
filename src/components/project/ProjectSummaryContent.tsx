@@ -1,7 +1,4 @@
-import { PDFDownloadLink } from "@react-pdf/renderer";
 import { Button } from "@/components/ui/button";
-import { FileDown } from "lucide-react";
-import { ProjectPDF } from "@/components/ProjectPDF";
 import { RiskList } from "@/components/RiskList";
 import { KanbanBoard } from "@/components/KanbanBoard";
 import { LastReview } from "@/components/LastReview";
@@ -41,27 +38,6 @@ export const ProjectSummaryContent = ({
         <div className="space-y-4">
           <h2 className="text-2xl font-bold">Dernière revue</h2>
           {lastReview && <LastReview review={lastReview} />}
-        </div>
-
-        <div className="space-y-4">
-          <PDFDownloadLink
-            document={
-              <ProjectPDF
-                project={project}
-                lastReview={lastReview}
-                risks={risks}
-                tasks={tasks}
-              />
-            }
-            fileName={`${project.title}.pdf`}
-          >
-            {({ loading }) => (
-              <Button disabled={loading} className="w-full">
-                <FileDown className="h-4 w-4 mr-2" />
-                {loading ? "Génération..." : "Télécharger le PDF"}
-              </Button>
-            )}
-          </PDFDownloadLink>
         </div>
       </div>
 
