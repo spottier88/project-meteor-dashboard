@@ -15,6 +15,7 @@ interface ProjectCardHeaderProps {
   suivi_dgs?: boolean;
   onEdit: (id: string) => void;
   onViewHistory: (id: string, title: string) => void;
+  onReview: (id: string, title: string) => void;
   id: string;
   owner_id?: string;
   project_manager?: string;
@@ -26,6 +27,7 @@ export const ProjectCardHeader = ({
   suivi_dgs,
   onEdit,
   onViewHistory,
+  onReview,
   id,
   owner_id,
   project_manager,

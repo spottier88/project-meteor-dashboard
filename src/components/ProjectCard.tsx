@@ -44,6 +44,7 @@ export const ProjectCard = ({
   service_id,
   onEdit,
   onViewHistory,
+  onReview,
 }: ProjectCardProps) => {
   const navigate = useNavigate();
 
@@ -94,6 +95,7 @@ export const ProjectCard = ({
         suivi_dgs={suivi_dgs}
         onEdit={onEdit}
         onViewHistory={onViewHistory}
+        onReview={onReview}
         id={id}
         owner_id={owner_id}
         project_manager={project_manager}
