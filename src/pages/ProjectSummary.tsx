@@ -107,12 +107,34 @@ export const ProjectSummary = () => {
     enabled: !!user?.id,
   });
 
+  const { data: userProfile } = useQuery({
+    queryKey: ["userProfile", user?.id],
+    queryFn: async () => {
+      if (!user?.id) return null;
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("id", user.id)
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!user?.id,
+  });
+
   if (!project || projectError) {
     return null;
   }
 
   const roles = userRoles?.map(ur => ur.role);
-  const canManage = canManageProjectItems(roles, user?.id, project.owner_id);
+  const canManage = canManageProjectItems(
+    roles,
+    user?.id,
+    project.owner_id,
+    project.project_manager,
+    userProfile?.email
+  );
 
   return (
     <div className="container mx-auto py-6 space-y-6">
