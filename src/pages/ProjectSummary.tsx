@@ -8,12 +8,14 @@ import { canManageProjectItems } from "@/utils/permissions";
 import { useState } from "react";
 import { TaskForm } from "@/components/TaskForm";
 import { ProjectSummaryContent } from "@/components/project/ProjectSummaryContent";
+import { useToast } from "@/components/ui/use-toast";
 
 export const ProjectSummary = () => {
   const { projectId } = useParams<{ projectId: string }>();
   const navigate = useNavigate();
   const user = useUser();
   const [isTaskFormOpen, setIsTaskFormOpen] = useState(false);
+  const { toast } = useToast();
 
   const { data: project, isError: projectError } = useQuery({
     queryKey: ["project", projectId],
@@ -29,11 +31,25 @@ export const ProjectSummary = () => {
         .eq("id", projectId)
         .maybeSingle();
 
-      if (error) throw error;
+      if (error) {
+        toast({
+          variant: "destructive",
+          title: "Erreur",
+          description: "Impossible de charger le projet",
+        });
+        throw error;
+      }
+      
       if (!data) {
+        toast({
+          variant: "destructive",
+          title: "Projet non trouvé",
+          description: "Le projet demandé n'existe pas",
+        });
         navigate("/");
         return null;
       }
+      
       return data;
     },
     enabled: !!projectId,
