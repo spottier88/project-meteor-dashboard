@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Sun, Cloud, CloudLightning } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
+import { ProjectHeader } from "./ProjectHeader";
 
 const statusIcons = {
   sunny: { icon: Sun, color: "text-warning", label: "Ensoleillé" },
@@ -33,7 +34,7 @@ export const ReviewHistory = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("projects")
-        .select("title")
+        .select("*")
         .eq("id", projectId)
         .single();
 
@@ -63,10 +64,10 @@ export const ReviewHistory = () => {
 
   return (
     <div className="container mx-auto py-8 space-y-6 animate-fade-in">
+      {project && <ProjectHeader project={project} />}
+      
       <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold">
-          Historique des revues - {project?.title}
-        </h2>
+        <h2 className="text-2xl font-bold">Historique des revues</h2>
         <Button onClick={() => navigate("/")}>Retour à l'accueil</Button>
       </div>
 
