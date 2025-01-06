@@ -33,7 +33,7 @@ interface Task {
   title: string;
   description?: string;
   status: "todo" | "in_progress" | "done";
-  due_date?: string;
+  due_date?: string | null;
   assignee?: string;
 }
 
@@ -179,6 +179,15 @@ export const KanbanBoard = ({ projectId }: KanbanBoardProps) => {
     return isPast(new Date(task.due_date));
   };
 
+  const formatDueDate = (date: string) => {
+    try {
+      return format(new Date(date), "dd MMMM yyyy", { locale: fr });
+    } catch (error) {
+      console.error("Error formatting date:", error);
+      return date;
+    }
+  };
+
   return (
     <>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -203,8 +212,14 @@ export const KanbanBoard = ({ projectId }: KanbanBoardProps) => {
                             {task.assignee || "Non assigné"}
                           </div>
                           {task.due_date && (
-                            <div className={`text-sm ${isOverdue(task) ? "text-red-500 font-medium" : "text-muted-foreground"}`}>
-                              Échéance : {format(new Date(task.due_date), "dd MMMM yyyy", { locale: fr })}
+                            <div
+                              className={`text-sm ${
+                                isOverdue(task)
+                                  ? "text-red-500 font-medium"
+                                  : "text-muted-foreground"
+                              }`}
+                            >
+                              Échéance : {formatDueDate(task.due_date)}
                             </div>
                           )}
                         </div>
