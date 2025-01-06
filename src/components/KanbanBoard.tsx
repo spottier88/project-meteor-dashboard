@@ -25,6 +25,8 @@ import { useState } from "react";
 import { TaskForm } from "./TaskForm";
 import { useUser } from "@supabase/auth-helpers-react";
 import { canManageProjectItems } from "@/utils/permissions";
+import { format, isPast } from "date-fns";
+import { fr } from "date-fns/locale";
 
 interface Task {
   id: string;
@@ -172,6 +174,11 @@ export const KanbanBoard = ({ projectId }: KanbanBoardProps) => {
     }
   };
 
+  const isOverdue = (task: Task) => {
+    if (!task.due_date || task.status === "done") return false;
+    return isPast(new Date(task.due_date));
+  };
+
   return (
     <>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -191,8 +198,15 @@ export const KanbanBoard = ({ projectId }: KanbanBoardProps) => {
                         </p>
                       )}
                       <div className="flex items-center justify-between">
-                        <div className="text-sm text-muted-foreground">
-                          {task.assignee || "Non assigné"}
+                        <div className="space-y-1">
+                          <div className="text-sm text-muted-foreground">
+                            {task.assignee || "Non assigné"}
+                          </div>
+                          {task.due_date && (
+                            <div className={`text-sm ${isOverdue(task) ? "text-red-500 font-medium" : "text-muted-foreground"}`}>
+                              Échéance : {format(new Date(task.due_date), "dd MMMM yyyy", { locale: fr })}
+                            </div>
+                          )}
                         </div>
                         <div className="flex items-center gap-2">
                           {canManage && (
