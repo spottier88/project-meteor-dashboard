@@ -1,4 +1,4 @@
-import { TableHeader, TableRow } from "@/components/ui/table";
+import { TableHeader, TableRow, TableHead } from "@/components/ui/table";
 import { SortableHeader, SortDirection } from "@/components/ui/sortable-header";
 
 interface ProjectTableHeaderProps {
