@@ -1,6 +1,8 @@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import { useState } from "react";
+import { SortableHeader, SortDirection } from "@/components/ui/sortable-header";
 
 interface Task {
   id: string;
@@ -29,18 +31,74 @@ const statusLabels = {
 };
 
 export const TaskTable = ({ tasks }: TaskTableProps) => {
+  const [sortKey, setSortKey] = useState<string | null>(null);
+  const [sortDirection, setSortDirection] = useState<SortDirection>(null);
+
+  const handleSort = (key: string) => {
+    if (sortKey === key) {
+      setSortDirection(prev => {
+        if (prev === "asc") return "desc";
+        if (prev === "desc") return null;
+        return "asc";
+      });
+    } else {
+      setSortKey(key);
+      setSortDirection("asc");
+    }
+  };
+
+  const sortedTasks = [...tasks].sort((a: any, b: any) => {
+    if (!sortKey || !sortDirection) return 0;
+
+    const aValue = a[sortKey];
+    const bValue = b[sortKey];
+
+    if (aValue === null) return 1;
+    if (bValue === null) return -1;
+
+    if (sortDirection === "asc") {
+      return aValue > bValue ? 1 : -1;
+    } else {
+      return aValue < bValue ? 1 : -1;
+    }
+  });
+
   return (
     <Table>
       <TableHeader>
         <TableRow>
-          <TableHead>Titre</TableHead>
-          <TableHead>Assigné à</TableHead>
-          <TableHead>Date limite</TableHead>
-          <TableHead>Statut</TableHead>
+          <SortableHeader
+            label="Titre"
+            sortKey="title"
+            currentSort={sortKey}
+            currentDirection={sortDirection}
+            onSort={handleSort}
+          />
+          <SortableHeader
+            label="Assigné à"
+            sortKey="assignee"
+            currentSort={sortKey}
+            currentDirection={sortDirection}
+            onSort={handleSort}
+          />
+          <SortableHeader
+            label="Date limite"
+            sortKey="due_date"
+            currentSort={sortKey}
+            currentDirection={sortDirection}
+            onSort={handleSort}
+          />
+          <SortableHeader
+            label="Statut"
+            sortKey="status"
+            currentSort={sortKey}
+            currentDirection={sortDirection}
+            onSort={handleSort}
+          />
         </TableRow>
       </TableHeader>
       <TableBody>
-        {tasks.map((task) => (
+        {sortedTasks.map((task) => (
           <TableRow key={task.id}>
             <TableCell>{task.title}</TableCell>
             <TableCell>{task.assignee || "-"}</TableCell>

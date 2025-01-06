@@ -1,6 +1,8 @@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import { useState } from "react";
+import { SortableHeader, SortDirection } from "@/components/ui/sortable-header";
 
 interface Risk {
   id: string;
@@ -35,18 +37,74 @@ const statusColors = {
 };
 
 export const RiskTable = ({ risks }: RiskTableProps) => {
+  const [sortKey, setSortKey] = useState<string | null>(null);
+  const [sortDirection, setSortDirection] = useState<SortDirection>(null);
+
+  const handleSort = (key: string) => {
+    if (sortKey === key) {
+      setSortDirection(prev => {
+        if (prev === "asc") return "desc";
+        if (prev === "desc") return null;
+        return "asc";
+      });
+    } else {
+      setSortKey(key);
+      setSortDirection("asc");
+    }
+  };
+
+  const sortedRisks = [...risks].sort((a: any, b: any) => {
+    if (!sortKey || !sortDirection) return 0;
+
+    const aValue = a[sortKey];
+    const bValue = b[sortKey];
+
+    if (aValue === null) return 1;
+    if (bValue === null) return -1;
+
+    if (sortDirection === "asc") {
+      return aValue > bValue ? 1 : -1;
+    } else {
+      return aValue < bValue ? 1 : -1;
+    }
+  });
+
   return (
     <Table>
       <TableHeader>
         <TableRow>
-          <TableHead>Description</TableHead>
-          <TableHead>Probabilité</TableHead>
-          <TableHead>Gravité</TableHead>
-          <TableHead>Statut</TableHead>
+          <SortableHeader
+            label="Description"
+            sortKey="description"
+            currentSort={sortKey}
+            currentDirection={sortDirection}
+            onSort={handleSort}
+          />
+          <SortableHeader
+            label="Probabilité"
+            sortKey="probability"
+            currentSort={sortKey}
+            currentDirection={sortDirection}
+            onSort={handleSort}
+          />
+          <SortableHeader
+            label="Gravité"
+            sortKey="severity"
+            currentSort={sortKey}
+            currentDirection={sortDirection}
+            onSort={handleSort}
+          />
+          <SortableHeader
+            label="Statut"
+            sortKey="status"
+            currentSort={sortKey}
+            currentDirection={sortDirection}
+            onSort={handleSort}
+          />
         </TableRow>
       </TableHeader>
       <TableBody>
-        {risks.map((risk) => (
+        {sortedRisks.map((risk) => (
           <TableRow key={risk.id}>
             <TableCell>{risk.description}</TableCell>
             <TableCell>

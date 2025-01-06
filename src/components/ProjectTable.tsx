@@ -6,6 +6,8 @@ import { ProjectTableRow } from "./project/ProjectTableRow";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { UserRoleData } from "@/types/user";
+import { useState } from "react";
+import { SortDirection } from "./ui/sortable-header";
 
 interface Project {
   id: string;
@@ -37,6 +39,8 @@ export const ProjectTable = ({
   onProjectDeleted,
 }: ProjectTableProps) => {
   const user = useUser();
+  const [sortKey, setSortKey] = useState<string | null>(null);
+  const [sortDirection, setSortDirection] = useState<SortDirection>(null);
 
   const { data: userRoles } = useQuery({
     queryKey: ["userRoles", user?.id],
@@ -62,12 +66,45 @@ export const ProjectTable = ({
     return project.project_manager === user.email;
   });
 
+  const handleSort = (key: string) => {
+    if (sortKey === key) {
+      setSortDirection(prev => {
+        if (prev === "asc") return "desc";
+        if (prev === "desc") return null;
+        return "asc";
+      });
+    } else {
+      setSortKey(key);
+      setSortDirection("asc");
+    }
+  };
+
+  const sortedProjects = [...filteredProjects].sort((a: any, b: any) => {
+    if (!sortKey || !sortDirection) return 0;
+
+    const aValue = a[sortKey];
+    const bValue = b[sortKey];
+
+    if (aValue === null) return 1;
+    if (bValue === null) return -1;
+
+    if (sortDirection === "asc") {
+      return aValue > bValue ? 1 : -1;
+    } else {
+      return aValue < bValue ? 1 : -1;
+    }
+  });
+
   return (
     <div className="rounded-md border">
       <Table>
-        <ProjectTableHeader />
+        <ProjectTableHeader
+          currentSort={sortKey}
+          currentDirection={sortDirection}
+          onSort={handleSort}
+        />
         <TableBody>
-          {filteredProjects.map((project) => (
+          {sortedProjects.map((project) => (
             <ProjectTableRow
               key={project.id}
               project={project}
