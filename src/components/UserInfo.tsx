@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useSupabaseClient, useUser } from "@supabase/auth-helpers-react";
 import { Button } from "./ui/button";
 import { useNavigate } from "react-router-dom";
-import { LogOut } from "lucide-react";
+import { LogOut, Settings } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { useToast } from "./ui/use-toast";
 import { UserProfile, UserRoleData } from "@/types/user";
@@ -90,6 +90,12 @@ export const UserInfo = () => {
           </span>
         </div>
         <div className="flex items-center gap-2">
+          {isAdmin && (
+            <Button variant="ghost" size="sm" onClick={() => navigate("/admin")}>
+              <Settings className="h-4 w-4 mr-2" />
+              Administration
+            </Button>
+          )}
           <Button variant="ghost" size="sm" onClick={handleLogout}>
             <LogOut className="h-4 w-4 mr-2" />
             Déconnexion
