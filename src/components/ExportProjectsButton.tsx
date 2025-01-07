@@ -38,7 +38,7 @@ export const ExportProjectsButton = () => {
       if (selectedProjects.length === 0) return null;
 
       const fetchProjectData = async (projectId: string) => {
-        const [projectResult, reviewResult, risksResult, tasksResult] = await Promise.all([
+        const [projectResult, reviewResult, risksResult, tasksResult, poleResult, directionResult, serviceResult] = await Promise.all([
           supabase.from("projects").select("*").eq("id", projectId).single(),
           supabase
             .from("reviews")
@@ -49,10 +49,18 @@ export const ExportProjectsButton = () => {
             .maybeSingle(),
           supabase.from("risks").select("*").eq("project_id", projectId),
           supabase.from("tasks").select("*").eq("project_id", projectId),
+          supabase.from("poles").select("name").eq("id", projectResult.data.pole_id).maybeSingle(),
+          supabase.from("directions").select("name").eq("id", projectResult.data.direction_id).maybeSingle(),
+          supabase.from("services").select("name").eq("id", projectResult.data.service_id).maybeSingle(),
         ]);
 
         return {
-          project: projectResult.data,
+          project: {
+            ...projectResult.data,
+            pole_name: poleResult.data?.name,
+            direction_name: directionResult.data?.name,
+            service_name: serviceResult.data?.name,
+          },
           lastReview: reviewResult.data,
           risks: risksResult.data || [],
           tasks: tasksResult.data || [],
@@ -93,19 +101,8 @@ export const ExportProjectsButton = () => {
                 document={<MultiProjectPDF projectsData={projectsData} />}
                 fileName="projets-export.pdf"
               >
-                {({ loading, error }) => (
-                  <Button 
-                    disabled={loading} 
-                    onClick={() => {
-                      if (error) {
-                        toast({
-                          variant: "destructive",
-                          title: "Erreur",
-                          description: "Une erreur est survenue lors de la génération du PDF",
-                        });
-                      }
-                    }}
-                  >
+                {({ loading }) => (
+                  <Button disabled={loading}>
                     {loading ? "Génération..." : "Télécharger le PDF"}
                   </Button>
                 )}

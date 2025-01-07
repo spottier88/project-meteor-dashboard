@@ -3,6 +3,7 @@ import { styles } from "./pdf/PDFStyles";
 import { PDFHeader } from "./pdf/PDFHeader";
 import { PDFProjectInfo } from "./pdf/PDFProjectInfo";
 import { PDFLastReview } from "./pdf/PDFLastReview";
+import { PDFTasks } from "./pdf/PDFTasks";
 import { PDFRisks } from "./pdf/PDFRisks";
 import { PDFFooter } from "./pdf/PDFFooter";
 import { Database } from "@/integrations/supabase/types";
@@ -22,6 +23,11 @@ interface ProjectPDFProps {
     completion: number;
     project_manager?: string;
     last_review_date: string;
+    start_date?: string;
+    end_date?: string;
+    pole_name?: string;
+    direction_name?: string;
+    service_name?: string;
   };
   lastReview?: {
     weather: ProjectStatus;
@@ -29,13 +35,6 @@ interface ProjectPDFProps {
     comment?: string;
     created_at: string;
   };
-  risks: Array<{
-    description: string;
-    probability: RiskProbability;
-    severity: RiskSeverity;
-    status: RiskStatus;
-    mitigation_plan?: string;
-  }>;
   tasks: Array<{
     title: string;
     description?: string;
@@ -43,13 +42,21 @@ interface ProjectPDFProps {
     due_date?: string;
     assignee?: string;
   }>;
+  risks: Array<{
+    description: string;
+    probability: RiskProbability;
+    severity: RiskSeverity;
+    status: RiskStatus;
+    mitigation_plan?: string;
+  }>;
 }
 
-export const ProjectPDF = ({ project, lastReview, risks, tasks }: ProjectPDFProps) => (
+export const ProjectPDF = ({ project, lastReview, tasks, risks }: ProjectPDFProps) => (
   <View style={styles.page}>
     <PDFHeader title={project.title} />
     <PDFProjectInfo project={project} />
     {lastReview && <PDFLastReview review={lastReview} />}
+    <PDFTasks tasks={tasks} />
     <PDFRisks risks={risks} />
     <PDFFooter />
   </View>

@@ -92,4 +92,46 @@ export const styles = StyleSheet.create({
   statusResolved: {
     backgroundColor: "#10b981",
   },
+
+  // Styles pour les tâches
+  kanbanBoard: {
+    flexDirection: "row",
+    gap: 10,
+    marginTop: 10,
+  },
+  taskColumn: {
+    flex: 1,
+    gap: 5,
+  },
+  taskColumnTitle: {
+    fontSize: 12,
+    fontWeight: "bold",
+    marginBottom: 5,
+    color: "#666",
+  },
+  task: {
+    padding: 5,
+    marginBottom: 5,
+    backgroundColor: "#f8f9fa",
+    borderRadius: 3,
+  },
+  taskTitle: {
+    fontSize: 10,
+    fontWeight: "bold",
+  },
+  taskDescription: {
+    fontSize: 9,
+    color: "#666",
+    marginTop: 2,
+  },
+  taskAssignee: {
+    fontSize: 9,
+    color: "#666",
+    marginTop: 2,
+  },
+  taskDueDate: {
+    fontSize: 9,
+    color: "#666",
+    marginTop: 2,
+  },
 });
