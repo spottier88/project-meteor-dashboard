@@ -83,11 +83,10 @@ export const UserInfo = () => {
         <div 
           className="flex flex-col cursor-pointer hover:opacity-80"
           onClick={() => setIsProfileFormOpen(true)}
-        >
-          <span className="text-sm font-medium">{user.email}</span>
+        >          
           <span className="text-sm font-medium">
             {user.first_name && user.last_name ? `${user.first_name} ${user.last_name}` : user.email}
-        </span>
+          </span>
           <span className="text-xs text-muted-foreground">
             {isAdmin ? "Administrateur" : "Chef de projet"}
           </span>
