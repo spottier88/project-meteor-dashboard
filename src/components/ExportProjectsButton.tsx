@@ -32,8 +32,6 @@ export const ExportProjectsButton = () => {
     enabled: !!user?.id,
   });
 
-  const isAdmin = userRoles?.some(role => role.role === "admin");
-
   const { data: projectsData } = useQuery({
     queryKey: ["selectedProjects", selectedProjects],
     queryFn: async () => {
@@ -67,6 +65,8 @@ export const ExportProjectsButton = () => {
     enabled: selectedProjects.length > 0,
   });
 
+  const isAdmin = userRoles?.some(role => role.role === "admin");
+
   if (!isAdmin) return null;
 
   const handleSelectionChange = (selectedIds: string[]) => {
@@ -93,8 +93,19 @@ export const ExportProjectsButton = () => {
                 document={<MultiProjectPDF projectsData={projectsData} />}
                 fileName="projets-export.pdf"
               >
-                {({ loading }) => (
-                  <Button disabled={loading}>
+                {({ loading, error }) => (
+                  <Button 
+                    disabled={loading} 
+                    onClick={() => {
+                      if (error) {
+                        toast({
+                          variant: "destructive",
+                          title: "Erreur",
+                          description: "Une erreur est survenue lors de la génération du PDF",
+                        });
+                      }
+                    }}
+                  >
                     {loading ? "Génération..." : "Télécharger le PDF"}
                   </Button>
                 )}

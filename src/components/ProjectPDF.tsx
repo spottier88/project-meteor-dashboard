@@ -1,4 +1,4 @@
-import { Document, Page } from "@react-pdf/renderer";
+import { View } from "@react-pdf/renderer";
 import { styles } from "./pdf/PDFStyles";
 import { PDFHeader } from "./pdf/PDFHeader";
 import { PDFProjectInfo } from "./pdf/PDFProjectInfo";
@@ -46,13 +46,11 @@ interface ProjectPDFProps {
 }
 
 export const ProjectPDF = ({ project, lastReview, risks, tasks }: ProjectPDFProps) => (
-  <Document>
-    <Page size="A4" style={styles.page}>
-      <PDFHeader title={project.title} />
-      <PDFProjectInfo project={project} />
-      {lastReview && <PDFLastReview review={lastReview} />}
-      <PDFRisks risks={risks} />
-      <PDFFooter />
-    </Page>
-  </Document>
+  <View style={styles.page}>
+    <PDFHeader title={project.title} />
+    <PDFProjectInfo project={project} />
+    {lastReview && <PDFLastReview review={lastReview} />}
+    <PDFRisks risks={risks} />
+    <PDFFooter />
+  </View>
 );
