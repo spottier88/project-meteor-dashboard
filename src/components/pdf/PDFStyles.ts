@@ -2,87 +2,99 @@ import { StyleSheet } from "@react-pdf/renderer";
 
 export const styles = StyleSheet.create({
   page: {
-    padding: 30,
+    padding: 20,
     fontFamily: "Helvetica",
   },
   header: {
-    marginBottom: 20,
-  },
-  title: {
-    fontSize: 24,
-    marginBottom: 10,
-    color: "#1a1a1a",
-  },
-  subtitle: {
-    fontSize: 14,
-    color: "#666666",
-    marginBottom: 5,
-  },
-  section: {
-    marginBottom: 20,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    marginBottom: 10,
-    color: "#1a1a1a",
-    paddingBottom: 5,
-    borderBottomWidth: 1,
-    borderBottomColor: "#e5e7eb",
-  },
-  row: {
     flexDirection: "row",
-    marginBottom: 8,
-    alignItems: "center",
+    backgroundColor: "#6CB33F",
+    padding: 10,
+    marginBottom: 0,
   },
-  label: {
-    width: 120,
-    color: "#666666",
-    fontSize: 12,
+  headerTitle: {
+    color: "white",
+    fontSize: 24,
+    flex: 1,
   },
-  value: {
+  headerDate: {
+    color: "white",
+    fontSize: 14,
+    alignSelf: "center",
+  },
+  situationRow: {
+    flexDirection: "row",
+    borderBottom: 1,
+    borderColor: "#e5e7eb",
+    backgroundColor: "#4B5563",
+    color: "white",
+  },
+  situationCell: {
+    padding: 10,
     flex: 1,
     fontSize: 12,
-    color: "#1a1a1a",
+    borderRight: 1,
+    borderColor: "#e5e7eb",
   },
-  risk: {
-    marginBottom: 10,
+  mainContent: {
+    flexDirection: "row",
+    flex: 1,
+  },
+  leftColumn: {
+    flex: 1,
     padding: 10,
-    backgroundColor: "#f9fafb",
-    borderRadius: 4,
+    borderRight: 1,
+    borderColor: "#e5e7eb",
   },
-  riskTitle: {
+  rightColumn: {
+    flex: 1,
+    padding: 10,
+  },
+  sectionTitle: {
     fontSize: 14,
+    fontWeight: "bold",
+    backgroundColor: "#111827",
+    color: "white",
+    padding: 8,
+    marginBottom: 10,
+  },
+  contentText: {
+    fontSize: 11,
     marginBottom: 5,
-    color: "#1a1a1a",
+    lineHeight: 1.4,
   },
-  riskDetail: {
-    fontSize: 12,
-    color: "#666666",
-    marginBottom: 3,
+  bulletPoint: {
+    flexDirection: "row",
+    marginBottom: 5,
   },
-  criticalRisk: {
-    backgroundColor: "#fee2e2",
+  bullet: {
+    width: 10,
+    fontSize: 11,
+  },
+  bulletText: {
+    flex: 1,
+    fontSize: 11,
+    paddingLeft: 5,
   },
   footer: {
     position: "absolute",
-    bottom: 30,
-    left: 30,
-    right: 30,
+    bottom: 20,
+    left: 20,
+    right: 20,
     fontSize: 10,
     color: "#666666",
-    borderTopWidth: 1,
-    borderTopColor: "#e5e7eb",
-    paddingTop: 10,
+    textAlign: "right",
   },
   statusBadge: {
-    paddingVertical: 4,
-    paddingHorizontal: 8,
+    paddingVertical: 2,
+    paddingHorizontal: 6,
     borderRadius: 4,
-    fontSize: 12,
+    fontSize: 10,
     color: "#ffffff",
     textAlign: "center",
-    width: "auto",
+    alignSelf: "flex-start",
+    marginTop: 4,
   },
+  // Status colors
   statusOpen: {
     backgroundColor: "#ef4444",
   },
@@ -91,47 +103,5 @@ export const styles = StyleSheet.create({
   },
   statusResolved: {
     backgroundColor: "#10b981",
-  },
-
-  // Styles pour les tâches
-  kanbanBoard: {
-    flexDirection: "row",
-    gap: 10,
-    marginTop: 10,
-  },
-  taskColumn: {
-    flex: 1,
-    gap: 5,
-  },
-  taskColumnTitle: {
-    fontSize: 12,
-    fontWeight: "bold",
-    marginBottom: 5,
-    color: "#666",
-  },
-  task: {
-    padding: 5,
-    marginBottom: 5,
-    backgroundColor: "#f8f9fa",
-    borderRadius: 3,
-  },
-  taskTitle: {
-    fontSize: 10,
-    fontWeight: "bold",
-  },
-  taskDescription: {
-    fontSize: 9,
-    color: "#666",
-    marginTop: 2,
-  },
-  taskAssignee: {
-    fontSize: 9,
-    color: "#666",
-    marginTop: 2,
-  },
-  taskDueDate: {
-    fontSize: 9,
-    color: "#666",
-    marginTop: 2,
   },
 });

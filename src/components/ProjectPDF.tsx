@@ -55,9 +55,15 @@ export const ProjectPDF = ({ project, lastReview, tasks, risks }: ProjectPDFProp
   <View style={styles.page}>
     <PDFHeader title={project.title} />
     <PDFProjectInfo project={project} />
-    {lastReview && <PDFLastReview review={lastReview} />}
-    <PDFTasks tasks={tasks} />
-    <PDFRisks risks={risks} />
+    <View style={styles.mainContent}>
+      <View style={styles.leftColumn}>
+        <PDFTasks tasks={tasks} />
+      </View>
+      <View style={styles.rightColumn}>
+        <PDFRisks risks={risks} />
+        {lastReview && <PDFLastReview review={lastReview} />}
+      </View>
+    </View>
     <PDFFooter />
   </View>
 );
