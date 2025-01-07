@@ -38,8 +38,8 @@ export const ExportProjectsButton = () => {
       if (selectedProjects.length === 0) return null;
 
       const fetchProjectData = async (projectId: string) => {
-        const [projectResult, reviewResult, risksResult, tasksResult, poleResult, directionResult, serviceResult] = await Promise.all([
-          supabase.from("projects").select("*").eq("id", projectId).single(),
+        const projectResult = await supabase.from("projects").select("*").eq("id", projectId).single();
+        const [reviewResult, risksResult, tasksResult, poleResult, directionResult, serviceResult] = await Promise.all([
           supabase
             .from("reviews")
             .select("*")
@@ -102,7 +102,7 @@ export const ExportProjectsButton = () => {
                 fileName="projets-export.pdf"
               >
                 {({ loading }) => (
-                  <Button disabled={loading}>
+                  <Button disabled={loading} type="button">
                     {loading ? "Génération..." : "Télécharger le PDF"}
                   </Button>
                 )}
