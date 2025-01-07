@@ -13,6 +13,7 @@ import { ReviewSheet } from "@/components/ReviewSheet";
 import { FilterToggle } from "@/components/FilterToggle";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { UserInfo } from "@/components/UserInfo";
 
 const Index = () => {
   const navigate = useNavigate();
@@ -27,7 +28,6 @@ const Index = () => {
   const [showDgsOnly, setShowDgsOnly] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   
-  // Initialize view state from localStorage or default to "grid"
   const [view, setView] = useState<ViewMode>(() => {
     const savedView = localStorage.getItem("projectViewMode");
     return (savedView as ViewMode) || "grid";
@@ -35,7 +35,6 @@ const Index = () => {
   
   const user = useUser();
 
-  // Save view mode to localStorage whenever it changes
   useEffect(() => {
     localStorage.setItem("projectViewMode", view);
   }, [view]);
@@ -71,14 +70,11 @@ const Index = () => {
     },
   });
 
-  // Filter projects based on DGS and search query
   const filteredProjects = projects?.filter(project => {
-    // First apply DGS filter if active
     if (showDgsOnly && !project.suivi_dgs) {
       return false;
     }
 
-    // Then apply search filter if there's a query
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
       const matchesTitle = project.title?.toLowerCase().includes(query);
@@ -131,6 +127,7 @@ const Index = () => {
 
   return (
     <div className="container mx-auto py-8">
+      <UserInfo />
       <DashboardHeader
         onNewProject={() => setIsProjectFormOpen(true)}
         onNewReview={handleNewReview}
