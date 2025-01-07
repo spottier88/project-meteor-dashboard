@@ -1,12 +1,6 @@
 import { Button } from "@/components/ui/button";
-import { PlusCircle, Settings } from "lucide-react";
-import { UserInfo } from "./UserInfo";
-import { useQuery } from "@tanstack/react-query";
-import { useUser, User } from "@supabase/auth-helpers-react";
-import { supabase } from "@/integrations/supabase/client";
-import { canCreateProject } from "@/utils/permissions";
-import { UserRoleData } from "@/types/user";
-import { useNavigate } from "react-router-dom";
+import { Plus, History } from "lucide-react";
+import { ExportProjectsButton } from "./ExportProjectsButton";
 
 interface DashboardHeaderProps {
   onNewProject: () => void;
@@ -14,66 +8,19 @@ interface DashboardHeaderProps {
 }
 
 export const DashboardHeader = ({ onNewProject, onNewReview }: DashboardHeaderProps) => {
-  const user = useUser();
-  const navigate = useNavigate();
-
-  const { data: userRoles } = useQuery({
-    queryKey: ["userRoles", user?.id],
-    queryFn: async () => {
-      if (!user?.id) return null;
-      const { data, error } = await supabase
-        .from("user_roles")
-        .select("*")
-        .eq("user_id", user.id);
-
-      if (error) throw error;
-      return data as UserRoleData[];
-    },
-    enabled: !!user?.id,
-  });
-
-  const roles = userRoles?.map(ur => ur.role);
-  const isAdmin = roles?.includes("admin");
-
   return (
-    <div className="space-y-4 mb-8">
-      <UserInfo />
-      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Tableau de Bord des Projets</h1>
-          <p className="text-muted-foreground">
-            Suivez et évaluez l'état et la progression de vos projets
-          </p>
-        </div>
-        <div className="flex flex-col md:flex-row gap-2">
-          {canCreateProject(roles) && (
-            <Button
-              onClick={onNewProject}
-              className="w-full md:w-auto animate-fade-in"
-            >
-              <PlusCircle className="mr-2 h-4 w-4" />
-              Nouveau Projet
-            </Button>
-          )}
-          <Button
-            onClick={onNewReview}
-            variant="outline"
-            className="w-full md:w-auto animate-fade-in"
-          >
-            <PlusCircle className="mr-2 h-4 w-4" />
-            Nouvelle Revue
-          </Button>
-          {isAdmin && (
-            <Button
-              variant="outline"
-              onClick={() => navigate("/admin")}
-              className="w-full md:w-auto animate-fade-in"
-            >
-              <Settings className="mr-2 h-4 w-4" />
-              Administration
-            </Button>
-          )}
-        </div>
+    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
+      <h1 className="text-3xl font-bold">Tableau de bord</h1>
+      <div className="flex flex-wrap items-center gap-2">
+        <ExportProjectsButton />
+        <Button onClick={onNewReview} variant="outline" size="sm">
+          <History className="h-4 w-4 mr-2" />
+          Nouvelle revue
+        </Button>
+        <Button onClick={onNewProject} size="sm">
+          <Plus className="h-4 w-4 mr-2" />
+          Nouveau projet
+        </Button>
       </div>
     </div>
   );
