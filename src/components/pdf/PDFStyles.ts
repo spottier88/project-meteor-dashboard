@@ -32,15 +32,9 @@ export const styles = StyleSheet.create({
     color: "white",
     fontSize: 16,
   },
-  mainContent: {
-    flexDirection: "row",
+  content: {
+    flex: 1,
     gap: 20,
-  },
-  leftColumn: {
-    flex: 1,
-  },
-  rightColumn: {
-    flex: 1,
   },
   section: {
     marginBottom: 15,
@@ -70,6 +64,7 @@ export const styles = StyleSheet.create({
   kanbanBoard: {
     flexDirection: "row",
     gap: 10,
+    marginTop: 10,
   },
   taskColumn: {
     flex: 1,
