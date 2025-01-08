@@ -38,6 +38,9 @@ export const styles = StyleSheet.create({
   },
   section: {
     marginBottom: 15,
+    backgroundColor: "white",
+    padding: 10,
+    borderRadius: 4,
   },
   sectionTitle: {
     fontSize: 16,
@@ -46,20 +49,74 @@ export const styles = StyleSheet.create({
     backgroundColor: "#E5E7EB",
     padding: 5,
   },
-  row: {
+  projectHeader: {
+    marginBottom: 15,
+  },
+  projectTitle: {
+    fontSize: 18,
+    fontWeight: "bold",
+    marginBottom: 5,
+  },
+  projectDescription: {
+    fontSize: 12,
+    color: "#666666",
+  },
+  infoGrid: {
     flexDirection: "row",
-    marginBottom: 8,
-    alignItems: "center",
+    flexWrap: "wrap",
+    gap: 20,
+  },
+  infoItem: {
+    flex: 1,
+    minWidth: 200,
   },
   label: {
-    width: 120,
+    fontSize: 10,
     color: "#666666",
-    fontSize: 12,
+    marginBottom: 2,
   },
   value: {
-    flex: 1,
     fontSize: 12,
     color: "#1a1a1a",
+  },
+  reviewHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 15,
+  },
+  weatherIcon: {
+    alignItems: "center",
+  },
+  weatherLabel: {
+    fontSize: 10,
+    marginTop: 4,
+  },
+  progressIcon: {
+    alignItems: "center",
+  },
+  progressLabel: {
+    fontSize: 10,
+    marginTop: 4,
+  },
+  reviewDate: {
+    fontSize: 12,
+    color: "#666666",
+  },
+  commentSection: {
+    marginTop: 10,
+    paddingTop: 10,
+    borderTopWidth: 1,
+    borderTopColor: "#E5E7EB",
+  },
+  commentLabel: {
+    fontSize: 12,
+    fontWeight: "bold",
+    marginBottom: 5,
+  },
+  comment: {
+    fontSize: 11,
+    color: "#666666",
   },
   kanbanBoard: {
     flexDirection: "row",
@@ -87,21 +144,13 @@ export const styles = StyleSheet.create({
   taskTitle: {
     fontSize: 10,
   },
-  footer: {
-    position: "absolute",
-    bottom: 30,
-    left: 30,
-    right: 30,
-    fontSize: 10,
-    color: "#666666",
-    borderTopWidth: 1,
-    borderTopColor: "#e5e7eb",
-    paddingTop: 10,
+  risksGrid: {
+    gap: 10,
   },
-  risk: {
-    marginBottom: 8,
-    padding: 8,
+  riskCard: {
     backgroundColor: "#F3F4F6",
+    padding: 10,
+    marginBottom: 10,
     borderRadius: 4,
   },
   criticalRisk: {
@@ -110,12 +159,25 @@ export const styles = StyleSheet.create({
   riskTitle: {
     fontSize: 12,
     fontWeight: "bold",
-    marginBottom: 4,
+    marginBottom: 8,
+  },
+  riskDetails: {
+    flexDirection: "row",
+    gap: 15,
+    marginBottom: 8,
   },
   riskDetail: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+  },
+  riskLabel: {
     fontSize: 10,
-    color: "#374151",
-    marginBottom: 2,
+    color: "#666666",
+  },
+  riskValue: {
+    fontSize: 10,
+    color: "#1a1a1a",
   },
   statusBadge: {
     padding: 4,
@@ -133,5 +195,22 @@ export const styles = StyleSheet.create({
   statusResolved: {
     backgroundColor: "#D1FAE5",
     color: "#065F46",
+  },
+  mitigationPlan: {
+    marginTop: 8,
+    paddingTop: 8,
+    borderTopWidth: 1,
+    borderTopColor: "#E5E7EB",
+  },
+  footer: {
+    position: "absolute",
+    bottom: 30,
+    left: 30,
+    right: 30,
+    fontSize: 10,
+    color: "#666666",
+    borderTopWidth: 1,
+    borderTopColor: "#e5e7eb",
+    paddingTop: 10,
   },
 });

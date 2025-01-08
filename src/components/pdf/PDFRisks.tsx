@@ -15,40 +15,51 @@ interface PDFRisksProps {
 }
 
 export const PDFRisks = ({ risks }: PDFRisksProps) => (
-  <View style={styles.section}>
+  <View style={styles.section} wrap={false}>
     <Text style={styles.sectionTitle}>Risques ({risks.length})</Text>
-    {risks.map((risk, index) => {
-      const isCritical =
-        risk.probability === "high" && risk.severity === "high" && risk.status !== "resolved";
-      return (
-        <View key={index} style={[styles.risk, isCritical && styles.criticalRisk]}>
-          <Text style={styles.riskTitle}>{risk.description}</Text>
-          <Text style={styles.riskDetail}>
-            Probabilité: {riskLabels.probability[risk.probability]}
-          </Text>
-          <Text style={styles.riskDetail}>
-            Gravité: {riskLabels.severity[risk.severity]}
-          </Text>
-          <View style={styles.row}>
-            <Text style={styles.riskDetail}>Statut: </Text>
-            <View
-              style={[
-                styles.statusBadge,
-                risk.status === "open" && styles.statusOpen,
-                risk.status === "in_progress" && styles.statusInProgress,
-                risk.status === "resolved" && styles.statusResolved,
-              ]}
-            >
-              <Text>{riskLabels.status[risk.status]}</Text>
+    <View style={styles.risksGrid}>
+      {risks.map((risk, index) => {
+        const isCritical =
+          risk.probability === "high" && risk.severity === "high" && risk.status !== "resolved";
+        return (
+          <View key={index} style={[styles.riskCard, isCritical && styles.criticalRisk]} wrap={false}>
+            <Text style={styles.riskTitle}>{risk.description}</Text>
+            <View style={styles.riskDetails}>
+              <View style={styles.riskDetail}>
+                <Text style={styles.riskLabel}>Probabilité:</Text>
+                <Text style={styles.riskValue}>
+                  {riskLabels.probability[risk.probability]}
+                </Text>
+              </View>
+              <View style={styles.riskDetail}>
+                <Text style={styles.riskLabel}>Gravité:</Text>
+                <Text style={styles.riskValue}>
+                  {riskLabels.severity[risk.severity]}
+                </Text>
+              </View>
+              <View style={styles.riskDetail}>
+                <Text style={styles.riskLabel}>Statut:</Text>
+                <View
+                  style={[
+                    styles.statusBadge,
+                    risk.status === "open" && styles.statusOpen,
+                    risk.status === "in_progress" && styles.statusInProgress,
+                    risk.status === "resolved" && styles.statusResolved,
+                  ]}
+                >
+                  <Text>{riskLabels.status[risk.status]}</Text>
+                </View>
+              </View>
             </View>
+            {risk.mitigation_plan && (
+              <View style={styles.mitigationPlan}>
+                <Text style={styles.riskLabel}>Plan de mitigation:</Text>
+                <Text style={styles.riskValue}>{risk.mitigation_plan}</Text>
+              </View>
+            )}
           </View>
-          {risk.mitigation_plan && (
-            <Text style={styles.riskDetail}>
-              Plan de mitigation: {risk.mitigation_plan}
-            </Text>
-          )}
-        </View>
-      );
-    })}
+        );
+      })}
+    </View>
   </View>
 );
