@@ -23,21 +23,23 @@ export const PDFRisks = ({ risks }: PDFRisksProps) => (
           risk.probability === "high" && risk.severity === "high" && risk.status !== "resolved";
         return (
           <View key={index} style={[styles.riskCard, isCritical && styles.criticalRisk]} wrap={false}>
-            <Text style={styles.riskTitle}>{risk.description}</Text>
-            <View style={styles.riskDetails}>
-              <View style={styles.riskDetail}>
+            <View style={styles.riskTitleContainer}>
+              <Text style={styles.riskTitle}>{risk.description}</Text>
+            </View>
+            <View style={styles.riskDetailsContainer}>
+              <View style={styles.riskDetailItem}>
                 <Text style={styles.riskLabel}>Probabilité:</Text>
                 <Text style={styles.riskValue}>
                   {riskLabels.probability[risk.probability]}
                 </Text>
               </View>
-              <View style={styles.riskDetail}>
+              <View style={styles.riskDetailItem}>
                 <Text style={styles.riskLabel}>Gravité:</Text>
                 <Text style={styles.riskValue}>
                   {riskLabels.severity[risk.severity]}
                 </Text>
               </View>
-              <View style={styles.riskDetail}>
+              <View style={styles.riskDetailItem}>
                 <Text style={styles.riskLabel}>Statut:</Text>
                 <View
                   style={[
@@ -47,14 +49,14 @@ export const PDFRisks = ({ risks }: PDFRisksProps) => (
                     risk.status === "resolved" && styles.statusResolved,
                   ]}
                 >
-                  <Text>{riskLabels.status[risk.status]}</Text>
+                  <Text style={styles.statusText}>{riskLabels.status[risk.status]}</Text>
                 </View>
               </View>
             </View>
             {risk.mitigation_plan && (
-              <View style={styles.mitigationPlan}>
+              <View style={styles.mitigationPlanContainer}>
                 <Text style={styles.riskLabel}>Plan de mitigation:</Text>
-                <Text style={styles.riskValue}>{risk.mitigation_plan}</Text>
+                <Text style={styles.mitigationPlanText}>{risk.mitigation_plan}</Text>
               </View>
             )}
           </View>

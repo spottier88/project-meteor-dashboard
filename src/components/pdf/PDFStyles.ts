@@ -146,6 +146,7 @@ export const styles = StyleSheet.create({
   },
   risksGrid: {
     gap: 10,
+    marginTop: 5,
   },
   riskCard: {
     backgroundColor: "#F3F4F6",
@@ -156,24 +157,26 @@ export const styles = StyleSheet.create({
   criticalRisk: {
     backgroundColor: "#FEE2E2",
   },
+  riskTitleContainer: {
+    marginBottom: 8,
+  },
   riskTitle: {
     fontSize: 12,
     fontWeight: "bold",
-    marginBottom: 8,
   },
-  riskDetails: {
+  riskDetailsContainer: {
     flexDirection: "row",
+    justifyContent: "space-between",
+    marginBottom: 8,
     gap: 15,
-    marginBottom: 8,
   },
-  riskDetail: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 5,
+  riskDetailItem: {
+    flex: 1,
   },
   riskLabel: {
     fontSize: 10,
     color: "#666666",
+    marginBottom: 2,
   },
   riskValue: {
     fontSize: 10,
@@ -182,25 +185,30 @@ export const styles = StyleSheet.create({
   statusBadge: {
     padding: 4,
     borderRadius: 2,
+    alignSelf: "flex-start",
+  },
+  statusText: {
     fontSize: 10,
   },
   statusOpen: {
     backgroundColor: "#FEE2E2",
-    color: "#991B1B",
   },
   statusInProgress: {
     backgroundColor: "#FEF3C7",
-    color: "#92400E",
   },
   statusResolved: {
     backgroundColor: "#D1FAE5",
-    color: "#065F46",
   },
-  mitigationPlan: {
+  mitigationPlanContainer: {
     marginTop: 8,
     paddingTop: 8,
     borderTopWidth: 1,
     borderTopColor: "#E5E7EB",
+  },
+  mitigationPlanText: {
+    fontSize: 10,
+    color: "#1a1a1a",
+    marginTop: 2,
   },
   footer: {
     position: "absolute",
