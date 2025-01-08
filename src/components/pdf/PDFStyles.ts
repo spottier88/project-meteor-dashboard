@@ -144,21 +144,25 @@ export const styles = StyleSheet.create({
   taskTitle: {
     fontSize: 10,
   },
+
   risksGrid: {
     gap: 10,
     marginTop: 5,
+    width: "100%",
   },
   riskCard: {
     backgroundColor: "#F3F4F6",
     padding: 10,
     marginBottom: 10,
     borderRadius: 4,
+    width: "100%",
   },
   criticalRisk: {
     backgroundColor: "#FEE2E2",
   },
   riskTitleContainer: {
     marginBottom: 8,
+    width: "100%",
   },
   riskTitle: {
     fontSize: 12,
@@ -169,14 +173,21 @@ export const styles = StyleSheet.create({
     justifyContent: "space-between",
     marginBottom: 8,
     gap: 15,
+    width: "100%",
   },
   riskDetailItem: {
+    flex: 1,
+    minWidth: "30%",
+  },
+  riskLabelContainer: {
+    marginBottom: 2,
+  },
+  riskValueContainer: {
     flex: 1,
   },
   riskLabel: {
     fontSize: 10,
     color: "#666666",
-    marginBottom: 2,
   },
   riskValue: {
     fontSize: 10,
@@ -204,12 +215,20 @@ export const styles = StyleSheet.create({
     paddingTop: 8,
     borderTopWidth: 1,
     borderTopColor: "#E5E7EB",
+    width: "100%",
   },
   mitigationPlanText: {
     fontSize: 10,
     color: "#1a1a1a",
     marginTop: 2,
   },
+  noDataText: {
+    fontSize: 12,
+    color: "#666666",
+    fontStyle: "italic",
+    marginTop: 5,
+  },
+
   footer: {
     position: "absolute",
     bottom: 30,
