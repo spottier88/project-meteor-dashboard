@@ -1,4 +1,4 @@
-import { View } from "@react-pdf/renderer";
+import { View, Text } from "@react-pdf/renderer";
 import { styles } from "./pdf/PDFStyles";
 import { PDFHeader } from "./pdf/PDFHeader";
 import { PDFProjectInfo } from "./pdf/PDFProjectInfo";
@@ -37,10 +37,7 @@ interface ProjectPDFProps {
   };
   tasks: Array<{
     title: string;
-    description?: string;
     status: TaskStatus;
-    due_date?: string;
-    assignee?: string;
   }>;
   risks: Array<{
     description: string;
@@ -54,10 +51,19 @@ interface ProjectPDFProps {
 export const ProjectPDF = ({ project, lastReview, tasks, risks }: ProjectPDFProps) => (
   <View style={styles.page}>
     <PDFHeader title={project.title} />
-    <PDFProjectInfo project={project} />
-    {lastReview && <PDFLastReview review={lastReview} />}
-    <PDFTasks tasks={tasks} />
-    <PDFRisks risks={risks} />
+    <View style={styles.situationRow}>
+      <Text style={styles.situationText}>Situation générale</Text>
+    </View>
+    <View style={styles.mainContent}>
+      <View style={styles.leftColumn}>
+        <PDFProjectInfo project={project} />
+        {lastReview && <PDFLastReview review={lastReview} />}
+      </View>
+      <View style={styles.rightColumn}>
+        <PDFTasks tasks={tasks} />
+        <PDFRisks risks={risks} />
+      </View>
+    </View>
     <PDFFooter />
   </View>
 );

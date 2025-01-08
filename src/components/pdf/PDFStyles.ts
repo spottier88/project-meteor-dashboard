@@ -4,30 +4,53 @@ export const styles = StyleSheet.create({
   page: {
     padding: 30,
     fontFamily: "Helvetica",
+    orientation: "landscape",
   },
   header: {
+    flexDirection: "row",
+    backgroundColor: "#6B9E46",
+    padding: 15,
     marginBottom: 20,
   },
-  title: {
+  headerTitle: {
+    color: "white",
     fontSize: 24,
-    marginBottom: 10,
-    color: "#1a1a1a",
+    flex: 1,
   },
-  subtitle: {
+  headerDate: {
+    color: "white",
     fontSize: 14,
-    color: "#666666",
-    marginBottom: 5,
+    alignSelf: "center",
+  },
+  situationRow: {
+    flexDirection: "row",
+    backgroundColor: "#4A4A4A",
+    padding: 10,
+    marginBottom: 20,
+  },
+  situationText: {
+    color: "white",
+    fontSize: 16,
+  },
+  mainContent: {
+    flexDirection: "row",
+    gap: 20,
+  },
+  leftColumn: {
+    flex: 1,
+  },
+  rightColumn: {
+    flex: 1,
   },
   section: {
-    marginBottom: 20,
+    marginBottom: 15,
   },
   sectionTitle: {
-    fontSize: 18,
+    fontSize: 16,
     marginBottom: 10,
     color: "#1a1a1a",
-    paddingBottom: 5,
-    borderBottomWidth: 1,
-    borderBottomColor: "#e5e7eb",
+    backgroundColor: "#E5E7EB",
+    padding: 5,
   },
   row: {
     flexDirection: "row",
@@ -44,24 +67,30 @@ export const styles = StyleSheet.create({
     fontSize: 12,
     color: "#1a1a1a",
   },
-  risk: {
-    marginBottom: 10,
-    padding: 10,
-    backgroundColor: "#f9fafb",
+  kanbanBoard: {
+    flexDirection: "row",
+    gap: 10,
+  },
+  taskColumn: {
+    flex: 1,
+    backgroundColor: "#F3F4F6",
+    padding: 8,
     borderRadius: 4,
   },
-  riskTitle: {
-    fontSize: 14,
-    marginBottom: 5,
-    color: "#1a1a1a",
-  },
-  riskDetail: {
+  taskColumnTitle: {
     fontSize: 12,
-    color: "#666666",
-    marginBottom: 3,
+    fontWeight: "bold",
+    marginBottom: 8,
+    color: "#374151",
   },
-  criticalRisk: {
-    backgroundColor: "#fee2e2",
+  task: {
+    backgroundColor: "white",
+    padding: 6,
+    marginBottom: 4,
+    borderRadius: 2,
+  },
+  taskTitle: {
+    fontSize: 10,
   },
   footer: {
     position: "absolute",
@@ -73,65 +102,5 @@ export const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: "#e5e7eb",
     paddingTop: 10,
-  },
-  statusBadge: {
-    paddingVertical: 4,
-    paddingHorizontal: 8,
-    borderRadius: 4,
-    fontSize: 12,
-    color: "#ffffff",
-    textAlign: "center",
-    width: "auto",
-  },
-  statusOpen: {
-    backgroundColor: "#ef4444",
-  },
-  statusInProgress: {
-    backgroundColor: "#f59e0b",
-  },
-  statusResolved: {
-    backgroundColor: "#10b981",
-  },
-
-  // Styles pour les tâches
-  kanbanBoard: {
-    flexDirection: "row",
-    gap: 10,
-    marginTop: 10,
-  },
-  taskColumn: {
-    flex: 1,
-    gap: 5,
-  },
-  taskColumnTitle: {
-    fontSize: 12,
-    fontWeight: "bold",
-    marginBottom: 5,
-    color: "#666",
-  },
-  task: {
-    padding: 5,
-    marginBottom: 5,
-    backgroundColor: "#f8f9fa",
-    borderRadius: 3,
-  },
-  taskTitle: {
-    fontSize: 10,
-    fontWeight: "bold",
-  },
-  taskDescription: {
-    fontSize: 9,
-    color: "#666",
-    marginTop: 2,
-  },
-  taskAssignee: {
-    fontSize: 9,
-    color: "#666",
-    marginTop: 2,
-  },
-  taskDueDate: {
-    fontSize: 9,
-    color: "#666",
-    marginTop: 2,
   },
 });

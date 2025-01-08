@@ -7,9 +7,9 @@ interface PDFHeaderProps {
 
 export const PDFHeader = ({ title }: PDFHeaderProps) => (
   <View style={styles.header}>
-    <Text style={styles.title}>{title}</Text>
-    <Text style={styles.subtitle}>
-      Fiche de synthèse - {new Date().toLocaleDateString("fr-FR")}
+    <Text style={styles.headerTitle}>{title}</Text>
+    <Text style={styles.headerDate}>
+      {new Date().toLocaleDateString("fr-FR")}
     </Text>
   </View>
 );
