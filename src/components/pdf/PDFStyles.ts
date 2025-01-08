@@ -103,4 +103,40 @@ export const styles = StyleSheet.create({
     borderTopColor: "#e5e7eb",
     paddingTop: 10,
   },
+  risk: {
+    marginBottom: 8,
+    padding: 8,
+    backgroundColor: "#F3F4F6",
+    borderRadius: 4,
+  },
+  criticalRisk: {
+    backgroundColor: "#FEE2E2",
+  },
+  riskTitle: {
+    fontSize: 12,
+    fontWeight: "bold",
+    marginBottom: 4,
+  },
+  riskDetail: {
+    fontSize: 10,
+    color: "#374151",
+    marginBottom: 2,
+  },
+  statusBadge: {
+    padding: 4,
+    borderRadius: 2,
+    fontSize: 10,
+  },
+  statusOpen: {
+    backgroundColor: "#FEE2E2",
+    color: "#991B1B",
+  },
+  statusInProgress: {
+    backgroundColor: "#FEF3C7",
+    color: "#92400E",
+  },
+  statusResolved: {
+    backgroundColor: "#D1FAE5",
+    color: "#065F46",
+  },
 });
