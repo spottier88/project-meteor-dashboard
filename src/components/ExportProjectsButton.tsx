@@ -101,8 +101,8 @@ export const ExportProjectsButton = () => {
                 document={<MultiProjectPDF projectsData={projectsData} />}
                 fileName="projets-export.pdf"
               >
-                {({ loading }) => (
-                  <Button disabled={loading} type="button" asChild>
+                {({ loading }: { loading: boolean }) => (
+                  <Button disabled={loading}>
                     {loading ? "Génération..." : "Télécharger le PDF"}
                   </Button>
                 )}
