@@ -6,7 +6,6 @@ export const riskStyles: Styles = {
     flexWrap: "wrap",
     gap: 15,
     marginTop: 10,
-    flexWrap: "wrap",
   },
   riskColumn: {
     flex: 1,
