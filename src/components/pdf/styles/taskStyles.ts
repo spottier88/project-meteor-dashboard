@@ -1,8 +1,8 @@
-import { Style } from "@react-pdf/renderer";
+import { Styles } from "@react-pdf/renderer";
 
-export const taskStyles: Record<string, Style> = {
+export const taskStyles: Styles = {
   kanbanBoard: {
-    flexDirection: "row" as const,
+    flexDirection: "row",
     gap: 20,
     marginTop: 10,
   },

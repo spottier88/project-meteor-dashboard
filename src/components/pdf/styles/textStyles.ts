@@ -1,6 +1,6 @@
-import { Style } from "@react-pdf/renderer";
+import { Styles } from "@react-pdf/renderer";
 
-export const textStyles: Record<string, Style> = {
+export const textStyles: Styles = {
   headerTitle: {
     color: "white",
     fontSize: 24,
@@ -9,7 +9,7 @@ export const textStyles: Record<string, Style> = {
   headerDate: {
     color: "white",
     fontSize: 14,
-    alignSelf: "center" as const,
+    alignSelf: "center",
   },
   sectionTitle: {
     fontSize: 16,

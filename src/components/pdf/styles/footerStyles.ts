@@ -1,8 +1,8 @@
-import { Style } from "@react-pdf/renderer";
+import { Styles } from "@react-pdf/renderer";
 
-export const footerStyles: Record<string, Style> = {
+export const footerStyles: Styles = {
   footer: {
-    position: "absolute" as const,
+    position: "absolute",
     bottom: 30,
     left: 30,
     right: 30,

@@ -1,21 +1,21 @@
-import { Style } from "@react-pdf/renderer";
+import { Styles } from "@react-pdf/renderer";
 
-export const reviewStyles: Record<string, Style> = {
+export const reviewStyles: Styles = {
   reviewHeader: {
-    flexDirection: "row" as const,
-    justifyContent: "space-between" as const,
-    alignItems: "center" as const,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     marginBottom: 15,
   },
   weatherIcon: {
-    alignItems: "center" as const,
+    alignItems: "center",
   },
   weatherLabel: {
     fontSize: 10,
     marginTop: 4,
   },
   progressIcon: {
-    alignItems: "center" as const,
+    alignItems: "center",
   },
   progressLabel: {
     fontSize: 10,

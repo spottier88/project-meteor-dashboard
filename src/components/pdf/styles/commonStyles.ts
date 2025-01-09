@@ -4,7 +4,6 @@ export const commonStyles: Styles = {
   page: {
     padding: 30,
     fontFamily: "Helvetica",
-    orientation: "landscape",
   },
   header: {
     flexDirection: "row",

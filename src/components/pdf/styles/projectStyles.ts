@@ -1,12 +1,12 @@
-import { Style } from "@react-pdf/renderer";
+import { Styles } from "@react-pdf/renderer";
 
-export const projectStyles: Record<string, Style> = {
+export const projectStyles: Styles = {
   projectHeader: {
     marginBottom: 15,
   },
   projectTitle: {
     fontSize: 18,
-    fontWeight: "bold" as const,
+    fontWeight: "bold",
     marginBottom: 5,
   },
   projectDescription: {
@@ -14,8 +14,8 @@ export const projectStyles: Record<string, Style> = {
     color: "#666666",
   },
   infoGrid: {
-    flexDirection: "row" as const,
-    flexWrap: "wrap" as const,
+    flexDirection: "row",
+    flexWrap: "wrap",
     gap: 20,
   },
   infoItem: {
