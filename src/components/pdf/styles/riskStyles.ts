@@ -3,6 +3,7 @@ import { Styles } from "@react-pdf/renderer";
 export const riskStyles: Styles = {
   riskColumns: {
     flexDirection: "row",
+    flexWrap: "wrap",
     gap: 15,
     marginTop: 10,
     flexWrap: "wrap",
@@ -34,6 +35,7 @@ export const riskStyles: Styles = {
     display: "flex",
     flexDirection: "column",
     gap: 8,
+    flexGrow: 1,
     width: "100%",
   },
   criticalRiskCard: {
