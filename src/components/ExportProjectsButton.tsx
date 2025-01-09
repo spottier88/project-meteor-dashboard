@@ -100,13 +100,12 @@ export const ExportProjectsButton = () => {
               <PDFDownloadLink
                 document={<MultiProjectPDF projectsData={projectsData} />}
                 fileName="projets-export.pdf"
+                className="inline-flex"
               >
-                {({ loading }: { loading: boolean }) => (
-                  <>
-                    <Button disabled={loading}>
-                      {loading ? "Génération..." : "Télécharger le PDF"}
-                    </Button>
-                  </>
+                {({ loading, error }) => (
+                  <Button disabled={loading || !!error}>
+                    {loading ? "Génération..." : error ? "Erreur" : "Télécharger le PDF"}
+                  </Button>
                 )}
               </PDFDownloadLink>
             )}
