@@ -1,3 +1,4 @@
+import React from "react";
 import { Button } from "@/components/ui/button";
 import { FileDown } from "lucide-react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
@@ -102,9 +103,11 @@ export const ExportProjectsButton = () => {
                 fileName="projets-export.pdf"
               >
                 {({ loading }) => (
-                  <Button disabled={loading} type="button">
-                    {loading ? "Génération..." : "Télécharger le PDF"}
-                  </Button>
+                  <React.Fragment>
+                    <Button disabled={loading} type="button">
+                      {loading ? "Génération..." : "Télécharger le PDF"}
+                    </Button>
+                  </React.Fragment>
                 )}
               </PDFDownloadLink>
             )}
