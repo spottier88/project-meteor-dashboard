@@ -1,13 +1,13 @@
-import { Style } from "@react-pdf/renderer";
+import { Styles } from "@react-pdf/renderer";
 
-export const commonStyles: Record<string, Style> = {
+export const commonStyles: Styles = {
   page: {
     padding: 30,
     fontFamily: "Helvetica",
-    orientation: "landscape" as const,
+    orientation: "landscape",
   },
   header: {
-    flexDirection: "row" as const,
+    flexDirection: "row",
     backgroundColor: "#6B9E46",
     padding: 15,
     marginBottom: 20,
