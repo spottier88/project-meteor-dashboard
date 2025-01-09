@@ -102,7 +102,7 @@ export const ExportProjectsButton = () => {
                 fileName="projets-export.pdf"
               >
                 {({ loading }) => (
-                  <Button disabled={loading} type="button">
+                  <Button disabled={loading}>
                     {loading ? "Génération..." : "Télécharger le PDF"}
                   </Button>
                 )}
