@@ -38,7 +38,6 @@ export const riskStyles: Styles = {
     width: "100%",
     minHeight: "auto", // Permet une hauteur ajustée
     maxHeight: "none", // Empêche une restriction fixe
-    overflow: "visible", // Permet au contenu de ne pas être coupé
   },
   criticalRiskCard: {
     // backgroundColor: "#FEE2E2",
