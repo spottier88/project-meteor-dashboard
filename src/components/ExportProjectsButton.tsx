@@ -104,7 +104,7 @@ export const ExportProjectsButton = () => {
               >
                 {({ loading }) => (
                   <React.Fragment>
-                    <Button disabled={loading} type="button">
+                    <Button disabled={loading} type="button" asChild>
                       {loading ? "Génération..." : "Télécharger le PDF"}
                     </Button>
                   </React.Fragment>
