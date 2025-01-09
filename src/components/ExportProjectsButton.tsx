@@ -102,10 +102,12 @@ export const ExportProjectsButton = () => {
                 fileName="projets-export.pdf"
                 className="inline-flex"
               >
-                {({ loading, error }) => (
-                  <Button disabled={loading || !!error}>
-                    {loading ? "Génération..." : error ? "Erreur" : "Télécharger le PDF"}
-                  </Button>
+                {({ loading, error }: { loading: boolean; error: Error | null }) => (
+                  <React.Fragment>
+                    <Button disabled={loading || !!error}>
+                      {loading ? "Génération..." : error ? "Erreur" : "Télécharger le PDF"}
+                    </Button>
+                  </React.Fragment>
                 )}
               </PDFDownloadLink>
             )}
