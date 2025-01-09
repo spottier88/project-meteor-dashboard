@@ -5,7 +5,7 @@ const commonStyles = {
   page: {
     padding: 30,
     fontFamily: "Helvetica",
-    orientation: "landscape",
+    orientation: "landscape" as const,
   },
   header: {
     flexDirection: "row" as const,
@@ -89,7 +89,7 @@ const riskStyles = {
   },
   riskTitle: {
     fontSize: 12,
-    fontWeight: "bold",
+    fontWeight: "bold" as const,
   },
   riskStatusBadge: {
     padding: "4 8",
@@ -142,7 +142,7 @@ const projectStyles = {
   },
   projectTitle: {
     fontSize: 18,
-    fontWeight: "bold",
+    fontWeight: "bold" as const,
     marginBottom: 5,
   },
   projectDescription: {
