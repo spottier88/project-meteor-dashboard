@@ -39,7 +39,7 @@ export const PDFRisks = ({ risks }: PDFRisksProps) => {
       ) : (
         <View style={styles.riskColumns}>
           {Object.entries(groupedRisks).map(([impact, impactRisks]) => (
-            <View key={impact} style={styles.riskColumn}>
+            <View key={impact} style={styles.riskColumn} wrap={true}>
               <Text style={styles.riskColumnTitle}>
                 {impact === "critical" ? "Critiques" : impact === "high" ? "Élevés" : "Modérés"}
                 {" "}({impactRisks.length})
