@@ -3,28 +3,32 @@ import { Styles } from "@react-pdf/renderer";
 export const riskStyles: Styles = {
   riskColumns: {
     flexDirection: "row",
-    gap: 10,
+    gap: 15,
     marginTop: 10,
   },
   riskColumn: {
     flex: 1,
-    gap: 8,
+    gap: 10,
   },
   riskColumnTitle: {
-    fontSize: 14,
+    fontSize: 12,
     fontWeight: "bold",
     backgroundColor: "#F3F4F6",
     padding: 5,
     borderRadius: 4,
+    marginBottom: 5,
   },
   riskCards: {
-    gap: 8,
+    gap: 10,
   },
   riskCard: {
     padding: 8,
     borderRadius: 4,
     backgroundColor: "#F9FAFB",
     marginBottom: 8,
+    display: "flex",
+    flexDirection: "column",
+    gap: 6,
   },
   criticalRiskCard: {
     backgroundColor: "#FEE2E2",
@@ -39,19 +43,21 @@ export const riskStyles: Styles = {
     borderLeft: "4 solid #0284C7",
   },
   riskDescription: {
-    fontSize: 12,
-    marginBottom: 6,
+    fontSize: 10,
+    marginBottom: 4,
+    lineHeight: 1.4,
   },
   riskMetadata: {
-    gap: 4,
+    gap: 3,
     marginTop: 4,
   },
   riskMetadataText: {
-    fontSize: 10,
+    fontSize: 8,
     color: "#4B5563",
+    lineHeight: 1.2,
   },
   riskStatus: {
-    fontSize: 10,
+    fontSize: 8,
     marginTop: 4,
     padding: "2 6",
     borderRadius: 4,
@@ -76,13 +82,14 @@ export const riskStyles: Styles = {
     borderTopColor: "#E5E7EB",
   },
   mitigationLabel: {
-    fontSize: 10,
+    fontSize: 8,
     fontWeight: "bold",
     color: "#4B5563",
+    marginBottom: 2,
   },
   mitigationText: {
-    fontSize: 10,
+    fontSize: 8,
     color: "#1F2937",
-    marginTop: 2,
+    lineHeight: 1.4,
   },
 };
