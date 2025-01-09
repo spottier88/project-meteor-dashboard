@@ -42,7 +42,8 @@ export const riskStyles: Styles = {
     overflow: "visible", // Permet au contenu de ne pas être coupé
   },
   criticalRiskCard: {
-    backgroundColor: "#FEE2E2",
+    // backgroundColor: "#FEE2E2",
+    backgroundColor: "#DC2626",
     borderLeft: "4 solid #DC2626",
   },
   highRiskCard: {
