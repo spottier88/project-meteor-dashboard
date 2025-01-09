@@ -1,4 +1,3 @@
-import React from "react";
 import { Button } from "@/components/ui/button";
 import { FileDown } from "lucide-react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
@@ -101,11 +100,10 @@ export const ExportProjectsButton = () => {
               <PDFDownloadLink
                 document={<MultiProjectPDF projectsData={projectsData} />}
                 fileName="projets-export.pdf"
-                className="inline-flex"
               >
-                {({ loading, error }) => (
-                  <Button disabled={loading || !!error}>
-                    {loading ? "Génération..." : error ? "Erreur" : "Télécharger le PDF"}
+                {({ loading }) => (
+                  <Button disabled={loading} type="button">
+                    {loading ? "Génération..." : "Télécharger le PDF"}
                   </Button>
                 )}
               </PDFDownloadLink>
