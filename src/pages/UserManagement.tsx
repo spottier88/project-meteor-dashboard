@@ -9,7 +9,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Edit, Plus, Settings, Trash2 } from "lucide-react";
+import { Edit, Plus, Settings, Trash2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { UserForm } from "@/components/UserForm";
@@ -30,6 +30,19 @@ import { UserProfile, UserRole, UserRoleData } from "@/types/user";
 interface UserWithRoles extends UserProfile {
   roles: UserRole[];
 }
+
+const getRoleLabel = (role: UserRole): string => {
+  switch (role) {
+    case "admin":
+      return "Administrateur";
+    case "chef_projet":
+      return "Chef de projet";
+    case "manager":
+      return "Manager";
+    default:
+      return role;
+  }
+};
 
 export const UserManagement = () => {
   const navigate = useNavigate();
@@ -152,9 +165,9 @@ export const UserManagement = () => {
               <TableCell>{user.last_name || "-"}</TableCell>
               <TableCell>
                 <div className="flex gap-2">
-                  {user.roles.map((role) => (
+                  {[...new Set(user.roles)].map((role) => (
                     <Badge key={role} variant="secondary">
-                      {role === "admin" ? "Administrateur" : "Chef de projet"}
+                      {getRoleLabel(role)}
                     </Badge>
                   ))}
                 </div>
