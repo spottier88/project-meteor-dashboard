@@ -11,80 +11,114 @@ interface ManagerAssignmentFieldsProps {
 }
 
 export const ManagerAssignmentFields = ({ userId, onAssignmentChange }: ManagerAssignmentFieldsProps) => {
-  const [assignments, setAssignments] = useState<ManagerAssignment[]>([]);
+  const [selectedPoleId, setSelectedPoleId] = useState<string>("none");
+  const [selectedDirectionId, setSelectedDirectionId] = useState<string>("none");
+  const [selectedServiceId, setSelectedServiceId] = useState<string>("none");
 
-  const { data: poles } = useQuery({
+  // Fetch poles data
+  const { data: poles, isLoading: isLoadingPoles } = useQuery({
     queryKey: ["poles"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("poles").select("*");
-      if (error) throw error;
-      return data;
-    },
-  });
-
-  const { data: directions } = useQuery({
-    queryKey: ["directions"],
-    queryFn: async () => {
-      const { data, error } = await supabase.from("directions").select("*");
-      if (error) throw error;
-      return data;
-    },
-  });
-
-  const { data: services } = useQuery({
-    queryKey: ["services"],
-    queryFn: async () => {
-      const { data, error } = await supabase.from("services").select("*");
-      if (error) throw error;
-      return data;
-    },
-  });
-
-  const { data: existingAssignments } = useQuery({
-    queryKey: ["managerAssignments", userId],
-    queryFn: async () => {
       const { data, error } = await supabase
-        .from("manager_assignments")
-        .select("*, poles(*), directions(*), services(*)")
-        .eq("user_id", userId);
+        .from("poles")
+        .select("*")
+        .order("name");
       if (error) throw error;
-      return data as ManagerAssignment[];
+      return data;
     },
-    enabled: !!userId,
   });
 
+  // Fetch directions data filtered by pole
+  const { data: directions, isLoading: isLoadingDirections } = useQuery({
+    queryKey: ["directions", selectedPoleId],
+    queryFn: async () => {
+      if (selectedPoleId === "none") return [];
+      const { data, error } = await supabase
+        .from("directions")
+        .select("*")
+        .eq("pole_id", selectedPoleId)
+        .order("name");
+      if (error) throw error;
+      return data;
+    },
+    enabled: selectedPoleId !== "none",
+  });
+
+  // Fetch services data filtered by direction
+  const { data: services, isLoading: isLoadingServices } = useQuery({
+    queryKey: ["services", selectedDirectionId],
+    queryFn: async () => {
+      if (selectedDirectionId === "none") return [];
+      const { data, error } = await supabase
+        .from("services")
+        .select("*")
+        .eq("direction_id", selectedDirectionId)
+        .order("name");
+      if (error) throw error;
+      return data;
+    },
+    enabled: selectedDirectionId !== "none",
+  });
+
+  // Effect to update assignments when selections change
   useEffect(() => {
-    if (existingAssignments) {
-      setAssignments(existingAssignments);
-      onAssignmentChange(existingAssignments);
+    const assignments: ManagerAssignment[] = [];
+    
+    if (selectedPoleId !== "none") {
+      assignments.push({
+        user_id: userId,
+        pole_id: selectedPoleId,
+        direction_id: null,
+        service_id: null,
+      });
     }
-  }, [existingAssignments, onAssignmentChange]);
+    
+    if (selectedDirectionId !== "none") {
+      assignments.push({
+        user_id: userId,
+        pole_id: null,
+        direction_id: selectedDirectionId,
+        service_id: null,
+      });
+    }
+    
+    if (selectedServiceId !== "none") {
+      assignments.push({
+        user_id: userId,
+        pole_id: null,
+        direction_id: null,
+        service_id: selectedServiceId,
+      });
+    }
 
-  const handleAddAssignment = (type: "pole" | "direction" | "service", id: string) => {
-    const newAssignment: Partial<ManagerAssignment> = {
-      user_id: userId,
-    };
+    onAssignmentChange(assignments);
+  }, [selectedPoleId, selectedDirectionId, selectedServiceId, userId, onAssignmentChange]);
 
-    if (type === "pole") newAssignment.pole_id = id;
-    if (type === "direction") newAssignment.direction_id = id;
-    if (type === "service") newAssignment.service_id = id;
-
-    const updatedAssignments = [...assignments, newAssignment as ManagerAssignment];
-    setAssignments(updatedAssignments);
-    onAssignmentChange(updatedAssignments);
+  const handlePoleChange = (value: string) => {
+    setSelectedPoleId(value);
+    setSelectedDirectionId("none");
+    setSelectedServiceId("none");
   };
 
+  const handleDirectionChange = (value: string) => {
+    setSelectedDirectionId(value);
+    setSelectedServiceId("none");
+  };
+
+  if (isLoadingPoles) {
+    return <div>Chargement des données...</div>;
+  }
+
   return (
-    <div className="space-y-4">
-      <div>
-        <Label>Pôles gérés</Label>
-        <Select
-          onValueChange={(value) => handleAddAssignment("pole", value)}
-        >
+    <div className="grid gap-4">
+      <div className="grid gap-2">
+        <Label htmlFor="pole">Pôle</Label>
+        <Select value={selectedPoleId} onValueChange={handlePoleChange}>
           <SelectTrigger>
             <SelectValue placeholder="Sélectionner un pôle" />
           </SelectTrigger>
           <SelectContent>
+            <SelectItem value="none">Aucun</SelectItem>
             {poles?.map((pole) => (
               <SelectItem key={pole.id} value={pole.id}>
                 {pole.name}
@@ -94,15 +128,18 @@ export const ManagerAssignmentFields = ({ userId, onAssignmentChange }: ManagerA
         </Select>
       </div>
 
-      <div>
-        <Label>Directions gérées</Label>
-        <Select
-          onValueChange={(value) => handleAddAssignment("direction", value)}
+      <div className="grid gap-2">
+        <Label htmlFor="direction">Direction</Label>
+        <Select 
+          value={selectedDirectionId} 
+          onValueChange={handleDirectionChange}
+          disabled={!selectedPoleId || selectedPoleId === "none"}
         >
           <SelectTrigger>
             <SelectValue placeholder="Sélectionner une direction" />
           </SelectTrigger>
           <SelectContent>
+            <SelectItem value="none">Aucune</SelectItem>
             {directions?.map((direction) => (
               <SelectItem key={direction.id} value={direction.id}>
                 {direction.name}
@@ -112,15 +149,18 @@ export const ManagerAssignmentFields = ({ userId, onAssignmentChange }: ManagerA
         </Select>
       </div>
 
-      <div>
-        <Label>Services gérés</Label>
-        <Select
-          onValueChange={(value) => handleAddAssignment("service", value)}
+      <div className="grid gap-2">
+        <Label htmlFor="service">Service</Label>
+        <Select 
+          value={selectedServiceId} 
+          onValueChange={setSelectedServiceId}
+          disabled={!selectedDirectionId || selectedDirectionId === "none"}
         >
           <SelectTrigger>
             <SelectValue placeholder="Sélectionner un service" />
           </SelectTrigger>
           <SelectContent>
+            <SelectItem value="none">Aucun</SelectItem>
             {services?.map((service) => (
               <SelectItem key={service.id} value={service.id}>
                 {service.name}
@@ -129,19 +169,6 @@ export const ManagerAssignmentFields = ({ userId, onAssignmentChange }: ManagerA
           </SelectContent>
         </Select>
       </div>
-
-      {assignments.length > 0 && (
-        <div className="mt-4">
-          <Label>Assignations actuelles</Label>
-          <ul className="mt-2 space-y-2">
-            {assignments.map((assignment) => (
-              <li key={assignment.id} className="text-sm text-gray-600">
-                {assignment.poles?.name || assignment.directions?.name || assignment.services?.name}
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
     </div>
   );
 };
