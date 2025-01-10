@@ -1,4 +1,4 @@
-export type UserRole = "admin" | "chef_projet";
+export type UserRole = "admin" | "chef_projet" | "manager";
 
 export interface UserProfile {
   id: string;
@@ -13,4 +13,25 @@ export interface UserRoleData {
   user_id: string;
   role: UserRole;
   created_at: string;
+}
+
+export interface ManagerAssignment {
+  id: string;
+  user_id: string;
+  pole_id?: string;
+  direction_id?: string;
+  service_id?: string;
+  created_at?: string;
+  poles?: {
+    id: string;
+    name: string;
+  };
+  directions?: {
+    id: string;
+    name: string;
+  };
+  services?: {
+    id: string;
+    name: string;
+  };
 }

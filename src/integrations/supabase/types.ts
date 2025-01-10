@@ -38,6 +38,62 @@ export type Database = {
           },
         ]
       }
+      manager_assignments: {
+        Row: {
+          created_at: string | null
+          direction_id: string | null
+          id: string
+          pole_id: string | null
+          service_id: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          direction_id?: string | null
+          id?: string
+          pole_id?: string | null
+          service_id?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          direction_id?: string | null
+          id?: string
+          pole_id?: string | null
+          service_id?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "manager_assignments_direction_id_fkey"
+            columns: ["direction_id"]
+            isOneToOne: false
+            referencedRelation: "directions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "manager_assignments_pole_id_fkey"
+            columns: ["pole_id"]
+            isOneToOne: false
+            referencedRelation: "poles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "manager_assignments_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "manager_assignments_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       poles: {
         Row: {
           created_at: string | null
@@ -394,7 +450,7 @@ export type Database = {
       risk_severity: "low" | "medium" | "high"
       risk_status: "open" | "in_progress" | "resolved"
       task_status: "todo" | "in_progress" | "done"
-      user_role: "admin" | "chef_projet"
+      user_role: "admin" | "chef_projet" | "manager"
     }
     CompositeTypes: {
       [_ in never]: never
