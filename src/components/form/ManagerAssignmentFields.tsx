@@ -7,7 +7,7 @@ import { ManagerAssignment } from "@/types/user";
 
 interface ManagerAssignmentFieldsProps {
   userId: string;
-  onAssignmentChange: (assignments: ManagerAssignment[]) => void;
+  onAssignmentChange: (assignments: Omit<ManagerAssignment, 'id' | 'created_at'>[] ) => void;
 }
 
 export const ManagerAssignmentFields = ({ userId, onAssignmentChange }: ManagerAssignmentFieldsProps) => {
@@ -62,7 +62,7 @@ export const ManagerAssignmentFields = ({ userId, onAssignmentChange }: ManagerA
 
   // Effect to update assignments when selections change
   useEffect(() => {
-    const assignments: ManagerAssignment[] = [];
+    const assignments: Omit<ManagerAssignment, 'id' | 'created_at'>[] = [];
     
     if (selectedPoleId !== "none") {
       assignments.push({

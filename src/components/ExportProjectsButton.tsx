@@ -103,11 +103,9 @@ export const ExportProjectsButton = () => {
                 fileName="projets-export.pdf"
               >
                 {({ loading }) => (
-                  <React.Fragment>
-                    <Button disabled={loading} type="button" asChild>
-                      {loading ? "Génération..." : "Télécharger le PDF"}
-                    </Button>
-                  </React.Fragment>
+                  <Button disabled={loading} type="button">
+                    {loading ? "Génération..." : "Télécharger le PDF"}
+                  </Button>
                 )}
               </PDFDownloadLink>
             )}

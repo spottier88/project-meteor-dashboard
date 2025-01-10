@@ -18,9 +18,9 @@ export interface UserRoleData {
 export interface ManagerAssignment {
   id: string;
   user_id: string;
-  pole_id?: string;
-  direction_id?: string;
-  service_id?: string;
+  pole_id: string | null;
+  direction_id: string | null;
+  service_id: string | null;
   created_at?: string;
   poles?: {
     id: string;
