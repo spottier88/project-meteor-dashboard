@@ -81,18 +81,16 @@ export const ExportProjectsButton = () => {
 
   return (
     <div>
-      {projects && (
-        <PDFDownloadLink
-          document={<MultiProjectPDF projects={projects} />}
-          fileName="projets-export.pdf"
-        >
-          {({ loading }) => (
-            <Button disabled={loading}>
-              {loading ? "Génération..." : "Télécharger le PDF"}
-            </Button>
-          )}
-        </PDFDownloadLink>
-      )}
+      <PDFDownloadLink
+        document={<MultiProjectPDF projects={projects} />}
+        fileName="projets-export.pdf"
+      >
+        {({ loading }) => (
+          <Button disabled={loading}>
+            {loading ? "Génération..." : "Télécharger le PDF"}
+          </Button>
+        )}
+      </PDFDownloadLink>
     </div>
   );
 };
