@@ -4,48 +4,16 @@ import { supabase } from "@/integrations/supabase/client";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ManagerAssignment } from "@/types/user";
-import { Button } from "@/components/ui/button";
-import { Trash2 } from "lucide-react";
-import { useToast } from "@/components/ui/use-toast";
 
 interface ManagerAssignmentFieldsProps {
   userId: string;
-  onAssignmentChange: (assignments: Omit<ManagerAssignment, 'id' | 'created_at'>[]) => void;
+  onAssignmentChange: (assignments: Omit<ManagerAssignment, 'id' | 'created_at'>[] ) => void;
 }
 
 export const ManagerAssignmentFields = ({ userId, onAssignmentChange }: ManagerAssignmentFieldsProps) => {
-  const { toast } = useToast();
   const [selectedPoleId, setSelectedPoleId] = useState<string>("none");
   const [selectedDirectionId, setSelectedDirectionId] = useState<string>("none");
   const [selectedServiceId, setSelectedServiceId] = useState<string>("none");
-  const [existingAssignments, setExistingAssignments] = useState<ManagerAssignment[]>([]);
-
-  // Fetch existing assignments
-  const { data: assignments, refetch: refetchAssignments } = useQuery({
-    queryKey: ["manager_assignments", userId],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("manager_assignments")
-        .select(`
-          id,
-          pole_id,
-          direction_id,
-          service_id,
-          poles (id, name),
-          directions (id, name),
-          services (id, name)
-        `)
-        .eq("user_id", userId);
-      if (error) throw error;
-      return data as ManagerAssignment[];
-    },
-  });
-
-  useEffect(() => {
-    if (assignments) {
-      setExistingAssignments(assignments);
-    }
-  }, [assignments]);
 
   // Fetch poles data
   const { data: poles, isLoading: isLoadingPoles } = useQuery({
@@ -92,37 +60,12 @@ export const ManagerAssignmentFields = ({ userId, onAssignmentChange }: ManagerA
     enabled: selectedDirectionId !== "none",
   });
 
-  const handleDeleteAssignment = async (assignmentId: string) => {
-    try {
-      const { error } = await supabase
-        .from("manager_assignments")
-        .delete()
-        .eq("id", assignmentId);
-
-      if (error) throw error;
-
-      toast({
-        title: "Succès",
-        description: "L'affectation a été supprimée",
-      });
-
-      refetchAssignments();
-    } catch (error) {
-      console.error("Error:", error);
-      toast({
-        title: "Erreur",
-        description: "Une erreur est survenue lors de la suppression",
-        variant: "destructive",
-      });
-    }
-  };
-
   // Effect to update assignments when selections change
   useEffect(() => {
-    const newAssignments: Omit<ManagerAssignment, 'id' | 'created_at'>[] = [];
+    const assignments: Omit<ManagerAssignment, 'id' | 'created_at'>[] = [];
     
     if (selectedPoleId !== "none") {
-      newAssignments.push({
+      assignments.push({
         user_id: userId,
         pole_id: selectedPoleId,
         direction_id: null,
@@ -131,7 +74,7 @@ export const ManagerAssignmentFields = ({ userId, onAssignmentChange }: ManagerA
     }
     
     if (selectedDirectionId !== "none") {
-      newAssignments.push({
+      assignments.push({
         user_id: userId,
         pole_id: null,
         direction_id: selectedDirectionId,
@@ -140,7 +83,7 @@ export const ManagerAssignmentFields = ({ userId, onAssignmentChange }: ManagerA
     }
     
     if (selectedServiceId !== "none") {
-      newAssignments.push({
+      assignments.push({
         user_id: userId,
         pole_id: null,
         direction_id: null,
@@ -148,7 +91,7 @@ export const ManagerAssignmentFields = ({ userId, onAssignmentChange }: ManagerA
       });
     }
 
-    onAssignmentChange(newAssignments);
+    onAssignmentChange(assignments);
   }, [selectedPoleId, selectedDirectionId, selectedServiceId, userId, onAssignmentChange]);
 
   const handlePoleChange = (value: string) => {
@@ -168,24 +111,6 @@ export const ManagerAssignmentFields = ({ userId, onAssignmentChange }: ManagerA
 
   return (
     <div className="grid gap-4">
-      <div className="space-y-4">
-        <Label>Affectations existantes</Label>
-        {existingAssignments.map((assignment) => (
-          <div key={assignment.id} className="flex items-center justify-between p-2 bg-gray-50 rounded">
-            <span>
-              {assignment.poles?.name || assignment.directions?.name || assignment.services?.name}
-            </span>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => handleDeleteAssignment(assignment.id)}
-            >
-              <Trash2 className="h-4 w-4" />
-            </Button>
-          </div>
-        ))}
-      </div>
-
       <div className="grid gap-2">
         <Label htmlFor="pole">Pôle</Label>
         <Select value={selectedPoleId} onValueChange={handlePoleChange}>
