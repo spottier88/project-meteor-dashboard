@@ -3,24 +3,55 @@ import { PDFDownloadLink } from "@react-pdf/renderer";
 import { Button } from "@/components/ui/button";
 import { MultiProjectPDF } from "./MultiProjectPDF";
 import type { MultiProjectPDFProps } from "./MultiProjectPDF";
+import { ProjectSelectionSheet } from "./ProjectSelectionSheet";
 
-export const ExportProjectsButton = ({ projectsData }: MultiProjectPDFProps) => {
+interface ExportProjectsButtonProps {
+  projectsData: MultiProjectPDFProps["projectsData"];
+}
+
+export const ExportProjectsButton = ({ projectsData }: ExportProjectsButtonProps) => {
   const [isGenerating, setIsGenerating] = useState(false);
+  const [isSelectionOpen, setIsSelectionOpen] = useState(false);
+  const [selectedProjects, setSelectedProjects] = useState<MultiProjectPDFProps["projectsData"]>([]);
+
+  const handleProjectSelect = (selectedData: MultiProjectPDFProps["projectsData"]) => {
+    setSelectedProjects(selectedData);
+    setIsSelectionOpen(false);
+  };
 
   return (
-    <PDFDownloadLink
-      document={<MultiProjectPDF projectsData={projectsData} />}
-      fileName="projets-export.pdf"
-    >
-      {({ loading }) => (
-        <Button 
-          type="button" 
-          disabled={loading || isGenerating}
-          onClick={() => setIsGenerating(true)}
+    <>
+      <Button 
+        type="button" 
+        onClick={() => setIsSelectionOpen(true)}
+      >
+        Sélectionner les projets à exporter
+      </Button>
+
+      {selectedProjects.length > 0 && (
+        <PDFDownloadLink
+          document={<MultiProjectPDF projectsData={selectedProjects} />}
+          fileName="projets-export.pdf"
         >
-          {loading || isGenerating ? "Génération..." : "Télécharger le PDF"}
-        </Button>
+          {({ loading }) => (
+            <Button 
+              type="button" 
+              disabled={loading || isGenerating}
+              onClick={() => setIsGenerating(true)}
+              variant="outline"
+            >
+              {loading || isGenerating ? "Génération..." : "Télécharger le PDF"}
+            </Button>
+          )}
+        </PDFDownloadLink>
       )}
-    </PDFDownloadLink>
+
+      <ProjectSelectionSheet
+        projects={projectsData}
+        isOpen={isSelectionOpen}
+        onClose={() => setIsSelectionOpen(false)}
+        onProjectSelect={handleProjectSelect}
+      />
+    </>
   );
 };

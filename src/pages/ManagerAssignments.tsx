@@ -6,10 +6,12 @@ import { Settings } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { AssignmentForm } from "@/components/manager-assignments/AssignmentForm";
 import { AssignmentList } from "@/components/manager-assignments/AssignmentList";
+import { useToast } from "@/components/ui/use-toast";
 
 export const ManagerAssignments = () => {
   const { userId } = useParams();
   const navigate = useNavigate();
+  const { toast } = useToast();
 
   const { data: profile, isLoading: isLoadingProfile } = useQuery({
     queryKey: ["profile", userId],
@@ -19,9 +21,47 @@ export const ManagerAssignments = () => {
         .from("profiles")
         .select("*")
         .eq("id", userId)
-        .maybeSingle();
-      if (error) throw error;
+        .single();
+
+      if (error) {
+        toast({
+          title: "Erreur",
+          description: "Impossible de charger le profil",
+          variant: "destructive",
+        });
+        throw error;
+      }
       return data;
+    },
+    enabled: !!userId,
+  });
+
+  const { data: assignments, refetch: refetchAssignments } = useQuery({
+    queryKey: ["manager_assignments", userId],
+    queryFn: async () => {
+      if (!userId) return [];
+      const { data, error } = await supabase
+        .from("manager_assignments")
+        .select(`
+          id,
+          pole_id,
+          direction_id,
+          service_id,
+          poles (id, name),
+          directions (id, name),
+          services (id, name)
+        `)
+        .eq("user_id", userId);
+
+      if (error) {
+        toast({
+          title: "Erreur",
+          description: "Impossible de charger les affectations",
+          variant: "destructive",
+        });
+        throw error;
+      }
+      return data || [];
     },
     enabled: !!userId,
   });
@@ -72,7 +112,7 @@ export const ManagerAssignments = () => {
             <AssignmentForm
               userId={userId}
               onAssignmentAdded={() => {
-                // Refresh assignments list
+                refetchAssignments();
               }}
             />
           </CardContent>
@@ -86,7 +126,7 @@ export const ManagerAssignments = () => {
             <AssignmentList
               userId={userId}
               onAssignmentDeleted={() => {
-                // Refresh assignments list
+                refetchAssignments();
               }}
             />
           </CardContent>
