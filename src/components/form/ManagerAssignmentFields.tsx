@@ -68,8 +68,8 @@ export const ManagerAssignmentFields = ({ userId, onAssignmentChange }: ManagerA
       direction_id: null,
       service_id: null,
     };
-    
-    // Only set one type of ID based on the deepest selection
+
+    // Only set the most specific level selected
     if (selectedServiceId !== "none") {
       assignment.service_id = selectedServiceId;
     } else if (selectedDirectionId !== "none") {
@@ -83,26 +83,19 @@ export const ManagerAssignmentFields = ({ userId, onAssignmentChange }: ManagerA
 
   const handlePoleChange = (value: string) => {
     setSelectedPoleId(value);
+    // Reset lower levels when selecting a pole
     setSelectedDirectionId("none");
     setSelectedServiceId("none");
   };
 
   const handleDirectionChange = (value: string) => {
     setSelectedDirectionId(value);
+    // Reset service when selecting a direction
     setSelectedServiceId("none");
-    // Clear pole selection when selecting a direction
-    if (value !== "none") {
-      setSelectedPoleId("none");
-    }
   };
 
   const handleServiceChange = (value: string) => {
     setSelectedServiceId(value);
-    // Clear pole and direction selections when selecting a service
-    if (value !== "none") {
-      setSelectedPoleId("none");
-      setSelectedDirectionId("none");
-    }
   };
 
   if (isLoadingPoles) {
@@ -116,7 +109,6 @@ export const ManagerAssignmentFields = ({ userId, onAssignmentChange }: ManagerA
         <Select 
           value={selectedPoleId} 
           onValueChange={handlePoleChange}
-          disabled={selectedDirectionId !== "none" || selectedServiceId !== "none"}
         >
           <SelectTrigger>
             <SelectValue placeholder="Sélectionner un pôle" />
@@ -137,7 +129,6 @@ export const ManagerAssignmentFields = ({ userId, onAssignmentChange }: ManagerA
         <Select 
           value={selectedDirectionId} 
           onValueChange={handleDirectionChange}
-          disabled={selectedServiceId !== "none"}
         >
           <SelectTrigger>
             <SelectValue placeholder="Sélectionner une direction" />
