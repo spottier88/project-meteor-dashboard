@@ -3,17 +3,25 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sh
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { StatusIcon } from "./project/StatusIcon";
+import { ProjectStatus } from "./ProjectCard";
 import { useUser } from "@supabase/auth-helpers-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { UserRoleData } from "@/types/user";
-import type { MultiProjectPDFProps } from "./MultiProjectPDF";
+
+interface Project {
+  id: string;
+  title: string;
+  status: ProjectStatus;
+  lastReviewDate: string;
+  project_manager?: string;
+}
 
 interface ProjectSelectionSheetProps {
-  projects: MultiProjectPDFProps["projectsData"];
+  projects: Project[];
   isOpen: boolean;
   onClose: () => void;
-  onProjectSelect: (selectedData: MultiProjectPDFProps["projectsData"]) => void;
+  onProjectSelect: (id: string, title: string) => void;
 }
 
 export const ProjectSelectionSheet = ({
@@ -42,20 +50,18 @@ export const ProjectSelectionSheet = ({
 
   const isAdmin = userRoles?.some(role => role.role === "admin");
 
+  // Filter projects based on user role and search term
   const filteredProjects = projects.filter((project) => {
-    if (!project.project) return false;
-    
     const matchesSearch = 
-      project.project.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (project.project.project_manager?.toLowerCase() || "").includes(searchTerm.toLowerCase());
+      project.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (project.project_manager?.toLowerCase() || "").includes(searchTerm.toLowerCase());
 
+    // If admin, show all projects that match search
     if (isAdmin) return matchesSearch;
-    return matchesSearch && project.project.project_manager === user?.email;
-  });
 
-  const handleProjectSelect = (selectedProject: MultiProjectPDFProps["projectsData"][0]) => {
-    onProjectSelect([selectedProject]);
-  };
+    // For non-admin users, only show their projects that match search
+    return matchesSearch && project.project_manager === user?.email;
+  });
 
   return (
     <Sheet open={isOpen} onOpenChange={onClose}>
@@ -83,16 +89,16 @@ export const ProjectSelectionSheet = ({
               <TableBody>
                 {filteredProjects.map((project) => (
                   <TableRow
-                    key={project.project.title}
+                    key={project.id}
                     className="cursor-pointer hover:bg-muted/50"
-                    onClick={() => handleProjectSelect(project)}
+                    onClick={() => onProjectSelect(project.id, project.title)}
                   >
-                    <TableCell className="font-medium">{project.project.title}</TableCell>
-                    <TableCell>{project.project.project_manager || "-"}</TableCell>
+                    <TableCell className="font-medium">{project.title}</TableCell>
+                    <TableCell>{project.project_manager || "-"}</TableCell>
                     <TableCell>
-                      <StatusIcon status={project.project.status} />
+                      <StatusIcon status={project.status} />
                     </TableCell>
-                    <TableCell>{project.project.last_review_date}</TableCell>
+                    <TableCell>{project.lastReviewDate}</TableCell>
                   </TableRow>
                 ))}
                 {filteredProjects.length === 0 && (
