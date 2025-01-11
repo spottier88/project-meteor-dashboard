@@ -22,27 +22,26 @@ export const ManagerAssignments = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   
-  // Add state variables for selections
   const [selectedPoleId, setSelectedPoleId] = useState<string>("");
   const [selectedDirectionId, setSelectedDirectionId] = useState<string>("");
   const [selectedServiceId, setSelectedServiceId] = useState<string>("");
 
   // Fetch user profile
-  const { data: profile } = useQuery({
+  const { data: profile, isLoading: isLoadingProfile } = useQuery({
     queryKey: ["profile", userId],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("profiles")
         .select("*")
         .eq("id", userId)
-        .single();
+        .maybeSingle();
       if (error) throw error;
       return data;
     },
   });
 
   // Fetch existing assignments
-  const { data: assignments } = useQuery({
+  const { data: assignments, isLoading: isLoadingAssignments } = useQuery({
     queryKey: ["manager_assignments", userId],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -63,7 +62,7 @@ export const ManagerAssignments = () => {
   });
 
   // Fetch poles
-  const { data: poles } = useQuery({
+  const { data: poles, isLoading: isLoadingPoles } = useQuery({
     queryKey: ["poles"],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -76,7 +75,7 @@ export const ManagerAssignments = () => {
   });
 
   // Fetch directions when pole is selected
-  const { data: directions } = useQuery({
+  const { data: directions, isLoading: isLoadingDirections } = useQuery({
     queryKey: ["directions", selectedPoleId],
     queryFn: async () => {
       if (!selectedPoleId) return [];
@@ -92,7 +91,7 @@ export const ManagerAssignments = () => {
   });
 
   // Fetch services when direction is selected
-  const { data: services } = useQuery({
+  const { data: services, isLoading: isLoadingServices } = useQuery({
     queryKey: ["services", selectedDirectionId],
     queryFn: async () => {
       if (!selectedDirectionId) return [];
@@ -172,6 +171,14 @@ export const ManagerAssignments = () => {
     setSelectedServiceId("");
   };
 
+  if (isLoadingProfile || isLoadingAssignments || isLoadingPoles) {
+    return <div className="container mx-auto py-8 px-4">Chargement des données...</div>;
+  }
+
+  if (!profile) {
+    return <div className="container mx-auto py-8 px-4">Utilisateur non trouvé</div>;
+  }
+
   return (
     <div className="container mx-auto py-8 px-4">
       <div className="mb-8">
@@ -184,7 +191,7 @@ export const ManagerAssignments = () => {
             Gestion des affectations
           </h1>
           <p className="text-muted-foreground">
-            {profile?.first_name} {profile?.last_name}
+            {profile.first_name} {profile.last_name}
           </p>
         </div>
       </div>
