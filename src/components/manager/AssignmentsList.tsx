@@ -19,7 +19,7 @@ export const AssignmentsList = ({ assignments, onAssignmentDelete }: Assignments
         <div className="grid gap-4">
           {assignments?.map((assignment) => (
             <div key={assignment.id} className="flex items-center justify-between p-4 border rounded-lg">
-              <div className="flex gap-2">
+              <div className="flex flex-wrap gap-2">
                 {assignment.poles && (
                   <Badge variant="secondary">
                     Pôle: {assignment.poles.name}

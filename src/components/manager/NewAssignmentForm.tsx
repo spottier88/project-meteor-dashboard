@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ManagerAssignment } from "@/types/user";
+import { useToast } from "@/components/ui/use-toast";
 
 interface NewAssignmentFormProps {
   userId: string;
@@ -17,6 +18,7 @@ export const NewAssignmentForm = ({ userId, onAssignmentAdd }: NewAssignmentForm
   const [selectedPoleId, setSelectedPoleId] = useState<string>("");
   const [selectedDirectionId, setSelectedDirectionId] = useState<string>("");
   const [selectedServiceId, setSelectedServiceId] = useState<string>("");
+  const { toast } = useToast();
 
   // Fetch poles data
   const { data: poles, isLoading: isLoadingPoles } = useQuery({
@@ -64,6 +66,15 @@ export const NewAssignmentForm = ({ userId, onAssignmentAdd }: NewAssignmentForm
   });
 
   const handleAddAssignment = () => {
+    if (!selectedPoleId && !selectedDirectionId && !selectedServiceId) {
+      toast({
+        title: "Erreur",
+        description: "Veuillez sélectionner au moins un niveau d'affectation",
+        variant: "destructive",
+      });
+      return;
+    }
+
     const assignment: Omit<ManagerAssignment, 'id' | 'created_at'> = {
       user_id: userId,
       pole_id: selectedPoleId || null,
@@ -149,7 +160,6 @@ export const NewAssignmentForm = ({ userId, onAssignmentAdd }: NewAssignmentForm
 
           <Button 
             onClick={handleAddAssignment}
-            disabled={!selectedPoleId && !selectedDirectionId && !selectedServiceId}
           >
             <Plus className="mr-2 h-4 w-4" />
             Ajouter l'affectation
