@@ -8,20 +8,13 @@ import { useUser } from "@supabase/auth-helpers-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { UserRoleData } from "@/types/user";
-
-interface Project {
-  id: string;
-  title: string;
-  status: ProjectStatus;
-  lastReviewDate: string;
-  project_manager?: string;
-}
+import type { MultiProjectPDFProps } from "./MultiProjectPDF";
 
 interface ProjectSelectionSheetProps {
-  projects: Project[];
+  projects: MultiProjectPDFProps["projectsData"];
   isOpen: boolean;
   onClose: () => void;
-  onProjectSelect: (id: string, title: string) => void;
+  onProjectSelect: (selectedData: MultiProjectPDFProps["projectsData"]) => void;
 }
 
 export const ProjectSelectionSheet = ({
@@ -50,18 +43,18 @@ export const ProjectSelectionSheet = ({
 
   const isAdmin = userRoles?.some(role => role.role === "admin");
 
-  // Filter projects based on user role and search term
   const filteredProjects = projects.filter((project) => {
     const matchesSearch = 
-      project.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (project.project_manager?.toLowerCase() || "").includes(searchTerm.toLowerCase());
+      project.project.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (project.project.project_manager?.toLowerCase() || "").includes(searchTerm.toLowerCase());
 
-    // If admin, show all projects that match search
     if (isAdmin) return matchesSearch;
-
-    // For non-admin users, only show their projects that match search
-    return matchesSearch && project.project_manager === user?.email;
+    return matchesSearch && project.project.project_manager === user?.email;
   });
+
+  const handleProjectSelect = (selectedProject: MultiProjectPDFProps["projectsData"][0]) => {
+    onProjectSelect([selectedProject]);
+  };
 
   return (
     <Sheet open={isOpen} onOpenChange={onClose}>
@@ -89,16 +82,16 @@ export const ProjectSelectionSheet = ({
               <TableBody>
                 {filteredProjects.map((project) => (
                   <TableRow
-                    key={project.id}
+                    key={project.project.title}
                     className="cursor-pointer hover:bg-muted/50"
-                    onClick={() => onProjectSelect(project.id, project.title)}
+                    onClick={() => handleProjectSelect(project)}
                   >
-                    <TableCell className="font-medium">{project.title}</TableCell>
-                    <TableCell>{project.project_manager || "-"}</TableCell>
+                    <TableCell className="font-medium">{project.project.title}</TableCell>
+                    <TableCell>{project.project.project_manager || "-"}</TableCell>
                     <TableCell>
-                      <StatusIcon status={project.status} />
+                      <StatusIcon status={project.project.status} />
                     </TableCell>
-                    <TableCell>{project.lastReviewDate}</TableCell>
+                    <TableCell>{project.project.last_review_date}</TableCell>
                   </TableRow>
                 ))}
                 {filteredProjects.length === 0 && (
