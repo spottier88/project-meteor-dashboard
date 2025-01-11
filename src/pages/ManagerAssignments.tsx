@@ -1,3 +1,4 @@
+import React, { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -20,6 +21,11 @@ export const ManagerAssignments = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  
+  // Add state variables for selections
+  const [selectedPoleId, setSelectedPoleId] = useState<string>("");
+  const [selectedDirectionId, setSelectedDirectionId] = useState<string>("");
+  const [selectedServiceId, setSelectedServiceId] = useState<string>("");
 
   // Fetch user profile
   const { data: profile } = useQuery({
@@ -158,6 +164,12 @@ export const ManagerAssignments = () => {
     if (selectedServiceId) assignment.service_id = selectedServiceId;
     
     addAssignment.mutate(assignment);
+  };
+
+  const resetSelections = () => {
+    setSelectedPoleId("");
+    setSelectedDirectionId("");
+    setSelectedServiceId("");
   };
 
   return (
