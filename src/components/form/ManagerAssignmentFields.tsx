@@ -7,7 +7,7 @@ import { ManagerAssignment } from "@/types/user";
 
 interface ManagerAssignmentFieldsProps {
   userId: string;
-  onAssignmentChange: (assignments: Omit<ManagerAssignment, 'id' | 'created_at'>[] ) => void;
+  onAssignmentChange: (assignment: Omit<ManagerAssignment, 'id' | 'created_at'>) => void;
 }
 
 export const ManagerAssignmentFields = ({ userId, onAssignmentChange }: ManagerAssignmentFieldsProps) => {
@@ -60,38 +60,25 @@ export const ManagerAssignmentFields = ({ userId, onAssignmentChange }: ManagerA
     enabled: selectedDirectionId !== "none",
   });
 
-  // Effect to update assignments when selections change
+  // Effect to update assignment when selections change
   useEffect(() => {
-    const assignments: Omit<ManagerAssignment, 'id' | 'created_at'>[] = [];
+    let assignment: Omit<ManagerAssignment, 'id' | 'created_at'> = {
+      user_id: userId,
+      pole_id: null,
+      direction_id: null,
+      service_id: null,
+    };
     
-    if (selectedPoleId !== "none") {
-      assignments.push({
-        user_id: userId,
-        pole_id: selectedPoleId,
-        direction_id: null,
-        service_id: null,
-      });
-    }
-    
-    if (selectedDirectionId !== "none") {
-      assignments.push({
-        user_id: userId,
-        pole_id: null,
-        direction_id: selectedDirectionId,
-        service_id: null,
-      });
-    }
-    
+    // Only set one type of ID based on the deepest selection
     if (selectedServiceId !== "none") {
-      assignments.push({
-        user_id: userId,
-        pole_id: null,
-        direction_id: null,
-        service_id: selectedServiceId,
-      });
+      assignment.service_id = selectedServiceId;
+    } else if (selectedDirectionId !== "none") {
+      assignment.direction_id = selectedDirectionId;
+    } else if (selectedPoleId !== "none") {
+      assignment.pole_id = selectedPoleId;
     }
 
-    onAssignmentChange(assignments);
+    onAssignmentChange(assignment);
   }, [selectedPoleId, selectedDirectionId, selectedServiceId, userId, onAssignmentChange]);
 
   const handlePoleChange = (value: string) => {
