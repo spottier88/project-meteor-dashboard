@@ -40,7 +40,9 @@ export const ExportProjectsButton = () => {
 
       const fetchProjectData = async (projectId: string) => {
         const projectResult = await supabase.from("projects").select("*").eq("id", projectId).single();
-        const [reviewResult, risksResult, tasksResult, poleResult, directionResult, serviceResult] = await Promise.all([
+        
+        // Fetch related data only if IDs are present
+        const [reviewResult, risksResult, tasksResult] = await Promise.all([
           supabase
             .from("reviews")
             .select("*")
@@ -50,9 +52,19 @@ export const ExportProjectsButton = () => {
             .maybeSingle(),
           supabase.from("risks").select("*").eq("project_id", projectId),
           supabase.from("tasks").select("*").eq("project_id", projectId),
-          supabase.from("poles").select("name").eq("id", projectResult.data.pole_id).maybeSingle(),
-          supabase.from("directions").select("name").eq("id", projectResult.data.direction_id).maybeSingle(),
-          supabase.from("services").select("name").eq("id", projectResult.data.service_id).maybeSingle(),
+        ]);
+
+        // Only fetch organization data if the IDs exist
+        const [poleResult, directionResult, serviceResult] = await Promise.all([
+          projectResult.data.pole_id 
+            ? supabase.from("poles").select("name").eq("id", projectResult.data.pole_id).maybeSingle()
+            : Promise.resolve({ data: null }),
+          projectResult.data.direction_id
+            ? supabase.from("directions").select("name").eq("id", projectResult.data.direction_id).maybeSingle()
+            : Promise.resolve({ data: null }),
+          projectResult.data.service_id
+            ? supabase.from("services").select("name").eq("id", projectResult.data.service_id).maybeSingle()
+            : Promise.resolve({ data: null }),
         ]);
 
         return {
@@ -103,9 +115,9 @@ export const ExportProjectsButton = () => {
                 fileName="projets-export.pdf"
               >
                 {({ loading }) => (
-                  <div className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2">
+                  <Button>
                     {loading ? "Génération..." : "Télécharger le PDF"}
-                  </div>
+                  </Button>
                 )}
               </PDFDownloadLink>
             )}
