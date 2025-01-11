@@ -85,6 +85,26 @@ const Index = () => {
     return true;
   }) || [];
 
+  // Transform projects data for PDF export
+  const projectsDataForPDF = filteredProjects.map(project => ({
+    project: {
+      title: project.title,
+      status: project.status,
+      progress: project.progress,
+      completion: project.completion,
+      project_manager: project.project_manager,
+      last_review_date: project.last_review_date,
+      start_date: project.start_date,
+      end_date: project.end_date,
+      pole_name: project.poles?.name,
+      direction_name: project.directions?.name,
+      service_name: project.services?.name,
+    },
+    lastReview: null, // You might want to fetch this data if needed
+    tasks: [], // You might want to fetch tasks data if needed
+    risks: [], // You might want to fetch risks data if needed
+  }));
+
   const handleEditProject = (projectId: string) => {
     const project = projects?.find(p => p.id === projectId);
     if (project) {
@@ -131,6 +151,7 @@ const Index = () => {
       <DashboardHeader
         onNewProject={() => setIsProjectFormOpen(true)}
         onNewReview={handleNewReview}
+        projectsData={projectsDataForPDF}
       />
 
       <div className="space-y-4 mb-6">
