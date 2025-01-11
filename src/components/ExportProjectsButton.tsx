@@ -24,6 +24,7 @@ export const ExportProjectsButton = ({ projectsData }: ExportProjectsButtonProps
       <Button 
         type="button" 
         onClick={() => setIsSelectionOpen(true)}
+        variant="outline"
       >
         Sélectionner les projets à exporter
       </Button>
@@ -38,7 +39,6 @@ export const ExportProjectsButton = ({ projectsData }: ExportProjectsButtonProps
               type="button" 
               disabled={loading || isGenerating}
               onClick={() => setIsGenerating(true)}
-              variant="outline"
             >
               {loading || isGenerating ? "Génération..." : "Télécharger le PDF"}
             </Button>

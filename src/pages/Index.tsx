@@ -100,7 +100,7 @@ const Index = () => {
       direction_name: project.directions?.name,
       service_name: project.services?.name,
     },
-    lastReview: null, // You might want to fetch this data if needed
+    lastReview: null,
     tasks: [], // You might want to fetch tasks data if needed
     risks: [], // You might want to fetch risks data if needed
   }));
