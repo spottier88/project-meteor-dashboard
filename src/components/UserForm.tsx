@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { UserFormFields } from "./form/UserFormFields";
-import { UserRole, ManagerAssignment } from "@/types/user";
+import { UserRole } from "@/types/user";
 
 interface UserFormProps {
   isOpen: boolean;
@@ -32,7 +32,6 @@ export const UserForm = ({ isOpen, onClose, onSubmit, user }: UserFormProps) => 
   const [lastName, setLastName] = useState(user?.last_name || "");
   const [email, setEmail] = useState(user?.email || "");
   const [roles, setRoles] = useState<UserRole[]>(user?.roles || ["chef_projet"]);
-  const [managerAssignments, setManagerAssignments] = useState<ManagerAssignment[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
@@ -118,33 +117,6 @@ export const UserForm = ({ isOpen, onClose, onSubmit, user }: UserFormProps) => 
           if (insertRolesError) throw insertRolesError;
         }
 
-        // Handle manager assignments if user is a manager
-        if (roles.includes("manager")) {
-          // Delete existing assignments
-          const { error: deleteAssignmentsError } = await supabase
-            .from("manager_assignments")
-            .delete()
-            .eq("user_id", user.id);
-
-          if (deleteAssignmentsError) throw deleteAssignmentsError;
-
-          // Add new assignments
-          if (managerAssignments.length > 0) {
-            const { error: insertAssignmentsError } = await supabase
-              .from("manager_assignments")
-              .insert(
-                managerAssignments.map(assignment => ({
-                  user_id: user.id,
-                  pole_id: assignment.pole_id,
-                  direction_id: assignment.direction_id,
-                  service_id: assignment.service_id,
-                }))
-              );
-
-            if (insertAssignmentsError) throw insertAssignmentsError;
-          }
-        }
-
         toast({
           title: "Succès",
           description: "L'utilisateur a été mis à jour",
@@ -174,22 +146,6 @@ export const UserForm = ({ isOpen, onClose, onSubmit, user }: UserFormProps) => 
           );
 
         if (rolesError) throw rolesError;
-
-        // Add manager assignments if user is a manager
-        if (roles.includes("manager") && managerAssignments.length > 0) {
-          const { error: assignmentsError } = await supabase
-            .from("manager_assignments")
-            .insert(
-              managerAssignments.map(assignment => ({
-                user_id: newUserId,
-                pole_id: assignment.pole_id,
-                direction_id: assignment.direction_id,
-                service_id: assignment.service_id,
-              }))
-            );
-
-          if (assignmentsError) throw assignmentsError;
-        }
 
         toast({
           title: "Succès",
@@ -234,8 +190,6 @@ export const UserForm = ({ isOpen, onClose, onSubmit, user }: UserFormProps) => 
           roles={roles}
           setRoles={setRoles}
           isEditMode={!!user}
-          userId={user?.id}
-          onManagerAssignmentsChange={setManagerAssignments}
         />
         <DialogFooter>
           <Button variant="outline" onClick={onClose}>

@@ -9,7 +9,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { Edit, Plus, Settings, Trash2 } from "lucide-react";
+import { Edit, Plus, Settings, Trash2, Users } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { UserForm } from "@/components/UserForm";
@@ -55,21 +55,18 @@ export const UserManagement = () => {
   const { data: users, isLoading } = useQuery({
     queryKey: ["users"],
     queryFn: async () => {
-      // Fetch profiles
       const { data: profilesData, error: profilesError } = await supabase
         .from("profiles")
         .select("*");
 
       if (profilesError) throw profilesError;
 
-      // Fetch user roles
       const { data: rolesData, error: rolesError } = await supabase
         .from("user_roles")
         .select("*");
 
       if (rolesError) throw rolesError;
 
-      // Combine profiles with their roles
       return (profilesData as UserProfile[]).map(profile => ({
         ...profile,
         roles: rolesData
@@ -180,6 +177,15 @@ export const UserManagement = () => {
                 >
                   <Edit className="h-4 w-4" />
                 </Button>
+                {user.roles.includes("manager") && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => navigate(`/admin/users/${user.id}/assignments`)}
+                  >
+                    <Users className="h-4 w-4" />
+                  </Button>
+                )}
                 <Button
                   variant="ghost"
                   size="icon"

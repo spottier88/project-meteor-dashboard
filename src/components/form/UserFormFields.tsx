@@ -2,7 +2,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { UserRole } from "@/types/user";
-import { ManagerAssignmentFields } from "./ManagerAssignmentFields";
 
 interface UserFormFieldsProps {
   firstName: string;
@@ -14,8 +13,6 @@ interface UserFormFieldsProps {
   roles: UserRole[];
   setRoles: (value: UserRole[]) => void;
   isEditMode: boolean;
-  userId?: string;
-  onManagerAssignmentsChange?: (assignments: any[]) => void;
 }
 
 export const UserFormFields = ({
@@ -28,8 +25,6 @@ export const UserFormFields = ({
   roles,
   setRoles,
   isEditMode,
-  userId,
-  onManagerAssignmentsChange,
 }: UserFormFieldsProps) => {
   const handleRoleToggle = (role: UserRole) => {
     if (roles.includes(role)) {
@@ -103,16 +98,6 @@ export const UserFormFields = ({
           </div>
         </div>
       </div>
-
-      {roles.includes("manager") && userId && onManagerAssignmentsChange && (
-        <div className="grid gap-2">
-          <Label>Gestion des entités</Label>
-          <ManagerAssignmentFields
-            userId={userId}
-            onAssignmentChange={onManagerAssignmentsChange}
-          />
-        </div>
-      )}
     </div>
   );
 };
