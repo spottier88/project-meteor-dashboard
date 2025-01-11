@@ -2,17 +2,14 @@ import { useState } from "react";
 import { PDFDownloadLink } from "@react-pdf/renderer";
 import { Button } from "@/components/ui/button";
 import { MultiProjectPDF } from "./MultiProjectPDF";
+import type { MultiProjectPDFProps } from "./MultiProjectPDF";
 
-interface ExportProjectsButtonProps {
-  projects: any[]; // Adjust the type according to your project structure
-}
-
-export const ExportProjectsButton = ({ projects }: ExportProjectsButtonProps) => {
+export const ExportProjectsButton = ({ projectsData }: MultiProjectPDFProps) => {
   const [isGenerating, setIsGenerating] = useState(false);
 
   return (
     <PDFDownloadLink
-      document={<MultiProjectPDF projects={projects} />}
+      document={<MultiProjectPDF projectsData={projectsData} />}
       fileName="projets-export.pdf"
     >
       {({ loading }) => (
