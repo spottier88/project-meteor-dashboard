@@ -1,12 +1,14 @@
 import { Auth } from "@supabase/auth-ui-react";
+import { ThemeSupa } from "@supabase/auth-ui-shared";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { useEffect } from "react";
 
-export const Login = () => {
+const Login = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
+    // Vérifier si l'utilisateur est déjà connecté
     supabase.auth.onAuthStateChange((event, session) => {
       if (session) {
         navigate("/");
@@ -15,48 +17,39 @@ export const Login = () => {
   }, [navigate]);
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center">
-      <div className="w-full max-w-md space-y-8 p-8">
+    <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="max-w-md w-full space-y-8 p-8 bg-white rounded-lg shadow">
         <div className="text-center">
-          <h1 className="text-2xl font-bold">Connexion</h1>
-          <p className="text-muted-foreground mt-2">
-            Connectez-vous pour accéder à votre espace
+          <h2 className="text-3xl font-bold text-gray-900">Connexion</h2>
+          <p className="mt-2 text-sm text-gray-600">
+            Connectez-vous pour accéder à votre tableau de bord
           </p>
         </div>
-
-        <div className="bg-card rounded-lg shadow-lg p-6">
-          <Auth
-            supabaseClient={supabase}
-            appearance={{
-              theme: 'light',
-              style: {
-                button: {
-                  background: 'hsl(var(--primary))',
-                  color: 'hsl(var(--primary-foreground))',
-                  borderRadius: 'var(--radius)',
-                },
-                input: {
-                  borderRadius: 'var(--radius)',
-                },
+        <Auth
+          supabaseClient={supabase}
+          appearance={{ theme: ThemeSupa }}
+          providers={[]}
+          redirectTo={window.location.origin}
+          localization={{
+            variables: {
+              sign_in: {
+                email_label: "Email",
+                password_label: "Mot de passe",
+                button_label: "Se connecter",
+                loading_button_label: "Connexion en cours...",
               },
-            }}
-            localization={{
-              variables: {
-                sign_in: {
-                  email_label: 'Adresse email',
-                  password_label: 'Mot de passe',
-                  button_label: 'Se connecter',
-                },
-                sign_up: {
-                  email_label: 'Adresse email',
-                  password_label: 'Mot de passe',
-                  button_label: "S'inscrire",
-                },
+              sign_up: {
+                email_label: "Email",
+                password_label: "Mot de passe",
+                button_label: "S'inscrire",
+                loading_button_label: "Inscription en cours...",
               },
-            }}
-          />
-        </div>
+            },
+          }}
+        />
       </div>
     </div>
   );
 };
+
+export default Login;

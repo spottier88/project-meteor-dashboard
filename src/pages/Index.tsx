@@ -15,7 +15,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { UserInfo } from "@/components/UserInfo";
 
-export const Index = () => {
+const Index = () => {
   const navigate = useNavigate();
   const [isProjectFormOpen, setIsProjectFormOpen] = useState(false);
   const [isProjectSelectionOpen, setIsProjectSelectionOpen] = useState(false);
@@ -195,3 +195,5 @@ export const Index = () => {
     </div>
   );
 };
+
+export default Index;

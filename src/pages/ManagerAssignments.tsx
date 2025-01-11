@@ -14,8 +14,6 @@ export const ManagerAssignments = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  console.log("Current userId:", userId); // Debug log
-
   // Fetch user profile
   const { data: profile, isLoading: isLoadingProfile } = useQuery({
     queryKey: ["profile", userId],
@@ -37,7 +35,6 @@ export const ManagerAssignments = () => {
     queryKey: ["manager_assignments", userId],
     queryFn: async () => {
       if (!userId) return [];
-      console.log("Fetching assignments for userId:", userId); // Debug log
       const { data, error } = await supabase
         .from("manager_assignments")
         .select(`
@@ -48,7 +45,6 @@ export const ManagerAssignments = () => {
         `)
         .eq("user_id", userId);
       if (error) throw error;
-      console.log("Fetched assignments:", data); // Debug log
       return data;
     },
     enabled: !!userId,
@@ -57,7 +53,6 @@ export const ManagerAssignments = () => {
   // Add assignment mutation
   const addAssignment = useMutation({
     mutationFn: async (assignment: Omit<ManagerAssignment, 'id' | 'created_at'>) => {
-      console.log("Adding assignment:", assignment); // Debug log
       const { error } = await supabase
         .from("manager_assignments")
         .insert([assignment]);
@@ -70,8 +65,7 @@ export const ManagerAssignments = () => {
         description: "L'affectation a été ajoutée",
       });
     },
-    onError: (error) => {
-      console.error("Error adding assignment:", error); // Debug log
+    onError: () => {
       toast({
         title: "Erreur",
         description: "Une erreur est survenue lors de l'ajout de l'affectation",
@@ -83,7 +77,6 @@ export const ManagerAssignments = () => {
   // Delete assignment mutation
   const deleteAssignment = useMutation({
     mutationFn: async (assignmentId: string) => {
-      console.log("Deleting assignment:", assignmentId); // Debug log
       const { error } = await supabase
         .from("manager_assignments")
         .delete()
@@ -97,8 +90,7 @@ export const ManagerAssignments = () => {
         description: "L'affectation a été supprimée",
       });
     },
-    onError: (error) => {
-      console.error("Error deleting assignment:", error); // Debug log
+    onError: () => {
       toast({
         title: "Erreur",
         description: "Une erreur est survenue lors de la suppression de l'affectation",
