@@ -13,6 +13,7 @@ import { SessionContextProvider } from "@supabase/auth-helpers-react";
 import { supabase } from "@/integrations/supabase/client";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import { ReviewHistory } from "./components/ReviewHistory";
+import { ManagerAssignments } from "./pages/ManagerAssignments";
 
 const queryClient = new QueryClient();
 
@@ -44,6 +45,14 @@ function App() {
               element={
                 <ProtectedRoute>
                   <UserManagement />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/users/:userId/assignments"
+              element={
+                <ProtectedRoute>
+                  <ManagerAssignments />
                 </ProtectedRoute>
               }
             />
