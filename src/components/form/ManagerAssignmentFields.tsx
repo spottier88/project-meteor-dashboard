@@ -69,7 +69,7 @@ export const ManagerAssignmentFields = ({ userId, onAssignmentChange }: ManagerA
       service_id: null,
     };
 
-    // Only set the most specific level selected
+    // Only set the most specific level selected, ensuring only one field is non-null
     if (selectedServiceId !== "none") {
       assignment.service_id = selectedServiceId;
     } else if (selectedDirectionId !== "none") {
