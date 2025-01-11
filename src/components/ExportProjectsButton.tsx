@@ -41,7 +41,6 @@ export const ExportProjectsButton = () => {
       const fetchProjectData = async (projectId: string) => {
         const projectResult = await supabase.from("projects").select("*").eq("id", projectId).single();
         
-        // Fetch related data only if IDs are present
         const [reviewResult, risksResult, tasksResult] = await Promise.all([
           supabase
             .from("reviews")
@@ -54,7 +53,6 @@ export const ExportProjectsButton = () => {
           supabase.from("tasks").select("*").eq("project_id", projectId),
         ]);
 
-        // Only fetch organization data if the IDs exist
         const [poleResult, directionResult, serviceResult] = await Promise.all([
           projectResult.data.pole_id 
             ? supabase.from("poles").select("name").eq("id", projectResult.data.pole_id).maybeSingle()
@@ -69,12 +67,24 @@ export const ExportProjectsButton = () => {
 
         return {
           project: {
-            ...projectResult.data,
+            title: projectResult.data.title,
+            status: projectResult.data.status,
+            progress: projectResult.data.progress,
+            completion: projectResult.data.completion,
+            project_manager: projectResult.data.project_manager,
+            last_review_date: projectResult.data.last_review_date,
+            start_date: projectResult.data.start_date,
+            end_date: projectResult.data.end_date,
             pole_name: poleResult.data?.name,
             direction_name: directionResult.data?.name,
             service_name: serviceResult.data?.name,
           },
-          lastReview: reviewResult.data,
+          lastReview: reviewResult.data ? {
+            weather: reviewResult.data.weather,
+            progress: reviewResult.data.progress,
+            comment: reviewResult.data.comment,
+            created_at: reviewResult.data.created_at,
+          } : undefined,
           risks: risksResult.data || [],
           tasks: tasksResult.data || [],
         };
@@ -113,11 +123,10 @@ export const ExportProjectsButton = () => {
               <PDFDownloadLink
                 document={<MultiProjectPDF projectsData={projectsData} />}
                 fileName="projets-export.pdf"
+                className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2"
               >
                 {({ loading }) => (
-                  <Button>
-                    {loading ? "Génération..." : "Télécharger le PDF"}
-                  </Button>
+                  loading ? "Génération..." : "Télécharger le PDF"
                 )}
               </PDFDownloadLink>
             )}

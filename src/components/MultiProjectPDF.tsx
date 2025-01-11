@@ -17,6 +17,11 @@ interface ProjectData {
     completion: number;
     project_manager?: string;
     last_review_date: string;
+    start_date?: string;
+    end_date?: string;
+    pole_name?: string;
+    direction_name?: string;
+    service_name?: string;
   };
   lastReview?: {
     weather: ProjectStatus;
