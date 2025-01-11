@@ -62,7 +62,7 @@ export const ManagerAssignmentFields = ({ userId, onAssignmentChange }: ManagerA
 
   // Effect to update assignment when selections change
   useEffect(() => {
-    let assignment: Omit<ManagerAssignment, 'id' | 'created_at'> = {
+    const assignment: Omit<ManagerAssignment, 'id' | 'created_at'> = {
       user_id: userId,
       pole_id: null,
       direction_id: null,
@@ -90,6 +90,19 @@ export const ManagerAssignmentFields = ({ userId, onAssignmentChange }: ManagerA
   const handleDirectionChange = (value: string) => {
     setSelectedDirectionId(value);
     setSelectedServiceId("none");
+    // Clear pole selection when selecting a direction
+    if (value !== "none") {
+      setSelectedPoleId("none");
+    }
+  };
+
+  const handleServiceChange = (value: string) => {
+    setSelectedServiceId(value);
+    // Clear pole and direction selections when selecting a service
+    if (value !== "none") {
+      setSelectedPoleId("none");
+      setSelectedDirectionId("none");
+    }
   };
 
   if (isLoadingPoles) {
@@ -100,7 +113,11 @@ export const ManagerAssignmentFields = ({ userId, onAssignmentChange }: ManagerA
     <div className="grid gap-4">
       <div className="grid gap-2">
         <Label htmlFor="pole">Pôle</Label>
-        <Select value={selectedPoleId} onValueChange={handlePoleChange}>
+        <Select 
+          value={selectedPoleId} 
+          onValueChange={handlePoleChange}
+          disabled={selectedDirectionId !== "none" || selectedServiceId !== "none"}
+        >
           <SelectTrigger>
             <SelectValue placeholder="Sélectionner un pôle" />
           </SelectTrigger>
@@ -120,7 +137,7 @@ export const ManagerAssignmentFields = ({ userId, onAssignmentChange }: ManagerA
         <Select 
           value={selectedDirectionId} 
           onValueChange={handleDirectionChange}
-          disabled={!selectedPoleId || selectedPoleId === "none"}
+          disabled={selectedServiceId !== "none"}
         >
           <SelectTrigger>
             <SelectValue placeholder="Sélectionner une direction" />
@@ -140,8 +157,7 @@ export const ManagerAssignmentFields = ({ userId, onAssignmentChange }: ManagerA
         <Label htmlFor="service">Service</Label>
         <Select 
           value={selectedServiceId} 
-          onValueChange={setSelectedServiceId}
-          disabled={!selectedDirectionId || selectedDirectionId === "none"}
+          onValueChange={handleServiceChange}
         >
           <SelectTrigger>
             <SelectValue placeholder="Sélectionner un service" />
