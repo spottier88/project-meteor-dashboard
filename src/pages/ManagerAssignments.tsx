@@ -30,6 +30,7 @@ export const ManagerAssignments = () => {
   const { data: profile, isLoading: isLoadingProfile } = useQuery({
     queryKey: ["profile", userId],
     queryFn: async () => {
+      if (!userId) return null;
       const { data, error } = await supabase
         .from("profiles")
         .select("*")
@@ -38,12 +39,14 @@ export const ManagerAssignments = () => {
       if (error) throw error;
       return data;
     },
+    enabled: !!userId,
   });
 
   // Fetch existing assignments
   const { data: assignments, isLoading: isLoadingAssignments } = useQuery({
     queryKey: ["manager_assignments", userId],
     queryFn: async () => {
+      if (!userId) return [];
       const { data, error } = await supabase
         .from("manager_assignments")
         .select(`
@@ -59,6 +62,7 @@ export const ManagerAssignments = () => {
       if (error) throw error;
       return data;
     },
+    enabled: !!userId,
   });
 
   // Fetch poles
