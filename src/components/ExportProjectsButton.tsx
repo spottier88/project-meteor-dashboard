@@ -39,8 +39,17 @@ export const ExportProjectsButton = () => {
       if (selectedProjects.length === 0) return null;
 
       const fetchProjectData = async (projectId: string) => {
-        const projectResult = await supabase.from("projects").select("*").eq("id", projectId).single();
-        
+        const { data: projectData, error: projectError } = await supabase
+          .from("projects")
+          .select("*")
+          .eq("id", projectId)
+          .single();
+
+        if (projectError) {
+          console.error("Error fetching project:", projectError);
+          return null;
+        }
+
         const [reviewResult, risksResult, tasksResult] = await Promise.all([
           supabase
             .from("reviews")
@@ -53,28 +62,44 @@ export const ExportProjectsButton = () => {
           supabase.from("tasks").select("*").eq("project_id", projectId),
         ]);
 
-        const [poleResult, directionResult, serviceResult] = await Promise.all([
-          projectResult.data.pole_id 
-            ? supabase.from("poles").select("name").eq("id", projectResult.data.pole_id).maybeSingle()
-            : Promise.resolve({ data: null }),
-          projectResult.data.direction_id
-            ? supabase.from("directions").select("name").eq("id", projectResult.data.direction_id).maybeSingle()
-            : Promise.resolve({ data: null }),
-          projectResult.data.service_id
-            ? supabase.from("services").select("name").eq("id", projectResult.data.service_id).maybeSingle()
-            : Promise.resolve({ data: null }),
-        ]);
+        let poleResult = { data: null };
+        let directionResult = { data: null };
+        let serviceResult = { data: null };
+
+        if (projectData.pole_id) {
+          poleResult = await supabase
+            .from("poles")
+            .select("name")
+            .eq("id", projectData.pole_id)
+            .maybeSingle();
+        }
+
+        if (projectData.direction_id) {
+          directionResult = await supabase
+            .from("directions")
+            .select("name")
+            .eq("id", projectData.direction_id)
+            .maybeSingle();
+        }
+
+        if (projectData.service_id) {
+          serviceResult = await supabase
+            .from("services")
+            .select("name")
+            .eq("id", projectData.service_id)
+            .maybeSingle();
+        }
 
         return {
           project: {
-            title: projectResult.data.title,
-            status: projectResult.data.status,
-            progress: projectResult.data.progress,
-            completion: projectResult.data.completion,
-            project_manager: projectResult.data.project_manager,
-            last_review_date: projectResult.data.last_review_date,
-            start_date: projectResult.data.start_date,
-            end_date: projectResult.data.end_date,
+            title: projectData.title,
+            status: projectData.status,
+            progress: projectData.progress,
+            completion: projectData.completion,
+            project_manager: projectData.project_manager,
+            last_review_date: projectData.last_review_date,
+            start_date: projectData.start_date,
+            end_date: projectData.end_date,
             pole_name: poleResult.data?.name,
             direction_name: directionResult.data?.name,
             service_name: serviceResult.data?.name,
@@ -90,8 +115,8 @@ export const ExportProjectsButton = () => {
         };
       };
 
-      const projectsData = await Promise.all(selectedProjects.map(fetchProjectData));
-      return projectsData;
+      const results = await Promise.all(selectedProjects.map(fetchProjectData));
+      return results.filter((result): result is NonNullable<typeof result> => result !== null);
     },
     enabled: selectedProjects.length > 0,
   });
@@ -114,9 +139,7 @@ export const ExportProjectsButton = () => {
         className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2"
       >
         {({ loading }) => (
-          <div>
-            {loading ? "Génération..." : "Télécharger le PDF"}
-          </div>
+          loading ? "Génération..." : "Télécharger le PDF"
         )}
       </PDFDownloadLink>
     );
