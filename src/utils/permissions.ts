@@ -18,12 +18,16 @@ export const canManageProjectItems = (
   // Le chef de projet assigné peut tout faire
   if (projectManagerEmail && userEmail && projectManagerEmail === userEmail) return true;
 
+  // Les managers ne peuvent que consulter
+  if (roles.includes("manager")) return false;
+
   return false;
 };
 
 export const canCreateProject = (roles: UserRole[] | undefined): boolean => {
   if (!roles) return false;
-  return roles.length > 0; // Any user with a role can create projects
+  // Les managers ne peuvent pas créer de projets
+  return roles.some(role => role === "admin" || role === "chef_projet");
 };
 
 export const canEditProject = (

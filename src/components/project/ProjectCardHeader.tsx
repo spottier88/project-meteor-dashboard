@@ -50,9 +50,30 @@ export const ProjectCardHeader = ({
     enabled: !!user?.id,
   });
 
+  const { data: userProfile } = useQuery({
+    queryKey: ["userProfile", user?.id],
+    queryFn: async () => {
+      if (!user?.id) return null;
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("id", user.id)
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!user?.id,
+  });
+
   const roles = userRoles?.map(ur => ur.role);
-  const canViewHistory = canViewProjectHistory(roles, user?.id, owner_id, project_manager, user?.email);
-  const canManageProjectTasks = canManageTasks(roles, user?.id, owner_id, project_manager, user?.email);
+  const isManager = roles?.includes("manager");
+  const canEdit = canEditProject(roles, user?.id, owner_id, project_manager, userProfile?.email);
+  const canViewHistory = canViewProjectHistory(roles, user?.id, owner_id, project_manager, userProfile?.email);
+  const canManageProjectTasks = canManageTasks(roles, user?.id, owner_id, project_manager, userProfile?.email);
+
+  // Un manager ne peut que consulter les projets auxquels il a accès
+  const showActions = !isManager || canEdit;
 
   return (
     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -63,47 +84,51 @@ export const ProjectCardHeader = ({
         <CardTitle className="text-xl font-semibold">{title}</CardTitle>
       </div>
       <div className="flex items-center gap-2">
-        {canEditProject(roles, user?.id, owner_id, project_manager, user?.email) && (
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={(e) => {
-              e.stopPropagation();
-              onEdit(id);
-            }}
-            className="h-8 w-8"
-            title="Modifier le projet"
-          >
-            <Pencil className="h-4 w-4" />
-          </Button>
-        )}
-        {canViewHistory && (
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={(e) => {
-              e.stopPropagation();
-              onViewHistory(id, title);
-            }}
-            className="h-8 w-8"
-            title="Historique des revues de projet"
-          >
-            <History className="h-4 w-4" />
-          </Button>
-        )}
-        {canManageProjectTasks && (
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={(e) => {
-              e.stopPropagation();
-              navigate(`/tasks/${id}`);
-            }}
-            className="h-8 w-8"
-            title="Gérer les tâches"
-          >
-            <ListTodo className="h-4 w-4" />
-          </Button>
+        {showActions && (
+          <>
+            {canEdit && (
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onEdit(id);
+                }}
+                className="h-8 w-8"
+                title="Modifier le projet"
+              >
+                <Pencil className="h-4 w-4" />
+              </Button>
+            )}
+            {canViewHistory && (
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onViewHistory(id, title);
+                }}
+                className="h-8 w-8"
+                title="Historique des revues de projet"
+              >
+                <History className="h-4 w-4" />
+              </Button>
+            )}
+            {canManageProjectTasks && (
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  navigate(`/tasks/${id}`);
+                }}
+                className="h-8 w-8"
+                title="Gérer les tâches"
+              >
+                <ListTodo className="h-4 w-4" />
+              </Button>
+            )}
+          </>
         )}
         {status && <StatusIcon status={status} />}
       </div>

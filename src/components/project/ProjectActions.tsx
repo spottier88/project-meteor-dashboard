@@ -33,6 +33,7 @@ export const ProjectActions = ({
   const navigate = useNavigate();
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const isAdmin = userRoles?.includes("admin");
+  const isManager = userRoles?.includes("manager");
   const user = useUser();
 
   const handleClick = (e: React.MouseEvent, action: () => void) => {
@@ -43,6 +44,13 @@ export const ProjectActions = ({
   const canViewHistory = canViewProjectHistory(userRoles, user?.id, owner_id, project_manager, user?.email);
   const canManageProjectTasks = canManageTasks(userRoles, user?.id, owner_id, project_manager, user?.email);
   const canManageProjectRisks = canManageRisks(userRoles, user?.id, owner_id, project_manager, user?.email);
+
+  // Un manager ne peut que consulter les projets auxquels il a accès
+  const showActions = !isManager || canEdit;
+
+  if (!showActions) {
+    return null;
+  }
 
   return (
     <>
