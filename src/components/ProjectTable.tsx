@@ -52,18 +52,69 @@ export const ProjectTable = ({
         .eq("user_id", user.id);
 
       if (error) throw error;
+      console.log("User roles (table):", data);
       return data as UserRoleData[];
     },
     enabled: !!user?.id,
   });
 
-  const isAdmin = userRoles?.some(role => role.role === "admin");
+  const { data: managerAssignments } = useQuery({
+    queryKey: ["managerAssignments", user?.id],
+    queryFn: async () => {
+      if (!user?.id) return null;
+      const { data, error } = await supabase
+        .from("manager_assignments")
+        .select("*")
+        .eq("user_id", user.id);
 
-  // Filter projects for project managers
+      if (error) throw error;
+      console.log("Manager assignments (table):", data);
+      return data;
+    },
+    enabled: !!user?.id,
+  });
+
+  const isAdmin = userRoles?.some(role => role.role === "admin");
+  const isManager = userRoles?.some(role => role.role === "manager");
+
+  // Filter projects for project managers and managers
   const filteredProjects = projects.filter(project => {
     if (!user) return false;
     if (isAdmin) return true;
-    return project.project_manager === user.email;
+
+    console.log("Checking project (table):", project.title);
+    console.log("Project manager:", project.project_manager);
+    console.log("User email:", user.email);
+    
+    // Si l'utilisateur est le chef de projet
+    const isProjectManager = project.project_manager === user.email;
+    
+    // Si l'utilisateur est manager, vérifier les assignations
+    const hasManagerAccess = isManager && managerAssignments?.some(assignment => {
+      const hasPoleAccess = assignment.pole_id && project.pole_id === assignment.pole_id;
+      const hasDirectionAccess = assignment.direction_id && project.direction_id === assignment.direction_id;
+      const hasServiceAccess = assignment.service_id && project.service_id === assignment.service_id;
+      
+      console.log("Manager assignment check (table):", {
+        hasPoleAccess,
+        hasDirectionAccess,
+        hasServiceAccess,
+        assignment,
+        projectPoleId: project.pole_id,
+        projectDirectionId: project.direction_id,
+        projectServiceId: project.service_id
+      });
+
+      return hasPoleAccess || hasDirectionAccess || hasServiceAccess;
+    });
+
+    console.log("Access check result (table):", {
+      isProjectManager,
+      hasManagerAccess,
+      finalAccess: isProjectManager || hasManagerAccess
+    });
+
+    return isProjectManager || hasManagerAccess;
   });
 
   const handleSort = (key: string) => {
