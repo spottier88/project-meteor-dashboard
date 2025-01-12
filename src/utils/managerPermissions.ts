@@ -54,62 +54,50 @@ export const canManagerAccessProject = async (
     .eq("id", projectId)
     .single();
 
-  console.log("Manager assignments:", assignments);
+  console.log("Checking access for project:", projectId);
   console.log("Project data:", projectData);
+  console.log("User assignments:", assignments);
 
   if (!assignments || !projectData) return false;
 
-  // Trier les affectations par niveau de précision (service > direction > pôle)
-  const sortedAssignments = [...assignments].sort((a, b) => {
-    // Service est prioritaire
-    if (a.service_id && !b.service_id) return -1;
-    if (!a.service_id && b.service_id) return 1;
-    // Direction est ensuite prioritaire
-    if (a.direction_id && !b.direction_id) return -1;
-    if (!a.direction_id && b.direction_id) return 1;
-    return 0;
+  // Pour chaque affectation, vérifier si elle donne accès au projet
+  return assignments.some(assignment => {
+    // Vérifier d'abord au niveau service si une affectation service existe
+    if (assignment.service_id && projectData.service_id) {
+      const hasServiceAccess = assignment.service_id === projectData.service_id;
+      console.log("Checking service level access:", {
+        assignedService: assignment.service_id,
+        projectService: projectData.service_id,
+        serviceName: assignment.services?.name,
+        hasAccess: hasServiceAccess
+      });
+      if (hasServiceAccess) return true;
+    }
+
+    // Vérifier au niveau direction si une affectation direction existe
+    if (assignment.direction_id && projectData.direction_id) {
+      const hasDirectionAccess = assignment.direction_id === projectData.direction_id;
+      console.log("Checking direction level access:", {
+        assignedDirection: assignment.direction_id,
+        projectDirection: projectData.direction_id,
+        directionName: assignment.directions?.name,
+        hasAccess: hasDirectionAccess
+      });
+      if (hasDirectionAccess) return true;
+    }
+
+    // Vérifier au niveau pôle si une affectation pôle existe
+    if (assignment.pole_id && projectData.pole_id) {
+      const hasPoleAccess = assignment.pole_id === projectData.pole_id;
+      console.log("Checking pole level access:", {
+        assignedPole: assignment.pole_id,
+        projectPole: projectData.pole_id,
+        poleName: assignment.poles?.name,
+        hasAccess: hasPoleAccess
+      });
+      if (hasPoleAccess) return true;
+    }
+
+    return false;
   });
-
-  console.log("Sorted assignments:", sortedAssignments);
-
-  // Utiliser uniquement l'affectation la plus précise
-  const mostPreciseAssignment = sortedAssignments[0];
-  if (!mostPreciseAssignment) return false;
-
-  console.log("Most precise assignment:", {
-    assignment: mostPreciseAssignment,
-    level: mostPreciseAssignment.service_id ? 'service' : 
-           mostPreciseAssignment.direction_id ? 'direction' : 
-           mostPreciseAssignment.pole_id ? 'pole' : 'none'
-  });
-
-  // Vérifier l'accès basé sur le niveau le plus précis uniquement
-  if (mostPreciseAssignment.service_id) {
-    console.log("Checking service level access:", {
-      assignedService: mostPreciseAssignment.service_id,
-      projectService: projectData.service_id,
-      hasAccess: mostPreciseAssignment.service_id === projectData.service_id
-    });
-    return mostPreciseAssignment.service_id === projectData.service_id;
-  }
-
-  if (mostPreciseAssignment.direction_id) {
-    console.log("Checking direction level access:", {
-      assignedDirection: mostPreciseAssignment.direction_id,
-      projectDirection: projectData.direction_id,
-      hasAccess: mostPreciseAssignment.direction_id === projectData.direction_id
-    });
-    return mostPreciseAssignment.direction_id === projectData.direction_id;
-  }
-
-  if (mostPreciseAssignment.pole_id) {
-    console.log("Checking pole level access:", {
-      assignedPole: mostPreciseAssignment.pole_id,
-      projectPole: projectData.pole_id,
-      hasAccess: mostPreciseAssignment.pole_id === projectData.pole_id
-    });
-    return mostPreciseAssignment.pole_id === projectData.pole_id;
-  }
-
-  return false;
 };
