@@ -59,23 +59,43 @@ export const ProjectGrid = ({
         .single();
 
       if (error) throw error;
+      console.log("User profile:", data);
       return data;
     },
     enabled: !!user?.id,
   });
 
   const isAdmin = userRoles?.some(role => role.role === "admin");
+  console.log("Is admin:", isAdmin);
 
   // Les projets sont déjà filtrés par la politique RLS au niveau de la base de données
-  // Nous n'avons plus besoin de filtrer côté client car la fonction can_manager_access_project
-  // gère déjà la logique d'accès hiérarchique
+  // Nous ajoutons des logs pour comprendre le filtrage
   const filteredProjects = projects.filter(project => {
-    if (!user) return false;
-    if (isAdmin) return true;
+    if (!user) {
+      console.log("No user logged in");
+      return false;
+    }
+    
+    if (isAdmin) {
+      console.log(`Project ${project.id} accessible (admin access)`);
+      return true;
+    }
 
-    // Si l'utilisateur est le chef de projet
-    return project.project_manager === userProfile?.email;
+    const isProjectManager = project.project_manager === userProfile?.email;
+    console.log(`Project ${project.id}:`, {
+      title: project.title,
+      projectManager: project.project_manager,
+      userEmail: userProfile?.email,
+      isProjectManager,
+      pole_id: project.pole_id,
+      direction_id: project.direction_id,
+      service_id: project.service_id
+    });
+
+    return isProjectManager;
   });
+
+  console.log("Filtered projects:", filteredProjects.length, "out of", projects.length);
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
