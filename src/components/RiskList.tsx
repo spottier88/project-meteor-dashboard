@@ -3,6 +3,9 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import { Risk } from "@/types/risk";
+import { Plus } from "lucide-react";
+import { RiskForm } from "./RiskForm";
+import { RiskCard } from "./risk/RiskCard";
 
 interface RiskListProps {
   projectId: string;
@@ -13,6 +16,7 @@ interface RiskListProps {
 export const RiskList = ({ projectId, projectTitle, readOnly = false }: RiskListProps) => {
   const [risks, setRisks] = useState<Risk[]>([]);
   const [isRiskFormOpen, setIsRiskFormOpen] = useState(false);
+  const [selectedRisk, setSelectedRisk] = useState<Risk | undefined>(undefined);
 
   const { data: riskData } = useQuery({
     queryKey: ["risks", projectId],
@@ -23,7 +27,7 @@ export const RiskList = ({ projectId, projectTitle, readOnly = false }: RiskList
         .eq("project_id", projectId);
 
       if (error) throw error;
-      return data;
+      return data as Risk[];
     },
     enabled: !!projectId,
   });
@@ -34,22 +38,60 @@ export const RiskList = ({ projectId, projectTitle, readOnly = false }: RiskList
     }
   }, [riskData]);
 
+  const handleEditRisk = (risk: Risk) => {
+    setSelectedRisk(risk);
+    setIsRiskFormOpen(true);
+  };
+
+  const handleDeleteRisk = async (risk: Risk) => {
+    try {
+      const { error } = await supabase
+        .from("risks")
+        .delete()
+        .eq("id", risk.id);
+
+      if (error) throw error;
+
+      setRisks(risks.filter((r) => r.id !== risk.id));
+    } catch (error) {
+      console.error("Error deleting risk:", error);
+    }
+  };
+
   return (
-    <div>
+    <div className="space-y-4">
       {!readOnly && (
         <Button onClick={() => setIsRiskFormOpen(true)} className="mb-4">
           <Plus className="h-4 w-4 mr-2" />
           Nouveau risque
         </Button>
       )}
-      <ul>
+
+      <div className="grid gap-4">
         {risks.map((risk) => (
-          <li key={risk.id}>
-            <h3>{risk.title}</h3>
-            <p>{risk.description}</p>
-          </li>
+          <RiskCard
+            key={risk.id}
+            risk={risk}
+            onEdit={handleEditRisk}
+            onDelete={handleDeleteRisk}
+            showActions={!readOnly}
+          />
         ))}
-      </ul>
+      </div>
+
+      <RiskForm
+        isOpen={isRiskFormOpen}
+        onClose={() => {
+          setIsRiskFormOpen(false);
+          setSelectedRisk(undefined);
+        }}
+        onSubmit={() => {
+          setIsRiskFormOpen(false);
+          setSelectedRisk(undefined);
+        }}
+        projectId={projectId}
+        risk={selectedRisk}
+      />
     </div>
   );
 };
