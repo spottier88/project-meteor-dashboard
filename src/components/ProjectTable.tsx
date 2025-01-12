@@ -80,7 +80,7 @@ export const ProjectTable = ({
 
   // Les projets sont déjà filtrés par la politique RLS au niveau de la base de données
   // Nous ajoutons des logs pour comprendre le filtrage
-  const filteredProjects = projects.filter(project => {
+  const filteredProjects = projects.filter(async project => {
     if (!user) {
       console.log("No user logged in (table)");
       return false;
@@ -91,18 +91,33 @@ export const ProjectTable = ({
       return true;
     }
 
+    // Vérifier si l'utilisateur est chef de projet
     const isProjectManager = project.project_manager === userProfile?.email;
+    
+    // Vérifier si l'utilisateur a accès via la fonction can_manager_access_project
+    const { data: canAccess, error } = await supabase
+      .rpc('can_manager_access_project', {
+        p_user_id: user.id,
+        p_project_id: project.id
+      });
+
+    if (error) {
+      console.error("Error checking project access (table):", error);
+    }
+
     console.log(`Project ${project.id} (table):`, {
       title: project.title,
       projectManager: project.project_manager,
       userEmail: userProfile?.email,
       isProjectManager,
+      canAccess,
       pole_id: project.pole_id,
       direction_id: project.direction_id,
-      service_id: project.service_id
+      service_id: project.service_id,
+      userRoles: userRoles?.map(r => r.role)
     });
 
-    return isProjectManager;
+    return isProjectManager || canAccess;
   });
 
   console.log("Filtered projects (table):", filteredProjects.length, "out of", projects.length);
