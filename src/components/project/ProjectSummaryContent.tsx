@@ -4,6 +4,9 @@ import { KanbanBoard } from "@/components/KanbanBoard";
 import { LastReview } from "@/components/LastReview";
 import { ProjectSummaryHeader } from "@/components/project/ProjectSummaryHeader";
 import { ProjectSummaryActions } from "./ProjectSummaryActions";
+import { useUser } from "@supabase/auth-helpers-react";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 interface ProjectSummaryContentProps {
   project: any;
@@ -22,6 +25,29 @@ export const ProjectSummaryContent = ({
   canManage,
   onAddTask,
 }: ProjectSummaryContentProps) => {
+  const user = useUser();
+
+  const { data: userRoles } = useQuery({
+    queryKey: ["userRoles", user?.id],
+    queryFn: async () => {
+      if (!user?.id) return null;
+      const { data, error } = await supabase
+        .from("user_roles")
+        .select("*")
+        .eq("user_id", user.id);
+
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!user?.id,
+  });
+
+  const roles = userRoles?.map(ur => ur.role);
+  const isManager = roles?.includes("manager");
+  const isAdmin = roles?.includes("admin");
+  const isOnlyManager = isManager && project.project_manager !== user?.email && !isAdmin;
+  const showActions = !isOnlyManager;
+
   return (
     <div className="grid gap-6">
       <ProjectSummaryHeader
@@ -44,14 +70,14 @@ export const ProjectSummaryContent = ({
       <div className="space-y-4">
         <div className="flex items-center justify-between">
           <h2 className="text-2xl font-bold">Tâches</h2>
-          <ProjectSummaryActions canManage={canManage} onAddTask={onAddTask} />
+          {showActions && <ProjectSummaryActions canManage={canManage} onAddTask={onAddTask} />}
         </div>
-        <KanbanBoard projectId={project.id} />
+        <KanbanBoard projectId={project.id} readOnly={!showActions} />
       </div>
 
       <div className="space-y-4">
         <h2 className="text-2xl font-bold">Risques</h2>
-        <RiskList projectId={project.id} projectTitle={project.title} />
+        <RiskList projectId={project.id} projectTitle={project.title} readOnly={!showActions} />
       </div>
     </div>
   );
