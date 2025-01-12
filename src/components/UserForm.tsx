@@ -26,6 +26,11 @@ interface UserFormProps {
   };
 }
 
+interface ExistingUser {
+  id: string;
+  email: string;
+}
+
 export const UserForm = ({ isOpen, onClose, onSubmit, user }: UserFormProps) => {
   const { toast } = useToast();
   const [firstName, setFirstName] = useState(user?.first_name || "");
@@ -33,7 +38,7 @@ export const UserForm = ({ isOpen, onClose, onSubmit, user }: UserFormProps) => 
   const [email, setEmail] = useState(user?.email || "");
   const [roles, setRoles] = useState<UserRole[]>(user?.roles || ["chef_projet"]);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [existingUsers, setExistingUsers] = useState<Array<{ id: string; email: string }>>([]);
+  const [existingUsers, setExistingUsers] = useState<ExistingUser[]>([]);
   const [selectedUserId, setSelectedUserId] = useState<string>("");
 
   useEffect(() => {
@@ -55,25 +60,28 @@ export const UserForm = ({ isOpen, onClose, onSubmit, user }: UserFormProps) => 
 
   const fetchExistingUsers = async () => {
     try {
-      const { data: authUsers, error: authError } = await supabase.auth.admin.listUsers();
-      if (authError) throw authError;
-
+      // Récupérer les utilisateurs qui ont déjà un profil
       const { data: profiles } = await supabase
         .from("profiles")
         .select("id");
 
       const existingUserIds = new Set(profiles?.map(p => p.id) || []);
-      
-      const usersWithoutProfile = authUsers.users
-        .filter(user => !existingUserIds.has(user.id))
-        .map(user => ({
-          id: user.id,
-          email: user.email || "",
-        }));
 
-      setExistingUsers(usersWithoutProfile);
+      // Récupérer tous les utilisateurs de auth.users via l'Edge Function
+      const { data: authUsers, error } = await supabase
+        .from('users_without_profile')
+        .select('id, email');
+
+      if (error) throw error;
+
+      setExistingUsers(authUsers || []);
     } catch (error) {
       console.error("Error fetching users:", error);
+      toast({
+        title: "Erreur",
+        description: "Impossible de récupérer la liste des utilisateurs",
+        variant: "destructive",
+      });
     }
   };
 
