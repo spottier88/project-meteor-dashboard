@@ -7,6 +7,8 @@ import { ProjectSummaryActions } from "./ProjectSummaryActions";
 import { useUser } from "@supabase/auth-helpers-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useState } from "react";
+import { TaskForm } from "@/components/TaskForm";
 
 interface ProjectSummaryContentProps {
   project: any;
@@ -14,7 +16,6 @@ interface ProjectSummaryContentProps {
   risks: any[];
   tasks: any[];
   canManage: boolean;
-  onAddTask: () => void;
 }
 
 export const ProjectSummaryContent = ({
@@ -23,9 +24,9 @@ export const ProjectSummaryContent = ({
   risks,
   tasks,
   canManage,
-  onAddTask,
 }: ProjectSummaryContentProps) => {
   const user = useUser();
+  const [isTaskFormOpen, setIsTaskFormOpen] = useState(false);
 
   const { data: userRoles } = useQuery({
     queryKey: ["userRoles", user?.id],
@@ -70,7 +71,11 @@ export const ProjectSummaryContent = ({
       <div className="space-y-4">
         <div className="flex items-center justify-between">
           <h2 className="text-2xl font-bold">Tâches</h2>
-          {showActions && <ProjectSummaryActions canManage={canManage} onAddTask={onAddTask} />}
+          {showActions && (
+            <Button onClick={() => setIsTaskFormOpen(true)} size="sm">
+              Nouvelle tâche
+            </Button>
+          )}
         </div>
         <KanbanBoard projectId={project.id} readOnly={!showActions} />
       </div>
@@ -79,6 +84,15 @@ export const ProjectSummaryContent = ({
         <h2 className="text-2xl font-bold">Risques</h2>
         <RiskList projectId={project.id} projectTitle={project.title} readOnly={!showActions} />
       </div>
+
+      <TaskForm
+        isOpen={isTaskFormOpen}
+        onClose={() => setIsTaskFormOpen(false)}
+        onSubmit={() => {
+          setIsTaskFormOpen(false);
+        }}
+        projectId={project.id}
+      />
     </div>
   );
 };
