@@ -1,16 +1,24 @@
 import { useEffect, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Pencil, Trash2 } from "lucide-react";
+import { useToast } from "@/components/ui/use-toast";
+import { useUser } from "@supabase/auth-helpers-react";
 
 interface KanbanBoardProps {
   projectId: string;
   readOnly?: boolean;
+  onEditTask?: (task: any) => void;
 }
 
-export const KanbanBoard = ({ projectId, readOnly = false }: KanbanBoardProps) => {
+export const KanbanBoard = ({ projectId, readOnly = false, onEditTask }: KanbanBoardProps) => {
   const [tasks, setTasks] = useState<any[]>([]);
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const user = useUser();
 
   const { data: taskData, refetch } = useQuery({
     queryKey: ["tasks", projectId],
@@ -32,6 +40,31 @@ export const KanbanBoard = ({ projectId, readOnly = false }: KanbanBoardProps) =
       setTasks(taskData);
     }
   }, [taskData]);
+
+  const handleDeleteTask = async (taskId: string) => {
+    try {
+      const { error } = await supabase
+        .from("tasks")
+        .delete()
+        .eq("id", taskId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Succès",
+        description: "La tâche a été supprimée",
+      });
+      
+      queryClient.invalidateQueries({ queryKey: ["tasks", projectId] });
+    } catch (error) {
+      console.error("Error:", error);
+      toast({
+        title: "Erreur",
+        description: "Une erreur est survenue lors de la suppression",
+        variant: "destructive",
+      });
+    }
+  };
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -95,6 +128,24 @@ export const KanbanBoard = ({ projectId, readOnly = false }: KanbanBoardProps) =
                     <p className="text-sm text-muted-foreground">
                       Échéance : {new Date(task.due_date).toLocaleDateString("fr-FR")}
                     </p>
+                  )}
+                  {!readOnly && (
+                    <div className="flex items-center justify-end gap-2 pt-2">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => onEditTask?.(task)}
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => handleDeleteTask(task.id)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
                   )}
                 </Card>
               ))}
