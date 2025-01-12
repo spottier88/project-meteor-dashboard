@@ -1,6 +1,7 @@
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { UserRole } from "@/types/user";
 
 interface UserFormFieldsProps {
@@ -13,6 +14,9 @@ interface UserFormFieldsProps {
   roles: UserRole[];
   setRoles: (value: UserRole[]) => void;
   isEditMode: boolean;
+  existingUsers?: Array<{ id: string; email: string; }>;
+  selectedUserId?: string;
+  onExistingUserSelect?: (userId: string) => void;
 }
 
 export const UserFormFields = ({
@@ -25,6 +29,9 @@ export const UserFormFields = ({
   roles,
   setRoles,
   isEditMode,
+  existingUsers,
+  selectedUserId,
+  onExistingUserSelect,
 }: UserFormFieldsProps) => {
   const handleRoleToggle = (role: UserRole) => {
     if (roles.includes(role)) {
@@ -36,6 +43,26 @@ export const UserFormFields = ({
 
   return (
     <div className="grid gap-4 py-4">
+      {!isEditMode && existingUsers && (
+        <div className="grid gap-2">
+          <Label>Utilisateur existant</Label>
+          <Select
+            value={selectedUserId}
+            onValueChange={(value) => onExistingUserSelect?.(value)}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Sélectionner un utilisateur existant" />
+            </SelectTrigger>
+            <SelectContent>
+              {existingUsers.map((user) => (
+                <SelectItem key={user.id} value={user.id}>
+                  {user.email}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      )}
       <div className="grid gap-2">
         <Label htmlFor="email">Email</Label>
         <Input
@@ -43,8 +70,8 @@ export const UserFormFields = ({
           type="email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          readOnly={isEditMode}
-          className={isEditMode ? "bg-gray-100" : ""}
+          readOnly={isEditMode || !!selectedUserId}
+          className={isEditMode || !!selectedUserId ? "bg-gray-100" : ""}
         />
       </div>
       <div className="grid gap-2">

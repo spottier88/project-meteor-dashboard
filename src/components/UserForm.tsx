@@ -33,6 +33,8 @@ export const UserForm = ({ isOpen, onClose, onSubmit, user }: UserFormProps) => 
   const [email, setEmail] = useState(user?.email || "");
   const [roles, setRoles] = useState<UserRole[]>(user?.roles || ["chef_projet"]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [existingUsers, setExistingUsers] = useState<Array<{ id: string; email: string }>>([]);
+  const [selectedUserId, setSelectedUserId] = useState<string>("");
 
   useEffect(() => {
     if (user) {
@@ -40,13 +42,48 @@ export const UserForm = ({ isOpen, onClose, onSubmit, user }: UserFormProps) => 
       setLastName(user.last_name || "");
       setEmail(user.email || "");
       setRoles(user.roles);
+      setSelectedUserId("");
     } else {
       setFirstName("");
       setLastName("");
       setEmail("");
       setRoles(["chef_projet"]);
+      setSelectedUserId("");
+      fetchExistingUsers();
     }
   }, [user]);
+
+  const fetchExistingUsers = async () => {
+    try {
+      const { data: authUsers, error: authError } = await supabase.auth.admin.listUsers();
+      if (authError) throw authError;
+
+      const { data: profiles } = await supabase
+        .from("profiles")
+        .select("id");
+
+      const existingUserIds = new Set(profiles?.map(p => p.id) || []);
+      
+      const usersWithoutProfile = authUsers.users
+        .filter(user => !existingUserIds.has(user.id))
+        .map(user => ({
+          id: user.id,
+          email: user.email || "",
+        }));
+
+      setExistingUsers(usersWithoutProfile);
+    } catch (error) {
+      console.error("Error fetching users:", error);
+    }
+  };
+
+  const handleExistingUserSelect = async (userId: string) => {
+    setSelectedUserId(userId);
+    const selectedUser = existingUsers.find(u => u.id === userId);
+    if (selectedUser) {
+      setEmail(selectedUser.email);
+    }
+  };
 
   const handleSubmit = async () => {
     if (!email || !firstName || !lastName) {
@@ -122,12 +159,13 @@ export const UserForm = ({ isOpen, onClose, onSubmit, user }: UserFormProps) => 
           description: "L'utilisateur a été mis à jour",
         });
       } else {
-        // Create new user with profile and generate UUID
-        const newUserId = crypto.randomUUID();
+        const userId = selectedUserId || crypto.randomUUID();
+        
+        // Create profile for existing or new user
         const { error: profileError } = await supabase
           .from("profiles")
           .insert({
-            id: newUserId,
+            id: userId,
             email,
             first_name: firstName,
             last_name: lastName,
@@ -135,12 +173,12 @@ export const UserForm = ({ isOpen, onClose, onSubmit, user }: UserFormProps) => 
 
         if (profileError) throw profileError;
 
-        // Add roles for the new user
+        // Add roles for the user
         const { error: rolesError } = await supabase
           .from("user_roles")
           .insert(
             roles.map(role => ({
-              user_id: newUserId,
+              user_id: userId,
               role: role,
             }))
           );
@@ -190,6 +228,9 @@ export const UserForm = ({ isOpen, onClose, onSubmit, user }: UserFormProps) => 
           roles={roles}
           setRoles={setRoles}
           isEditMode={!!user}
+          existingUsers={existingUsers}
+          selectedUserId={selectedUserId}
+          onExistingUserSelect={handleExistingUserSelect}
         />
         <DialogFooter>
           <Button variant="outline" onClick={onClose}>
