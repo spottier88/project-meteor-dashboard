@@ -95,51 +95,47 @@ export const ProjectGrid = ({
     // Si l'utilisateur est le chef de projet
     const isProjectManager = project.project_manager === user.email;
     
-    // Si l'utilisateur est manager, vérifier les assignations
-    const hasManagerAccess = isManager && managerAssignments?.some(assignment => {
-      // Vérifier d'abord au niveau service si applicable
-      if (assignment.service_id && project.service_id) {
-        const hasServiceAccess = assignment.service_id === project.service_id;
-        console.log("Service level check:", {
-          assignedService: assignment.services?.name,
+    // Si l'utilisateur est manager, vérifier les affectations
+    let hasManagerAccess = false;
+    
+    if (isManager && managerAssignments) {
+      // Vérifier le niveau approprié en fonction de l'affectation du projet
+      if (project.service_id) {
+        // Si le projet est affecté à un service, vérifier uniquement les affectations service
+        hasManagerAccess = managerAssignments.some(assignment => 
+          assignment.service_id === project.service_id
+        );
+        console.log("Service level access check:", {
           projectService: project.service_id,
-          hasAccess: hasServiceAccess
+          hasAccess: hasManagerAccess
         });
-        return hasServiceAccess;
-      }
-
-      // Vérifier au niveau direction si applicable
-      if (assignment.direction_id && project.direction_id) {
-        const hasDirectionAccess = assignment.direction_id === project.direction_id;
-        console.log("Direction level check:", {
-          assignedDirection: assignment.directions?.name,
+      } else if (project.direction_id) {
+        // Si le projet est affecté à une direction, vérifier uniquement les affectations direction
+        hasManagerAccess = managerAssignments.some(assignment => 
+          assignment.direction_id === project.direction_id
+        );
+        console.log("Direction level access check:", {
           projectDirection: project.direction_id,
-          hasAccess: hasDirectionAccess
+          hasAccess: hasManagerAccess
         });
-        return hasDirectionAccess;
-      }
-
-      // Vérifier au niveau pôle si applicable
-      if (assignment.pole_id && project.pole_id) {
-        const hasPoleAccess = assignment.pole_id === project.pole_id;
-        console.log("Pole level check:", {
-          assignedPole: assignment.poles?.name,
+      } else if (project.pole_id) {
+        // Si le projet est affecté à un pôle, vérifier uniquement les affectations pôle
+        hasManagerAccess = managerAssignments.some(assignment => 
+          assignment.pole_id === project.pole_id
+        );
+        console.log("Pole level access check:", {
           projectPole: project.pole_id,
-          hasAccess: hasPoleAccess
+          hasAccess: hasManagerAccess
         });
-        return hasPoleAccess;
       }
-
-      return false;
-    });
+    }
 
     console.log("Access check result:", {
       isProjectManager,
       hasManagerAccess,
-      finalAccess: isProjectManager || (hasManagerAccess === true) // Modification ici
+      finalAccess: isProjectManager || (hasManagerAccess === true)
     });
 
-    // On s'assure que hasManagerAccess est strictement true pour accorder l'accès
     return isProjectManager || (hasManagerAccess === true);
   });
 
