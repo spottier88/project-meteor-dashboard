@@ -15,7 +15,6 @@ export const ManagerAssignmentFields = ({ userId, onAssignmentChange }: ManagerA
   const [selectedDirectionId, setSelectedDirectionId] = useState<string>("none");
   const [selectedServiceId, setSelectedServiceId] = useState<string>("none");
 
-  // Fetch poles data
   const { data: poles, isLoading: isLoadingPoles } = useQuery({
     queryKey: ["poles"],
     queryFn: async () => {
@@ -62,29 +61,24 @@ export const ManagerAssignmentFields = ({ userId, onAssignmentChange }: ManagerA
 
   // Effect to update assignment when selections change
   useEffect(() => {
-    console.log("Current selections:", {
-      pole: selectedPoleId,
-      direction: selectedDirectionId,
-      service: selectedServiceId
-    });
-
     const assignment: Omit<ManagerAssignment, 'id' | 'created_at'> = {
       user_id: userId,
-      pole_id: null,
-      direction_id: null,
-      service_id: null,
+      entity_id: '',
+      entity_type: 'pole'
     };
 
     // Only set the most specific level selected
     if (selectedServiceId !== "none") {
-      assignment.service_id = selectedServiceId;
+      assignment.entity_id = selectedServiceId;
+      assignment.entity_type = 'service';
     } else if (selectedDirectionId !== "none") {
-      assignment.direction_id = selectedDirectionId;
+      assignment.entity_id = selectedDirectionId;
+      assignment.entity_type = 'direction';
     } else if (selectedPoleId !== "none") {
-      assignment.pole_id = selectedPoleId;
+      assignment.entity_id = selectedPoleId;
+      assignment.entity_type = 'pole';
     }
 
-    console.log("Final assignment:", assignment);
     onAssignmentChange(assignment);
   }, [selectedPoleId, selectedDirectionId, selectedServiceId, userId, onAssignmentChange]);
 
@@ -175,4 +169,3 @@ export const ManagerAssignmentFields = ({ userId, onAssignmentChange }: ManagerA
       </div>
     </div>
   );
-};

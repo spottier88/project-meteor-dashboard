@@ -147,7 +147,6 @@ export const ExportProjectsButton = () => {
           <ProjectSelectionTable onSelectionChange={handleSelectionChange} />
           <div className="flex justify-end mt-4">
             {selectedProjects.length > 0 && projectsData && (
-
               <PDFDownloadLink
                 document={<MultiProjectPDF projectsData={projectsData} />}
                 fileName="projets-export.pdf"
@@ -155,7 +154,6 @@ export const ExportProjectsButton = () => {
               >
                 {({ loading }) => (loading ? "Génération..." : "Télécharger le PDF") as React.ReactNode}
               </PDFDownloadLink>
-
             )}
           </div>
         </div>

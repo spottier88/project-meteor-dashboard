@@ -77,10 +77,21 @@ export const NewAssignmentForm = ({ userId, onAssignmentAdd }: NewAssignmentForm
 
     const assignment: Omit<ManagerAssignment, 'id' | 'created_at'> = {
       user_id: userId,
-      pole_id: selectedPoleId || null,
-      direction_id: selectedDirectionId || null,
-      service_id: selectedServiceId || null,
+      entity_id: '',
+      entity_type: 'pole'
     };
+
+    if (selectedServiceId) {
+      assignment.entity_id = selectedServiceId;
+      assignment.entity_type = 'service';
+    } else if (selectedDirectionId) {
+      assignment.entity_id = selectedDirectionId;
+      assignment.entity_type = 'direction';
+    } else if (selectedPoleId) {
+      assignment.entity_id = selectedPoleId;
+      assignment.entity_type = 'pole';
+    }
+
     onAssignmentAdd(assignment);
     resetForm();
   };
