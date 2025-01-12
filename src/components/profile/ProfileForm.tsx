@@ -15,7 +15,6 @@ import { UserProfile } from "@/types/user";
 import { Badge } from "@/components/ui/badge";
 import { useQuery } from "@tanstack/react-query";
 import { Separator } from "@/components/ui/separator";
-import { ManagerAssignmentWithDetails } from "@/types/user";
 
 interface ProfileFormProps {
   isOpen: boolean;
@@ -33,6 +32,19 @@ const getRoleLabel = (role: string): string => {
       return "Manager";
     default:
       return role;
+  }
+};
+
+const getEntityTypeLabel = (type: string): string => {
+  switch (type) {
+    case "pole":
+      return "Pôle";
+    case "direction":
+      return "Direction";
+    case "service":
+      return "Service";
+    default:
+      return type;
   }
 };
 
@@ -64,11 +76,14 @@ export const ProfileForm = ({ isOpen, onClose, profile }: ProfileFormProps) => {
     enabled: !!profile?.id,
   });
 
+  const isManager = userRoles?.some(role => role.role === "manager");
+
   const { data: managerAssignments } = useQuery({
     queryKey: ["managerAssignments", profile?.id],
     queryFn: async () => {
-      if (!profile?.id) return null;
-      const { data: assignmentsData, error } = await supabase
+      if (!profile?.id || !isManager) return null;
+
+      const { data: assignments, error } = await supabase
         .from("manager_assignments")
         .select("*")
         .eq("user_id", profile.id);
@@ -76,24 +91,23 @@ export const ProfileForm = ({ isOpen, onClose, profile }: ProfileFormProps) => {
       if (error) throw error;
 
       const detailedAssignments = await Promise.all(
-        assignmentsData.map(async (assignment) => {
-          const tableName = `${assignment.entity_type}s` as "poles" | "directions" | "services";
+        assignments.map(async (assignment) => {
           const { data: entityData } = await supabase
-            .from(tableName)
+            .from(assignment.entity_type + "s")
             .select("name")
             .eq("id", assignment.entity_id)
-            .maybeSingle();
+            .single();
 
           return {
             ...assignment,
-            entity_details: entityData || { name: 'Unknown' }
-          } as ManagerAssignmentWithDetails;
+            entity_name: entityData?.name || "Inconnu",
+          };
         })
       );
 
       return detailedAssignments;
     },
-    enabled: !!profile?.id && userRoles?.some(role => role.role === "manager"),
+    enabled: !!profile?.id && isManager,
   });
 
   const handleSubmit = async () => {
@@ -174,19 +188,20 @@ export const ProfileForm = ({ isOpen, onClose, profile }: ProfileFormProps) => {
             </div>
           </div>
 
-          {managerAssignments && managerAssignments.length > 0 && (
+          {isManager && managerAssignments && managerAssignments.length > 0 && (
             <>
               <Separator className="my-2" />
               <div className="grid gap-2">
                 <Label>Affectations</Label>
                 <div className="space-y-2">
                   {managerAssignments.map((assignment) => (
-                    <div key={assignment.id} className="flex flex-wrap gap-2">
+                    <div key={assignment.id} className="flex items-center gap-2">
                       <Badge variant="outline">
-                        {assignment.entity_type === 'pole' && `Pôle: ${assignment.entity_details.name}`}
-                        {assignment.entity_type === 'direction' && `Direction: ${assignment.entity_details.name}`}
-                        {assignment.entity_type === 'service' && `Service: ${assignment.entity_details.name}`}
+                        {getEntityTypeLabel(assignment.entity_type)}
                       </Badge>
+                      <span className="text-sm text-muted-foreground">
+                        {assignment.entity_name}
+                      </span>
                     </div>
                   ))}
                 </div>
