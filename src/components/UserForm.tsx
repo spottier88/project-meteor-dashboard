@@ -60,21 +60,12 @@ export const UserForm = ({ isOpen, onClose, onSubmit, user }: UserFormProps) => 
 
   const fetchExistingUsers = async () => {
     try {
-      // Récupérer les utilisateurs qui ont déjà un profil
-      const { data: profiles } = await supabase
-        .from("profiles")
-        .select("id");
-
-      const existingUserIds = new Set(profiles?.map(p => p.id) || []);
-
-      // Récupérer tous les utilisateurs de auth.users via l'Edge Function
-      const { data: authUsers, error } = await supabase
-        .from('users_without_profile')
-        .select('id, email');
+      const { data, error } = await supabase
+        .rpc('get_users_without_profile');
 
       if (error) throw error;
 
-      setExistingUsers(authUsers || []);
+      setExistingUsers(data || []);
     } catch (error) {
       console.error("Error fetching users:", error);
       toast({
