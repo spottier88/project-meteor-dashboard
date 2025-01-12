@@ -33,33 +33,38 @@ export const canManagerAccessProject = async (
     return true;
   }
 
-  // Vérifier les droits de manager basés sur la hiérarchie
+  // Récupérer les affectations du manager et les informations du projet
   const { data: assignments } = await supabase
     .from("manager_assignments")
-    .select(`
-      pole_id,
-      direction_id,
-      service_id,
-      projects!inner (
-        id,
-        pole_id,
-        direction_id,
-        service_id
-      )
-    `)
-    .eq("user_id", userId)
-    .eq("projects.id", projectId);
+    .select("pole_id, direction_id, service_id")
+    .eq("user_id", userId);
 
-  if (!assignments) return false;
+  const { data: projectData } = await supabase
+    .from("projects")
+    .select("pole_id, direction_id, service_id")
+    .eq("id", projectId)
+    .single();
 
+  console.log("Manager assignments:", assignments);
+  console.log("Project data:", projectData);
+
+  if (!assignments || !projectData) return false;
+
+  // Vérifier les droits basés sur la hiérarchie
   return assignments.some(assignment => {
-    const project = assignment.projects as ProjectData;
-    if (!project) return false;
-
-    return (
-      (assignment.pole_id && project.pole_id === assignment.pole_id) ||
-      (assignment.direction_id && project.direction_id === assignment.direction_id) ||
-      (assignment.service_id && project.service_id === assignment.service_id)
-    );
+    // Vérifier d'abord le niveau le plus précis
+    if (assignment.service_id && assignment.service_id === projectData.service_id) {
+      console.log("Access granted via service level");
+      return true;
+    }
+    if (assignment.direction_id && assignment.direction_id === projectData.direction_id) {
+      console.log("Access granted via direction level");
+      return true;
+    }
+    if (assignment.pole_id && assignment.pole_id === projectData.pole_id) {
+      console.log("Access granted via pole level");
+      return true;
+    }
+    return false;
   });
 };

@@ -62,6 +62,12 @@ export const ManagerAssignmentFields = ({ userId, onAssignmentChange }: ManagerA
 
   // Effect to update assignment when selections change
   useEffect(() => {
+    console.log("Current selections:", {
+      pole: selectedPoleId,
+      direction: selectedDirectionId,
+      service: selectedServiceId
+    });
+
     const assignment: Omit<ManagerAssignment, 'id' | 'created_at'> = {
       user_id: userId,
       pole_id: null,
@@ -69,7 +75,7 @@ export const ManagerAssignmentFields = ({ userId, onAssignmentChange }: ManagerA
       service_id: null,
     };
 
-    // Only set the most specific level selected, ensuring only one field is non-null
+    // Only set the most specific level selected
     if (selectedServiceId !== "none") {
       assignment.service_id = selectedServiceId;
     } else if (selectedDirectionId !== "none") {
@@ -78,10 +84,12 @@ export const ManagerAssignmentFields = ({ userId, onAssignmentChange }: ManagerA
       assignment.pole_id = selectedPoleId;
     }
 
+    console.log("Final assignment:", assignment);
     onAssignmentChange(assignment);
   }, [selectedPoleId, selectedDirectionId, selectedServiceId, userId, onAssignmentChange]);
 
   const handlePoleChange = (value: string) => {
+    console.log("Pole changed to:", value);
     setSelectedPoleId(value);
     // Reset lower levels when selecting a pole
     setSelectedDirectionId("none");
@@ -89,12 +97,14 @@ export const ManagerAssignmentFields = ({ userId, onAssignmentChange }: ManagerA
   };
 
   const handleDirectionChange = (value: string) => {
+    console.log("Direction changed to:", value);
     setSelectedDirectionId(value);
     // Reset service when selecting a direction
     setSelectedServiceId("none");
   };
 
   const handleServiceChange = (value: string) => {
+    console.log("Service changed to:", value);
     setSelectedServiceId(value);
   };
 
