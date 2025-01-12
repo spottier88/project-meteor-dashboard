@@ -1,5 +1,12 @@
 import { supabase } from "@/integrations/supabase/client";
 
+interface ProjectData {
+  id: string;
+  pole_id: string | null;
+  direction_id: string | null;
+  service_id: string | null;
+}
+
 export const canManagerAccessProject = async (
   userId: string | undefined,
   projectId: string,
@@ -46,7 +53,7 @@ export const canManagerAccessProject = async (
   if (!assignments) return false;
 
   return assignments.some(assignment => {
-    const project = assignment.projects;
+    const project = assignment.projects as ProjectData;
     if (!project) return false;
 
     return (

@@ -170,7 +170,6 @@ export const ProjectSummary = () => {
         risks={risks || []}
         tasks={tasks || []}
         canManage={canManage}
-        onAddTask={() => setIsTaskFormOpen(true)}
       />
 
       <TaskForm
