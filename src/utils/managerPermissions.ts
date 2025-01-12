@@ -1,12 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
 
-interface ProjectData {
-  id: string;
-  pole_id: string | null;
-  direction_id: string | null;
-  service_id: string | null;
-}
-
 interface Assignment {
   pole_id: string | null;
   direction_id: string | null;
@@ -14,6 +7,13 @@ interface Assignment {
   poles?: { name: string } | null;
   directions?: { name: string } | null;
   services?: { name: string } | null;
+}
+
+interface ProjectData {
+  id: string;
+  pole_id: string | null;
+  direction_id: string | null;
+  service_id: string | null;
 }
 
 export const canManagerAccessProject = async (
@@ -62,8 +62,8 @@ export const canManagerAccessProject = async (
 
   // Pour chaque affectation, vérifier si elle donne accès au projet
   return assignments.some(assignment => {
-    // Vérifier d'abord au niveau service si une affectation service existe
-    if (assignment.service_id && projectData.service_id) {
+    // Si l'affectation a un service_id, vérifier uniquement au niveau service
+    if (assignment.service_id) {
       const hasServiceAccess = assignment.service_id === projectData.service_id;
       console.log("Checking service level access:", {
         assignedService: assignment.service_id,
@@ -71,11 +71,11 @@ export const canManagerAccessProject = async (
         serviceName: assignment.services?.name,
         hasAccess: hasServiceAccess
       });
-      if (hasServiceAccess) return true;
+      return hasServiceAccess;
     }
 
-    // Vérifier au niveau direction si une affectation direction existe
-    if (assignment.direction_id && projectData.direction_id) {
+    // Si l'affectation a un direction_id, vérifier uniquement au niveau direction
+    if (assignment.direction_id) {
       const hasDirectionAccess = assignment.direction_id === projectData.direction_id;
       console.log("Checking direction level access:", {
         assignedDirection: assignment.direction_id,
@@ -83,11 +83,11 @@ export const canManagerAccessProject = async (
         directionName: assignment.directions?.name,
         hasAccess: hasDirectionAccess
       });
-      if (hasDirectionAccess) return true;
+      return hasDirectionAccess;
     }
 
-    // Vérifier au niveau pôle si une affectation pôle existe
-    if (assignment.pole_id && projectData.pole_id) {
+    // Si l'affectation a uniquement un pole_id, vérifier au niveau pôle
+    if (assignment.pole_id) {
       const hasPoleAccess = assignment.pole_id === projectData.pole_id;
       console.log("Checking pole level access:", {
         assignedPole: assignment.pole_id,
@@ -95,7 +95,7 @@ export const canManagerAccessProject = async (
         poleName: assignment.poles?.name,
         hasAccess: hasPoleAccess
       });
-      if (hasPoleAccess) return true;
+      return hasPoleAccess;
     }
 
     return false;
