@@ -75,66 +75,75 @@ export const ProjectTable = ({
     enabled: !!user?.id,
   });
 
-  const isAdmin = userRoles?.some(role => role.role === "admin");
-  console.log("Is admin (table):", isAdmin);
+  const { data: filteredProjects } = useQuery({
+    queryKey: ["filteredProjects", projects, user?.id, userRoles, userProfile],
+    queryFn: async () => {
+      if (!user) {
+        console.log("No user logged in (table)");
+        return [];
+      }
 
-  // Les projets sont déjà filtrés par la politique RLS au niveau de la base de données
-  // Nous ajoutons des logs pour comprendre le filtrage
-  const filteredProjects = projects.filter(async project => {
-    if (!user) {
-      console.log("No user logged in (table)");
-      return false;
-    }
-    
-    if (isAdmin) {
-      console.log(`Project ${project.id} accessible (admin access) (table)`);
-      return true;
-    }
+      const isAdmin = userRoles?.some(role => role.role === "admin");
+      if (isAdmin) {
+        console.log("User is admin (table), showing all projects");
+        return projects;
+      }
 
-    // Vérifier si l'utilisateur est chef de projet
-    const isProjectManager = project.project_manager === userProfile?.email;
-    
-    // Vérifier si l'utilisateur a accès via la fonction can_manager_access_project
-    const { data: canAccess, error } = await supabase
-      .rpc('can_manager_access_project', {
-        p_user_id: user.id,
-        p_project_id: project.id
-      });
+      const filteredResults = await Promise.all(
+        projects.map(async project => {
+          const isProjectManager = project.project_manager === userProfile?.email;
+          
+          if (isProjectManager) {
+            console.log(`Project ${project.id} accessible (project manager) (table)`);
+            return true;
+          }
 
-    if (error) {
-      console.error("Error checking project access (table):", error);
-    }
+          const { data: canAccess, error } = await supabase
+            .rpc('can_manager_access_project', {
+              p_user_id: user.id,
+              p_project_id: project.id
+            });
 
-    // Déterminer le niveau hiérarchique du projet
-    let projectLevel = "Non défini";
-    if (project.service_id) {
-      projectLevel = "Service";
-    } else if (project.direction_id) {
-      projectLevel = "Direction";
-    } else if (project.pole_id) {
-      projectLevel = "Pôle";
-    }
+          if (error) {
+            console.error("Error checking project access (table):", error);
+            return false;
+          }
 
-    console.log(`Project ${project.id} - ${project.title} (table):`, {
-      projectLevel,
-      hierarchyDetails: {
-        pole_id: project.pole_id,
-        direction_id: project.direction_id,
-        service_id: project.service_id
-      },
-      access: {
-        isProjectManager,
-        canAccess,
-        userEmail: userProfile?.email,
-        projectManager: project.project_manager
-      },
-      userRoles: userRoles?.map(r => r.role)
-    });
+          let projectLevel = "Non défini";
+          if (project.service_id) {
+            projectLevel = "Service";
+          } else if (project.direction_id) {
+            projectLevel = "Direction";
+          } else if (project.pole_id) {
+            projectLevel = "Pôle";
+          }
 
-    return isProjectManager || canAccess;
+          console.log(`Project ${project.id} - ${project.title} (table):`, {
+            projectLevel,
+            hierarchyDetails: {
+              pole_id: project.pole_id,
+              direction_id: project.direction_id,
+              service_id: project.service_id
+            },
+            access: {
+              isProjectManager,
+              canAccess,
+              userEmail: userProfile?.email,
+              projectManager: project.project_manager
+            },
+            userRoles: userRoles?.map(r => r.role)
+          });
+
+          return canAccess;
+        })
+      );
+
+      return projects.filter((_, index) => filteredResults[index]);
+    },
+    enabled: !!user?.id && !!userRoles && !!userProfile,
   });
 
-  console.log("Filtered projects (table):", filteredProjects.length, "out of", projects.length);
+  console.log("Filtered projects (table):", filteredProjects?.length || 0, "out of", projects.length);
 
   const handleSort = (key: string) => {
     if (sortKey === key) {
@@ -148,6 +157,10 @@ export const ProjectTable = ({
       setSortDirection("asc");
     }
   };
+
+  if (!filteredProjects) {
+    return null;
+  }
 
   const sortedProjects = [...filteredProjects].sort((a: any, b: any) => {
     if (!sortKey || !sortDirection) return 0;
