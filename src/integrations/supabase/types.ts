@@ -41,52 +41,28 @@ export type Database = {
       manager_assignments: {
         Row: {
           created_at: string | null
-          direction_id: string | null
+          entity_id: string
+          entity_type: string
           id: string
-          pole_id: string | null
-          service_id: string | null
           user_id: string | null
         }
         Insert: {
           created_at?: string | null
-          direction_id?: string | null
+          entity_id: string
+          entity_type: string
           id?: string
-          pole_id?: string | null
-          service_id?: string | null
           user_id?: string | null
         }
         Update: {
           created_at?: string | null
-          direction_id?: string | null
+          entity_id?: string
+          entity_type?: string
           id?: string
-          pole_id?: string | null
-          service_id?: string | null
           user_id?: string | null
         }
         Relationships: [
           {
-            foreignKeyName: "manager_assignments_direction_id_fkey"
-            columns: ["direction_id"]
-            isOneToOne: false
-            referencedRelation: "directions"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "manager_assignments_pole_id_fkey"
-            columns: ["pole_id"]
-            isOneToOne: false
-            referencedRelation: "poles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "manager_assignments_service_id_fkey"
-            columns: ["service_id"]
-            isOneToOne: false
-            referencedRelation: "services"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "manager_assignments_user_id_fkey"
+            foreignKeyName: "temp_manager_assignments_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
