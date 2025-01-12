@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -37,9 +37,17 @@ const getRoleLabel = (role: string): string => {
 
 export const ProfileForm = ({ isOpen, onClose, profile }: ProfileFormProps) => {
   const { toast } = useToast();
-  const [firstName, setFirstName] = useState(profile?.first_name || "");
-  const [lastName, setLastName] = useState(profile?.last_name || "");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Update form fields when profile changes
+  useEffect(() => {
+    if (profile) {
+      setFirstName(profile.first_name || "");
+      setLastName(profile.last_name || "");
+    }
+  }, [profile]);
 
   // Fetch user roles
   const { data: userRoles } = useQuery({
