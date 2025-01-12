@@ -52,19 +52,35 @@ export const canManagerAccessProject = async (
 
   // Vérifier les droits basés sur la hiérarchie
   return assignments.some(assignment => {
-    // Vérifier d'abord le niveau le plus précis
-    if (assignment.service_id && assignment.service_id === projectData.service_id) {
-      console.log("Access granted via service level");
-      return true;
+    // Si le manager a une affectation service, il ne voit que les projets de ce service
+    if (assignment.service_id) {
+      console.log("Checking service level access:", {
+        assignedService: assignment.service_id,
+        projectService: projectData.service_id
+      });
+      return assignment.service_id === projectData.service_id;
     }
-    if (assignment.direction_id && assignment.direction_id === projectData.direction_id) {
-      console.log("Access granted via direction level");
-      return true;
+    
+    // Si le manager a une affectation direction, il voit les projets de la direction
+    // et de ses services
+    if (assignment.direction_id) {
+      console.log("Checking direction level access:", {
+        assignedDirection: assignment.direction_id,
+        projectDirection: projectData.direction_id
+      });
+      return assignment.direction_id === projectData.direction_id;
     }
-    if (assignment.pole_id && assignment.pole_id === projectData.pole_id) {
-      console.log("Access granted via pole level");
-      return true;
+    
+    // Si le manager a une affectation pôle, il voit les projets du pôle
+    // et de ses directions/services
+    if (assignment.pole_id) {
+      console.log("Checking pole level access:", {
+        assignedPole: assignment.pole_id,
+        projectPole: projectData.pole_id
+      });
+      return assignment.pole_id === projectData.pole_id;
     }
+
     return false;
   });
 };
