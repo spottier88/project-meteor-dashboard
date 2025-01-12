@@ -46,7 +46,9 @@ export const ProjectActions = ({
   const canManageProjectRisks = canManageRisks(userRoles, user?.id, owner_id, project_manager, user?.email);
 
   // Un manager ne peut que consulter les projets auxquels il a accès
-  const showActions = !isManager || canEdit;
+  // S'il est uniquement manager (et pas chef de projet du projet), il ne doit pas voir les boutons d'action
+  const isOnlyManager = isManager && project_manager !== user?.email && !isAdmin;
+  const showActions = !isOnlyManager;
 
   if (!showActions) {
     return null;
