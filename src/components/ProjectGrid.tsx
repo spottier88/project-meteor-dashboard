@@ -136,10 +136,11 @@ export const ProjectGrid = ({
     console.log("Access check result:", {
       isProjectManager,
       hasManagerAccess,
-      finalAccess: isProjectManager || hasManagerAccess
+      finalAccess: isProjectManager || (hasManagerAccess === true) // Modification ici
     });
 
-    return isProjectManager || hasManagerAccess;
+    // On s'assure que hasManagerAccess est strictement true pour accorder l'accès
+    return isProjectManager || (hasManagerAccess === true);
   });
 
   return (
