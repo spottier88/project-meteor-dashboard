@@ -3,9 +3,8 @@ import { RiskList } from "@/components/RiskList";
 import { KanbanBoard } from "@/components/KanbanBoard";
 import { LastReview } from "@/components/LastReview";
 import { ProjectSummaryHeader } from "@/components/project/ProjectSummaryHeader";
-import { ProjectSummaryActions } from "./ProjectSummaryActions";
 import { useUser } from "@supabase/auth-helpers-react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useState } from "react";
 import { TaskForm } from "@/components/TaskForm";
@@ -27,6 +26,7 @@ export const ProjectSummaryContent = ({
 }: ProjectSummaryContentProps) => {
   const user = useUser();
   const [isTaskFormOpen, setIsTaskFormOpen] = useState(false);
+  const queryClient = useQueryClient();
 
   const { data: userRoles } = useQuery({
     queryKey: ["userRoles", user?.id],
@@ -48,6 +48,11 @@ export const ProjectSummaryContent = ({
   const isAdmin = roles?.includes("admin");
   const isOnlyManager = isManager && project.project_manager !== user?.email && !isAdmin;
   const showActions = !isOnlyManager;
+
+  const handleTaskSubmit = async () => {
+    await queryClient.invalidateQueries({ queryKey: ["tasks", project.id] });
+    setIsTaskFormOpen(false);
+  };
 
   return (
     <div className="grid gap-6">
@@ -88,9 +93,7 @@ export const ProjectSummaryContent = ({
       <TaskForm
         isOpen={isTaskFormOpen}
         onClose={() => setIsTaskFormOpen(false)}
-        onSubmit={() => {
-          setIsTaskFormOpen(false);
-        }}
+        onSubmit={handleTaskSubmit}
         projectId={project.id}
       />
     </div>
