@@ -6,7 +6,7 @@ import { Settings } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { NewAssignmentForm } from "@/components/manager/NewAssignmentForm";
 import { AssignmentsList } from "@/components/manager/AssignmentsList";
-import { ManagerAssignment } from "@/types/user";
+import { ManagerAssignment, ManagerAssignmentWithDetails } from "@/types/user";
 
 export const ManagerAssignments = () => {
   const { userId } = useParams();
@@ -35,17 +35,30 @@ export const ManagerAssignments = () => {
     queryKey: ["manager_assignments", userId],
     queryFn: async () => {
       if (!userId) return [];
-      const { data, error } = await supabase
+      const { data: assignmentsData, error } = await supabase
         .from("manager_assignments")
-        .select(`
-          *,
-          poles (id, name),
-          directions (id, name),
-          services (id, name)
-        `)
+        .select("*")
         .eq("user_id", userId);
+
       if (error) throw error;
-      return data;
+
+      // Fetch entity details for each assignment
+      const detailedAssignments = await Promise.all(
+        assignmentsData.map(async (assignment) => {
+          const { data: entityData } = await supabase
+            .from(assignment.entity_type + "s")
+            .select("name")
+            .eq("id", assignment.entity_id)
+            .single();
+
+          return {
+            ...assignment,
+            entity_details: entityData
+          } as ManagerAssignmentWithDetails;
+        })
+      );
+
+      return detailedAssignments;
     },
     enabled: !!userId,
   });

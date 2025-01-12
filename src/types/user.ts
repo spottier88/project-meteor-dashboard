@@ -18,20 +18,13 @@ export interface UserRoleData {
 export interface ManagerAssignment {
   id: string;
   user_id: string;
-  pole_id: string | null;
-  direction_id: string | null;
-  service_id: string | null;
+  entity_id: string;
+  entity_type: 'pole' | 'direction' | 'service';
   created_at?: string;
-  poles?: {
-    id: string;
-    name: string;
-  };
-  directions?: {
-    id: string;
-    name: string;
-  };
-  services?: {
-    id: string;
+}
+
+export interface ManagerAssignmentWithDetails extends ManagerAssignment {
+  entity_details?: {
     name: string;
   };
 }
