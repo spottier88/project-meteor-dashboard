@@ -43,12 +43,16 @@ export const canManagerAccessProject = async (
     .eq("user_id", userId)
     .eq("projects.id", projectId);
 
-  return assignments?.some(assignment => {
+  if (!assignments) return false;
+
+  return assignments.some(assignment => {
     const project = assignment.projects;
+    if (!project) return false;
+
     return (
       (assignment.pole_id && project.pole_id === assignment.pole_id) ||
       (assignment.direction_id && project.direction_id === assignment.direction_id) ||
       (assignment.service_id && project.service_id === assignment.service_id)
     );
-  }) || false;
+  });
 };

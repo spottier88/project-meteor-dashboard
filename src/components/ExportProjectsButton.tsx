@@ -131,24 +131,6 @@ export const ExportProjectsButton = () => {
     setSelectedProjects(selectedIds);
   };
 
-  const renderPDFDownload = () => {
-    if (!projectsData || projectsData.length === 0) return null;
-
-    return (
-      <PDFDownloadLink
-        document={<MultiProjectPDF projectsData={projectsData} />}
-        fileName="projets-export.pdf"
-        className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2"
-      >
-        <span>
-          {({ loading }) => (
-            loading ? "Génération..." : "Télécharger le PDF"
-          )}
-        </span>
-      </PDFDownloadLink>
-    );
-  };
-
   return (
     <Sheet open={isOpen} onOpenChange={setIsOpen}>
       <SheetTrigger asChild>
@@ -164,7 +146,15 @@ export const ExportProjectsButton = () => {
         <div className="mt-6 space-y-4">
           <ProjectSelectionTable onSelectionChange={handleSelectionChange} />
           <div className="flex justify-end mt-4">
-            {selectedProjects.length > 0 && renderPDFDownload()}
+            {selectedProjects.length > 0 && projectsData && (
+              <PDFDownloadLink
+                document={<MultiProjectPDF projectsData={projectsData} />}
+                fileName="projets-export.pdf"
+                className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2"
+              >
+                {({ loading }) => (loading ? "Génération..." : "Télécharger le PDF")}
+              </PDFDownloadLink>
+            )}
           </div>
         </div>
       </SheetContent>
