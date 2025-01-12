@@ -26,32 +26,26 @@ export const ProjectSummaryContent = ({
 }: ProjectSummaryContentProps) => {
   const user = useUser();
   const [isTaskFormOpen, setIsTaskFormOpen] = useState(false);
+  const [selectedTask, setSelectedTask] = useState<any>(null);
   const queryClient = useQueryClient();
 
-  const { data: userRoles } = useQuery({
-    queryKey: ["userRoles", user?.id],
-    queryFn: async () => {
-      if (!user?.id) return null;
-      const { data, error } = await supabase
-        .from("user_roles")
-        .select("*")
-        .eq("user_id", user.id);
+  const handleTaskEdit = (task: any) => {
+    setSelectedTask(task);
+    setIsTaskFormOpen(true);
+  };
 
-      if (error) throw error;
-      return data;
-    },
-    enabled: !!user?.id,
-  });
-
-  const roles = userRoles?.map(ur => ur.role);
-  const isManager = roles?.includes("manager");
-  const isAdmin = roles?.includes("admin");
-  const isOnlyManager = isManager && project.project_manager !== user?.email && !isAdmin;
-  const showActions = !isOnlyManager;
+  const handleTaskFormClose = () => {
+    setIsTaskFormOpen(false);
+    setSelectedTask(null);
+  };
 
   const handleTaskSubmit = async () => {
     await queryClient.invalidateQueries({ queryKey: ["tasks", project.id] });
-    setIsTaskFormOpen(false);
+    handleTaskFormClose();
+  };
+
+  const handleRiskSubmit = async () => {
+    await queryClient.invalidateQueries({ queryKey: ["risks", project.id] });
   };
 
   return (
@@ -76,25 +70,35 @@ export const ProjectSummaryContent = ({
       <div className="space-y-4">
         <div className="flex items-center justify-between">
           <h2 className="text-2xl font-bold">Tâches</h2>
-          {showActions && (
+          {canManage && (
             <Button onClick={() => setIsTaskFormOpen(true)} size="sm">
               Nouvelle tâche
             </Button>
           )}
         </div>
-        <KanbanBoard projectId={project.id} readOnly={!showActions} />
+        <KanbanBoard 
+          projectId={project.id} 
+          readOnly={!canManage} 
+          onEditTask={handleTaskEdit}
+        />
       </div>
 
       <div className="space-y-4">
         <h2 className="text-2xl font-bold">Risques</h2>
-        <RiskList projectId={project.id} projectTitle={project.title} readOnly={!showActions} />
+        <RiskList 
+          projectId={project.id} 
+          projectTitle={project.title} 
+          readOnly={!canManage}
+          onRiskSubmit={handleRiskSubmit}
+        />
       </div>
 
       <TaskForm
         isOpen={isTaskFormOpen}
-        onClose={() => setIsTaskFormOpen(false)}
+        onClose={handleTaskFormClose}
         onSubmit={handleTaskSubmit}
         projectId={project.id}
+        task={selectedTask}
       />
     </div>
   );
