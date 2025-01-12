@@ -169,3 +169,4 @@ export const ManagerAssignmentFields = ({ userId, onAssignmentChange }: ManagerA
       </div>
     </div>
   );
+};
