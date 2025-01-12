@@ -64,11 +64,27 @@ export const ProjectTable = ({
       if (!user?.id) return null;
       const { data, error } = await supabase
         .from("manager_assignments")
-        .select("*")
+        .select(`
+          *,
+          poles:pole_id (
+            id,
+            name
+          ),
+          directions:direction_id (
+            id,
+            name,
+            pole_id
+          ),
+          services:service_id (
+            id,
+            name,
+            direction_id
+          )
+        `)
         .eq("user_id", user.id);
 
       if (error) throw error;
-      console.log("Manager assignments (table):", data);
+      console.log("Manager assignments with full hierarchy (table):", data);
       return data;
     },
     enabled: !!user?.id,
@@ -91,21 +107,40 @@ export const ProjectTable = ({
     
     // Si l'utilisateur est manager, vérifier les assignations
     const hasManagerAccess = isManager && managerAssignments?.some(assignment => {
-      const hasPoleAccess = assignment.pole_id && project.pole_id === assignment.pole_id;
-      const hasDirectionAccess = assignment.direction_id && project.direction_id === assignment.direction_id;
-      const hasServiceAccess = assignment.service_id && project.service_id === assignment.service_id;
-      
-      console.log("Manager assignment check (table):", {
-        hasPoleAccess,
-        hasDirectionAccess,
-        hasServiceAccess,
-        assignment,
-        projectPoleId: project.pole_id,
-        projectDirectionId: project.direction_id,
-        projectServiceId: project.service_id
-      });
+      // Vérifier d'abord au niveau service si applicable
+      if (assignment.service_id && project.service_id) {
+        const hasServiceAccess = assignment.service_id === project.service_id;
+        console.log("Service level check (table):", {
+          assignedService: assignment.services?.name,
+          projectService: project.service_id,
+          hasAccess: hasServiceAccess
+        });
+        return hasServiceAccess;
+      }
 
-      return hasPoleAccess || hasDirectionAccess || hasServiceAccess;
+      // Vérifier au niveau direction si applicable
+      if (assignment.direction_id && project.direction_id) {
+        const hasDirectionAccess = assignment.direction_id === project.direction_id;
+        console.log("Direction level check (table):", {
+          assignedDirection: assignment.directions?.name,
+          projectDirection: project.direction_id,
+          hasAccess: hasDirectionAccess
+        });
+        return hasDirectionAccess;
+      }
+
+      // Vérifier au niveau pôle si applicable
+      if (assignment.pole_id && project.pole_id) {
+        const hasPoleAccess = assignment.pole_id === project.pole_id;
+        console.log("Pole level check (table):", {
+          assignedPole: assignment.poles?.name,
+          projectPole: project.pole_id,
+          hasAccess: hasPoleAccess
+        });
+        return hasPoleAccess;
+      }
+
+      return false;
     });
 
     console.log("Access check result (table):", {
