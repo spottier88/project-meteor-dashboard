@@ -41,7 +41,6 @@ export const ProfileForm = ({ isOpen, onClose, profile }: ProfileFormProps) => {
   const [lastName, setLastName] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Update form fields when profile changes
   useEffect(() => {
     if (profile) {
       setFirstName(profile.first_name || "");
@@ -49,7 +48,6 @@ export const ProfileForm = ({ isOpen, onClose, profile }: ProfileFormProps) => {
     }
   }, [profile]);
 
-  // Fetch user roles
   const { data: userRoles } = useQuery({
     queryKey: ["userRoles", profile?.id],
     queryFn: async () => {
@@ -65,23 +63,33 @@ export const ProfileForm = ({ isOpen, onClose, profile }: ProfileFormProps) => {
     enabled: !!profile?.id,
   });
 
-  // Fetch manager assignments if user is a manager
   const { data: managerAssignments } = useQuery({
     queryKey: ["managerAssignments", profile?.id],
     queryFn: async () => {
       if (!profile?.id) return null;
-      const { data, error } = await supabase
+      const { data: assignmentsData, error } = await supabase
         .from("manager_assignments")
-        .select(`
-          *,
-          poles (name),
-          directions (name),
-          services (name)
-        `)
+        .select("*")
         .eq("user_id", profile.id);
 
       if (error) throw error;
-      return data;
+
+      const detailedAssignments = await Promise.all(
+        assignmentsData.map(async (assignment) => {
+          const { data: entityData } = await supabase
+            .from(assignment.entity_type + "s")
+            .select("name")
+            .eq("id", assignment.entity_id)
+            .maybeSingle();
+
+          return {
+            ...assignment,
+            entity_details: entityData || { name: 'Unknown' }
+          };
+        })
+      );
+
+      return detailedAssignments;
     },
     enabled: !!profile?.id && userRoles?.some(role => role.role === "manager"),
   });
@@ -172,21 +180,11 @@ export const ProfileForm = ({ isOpen, onClose, profile }: ProfileFormProps) => {
                 <div className="space-y-2">
                   {managerAssignments.map((assignment) => (
                     <div key={assignment.id} className="flex flex-wrap gap-2">
-                      {assignment.poles && (
-                        <Badge variant="outline">
-                          Pôle: {assignment.poles.name}
-                        </Badge>
-                      )}
-                      {assignment.directions && (
-                        <Badge variant="outline">
-                          Direction: {assignment.directions.name}
-                        </Badge>
-                      )}
-                      {assignment.services && (
-                        <Badge variant="outline">
-                          Service: {assignment.services.name}
-                        </Badge>
-                      )}
+                      <Badge variant="outline">
+                        {assignment.entity_type === 'pole' && `Pôle: ${assignment.entity_details.name}`}
+                        {assignment.entity_type === 'direction' && `Direction: ${assignment.entity_details.name}`}
+                        {assignment.entity_type === 'service' && `Service: ${assignment.entity_details.name}`}
+                      </Badge>
                     </div>
                   ))}
                 </div>

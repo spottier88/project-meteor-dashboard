@@ -49,7 +49,7 @@ export const ManagerAssignments = () => {
             .from(assignment.entity_type + "s")
             .select("name")
             .eq("id", assignment.entity_id)
-            .single();
+            .maybeSingle();
 
           return {
             ...assignment,
