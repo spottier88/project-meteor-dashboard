@@ -6,7 +6,7 @@ import { Settings } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { NewAssignmentForm } from "@/components/manager/NewAssignmentForm";
 import { AssignmentsList } from "@/components/manager/AssignmentsList";
-import { ManagerAssignment, ManagerAssignmentWithDetails } from "@/types/user";
+import { ManagerAssignment, ManagerAssignmentWithDetails, EntityType } from "@/types/user";
 
 export const ManagerAssignments = () => {
   const { userId } = useParams();
@@ -14,7 +14,6 @@ export const ManagerAssignments = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  // Fetch user profile
   const { data: profile, isLoading: isLoadingProfile } = useQuery({
     queryKey: ["profile", userId],
     queryFn: async () => {
@@ -30,7 +29,6 @@ export const ManagerAssignments = () => {
     enabled: !!userId,
   });
 
-  // Fetch existing assignments with related data
   const { data: assignments, isLoading: isLoadingAssignments } = useQuery({
     queryKey: ["manager_assignments", userId],
     queryFn: async () => {
@@ -42,11 +40,11 @@ export const ManagerAssignments = () => {
 
       if (error) throw error;
 
-      // Fetch entity details for each assignment
       const detailedAssignments = await Promise.all(
         assignmentsData.map(async (assignment) => {
+          const tableName = `${assignment.entity_type}s` as "poles" | "directions" | "services";
           const { data: entityData } = await supabase
-            .from(assignment.entity_type + "s")
+            .from(tableName)
             .select("name")
             .eq("id", assignment.entity_id)
             .maybeSingle();
@@ -63,7 +61,6 @@ export const ManagerAssignments = () => {
     enabled: !!userId,
   });
 
-  // Add assignment mutation
   const addAssignment = useMutation({
     mutationFn: async (assignment: Omit<ManagerAssignment, 'id' | 'created_at'>) => {
       const { error } = await supabase
@@ -87,7 +84,6 @@ export const ManagerAssignments = () => {
     },
   });
 
-  // Delete assignment mutation
   const deleteAssignment = useMutation({
     mutationFn: async (assignmentId: string) => {
       const { error } = await supabase

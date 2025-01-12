@@ -15,6 +15,7 @@ import { UserProfile } from "@/types/user";
 import { Badge } from "@/components/ui/badge";
 import { useQuery } from "@tanstack/react-query";
 import { Separator } from "@/components/ui/separator";
+import { ManagerAssignmentWithDetails } from "@/types/user";
 
 interface ProfileFormProps {
   isOpen: boolean;
@@ -76,8 +77,9 @@ export const ProfileForm = ({ isOpen, onClose, profile }: ProfileFormProps) => {
 
       const detailedAssignments = await Promise.all(
         assignmentsData.map(async (assignment) => {
+          const tableName = `${assignment.entity_type}s` as "poles" | "directions" | "services";
           const { data: entityData } = await supabase
-            .from(assignment.entity_type + "s")
+            .from(tableName)
             .select("name")
             .eq("id", assignment.entity_id)
             .maybeSingle();
@@ -85,7 +87,7 @@ export const ProfileForm = ({ isOpen, onClose, profile }: ProfileFormProps) => {
           return {
             ...assignment,
             entity_details: entityData || { name: 'Unknown' }
-          };
+          } as ManagerAssignmentWithDetails;
         })
       );
 

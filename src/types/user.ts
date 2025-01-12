@@ -15,11 +15,13 @@ export interface UserRoleData {
   created_at: string;
 }
 
+export type EntityType = 'pole' | 'direction' | 'service';
+
 export interface ManagerAssignment {
   id: string;
   user_id: string | null;
   entity_id: string;
-  entity_type: 'pole' | 'direction' | 'service';
+  entity_type: EntityType;
   created_at?: string;
 }
 
