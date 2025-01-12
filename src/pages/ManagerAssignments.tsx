@@ -53,7 +53,7 @@ export const ManagerAssignments = () => {
 
           return {
             ...assignment,
-            entity_details: entityData
+            entity_details: entityData || { name: 'Unknown' }
           } as ManagerAssignmentWithDetails;
         })
       );

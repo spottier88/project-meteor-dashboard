@@ -24,7 +24,7 @@ export interface ManagerAssignment {
 }
 
 export interface ManagerAssignmentWithDetails extends ManagerAssignment {
-  entity_details?: {
+  entity_details: {
     name: string;
   };
 }

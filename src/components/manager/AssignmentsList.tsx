@@ -20,13 +20,11 @@ export const AssignmentsList = ({ assignments, onAssignmentDelete }: Assignments
           {assignments?.map((assignment) => (
             <div key={assignment.id} className="flex items-center justify-between p-4 border rounded-lg">
               <div className="flex flex-wrap gap-2">
-                {assignment.entity_details && (
-                  <Badge variant="secondary">
-                    {assignment.entity_type === 'pole' && `Pôle: ${assignment.entity_details.name}`}
-                    {assignment.entity_type === 'direction' && `Direction: ${assignment.entity_details.name}`}
-                    {assignment.entity_type === 'service' && `Service: ${assignment.entity_details.name}`}
-                  </Badge>
-                )}
+                <Badge variant="secondary">
+                  {assignment.entity_type === 'pole' && `Pôle: ${assignment.entity_details.name}`}
+                  {assignment.entity_type === 'direction' && `Direction: ${assignment.entity_details.name}`}
+                  {assignment.entity_type === 'service' && `Service: ${assignment.entity_details.name}`}
+                </Badge>
               </div>
               <Button
                 variant="ghost"
