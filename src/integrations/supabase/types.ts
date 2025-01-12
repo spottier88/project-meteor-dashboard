@@ -440,6 +440,13 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      can_manager_access_project: {
+        Args: {
+          p_user_id: string
+          p_project_id: string
+        }
+        Returns: boolean
+      }
       get_users_without_profile: {
         Args: Record<PropertyKey, never>
         Returns: {
