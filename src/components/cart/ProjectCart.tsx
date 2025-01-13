@@ -3,9 +3,7 @@ import { Button } from "@/components/ui/button";
 import { useProjectCart } from "@/hooks/use-project-cart";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { PDFDownloadLink } from "@react-pdf/renderer";
-import { MultiProjectPDF } from "../MultiProjectPDF";
-import { Trash2, FileText, Presentation } from "lucide-react";
+import { Trash2, Presentation } from "lucide-react";
 import { useToast } from "../ui/use-toast";
 import { generateProjectPPTX } from "../pptx/ProjectPPTX";
 
@@ -166,21 +164,10 @@ export const ProjectCart = ({ isOpen, onClose }: ProjectCartProps) => {
                 </Button>
                 <div className="space-x-2">
                   {projectsData && (
-                    <>
-                      <Button asChild variant="outline">
-                        <PDFDownloadLink
-                          document={<MultiProjectPDF projectsData={projectsData} />}
-                          fileName="projets-export.pdf"
-                        >
-                          <FileText className="h-4 w-4 mr-2" />
-                          PDF
-                        </PDFDownloadLink>
-                      </Button>
-                      <Button onClick={handlePPTXExport} variant="outline">
-                        <Presentation className="h-4 w-4 mr-2" />
-                        PPTX
-                      </Button>
-                    </>
+                    <Button onClick={handlePPTXExport} variant="outline">
+                      <Presentation className="h-4 w-4 mr-2" />
+                      PPTX
+                    </Button>
                   )}
                 </div>
               </div>
