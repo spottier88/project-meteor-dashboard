@@ -48,15 +48,6 @@ const getEntityTypeLabel = (type: string): string => {
   }
 };
 
-interface ManagerAssignmentData {
-  id: string;
-  entity_id: string;
-  entity_type: string;
-  poles: { name: string } | null;
-  directions: { name: string } | null;
-  services: { name: string } | null;
-}
-
 export const ProfileForm = ({ isOpen, onClose, profile }: ProfileFormProps) => {
   const { toast } = useToast();
   const [firstName, setFirstName] = useState("");
@@ -92,35 +83,49 @@ export const ProfileForm = ({ isOpen, onClose, profile }: ProfileFormProps) => {
     queryFn: async () => {
       if (!profile?.id || !isManager) return null;
 
-      const { data: assignments, error } = await supabase
+      // Récupérer d'abord les affectations
+      const { data: assignments, error: assignmentsError } = await supabase
         .from("manager_assignments")
-        .select(`
-          id,
-          entity_id,
-          entity_type,
-          poles:poles!inner(name),
-          directions:directions!inner(name),
-          services:services!inner(name)
-        `)
+        .select("id, entity_id, entity_type")
         .eq("user_id", profile.id);
 
-      if (error) throw error;
+      if (assignmentsError) throw assignmentsError;
 
-      const detailedAssignments = assignments.map((assignment: ManagerAssignmentData) => {
-        let entityName = '';
-        if (assignment.entity_type === 'pole' && assignment.poles) {
-          entityName = assignment.poles.name;
-        } else if (assignment.entity_type === 'direction' && assignment.directions) {
-          entityName = assignment.directions.name;
-        } else if (assignment.entity_type === 'service' && assignment.services) {
-          entityName = assignment.services.name;
-        }
+      // Pour chaque affectation, récupérer le nom de l'entité correspondante
+      const detailedAssignments = await Promise.all(
+        assignments.map(async (assignment) => {
+          let entityName = '';
+          
+          // Selon le type d'entité, faire la requête appropriée
+          if (assignment.entity_type === 'pole') {
+            const { data } = await supabase
+              .from('poles')
+              .select('name')
+              .eq('id', assignment.entity_id)
+              .single();
+            entityName = data?.name || '';
+          } else if (assignment.entity_type === 'direction') {
+            const { data } = await supabase
+              .from('directions')
+              .select('name')
+              .eq('id', assignment.entity_id)
+              .single();
+            entityName = data?.name || '';
+          } else if (assignment.entity_type === 'service') {
+            const { data } = await supabase
+              .from('services')
+              .select('name')
+              .eq('id', assignment.entity_id)
+              .single();
+            entityName = data?.name || '';
+          }
 
-        return {
-          ...assignment,
-          entity_name: entityName,
-        };
-      });
+          return {
+            ...assignment,
+            entity_name: entityName,
+          };
+        })
+      );
 
       return detailedAssignments;
     },
