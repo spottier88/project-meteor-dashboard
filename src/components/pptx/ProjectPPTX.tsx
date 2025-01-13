@@ -59,7 +59,7 @@ export const generateProjectPPTX = async (projectsData: ProjectData[]) => {
     background: { color: "FFFFFF" },
     margin: [0.5, 0.5, 0.5, 0.5],
     objects: [
-      { rect: { x: 0, y: 0, w: "100%", h: 1.2, fill: { color: "CC0000" } } },
+      { rect: { x: 0, y: 0, w: "100%", h: 0.8, fill: { color: "CC0000" } } },
       { rect: { x: 0, y: 6.7, w: "100%", h: 0.1, fill: { color: "000000" } } },
     ]
   });
@@ -80,26 +80,26 @@ export const generateProjectPPTX = async (projectsData: ProjectData[]) => {
         ].filter(Boolean).join(" / "), 
         options: { color: "FFFFFF", fontSize: 12 } 
       }
-    ], { x: 0.5, y: 0.2, w: 8 });
+    ], { x: 0.5, y: 0.1, w: 8 });
 
     // Date de revue
     if (data.lastReview?.created_at) {
       slide.addText(new Date(data.lastReview.created_at).toLocaleDateString("fr-FR"), {
-        x: 8.5, y: 0.2,
+        x: 8.5, y: 0.1,
         color: "FFFFFF",
         fontSize: 12,
         align: "right"
       });
     }
 
-    // Grille principale
+    // Grille principale avec espacement optimisé
     const grid = {
       x: 0.5,
-      y: 1.5,
+      y: 1.0,
       w: 9,
       h: 5,
       columnGap: 0.1,
-      rowGap: 0.2
+      rowGap: 0.1
     };
 
     // Situation (Météo)
@@ -107,7 +107,7 @@ export const generateProjectPPTX = async (projectsData: ProjectData[]) => {
       x: grid.x,
       y: grid.y,
       w: 1.5,
-      h: 1.2,
+      h: 1,
       fill: { color: "F5F5F5" },
     });
 
@@ -125,9 +125,9 @@ export const generateProjectPPTX = async (projectsData: ProjectData[]) => {
 
     slide.addText(weatherIcons[data.lastReview?.weather || "cloudy"], {
       x: grid.x,
-      y: grid.y + 0.5,
+      y: grid.y + 0.3,
       w: 1.5,
-      h: 0.5,
+      h: 0.7,
       fontSize: 24,
       align: "center",
       valign: "middle"
@@ -138,7 +138,7 @@ export const generateProjectPPTX = async (projectsData: ProjectData[]) => {
       x: grid.x + 1.6,
       y: grid.y,
       w: 1.5,
-      h: 1.2,
+      h: 1,
       fill: { color: "F5F5F5" },
     });
 
@@ -156,9 +156,9 @@ export const generateProjectPPTX = async (projectsData: ProjectData[]) => {
 
     slide.addText(progressIcons[data.lastReview?.progress || "stable"], {
       x: grid.x + 1.6,
-      y: grid.y + 0.5,
+      y: grid.y + 0.3,
       w: 1.5,
-      h: 0.5,
+      h: 0.7,
       fontSize: 24,
       align: "center",
       valign: "middle"
@@ -169,7 +169,7 @@ export const generateProjectPPTX = async (projectsData: ProjectData[]) => {
       x: grid.x + 3.2,
       y: grid.y,
       w: 4.5,
-      h: 1.2,
+      h: 1,
       fill: { color: "F5F5F5" },
     });
 
@@ -187,9 +187,9 @@ export const generateProjectPPTX = async (projectsData: ProjectData[]) => {
 
     slide.addText(data.lastReview?.comment || "Pas de commentaire", {
       x: grid.x + 3.2,
-      y: grid.y + 0.4,
+      y: grid.y + 0.3,
       w: 4.5,
-      h: 0.7,
+      h: 0.6,
       fontSize: 11,
       color: "363636",
       align: "left",
@@ -201,7 +201,7 @@ export const generateProjectPPTX = async (projectsData: ProjectData[]) => {
       x: grid.x + 7.8,
       y: grid.y,
       w: 1.5,
-      h: 1.2,
+      h: 1,
       fill: { color: "F5F5F5" },
     });
 
@@ -223,9 +223,9 @@ export const generateProjectPPTX = async (projectsData: ProjectData[]) => {
         : "Non définie", 
       {
         x: grid.x + 7.8,
-        y: grid.y + 0.5,
+        y: grid.y + 0.3,
         w: 1.5,
-        h: 0.5,
+        h: 0.6,
         fontSize: 11,
         color: "363636",
         align: "center",
@@ -234,14 +234,14 @@ export const generateProjectPPTX = async (projectsData: ProjectData[]) => {
     );
 
     // Tâches
-    const tasksY = grid.y + 1.6;
+    const tasksY = grid.y + 1.2;
     
     // Zone des tâches terminées
     slide.addShape("rect", {
       x: grid.x,
       y: tasksY,
       w: 4.5,
-      h: 2,
+      h: 1.8,
       fill: { color: "F5F5F5" },
     });
 
@@ -285,7 +285,7 @@ export const generateProjectPPTX = async (projectsData: ProjectData[]) => {
       x: grid.x + 4.6,
       y: tasksY,
       w: 4.7,
-      h: 2,
+      h: 1.8,
       fill: { color: "F5F5F5" },
     });
 
@@ -325,14 +325,14 @@ export const generateProjectPPTX = async (projectsData: ProjectData[]) => {
     }
 
     // Risques
-    const risksY = tasksY + 2.2;
+    const risksY = tasksY + 2;
 
     // Zone des risques identifiés
     slide.addShape("rect", {
       x: grid.x,
       y: risksY,
       w: 4.5,
-      h: 2,
+      h: 1.8,
       fill: { color: "F5F5F5" },
     });
 
@@ -375,7 +375,7 @@ export const generateProjectPPTX = async (projectsData: ProjectData[]) => {
       x: grid.x + 4.6,
       y: risksY,
       w: 4.7,
-      h: 2,
+      h: 1.8,
       fill: { color: "F5F5F5" },
     });
 
