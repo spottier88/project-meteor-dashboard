@@ -18,8 +18,8 @@ export const canManageProjectItems = (
   // Le chef de projet assigné peut tout faire
   if (projectManagerEmail && userEmail && projectManagerEmail === userEmail) return true;
 
-  // Les managers ne peuvent que consulter
-  if (roles.includes("manager")) return false;
+  // Les managers peuvent consulter
+  if (roles.includes("manager")) return true;
 
   return false;
 };
@@ -37,7 +37,19 @@ export const canEditProject = (
   projectManagerEmail?: string | undefined,
   userEmail?: string | undefined
 ): boolean => {
-  return canManageProjectItems(roles, userId, projectOwnerId, projectManagerEmail, userEmail);
+  if (!roles || !userId) return false;
+
+  // Les admins peuvent tout faire
+  if (roles.includes("admin")) return true;
+
+  // Le propriétaire du projet peut tout faire
+  if (userId === projectOwnerId) return true;
+
+  // Le chef de projet assigné peut tout faire
+  if (projectManagerEmail && userEmail && projectManagerEmail === userEmail) return true;
+
+  // Les managers ne peuvent pas éditer
+  return false;
 };
 
 export const canViewProjectHistory = (
@@ -57,7 +69,19 @@ export const canManageTasks = (
   projectManagerEmail?: string | undefined,
   userEmail?: string | undefined
 ): boolean => {
-  return canManageProjectItems(roles, userId, projectOwnerId, projectManagerEmail, userEmail);
+  if (!roles || !userId) return false;
+
+  // Les admins peuvent tout faire
+  if (roles.includes("admin")) return true;
+
+  // Le propriétaire du projet peut tout faire
+  if (userId === projectOwnerId) return true;
+
+  // Le chef de projet assigné peut tout faire
+  if (projectManagerEmail && userEmail && projectManagerEmail === userEmail) return true;
+
+  // Les managers ne peuvent pas gérer les tâches
+  return false;
 };
 
 export const canManageRisks = (
@@ -67,5 +91,17 @@ export const canManageRisks = (
   projectManagerEmail?: string | undefined,
   userEmail?: string | undefined
 ): boolean => {
-  return canManageProjectItems(roles, userId, projectOwnerId, projectManagerEmail, userEmail);
+  if (!roles || !userId) return false;
+
+  // Les admins peuvent tout faire
+  if (roles.includes("admin")) return true;
+
+  // Le propriétaire du projet peut tout faire
+  if (userId === projectOwnerId) return true;
+
+  // Le chef de projet assigné peut tout faire
+  if (projectManagerEmail && userEmail && projectManagerEmail === userEmail) return true;
+
+  // Les managers ne peuvent pas gérer les risques
+  return false;
 };
