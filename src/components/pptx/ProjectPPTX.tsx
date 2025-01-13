@@ -102,7 +102,7 @@ export const generateProjectPPTX = async (projectsData: ProjectData[]) => {
     };
 
     // Situation (Météo)
-    slide.addShape("RECTANGLE", {
+    slide.addShape("rect", {
       x: grid.x,
       y: grid.y,
       w: 1.5,
@@ -131,7 +131,7 @@ export const generateProjectPPTX = async (projectsData: ProjectData[]) => {
     });
 
     // Evolution
-    slide.addShape("RECTANGLE", {
+    slide.addShape("rect", {
       x: grid.x + 1.6,
       y: grid.y,
       w: 1.5,
@@ -160,7 +160,7 @@ export const generateProjectPPTX = async (projectsData: ProjectData[]) => {
     });
 
     // Situation générale
-    slide.addShape("RECTANGLE", {
+    slide.addShape("rect", {
       x: grid.x + 3.2,
       y: grid.y,
       w: 4.5,
@@ -189,7 +189,7 @@ export const generateProjectPPTX = async (projectsData: ProjectData[]) => {
     });
 
     // Fin cible
-    slide.addShape("RECTANGLE", {
+    slide.addShape("rect", {
       x: grid.x + 7.8,
       y: grid.y,
       w: 1.5,
