@@ -5,7 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { PDFDownloadLink } from "@react-pdf/renderer";
 import { MultiProjectPDF } from "../MultiProjectPDF";
-import { Trash2, FileText, FilePresentation } from "lucide-react";
+import { Trash2, FileText, Presentation } from "lucide-react";
 import { useToast } from "../ui/use-toast";
 import { generateProjectPPTX } from "../pptx/ProjectPPTX";
 
@@ -177,7 +177,7 @@ export const ProjectCart = ({ isOpen, onClose }: ProjectCartProps) => {
                         </PDFDownloadLink>
                       </Button>
                       <Button onClick={handlePPTXExport} variant="outline">
-                        <FilePresentation className="h-4 w-4 mr-2" />
+                        <Presentation className="h-4 w-4 mr-2" />
                         PPTX
                       </Button>
                     </>

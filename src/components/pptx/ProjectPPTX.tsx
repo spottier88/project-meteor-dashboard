@@ -80,13 +80,13 @@ export const generateProjectPPTX = async (projectsData: ProjectData[]) => {
     });
 
     const infoContent = [
-      ["Chef de projet", data.project.project_manager || "-"],
-      ["Date de début", data.project.start_date ? new Date(data.project.start_date).toLocaleDateString("fr-FR") : "-"],
-      ["Date de fin", data.project.end_date ? new Date(data.project.end_date).toLocaleDateString("fr-FR") : "-"],
-      ["Avancement", `${data.project.completion}%`],
-      ["Pôle", data.project.pole_name || "-"],
-      ["Direction", data.project.direction_name || "-"],
-      ["Service", data.project.service_name || "-"],
+      [{ text: "Chef de projet" }, { text: data.project.project_manager || "-" }],
+      [{ text: "Date de début" }, { text: data.project.start_date ? new Date(data.project.start_date).toLocaleDateString("fr-FR") : "-" }],
+      [{ text: "Date de fin" }, { text: data.project.end_date ? new Date(data.project.end_date).toLocaleDateString("fr-FR") : "-" }],
+      [{ text: "Avancement" }, { text: `${data.project.completion}%` }],
+      [{ text: "Pôle" }, { text: data.project.pole_name || "-" }],
+      [{ text: "Direction" }, { text: data.project.direction_name || "-" }],
+      [{ text: "Service" }, { text: data.project.service_name || "-" }],
     ];
 
     if (data.project.description) {
@@ -122,9 +122,9 @@ export const generateProjectPPTX = async (projectsData: ProjectData[]) => {
       });
 
       const reviewContent = [
-        ["Date", new Date(data.lastReview.created_at).toLocaleDateString("fr-FR")],
-        ["Météo", statusLabels[data.lastReview.weather]],
-        ["Progression", progressLabels[data.lastReview.progress]],
+        [{ text: "Date" }, { text: new Date(data.lastReview.created_at).toLocaleDateString("fr-FR") }],
+        [{ text: "Météo" }, { text: statusLabels[data.lastReview.weather] }],
+        [{ text: "Progression" }, { text: progressLabels[data.lastReview.progress] }],
       ];
 
       reviewSlide.addTable(reviewContent, {
@@ -196,17 +196,22 @@ export const generateProjectPPTX = async (projectsData: ProjectData[]) => {
       });
 
       // Add task list
-      const taskContent = data.tasks.map(task => [
-        task.title,
-        task.status === "todo" ? "À faire" : task.status === "in_progress" ? "En cours" : "Terminé",
-        task.assignee || "-",
-        task.due_date ? new Date(task.due_date).toLocaleDateString("fr-FR") : "-",
-      ]);
+      const taskContent = [
+        [
+          { text: "Titre" },
+          { text: "Statut" },
+          { text: "Assigné à" },
+          { text: "Date limite" }
+        ],
+        ...data.tasks.map(task => [
+          { text: task.title },
+          { text: task.status === "todo" ? "À faire" : task.status === "in_progress" ? "En cours" : "Terminé" },
+          { text: task.assignee || "-" },
+          { text: task.due_date ? new Date(task.due_date).toLocaleDateString("fr-FR") : "-" },
+        ])
+      ];
 
-      taskSlide.addTable([
-        ["Titre", "Statut", "Assigné à", "Date limite"],
-        ...taskContent,
-      ], {
+      taskSlide.addTable(taskContent, {
         x: pptxLayout.margin,
         y: 5,
         w: pptxLayout.width,
@@ -225,10 +230,10 @@ export const generateProjectPPTX = async (projectsData: ProjectData[]) => {
 
       // Risk matrix
       const matrix = [
-        ["Élevée", "", "", ""],
-        ["Moyenne", "", "", ""],
-        ["Faible", "", "", ""],
-        ["", "Faible", "Moyenne", "Élevée"],
+        [{ text: "Élevée" }, { text: "" }, { text: "" }, { text: "" }],
+        [{ text: "Moyenne" }, { text: "" }, { text: "" }, { text: "" }],
+        [{ text: "Faible" }, { text: "" }, { text: "" }, { text: "" }],
+        [{ text: "" }, { text: "Faible" }, { text: "Moyenne" }, { text: "Élevée" }],
       ];
 
       riskSlide.addTable(matrix, {
@@ -241,17 +246,22 @@ export const generateProjectPPTX = async (projectsData: ProjectData[]) => {
       });
 
       // Risk list
-      const riskContent = data.risks.map(risk => [
-        risk.description,
-        risk.probability === "low" ? "Faible" : risk.probability === "medium" ? "Moyenne" : "Élevée",
-        risk.severity === "low" ? "Faible" : risk.severity === "medium" ? "Moyenne" : "Élevée",
-        risk.status === "open" ? "Ouvert" : risk.status === "in_progress" ? "En cours" : "Résolu",
-      ]);
+      const riskContent = [
+        [
+          { text: "Description" },
+          { text: "Probabilité" },
+          { text: "Gravité" },
+          { text: "Statut" }
+        ],
+        ...data.risks.map(risk => [
+          { text: risk.description },
+          { text: risk.probability === "low" ? "Faible" : risk.probability === "medium" ? "Moyenne" : "Élevée" },
+          { text: risk.severity === "low" ? "Faible" : risk.severity === "medium" ? "Moyenne" : "Élevée" },
+          { text: risk.status === "open" ? "Ouvert" : risk.status === "in_progress" ? "En cours" : "Résolu" },
+        ])
+      ];
 
-      riskSlide.addTable([
-        ["Description", "Probabilité", "Gravité", "Statut"],
-        ...riskContent,
-      ], {
+      riskSlide.addTable(riskContent, {
         x: pptxLayout.margin,
         y: 5,
         w: pptxLayout.width,
@@ -260,6 +270,6 @@ export const generateProjectPPTX = async (projectsData: ProjectData[]) => {
     }
   }
 
-  // Save the presentation
-  await pptx.writeFile(`projets-export-${new Date().toISOString().split("T")[0]}.pptx`);
+  const fileName = `projets-export-${new Date().toISOString().split("T")[0]}.pptx`;
+  await pptx.writeFile({ fileName });
 };
