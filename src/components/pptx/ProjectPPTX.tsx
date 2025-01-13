@@ -38,234 +38,278 @@ interface ProjectData {
   }>;
 }
 
-const statusLabels = {
-  sunny: "Ensoleillé",
-  cloudy: "Nuageux",
-  stormy: "Orageux",
+const weatherIcons = {
+  sunny: "☀️",
+  cloudy: "☁️",
+  stormy: "⛈️",
 };
 
-const progressLabels = {
-  better: "En amélioration",
-  stable: "Stable",
-  worse: "En dégradation",
+const progressIcons = {
+  better: "↗️",
+  stable: "➡️",
+  worse: "↘️",
 };
 
 export const generateProjectPPTX = async (projectsData: ProjectData[]) => {
   const pptx = new pptxgen();
+  
+  // Configuration globale
+  pptx.layout = "LAYOUT_16x9";
+  pptx.defineSlideMaster({
+    title: "MAIN_MASTER",
+    background: { color: "FFFFFF" },
+    margin: [0.5, 0.5, 0.5, 0.5],
+    objects: [
+      { rect: { x: 0, y: 0, w: "100%", h: 0.8, fill: { color: "CC0000" } } },
+      { rect: { x: 0, y: 6.7, w: "100%", h: 0.1, fill: { color: "000000" } } },
+    ]
+  });
 
   for (const data of projectsData) {
-    // Title Slide
-    const titleSlide = pptx.addSlide();
-    titleSlide.addText(data.project.title, {
-      ...pptxStyles.title,
-      x: pptxLayout.margin,
-      y: 2,
-      w: pptxLayout.width,
-      align: "center",
-    });
-    titleSlide.addText(new Date().toLocaleDateString("fr-FR"), {
-      ...pptxStyles.date,
-      x: pptxLayout.margin,
-      y: 5,
-      w: pptxLayout.width,
-      align: "center",
-    });
+    const slide = pptx.addSlide({ masterName: "MAIN_MASTER" });
 
-    // Project Info Slide
-    const infoSlide = pptx.addSlide();
-    infoSlide.addText("Informations générales", {
-      ...pptxStyles.sectionTitle,
-      x: pptxLayout.margin,
-      y: 0.5,
-    });
-
-    const infoContent = [
-      [{ text: "Chef de projet" }, { text: data.project.project_manager || "-" }],
-      [{ text: "Date de début" }, { text: data.project.start_date ? new Date(data.project.start_date).toLocaleDateString("fr-FR") : "-" }],
-      [{ text: "Date de fin" }, { text: data.project.end_date ? new Date(data.project.end_date).toLocaleDateString("fr-FR") : "-" }],
-      [{ text: "Avancement" }, { text: `${data.project.completion}%` }],
-      [{ text: "Pôle" }, { text: data.project.pole_name || "-" }],
-      [{ text: "Direction" }, { text: data.project.direction_name || "-" }],
-      [{ text: "Service" }, { text: data.project.service_name || "-" }],
-    ];
-
-    if (data.project.description) {
-      infoSlide.addText("Description", {
-        ...pptxStyles.text,
-        x: pptxLayout.margin,
-        y: 1.5,
-        bold: true,
-      });
-      infoSlide.addText(data.project.description, {
-        ...pptxStyles.text,
-        x: pptxLayout.margin,
-        y: 2,
-        w: pptxLayout.width,
-      });
-    }
-
-    infoSlide.addTable(infoContent, {
-      x: pptxLayout.margin,
-      y: data.project.description ? 3 : 1.5,
-      w: pptxLayout.width,
-      colW: [2, 6],
-      fontSize: 12,
-    });
-
-    // Last Review Slide
-    if (data.lastReview) {
-      const reviewSlide = pptx.addSlide();
-      reviewSlide.addText("Dernière revue", {
-        ...pptxStyles.sectionTitle,
-        x: pptxLayout.margin,
-        y: 0.5,
-      });
-
-      const reviewContent = [
-        [{ text: "Date" }, { text: new Date(data.lastReview.created_at).toLocaleDateString("fr-FR") }],
-        [{ text: "Météo" }, { text: statusLabels[data.lastReview.weather] }],
-        [{ text: "Progression" }, { text: progressLabels[data.lastReview.progress] }],
-      ];
-
-      reviewSlide.addTable(reviewContent, {
-        x: pptxLayout.margin,
-        y: 1.5,
-        w: pptxLayout.width,
-        colW: [2, 6],
-        fontSize: 12,
-      });
-
-      if (data.lastReview.comment) {
-        reviewSlide.addText("Commentaire", {
-          ...pptxStyles.text,
-          x: pptxLayout.margin,
-          y: 3.5,
-          bold: true,
-        });
-        reviewSlide.addText(data.lastReview.comment, {
-          ...pptxStyles.text,
-          x: pptxLayout.margin,
-          y: 4,
-          w: pptxLayout.width,
-        });
+    // En-tête
+    slide.addText([
+      { text: data.project.title, options: { bold: true, color: "FFFFFF", fontSize: 16 } },
+      { text: "\n" },
+      { text: [
+          data.project.service_name,
+          data.project.direction_name,
+          data.project.pole_name
+        ].filter(Boolean).join(" / "), 
+        options: { color: "FFFFFF", fontSize: 12 } 
       }
-    }
+    ], { x: 0.5, y: 0.1, w: 8 });
 
-    // Tasks Slide
-    if (data.tasks.length > 0) {
-      const taskSlide = pptx.addSlide();
-      taskSlide.addText("Tâches", {
-        ...pptxStyles.sectionTitle,
-        x: pptxLayout.margin,
-        y: 0.5,
-      });
-
-      const taskStats = {
-        todo: data.tasks.filter(t => t.status === "todo").length,
-        in_progress: data.tasks.filter(t => t.status === "in_progress").length,
-        done: data.tasks.filter(t => t.status === "done").length,
-      };
-
-      // Add task distribution chart
-      taskSlide.addChart(pptx.ChartType.pie, [
-        {
-          name: "À faire",
-          labels: ["À faire"],
-          values: [taskStats.todo],
-          color: pptxColors.warning,
-        },
-        {
-          name: "En cours",
-          labels: ["En cours"],
-          values: [taskStats.in_progress],
-          color: pptxColors.info,
-        },
-        {
-          name: "Terminé",
-          labels: ["Terminé"],
-          values: [taskStats.done],
-          color: pptxColors.success,
-        },
-      ], {
-        x: 1,
-        y: 1.5,
-        w: 4,
-        h: 3,
-        showLegend: true,
-        legendPos: "r",
-      });
-
-      // Add task list
-      const taskContent = [
-        [
-          { text: "Titre" },
-          { text: "Statut" },
-          { text: "Assigné à" },
-          { text: "Date limite" }
-        ],
-        ...data.tasks.map(task => [
-          { text: task.title },
-          { text: task.status === "todo" ? "À faire" : task.status === "in_progress" ? "En cours" : "Terminé" },
-          { text: task.assignee || "-" },
-          { text: task.due_date ? new Date(task.due_date).toLocaleDateString("fr-FR") : "-" },
-        ])
-      ];
-
-      taskSlide.addTable(taskContent, {
-        x: pptxLayout.margin,
-        y: 5,
-        w: pptxLayout.width,
-        fontSize: 10,
+    // Date de revue
+    if (data.lastReview?.created_at) {
+      slide.addText(new Date(data.lastReview.created_at).toLocaleDateString("fr-FR"), {
+        x: 8.5, y: 0.1,
+        color: "FFFFFF",
+        fontSize: 12,
+        align: "right"
       });
     }
 
-    // Risks Slide
+    // Grille principale
+    const grid = {
+      x: 0.5,
+      y: 1,
+      w: 9,
+      h: 5,
+      columnGap: 0.1,
+      rowGap: 0.1
+    };
+
+    // Situation (Météo)
+    slide.addText("Situation", {
+      x: grid.x,
+      y: grid.y,
+      w: 1.5,
+      fontSize: 12,
+      bold: true,
+      color: "666666"
+    });
+
+    slide.addText(weatherIcons[data.lastReview?.weather || "cloudy"], {
+      x: grid.x,
+      y: grid.y + 0.4,
+      w: 1.5,
+      fontSize: 24,
+      align: "center"
+    });
+
+    // Evolution
+    slide.addText("Evolution", {
+      x: grid.x + 1.6,
+      y: grid.y,
+      w: 1.5,
+      fontSize: 12,
+      bold: true,
+      color: "666666"
+    });
+
+    slide.addText(progressIcons[data.lastReview?.progress || "stable"], {
+      x: grid.x + 1.6,
+      y: grid.y + 0.4,
+      w: 1.5,
+      fontSize: 24,
+      align: "center"
+    });
+
+    // Situation générale
+    slide.addText("Situation générale", {
+      x: grid.x + 3.2,
+      y: grid.y,
+      w: 4.5,
+      fontSize: 12,
+      bold: true,
+      color: "666666"
+    });
+
+    slide.addText(data.lastReview?.comment || "Pas de commentaire", {
+      x: grid.x + 3.2,
+      y: grid.y + 0.4,
+      w: 4.5,
+      fontSize: 11,
+      color: "363636"
+    });
+
+    // Fin cible
+    slide.addText("Fin cible", {
+      x: grid.x + 7.8,
+      y: grid.y,
+      w: 1.5,
+      fontSize: 12,
+      bold: true,
+      color: "666666"
+    });
+
+    slide.addText(
+      data.project.end_date 
+        ? new Date(data.project.end_date).toLocaleDateString("fr-FR", { month: "long", year: "numeric" })
+        : "Non définie", 
+      {
+        x: grid.x + 7.8,
+        y: grid.y + 0.4,
+        w: 1.5,
+        fontSize: 11,
+        color: "363636"
+      }
+    );
+
+    // État d'avancement
+    const completedTasks = data.tasks.filter(t => t.status === "done");
+    slide.addText("État d'avancement", {
+      x: grid.x,
+      y: grid.y + 1.5,
+      w: 4.5,
+      fontSize: 12,
+      bold: true,
+      color: "FFFFFF",
+      fill: { color: "000000" }
+    });
+
+    if (completedTasks.length > 0) {
+      slide.addText(
+        completedTasks.map(t => `• ${t.title}`).join("\n"),
+        {
+          x: grid.x,
+          y: grid.y + 2,
+          w: 4.5,
+          fontSize: 11,
+          color: "363636",
+          bullet: { type: "number" }
+        }
+      );
+    } else {
+      slide.addText("Aucune tâche terminée", {
+        x: grid.x,
+        y: grid.y + 2,
+        w: 4.5,
+        fontSize: 11,
+        color: "666666"
+      });
+    }
+
+    // Principaux travaux à venir
+    const todoTasks = data.tasks.filter(t => t.status === "todo");
+    slide.addText("Principaux travaux à venir", {
+      x: grid.x + 4.6,
+      y: grid.y + 1.5,
+      w: 4.7,
+      fontSize: 12,
+      bold: true,
+      color: "FFFFFF",
+      fill: { color: "000000" }
+    });
+
+    if (todoTasks.length > 0) {
+      slide.addText(
+        todoTasks.map(t => `• ${t.title}`).join("\n"),
+        {
+          x: grid.x + 4.6,
+          y: grid.y + 2,
+          w: 4.7,
+          fontSize: 11,
+          color: "363636",
+          bullet: { type: "number" }
+        }
+      );
+    } else {
+      slide.addText("Aucune tâche à venir", {
+        x: grid.x + 4.6,
+        y: grid.y + 2,
+        w: 4.7,
+        fontSize: 11,
+        color: "666666"
+      });
+    }
+
+    // Difficultés rencontrées
+    slide.addText("Difficultés rencontrées", {
+      x: grid.x,
+      y: grid.y + 3.5,
+      w: 4.5,
+      fontSize: 12,
+      bold: true,
+      color: "FFFFFF",
+      fill: { color: "000000" }
+    });
+
     if (data.risks.length > 0) {
-      const riskSlide = pptx.addSlide();
-      riskSlide.addText("Risques", {
-        ...pptxStyles.sectionTitle,
-        x: pptxLayout.margin,
-        y: 0.5,
+      slide.addText(
+        data.risks.map(r => `• ${r.description}`).join("\n"),
+        {
+          x: grid.x,
+          y: grid.y + 4,
+          w: 4.5,
+          fontSize: 11,
+          color: "363636",
+          bullet: { type: "number" }
+        }
+      );
+    } else {
+      slide.addText("Aucun risque identifié", {
+        x: grid.x,
+        y: grid.y + 4,
+        w: 4.5,
+        fontSize: 11,
+        color: "666666"
       });
+    }
 
-      // Risk matrix
-      const matrix = [
-        [{ text: "Élevée" }, { text: "" }, { text: "" }, { text: "" }],
-        [{ text: "Moyenne" }, { text: "" }, { text: "" }, { text: "" }],
-        [{ text: "Faible" }, { text: "" }, { text: "" }, { text: "" }],
-        [{ text: "" }, { text: "Faible" }, { text: "Moyenne" }, { text: "Élevée" }],
-      ];
+    // Solutions proposées
+    slide.addText("Solutions proposées", {
+      x: grid.x + 4.6,
+      y: grid.y + 3.5,
+      w: 4.7,
+      fontSize: 12,
+      bold: true,
+      color: "FFFFFF",
+      fill: { color: "000000" }
+    });
 
-      riskSlide.addTable(matrix, {
-        x: 1,
-        y: 1.5,
-        w: 4,
-        h: 3,
-        border: { pt: 1, color: "363636" },
-        align: "center",
-      });
-
-      // Risk list
-      const riskContent = [
-        [
-          { text: "Description" },
-          { text: "Probabilité" },
-          { text: "Gravité" },
-          { text: "Statut" }
-        ],
-        ...data.risks.map(risk => [
-          { text: risk.description },
-          { text: risk.probability === "low" ? "Faible" : risk.probability === "medium" ? "Moyenne" : "Élevée" },
-          { text: risk.severity === "low" ? "Faible" : risk.severity === "medium" ? "Moyenne" : "Élevée" },
-          { text: risk.status === "open" ? "Ouvert" : risk.status === "in_progress" ? "En cours" : "Résolu" },
-        ])
-      ];
-
-      riskSlide.addTable(riskContent, {
-        x: pptxLayout.margin,
-        y: 5,
-        w: pptxLayout.width,
-        fontSize: 10,
+    const risksWithMitigation = data.risks.filter(r => r.mitigation_plan);
+    if (risksWithMitigation.length > 0) {
+      slide.addText(
+        risksWithMitigation.map(r => `• ${r.mitigation_plan}`).join("\n"),
+        {
+          x: grid.x + 4.6,
+          y: grid.y + 4,
+          w: 4.7,
+          fontSize: 11,
+          color: "363636",
+          bullet: { type: "number" }
+        }
+      );
+    } else {
+      slide.addText("Aucune solution proposée", {
+        x: grid.x + 4.6,
+        y: grid.y + 4,
+        w: 4.7,
+        fontSize: 11,
+        color: "666666"
       });
     }
   }
