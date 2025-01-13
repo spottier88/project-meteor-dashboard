@@ -164,7 +164,7 @@ export const generateProjectPPTX = async (projectsData: ProjectData[]) => {
       valign: "middle"
     });
 
-    // Situation générale
+    // Situation générale - ajustement de la zone de texte
     slide.addShape("rect", {
       x: grid.x + 3.2,
       y: grid.y,
@@ -189,7 +189,7 @@ export const generateProjectPPTX = async (projectsData: ProjectData[]) => {
       x: grid.x + 3.2,
       y: grid.y + 0.3,
       w: 4.5,
-      h: 0.6,
+      h: 0.7, // Ajusté pour remplir l'espace restant
       fontSize: 11,
       color: "363636",
       align: "left",
@@ -235,13 +235,16 @@ export const generateProjectPPTX = async (projectsData: ProjectData[]) => {
 
     // Tâches avec hauteur ajustée
     const tasksY = grid.y + 1.2;
+    const taskBoxHeight = 1.6;
+    const titleHeight = 0.3;
+    const contentHeight = taskBoxHeight - titleHeight;
     
     // Zone des tâches terminées
     slide.addShape("rect", {
       x: grid.x,
       y: tasksY,
       w: 4.5,
-      h: 1.6, // Hauteur réduite
+      h: taskBoxHeight,
       fill: { color: "F5F5F5" },
     });
 
@@ -249,7 +252,7 @@ export const generateProjectPPTX = async (projectsData: ProjectData[]) => {
       x: grid.x,
       y: tasksY,
       w: 4.5,
-      h: 0.3,
+      h: titleHeight,
       fontSize: 11,
       bold: true,
       color: "FFFFFF",
@@ -263,8 +266,9 @@ export const generateProjectPPTX = async (projectsData: ProjectData[]) => {
         completedTasks.map(t => t.title).join("\n"),
         {
           x: grid.x + 0.2,
-          y: tasksY + 0.4,
+          y: tasksY + titleHeight,
           w: 4.1,
+          h: contentHeight,
           fontSize: 10,
           color: "363636",
           bullet: { type: "number" }
@@ -273,19 +277,20 @@ export const generateProjectPPTX = async (projectsData: ProjectData[]) => {
     } else {
       slide.addText("Aucune tâche terminée", {
         x: grid.x + 0.2,
-        y: tasksY + 0.4,
+        y: tasksY + titleHeight,
         w: 4.1,
+        h: contentHeight,
         fontSize: 10,
         color: "666666"
       });
     }
 
-    // Zone des tâches à venir avec position corrigée
+    // Zone des tâches à venir
     slide.addShape("rect", {
       x: grid.x + 4.6,
       y: tasksY,
       w: 4.7,
-      h: 1.6, // Hauteur réduite
+      h: taskBoxHeight,
       fill: { color: "F5F5F5" },
     });
 
@@ -293,7 +298,7 @@ export const generateProjectPPTX = async (projectsData: ProjectData[]) => {
       x: grid.x + 4.6,
       y: tasksY,
       w: 4.7,
-      h: 0.3,
+      h: titleHeight,
       fontSize: 11,
       bold: true,
       color: "FFFFFF",
@@ -307,8 +312,9 @@ export const generateProjectPPTX = async (projectsData: ProjectData[]) => {
         todoTasks.map(t => t.title).join("\n"),
         {
           x: grid.x + 4.8,
-          y: tasksY + 0.4, // Position ajustée pour être sous le titre
+          y: tasksY + titleHeight,
           w: 4.3,
+          h: contentHeight,
           fontSize: 10,
           color: "363636",
           bullet: { type: "number" }
@@ -317,22 +323,25 @@ export const generateProjectPPTX = async (projectsData: ProjectData[]) => {
     } else {
       slide.addText("Aucune tâche à venir", {
         x: grid.x + 4.8,
-        y: tasksY + 0.4, // Position ajustée pour être sous le titre
+        y: tasksY + titleHeight,
         w: 4.3,
+        h: contentHeight,
         fontSize: 10,
         color: "666666"
       });
     }
 
     // Risques avec hauteur réduite
-    const risksY = tasksY + 1.8; // Position ajustée pour tenir compte de la nouvelle hauteur des tâches
+    const risksY = tasksY + 1.8;
+    const riskBoxHeight = 1.4;
+    const riskContentHeight = riskBoxHeight - titleHeight;
 
     // Zone des risques identifiés
     slide.addShape("rect", {
       x: grid.x,
       y: risksY,
       w: 4.5,
-      h: 1.4, // Hauteur réduite
+      h: riskBoxHeight,
       fill: { color: "F5F5F5" },
     });
 
@@ -340,7 +349,7 @@ export const generateProjectPPTX = async (projectsData: ProjectData[]) => {
       x: grid.x,
       y: risksY,
       w: 4.5,
-      h: 0.3,
+      h: titleHeight,
       fontSize: 11,
       bold: true,
       color: "FFFFFF",
@@ -353,8 +362,9 @@ export const generateProjectPPTX = async (projectsData: ProjectData[]) => {
         data.risks.map(r => r.description).join("\n"),
         {
           x: grid.x + 0.2,
-          y: risksY + 0.4,
+          y: risksY + titleHeight,
           w: 4.1,
+          h: riskContentHeight,
           fontSize: 10,
           color: "363636",
           bullet: { type: "number" }
@@ -363,8 +373,9 @@ export const generateProjectPPTX = async (projectsData: ProjectData[]) => {
     } else {
       slide.addText("Aucun risque identifié", {
         x: grid.x + 0.2,
-        y: risksY + 0.4,
+        y: risksY + titleHeight,
         w: 4.1,
+        h: riskContentHeight,
         fontSize: 10,
         color: "666666"
       });
@@ -375,7 +386,7 @@ export const generateProjectPPTX = async (projectsData: ProjectData[]) => {
       x: grid.x + 4.6,
       y: risksY,
       w: 4.7,
-      h: 1.4, // Hauteur réduite
+      h: riskBoxHeight,
       fill: { color: "F5F5F5" },
     });
 
@@ -383,7 +394,7 @@ export const generateProjectPPTX = async (projectsData: ProjectData[]) => {
       x: grid.x + 4.6,
       y: risksY,
       w: 4.7,
-      h: 0.3,
+      h: titleHeight,
       fontSize: 11,
       bold: true,
       color: "FFFFFF",
@@ -397,8 +408,9 @@ export const generateProjectPPTX = async (projectsData: ProjectData[]) => {
         risksWithMitigation.map(r => r.mitigation_plan).join("\n"),
         {
           x: grid.x + 4.8,
-          y: risksY + 0.4,
+          y: risksY + titleHeight,
           w: 4.3,
+          h: riskContentHeight,
           fontSize: 10,
           color: "363636",
           bullet: { type: "number" }
@@ -407,8 +419,9 @@ export const generateProjectPPTX = async (projectsData: ProjectData[]) => {
     } else {
       slide.addText("Aucune action de mitigation définie", {
         x: grid.x + 4.8,
-        y: risksY + 0.4,
+        y: risksY + titleHeight,
         w: 4.3,
+        h: riskContentHeight,
         fontSize: 10,
         color: "666666"
       });
