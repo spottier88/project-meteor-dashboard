@@ -6,7 +6,7 @@ import { Settings } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { NewAssignmentForm } from "@/components/manager/NewAssignmentForm";
 import { AssignmentsList } from "@/components/manager/AssignmentsList";
-import { ManagerAssignment, ManagerAssignmentWithDetails, EntityType } from "@/types/user";
+import { ManagerAssignment, ManagerAssignmentWithDetails } from "@/types/user";
 
 export const ManagerAssignments = () => {
   const { userId } = useParams();
@@ -66,7 +66,13 @@ export const ManagerAssignments = () => {
       const { error } = await supabase
         .from("manager_assignments")
         .insert([assignment]);
-      if (error) throw error;
+      if (error) {
+        // Gérer spécifiquement l'erreur de violation de contrainte unique
+        if (error.code === '23505') {
+          throw new Error("Cette affectation existe déjà pour cet utilisateur.");
+        }
+        throw error;
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["manager_assignments"] });
@@ -75,10 +81,10 @@ export const ManagerAssignments = () => {
         description: "L'affectation a été ajoutée",
       });
     },
-    onError: () => {
+    onError: (error: Error) => {
       toast({
         title: "Erreur",
-        description: "Une erreur est survenue lors de l'ajout de l'affectation",
+        description: error.message || "Une erreur est survenue lors de l'ajout de l'affectation",
         variant: "destructive",
       });
     },
