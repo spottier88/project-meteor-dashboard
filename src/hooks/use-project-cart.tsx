@@ -4,7 +4,6 @@ import { useEffect } from "react";
 export const useProjectCart = () => {
   const queryClient = useQueryClient();
 
-  // Load cart from localStorage on initial mount
   useEffect(() => {
     const savedCart = localStorage.getItem("projectCart");
     if (savedCart) {
@@ -22,7 +21,7 @@ export const useProjectCart = () => {
   });
 
   const { mutate: addToCart } = useMutation({
-    mutationFn: (projectId: string) => {
+    mutationFn: async (projectId: string) => {
       const currentCart = queryClient.getQueryData<string[]>(["projectCart"]) || [];
       const newCart = [...new Set([...currentCart, projectId])];
       localStorage.setItem("projectCart", JSON.stringify(newCart));
@@ -34,7 +33,7 @@ export const useProjectCart = () => {
   });
 
   const { mutate: removeFromCart } = useMutation({
-    mutationFn: (projectId: string) => {
+    mutationFn: async (projectId: string) => {
       const currentCart = queryClient.getQueryData<string[]>(["projectCart"]) || [];
       const newCart = currentCart.filter(id => id !== projectId);
       localStorage.setItem("projectCart", JSON.stringify(newCart));
@@ -46,7 +45,7 @@ export const useProjectCart = () => {
   });
 
   const { mutate: clearCart } = useMutation({
-    mutationFn: () => {
+    mutationFn: async () => {
       localStorage.removeItem("projectCart");
       return [];
     },

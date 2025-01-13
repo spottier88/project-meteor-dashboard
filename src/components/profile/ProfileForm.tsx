@@ -85,25 +85,33 @@ export const ProfileForm = ({ isOpen, onClose, profile }: ProfileFormProps) => {
 
       const { data: assignments, error } = await supabase
         .from("manager_assignments")
-        .select("*")
+        .select(`
+          id,
+          entity_id,
+          entity_type,
+          poles (name),
+          directions (name),
+          services (name)
+        `)
         .eq("user_id", profile.id);
 
       if (error) throw error;
 
-      const detailedAssignments = await Promise.all(
-        assignments.map(async (assignment) => {
-          const { data: entityData } = await supabase
-            .from(assignment.entity_type + "s")
-            .select("name")
-            .eq("id", assignment.entity_id)
-            .single();
+      const detailedAssignments = assignments.map((assignment) => {
+        let entityName = '';
+        if (assignment.entity_type === 'pole' && assignment.poles) {
+          entityName = assignment.poles.name;
+        } else if (assignment.entity_type === 'direction' && assignment.directions) {
+          entityName = assignment.directions.name;
+        } else if (assignment.entity_type === 'service' && assignment.services) {
+          entityName = assignment.services.name;
+        }
 
-          return {
-            ...assignment,
-            entity_name: entityData?.name || "Inconnu",
-          };
-        })
-      );
+        return {
+          ...assignment,
+          entity_name: entityName,
+        };
+      });
 
       return detailedAssignments;
     },
