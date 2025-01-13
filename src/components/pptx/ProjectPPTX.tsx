@@ -85,7 +85,7 @@ export const generateProjectPPTX = async (projectsData: ProjectData[]) => {
     // Date de revue
     if (data.lastReview?.created_at) {
       slide.addText(new Date(data.lastReview.created_at).toLocaleDateString("fr-FR"), {
-        x: 5, y: 0.1, h: 0.3, w: 1.5,
+        x: 7, y: 0.1, h: 0.3, w: 1.5,
         color: "FFFFFF",
         fontSize: 12,
         align: "right"
