@@ -137,16 +137,14 @@ export const ProjectCart = ({ isOpen, onClose }: ProjectCartProps) => {
                   Vider le panier
                 </Button>
                 {projectsData && (
-                  <PDFDownloadLink
-                    document={<MultiProjectPDF projectsData={projectsData} />}
-                    fileName="projets-export.pdf"
-                  >
-                    {({ loading, error }) => (
-                      <Button disabled={loading || !!error}>
-                        {loading ? "Génération..." : "Télécharger le PDF"}
-                      </Button>
-                    )}
-                  </PDFDownloadLink>
+                  <Button asChild>
+                    <PDFDownloadLink
+                      document={<MultiProjectPDF projectsData={projectsData} />}
+                      fileName="projets-export.pdf"
+                    >
+                      Télécharger le PDF
+                    </PDFDownloadLink>
+                  </Button>
                 )}
               </div>
             </>
