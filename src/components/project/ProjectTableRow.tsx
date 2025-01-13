@@ -11,6 +11,7 @@ import { UserRoleData } from "@/types/user";
 import { ProjectActions } from "./ProjectActions";
 import { StatusIcon } from "./StatusIcon";
 import { OrganizationCell } from "./OrganizationCell";
+import { AddToCartButton } from "@/components/cart/AddToCartButton";
 
 interface ProjectTableRowProps {
   project: {
@@ -126,6 +127,7 @@ export const ProjectTableRow = ({
         )}
       </TableCell>
       <TableCell className="text-right space-x-2">
+        <AddToCartButton projectId={project.id} projectTitle={project.title} />
         <ProjectActions
           projectId={project.id}
           projectTitle={project.title}

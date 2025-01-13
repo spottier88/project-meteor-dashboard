@@ -20,6 +20,7 @@ interface ProjectCardHeaderProps {
   id: string;
   owner_id?: string;
   project_manager?: string;
+  additionalActions?: React.ReactNode;
 }
 
 export const ProjectCardHeader = ({
@@ -31,6 +32,7 @@ export const ProjectCardHeader = ({
   id,
   owner_id,
   project_manager,
+  additionalActions,
 }: ProjectCardHeaderProps) => {
   const user = useUser();
   const navigate = useNavigate();
@@ -87,6 +89,7 @@ export const ProjectCardHeader = ({
         <CardTitle className="text-xl font-semibold">{title}</CardTitle>
       </div>
       <div className="flex items-center gap-2">
+        {additionalActions}
         {showActions && (
           <>
             {canEdit && (

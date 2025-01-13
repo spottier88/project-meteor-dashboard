@@ -5,6 +5,7 @@ import { ProjectCardHeader } from "./project/ProjectCardHeader";
 import { ProjectMetrics } from "./project/ProjectMetrics";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { AddToCartButton } from "./cart/AddToCartButton";
 
 export type ProjectStatus = "sunny" | "cloudy" | "stormy";
 export type ProgressStatus = "better" | "stable" | "worse";
@@ -99,6 +100,9 @@ export const ProjectCard = ({
         id={id}
         owner_id={owner_id}
         project_manager={project_manager}
+        additionalActions={
+          <AddToCartButton projectId={id} projectTitle={title} />
+        }
       />
       <CardContent>
         <div className="grid gap-4">
