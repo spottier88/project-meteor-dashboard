@@ -92,7 +92,7 @@ export const generateProjectPPTX = async (projectsData: ProjectData[]) => {
       });
     }
 
-    // Grille principale avec espacement optimisé
+    // Grille principale avec espacement optimisé et hauteurs réduites
     const grid = {
       x: 0.5,
       y: 1.0,
@@ -233,7 +233,7 @@ export const generateProjectPPTX = async (projectsData: ProjectData[]) => {
       }
     );
 
-    // Tâches
+    // Tâches avec hauteur ajustée
     const tasksY = grid.y + 1.2;
     
     // Zone des tâches terminées
@@ -241,7 +241,7 @@ export const generateProjectPPTX = async (projectsData: ProjectData[]) => {
       x: grid.x,
       y: tasksY,
       w: 4.5,
-      h: 1.8,
+      h: 1.6, // Hauteur réduite
       fill: { color: "F5F5F5" },
     });
 
@@ -280,12 +280,12 @@ export const generateProjectPPTX = async (projectsData: ProjectData[]) => {
       });
     }
 
-    // Zone des tâches à venir
+    // Zone des tâches à venir avec position corrigée
     slide.addShape("rect", {
       x: grid.x + 4.6,
       y: tasksY,
       w: 4.7,
-      h: 1.8,
+      h: 1.6, // Hauteur réduite
       fill: { color: "F5F5F5" },
     });
 
@@ -307,7 +307,7 @@ export const generateProjectPPTX = async (projectsData: ProjectData[]) => {
         todoTasks.map(t => t.title).join("\n"),
         {
           x: grid.x + 4.8,
-          y: tasksY + 0.4,
+          y: tasksY + 0.4, // Position ajustée pour être sous le titre
           w: 4.3,
           fontSize: 10,
           color: "363636",
@@ -317,22 +317,22 @@ export const generateProjectPPTX = async (projectsData: ProjectData[]) => {
     } else {
       slide.addText("Aucune tâche à venir", {
         x: grid.x + 4.8,
-        y: tasksY + 0.4,
+        y: tasksY + 0.4, // Position ajustée pour être sous le titre
         w: 4.3,
         fontSize: 10,
         color: "666666"
       });
     }
 
-    // Risques
-    const risksY = tasksY + 2;
+    // Risques avec hauteur réduite
+    const risksY = tasksY + 1.8; // Position ajustée pour tenir compte de la nouvelle hauteur des tâches
 
     // Zone des risques identifiés
     slide.addShape("rect", {
       x: grid.x,
       y: risksY,
       w: 4.5,
-      h: 1.8,
+      h: 1.4, // Hauteur réduite
       fill: { color: "F5F5F5" },
     });
 
@@ -375,7 +375,7 @@ export const generateProjectPPTX = async (projectsData: ProjectData[]) => {
       x: grid.x + 4.6,
       y: risksY,
       w: 4.7,
-      h: 1.8,
+      h: 1.4, // Hauteur réduite
       fill: { color: "F5F5F5" },
     });
 
