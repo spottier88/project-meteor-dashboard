@@ -7,6 +7,7 @@ import { PDFDownloadLink } from "@react-pdf/renderer";
 import { MultiProjectPDF } from "../MultiProjectPDF";
 import { Trash2 } from "lucide-react";
 import { useToast } from "../ui/use-toast";
+import { ReactNode } from "react";
 
 interface ProjectCartProps {
   isOpen: boolean;
@@ -107,6 +108,20 @@ export const ProjectCart = ({ isOpen, onClose }: ProjectCartProps) => {
     enabled: cartItems.length > 0,
   });
 
+  const renderDownloadButton = (): ReactNode => {
+    if (!projectsData) return null;
+
+    return (
+      <PDFDownloadLink
+        document={<MultiProjectPDF projectsData={projectsData} />}
+        fileName="projets-export.pdf"
+        className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2"
+      >
+        {({ loading }) => (loading ? "Génération..." : "Télécharger le PDF")}
+      </PDFDownloadLink>
+    );
+  };
+
   return (
     <Sheet open={isOpen} onOpenChange={onClose}>
       <SheetContent className="w-full sm:max-w-xl overflow-y-auto">
@@ -136,15 +151,7 @@ export const ProjectCart = ({ isOpen, onClose }: ProjectCartProps) => {
                 <Button variant="outline" onClick={() => clearCart()}>
                   Vider le panier
                 </Button>
-                {projectsData && (
-                  <PDFDownloadLink
-                    document={<MultiProjectPDF projectsData={projectsData} />}
-                    fileName="projets-export.pdf"
-                    className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2"
-                  >
-                    {({ loading }) => (loading ? 'Génération...' : 'Télécharger le PDF')}
-                  </PDFDownloadLink>
-                )}
+                {renderDownloadButton()}
               </div>
             </>
           )}
