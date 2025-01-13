@@ -8,11 +8,14 @@ interface PDFProjectInfoProps {
     project_manager?: string;
     start_date?: string;
     end_date?: string;
+    pole_name?: string;
+    direction_name?: string;
+    service_name?: string;
   };
 }
 
 export const PDFProjectInfo = ({ project }: PDFProjectInfoProps) => (
-  <View style={styles.section}>
+  <View style={styles.section} wrap={false}>
     <Text style={styles.sectionTitle}>Informations générales</Text>
     <View style={styles.projectHeader}>
       <Text style={styles.projectTitle}>{project.title}</Text>
@@ -40,6 +43,18 @@ export const PDFProjectInfo = ({ project }: PDFProjectInfoProps) => (
             ? new Date(project.end_date).toLocaleDateString("fr-FR")
             : "-"}
         </Text>
+      </View>
+      <View style={styles.infoItem}>
+        <Text style={styles.label}>Pôle</Text>
+        <Text style={styles.value}>{project.pole_name || "-"}</Text>
+      </View>
+      <View style={styles.infoItem}>
+        <Text style={styles.label}>Direction</Text>
+        <Text style={styles.value}>{project.direction_name || "-"}</Text>
+      </View>
+      <View style={styles.infoItem}>
+        <Text style={styles.label}>Service</Text>
+        <Text style={styles.value}>{project.service_name || "-"}</Text>
       </View>
     </View>
   </View>

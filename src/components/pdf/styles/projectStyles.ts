@@ -7,19 +7,22 @@ export const projectStyles: Styles = {
   projectTitle: {
     fontSize: 18,
     fontWeight: "bold",
-    marginBottom: 5,
+    marginBottom: 8,
   },
   projectDescription: {
-    fontSize: 12,
+    fontSize: 11,
     color: "#666666",
+    marginBottom: 12,
+    lineHeight: 1.4,
   },
   infoGrid: {
     flexDirection: "row",
     flexWrap: "wrap",
-    gap: 20,
+    gap: 16,
   },
   infoItem: {
     flex: 1,
-    minWidth: 200,
+    minWidth: 180,
+    marginBottom: 8,
   },
 };
