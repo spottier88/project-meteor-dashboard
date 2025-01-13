@@ -271,6 +271,7 @@ export const generateProjectPPTX = async (projectsData: ProjectData[]) => {
           h: contentHeight,
           fontSize: 10,
           color: "363636",
+          valign: "top",
           bullet: { type: "number" }
         }
       );
@@ -281,6 +282,7 @@ export const generateProjectPPTX = async (projectsData: ProjectData[]) => {
         w: 4.1,
         h: contentHeight,
         fontSize: 10,
+        valign: "top",
         color: "666666"
       });
     }
@@ -317,6 +319,7 @@ export const generateProjectPPTX = async (projectsData: ProjectData[]) => {
           h: contentHeight,
           fontSize: 10,
           color: "363636",
+          valign: "top",
           bullet: { type: "number" }
         }
       );
@@ -327,6 +330,7 @@ export const generateProjectPPTX = async (projectsData: ProjectData[]) => {
         w: 4.3,
         h: contentHeight,
         fontSize: 10,
+        valign: "top",
         color: "666666"
       });
     }
@@ -367,6 +371,7 @@ export const generateProjectPPTX = async (projectsData: ProjectData[]) => {
           h: riskContentHeight,
           fontSize: 10,
           color: "363636",
+          valign: "top",
           bullet: { type: "number" }
         }
       );
@@ -377,6 +382,7 @@ export const generateProjectPPTX = async (projectsData: ProjectData[]) => {
         w: 4.1,
         h: riskContentHeight,
         fontSize: 10,
+        valign: "top",
         color: "666666"
       });
     }
@@ -413,6 +419,7 @@ export const generateProjectPPTX = async (projectsData: ProjectData[]) => {
           h: riskContentHeight,
           fontSize: 10,
           color: "363636",
+          valign: "top",
           bullet: { type: "number" }
         }
       );
@@ -423,6 +430,7 @@ export const generateProjectPPTX = async (projectsData: ProjectData[]) => {
         w: 4.3,
         h: riskContentHeight,
         fontSize: 10,
+        valign: "top",
         color: "666666"
       });
     }
