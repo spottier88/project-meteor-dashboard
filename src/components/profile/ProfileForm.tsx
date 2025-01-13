@@ -48,6 +48,15 @@ const getEntityTypeLabel = (type: string): string => {
   }
 };
 
+interface ManagerAssignment {
+  id: string;
+  entity_id: string;
+  entity_type: string;
+  poles?: { name: string } | null;
+  directions?: { name: string } | null;
+  services?: { name: string } | null;
+}
+
 export const ProfileForm = ({ isOpen, onClose, profile }: ProfileFormProps) => {
   const { toast } = useToast();
   const [firstName, setFirstName] = useState("");
@@ -89,15 +98,15 @@ export const ProfileForm = ({ isOpen, onClose, profile }: ProfileFormProps) => {
           id,
           entity_id,
           entity_type,
-          poles (name),
-          directions (name),
-          services (name)
+          poles:poles(name),
+          directions:directions(name),
+          services:services(name)
         `)
         .eq("user_id", profile.id);
 
       if (error) throw error;
 
-      const detailedAssignments = assignments.map((assignment) => {
+      const detailedAssignments = assignments.map((assignment: ManagerAssignment) => {
         let entityName = '';
         if (assignment.entity_type === 'pole' && assignment.poles) {
           entityName = assignment.poles.name;
