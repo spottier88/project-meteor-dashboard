@@ -5,8 +5,9 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { PDFDownloadLink } from "@react-pdf/renderer";
 import { MultiProjectPDF } from "../MultiProjectPDF";
-import { Trash2 } from "lucide-react";
+import { Trash2, FileText, FilePresentation } from "lucide-react";
 import { useToast } from "../ui/use-toast";
+import { generateProjectPPTX } from "../pptx/ProjectPPTX";
 
 interface ProjectCartProps {
   isOpen: boolean;
@@ -69,6 +70,7 @@ export const ProjectCart = ({ isOpen, onClose }: ProjectCartProps) => {
               last_review_date: projectData.last_review_date,
               start_date: projectData.start_date,
               end_date: projectData.end_date,
+              description: projectData.description,
               pole_name: poleResult.data?.name,
               direction_name: directionResult.data?.name,
               service_name: serviceResult.data?.name,
@@ -97,7 +99,7 @@ export const ProjectCart = ({ isOpen, onClose }: ProjectCartProps) => {
         toast({
           variant: "destructive",
           title: "Erreur",
-          description: "Impossible de générer le PDF pour les projets sélectionnés",
+          description: "Impossible de générer les exports pour les projets sélectionnés",
         });
         return null;
       }
@@ -106,6 +108,32 @@ export const ProjectCart = ({ isOpen, onClose }: ProjectCartProps) => {
     },
     enabled: cartItems.length > 0,
   });
+
+  const handlePPTXExport = async () => {
+    if (!projectsData) {
+      toast({
+        variant: "destructive",
+        title: "Erreur",
+        description: "Aucune donnée disponible pour l'export",
+      });
+      return;
+    }
+
+    try {
+      await generateProjectPPTX(projectsData);
+      toast({
+        title: "Succès",
+        description: "Présentation PowerPoint générée avec succès",
+      });
+    } catch (error) {
+      console.error("Error generating PPTX:", error);
+      toast({
+        variant: "destructive",
+        title: "Erreur",
+        description: "Impossible de générer la présentation PowerPoint",
+      });
+    }
+  };
 
   return (
     <Sheet open={isOpen} onOpenChange={onClose}>
@@ -136,16 +164,25 @@ export const ProjectCart = ({ isOpen, onClose }: ProjectCartProps) => {
                 <Button variant="outline" onClick={() => clearCart()}>
                   Vider le panier
                 </Button>
-                {projectsData && (
-                  <Button asChild>
-                    <PDFDownloadLink
-                      document={<MultiProjectPDF projectsData={projectsData} />}
-                      fileName="projets-export.pdf"
-                    >
-                      Télécharger le PDF
-                    </PDFDownloadLink>
-                  </Button>
-                )}
+                <div className="space-x-2">
+                  {projectsData && (
+                    <>
+                      <Button asChild variant="outline">
+                        <PDFDownloadLink
+                          document={<MultiProjectPDF projectsData={projectsData} />}
+                          fileName="projets-export.pdf"
+                        >
+                          <FileText className="h-4 w-4 mr-2" />
+                          PDF
+                        </PDFDownloadLink>
+                      </Button>
+                      <Button onClick={handlePPTXExport} variant="outline">
+                        <FilePresentation className="h-4 w-4 mr-2" />
+                        PPTX
+                      </Button>
+                    </>
+                  )}
+                </div>
               </div>
             </>
           )}
