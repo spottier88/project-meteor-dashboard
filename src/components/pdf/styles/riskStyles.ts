@@ -37,7 +37,6 @@ export const riskStyles: Styles = {
     flexGrow: 1,
     width: "100%",
     minHeight: "auto", // Permet une hauteur ajustée
-    maxHeight: "none", // Empêche une restriction fixe
   },
   criticalRiskCard: {
     // backgroundColor: "#FEE2E2",
