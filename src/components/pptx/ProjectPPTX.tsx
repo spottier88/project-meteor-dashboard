@@ -102,13 +102,24 @@ export const generateProjectPPTX = async (projectsData: ProjectData[]) => {
     };
 
     // Situation (Météo)
-    slide.addText("Situation", {
+    slide.addShape("RECTANGLE", {
       x: grid.x,
       y: grid.y,
       w: 1.5,
+      h: 1.2,
+      fill: { color: "F5F5F5" },
+    });
+
+    slide.addText("SITUATION", {
+      x: grid.x,
+      y: grid.y,
+      w: 1.5,
+      h: 0.3,
       fontSize: 12,
       bold: true,
-      color: "666666"
+      color: "FFFFFF",
+      fill: { color: "000000" },
+      align: "center",
     });
 
     slide.addText(weatherIcons[data.lastReview?.weather || "cloudy"], {
@@ -120,13 +131,24 @@ export const generateProjectPPTX = async (projectsData: ProjectData[]) => {
     });
 
     // Evolution
-    slide.addText("Evolution", {
+    slide.addShape("RECTANGLE", {
       x: grid.x + 1.6,
       y: grid.y,
       w: 1.5,
+      h: 1.2,
+      fill: { color: "F5F5F5" },
+    });
+
+    slide.addText("EVOLUTION", {
+      x: grid.x + 1.6,
+      y: grid.y,
+      w: 1.5,
+      h: 0.3,
       fontSize: 12,
       bold: true,
-      color: "666666"
+      color: "FFFFFF",
+      fill: { color: "000000" },
+      align: "center",
     });
 
     slide.addText(progressIcons[data.lastReview?.progress || "stable"], {
@@ -138,13 +160,24 @@ export const generateProjectPPTX = async (projectsData: ProjectData[]) => {
     });
 
     // Situation générale
-    slide.addText("Situation générale", {
+    slide.addShape("RECTANGLE", {
       x: grid.x + 3.2,
       y: grid.y,
       w: 4.5,
+      h: 1.2,
+      fill: { color: "F5F5F5" },
+    });
+
+    slide.addText("SITUATION GÉNÉRALE", {
+      x: grid.x + 3.2,
+      y: grid.y,
+      w: 4.5,
+      h: 0.3,
       fontSize: 12,
       bold: true,
-      color: "666666"
+      color: "FFFFFF",
+      fill: { color: "000000" },
+      align: "center",
     });
 
     slide.addText(data.lastReview?.comment || "Pas de commentaire", {
@@ -156,13 +189,24 @@ export const generateProjectPPTX = async (projectsData: ProjectData[]) => {
     });
 
     // Fin cible
-    slide.addText("Fin cible", {
+    slide.addShape("RECTANGLE", {
       x: grid.x + 7.8,
       y: grid.y,
       w: 1.5,
+      h: 1.2,
+      fill: { color: "F5F5F5" },
+    });
+
+    slide.addText("FIN CIBLE", {
+      x: grid.x + 7.8,
+      y: grid.y,
+      w: 1.5,
+      h: 0.3,
       fontSize: 12,
       bold: true,
-      color: "666666"
+      color: "FFFFFF",
+      fill: { color: "000000" },
+      align: "center",
     });
 
     slide.addText(
@@ -174,13 +218,14 @@ export const generateProjectPPTX = async (projectsData: ProjectData[]) => {
         y: grid.y + 0.4,
         w: 1.5,
         fontSize: 11,
-        color: "363636"
+        color: "363636",
+        align: "center"
       }
     );
 
     // État d'avancement
     const completedTasks = data.tasks.filter(t => t.status === "done");
-    slide.addText("État d'avancement", {
+    slide.addText("ÉTAT D'AVANCEMENT", {
       x: grid.x,
       y: grid.y + 1.5,
       w: 4.5,
@@ -192,7 +237,7 @@ export const generateProjectPPTX = async (projectsData: ProjectData[]) => {
 
     if (completedTasks.length > 0) {
       slide.addText(
-        completedTasks.map(t => `• ${t.title}`).join("\n"),
+        completedTasks.map(t => t.title).join("\n"),
         {
           x: grid.x,
           y: grid.y + 2,
@@ -214,7 +259,7 @@ export const generateProjectPPTX = async (projectsData: ProjectData[]) => {
 
     // Principaux travaux à venir
     const todoTasks = data.tasks.filter(t => t.status === "todo");
-    slide.addText("Principaux travaux à venir", {
+    slide.addText("PRINCIPAUX TRAVAUX À VENIR", {
       x: grid.x + 4.6,
       y: grid.y + 1.5,
       w: 4.7,
@@ -226,7 +271,7 @@ export const generateProjectPPTX = async (projectsData: ProjectData[]) => {
 
     if (todoTasks.length > 0) {
       slide.addText(
-        todoTasks.map(t => `• ${t.title}`).join("\n"),
+        todoTasks.map(t => t.title).join("\n"),
         {
           x: grid.x + 4.6,
           y: grid.y + 2,
@@ -247,7 +292,7 @@ export const generateProjectPPTX = async (projectsData: ProjectData[]) => {
     }
 
     // Difficultés rencontrées
-    slide.addText("Difficultés rencontrées", {
+    slide.addText("DIFFICULTÉS RENCONTRÉES", {
       x: grid.x,
       y: grid.y + 3.5,
       w: 4.5,
@@ -259,7 +304,7 @@ export const generateProjectPPTX = async (projectsData: ProjectData[]) => {
 
     if (data.risks.length > 0) {
       slide.addText(
-        data.risks.map(r => `• ${r.description}`).join("\n"),
+        data.risks.map(r => r.description).join("\n"),
         {
           x: grid.x,
           y: grid.y + 4,
@@ -280,7 +325,7 @@ export const generateProjectPPTX = async (projectsData: ProjectData[]) => {
     }
 
     // Solutions proposées
-    slide.addText("Solutions proposées", {
+    slide.addText("SOLUTIONS PROPOSÉES", {
       x: grid.x + 4.6,
       y: grid.y + 3.5,
       w: 4.7,
@@ -293,7 +338,7 @@ export const generateProjectPPTX = async (projectsData: ProjectData[]) => {
     const risksWithMitigation = data.risks.filter(r => r.mitigation_plan);
     if (risksWithMitigation.length > 0) {
       slide.addText(
-        risksWithMitigation.map(r => `• ${r.mitigation_plan}`).join("\n"),
+        risksWithMitigation.map(r => r.mitigation_plan).join("\n"),
         {
           x: grid.x + 4.6,
           y: grid.y + 4,
