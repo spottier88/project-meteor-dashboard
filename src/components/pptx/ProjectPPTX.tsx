@@ -74,9 +74,9 @@ export const generateProjectPPTX = async (projectsData: ProjectData[]) => {
       { text: data.project.description || "", options: { color: "FFFFFF", fontSize: 12 } },
       { text: "\n" },
       { text: [
-          data.project.service_name,
+          data.project.pole_name,
           data.project.direction_name,
-          data.project.pole_name
+          data.project.service_name
         ].filter(Boolean).join(" / "), 
         options: { color: "FFFFFF", fontSize: 12 } 
       }
@@ -85,7 +85,7 @@ export const generateProjectPPTX = async (projectsData: ProjectData[]) => {
     // Date de revue
     if (data.lastReview?.created_at) {
       slide.addText(new Date(data.lastReview.created_at).toLocaleDateString("fr-FR"), {
-        x: 8.5, y: 0.1, h: 0.3, w: 3,
+        x: 0.5, y: 0.1, h: 0.3, w: 3,
         color: "FFFFFF",
         fontSize: 12,
         align: "right"
