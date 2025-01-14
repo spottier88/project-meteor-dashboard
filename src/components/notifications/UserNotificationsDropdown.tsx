@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useUser } from "@supabase/auth-helpers-react";
 import { Bell } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -45,36 +45,16 @@ export const UserNotificationsDropdown = () => {
 
       if (error) throw error;
 
-      return data
+      const notifs = data
         .map(item => item.notification_targets?.notifications)
         .filter(Boolean) as Notification[];
+      
+      setUnreadCount(notifs.length);
+      return notifs;
     },
     enabled: !!user?.id,
+    refetchInterval: 30000, // Rafraîchit toutes les 30 secondes
   });
-
-  useEffect(() => {
-    if (!user?.id) return;
-
-    const channel = supabase
-      .channel("notification_changes")
-      .on(
-        "postgres_changes",
-        {
-          event: "INSERT",
-          schema: "public",
-          table: "notification_target_users",
-          filter: `user_id=eq.${user.id}`,
-        },
-        () => {
-          setUnreadCount(prev => prev + 1);
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [user?.id]);
 
   return (
     <DropdownMenu>
