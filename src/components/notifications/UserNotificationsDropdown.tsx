@@ -13,6 +13,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogClose,
 } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -101,6 +102,10 @@ export const UserNotificationsDropdown = () => {
     setDropdownOpen(false);
   };
 
+  const handleCloseDialog = () => {
+    setSelectedNotification(null);
+  };
+
   return (
     <>
       <DropdownMenu open={dropdownOpen} onOpenChange={setDropdownOpen}>
@@ -158,13 +163,12 @@ export const UserNotificationsDropdown = () => {
 
       <Dialog 
         open={!!selectedNotification} 
-        onOpenChange={(open) => {
-          if (!open) {
-            setSelectedNotification(null);
-          }
-        }}
+        onOpenChange={handleCloseDialog}
       >
-        <DialogContent className="sm:max-w-[500px]" onClick={(e) => e.stopPropagation()}>
+        <DialogContent 
+          className="sm:max-w-[500px]"
+          onClick={(e) => e.stopPropagation()}
+        >
           <DialogHeader>
             <DialogTitle>{selectedNotification?.title}</DialogTitle>
           </DialogHeader>
@@ -176,6 +180,7 @@ export const UserNotificationsDropdown = () => {
               Publié le {selectedNotification && format(new Date(selectedNotification.publication_date), "d MMMM yyyy", { locale: fr })}
             </div>
           </div>
+          <DialogClose />
         </DialogContent>
       </Dialog>
     </>
