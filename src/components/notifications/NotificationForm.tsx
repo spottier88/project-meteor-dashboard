@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { useUser } from "@supabase/auth-helpers-react";
+import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/components/ui/use-toast";
 import { Button } from "@/components/ui/button";
 import {
@@ -40,6 +41,7 @@ export function NotificationForm({ onSuccess, onCancel }: NotificationFormProps)
   const { toast } = useToast();
   const user = useUser();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const queryClient = useQueryClient();
 
   const form = useForm<NotificationFormData>({
     defaultValues: {
@@ -72,6 +74,9 @@ export function NotificationForm({ onSuccess, onCancel }: NotificationFormProps)
       });
 
       if (error) throw error;
+
+      // Invalider le cache des notifications
+      await queryClient.invalidateQueries({ queryKey: ["notifications"] });
 
       toast({
         title: "Notification créée",

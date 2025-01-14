@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Check, Users } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { Button } from "@/components/ui/button";
@@ -42,6 +42,7 @@ export function PublishNotificationForm({
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedUserIds, setSelectedUserIds] = useState<string[]>([]);
+  const queryClient = useQueryClient();
 
   const form = useForm<PublishFormData>({
     defaultValues: {
@@ -79,7 +80,7 @@ export function PublishNotificationForm({
   const onSubmit = async (data: PublishFormData) => {
     setIsSubmitting(true);
     try {
-      // Start a transaction
+      // Créer la cible de notification
       const { error: targetError } = await supabase
         .from("notification_targets")
         .insert({
@@ -89,15 +90,25 @@ export function PublishNotificationForm({
 
       if (targetError) throw targetError;
 
-      if (data.target_type === "specific" && selectedUserIds.length > 0) {
-        const { data: target } = await supabase
-          .from("notification_targets")
-          .select("id")
-          .eq("notification_id", notificationId)
-          .single();
+      // Récupérer l'ID de la cible créée
+      const { data: target } = await supabase
+        .from("notification_targets")
+        .select("id")
+        .eq("notification_id", notificationId)
+        .single();
 
-        if (target) {
-          const userTargets = selectedUserIds.map((userId) => ({
+      if (target) {
+        // Déterminer les utilisateurs cibles
+        let targetUserIds: string[] = [];
+        if (data.target_type === "all" && users) {
+          targetUserIds = users.map(user => user.id);
+        } else if (data.target_type === "specific") {
+          targetUserIds = selectedUserIds;
+        }
+
+        if (targetUserIds.length > 0) {
+          // Créer les liens utilisateurs-cible
+          const userTargets = targetUserIds.map((userId) => ({
             notification_target_id: target.id,
             user_id: userId,
           }));
@@ -107,16 +118,32 @@ export function PublishNotificationForm({
             .insert(userTargets);
 
           if (userTargetError) throw userTargetError;
+
+          // Créer les notifications utilisateurs
+          const userNotifications = targetUserIds.map((userId) => ({
+            notification_id: notificationId,
+            user_id: userId,
+          }));
+
+          const { error: userNotificationError } = await supabase
+            .from("user_notifications")
+            .insert(userNotifications);
+
+          if (userNotificationError) throw userNotificationError;
         }
       }
 
-      // Update notification status
+      // Marquer la notification comme publiée
       const { error: updateError } = await supabase
         .from("notifications")
         .update({ published: true })
         .eq("id", notificationId);
 
       if (updateError) throw updateError;
+
+      // Invalider les caches
+      await queryClient.invalidateQueries({ queryKey: ["notifications"] });
+      await queryClient.invalidateQueries({ queryKey: ["userNotifications"] });
 
       toast({
         title: "Notification publiée",
