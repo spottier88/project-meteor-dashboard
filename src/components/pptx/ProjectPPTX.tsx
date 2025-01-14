@@ -80,7 +80,7 @@ export const generateProjectPPTX = async (projectsData: ProjectData[]) => {
         ].filter(Boolean).join(" / "), 
         options: { color: "FFFFFF", fontSize: 8 } 
       }
-    ], { x: 0.1, y: 0.1, w: 8, h: 0.8,align: "left",valign: "top" });
+    ], { x: 0, y: 0.1, w: 8, h: 0.8,align: "left",valign: "top" });
 
     // Date de revue
     if (data.lastReview?.created_at) {
