@@ -98,7 +98,7 @@ export const generateProjectPPTX = async (projectsData: ProjectData[]) => {
 
     // Grille principale avec espacement optimisé et hauteurs réduites
     const grid = {
-      x: 0.5,
+      x: 0.3,
       y: 1.0,
       w: 9,
       h: 5,
