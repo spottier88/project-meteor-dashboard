@@ -72,14 +72,7 @@ export const generateProjectPPTX = async (projectsData: ProjectData[]) => {
       { text: data.project.title, options: { bold: true, color: "FFFFFF", fontSize: 16 } },
       { text: "\n" },
       { text: data.project.description || "", options: { color: "FFFFFF", fontSize: 10 } },
-      { text: "\n" },
-      { text: [
-          data.project.pole_name,
-          data.project.direction_name,
-          data.project.service_name
-        ].filter(Boolean).join(" / "), 
-        options: { color: "FFFFFF", fontSize: 8 } 
-      }
+      { text: "\n" }
     ], { x: 0, y: 0, w: 8, h: 0.8,align: "left",valign: "top" });
 
     // Date de revue
