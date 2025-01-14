@@ -71,16 +71,16 @@ export const generateProjectPPTX = async (projectsData: ProjectData[]) => {
     slide.addText([
       { text: data.project.title, options: { bold: true, color: "FFFFFF", fontSize: 16 } },
       { text: "\n" },
-      { text: data.project.description || "", options: { color: "FFFFFF", fontSize: 12 } },
+      { text: data.project.description || "", options: { color: "FFFFFF", fontSize: 10 } },
       { text: "\n" },
       { text: [
           data.project.pole_name,
           data.project.direction_name,
           data.project.service_name
         ].filter(Boolean).join(" / "), 
-        options: { color: "FFFFFF", fontSize: 12 } 
+        options: { color: "FFFFFF", fontSize: 8 } 
       }
-    ], { x: 0.5, y: 0.1, w: 8, h: 0.8,align: "left",valign: "top" });
+    ], { x: 0.1, y: 0.1, w: 8, h: 0.8,align: "left",valign: "top" });
 
     // Date de revue
     if (data.lastReview?.created_at) {
