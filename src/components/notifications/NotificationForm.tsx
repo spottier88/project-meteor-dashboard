@@ -59,7 +59,14 @@ export function NotificationForm({ onSuccess, onCancel }: NotificationFormProps)
   });
 
   const onSubmit = async (data: NotificationFormData) => {
-    if (!user) return;
+    if (!user) {
+      toast({
+        title: "Erreur",
+        description: "Vous devez être connecté pour créer une notification",
+        variant: "destructive",
+      });
+      return;
+    }
     
     setIsSubmitting(true);
     try {
@@ -71,7 +78,10 @@ export function NotificationForm({ onSuccess, onCancel }: NotificationFormProps)
         created_by: user.id,
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error("Erreur lors de l'insertion:", error);
+        throw error;
+      }
 
       toast({
         title: "Notification créée",
