@@ -76,12 +76,10 @@ export function NotificationForm({ onSuccess, onCancel }: NotificationFormProps)
         type: data.type,
         publication_date: data.publication_date.toISOString(),
         created_by: user.id,
+        published: false,
       });
 
-      if (error) {
-        console.error("Erreur lors de l'insertion:", error);
-        throw error;
-      }
+      if (error) throw error;
 
       toast({
         title: "Notification créée",

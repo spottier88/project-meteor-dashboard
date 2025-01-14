@@ -70,6 +70,71 @@ export type Database = {
           },
         ]
       }
+      notification_target_users: {
+        Row: {
+          created_at: string | null
+          id: string
+          notification_target_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          notification_target_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          notification_target_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notification_target_users_notification_target_id_fkey"
+            columns: ["notification_target_id"]
+            isOneToOne: false
+            referencedRelation: "notification_targets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notification_target_users_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      notification_targets: {
+        Row: {
+          created_at: string | null
+          id: string
+          notification_id: string
+          target_type: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          notification_id: string
+          target_type: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          notification_id?: string
+          target_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notification_targets_notification_id_fkey"
+            columns: ["notification_id"]
+            isOneToOne: true
+            referencedRelation: "notifications"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       notifications: {
         Row: {
           content: string
@@ -77,6 +142,7 @@ export type Database = {
           created_by: string | null
           id: string
           publication_date: string
+          published: boolean | null
           title: string
           type: Database["public"]["Enums"]["notification_type"]
         }
@@ -86,6 +152,7 @@ export type Database = {
           created_by?: string | null
           id?: string
           publication_date: string
+          published?: boolean | null
           title: string
           type: Database["public"]["Enums"]["notification_type"]
         }
@@ -95,6 +162,7 @@ export type Database = {
           created_by?: string | null
           id?: string
           publication_date?: string
+          published?: boolean | null
           title?: string
           type?: Database["public"]["Enums"]["notification_type"]
         }
