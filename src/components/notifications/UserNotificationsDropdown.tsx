@@ -28,6 +28,7 @@ export const UserNotificationsDropdown = () => {
   const queryClient = useQueryClient();
   const [unreadCount, setUnreadCount] = useState(0);
   const [selectedNotification, setSelectedNotification] = useState<Notification | null>(null);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
 
   const { data: notifications } = useQuery({
     queryKey: ["userNotifications", user?.id],
@@ -95,9 +96,14 @@ export const UserNotificationsDropdown = () => {
     }
   };
 
+  const handleNotificationClick = (notification: Notification) => {
+    setSelectedNotification(notification);
+    setDropdownOpen(false);
+  };
+
   return (
     <>
-      <DropdownMenu>
+      <DropdownMenu open={dropdownOpen} onOpenChange={setDropdownOpen}>
         <DropdownMenuTrigger asChild>
           <Button variant="ghost" size="icon" className="relative">
             <Bell className="h-5 w-5" />
@@ -119,7 +125,7 @@ export const UserNotificationsDropdown = () => {
                 <DropdownMenuItem 
                   key={notification.id} 
                   className="flex flex-col items-start p-4 cursor-pointer"
-                  onClick={() => setSelectedNotification(notification)}
+                  onClick={() => handleNotificationClick(notification)}
                 >
                   <div className="w-full flex justify-between items-start gap-2">
                     <div className="flex-1">
@@ -150,8 +156,15 @@ export const UserNotificationsDropdown = () => {
         </DropdownMenuContent>
       </DropdownMenu>
 
-      <Dialog open={!!selectedNotification} onOpenChange={() => setSelectedNotification(null)}>
-        <DialogContent className="sm:max-w-[500px]">
+      <Dialog 
+        open={!!selectedNotification} 
+        onOpenChange={(open) => {
+          if (!open) {
+            setSelectedNotification(null);
+          }
+        }}
+      >
+        <DialogContent className="sm:max-w-[500px]" onClick={(e) => e.stopPropagation()}>
           <DialogHeader>
             <DialogTitle>{selectedNotification?.title}</DialogTitle>
           </DialogHeader>
