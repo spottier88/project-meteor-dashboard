@@ -8,6 +8,12 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -21,6 +27,7 @@ export const UserNotificationsDropdown = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [unreadCount, setUnreadCount] = useState(0);
+  const [selectedNotification, setSelectedNotification] = useState<Notification | null>(null);
 
   const { data: notifications } = useQuery({
     queryKey: ["userNotifications", user?.id],
@@ -89,56 +96,75 @@ export const UserNotificationsDropdown = () => {
   };
 
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="icon" className="relative">
-          <Bell className="h-5 w-5" />
-          {unreadCount > 0 && (
-            <span className="absolute -top-1 -right-1 h-4 w-4 rounded-full bg-red-500 text-[10px] font-medium text-white flex items-center justify-center">
-              {unreadCount}
-            </span>
-          )}
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-80">
-        <ScrollArea className="h-[300px]">
-          {notifications?.length === 0 ? (
-            <div className="p-4 text-center text-sm text-muted-foreground">
-              Aucune notification
-            </div>
-          ) : (
-            notifications?.map((notification) => (
-              <DropdownMenuItem 
-                key={notification.id} 
-                className="flex flex-col items-start p-4 cursor-pointer"
-              >
-                <div className="w-full flex justify-between items-start gap-2">
-                  <div className="flex-1">
-                    <div className="font-medium">{notification.title}</div>
-                    <div className="text-sm text-muted-foreground line-clamp-2">
-                      {notification.content}
+    <>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="ghost" size="icon" className="relative">
+            <Bell className="h-5 w-5" />
+            {unreadCount > 0 && (
+              <span className="absolute -top-1 -right-1 h-4 w-4 rounded-full bg-red-500 text-[10px] font-medium text-white flex items-center justify-center">
+                {unreadCount}
+              </span>
+            )}
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" className="w-80">
+          <ScrollArea className="h-[300px]">
+            {notifications?.length === 0 ? (
+              <div className="p-4 text-center text-sm text-muted-foreground">
+                Aucune notification
+              </div>
+            ) : (
+              notifications?.map((notification) => (
+                <DropdownMenuItem 
+                  key={notification.id} 
+                  className="flex flex-col items-start p-4 cursor-pointer"
+                  onClick={() => setSelectedNotification(notification)}
+                >
+                  <div className="w-full flex justify-between items-start gap-2">
+                    <div className="flex-1">
+                      <div className="font-medium">{notification.title}</div>
+                      <div className="text-sm text-muted-foreground line-clamp-2">
+                        {notification.content}
+                      </div>
+                      <div className="text-xs text-muted-foreground mt-1">
+                        {format(new Date(notification.publication_date), "d MMMM yyyy", { locale: fr })}
+                      </div>
                     </div>
-                    <div className="text-xs text-muted-foreground mt-1">
-                      {format(new Date(notification.publication_date), "d MMMM yyyy", { locale: fr })}
-                    </div>
+                    <Button 
+                      variant="ghost" 
+                      size="icon"
+                      className="h-6 w-6"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleMarkAsRead(notification.id);
+                      }}
+                    >
+                      <Check className="h-4 w-4" />
+                    </Button>
                   </div>
-                  <Button 
-                    variant="ghost" 
-                    size="icon"
-                    className="h-6 w-6"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleMarkAsRead(notification.id);
-                    }}
-                  >
-                    <Check className="h-4 w-4" />
-                  </Button>
-                </div>
-              </DropdownMenuItem>
-            ))
-          )}
-        </ScrollArea>
-      </DropdownMenuContent>
-    </DropdownMenu>
+                </DropdownMenuItem>
+              ))
+            )}
+          </ScrollArea>
+        </DropdownMenuContent>
+      </DropdownMenu>
+
+      <Dialog open={!!selectedNotification} onOpenChange={() => setSelectedNotification(null)}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>{selectedNotification?.title}</DialogTitle>
+          </DialogHeader>
+          <div className="mt-4">
+            <p className="text-sm text-foreground whitespace-pre-wrap">
+              {selectedNotification?.content}
+            </p>
+            <div className="mt-4 text-xs text-muted-foreground">
+              Publié le {selectedNotification && format(new Date(selectedNotification.publication_date), "d MMMM yyyy", { locale: fr })}
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 };
