@@ -92,9 +92,9 @@ export const generateProjectPPTX = async (projectsData: ProjectData[]) => {
           data.project.direction_name,
           data.project.service_name
         ].filter(Boolean).join(" / "), 
-        options: { color: "000000", fontSize: 8 } 
+        options: { color: "FFFFFF", fontSize: 8 } 
       }
-    ], { x: 8, y: 0.4, w: 2, h: 0.8,align: "right",valign: "top" });
+    ], { x: 7, y: 0.5, w: 3, h: 0.2,align: "right",valign: "top" });
 
     // Grille principale avec espacement optimisé et hauteurs réduites
     const grid = {
