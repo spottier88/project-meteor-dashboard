@@ -21,6 +21,9 @@ interface ProjectData {
     progress: "better" | "stable" | "worse";
     comment?: string;
     created_at: string;
+    actions?: Array<{
+      description: string;
+    }>;
   };
   risks: Array<{
     description: string;
@@ -391,7 +394,7 @@ export const generateProjectPPTX = async (projectsData: ProjectData[]) => {
       });
     }
 
-    // Zone des actions de mitigation
+    // Zone des actions de revue
     slide.addShape("rect", {
       x: grid.x + 4.6,
       y: risksY,
@@ -400,7 +403,7 @@ export const generateProjectPPTX = async (projectsData: ProjectData[]) => {
       fill: { color: "F5F5F5" },
     });
 
-    slide.addText("ACTIONS DE MITIGATION", {
+    slide.addText("ACTIONS DE REVUE", {
       x: grid.x + 4.6,
       y: risksY,
       w: 4.7,
@@ -412,10 +415,9 @@ export const generateProjectPPTX = async (projectsData: ProjectData[]) => {
       align: "center",
     });
 
-    const risksWithMitigation = data.risks.filter(r => r.mitigation_plan);
-    if (risksWithMitigation.length > 0) {
+    if (data.lastReview?.actions && data.lastReview.actions.length > 0) {
       slide.addText(
-        risksWithMitigation.map(r => r.mitigation_plan).join("\n"),
+        data.lastReview.actions.map(a => a.description).join("\n"),
         {
           x: grid.x + 4.8,
           y: risksY + titleHeight,
@@ -428,7 +430,7 @@ export const generateProjectPPTX = async (projectsData: ProjectData[]) => {
         }
       );
     } else {
-      slide.addText("Aucune action de mitigation définie", {
+      slide.addText("Aucune action définie", {
         x: grid.x + 4.8,
         y: risksY + titleHeight,
         w: 4.3,
