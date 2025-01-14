@@ -207,7 +207,7 @@ export const ReviewSheet = ({
 
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <FormLabel>Actions à prendre</FormLabel>
+                <FormLabel>Actions correctives</FormLabel>
                 <Button
                   type="button"
                   variant="outline"
