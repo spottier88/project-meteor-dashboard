@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { Send, Trash2 } from "lucide-react";
@@ -29,9 +29,10 @@ interface NotificationListProps {
 
 export function NotificationList({ onDelete }: NotificationListProps) {
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const [selectedNotification, setSelectedNotification] = useState<string | null>(null);
 
-  const { data: notifications, isLoading, refetch } = useQuery({
+  const { data: notifications, isLoading } = useQuery({
     queryKey: ["notifications"],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -53,6 +54,9 @@ export function NotificationList({ onDelete }: NotificationListProps) {
 
       if (error) throw error;
 
+      // Invalider le cache des notifications
+      await queryClient.invalidateQueries({ queryKey: ["notifications"] });
+      
       toast({
         title: "Notification supprimée",
         description: "La notification a été supprimée avec succès",
@@ -137,7 +141,7 @@ export function NotificationList({ onDelete }: NotificationListProps) {
                 notificationId={selectedNotification}
                 onSuccess={() => {
                   setSelectedNotification(null);
-                  refetch();
+                  queryClient.invalidateQueries({ queryKey: ["notifications"] });
                 }}
                 onCancel={() => setSelectedNotification(null)}
               />

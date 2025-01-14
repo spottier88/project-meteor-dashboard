@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useUser } from "@supabase/auth-helpers-react";
-import { Bell } from "lucide-react";
+import { Bell, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -9,14 +9,17 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { Notification } from "@/types/notification";
+import { useToast } from "@/components/ui/use-toast";
 
 export const UserNotificationsDropdown = () => {
   const user = useUser();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
   const [unreadCount, setUnreadCount] = useState(0);
 
   const { data: notifications } = useQuery({
@@ -25,36 +28,65 @@ export const UserNotificationsDropdown = () => {
       if (!user?.id) return [];
       
       const { data, error } = await supabase
-        .from("notification_target_users")
+        .from("user_notifications")
         .select(`
-          notification_targets (
-            notification_id,
-            notifications (
-              id,
-              title,
-              content,
-              type,
-              publication_date,
-              created_at
-            )
+          notification_id,
+          read_at,
+          notifications (
+            id,
+            title,
+            content,
+            type,
+            publication_date,
+            created_at
           )
         `)
         .eq("user_id", user.id)
+        .is("read_at", null)
         .order("created_at", { ascending: false })
         .limit(5);
 
       if (error) throw error;
 
       const notifs = data
-        .map(item => item.notification_targets?.notifications)
-        .filter(Boolean) as Notification[];
+        .map(item => ({
+          ...item.notifications,
+          read_at: item.read_at
+        }))
+        .filter(Boolean) as (Notification & { read_at: string | null })[];
       
       setUnreadCount(notifs.length);
       return notifs;
     },
     enabled: !!user?.id,
-    refetchInterval: 30000, // Rafraîchit toutes les 30 secondes
+    refetchInterval: 30000,
   });
+
+  const handleMarkAsRead = async (notificationId: string) => {
+    try {
+      const { error } = await supabase
+        .from("user_notifications")
+        .update({ read_at: new Date().toISOString() })
+        .eq("notification_id", notificationId)
+        .eq("user_id", user?.id);
+
+      if (error) throw error;
+
+      await queryClient.invalidateQueries({ queryKey: ["userNotifications"] });
+
+      toast({
+        title: "Notification marquée comme lue",
+        description: "La notification a été supprimée de votre liste",
+      });
+    } catch (error) {
+      console.error("Erreur lors du marquage de la notification:", error);
+      toast({
+        title: "Erreur",
+        description: "Une erreur est survenue lors du marquage de la notification",
+        variant: "destructive",
+      });
+    }
+  };
 
   return (
     <DropdownMenu>
@@ -76,13 +108,31 @@ export const UserNotificationsDropdown = () => {
             </div>
           ) : (
             notifications?.map((notification) => (
-              <DropdownMenuItem key={notification.id} className="flex flex-col items-start p-4 cursor-pointer">
-                <div className="font-medium">{notification.title}</div>
-                <div className="text-sm text-muted-foreground line-clamp-2">
-                  {notification.content}
-                </div>
-                <div className="text-xs text-muted-foreground mt-1">
-                  {format(new Date(notification.publication_date), "d MMMM yyyy", { locale: fr })}
+              <DropdownMenuItem 
+                key={notification.id} 
+                className="flex flex-col items-start p-4 cursor-pointer"
+              >
+                <div className="w-full flex justify-between items-start gap-2">
+                  <div className="flex-1">
+                    <div className="font-medium">{notification.title}</div>
+                    <div className="text-sm text-muted-foreground line-clamp-2">
+                      {notification.content}
+                    </div>
+                    <div className="text-xs text-muted-foreground mt-1">
+                      {format(new Date(notification.publication_date), "d MMMM yyyy", { locale: fr })}
+                    </div>
+                  </div>
+                  <Button 
+                    variant="ghost" 
+                    size="icon"
+                    className="h-6 w-6"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleMarkAsRead(notification.id);
+                    }}
+                  >
+                    <Check className="h-4 w-4" />
+                  </Button>
                 </div>
               </DropdownMenuItem>
             ))
