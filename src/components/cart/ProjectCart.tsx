@@ -37,7 +37,10 @@ export const ProjectCart = ({ isOpen, onClose }: ProjectCartProps) => {
           const [reviewResult, risksResult, tasksResult] = await Promise.all([
             supabase
               .from("reviews")
-              .select("*")
+              .select(`
+                *,
+                review_actions(*)
+              `)
               .eq("project_id", projectId)
               .order("created_at", { ascending: false })
               .limit(1)
@@ -45,6 +48,8 @@ export const ProjectCart = ({ isOpen, onClose }: ProjectCartProps) => {
             supabase.from("risks").select("*").eq("project_id", projectId),
             supabase.from("tasks").select("*").eq("project_id", projectId),
           ]);
+
+          console.log("Review data with actions:", reviewResult.data);
 
           const [poleResult, directionResult, serviceResult] = await Promise.all([
             projectData.pole_id
@@ -79,6 +84,7 @@ export const ProjectCart = ({ isOpen, onClose }: ProjectCartProps) => {
                   progress: reviewResult.data.progress,
                   comment: reviewResult.data.comment,
                   created_at: reviewResult.data.created_at,
+                  actions: reviewResult.data.review_actions,
                 }
               : undefined,
             risks: risksResult.data || [],
