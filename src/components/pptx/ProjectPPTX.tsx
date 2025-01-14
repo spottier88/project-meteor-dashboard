@@ -403,7 +403,7 @@ export const generateProjectPPTX = async (projectsData: ProjectData[]) => {
       fill: { color: "F5F5F5" },
     });
 
-    slide.addText("ACTIONS DE REVUE", {
+    slide.addText("ACTIONS CORRECTIVES", {
       x: grid.x + 4.6,
       y: risksY,
       w: 4.7,
