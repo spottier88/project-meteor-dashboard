@@ -101,7 +101,7 @@ export const generateProjectPPTX = async (projectsData: ProjectData[]) => {
         ].filter(Boolean).join(" / "), 
         options: { color: "000000", fontSize: 8 } 
       }
-    ], { x: 8, y: 1, w: 2, h: 0.8,align: "right",valign: "top" });
+    ], { x: 8, y: 0.4, w: 2, h: 0.8,align: "right",valign: "top" });
 
     // Grille principale avec espacement optimisé et hauteurs réduites
     const grid = {
