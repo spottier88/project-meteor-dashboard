@@ -415,6 +415,8 @@ export const generateProjectPPTX = async (projectsData: ProjectData[]) => {
       align: "center",
     });
 
+    console.log("Actions de revue:", data.lastReview?.actions);
+
     if (data.lastReview?.actions && data.lastReview.actions.length > 0) {
       slide.addText(
         data.lastReview.actions.map(a => a.description).join("\n"),
