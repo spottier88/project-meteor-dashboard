@@ -20,6 +20,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
+import { Checkbox } from "@/components/ui/checkbox";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface PublishFormData {
   target_type: "all" | "specific";
@@ -39,6 +41,7 @@ export function PublishNotificationForm({
 }: PublishNotificationFormProps) {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [selectedUserIds, setSelectedUserIds] = useState<string[]>([]);
 
   const form = useForm<PublishFormData>({
     defaultValues: {
@@ -57,6 +60,22 @@ export function PublishNotificationForm({
     },
   });
 
+  const handleSelectAll = (checked: boolean) => {
+    if (checked && users) {
+      setSelectedUserIds(users.map(user => user.id));
+    } else {
+      setSelectedUserIds([]);
+    }
+  };
+
+  const handleSelectUser = (checked: boolean, userId: string) => {
+    if (checked) {
+      setSelectedUserIds(prev => [...prev, userId]);
+    } else {
+      setSelectedUserIds(prev => prev.filter(id => id !== userId));
+    }
+  };
+
   const onSubmit = async (data: PublishFormData) => {
     setIsSubmitting(true);
     try {
@@ -70,7 +89,7 @@ export function PublishNotificationForm({
 
       if (targetError) throw targetError;
 
-      if (data.target_type === "specific" && data.user_ids) {
+      if (data.target_type === "specific" && selectedUserIds.length > 0) {
         const { data: target } = await supabase
           .from("notification_targets")
           .select("id")
@@ -78,7 +97,7 @@ export function PublishNotificationForm({
           .single();
 
         if (target) {
-          const userTargets = data.user_ids.map((userId) => ({
+          const userTargets = selectedUserIds.map((userId) => ({
             notification_target_id: target.id,
             user_id: userId,
           }));
@@ -117,6 +136,8 @@ export function PublishNotificationForm({
     }
   };
 
+  const targetType = form.watch("target_type");
+
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -152,11 +173,46 @@ export function PublishNotificationForm({
           )}
         />
 
+        {targetType === "specific" && (
+          <div className="space-y-4">
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="select-all"
+                checked={users && selectedUserIds.length === users.length}
+                onCheckedChange={handleSelectAll}
+              />
+              <label htmlFor="select-all" className="text-sm font-medium">
+                Sélectionner tous les utilisateurs
+              </label>
+            </div>
+            
+            <ScrollArea className="h-[200px] rounded-md border p-4">
+              <div className="space-y-2">
+                {users?.map((user) => (
+                  <div key={user.id} className="flex items-center space-x-2">
+                    <Checkbox
+                      id={user.id}
+                      checked={selectedUserIds.includes(user.id)}
+                      onCheckedChange={(checked) => handleSelectUser(checked as boolean, user.id)}
+                    />
+                    <label htmlFor={user.id} className="text-sm">
+                      {user.first_name} {user.last_name} ({user.email})
+                    </label>
+                  </div>
+                ))}
+              </div>
+            </ScrollArea>
+          </div>
+        )}
+
         <div className="flex justify-end space-x-2">
           <Button type="button" variant="outline" onClick={onCancel}>
             Annuler
           </Button>
-          <Button type="submit" disabled={isSubmitting}>
+          <Button 
+            type="submit" 
+            disabled={isSubmitting || (targetType === "specific" && selectedUserIds.length === 0)}
+          >
             {isSubmitting ? "Publication..." : "Publier"}
           </Button>
         </div>

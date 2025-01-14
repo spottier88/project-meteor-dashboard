@@ -1,8 +1,5 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
-import { CalendarIcon } from "lucide-react";
-import { format } from "date-fns";
-import { fr } from "date-fns/locale";
 import { useUser } from "@supabase/auth-helpers-react";
 import { useToast } from "@/components/ui/use-toast";
 import { Button } from "@/components/ui/button";
@@ -23,14 +20,9 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import { Calendar } from "@/components/ui/calendar";
 import { NotificationType } from "@/types/notification";
 import { supabase } from "@/integrations/supabase/client";
+import { DatePickerField } from "@/components/form/DatePickerField";
 
 interface NotificationFormData {
   title: string;
@@ -156,38 +148,16 @@ export function NotificationForm({ onSuccess, onCancel }: NotificationFormProps)
           control={form.control}
           name="publication_date"
           render={({ field }) => (
-            <FormItem className="flex flex-col">
+            <FormItem>
               <FormLabel>Date de publication</FormLabel>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <FormControl>
-                    <Button
-                      variant={"outline"}
-                      className={
-                        "w-full pl-3 text-left font-normal"
-                      }
-                    >
-                      {field.value ? (
-                        format(field.value, "P", { locale: fr })
-                      ) : (
-                        <span>Choisir une date</span>
-                      )}
-                      <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                    </Button>
-                  </FormControl>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
-                  <Calendar
-                    mode="single"
-                    selected={field.value}
-                    onSelect={field.onChange}
-                    disabled={(date) =>
-                      date < new Date()
-                    }
-                    initialFocus
-                  />
-                </PopoverContent>
-              </Popover>
+              <FormControl>
+                <DatePickerField
+                  label=""
+                  value={field.value}
+                  onChange={field.onChange}
+                  minDate={new Date()}
+                />
+              </FormControl>
               <FormMessage />
             </FormItem>
           )}
