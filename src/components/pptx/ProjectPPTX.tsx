@@ -80,17 +80,28 @@ export const generateProjectPPTX = async (projectsData: ProjectData[]) => {
         ].filter(Boolean).join(" / "), 
         options: { color: "FFFFFF", fontSize: 8 } 
       }
-    ], { x: 0, y: 0.1, w: 8, h: 0.8,align: "left",valign: "top" });
+    ], { x: 0, y: 0, w: 8, h: 0.8,align: "left",valign: "top" });
 
     // Date de revue
     if (data.lastReview?.created_at) {
       slide.addText(new Date(data.lastReview.created_at).toLocaleDateString("fr-FR"), {
-        x: 8, y: 0.1, h: 0.3, w: 1.5,
+        x: 8, y: 0, h: 0.3, w: 1.5,
         color: "FFFFFF",
         fontSize: 12,
         align: "right"
       });
     }
+
+    // Service.direction.pôle entête
+    slide.addText([
+      { text: [
+          data.project.pole_name,
+          data.project.direction_name,
+          data.project.service_name
+        ].filter(Boolean).join(" / "), 
+        options: { color: "000000", fontSize: 8 } 
+      }
+    ], { x: 8, y: 1, w: 2, h: 0.8,align: "right",valign: "top" });
 
     // Grille principale avec espacement optimisé et hauteurs réduites
     const grid = {
