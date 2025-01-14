@@ -7,6 +7,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useToast } from "./ui/use-toast";
 import { UserProfile, UserRoleData } from "@/types/user";
 import { ProfileForm } from "./profile/ProfileForm";
+import { UserNotificationsDropdown } from "./notifications/UserNotificationsDropdown";
 
 export const UserInfo = () => {
   const user = useUser();
@@ -94,6 +95,7 @@ export const UserInfo = () => {
           </span>
         </div>
         <div className="flex items-center gap-2">
+          <UserNotificationsDropdown />
           {isAdmin && (
             <Button variant="ghost" size="sm" onClick={() => navigate("/admin")}>
               <Settings className="h-4 w-4 mr-2" />
