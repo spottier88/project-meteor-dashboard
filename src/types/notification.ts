@@ -8,6 +8,7 @@ export interface Notification {
   publication_date: string;
   created_at: string;
   created_by?: string;
+  published: boolean | null;
 }
 
 export interface UserNotification {
