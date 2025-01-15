@@ -42,6 +42,7 @@ const Index = () => {
   const { data: projects, refetch: refetchProjects } = useQuery({
     queryKey: ["projects"],
     queryFn: async () => {
+      console.log("Fetching projects with monitoring data...");
       const { data, error } = await supabase
         .from("projects")
         .select(`
@@ -65,7 +66,12 @@ const Index = () => {
         `)
         .order("created_at", { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error fetching projects:", error);
+        throw error;
+      }
+      
+      console.log("Raw projects data:", data);
       
       return data?.map(project => ({
         ...project,
@@ -77,11 +83,21 @@ const Index = () => {
   const filteredProjects = projects?.filter(project => {
     // Filtre par niveau de suivi
     if (monitoringLevel !== 'all') {
+      console.log(`Filtering project ${project.title}:`, {
+        monitoringLevel,
+        projectMonitoring: project.project_monitoring,
+      });
+
       const monitoring = project.project_monitoring?.[0];
       if (!monitoring) {
-        return monitoringLevel === 'none';
+        const isNoneMatch = monitoringLevel === 'none';
+        console.log(`Project has no monitoring. Matches 'none'? ${isNoneMatch}`);
+        return isNoneMatch;
       }
-      return monitoring.monitoring_level === monitoringLevel;
+      
+      const levelMatch = monitoring.monitoring_level === monitoringLevel;
+      console.log(`Project monitoring level: ${monitoring.monitoring_level}. Matches filter? ${levelMatch}`);
+      return levelMatch;
     }
 
     // Filtre par recherche
@@ -94,6 +110,8 @@ const Index = () => {
 
     return true;
   }) || [];
+
+  console.log("Filtered projects:", filteredProjects.length, "out of", projects?.length);
 
   const handleEditProject = (projectId: string) => {
     const project = projects?.find(p => p.id === projectId);
@@ -158,7 +176,10 @@ const Index = () => {
           </div>
           <MonitoringFilter
             selectedLevel={monitoringLevel}
-            onLevelChange={setMonitoringLevel}
+            onLevelChange={(level) => {
+              console.log("Monitoring level changed to:", level);
+              setMonitoringLevel(level);
+            }}
           />
         </div>
       </div>
