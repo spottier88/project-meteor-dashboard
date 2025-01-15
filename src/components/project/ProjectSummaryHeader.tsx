@@ -27,11 +27,17 @@ export const ProjectSummaryHeader = ({
   const { data: latestReview } = useQuery({
     queryKey: ["latestReview", id],
     queryFn: async () => {
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from("latest_reviews")
         .select("*")
         .eq("project_id", id)
-        .single();
+        .maybeSingle();
+
+      if (error) {
+        console.error("Error fetching latest review:", error);
+        return null;
+      }
+
       return data;
     },
     enabled: !!id,
