@@ -10,6 +10,7 @@ import { useForm } from "react-hook-form";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Slider } from "@/components/ui/slider";
+import { useQuery } from "@tanstack/react-query";
 
 interface ReviewSheetProps {
   projectId: string;
@@ -37,11 +38,32 @@ export const ReviewSheet = ({
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // Récupération de la dernière revue pour initialiser l'avancement
+  const { data: lastReview } = useQuery({
+    queryKey: ["lastReview", projectId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("reviews")
+        .select("completion")
+        .eq("project_id", projectId)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (error) {
+        console.error("Error fetching last review:", error);
+        return null;
+      }
+      return data;
+    },
+    enabled: !!projectId,
+  });
+
   const form = useForm<ReviewForm>({
     defaultValues: {
       weather: "cloudy",
       progress: "stable",
-      completion: 0,
+      completion: lastReview?.completion || 0,
       comment: "",
       actions: [{ description: "" }],
     },
