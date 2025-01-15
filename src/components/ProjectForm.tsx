@@ -107,21 +107,35 @@ export const ProjectForm = ({ isOpen, onClose, onSubmit, project }: ProjectFormP
           setServiceId(project.service_id || "none");
           setOwnerId(project.owner_id || "");
 
-          // Initialisation des données de suivi
-          const { data: monitoringData } = await supabase
-            .from("project_monitoring")
-            .select("monitoring_level, monitoring_entity_id")
-            .eq("project_id", project.id)
-            .maybeSingle();
+          try {
+            console.log("Fetching monitoring data for project:", project.id);
+            
+            const { data: monitoringData, error } = await supabase
+              .from("project_monitoring")
+              .select("*")
+              .eq("project_id", project.id)
+              .maybeSingle();
 
-          console.log("Monitoring data from DB:", monitoringData);
-          
-          if (monitoringData) {
-            setMonitoringLevel(monitoringData.monitoring_level);
-            setMonitoringEntityId(monitoringData.monitoring_entity_id);
-          } else {
-            setMonitoringLevel("none");
-            setMonitoringEntityId(null);
+            if (error) {
+              console.error("Error fetching monitoring data:", error);
+              return;
+            }
+
+            console.log("Raw monitoring data from DB:", monitoringData);
+            
+            if (monitoringData) {
+              console.log("Setting monitoring level to:", monitoringData.monitoring_level);
+              console.log("Setting monitoring entity ID to:", monitoringData.monitoring_entity_id);
+              
+              setMonitoringLevel(monitoringData.monitoring_level);
+              setMonitoringEntityId(monitoringData.monitoring_entity_id);
+            } else {
+              console.log("No monitoring data found, setting defaults");
+              setMonitoringLevel("none");
+              setMonitoringEntityId(null);
+            }
+          } catch (error) {
+            console.error("Error in monitoring data fetch:", error);
           }
         } else {
           // Réinitialisation pour un nouveau projet
