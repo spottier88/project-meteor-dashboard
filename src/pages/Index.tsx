@@ -81,7 +81,6 @@ const Index = () => {
   });
 
   const filteredProjects = projects?.filter(project => {
-    // Filtre par niveau de suivi
     if (monitoringLevel !== 'all') {
       console.log(`Filtering project ${project.title}:`, {
         monitoringLevel,
@@ -89,12 +88,12 @@ const Index = () => {
       });
 
       if (monitoringLevel === 'none') {
-        const hasNoMonitoring = !project.project_monitoring || project.project_monitoring.length === 0;
+        const hasNoMonitoring = !project.project_monitoring;
         console.log(`Project has no monitoring? ${hasNoMonitoring}`);
         return hasNoMonitoring;
       }
 
-      const monitoring = project.project_monitoring?.[0];
+      const monitoring = project.project_monitoring;
       if (!monitoring) {
         console.log(`Project has no monitoring, but filter is not 'none'`);
         return false;
@@ -105,7 +104,6 @@ const Index = () => {
       return levelMatch;
     }
 
-    // Filtre par recherche
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
       const matchesTitle = project.title?.toLowerCase().includes(query);
