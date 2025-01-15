@@ -12,6 +12,8 @@ interface ProjectFormActionsProps {
   project?: {
     id: string;
     owner_id?: string;
+    pole_id?: string;
+    direction_id?: string;
   };
   formData: {
     title: string;
