@@ -83,6 +83,15 @@ export const ProjectFormActions = ({
     setIsProcessing(true);
 
     try {
+      console.log("Submitting project data:", {
+        formData,
+        project: project ? {
+          id: project.id,
+          pole_id: project.pole_id,
+          direction_id: project.direction_id
+        } : null
+      });
+
       const projectData = {
         title: formData.title,
         description: formData.description,
@@ -96,8 +105,10 @@ export const ProjectFormActions = ({
         service_id: formData.serviceId === "none" ? null : formData.serviceId,
       };
 
+      console.log("Prepared project data:", projectData);
+
       if (project?.id) {
-        const canUpdate = isAdmin || project.owner_id === user.id;
+        const canUpdate = isAdmin || project.owner_id === user?.id;
 
         if (!canUpdate) {
           toast({
@@ -114,6 +125,12 @@ export const ProjectFormActions = ({
           .eq("id", project.id);
 
         if (error) throw error;
+
+        console.log("Updating project monitoring:", {
+          project_id: project.id,
+          monitoring_level: formData.monitoringLevel,
+          monitoring_entity_id: formData.monitoringEntityId,
+        });
 
         // Update project monitoring
         const { error: monitoringError } = await supabase
@@ -169,7 +186,7 @@ export const ProjectFormActions = ({
       onSubmit();
       onClose();
     } catch (error) {
-      console.error("Error:", error);
+      console.error("Error submitting project:", error);
       toast({
         title: "Erreur",
         description: "Une erreur est survenue",

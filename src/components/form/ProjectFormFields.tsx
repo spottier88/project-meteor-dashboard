@@ -76,6 +76,13 @@ export const ProjectFormFields = ({
   project,
   projectManagers,
 }: ProjectFormFieldsProps) => {
+  console.log("ProjectFormFields - Current state:", {
+    poleId,
+    directionId,
+    monitoringLevel,
+    monitoringEntityId
+  });
+
   return (
     <div className="grid gap-4 py-4">
       <BasicProjectFields
@@ -97,6 +104,8 @@ export const ProjectFormFields = ({
         setMonitoringEntityId={setMonitoringEntityId}
         isAdmin={isAdmin}
         projectManagers={projectManagers}
+        poleId={poleId}
+        directionId={directionId}
       />
 
       <OrganizationFields

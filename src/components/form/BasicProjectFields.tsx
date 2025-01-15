@@ -4,6 +4,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { DatePickerField } from "./DatePickerField";
 import { UserProfile } from "@/types/user";
 import { MonitoringLevel } from "@/types/monitoring";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 interface BasicProjectFieldsProps {
   title: string;
@@ -24,6 +26,8 @@ interface BasicProjectFieldsProps {
   setMonitoringEntityId: (value: string | null) => void;
   isAdmin: boolean;
   projectManagers?: UserProfile[];
+  poleId?: string;
+  directionId?: string;
 }
 
 export const BasicProjectFields = ({
@@ -45,7 +49,47 @@ export const BasicProjectFields = ({
   setMonitoringEntityId,
   isAdmin,
   projectManagers,
+  poleId,
+  directionId,
 }: BasicProjectFieldsProps) => {
+  console.log("BasicProjectFields - Props:", {
+    monitoringLevel,
+    monitoringEntityId,
+    poleId,
+    directionId
+  });
+
+  // Fetch poles for monitoring
+  const { data: poles } = useQuery({
+    queryKey: ["poles"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("poles")
+        .select("*")
+        .order("name");
+      if (error) throw error;
+      console.log("Poles data:", data);
+      return data;
+    },
+    enabled: monitoringLevel === "pole",
+  });
+
+  // Fetch directions for monitoring
+  const { data: directions } = useQuery({
+    queryKey: ["directions", poleId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("directions")
+        .select("*")
+        .eq("pole_id", poleId)
+        .order("name");
+      if (error) throw error;
+      console.log("Directions data:", data);
+      return data;
+    },
+    enabled: monitoringLevel === "direction" && !!poleId,
+  });
+
   return (
     <div className="space-y-4">
       <div className="grid gap-2">
@@ -131,7 +175,11 @@ export const BasicProjectFields = ({
         <label htmlFor="monitoring-level" className="text-sm font-medium">
           Niveau de suivi
         </label>
-        <Select value={monitoringLevel} onValueChange={setMonitoringLevel}>
+        <Select value={monitoringLevel} onValueChange={(value: MonitoringLevel) => {
+          console.log("Changing monitoring level to:", value);
+          setMonitoringLevel(value);
+          setMonitoringEntityId(null);
+        }}>
           <SelectTrigger>
             <SelectValue placeholder="Sélectionner un niveau de suivi" />
           </SelectTrigger>
@@ -150,13 +198,25 @@ export const BasicProjectFields = ({
           </label>
           <Select 
             value={monitoringEntityId || ""} 
-            onValueChange={(value) => setMonitoringEntityId(value || null)}
+            onValueChange={(value) => {
+              console.log("Setting monitoring entity to:", value);
+              setMonitoringEntityId(value || null);
+            }}
           >
             <SelectTrigger>
               <SelectValue placeholder="Sélectionner une entité" />
             </SelectTrigger>
             <SelectContent>
-              {/* Add entity options based on monitoring level */}
+              {monitoringLevel === "pole" && poles?.map((pole) => (
+                <SelectItem key={pole.id} value={pole.id}>
+                  {pole.name}
+                </SelectItem>
+              ))}
+              {monitoringLevel === "direction" && directions?.map((direction) => (
+                <SelectItem key={direction.id} value={direction.id}>
+                  {direction.name}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
         </div>
