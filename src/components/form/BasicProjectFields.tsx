@@ -4,8 +4,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { DatePickerField } from "./DatePickerField";
 import { UserProfile } from "@/types/user";
 import { MonitoringLevel } from "@/types/monitoring";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
 import { Label } from "@/components/ui/label";
 
 interface BasicProjectFieldsProps {
@@ -46,43 +44,11 @@ export const BasicProjectFields = ({
   setPriority,
   monitoringLevel,
   setMonitoringLevel,
-  monitoringEntityId,
-  setMonitoringEntityId,
   isAdmin,
   projectManagers,
   poleId,
   directionId,
 }: BasicProjectFieldsProps) => {
-  // Fetch pole name if needed
-  const { data: poleName } = useQuery({
-    queryKey: ["pole-name", poleId],
-    queryFn: async () => {
-      if (!poleId) return null;
-      const { data } = await supabase
-        .from("poles")
-        .select("name")
-        .eq("id", poleId)
-        .single();
-      return data?.name;
-    },
-    enabled: !!poleId && monitoringLevel === "pole",
-  });
-
-  // Fetch direction name if needed
-  const { data: directionName } = useQuery({
-    queryKey: ["direction-name", directionId],
-    queryFn: async () => {
-      if (!directionId) return null;
-      const { data } = await supabase
-        .from("directions")
-        .select("name")
-        .eq("id", directionId)
-        .single();
-      return data?.name;
-    },
-    enabled: !!directionId && monitoringLevel === "direction",
-  });
-
   return (
     <div className="space-y-4">
       <div className="grid gap-2">
@@ -177,7 +143,6 @@ export const BasicProjectFields = ({
           value={monitoringLevel} 
           onValueChange={(value: MonitoringLevel) => {
             setMonitoringLevel(value);
-            setMonitoringEntityId(null);
           }}
         >
           <SelectTrigger>
@@ -198,7 +163,7 @@ export const BasicProjectFields = ({
             Entité de suivi
           </Label>
           <Input
-            value={poleName || ""}
+            value="Pôle du projet"
             readOnly
             className="bg-gray-100"
           />
@@ -211,7 +176,7 @@ export const BasicProjectFields = ({
             Entité de suivi
           </Label>
           <Input
-            value={directionName || ""}
+            value="Direction du projet"
             readOnly
             className="bg-gray-100"
           />
