@@ -78,7 +78,9 @@ const Index = () => {
     // Filtre par niveau de suivi
     if (monitoringLevel !== 'all') {
       const monitoring = project.project_monitoring?.[0];
-      if (!monitoring) return monitoringLevel === 'none';
+      if (!monitoring) {
+        return monitoringLevel === 'none';
+      }
       return monitoring.monitoring_level === monitoringLevel;
     }
 
