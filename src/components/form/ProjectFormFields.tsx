@@ -23,6 +23,7 @@ interface ProjectFormFieldsProps {
   monitoringEntityId: string | null;
   setMonitoringEntityId: (value: string | null) => void;
   isAdmin: boolean;
+  isManager: boolean;
   ownerId: string;
   setOwnerId: (value: string) => void;
   poleId: string;
@@ -65,6 +66,7 @@ export const ProjectFormFields = ({
   monitoringEntityId,
   setMonitoringEntityId,
   isAdmin,
+  isManager,
   ownerId,
   setOwnerId,
   poleId,
@@ -103,6 +105,7 @@ export const ProjectFormFields = ({
         monitoringEntityId={monitoringEntityId}
         setMonitoringEntityId={setMonitoringEntityId}
         isAdmin={isAdmin}
+        isManager={isManager}
         projectManagers={projectManagers}
         poleId={poleId}
         directionId={directionId}

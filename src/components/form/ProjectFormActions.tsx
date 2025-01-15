@@ -31,6 +31,7 @@ interface ProjectFormActionsProps {
   };
   user: User | null;
   isAdmin: boolean;
+  isManager: boolean;
 }
 
 export const ProjectFormActions = ({
