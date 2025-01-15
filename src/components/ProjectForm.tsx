@@ -92,58 +92,62 @@ export const ProjectForm = ({ isOpen, onClose, onSubmit, project }: ProjectFormP
   const isAdmin = userRoles?.some(ur => ur.role === 'admin');
 
   useEffect(() => {
-    if (isOpen) {
-      if (project) {
-        console.log("Project data:", project);
-        setTitle(project.title || "");
-        setDescription(project.description || "");
-        setProjectManager(project.project_manager || "");
-        setStartDate(project.start_date ? new Date(project.start_date) : undefined);
-        setEndDate(project.end_date ? new Date(project.end_date) : undefined);
-        setPriority(project.priority || "medium");
-        setPoleId(project.pole_id || "none");
-        setDirectionId(project.direction_id || "none");
-        setServiceId(project.service_id || "none");
-        setOwnerId(project.owner_id || "");
+    const initializeForm = async () => {
+      if (isOpen) {
+        if (project) {
+          console.log("Project data:", project);
+          setTitle(project.title || "");
+          setDescription(project.description || "");
+          setProjectManager(project.project_manager || "");
+          setStartDate(project.start_date ? new Date(project.start_date) : undefined);
+          setEndDate(project.end_date ? new Date(project.end_date) : undefined);
+          setPriority(project.priority || "medium");
+          setPoleId(project.pole_id || "none");
+          setDirectionId(project.direction_id || "none");
+          setServiceId(project.service_id || "none");
+          setOwnerId(project.owner_id || "");
 
-        // Initialisation des données de suivi
-        const { data: monitoringData } = await supabase
-          .from("project_monitoring")
-          .select("monitoring_level, monitoring_entity_id")
-          .eq("project_id", project.id)
-          .maybeSingle();
+          // Initialisation des données de suivi
+          const { data: monitoringData } = await supabase
+            .from("project_monitoring")
+            .select("monitoring_level, monitoring_entity_id")
+            .eq("project_id", project.id)
+            .maybeSingle();
 
-        console.log("Monitoring data from DB:", monitoringData);
-        
-        if (monitoringData) {
-          setMonitoringLevel(monitoringData.monitoring_level);
-          setMonitoringEntityId(monitoringData.monitoring_entity_id);
+          console.log("Monitoring data from DB:", monitoringData);
+          
+          if (monitoringData) {
+            setMonitoringLevel(monitoringData.monitoring_level);
+            setMonitoringEntityId(monitoringData.monitoring_entity_id);
+          } else {
+            setMonitoringLevel("none");
+            setMonitoringEntityId(null);
+          }
         } else {
+          // Réinitialisation pour un nouveau projet
+          setTitle("");
+          setDescription("");
+          setStartDate(undefined);
+          setEndDate(undefined);
+          setPriority("medium");
           setMonitoringLevel("none");
           setMonitoringEntityId(null);
-        }
-      } else {
-        // Réinitialisation pour un nouveau projet
-        setTitle("");
-        setDescription("");
-        setStartDate(undefined);
-        setEndDate(undefined);
-        setPriority("medium");
-        setMonitoringLevel("none");
-        setMonitoringEntityId(null);
-        setPoleId("none");
-        setDirectionId("none");
-        setServiceId("none");
-        
-        if (!isAdmin && user?.id) {
-          setOwnerId(user.id);
-          setProjectManager(user.email || "");
-        } else {
-          setOwnerId("");
-          setProjectManager("");
+          setPoleId("none");
+          setDirectionId("none");
+          setServiceId("none");
+          
+          if (!isAdmin && user?.id) {
+            setOwnerId(user.id);
+            setProjectManager(user.email || "");
+          } else {
+            setOwnerId("");
+            setProjectManager("");
+          }
         }
       }
-    }
+    };
+
+    initializeForm();
   }, [isOpen, project, user?.email, user?.id, isAdmin]);
 
   return (
