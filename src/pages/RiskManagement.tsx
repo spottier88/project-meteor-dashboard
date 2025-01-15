@@ -4,17 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 import { RiskList } from "@/components/RiskList";
-import { ProjectStatus, ProgressStatus } from "@/components/ProjectCard";
-
-interface Project {
-  id: string;
-  title: string;
-  status: ProjectStatus;
-  progress: ProgressStatus;
-  completion: number;
-  last_review_date: string;
-  project_manager?: string;
-}
+import { ProjectStatus, ProgressStatus } from "@/types/project";
 
 const statusLabels = {
   sunny: "Ensoleillé",

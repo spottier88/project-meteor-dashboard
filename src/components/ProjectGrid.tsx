@@ -1,4 +1,5 @@
-import { ProjectCard, ProjectStatus, ProgressStatus } from "./ProjectCard";
+import { ProjectCard } from "./ProjectCard";
+import { ProjectStatus, ProgressStatus } from "@/types/project";
 import { useUser } from "@supabase/auth-helpers-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";

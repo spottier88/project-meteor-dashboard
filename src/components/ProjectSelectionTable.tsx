@@ -12,7 +12,7 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { StatusIcon } from "./project/StatusIcon";
-import { ProjectStatus } from "./ProjectCard";
+import { ProjectStatus } from "@/types/project";
 
 interface ProjectSelectionTableProps {
   onSelectionChange: (selectedIds: string[]) => void;

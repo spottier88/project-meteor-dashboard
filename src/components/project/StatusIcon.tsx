@@ -1,6 +1,6 @@
 import { Sun, Cloud, CloudLightning, Hourglass } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { ProjectStatus } from "../ProjectCard";
+import { ProjectStatus } from "@/types/project";
 
 const statusIcons = {
   sunny: { icon: Sun, color: "text-warning", label: "Ensoleillé" },

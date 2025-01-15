@@ -1,5 +1,5 @@
 import { cn } from "@/lib/utils";
-import { ProgressStatus } from "../ProjectCard";
+import { ProgressStatus } from "@/types/project";
 
 const progressColors = {
   better: "text-success",

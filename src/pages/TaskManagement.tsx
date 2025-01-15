@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { TaskList } from "@/components/TaskList";
 import { ArrowLeft } from "lucide-react";
-import { ProjectStatus, ProgressStatus } from "@/components/ProjectCard";
+import { ProjectStatus, ProgressStatus } from "@/types/project";
 
 interface Project {
   id: string;

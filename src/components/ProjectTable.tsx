@@ -1,5 +1,5 @@
 import { Table, TableBody } from "@/components/ui/table";
-import { ProjectStatus, ProgressStatus } from "./ProjectCard";
+import { ProjectStatus, ProgressStatus } from "@/types/project";
 import { useUser } from "@supabase/auth-helpers-react";
 import { ProjectTableHeader } from "./project/ProjectTableHeader";
 import { ProjectTableRow } from "./project/ProjectTableRow";

@@ -1,5 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ProjectStatus, ProgressStatus } from "@/components/ProjectCard";
+import { ProjectStatus, ProgressStatus } from "@/types/project";
 import { statusIcons } from "@/lib/project-status";
 import { Hourglass } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";

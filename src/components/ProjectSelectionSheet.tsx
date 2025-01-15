@@ -3,7 +3,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sh
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { StatusIcon } from "./project/StatusIcon";
-import { ProjectStatus } from "./ProjectCard";
+import { ProjectStatus } from "@/types/project";
 import { useUser } from "@supabase/auth-helpers-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";

@@ -1,6 +1,6 @@
 import { TableCell, TableRow } from "@/components/ui/table";
 import { Star } from "lucide-react";
-import { ProjectStatus, ProgressStatus } from "../ProjectCard";
+import { ProjectStatus, ProgressStatus } from "@/types/project";
 import { cn } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
 import { useUser } from "@supabase/auth-helpers-react";

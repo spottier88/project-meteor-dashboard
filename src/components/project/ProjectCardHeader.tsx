@@ -1,7 +1,7 @@
 import { CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Pencil, History, ListTodo } from "lucide-react";
-import { ProjectStatus } from "../ProjectCard";
+import { ProjectStatus } from "@/types/project";
 import { StatusIcon } from "./StatusIcon";
 import { useUser } from "@supabase/auth-helpers-react";
 import { useQuery } from "@tanstack/react-query";
