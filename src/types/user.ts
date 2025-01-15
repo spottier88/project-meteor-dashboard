@@ -38,10 +38,17 @@ export interface Project {
   title: string;
   status: ProjectStatus | null;
   progress: ProgressStatus | null;
-  lastReviewDate: string | null;
-  project_manager?: string;
-  owner_id?: string;
-  pole_id?: string;
-  direction_id?: string;
-  service_id?: string;
+  last_review_date: string | null;
+  project_manager?: string | null;
+  owner_id?: string | null;
+  pole_id?: string | null;
+  direction_id?: string | null;
+  service_id?: string | null;
+  created_at?: string | null;
+  description?: string | null;
+  start_date?: string | null;
+  end_date?: string | null;
+  priority?: string | null;
+  suivi_dgs?: boolean | null;
+  completion?: number;
 }
