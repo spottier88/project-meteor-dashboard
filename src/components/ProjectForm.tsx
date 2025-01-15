@@ -94,6 +94,7 @@ export const ProjectForm = ({ isOpen, onClose, onSubmit, project }: ProjectFormP
   useEffect(() => {
     if (isOpen) {
       if (project) {
+        // Initialisation des données du projet existant
         setTitle(project.title || "");
         setDescription(project.description || "");
         setProjectManager(project.project_manager || "");
@@ -104,10 +105,12 @@ export const ProjectForm = ({ isOpen, onClose, onSubmit, project }: ProjectFormP
         setDirectionId(project.direction_id || "none");
         setServiceId(project.service_id || "none");
         setOwnerId(project.owner_id || "");
-        
-        // Initialisation des valeurs de suivi
+
+        // Initialisation des données de suivi
+        console.log("Project monitoring data:", project.project_monitoring);
         if (project.project_monitoring && project.project_monitoring.length > 0) {
           const monitoring = project.project_monitoring[0];
+          console.log("Setting monitoring level to:", monitoring.monitoring_level);
           setMonitoringLevel(monitoring.monitoring_level);
           setMonitoringEntityId(monitoring.monitoring_entity_id);
         } else {
@@ -115,9 +118,11 @@ export const ProjectForm = ({ isOpen, onClose, onSubmit, project }: ProjectFormP
           setMonitoringEntityId(null);
         }
       } else {
-        // Réinitialisation des valeurs pour un nouveau projet
+        // Réinitialisation pour un nouveau projet
         setTitle("");
         setDescription("");
+        setStartDate(undefined);
+        setEndDate(undefined);
         setPriority("medium");
         setMonitoringLevel("none");
         setMonitoringEntityId(null);
