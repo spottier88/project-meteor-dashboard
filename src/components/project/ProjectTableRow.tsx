@@ -90,7 +90,6 @@ export const ProjectTableRow = ({
   });
 
   const roles = userRoles?.map(ur => ur.role);
-  const canEdit = canEditProject(roles, user?.id, project.owner_id, project.project_manager, user?.email);
 
   return (
     <TableRow
@@ -151,7 +150,6 @@ export const ProjectTableRow = ({
           projectTitle={project.title}
           onEdit={onProjectEdit}
           onViewHistory={onViewHistory}
-          canEdit={canEdit}
           userRoles={roles}
           onProjectDeleted={onProjectDeleted}
           owner_id={project.owner_id}
