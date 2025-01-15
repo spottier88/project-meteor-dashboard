@@ -85,15 +85,6 @@ export const ProjectFormActions = ({
     setIsProcessing(true);
 
     try {
-      console.log("Submitting project data:", {
-        formData,
-        project: project ? {
-          id: project.id,
-          pole_id: project.pole_id,
-          direction_id: project.direction_id
-        } : null
-      });
-
       const projectData = {
         title: formData.title,
         description: formData.description,
@@ -106,8 +97,6 @@ export const ProjectFormActions = ({
         direction_id: formData.directionId === "none" ? null : formData.directionId,
         service_id: formData.serviceId === "none" ? null : formData.serviceId,
       };
-
-      console.log("Prepared project data:", projectData);
 
       if (project?.id) {
         const canUpdate = isAdmin || project.owner_id === user?.id;
@@ -126,15 +115,15 @@ export const ProjectFormActions = ({
           .update(projectData)
           .eq("id", project.id);
 
-        if (error) throw error;
+        if (error) {
+          toast({
+            title: "Erreur",
+            description: error.message,
+            variant: "destructive",
+          });
+          return;
+        }
 
-        console.log("Updating project monitoring:", {
-          project_id: project.id,
-          monitoring_level: formData.monitoringLevel,
-          monitoring_entity_id: formData.monitoringEntityId,
-        });
-
-        // Update project monitoring
         const { error: monitoringError } = await supabase
           .from("project_monitoring")
           .upsert({
@@ -143,7 +132,14 @@ export const ProjectFormActions = ({
             monitoring_entity_id: formData.monitoringEntityId,
           });
 
-        if (monitoringError) throw monitoringError;
+        if (monitoringError) {
+          toast({
+            title: "Erreur",
+            description: monitoringError.message,
+            variant: "destructive",
+          });
+          return;
+        }
 
         toast({
           title: "Succès",
@@ -157,18 +153,14 @@ export const ProjectFormActions = ({
           .single();
 
         if (error) {
-          if (error.code === "23505") {
-            toast({
-              title: "Erreur",
-              description: "Un projet avec ce titre existe déjà",
-              variant: "destructive",
-            });
-            return;
-          }
-          throw error;
+          toast({
+            title: "Erreur",
+            description: error.message,
+            variant: "destructive",
+          });
+          return;
         }
 
-        // Create project monitoring
         const { error: monitoringError } = await supabase
           .from("project_monitoring")
           .insert({
@@ -177,7 +169,14 @@ export const ProjectFormActions = ({
             monitoring_entity_id: formData.monitoringEntityId,
           });
 
-        if (monitoringError) throw monitoringError;
+        if (monitoringError) {
+          toast({
+            title: "Erreur",
+            description: monitoringError.message,
+            variant: "destructive",
+          });
+          return;
+        }
 
         toast({
           title: "Succès",
@@ -187,11 +186,11 @@ export const ProjectFormActions = ({
 
       onSubmit();
       onClose();
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error submitting project:", error);
       toast({
         title: "Erreur",
-        description: "Une erreur est survenue",
+        description: error.message || "Une erreur est survenue",
         variant: "destructive",
       });
     } finally {

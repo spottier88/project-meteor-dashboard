@@ -105,20 +105,32 @@ export const ProjectForm = ({ isOpen, onClose, onSubmit, project }: ProjectFormP
         setServiceId(project.service_id || "none");
         setOwnerId(project.owner_id || "");
         
-        // Set monitoring data
+        // Initialisation des valeurs de suivi
         if (project.project_monitoring && project.project_monitoring.length > 0) {
-          setMonitoringLevel(project.project_monitoring[0].monitoring_level);
-          setMonitoringEntityId(project.project_monitoring[0].monitoring_entity_id);
+          const monitoring = project.project_monitoring[0];
+          setMonitoringLevel(monitoring.monitoring_level);
+          setMonitoringEntityId(monitoring.monitoring_entity_id);
         } else {
           setMonitoringLevel("none");
           setMonitoringEntityId(null);
         }
       } else {
+        // Réinitialisation des valeurs pour un nouveau projet
+        setTitle("");
+        setDescription("");
+        setPriority("medium");
+        setMonitoringLevel("none");
+        setMonitoringEntityId(null);
+        setPoleId("none");
+        setDirectionId("none");
+        setServiceId("none");
+        
         if (!isAdmin && user?.id) {
           setOwnerId(user.id);
           setProjectManager(user.email || "");
         } else {
           setOwnerId("");
+          setProjectManager("");
         }
       }
     }
