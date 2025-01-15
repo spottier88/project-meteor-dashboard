@@ -252,7 +252,6 @@ export type Database = {
       }
       projects: {
         Row: {
-          completion: number
           created_at: string | null
           description: string | null
           direction_id: string | null
@@ -271,7 +270,6 @@ export type Database = {
           title: string
         }
         Insert: {
-          completion?: number
           created_at?: string | null
           description?: string | null
           direction_id?: string | null
@@ -290,7 +288,6 @@ export type Database = {
           title: string
         }
         Update: {
-          completion?: number
           created_at?: string | null
           description?: string | null
           direction_id?: string | null
@@ -356,6 +353,13 @@ export type Database = {
             foreignKeyName: "fk_review"
             columns: ["review_id"]
             isOneToOne: false
+            referencedRelation: "latest_reviews"
+            referencedColumns: ["review_id"]
+          },
+          {
+            foreignKeyName: "fk_review"
+            columns: ["review_id"]
+            isOneToOne: false
             referencedRelation: "reviews"
             referencedColumns: ["id"]
           },
@@ -364,6 +368,7 @@ export type Database = {
       reviews: {
         Row: {
           comment: string | null
+          completion: number
           created_at: string | null
           id: string
           progress: Database["public"]["Enums"]["progress_status"]
@@ -372,6 +377,7 @@ export type Database = {
         }
         Insert: {
           comment?: string | null
+          completion?: number
           created_at?: string | null
           id?: string
           progress: Database["public"]["Enums"]["progress_status"]
@@ -380,6 +386,7 @@ export type Database = {
         }
         Update: {
           comment?: string | null
+          completion?: number
           created_at?: string | null
           id?: string
           progress?: Database["public"]["Enums"]["progress_status"]
@@ -590,7 +597,33 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      latest_reviews: {
+        Row: {
+          comment: string | null
+          completion: number | null
+          created_at: string | null
+          progress: Database["public"]["Enums"]["progress_status"] | null
+          project_id: string | null
+          review_id: string | null
+          weather: Database["public"]["Enums"]["project_status"] | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_project"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reviews_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       can_manager_access_project: {

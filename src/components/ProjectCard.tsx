@@ -86,11 +86,24 @@ export const ProjectCard = ({
     enabled: !!(pole_id || direction_id || service_id),
   });
 
+  const { data: latestReview } = useQuery({
+    queryKey: ["latestReview", id],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("latest_reviews")
+        .select("*")
+        .eq("project_id", id)
+        .single();
+      return data;
+    },
+    enabled: !!id,
+  });
+
   return (
     <Card className="w-full transition-all duration-300 hover:shadow-lg animate-fade-in">
       <ProjectCardHeader
         title={title}
-        status={status}
+        status={latestReview?.weather || null}
         onEdit={onEdit}
         onViewHistory={onViewHistory}
         id={id}
@@ -115,9 +128,9 @@ export const ProjectCard = ({
             onClick={() => navigate(`/projects/${id}`)}
           >
             <ProjectMetrics
-              progress={progress}
-              completion={completion}
-              lastReviewDate={lastReviewDate}
+              progress={latestReview?.progress || null}
+              completion={latestReview?.completion || 0}
+              lastReviewDate={latestReview?.created_at || null}
             />
           </div>
           <TaskSummary projectId={id} />

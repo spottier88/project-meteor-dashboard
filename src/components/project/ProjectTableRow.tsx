@@ -70,6 +70,19 @@ export const ProjectTableRow = ({
     enabled: !!user?.id,
   });
 
+  const { data: latestReview } = useQuery({
+    queryKey: ["latestReview", project.id],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("latest_reviews")
+        .select("*")
+        .eq("project_id", project.id)
+        .single();
+      return data;
+    },
+    enabled: !!project.id,
+  });
+
   const roles = userRoles?.map(ur => ur.role);
   const canEdit = canEditProject(roles, user?.id, project.owner_id, project.project_manager, user?.email);
 
@@ -91,33 +104,33 @@ export const ProjectTableRow = ({
         />
       </TableCell>
       <TableCell>
-        {project.status ? (
+        {latestReview?.weather ? (
           <div className="flex items-center gap-2">
-            <StatusIcon status={project.status} />
-            <span>{statusLabels[project.status]}</span>
+            <StatusIcon status={latestReview.weather} />
+            <span>{statusLabels[latestReview.weather]}</span>
           </div>
         ) : (
           <span className="text-muted-foreground">Pas de revue</span>
         )}
       </TableCell>
       <TableCell>
-        {project.progress ? (
+        {latestReview?.progress ? (
           <span
             className={cn(
               "text-sm font-medium",
-              project.progress === "better" ? "text-success" : project.progress === "stable" ? "text-neutral" : "text-danger"
+              latestReview.progress === "better" ? "text-success" : latestReview.progress === "stable" ? "text-neutral" : "text-danger"
             )}
           >
-            {progressLabels[project.progress]}
+            {progressLabels[latestReview.progress]}
           </span>
         ) : (
           <span className="text-muted-foreground">Pas de revue</span>
         )}
       </TableCell>
-      <TableCell>{project.completion}%</TableCell>
+      <TableCell>{latestReview?.completion || 0}%</TableCell>
       <TableCell>
-        {project.lastReviewDate ? (
-          new Date(project.lastReviewDate).toLocaleDateString("fr-FR")
+        {latestReview?.created_at ? (
+          new Date(latestReview.created_at).toLocaleDateString("fr-FR")
         ) : (
           <span className="text-muted-foreground">Pas de revue</span>
         )}

@@ -2,15 +2,14 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ProjectStatus, ProgressStatus } from "@/components/ProjectCard";
 import { statusIcons } from "@/lib/project-status";
 import { Hourglass } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 interface ProjectSummaryHeaderProps {
   title: string;
   description?: string;
-  status: ProjectStatus;
-  progress: ProgressStatus;
-  completion: number;
   project_manager?: string;
-  last_review_date: string;
+  id: string;
 }
 
 const progressLabels = {
@@ -22,13 +21,24 @@ const progressLabels = {
 export const ProjectSummaryHeader = ({
   title,
   description,
-  status,
-  progress,
-  completion,
   project_manager,
-  last_review_date,
+  id,
 }: ProjectSummaryHeaderProps) => {
+  const { data: latestReview } = useQuery({
+    queryKey: ["latestReview", id],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("latest_reviews")
+        .select("*")
+        .eq("project_id", id)
+        .single();
+      return data;
+    },
+    enabled: !!id,
+  });
+
   const getStatusIcon = () => {
+    const status = latestReview?.weather;
     if (!status || !statusIcons[status]) {
       return <Hourglass className="text-muted-foreground" aria-label="En attente" />;
     }
@@ -60,16 +70,20 @@ export const ProjectSummaryHeader = ({
           </div>
           <div>
             <span className="text-sm text-muted-foreground">Avancement</span>
-            <p className="font-medium">{completion}%</p>
+            <p className="font-medium">{latestReview?.completion || 0}%</p>
           </div>
           <div>
             <span className="text-sm text-muted-foreground">Progression</span>
-            <p className="font-medium">{progressLabels[progress]}</p>
+            <p className="font-medium">
+              {latestReview?.progress ? progressLabels[latestReview.progress] : "-"}
+            </p>
           </div>
           <div>
             <span className="text-sm text-muted-foreground">Dernière revue</span>
             <p className="font-medium">
-              {new Date(last_review_date).toLocaleDateString("fr-FR")}
+              {latestReview?.created_at 
+                ? new Date(latestReview.created_at).toLocaleDateString("fr-FR")
+                : "-"}
             </p>
           </div>
         </div>
