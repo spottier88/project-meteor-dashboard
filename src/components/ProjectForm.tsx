@@ -112,7 +112,7 @@ export const ProjectForm = ({ isOpen, onClose, onSubmit, project }: ProjectFormP
             
             const { data: monitoringData, error } = await supabase
               .from("project_monitoring")
-              .select("*")
+              .select("monitoring_level, monitoring_entity_id")
               .eq("project_id", project.id)
               .maybeSingle();
 
@@ -121,7 +121,7 @@ export const ProjectForm = ({ isOpen, onClose, onSubmit, project }: ProjectFormP
               return;
             }
 
-            console.log("Raw monitoring data from DB:", monitoringData);
+            console.log("Monitoring data from DB:", monitoringData);
             
             if (monitoringData) {
               console.log("Setting monitoring level to:", monitoringData.monitoring_level);

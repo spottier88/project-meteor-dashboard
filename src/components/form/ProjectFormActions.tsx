@@ -124,7 +124,7 @@ export const ProjectFormActions = ({
           return;
         }
 
-        // Mise à jour ou création du monitoring
+        // Mise à jour du monitoring avec upsert
         const { error: monitoringError } = await supabase
           .from("project_monitoring")
           .upsert({
