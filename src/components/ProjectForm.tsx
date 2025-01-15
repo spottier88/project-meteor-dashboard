@@ -94,7 +94,7 @@ export const ProjectForm = ({ isOpen, onClose, onSubmit, project }: ProjectFormP
   useEffect(() => {
     if (isOpen) {
       if (project) {
-        // Initialisation des données du projet existant
+        console.log("Project data:", project);
         setTitle(project.title || "");
         setDescription(project.description || "");
         setProjectManager(project.project_manager || "");
@@ -107,12 +107,17 @@ export const ProjectForm = ({ isOpen, onClose, onSubmit, project }: ProjectFormP
         setOwnerId(project.owner_id || "");
 
         // Initialisation des données de suivi
-        console.log("Project monitoring data:", project.project_monitoring);
-        if (project.project_monitoring && project.project_monitoring.length > 0) {
-          const monitoring = project.project_monitoring[0];
-          console.log("Setting monitoring level to:", monitoring.monitoring_level);
-          setMonitoringLevel(monitoring.monitoring_level);
-          setMonitoringEntityId(monitoring.monitoring_entity_id);
+        const { data: monitoringData } = await supabase
+          .from("project_monitoring")
+          .select("monitoring_level, monitoring_entity_id")
+          .eq("project_id", project.id)
+          .maybeSingle();
+
+        console.log("Monitoring data from DB:", monitoringData);
+        
+        if (monitoringData) {
+          setMonitoringLevel(monitoringData.monitoring_level);
+          setMonitoringEntityId(monitoringData.monitoring_entity_id);
         } else {
           setMonitoringLevel("none");
           setMonitoringEntityId(null);

@@ -110,29 +110,33 @@ export const ProjectFormActions = ({
           return;
         }
 
-        const { error } = await supabase
+        const { error: projectError } = await supabase
           .from("projects")
           .update(projectData)
           .eq("id", project.id);
 
-        if (error) {
+        if (projectError) {
           toast({
             title: "Erreur",
-            description: error.message,
+            description: projectError.message,
             variant: "destructive",
           });
           return;
         }
 
+        // Mise à jour ou création du monitoring
         const { error: monitoringError } = await supabase
           .from("project_monitoring")
           .upsert({
             project_id: project.id,
             monitoring_level: formData.monitoringLevel,
             monitoring_entity_id: formData.monitoringEntityId,
+          }, {
+            onConflict: 'project_id'
           });
 
         if (monitoringError) {
+          console.error("Monitoring error:", monitoringError);
           toast({
             title: "Erreur",
             description: monitoringError.message,
@@ -146,16 +150,16 @@ export const ProjectFormActions = ({
           description: "Le projet a été mis à jour",
         });
       } else {
-        const { data: newProject, error } = await supabase
+        const { data: newProject, error: projectError } = await supabase
           .from("projects")
           .insert(projectData)
           .select()
           .single();
 
-        if (error) {
+        if (projectError) {
           toast({
             title: "Erreur",
-            description: error.message,
+            description: projectError.message,
             variant: "destructive",
           });
           return;
@@ -170,6 +174,7 @@ export const ProjectFormActions = ({
           });
 
         if (monitoringError) {
+          console.error("Monitoring error:", monitoringError);
           toast({
             title: "Erreur",
             description: monitoringError.message,
