@@ -9,6 +9,7 @@ import { Sun, Cloud, CloudLightning, Plus, Trash2 } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { Slider } from "@/components/ui/slider";
 
 interface ReviewSheetProps {
   projectId: string;
@@ -198,13 +199,19 @@ export const ReviewSheet = ({
                 <FormItem>
                   <FormLabel>Avancement (%)</FormLabel>
                   <FormControl>
-                    <Input
-                      type="number"
-                      min="0"
-                      max="100"
-                      {...field}
-                      onChange={(e) => field.onChange(Number(e.target.value))}
-                    />
+                    <div className="flex flex-col space-y-2">
+                      <Slider
+                        min={0}
+                        max={100}
+                        step={1}
+                        value={[field.value]}
+                        onValueChange={(values) => field.onChange(values[0])}
+                        className="w-full"
+                      />
+                      <span className="text-sm text-muted-foreground text-right">
+                        {field.value}%
+                      </span>
+                    </div>
                   </FormControl>
                 </FormItem>
               )}
