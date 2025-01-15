@@ -1,18 +1,17 @@
 import { Button } from "@/components/ui/button";
 import { Pencil, History, ListTodo, ShieldAlert, Trash2 } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { DeleteProjectDialog } from "./DeleteProjectDialog";
 import { UserRole } from "@/types/user";
 import { useUser } from "@supabase/auth-helpers-react";
-import { canViewProjectHistory, canManageTasks, canManageRisks } from "@/utils/permissions";
+import { canViewProjectHistory, canManageTasks, canManageRisks, canEditProject } from "@/utils/permissions";
 
 interface ProjectActionsProps {
   projectId: string;
   projectTitle: string;
   onEdit: (id: string) => void;
   onViewHistory: (id: string, title: string) => void;
-  canEdit: boolean;
   userRoles?: UserRole[];
   onProjectDeleted: () => void;
   owner_id?: string;
@@ -24,7 +23,6 @@ export const ProjectActions = ({
   projectTitle,
   onEdit,
   onViewHistory,
-  canEdit,
   userRoles,
   onProjectDeleted,
   owner_id,
@@ -33,8 +31,26 @@ export const ProjectActions = ({
   const navigate = useNavigate();
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const isAdmin = userRoles?.includes("admin");
-  const isManager = userRoles?.includes("manager");
   const user = useUser();
+  const [canEdit, setCanEdit] = useState(false);
+
+  useEffect(() => {
+    const checkEditPermission = async () => {
+      if (user) {
+        const hasEditPermission = await canEditProject(
+          userRoles,
+          user.id,
+          owner_id,
+          projectId,
+          project_manager,
+          user.email || undefined
+        );
+        setCanEdit(hasEditPermission);
+      }
+    };
+    
+    checkEditPermission();
+  }, [userRoles, user, owner_id, projectId, project_manager]);
 
   const handleClick = (e: React.MouseEvent, action: () => void) => {
     e.stopPropagation();

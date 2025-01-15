@@ -1,4 +1,5 @@
 import { UserRole } from "@/types/user";
+import { supabase } from "@/integrations/supabase/client";
 
 export const canManageProjectItems = (
   roles: UserRole[] | undefined,
@@ -30,14 +31,15 @@ export const canCreateProject = (roles: UserRole[] | undefined): boolean => {
   return roles.some(role => role === "admin" || role === "chef_projet");
 };
 
-export const canEditProject = (
+export const canEditProject = async (
   roles: UserRole[] | undefined,
   userId: string | undefined,
   projectOwnerId: string | undefined,
+  projectId: string | undefined,
   projectManagerEmail?: string | undefined,
   userEmail?: string | undefined
-): boolean => {
-  if (!roles || !userId) return false;
+): Promise<boolean> => {
+  if (!roles || !userId || !projectId) return false;
 
   // Les admins peuvent tout faire
   if (roles.includes("admin")) return true;
@@ -48,7 +50,22 @@ export const canEditProject = (
   // Le chef de projet assigné peut tout faire
   if (projectManagerEmail && userEmail && projectManagerEmail === userEmail) return true;
 
-  // Les managers ne peuvent pas éditer
+  // Vérifier si l'utilisateur est un manager avec accès au projet
+  if (roles.includes("manager")) {
+    const { data: canAccess, error } = await supabase
+      .rpc('can_manager_access_project', {
+        p_user_id: userId,
+        p_project_id: projectId
+      });
+
+    if (error) {
+      console.error("Error checking project access:", error);
+      return false;
+    }
+
+    return canAccess;
+  }
+
   return false;
 };
 
