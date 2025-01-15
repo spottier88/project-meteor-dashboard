@@ -24,6 +24,7 @@ interface BasicProjectFieldsProps {
   monitoringEntityId: string | null;
   setMonitoringEntityId: (value: string | null) => void;
   isAdmin: boolean;
+  isManager?: boolean;
   projectManagers?: UserProfile[];
   poleId?: string;
   directionId?: string;
@@ -45,10 +46,13 @@ export const BasicProjectFields = ({
   monitoringLevel,
   setMonitoringLevel,
   isAdmin,
+  isManager,
   projectManagers,
   poleId,
   directionId,
 }: BasicProjectFieldsProps) => {
+  const canEditProjectManager = isAdmin || isManager;
+
   return (
     <div className="space-y-4">
       <div className="grid gap-2">
@@ -79,7 +83,7 @@ export const BasicProjectFields = ({
         <label htmlFor="project-manager" className="text-sm font-medium">
           Chef de projet *
         </label>
-        {isAdmin && projectManagers ? (
+        {canEditProjectManager && projectManagers ? (
           <Select value={projectManager} onValueChange={setProjectManager}>
             <SelectTrigger>
               <SelectValue placeholder="Sélectionner un chef de projet" />
@@ -99,8 +103,8 @@ export const BasicProjectFields = ({
             id="project-manager"
             value={projectManager}
             onChange={(e) => setProjectManager(e.target.value)}
-            readOnly={!isAdmin}
-            className={!isAdmin ? "bg-gray-100" : ""}
+            readOnly={!canEditProjectManager}
+            className={!canEditProjectManager ? "bg-gray-100" : ""}
           />
         )}
       </div>

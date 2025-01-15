@@ -86,10 +86,11 @@ export const ProjectForm = ({ isOpen, onClose, onSubmit, project }: ProjectFormP
 
       return profiles as UserProfile[];
     },
-    enabled: isOpen && userRoles?.some(ur => ur.role === "admin"),
+    enabled: isOpen && (userRoles?.some(ur => ur.role === "admin") || userRoles?.some(ur => ur.role === "manager")),
   });
 
   const isAdmin = userRoles?.some(ur => ur.role === 'admin');
+  const isManager = userRoles?.some(ur => ur.role === 'manager');
 
   useEffect(() => {
     const initializeForm = async () => {
@@ -195,6 +196,7 @@ export const ProjectForm = ({ isOpen, onClose, onSubmit, project }: ProjectFormP
             monitoringEntityId={monitoringEntityId}
             setMonitoringEntityId={setMonitoringEntityId}
             isAdmin={isAdmin}
+            isManager={isManager}
             ownerId={ownerId}
             setOwnerId={setOwnerId}
             poleId={poleId}
@@ -230,6 +232,7 @@ export const ProjectForm = ({ isOpen, onClose, onSubmit, project }: ProjectFormP
             }}
             user={user}
             isAdmin={isAdmin}
+            isManager={isManager}
           />
         </DialogFooter>
       </DialogContent>
