@@ -1,8 +1,6 @@
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { MonitoringLevel } from "@/types/monitoring";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
 
 interface MonitoringFilterProps {
   selectedLevel: MonitoringLevel | 'all';
@@ -10,18 +8,6 @@ interface MonitoringFilterProps {
 }
 
 export const MonitoringFilter = ({ selectedLevel, onLevelChange }: MonitoringFilterProps) => {
-  const { data: poles } = useQuery({
-    queryKey: ["poles"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("poles")
-        .select("*")
-        .order("name");
-      if (error) throw error;
-      return data;
-    },
-  });
-
   return (
     <div className="flex items-center space-x-2">
       <Label htmlFor="monitoring-filter">Filtre de suivi</Label>

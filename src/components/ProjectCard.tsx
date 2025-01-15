@@ -18,7 +18,6 @@ interface ProjectCardProps {
   completion: number;
   lastReviewDate: string | null;
   id: string;
-  suivi_dgs?: boolean;
   project_manager?: string;
   owner_id?: string;
   pole_id?: string;
@@ -37,7 +36,6 @@ export const ProjectCard = ({
   completion,
   lastReviewDate,
   id,
-  suivi_dgs,
   project_manager,
   owner_id,
   pole_id,
@@ -93,10 +91,8 @@ export const ProjectCard = ({
       <ProjectCardHeader
         title={title}
         status={status}
-        suivi_dgs={suivi_dgs}
         onEdit={onEdit}
         onViewHistory={onViewHistory}
-        onReview={onReview}
         id={id}
         owner_id={owner_id}
         project_manager={project_manager}
