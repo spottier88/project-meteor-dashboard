@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 import { RiskList } from "@/components/RiskList";
 import { ProjectStatus, ProgressStatus } from "@/types/project";
+import { Project } from "@/types/user";
 
 const statusLabels = {
   sunny: "Ensoleillé",
