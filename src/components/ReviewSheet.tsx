@@ -21,6 +21,7 @@ interface ReviewSheetProps {
 interface ReviewForm {
   weather: "sunny" | "cloudy" | "stormy";
   progress: "better" | "stable" | "worse";
+  completion: number;
   comment: string;
   actions: { description: string }[];
 }
@@ -39,6 +40,7 @@ export const ReviewSheet = ({
     defaultValues: {
       weather: "cloudy",
       progress: "stable",
+      completion: 0,
       comment: "",
       actions: [{ description: "" }],
     },
@@ -54,6 +56,7 @@ export const ReviewSheet = ({
           project_id: projectId,
           weather: data.weather,
           progress: data.progress,
+          completion: data.completion,
           comment: data.comment,
         })
         .select()
@@ -183,6 +186,25 @@ export const ReviewSheet = ({
                         <span className="text-danger">Moins bien</span>
                       </FormItem>
                     </RadioGroup>
+                  </FormControl>
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="completion"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Avancement (%)</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="number"
+                      min="0"
+                      max="100"
+                      {...field}
+                      onChange={(e) => field.onChange(Number(e.target.value))}
+                    />
                   </FormControl>
                 </FormItem>
               )}
