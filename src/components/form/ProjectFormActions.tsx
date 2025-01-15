@@ -42,6 +42,7 @@ export const ProjectFormActions = ({
   formData,
   user,
   isAdmin,
+  isManager,
 }: ProjectFormActionsProps) => {
   const { toast } = useToast();
   const [isProcessing, setIsProcessing] = useState(false);
@@ -100,32 +101,23 @@ export const ProjectFormActions = ({
       };
 
       if (project?.id) {
-        const canUpdate = isAdmin || project.owner_id === user?.id;
-
-        if (!canUpdate) {
-          toast({
-            title: "Erreur",
-            description: "Vous n'avez pas les droits pour modifier ce projet",
-            variant: "destructive",
-          });
-          return;
-        }
-
+        // La vérification des droits est maintenant gérée par les politiques RLS
+        // Nous laissons Supabase gérer les autorisations
         const { error: projectError } = await supabase
           .from("projects")
           .update(projectData)
           .eq("id", project.id);
 
         if (projectError) {
+          console.error("Project update error:", projectError);
           toast({
             title: "Erreur",
-            description: projectError.message,
+            description: "Vous n'avez pas les droits nécessaires pour modifier ce projet",
             variant: "destructive",
           });
           return;
         }
 
-        // Mise à jour du monitoring avec upsert
         const { error: monitoringError } = await supabase
           .from("project_monitoring")
           .upsert({
