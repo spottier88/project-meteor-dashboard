@@ -55,7 +55,7 @@ export const ProjectCard = ({
           .from("services")
           .select("name")
           .eq("id", service_id)
-          .single();
+          .maybeSingle();
         if (data) {
           org = { name: data.name, level: "Service" };
         }
@@ -64,7 +64,7 @@ export const ProjectCard = ({
           .from("directions")
           .select("name")
           .eq("id", direction_id)
-          .single();
+          .maybeSingle();
         if (data) {
           org = { name: data.name, level: "Direction" };
         }
@@ -73,7 +73,7 @@ export const ProjectCard = ({
           .from("poles")
           .select("name")
           .eq("id", pole_id)
-          .single();
+          .maybeSingle();
         if (data) {
           org = { name: data.name, level: "Pôle" };
         }
@@ -87,11 +87,17 @@ export const ProjectCard = ({
   const { data: latestReview } = useQuery({
     queryKey: ["latestReview", id],
     queryFn: async () => {
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from("latest_reviews")
         .select("*")
         .eq("project_id", id)
-        .single();
+        .maybeSingle();
+        
+      if (error) {
+        console.error("Error fetching latest review:", error);
+        return null;
+      }
+      
       return data;
     },
     enabled: !!id,
