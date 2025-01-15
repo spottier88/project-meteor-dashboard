@@ -6,6 +6,7 @@ import { UserProfile } from "@/types/user";
 import { MonitoringLevel } from "@/types/monitoring";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { Label } from "@/components/ui/label";
 
 interface BasicProjectFieldsProps {
   title: string;
@@ -52,42 +53,34 @@ export const BasicProjectFields = ({
   poleId,
   directionId,
 }: BasicProjectFieldsProps) => {
-  console.log("BasicProjectFields - Props:", {
-    monitoringLevel,
-    monitoringEntityId,
-    poleId,
-    directionId
-  });
-
-  // Fetch poles for monitoring
-  const { data: poles } = useQuery({
-    queryKey: ["poles"],
+  // Fetch pole name if needed
+  const { data: poleName } = useQuery({
+    queryKey: ["pole-name", poleId],
     queryFn: async () => {
-      const { data, error } = await supabase
+      if (!poleId) return null;
+      const { data } = await supabase
         .from("poles")
-        .select("*")
-        .order("name");
-      if (error) throw error;
-      console.log("Poles data:", data);
-      return data;
+        .select("name")
+        .eq("id", poleId)
+        .single();
+      return data?.name;
     },
-    enabled: monitoringLevel === "pole",
+    enabled: !!poleId && monitoringLevel === "pole",
   });
 
-  // Fetch directions for monitoring
-  const { data: directions } = useQuery({
-    queryKey: ["directions", poleId],
+  // Fetch direction name if needed
+  const { data: directionName } = useQuery({
+    queryKey: ["direction-name", directionId],
     queryFn: async () => {
-      const { data, error } = await supabase
+      if (!directionId) return null;
+      const { data } = await supabase
         .from("directions")
-        .select("*")
-        .eq("pole_id", poleId)
-        .order("name");
-      if (error) throw error;
-      console.log("Directions data:", data);
-      return data;
+        .select("name")
+        .eq("id", directionId)
+        .single();
+      return data?.name;
     },
-    enabled: monitoringLevel === "direction" && !!poleId,
+    enabled: !!directionId && monitoringLevel === "direction",
   });
 
   return (
@@ -103,6 +96,7 @@ export const BasicProjectFields = ({
           placeholder="Nom du projet"
         />
       </div>
+
       <div className="grid gap-2">
         <label htmlFor="description" className="text-sm font-medium">
           Description
@@ -114,6 +108,7 @@ export const BasicProjectFields = ({
           placeholder="Description du projet"
         />
       </div>
+
       <div className="grid gap-2">
         <label htmlFor="project-manager" className="text-sm font-medium">
           Chef de projet *
@@ -143,6 +138,7 @@ export const BasicProjectFields = ({
           />
         )}
       </div>
+
       <div className="grid gap-4 sm:grid-cols-2">
         <DatePickerField
           label="Date de début"
@@ -156,6 +152,7 @@ export const BasicProjectFields = ({
           minDate={startDate}
         />
       </div>
+
       <div className="grid gap-2">
         <label htmlFor="priority" className="text-sm font-medium">
           Priorité
@@ -171,54 +168,53 @@ export const BasicProjectFields = ({
           </SelectContent>
         </Select>
       </div>
+
       <div className="grid gap-2">
-        <label htmlFor="monitoring-level" className="text-sm font-medium">
+        <Label htmlFor="monitoring-level" className="text-sm font-medium">
           Niveau de suivi
-        </label>
-        <Select value={monitoringLevel} onValueChange={(value: MonitoringLevel) => {
-          console.log("Changing monitoring level to:", value);
-          setMonitoringLevel(value);
-          setMonitoringEntityId(null);
-        }}>
+        </Label>
+        <Select 
+          value={monitoringLevel} 
+          onValueChange={(value: MonitoringLevel) => {
+            setMonitoringLevel(value);
+            setMonitoringEntityId(null);
+          }}
+        >
           <SelectTrigger>
             <SelectValue placeholder="Sélectionner un niveau de suivi" />
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="none">Aucun</SelectItem>
             <SelectItem value="dgs">DGS</SelectItem>
-            <SelectItem value="pole">Pôle</SelectItem>
-            <SelectItem value="direction">Direction</SelectItem>
+            <SelectItem value="pole" disabled={!poleId}>Pôle</SelectItem>
+            <SelectItem value="direction" disabled={!directionId}>Direction</SelectItem>
           </SelectContent>
         </Select>
       </div>
-      {monitoringLevel !== 'none' && monitoringLevel !== 'dgs' && (
+
+      {monitoringLevel === 'pole' && poleId && (
         <div className="grid gap-2">
-          <label htmlFor="monitoring-entity" className="text-sm font-medium">
+          <Label className="text-sm font-medium">
             Entité de suivi
-          </label>
-          <Select 
-            value={monitoringEntityId || ""} 
-            onValueChange={(value) => {
-              console.log("Setting monitoring entity to:", value);
-              setMonitoringEntityId(value || null);
-            }}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Sélectionner une entité" />
-            </SelectTrigger>
-            <SelectContent>
-              {monitoringLevel === "pole" && poles?.map((pole) => (
-                <SelectItem key={pole.id} value={pole.id}>
-                  {pole.name}
-                </SelectItem>
-              ))}
-              {monitoringLevel === "direction" && directions?.map((direction) => (
-                <SelectItem key={direction.id} value={direction.id}>
-                  {direction.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          </Label>
+          <Input
+            value={poleName || ""}
+            readOnly
+            className="bg-gray-100"
+          />
+        </div>
+      )}
+
+      {monitoringLevel === 'direction' && directionId && (
+        <div className="grid gap-2">
+          <Label className="text-sm font-medium">
+            Entité de suivi
+          </Label>
+          <Input
+            value={directionName || ""}
+            readOnly
+            className="bg-gray-100"
+          />
         </div>
       )}
     </div>
