@@ -57,9 +57,13 @@ export const ProjectGrid = ({
         .from("profiles")
         .select("*")
         .eq("id", user.id)
-        .single();
+        .maybeSingle();
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error fetching user profile:", error);
+        return null;
+      }
+      
       console.log("User profile:", data);
       return data;
     },
