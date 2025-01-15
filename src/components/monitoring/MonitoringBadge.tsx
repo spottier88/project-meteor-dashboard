@@ -23,7 +23,7 @@ export const MonitoringBadge = ({ projectId, className }: MonitoringBadgeProps) 
         .from("project_monitoring")
         .select("monitoring_level, monitoring_entity_id")
         .eq("project_id", projectId)
-        .single();
+        .maybeSingle();
 
       if (monitoringError) throw monitoringError;
       if (!monitoringData) return null;
@@ -72,14 +72,14 @@ export const MonitoringBadge = ({ projectId, className }: MonitoringBadgeProps) 
         return (
           <>
             <Flag className="h-4 w-4 mr-1" />
-            Suivi {monitoring.entityName || ""}
+            Suivi Pôle {monitoring.entityName ? `(${monitoring.entityName})` : ""}
           </>
         );
       case "direction":
         return (
           <>
             <Flag className="h-4 w-4 mr-1" />
-            Suivi {monitoring.entityName || ""}
+            Suivi Direction {monitoring.entityName ? `(${monitoring.entityName})` : ""}
           </>
         );
       default:

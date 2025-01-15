@@ -12,6 +12,7 @@ import { ProjectActions } from "./ProjectActions";
 import { StatusIcon } from "./StatusIcon";
 import { OrganizationCell } from "./OrganizationCell";
 import { AddToCartButton } from "@/components/cart/AddToCartButton";
+import { MonitoringBadge } from "@/components/monitoring/MonitoringBadge";
 
 interface ProjectTableRowProps {
   project: {
@@ -122,9 +123,7 @@ export const ProjectTableRow = ({
         )}
       </TableCell>
       <TableCell>
-        {project.suivi_dgs && (
-          <Star className="h-4 w-4 text-yellow-500" aria-label="Suivi DGS" />
-        )}
+        <MonitoringBadge projectId={project.id} />
       </TableCell>
       <TableCell className="text-right space-x-2">
         <AddToCartButton projectId={project.id} projectTitle={project.title} />
