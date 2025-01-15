@@ -59,7 +59,7 @@ const Index = () => {
             id,
             name
           ),
-          project_monitoring (
+          project_monitoring!left (
             monitoring_level,
             monitoring_entity_id
           )
@@ -88,11 +88,16 @@ const Index = () => {
         projectMonitoring: project.project_monitoring,
       });
 
+      if (monitoringLevel === 'none') {
+        const hasNoMonitoring = !project.project_monitoring || project.project_monitoring.length === 0;
+        console.log(`Project has no monitoring? ${hasNoMonitoring}`);
+        return hasNoMonitoring;
+      }
+
       const monitoring = project.project_monitoring?.[0];
       if (!monitoring) {
-        const isNoneMatch = monitoringLevel === 'none';
-        console.log(`Project has no monitoring. Matches 'none'? ${isNoneMatch}`);
-        return isNoneMatch;
+        console.log(`Project has no monitoring, but filter is not 'none'`);
+        return false;
       }
       
       const levelMatch = monitoring.monitoring_level === monitoringLevel;
