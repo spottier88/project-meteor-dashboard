@@ -65,8 +65,8 @@ export const ProjectTableHeader = ({
           onSort={onSort}
         />
         <SortableHeader
-          label="Suivi DGS"
-          sortKey="suivi_dgs"
+          label="Niveau de suivi"
+          sortKey="monitoring_level"
           currentSort={currentSort}
           currentDirection={currentDirection}
           onSort={onSort}

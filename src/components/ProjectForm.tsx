@@ -6,6 +6,7 @@ import { UserRoleData, UserProfile } from "@/types/user";
 import { supabase } from "@/integrations/supabase/client";
 import { ProjectFormFields } from "./form/ProjectFormFields";
 import { ProjectFormActions } from "./form/ProjectFormActions";
+import { MonitoringLevel } from "@/types/monitoring";
 
 interface ProjectFormProps {
   isOpen: boolean;
@@ -19,23 +20,14 @@ interface ProjectFormProps {
     start_date?: string;
     end_date?: string;
     priority?: string;
-    suivi_dgs?: boolean;
     owner_id?: string;
     pole_id?: string;
     direction_id?: string;
     service_id?: string;
-    poles?: {
-      id: string;
-      name: string;
-    };
-    directions?: {
-      id: string;
-      name: string;
-    };
-    services?: {
-      id: string;
-      name: string;
-    };
+    project_monitoring?: {
+      monitoring_level: MonitoringLevel;
+      monitoring_entity_id: string | null;
+    }[];
   };
 }
 
@@ -47,7 +39,8 @@ export const ProjectForm = ({ isOpen, onClose, onSubmit, project }: ProjectFormP
   const [startDate, setStartDate] = useState<Date | undefined>(undefined);
   const [endDate, setEndDate] = useState<Date | undefined>(undefined);
   const [priority, setPriority] = useState("medium");
-  const [suiviDgs, setSuiviDgs] = useState(false);
+  const [monitoringLevel, setMonitoringLevel] = useState<MonitoringLevel>("none");
+  const [monitoringEntityId, setMonitoringEntityId] = useState<string | null>(null);
   const [ownerId, setOwnerId] = useState("");
   const [poleId, setPoleId] = useState("none");
   const [directionId, setDirectionId] = useState("none");
@@ -100,34 +93,27 @@ export const ProjectForm = ({ isOpen, onClose, onSubmit, project }: ProjectFormP
 
   useEffect(() => {
     if (isOpen) {
-      console.log("ProjectForm - Setting initial values with project:", project);
-      
       if (project) {
-        console.log("ProjectForm - Initializing form with project data:", {
-          title: project.title,
-          description: project.description,
-          project_manager: project.project_manager,
-          pole_id: project.pole_id,
-          direction_id: project.direction_id,
-          service_id: project.service_id,
-          poles: project.poles,
-          directions: project.directions,
-          services: project.services
-        });
-        
         setTitle(project.title || "");
         setDescription(project.description || "");
         setProjectManager(project.project_manager || "");
         setStartDate(project.start_date ? new Date(project.start_date) : undefined);
         setEndDate(project.end_date ? new Date(project.end_date) : undefined);
         setPriority(project.priority || "medium");
-        setSuiviDgs(project.suivi_dgs || false);
         setPoleId(project.pole_id || "none");
         setDirectionId(project.direction_id || "none");
         setServiceId(project.service_id || "none");
         setOwnerId(project.owner_id || "");
+        
+        // Set monitoring data
+        if (project.project_monitoring && project.project_monitoring.length > 0) {
+          setMonitoringLevel(project.project_monitoring[0].monitoring_level);
+          setMonitoringEntityId(project.project_monitoring[0].monitoring_entity_id);
+        } else {
+          setMonitoringLevel("none");
+          setMonitoringEntityId(null);
+        }
       } else {
-        console.log("ProjectForm - Initializing new project form");
         if (!isAdmin && user?.id) {
           setOwnerId(user.id);
           setProjectManager(user.email || "");
@@ -164,8 +150,10 @@ export const ProjectForm = ({ isOpen, onClose, onSubmit, project }: ProjectFormP
             setEndDate={setEndDate}
             priority={priority}
             setPriority={setPriority}
-            suiviDgs={suiviDgs}
-            setSuiviDgs={setSuiviDgs}
+            monitoringLevel={monitoringLevel}
+            setMonitoringLevel={setMonitoringLevel}
+            monitoringEntityId={monitoringEntityId}
+            setMonitoringEntityId={setMonitoringEntityId}
             isAdmin={isAdmin}
             ownerId={ownerId}
             setOwnerId={setOwnerId}
@@ -193,7 +181,8 @@ export const ProjectForm = ({ isOpen, onClose, onSubmit, project }: ProjectFormP
               startDate,
               endDate,
               priority,
-              suiviDgs,
+              monitoringLevel,
+              monitoringEntityId,
               ownerId,
               poleId,
               directionId,
