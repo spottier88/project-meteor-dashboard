@@ -26,14 +26,11 @@ const Index = () => {
     id: string;
     title: string;
   } | null>(null);
-  const [showDgsOnly, setShowDgsOnly] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  
   const [view, setView] = useState<ViewMode>(() => {
     const savedView = localStorage.getItem("projectViewMode");
     return (savedView as ViewMode) || "grid";
   });
-  
   const [monitoringLevel, setMonitoringLevel] = useState<MonitoringLevel | 'all'>('all');
 
   const user = useUser();
@@ -78,12 +75,14 @@ const Index = () => {
   });
 
   const filteredProjects = projects?.filter(project => {
+    // Filtre par niveau de suivi
     if (monitoringLevel !== 'all') {
       const monitoring = project.project_monitoring?.[0];
       if (!monitoring) return monitoringLevel === 'none';
-      if (monitoringLevel !== monitoring.monitoring_level) return false;
+      return monitoring.monitoring_level === monitoringLevel;
     }
 
+    // Filtre par recherche
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
       const matchesTitle = project.title?.toLowerCase().includes(query);
