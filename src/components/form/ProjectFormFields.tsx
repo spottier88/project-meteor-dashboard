@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { UserProfile } from "@/types/user";
 import { OrganizationFields } from "./OrganizationFields";
 import { BasicProjectFields } from "./BasicProjectFields";
+import { MonitoringLevel } from "@/types/monitoring";
 
 interface ProjectFormFieldsProps {
   title: string;
@@ -17,8 +18,10 @@ interface ProjectFormFieldsProps {
   setEndDate: (date: Date | undefined) => void;
   priority: string;
   setPriority: (value: string) => void;
-  suiviDgs: boolean;
-  setSuiviDgs: (value: boolean) => void;
+  monitoringLevel: MonitoringLevel;
+  setMonitoringLevel: (value: MonitoringLevel) => void;
+  monitoringEntityId: string | null;
+  setMonitoringEntityId: (value: string | null) => void;
   isAdmin: boolean;
   ownerId: string;
   setOwnerId: (value: string) => void;
@@ -36,7 +39,6 @@ interface ProjectFormFieldsProps {
     start_date?: string;
     end_date?: string;
     priority?: string;
-    suivi_dgs?: boolean;
     owner_id?: string;
     pole_id?: string;
     direction_id?: string;
@@ -58,8 +60,10 @@ export const ProjectFormFields = ({
   setEndDate,
   priority,
   setPriority,
-  suiviDgs,
-  setSuiviDgs,
+  monitoringLevel,
+  setMonitoringLevel,
+  monitoringEntityId,
+  setMonitoringEntityId,
   isAdmin,
   ownerId,
   setOwnerId,
@@ -87,8 +91,10 @@ export const ProjectFormFields = ({
         setEndDate={setEndDate}
         priority={priority}
         setPriority={setPriority}
-        suiviDgs={suiviDgs}
-        setSuiviDgs={setSuiviDgs}
+        monitoringLevel={monitoringLevel}
+        setMonitoringLevel={setMonitoringLevel}
+        monitoringEntityId={monitoringEntityId}
+        setMonitoringEntityId={setMonitoringEntityId}
         isAdmin={isAdmin}
         projectManagers={projectManagers}
       />

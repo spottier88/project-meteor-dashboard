@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { User } from "@supabase/auth-helpers-react";
+import { MonitoringLevel } from "@/types/monitoring";
 
 interface ProjectFormActionsProps {
   isSubmitting: boolean;
@@ -19,7 +20,8 @@ interface ProjectFormActionsProps {
     startDate?: Date;
     endDate?: Date;
     priority: string;
-    suiviDgs: boolean;
+    monitoringLevel: MonitoringLevel;
+    monitoringEntityId: string | null;
     ownerId: string;
     poleId: string;
     directionId: string;
@@ -88,7 +90,6 @@ export const ProjectFormActions = ({
         start_date: formData.startDate?.toISOString().split('T')[0],
         end_date: formData.endDate?.toISOString().split('T')[0],
         priority: formData.priority,
-        suivi_dgs: formData.suiviDgs,
         owner_id: formData.ownerId || null,
         pole_id: formData.poleId === "none" ? null : formData.poleId,
         direction_id: formData.directionId === "none" ? null : formData.directionId,
@@ -114,12 +115,27 @@ export const ProjectFormActions = ({
 
         if (error) throw error;
 
+        // Update project monitoring
+        const { error: monitoringError } = await supabase
+          .from("project_monitoring")
+          .upsert({
+            project_id: project.id,
+            monitoring_level: formData.monitoringLevel,
+            monitoring_entity_id: formData.monitoringEntityId,
+          });
+
+        if (monitoringError) throw monitoringError;
+
         toast({
           title: "Succès",
           description: "Le projet a été mis à jour",
         });
       } else {
-        const { error } = await supabase.from("projects").insert(projectData);
+        const { data: newProject, error } = await supabase
+          .from("projects")
+          .insert(projectData)
+          .select()
+          .single();
 
         if (error) {
           if (error.code === "23505") {
@@ -132,6 +148,17 @@ export const ProjectFormActions = ({
           }
           throw error;
         }
+
+        // Create project monitoring
+        const { error: monitoringError } = await supabase
+          .from("project_monitoring")
+          .insert({
+            project_id: newProject.id,
+            monitoring_level: formData.monitoringLevel,
+            monitoring_entity_id: formData.monitoringEntityId,
+          });
+
+        if (monitoringError) throw monitoringError;
 
         toast({
           title: "Succès",
