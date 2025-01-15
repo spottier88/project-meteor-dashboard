@@ -13,18 +13,34 @@ export const MonitoringBadge = ({ projectId, className }: MonitoringBadgeProps) 
   const { data: monitoring } = useQuery({
     queryKey: ["project-monitoring", projectId],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data: monitoringData, error: monitoringError } = await supabase
         .from("project_monitoring")
-        .select(`
-          *,
-          poles:monitoring_entity_id (name),
-          directions:monitoring_entity_id (name)
-        `)
+        .select("monitoring_level, monitoring_entity_id")
         .eq("project_id", projectId)
         .single();
 
-      if (error) throw error;
-      return data;
+      if (monitoringError) throw monitoringError;
+      if (!monitoringData) return null;
+
+      if (monitoringData.monitoring_level === "pole" && monitoringData.monitoring_entity_id) {
+        const { data: poleData } = await supabase
+          .from("poles")
+          .select("name")
+          .eq("id", monitoringData.monitoring_entity_id)
+          .single();
+        return { ...monitoringData, entityName: poleData?.name };
+      }
+
+      if (monitoringData.monitoring_level === "direction" && monitoringData.monitoring_entity_id) {
+        const { data: directionData } = await supabase
+          .from("directions")
+          .select("name")
+          .eq("id", monitoringData.monitoring_entity_id)
+          .single();
+        return { ...monitoringData, entityName: directionData?.name };
+      }
+
+      return monitoringData;
     },
   });
 
@@ -45,14 +61,14 @@ export const MonitoringBadge = ({ projectId, className }: MonitoringBadgeProps) 
         return (
           <>
             <Flag className="h-4 w-4 mr-1" />
-            Suivi {monitoring.poles?.name}
+            Suivi {monitoring.entityName}
           </>
         );
       case "direction":
         return (
           <>
             <Flag className="h-4 w-4 mr-1" />
-            Suivi {monitoring.directions?.name}
+            Suivi {monitoring.entityName}
           </>
         );
       default:
