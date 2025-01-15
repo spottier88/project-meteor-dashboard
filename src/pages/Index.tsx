@@ -43,7 +43,7 @@ const Index = () => {
     queryKey: ["projects"],
     queryFn: async () => {
       console.log("Fetching projects with monitoring data...");
-      const { data, error } = await supabase
+      const { data: projectsData, error: projectsError } = await supabase
         .from("projects")
         .select(`
           *,
@@ -66,17 +66,30 @@ const Index = () => {
         `)
         .order("created_at", { ascending: false });
 
-      if (error) {
-        console.error("Error fetching projects:", error);
-        throw error;
+      if (projectsError) {
+        console.error("Error fetching projects:", projectsError);
+        throw projectsError;
       }
-      
-      console.log("Raw projects data:", data);
-      
-      return data?.map(project => ({
-        ...project,
-        lastReviewDate: project.last_review_date,
-      })) || [];
+
+      const { data: reviewsData, error: reviewsError } = await supabase
+        .from("latest_reviews")
+        .select("*");
+
+      if (reviewsError) {
+        console.error("Error fetching reviews:", reviewsError);
+        throw reviewsError;
+      }
+
+      return projectsData?.map(project => {
+        const latestReview = reviewsData?.find(review => review.project_id === project.id);
+        return {
+          ...project,
+          status: latestReview?.weather || null,
+          progress: latestReview?.progress || null,
+          completion: latestReview?.completion || 0,
+          lastReviewDate: project.last_review_date,
+        };
+      }) || [];
     },
   });
 

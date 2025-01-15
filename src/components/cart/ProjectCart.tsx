@@ -23,28 +23,25 @@ export const ProjectCart = ({ isOpen, onClose }: ProjectCartProps) => {
 
       const fetchProjectData = async (projectId: string) => {
         try {
-          const { data: projectData, error: projectError } = await supabase
-            .from("projects")
-            .select("*")
-            .eq("id", projectId)
-            .maybeSingle();
+          const [projectResult, reviewResult] = await Promise.all([
+            supabase
+              .from("projects")
+              .select("*")
+              .eq("id", projectId)
+              .maybeSingle(),
+            supabase
+              .from("latest_reviews")
+              .select("*")
+              .eq("project_id", projectId)
+              .maybeSingle()
+          ]);
 
-          if (projectError || !projectData) {
-            console.error("Error fetching project:", projectError);
+          if (projectResult.error || !projectResult.data) {
+            console.error("Error fetching project:", projectResult.error);
             return null;
           }
 
-          const [reviewResult, risksResult, tasksResult] = await Promise.all([
-            supabase
-              .from("reviews")
-              .select(`
-                *,
-                review_actions(*)
-              `)
-              .eq("project_id", projectId)
-              .order("created_at", { ascending: false })
-              .limit(1)
-              .maybeSingle(),
+          const [risksResult, tasksResult] = await Promise.all([
             supabase.from("risks").select("*").eq("project_id", projectId),
             supabase.from("tasks").select("*").eq("project_id", projectId),
           ]);
@@ -52,28 +49,23 @@ export const ProjectCart = ({ isOpen, onClose }: ProjectCartProps) => {
           console.log("Review data with actions:", reviewResult.data);
 
           const [poleResult, directionResult, serviceResult] = await Promise.all([
-            projectData.pole_id
-              ? supabase.from("poles").select("name").eq("id", projectData.pole_id).maybeSingle()
+            projectResult.data.pole_id
+              ? supabase.from("poles").select("name").eq("id", projectResult.data.pole_id).maybeSingle()
               : { data: null },
-            projectData.direction_id
-              ? supabase.from("directions").select("name").eq("id", projectData.direction_id).maybeSingle()
+            projectResult.data.direction_id
+              ? supabase.from("directions").select("name").eq("id", projectResult.data.direction_id).maybeSingle()
               : { data: null },
-            projectData.service_id
-              ? supabase.from("services").select("name").eq("id", projectData.service_id).maybeSingle()
+            projectResult.data.service_id
+              ? supabase.from("services").select("name").eq("id", projectResult.data.service_id).maybeSingle()
               : { data: null },
           ]);
 
           return {
             project: {
-              title: projectData.title,
-              status: projectData.status,
-              progress: projectData.progress,
-              completion: projectData.completion,
-              project_manager: projectData.project_manager,
-              last_review_date: projectData.last_review_date,
-              start_date: projectData.start_date,
-              end_date: projectData.end_date,
-              description: projectData.description,
+              ...projectResult.data,
+              completion: reviewResult.data?.completion || 0,
+              weather: reviewResult.data?.weather || null,
+              progress: reviewResult.data?.progress || null,
               pole_name: poleResult.data?.name,
               direction_name: directionResult.data?.name,
               service_name: serviceResult.data?.name,
@@ -82,9 +74,9 @@ export const ProjectCart = ({ isOpen, onClose }: ProjectCartProps) => {
               ? {
                   weather: reviewResult.data.weather,
                   progress: reviewResult.data.progress,
+                  completion: reviewResult.data.completion,
                   comment: reviewResult.data.comment,
                   created_at: reviewResult.data.created_at,
-                  actions: reviewResult.data.review_actions,
                 }
               : undefined,
             risks: risksResult.data || [],

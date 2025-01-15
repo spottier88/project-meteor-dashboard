@@ -53,11 +53,8 @@ export const ProjectSummaryContent = ({
       <ProjectSummaryHeader
         title={project.title}
         description={project.description}
-        status={project.status}
-        progress={project.progress}
-        completion={project.completion}
         project_manager={project.project_manager}
-        last_review_date={project.last_review_date}
+        id={project.id}
       />
 
       <div className="grid gap-6 md:grid-cols-2">

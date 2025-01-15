@@ -30,3 +30,16 @@ export interface ManagerAssignmentWithDetails extends ManagerAssignment {
     name: string;
   };
 }
+
+export interface Project {
+  id: string;
+  title: string;
+  status: ProjectStatus | null;
+  progress: ProgressStatus | null;
+  lastReviewDate: string | null;
+  project_manager?: string;
+  owner_id?: string;
+  pole_id?: string;
+  direction_id?: string;
+  service_id?: string;
+}

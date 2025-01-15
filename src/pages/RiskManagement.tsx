@@ -35,14 +35,29 @@ export const RiskManagement = () => {
   const { data: project } = useQuery({
     queryKey: ["project", projectId],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("projects")
-        .select("*")
-        .eq("id", projectId)
-        .single();
+      if (!projectId) return null;
 
-      if (error) throw error;
-      return data as Project;
+      const [projectResult, reviewResult] = await Promise.all([
+        supabase
+          .from("projects")
+          .select("*")
+          .eq("id", projectId)
+          .single(),
+        supabase
+          .from("latest_reviews")
+          .select("*")
+          .eq("project_id", projectId)
+          .single()
+      ]);
+
+      if (projectResult.error) throw projectResult.error;
+
+      return {
+        ...projectResult.data,
+        status: reviewResult.data?.weather || null,
+        progress: reviewResult.data?.progress || null,
+        completion: reviewResult.data?.completion || 0
+      } as Project;
     },
   });
 
