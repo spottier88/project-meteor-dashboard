@@ -9,6 +9,12 @@ interface MonitoringBadgeProps {
   className?: string;
 }
 
+interface MonitoringData {
+  monitoring_level: MonitoringLevel;
+  monitoring_entity_id: string | null;
+  entityName?: string | null;
+}
+
 export const MonitoringBadge = ({ projectId, className }: MonitoringBadgeProps) => {
   const { data: monitoring } = useQuery({
     queryKey: ["project-monitoring", projectId],
@@ -22,13 +28,18 @@ export const MonitoringBadge = ({ projectId, className }: MonitoringBadgeProps) 
       if (monitoringError) throw monitoringError;
       if (!monitoringData) return null;
 
+      const result: MonitoringData = {
+        monitoring_level: monitoringData.monitoring_level,
+        monitoring_entity_id: monitoringData.monitoring_entity_id,
+      };
+
       if (monitoringData.monitoring_level === "pole" && monitoringData.monitoring_entity_id) {
         const { data: poleData } = await supabase
           .from("poles")
           .select("name")
           .eq("id", monitoringData.monitoring_entity_id)
           .single();
-        return { ...monitoringData, entityName: poleData?.name };
+        result.entityName = poleData?.name;
       }
 
       if (monitoringData.monitoring_level === "direction" && monitoringData.monitoring_entity_id) {
@@ -37,10 +48,10 @@ export const MonitoringBadge = ({ projectId, className }: MonitoringBadgeProps) 
           .select("name")
           .eq("id", monitoringData.monitoring_entity_id)
           .single();
-        return { ...monitoringData, entityName: directionData?.name };
+        result.entityName = directionData?.name;
       }
 
-      return monitoringData;
+      return result;
     },
   });
 
@@ -61,14 +72,14 @@ export const MonitoringBadge = ({ projectId, className }: MonitoringBadgeProps) 
         return (
           <>
             <Flag className="h-4 w-4 mr-1" />
-            Suivi {monitoring.entityName}
+            Suivi {monitoring.entityName || ""}
           </>
         );
       case "direction":
         return (
           <>
             <Flag className="h-4 w-4 mr-1" />
-            Suivi {monitoring.entityName}
+            Suivi {monitoring.entityName || ""}
           </>
         );
       default:
