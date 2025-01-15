@@ -218,6 +218,38 @@ export type Database = {
         }
         Relationships: []
       }
+      project_monitoring: {
+        Row: {
+          created_at: string | null
+          id: string
+          monitoring_entity_id: string | null
+          monitoring_level: Database["public"]["Enums"]["monitoring_level"]
+          project_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          monitoring_entity_id?: string | null
+          monitoring_level?: Database["public"]["Enums"]["monitoring_level"]
+          project_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          monitoring_entity_id?: string | null
+          monitoring_level?: Database["public"]["Enums"]["monitoring_level"]
+          project_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_monitoring_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: true
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       projects: {
         Row: {
           completion: number
@@ -577,6 +609,7 @@ export type Database = {
       }
     }
     Enums: {
+      monitoring_level: "none" | "dgs" | "pole" | "direction"
       notification_type: "system" | "user"
       progress_status: "better" | "stable" | "worse"
       project_status: "sunny" | "cloudy" | "stormy"

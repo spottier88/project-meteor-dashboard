@@ -10,10 +10,11 @@ import { DashboardHeader } from "@/components/DashboardHeader";
 import { ViewToggle, ViewMode } from "@/components/ViewToggle";
 import { ProjectSelectionSheet } from "@/components/ProjectSelectionSheet";
 import { ReviewSheet } from "@/components/ReviewSheet";
-import { FilterToggle } from "@/components/FilterToggle";
+import { MonitoringFilter } from "@/components/monitoring/MonitoringFilter";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { UserInfo } from "@/components/UserInfo";
+import { MonitoringLevel } from "@/types/monitoring";
 
 const Index = () => {
   const navigate = useNavigate();
@@ -33,6 +34,8 @@ const Index = () => {
     return (savedView as ViewMode) || "grid";
   });
   
+  const [monitoringLevel, setMonitoringLevel] = useState<MonitoringLevel | 'all'>('all');
+
   const user = useUser();
 
   useEffect(() => {
@@ -57,6 +60,10 @@ const Index = () => {
           services (
             id,
             name
+          ),
+          project_monitoring (
+            monitoring_level,
+            monitoring_entity_id
           )
         `)
         .order("created_at", { ascending: false });
@@ -71,8 +78,10 @@ const Index = () => {
   });
 
   const filteredProjects = projects?.filter(project => {
-    if (showDgsOnly && !project.suivi_dgs) {
-      return false;
+    if (monitoringLevel !== 'all') {
+      const monitoring = project.project_monitoring?.[0];
+      if (!monitoring) return monitoringLevel === 'none';
+      if (monitoringLevel !== monitoring.monitoring_level) return false;
     }
 
     if (searchQuery) {
@@ -146,7 +155,10 @@ const Index = () => {
               className="mt-1"
             />
           </div>
-          <FilterToggle showDgsOnly={showDgsOnly} onToggle={setShowDgsOnly} />
+          <MonitoringFilter
+            selectedLevel={monitoringLevel}
+            onLevelChange={setMonitoringLevel}
+          />
         </div>
       </div>
 

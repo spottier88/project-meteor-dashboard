@@ -1,6 +1,6 @@
 import { CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Pencil, History, Star, ListTodo } from "lucide-react";
+import { Pencil, History, ListTodo } from "lucide-react";
 import { ProjectStatus } from "../ProjectCard";
 import { StatusIcon } from "./StatusIcon";
 import { useUser } from "@supabase/auth-helpers-react";
@@ -9,14 +9,13 @@ import { supabase } from "@/integrations/supabase/client";
 import { canEditProject, canViewProjectHistory, canManageTasks } from "@/utils/permissions";
 import { UserRoleData } from "@/types/user";
 import { useNavigate } from "react-router-dom";
+import { MonitoringBadge } from "../monitoring/MonitoringBadge";
 
 interface ProjectCardHeaderProps {
   title: string;
   status: ProjectStatus | null;
-  suivi_dgs?: boolean;
   onEdit: (id: string) => void;
   onViewHistory: (id: string, title: string) => void;
-  onReview: (id: string, title: string) => void;
   id: string;
   owner_id?: string;
   project_manager?: string;
@@ -26,7 +25,6 @@ interface ProjectCardHeaderProps {
 export const ProjectCardHeader = ({
   title,
   status,
-  suivi_dgs,
   onEdit,
   onViewHistory,
   id,
@@ -83,9 +81,7 @@ export const ProjectCardHeader = ({
   return (
     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
       <div className="flex items-center gap-2">
-        {suivi_dgs && (
-          <Star className="h-4 w-4 text-yellow-500" aria-label="Suivi DGS" />
-        )}
+        <MonitoringBadge projectId={id} />
         <CardTitle className="text-xl font-semibold">{title}</CardTitle>
       </div>
       <div className="flex items-center gap-2">
