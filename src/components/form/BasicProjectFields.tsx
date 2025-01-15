@@ -2,9 +2,8 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { DatePickerField } from "./DatePickerField";
-import { Switch } from "@/components/ui/switch";
-import { Label } from "@/components/ui/label";
 import { UserProfile } from "@/types/user";
+import { MonitoringLevel } from "@/types/monitoring";
 
 interface BasicProjectFieldsProps {
   title: string;
@@ -19,8 +18,10 @@ interface BasicProjectFieldsProps {
   setEndDate: (date: Date | undefined) => void;
   priority: string;
   setPriority: (value: string) => void;
-  suiviDgs: boolean;
-  setSuiviDgs: (value: boolean) => void;
+  monitoringLevel: MonitoringLevel;
+  setMonitoringLevel: (value: MonitoringLevel) => void;
+  monitoringEntityId: string | null;
+  setMonitoringEntityId: (value: string | null) => void;
   isAdmin: boolean;
   projectManagers?: UserProfile[];
 }
@@ -38,8 +39,10 @@ export const BasicProjectFields = ({
   setEndDate,
   priority,
   setPriority,
-  suiviDgs,
-  setSuiviDgs,
+  monitoringLevel,
+  setMonitoringLevel,
+  monitoringEntityId,
+  setMonitoringEntityId,
   isAdmin,
   projectManagers,
 }: BasicProjectFieldsProps) => {
@@ -124,14 +127,40 @@ export const BasicProjectFields = ({
           </SelectContent>
         </Select>
       </div>
-      <div className="flex items-center space-x-2">
-        <Switch
-          id="suivi-dgs"
-          checked={suiviDgs}
-          onCheckedChange={setSuiviDgs}
-        />
-        <Label htmlFor="suivi-dgs">Suivi DGS</Label>
+      <div className="grid gap-2">
+        <label htmlFor="monitoring-level" className="text-sm font-medium">
+          Niveau de suivi
+        </label>
+        <Select value={monitoringLevel} onValueChange={setMonitoringLevel}>
+          <SelectTrigger>
+            <SelectValue placeholder="Sélectionner un niveau de suivi" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="none">Aucun</SelectItem>
+            <SelectItem value="dgs">DGS</SelectItem>
+            <SelectItem value="pole">Pôle</SelectItem>
+            <SelectItem value="direction">Direction</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
+      {monitoringLevel !== 'none' && monitoringLevel !== 'dgs' && (
+        <div className="grid gap-2">
+          <label htmlFor="monitoring-entity" className="text-sm font-medium">
+            Entité de suivi
+          </label>
+          <Select 
+            value={monitoringEntityId || ""} 
+            onValueChange={(value) => setMonitoringEntityId(value || null)}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Sélectionner une entité" />
+            </SelectTrigger>
+            <SelectContent>
+              {/* Add entity options based on monitoring level */}
+            </SelectContent>
+          </Select>
+        </div>
+      )}
     </div>
   );
 };
