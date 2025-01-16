@@ -37,6 +37,22 @@ export const UserForm = ({ isOpen, onClose, onSubmit, user }: UserFormProps) => 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedUserId, setSelectedUserId] = useState<string>("");
   const [hierarchyAssignment, setHierarchyAssignment] = useState<Omit<HierarchyAssignment, 'id' | 'created_at'> | null>(null);
+  const [existingUsers, setExistingUsers] = useState<Array<{ id: string; email: string; }>>([]);
+
+  const fetchExistingUsers = async () => {
+    const { data, error } = await supabase.rpc('get_users_without_profile');
+    if (!error && data) {
+      setExistingUsers(data);
+    }
+  };
+
+  const handleExistingUserSelect = (userId: string) => {
+    setSelectedUserId(userId);
+    const selectedUser = existingUsers.find(u => u.id === userId);
+    if (selectedUser) {
+      setEmail(selectedUser.email);
+    }
+  };
 
   useEffect(() => {
     if (user) {

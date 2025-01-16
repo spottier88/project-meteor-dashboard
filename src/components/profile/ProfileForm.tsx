@@ -36,7 +36,7 @@ const getRoleLabel = (role: string): string => {
   }
 };
 
-const getEntityTypeLabel = (type: string): string => {
+const getEntityTypeLabel = (type: EntityType): string => {
   switch (type) {
     case "pole":
       return "Pôle";
@@ -92,38 +92,55 @@ export const ProfileForm = ({ isOpen, onClose, profile }: ProfileFormProps) => {
 
       if (assignmentError) throw assignmentError;
 
-      // Récupérer le nom de l'entité
-      let entityName = '';
       if (assignment) {
         const { data: entityData } = await supabase
-          .from(assignment.entity_type + 's')
-          .select('name')
-          .eq('id', assignment.entity_id)
+          .from(`${assignment.entity_type}s`)
+          .select("name")
+          .eq("id", assignment.entity_id)
           .single();
 
-        if (entityData) {
-          entityName = entityData.name;
-        }
+        return entityData ? {
+          ...assignment,
+          entity_name: entityData.name
+        } : null;
       }
 
-      return assignment ? {
-        ...assignment,
-        entity_name: entityName
-      } : null;
+      return null;
     },
     enabled: !!profile?.id && isManager,
   });
 
-  const getEntityTypeLabel = (type: EntityType): string => {
-    switch (type) {
-      case "pole":
-        return "Pôle";
-      case "direction":
-        return "Direction";
-      case "service":
-        return "Service";
-      default:
-        return type;
+  const handleSubmit = async () => {
+    if (!profile) return;
+
+    setIsSubmitting(true);
+
+    try {
+      const { error } = await supabase
+        .from("profiles")
+        .update({
+          first_name: firstName,
+          last_name: lastName,
+        })
+        .eq("id", profile.id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Succès",
+        description: "Votre profil a été mis à jour",
+      });
+
+      onClose();
+    } catch (error) {
+      console.error("Error:", error);
+      toast({
+        title: "Erreur",
+        description: "Une erreur est survenue lors de la mise à jour du profil",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
