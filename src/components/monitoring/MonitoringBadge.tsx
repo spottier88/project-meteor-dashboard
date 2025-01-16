@@ -59,6 +59,10 @@ export const MonitoringBadge = ({ projectId, className }: MonitoringBadgeProps) 
     return null;
   }
 
+
+  // contenu texte du badge
+  // Suivi Pôle {monitoring.entityName ? `(${monitoring.entityName})` : ""}
+  
   const getBadgeContent = () => {
     switch (monitoring.monitoring_level) {
       case "dgs":
@@ -72,14 +76,14 @@ export const MonitoringBadge = ({ projectId, className }: MonitoringBadgeProps) 
         return (
           <>
             <Flag className="h-4 w-4 mr-1" />
-            Suivi Pôle {monitoring.entityName ? `(${monitoring.entityName})` : ""}
+            Suivi Pôle
           </>
         );
       case "direction":
         return (
           <>
             <Flag className="h-4 w-4 mr-1" />
-            Suivi Direction {monitoring.entityName ? `(${monitoring.entityName})` : ""}
+            Suivi Direction
           </>
         );
       default:
