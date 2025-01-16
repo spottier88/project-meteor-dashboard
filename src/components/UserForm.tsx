@@ -160,32 +160,24 @@ export const UserForm = ({ isOpen, onClose, onSubmit, user }: UserFormProps) => 
           if (insertRolesError) throw insertRolesError;
         }
 
-        // Update hierarchy assignment if user is a manager
-        if (roles.includes("manager")) {
-          if (hierarchyAssignment) {
-            // Delete existing assignment if any
-            await supabase
-              .from("user_hierarchy_assignments")
-              .delete()
-              .eq("user_id", user.id);
-
-            // Insert new assignment
-            const { error: hierarchyError } = await supabase
-              .from("user_hierarchy_assignments")
-              .insert({
-                user_id: user.id,
-                entity_id: hierarchyAssignment.entity_id,
-                entity_type: hierarchyAssignment.entity_type
-              });
-
-            if (hierarchyError) throw hierarchyError;
-          }
-        } else {
-          // If user is no longer a manager, remove any existing assignment
+        // Update hierarchy assignment if provided
+        if (hierarchyAssignment) {
+          // Delete existing assignment if any
           await supabase
             .from("user_hierarchy_assignments")
             .delete()
             .eq("user_id", user.id);
+
+          // Insert new assignment
+          const { error: hierarchyError } = await supabase
+            .from("user_hierarchy_assignments")
+            .insert({
+              user_id: user.id,
+              entity_id: hierarchyAssignment.entity_id,
+              entity_type: hierarchyAssignment.entity_type
+            });
+
+          if (hierarchyError) throw hierarchyError;
         }
 
         toast({
@@ -219,8 +211,8 @@ export const UserForm = ({ isOpen, onClose, onSubmit, user }: UserFormProps) => 
 
         if (rolesError) throw rolesError;
 
-        // Add hierarchy assignment if user is a manager
-        if (roles.includes("manager") && hierarchyAssignment) {
+        // Add hierarchy assignment if provided
+        if (hierarchyAssignment) {
           const { error: hierarchyError } = await supabase
             .from("user_hierarchy_assignments")
             .insert({
@@ -279,13 +271,11 @@ export const UserForm = ({ isOpen, onClose, onSubmit, user }: UserFormProps) => 
           selectedUserId={selectedUserId}
           onExistingUserSelect={handleExistingUserSelect}
         />
-        {roles.includes("manager") && (
-          <HierarchyAssignmentFields
-            userId={user?.id || selectedUserId}
-            onAssignmentChange={setHierarchyAssignment}
-            initialAssignment={hierarchyAssignment}
-          />
-        )}
+        <HierarchyAssignmentFields
+          userId={user?.id || selectedUserId}
+          onAssignmentChange={setHierarchyAssignment}
+          initialAssignment={hierarchyAssignment}
+        />
         <DialogFooter>
           <Button variant="outline" onClick={onClose}>
             Annuler
