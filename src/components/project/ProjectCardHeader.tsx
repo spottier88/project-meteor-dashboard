@@ -75,6 +75,24 @@ export const ProjectCardHeader = ({
 
   // Un manager ne peut que consulter les projets auxquels il a accès
   // S'il est uniquement manager (et pas chef de projet du projet), il ne doit pas voir les boutons d'action
+
+  // On masque le boutons de gestion des tâches.
+  //          {canManageProjectTasks && (
+  //            <Button
+  //              variant="ghost"
+  //              size="icon"
+  //              onClick={(e) => {
+  //                e.stopPropagation();
+  //                navigate(`/tasks/${id}`);
+  //              }}
+  //              className="h-8 w-8"
+  //              title="Gérer les tâches"
+  //            >
+  //              <ListTodo className="h-4 w-4" />
+  //            </Button>
+  //          )}
+  
+  
   const isOnlyManager = isManager && project_manager !== userProfile?.email && !isAdmin;
   const showActions = !isOnlyManager;
 
@@ -116,20 +134,7 @@ export const ProjectCardHeader = ({
                 <History className="h-4 w-4" />
               </Button>
             )}
-            {canManageProjectTasks && (
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  navigate(`/tasks/${id}`);
-                }}
-                className="h-8 w-8"
-                title="Gérer les tâches"
-              >
-                <ListTodo className="h-4 w-4" />
-              </Button>
-            )}
+            
           </>
         )}
         {status && <StatusIcon status={status} />}
