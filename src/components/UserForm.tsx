@@ -68,7 +68,7 @@ export const UserForm = ({ isOpen, onClose, onSubmit, user }: UserFormProps) => 
           .from("user_hierarchy_assignments")
           .select("*")
           .eq("user_id", user.id)
-          .single();
+          .maybeSingle();
 
         if (!error && data) {
           setHierarchyAssignment({
@@ -161,16 +161,31 @@ export const UserForm = ({ isOpen, onClose, onSubmit, user }: UserFormProps) => 
         }
 
         // Update hierarchy assignment if user is a manager
-        if (roles.includes("manager") && hierarchyAssignment) {
-          const { error: hierarchyError } = await supabase
-            .from("user_hierarchy_assignments")
-            .upsert({
-              user_id: user.id,
-              entity_id: hierarchyAssignment.entity_id,
-              entity_type: hierarchyAssignment.entity_type
-            });
+        if (roles.includes("manager")) {
+          if (hierarchyAssignment) {
+            // Delete existing assignment if any
+            await supabase
+              .from("user_hierarchy_assignments")
+              .delete()
+              .eq("user_id", user.id);
 
-          if (hierarchyError) throw hierarchyError;
+            // Insert new assignment
+            const { error: hierarchyError } = await supabase
+              .from("user_hierarchy_assignments")
+              .insert({
+                user_id: user.id,
+                entity_id: hierarchyAssignment.entity_id,
+                entity_type: hierarchyAssignment.entity_type
+              });
+
+            if (hierarchyError) throw hierarchyError;
+          }
+        } else {
+          // If user is no longer a manager, remove any existing assignment
+          await supabase
+            .from("user_hierarchy_assignments")
+            .delete()
+            .eq("user_id", user.id);
         }
 
         toast({
@@ -268,6 +283,7 @@ export const UserForm = ({ isOpen, onClose, onSubmit, user }: UserFormProps) => 
           <HierarchyAssignmentFields
             userId={user?.id || selectedUserId}
             onAssignmentChange={setHierarchyAssignment}
+            initialAssignment={hierarchyAssignment}
           />
         )}
         <DialogFooter>

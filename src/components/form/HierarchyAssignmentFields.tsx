@@ -8,9 +8,14 @@ import { EntityType, HierarchyAssignment } from "@/types/user";
 interface HierarchyAssignmentFieldsProps {
   userId: string;
   onAssignmentChange: (assignment: Omit<HierarchyAssignment, 'id' | 'created_at'>) => void;
+  initialAssignment?: Omit<HierarchyAssignment, 'id' | 'created_at'> | null;
 }
 
-export const HierarchyAssignmentFields = ({ userId, onAssignmentChange }: HierarchyAssignmentFieldsProps) => {
+export const HierarchyAssignmentFields = ({ 
+  userId, 
+  onAssignmentChange,
+  initialAssignment 
+}: HierarchyAssignmentFieldsProps) => {
   const [selectedPoleId, setSelectedPoleId] = useState<string>("none");
   const [selectedDirectionId, setSelectedDirectionId] = useState<string>("none");
   const [selectedServiceId, setSelectedServiceId] = useState<string>("none");
@@ -57,6 +62,44 @@ export const HierarchyAssignmentFields = ({ userId, onAssignmentChange }: Hierar
     },
     enabled: selectedDirectionId !== "none",
   });
+
+  // Effet pour initialiser les sélections avec l'affectation existante
+  useEffect(() => {
+    if (initialAssignment) {
+      setSelectedEntityType(initialAssignment.entity_type as EntityType);
+      
+      const loadInitialSelections = async () => {
+        if (initialAssignment.entity_type === 'service') {
+          const { data: service } = await supabase
+            .from('services')
+            .select('*, directions!inner(*), directions!inner(poles!inner(*))')
+            .eq('id', initialAssignment.entity_id)
+            .single();
+
+          if (service) {
+            setSelectedPoleId(service.directions.poles.id);
+            setSelectedDirectionId(service.directions.id);
+            setSelectedServiceId(initialAssignment.entity_id);
+          }
+        } else if (initialAssignment.entity_type === 'direction') {
+          const { data: direction } = await supabase
+            .from('directions')
+            .select('*, poles!inner(*)')
+            .eq('id', initialAssignment.entity_id)
+            .single();
+
+          if (direction) {
+            setSelectedPoleId(direction.poles.id);
+            setSelectedDirectionId(initialAssignment.entity_id);
+          }
+        } else if (initialAssignment.entity_type === 'pole') {
+          setSelectedPoleId(initialAssignment.entity_id);
+        }
+      };
+
+      loadInitialSelections();
+    }
+  }, [initialAssignment]);
 
   useEffect(() => {
     if (selectedEntityType === "none") {
