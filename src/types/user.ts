@@ -33,6 +33,20 @@ export interface HierarchyAssignmentWithDetails extends HierarchyAssignment {
   };
 }
 
+export interface ManagerAssignment {
+  id: string;
+  user_id: string | null;
+  entity_id: string;
+  entity_type: string;
+  created_at?: string;
+}
+
+export interface ManagerAssignmentWithDetails extends ManagerAssignment {
+  entity_details: {
+    name: string;
+  };
+}
+
 export interface Project {
   id: string;
   title: string;
