@@ -254,7 +254,7 @@ export const UserForm = ({ isOpen, onClose, onSubmit, user }: UserFormProps) => 
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-[425px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>
             {user ? "Modifier l'utilisateur" : "Nouvel utilisateur"}

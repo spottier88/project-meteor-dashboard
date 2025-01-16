@@ -63,7 +63,6 @@ export const HierarchyAssignmentFields = ({
     enabled: selectedDirectionId !== "none",
   });
 
-  // Effet pour initialiser les sélections avec l'affectation existante
   useEffect(() => {
     if (initialAssignment) {
       setSelectedEntityType(initialAssignment.entity_type as EntityType);
@@ -77,16 +76,9 @@ export const HierarchyAssignmentFields = ({
             .single();
 
           if (service) {
-            // D'abord définir le pôle pour activer la requête des directions
             setSelectedPoleId(service.directions.poles.id);
-            // Utiliser setTimeout pour s'assurer que la requête des directions est activée
-            setTimeout(() => {
-              setSelectedDirectionId(service.directions.id);
-              // Utiliser un autre setTimeout pour s'assurer que la requête des services est activée
-              setTimeout(() => {
-                setSelectedServiceId(initialAssignment.entity_id);
-              }, 100);
-            }, 100);
+            setSelectedDirectionId(service.directions.id);
+            setSelectedServiceId(initialAssignment.entity_id);
           }
         } else if (initialAssignment.entity_type === 'direction') {
           const { data: direction } = await supabase
@@ -97,10 +89,7 @@ export const HierarchyAssignmentFields = ({
 
           if (direction) {
             setSelectedPoleId(direction.poles.id);
-            // Utiliser setTimeout pour s'assurer que la requête des directions est activée
-            setTimeout(() => {
-              setSelectedDirectionId(initialAssignment.entity_id);
-            }, 100);
+            setSelectedDirectionId(initialAssignment.entity_id);
           }
         } else if (initialAssignment.entity_type === 'pole') {
           setSelectedPoleId(initialAssignment.entity_id);
