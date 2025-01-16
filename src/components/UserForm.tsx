@@ -12,6 +12,8 @@ import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { UserFormFields } from "./form/UserFormFields";
 import { UserRole } from "@/types/user";
+import { HierarchyAssignmentFields } from "./form/HierarchyAssignmentFields";
+import { HierarchyAssignment } from "@/types/user";
 
 interface UserFormProps {
   isOpen: boolean;
@@ -26,11 +28,6 @@ interface UserFormProps {
   };
 }
 
-interface ExistingUser {
-  id: string;
-  email: string;
-}
-
 export const UserForm = ({ isOpen, onClose, onSubmit, user }: UserFormProps) => {
   const { toast } = useToast();
   const [firstName, setFirstName] = useState(user?.first_name || "");
@@ -38,8 +35,8 @@ export const UserForm = ({ isOpen, onClose, onSubmit, user }: UserFormProps) => 
   const [email, setEmail] = useState(user?.email || "");
   const [roles, setRoles] = useState<UserRole[]>(user?.roles || ["chef_projet"]);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [existingUsers, setExistingUsers] = useState<ExistingUser[]>([]);
   const [selectedUserId, setSelectedUserId] = useState<string>("");
+  const [hierarchyAssignment, setHierarchyAssignment] = useState<Omit<HierarchyAssignment, 'id' | 'created_at'> | null>(null);
 
   useEffect(() => {
     if (user) {
@@ -48,41 +45,35 @@ export const UserForm = ({ isOpen, onClose, onSubmit, user }: UserFormProps) => 
       setEmail(user.email || "");
       setRoles(user.roles);
       setSelectedUserId("");
+      
+      // Charger l'affectation hiérarchique existante
+      const loadHierarchyAssignment = async () => {
+        const { data, error } = await supabase
+          .from("user_hierarchy_assignments")
+          .select("*")
+          .eq("user_id", user.id)
+          .single();
+
+        if (!error && data) {
+          setHierarchyAssignment({
+            user_id: data.user_id,
+            entity_id: data.entity_id,
+            entity_type: data.entity_type
+          });
+        }
+      };
+
+      loadHierarchyAssignment();
     } else {
       setFirstName("");
       setLastName("");
       setEmail("");
       setRoles(["chef_projet"]);
       setSelectedUserId("");
+      setHierarchyAssignment(null);
       fetchExistingUsers();
     }
   }, [user]);
-
-  const fetchExistingUsers = async () => {
-    try {
-      const { data, error } = await supabase
-        .rpc('get_users_without_profile');
-
-      if (error) throw error;
-
-      setExistingUsers(data || []);
-    } catch (error) {
-      console.error("Error fetching users:", error);
-      toast({
-        title: "Erreur",
-        description: "Impossible de récupérer la liste des utilisateurs",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const handleExistingUserSelect = async (userId: string) => {
-    setSelectedUserId(userId);
-    const selectedUser = existingUsers.find(u => u.id === userId);
-    if (selectedUser) {
-      setEmail(selectedUser.email);
-    }
-  };
 
   const handleSubmit = async () => {
     if (!email || !firstName || !lastName) {
@@ -153,6 +144,19 @@ export const UserForm = ({ isOpen, onClose, onSubmit, user }: UserFormProps) => 
           if (insertRolesError) throw insertRolesError;
         }
 
+        // Update hierarchy assignment if user is a manager
+        if (roles.includes("manager") && hierarchyAssignment) {
+          const { error: hierarchyError } = await supabase
+            .from("user_hierarchy_assignments")
+            .upsert({
+              user_id: user.id,
+              entity_id: hierarchyAssignment.entity_id,
+              entity_type: hierarchyAssignment.entity_type
+            });
+
+          if (hierarchyError) throw hierarchyError;
+        }
+
         toast({
           title: "Succès",
           description: "L'utilisateur a été mis à jour",
@@ -183,6 +187,19 @@ export const UserForm = ({ isOpen, onClose, onSubmit, user }: UserFormProps) => 
           );
 
         if (rolesError) throw rolesError;
+
+        // Add hierarchy assignment if user is a manager
+        if (roles.includes("manager") && hierarchyAssignment) {
+          const { error: hierarchyError } = await supabase
+            .from("user_hierarchy_assignments")
+            .insert({
+              user_id: userId,
+              entity_id: hierarchyAssignment.entity_id,
+              entity_type: hierarchyAssignment.entity_type
+            });
+
+          if (hierarchyError) throw hierarchyError;
+        }
 
         toast({
           title: "Succès",
@@ -231,6 +248,12 @@ export const UserForm = ({ isOpen, onClose, onSubmit, user }: UserFormProps) => 
           selectedUserId={selectedUserId}
           onExistingUserSelect={handleExistingUserSelect}
         />
+        {roles.includes("manager") && (
+          <HierarchyAssignmentFields
+            userId={user?.id || selectedUserId}
+            onAssignmentChange={setHierarchyAssignment}
+          />
+        )}
         <DialogFooter>
           <Button variant="outline" onClick={onClose}>
             Annuler

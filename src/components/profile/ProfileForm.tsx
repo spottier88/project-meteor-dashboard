@@ -15,6 +15,7 @@ import { UserProfile } from "@/types/user";
 import { Badge } from "@/components/ui/badge";
 import { useQuery } from "@tanstack/react-query";
 import { Separator } from "@/components/ui/separator";
+import { EntityType } from "@/types/user";
 
 interface ProfileFormProps {
   isOpen: boolean;
@@ -78,89 +79,51 @@ export const ProfileForm = ({ isOpen, onClose, profile }: ProfileFormProps) => {
 
   const isManager = userRoles?.some(role => role.role === "manager");
 
-  const { data: managerAssignments } = useQuery({
-    queryKey: ["managerAssignments", profile?.id],
+  const { data: hierarchyAssignment } = useQuery({
+    queryKey: ["hierarchyAssignment", profile?.id],
     queryFn: async () => {
       if (!profile?.id || !isManager) return null;
 
-      // Récupérer d'abord les affectations
-      const { data: assignments, error: assignmentsError } = await supabase
-        .from("manager_assignments")
-        .select("id, entity_id, entity_type")
-        .eq("user_id", profile.id);
+      const { data: assignment, error: assignmentError } = await supabase
+        .from("user_hierarchy_assignments")
+        .select("*")
+        .eq("user_id", profile.id)
+        .single();
 
-      if (assignmentsError) throw assignmentsError;
+      if (assignmentError) throw assignmentError;
 
-      // Pour chaque affectation, récupérer le nom de l'entité correspondante
-      const detailedAssignments = await Promise.all(
-        assignments.map(async (assignment) => {
-          let entityName = '';
-          
-          // Selon le type d'entité, faire la requête appropriée
-          if (assignment.entity_type === 'pole') {
-            const { data } = await supabase
-              .from('poles')
-              .select('name')
-              .eq('id', assignment.entity_id)
-              .single();
-            entityName = data?.name || '';
-          } else if (assignment.entity_type === 'direction') {
-            const { data } = await supabase
-              .from('directions')
-              .select('name')
-              .eq('id', assignment.entity_id)
-              .single();
-            entityName = data?.name || '';
-          } else if (assignment.entity_type === 'service') {
-            const { data } = await supabase
-              .from('services')
-              .select('name')
-              .eq('id', assignment.entity_id)
-              .single();
-            entityName = data?.name || '';
-          }
+      // Récupérer le nom de l'entité
+      let entityName = '';
+      if (assignment) {
+        const { data: entityData } = await supabase
+          .from(assignment.entity_type + 's')
+          .select('name')
+          .eq('id', assignment.entity_id)
+          .single();
 
-          return {
-            ...assignment,
-            entity_name: entityName,
-          };
-        })
-      );
+        if (entityData) {
+          entityName = entityData.name;
+        }
+      }
 
-      return detailedAssignments;
+      return assignment ? {
+        ...assignment,
+        entity_name: entityName
+      } : null;
     },
     enabled: !!profile?.id && isManager,
   });
 
-  const handleSubmit = async () => {
-    if (!profile?.id) return;
-    
-    setIsSubmitting(true);
-    try {
-      const { error } = await supabase
-        .from("profiles")
-        .update({
-          first_name: firstName,
-          last_name: lastName,
-        })
-        .eq("id", profile.id);
-
-      if (error) throw error;
-
-      toast({
-        title: "Succès",
-        description: "Votre profil a été mis à jour",
-      });
-      onClose();
-    } catch (error) {
-      console.error("Error:", error);
-      toast({
-        title: "Erreur",
-        description: "Une erreur est survenue lors de la mise à jour du profil",
-        variant: "destructive",
-      });
-    } finally {
-      setIsSubmitting(false);
+  const getEntityTypeLabel = (type: EntityType): string => {
+    switch (type) {
+      case "pole":
+        return "Pôle";
+      case "direction":
+        return "Direction";
+      case "service":
+        return "Service";
+      default:
+        return type;
     }
   };
 
@@ -210,22 +173,18 @@ export const ProfileForm = ({ isOpen, onClose, profile }: ProfileFormProps) => {
             </div>
           </div>
 
-          {isManager && managerAssignments && managerAssignments.length > 0 && (
+          {isManager && hierarchyAssignment && (
             <>
               <Separator className="my-2" />
               <div className="grid gap-2">
-                <Label>Affectations</Label>
-                <div className="space-y-2">
-                  {managerAssignments.map((assignment) => (
-                    <div key={assignment.id} className="flex items-center gap-2">
-                      <Badge variant="outline">
-                        {getEntityTypeLabel(assignment.entity_type)}
-                      </Badge>
-                      <span className="text-sm text-muted-foreground">
-                        {assignment.entity_name}
-                      </span>
-                    </div>
-                  ))}
+                <Label>Affectation hiérarchique</Label>
+                <div className="flex items-center gap-2">
+                  <Badge variant="outline">
+                    {getEntityTypeLabel(hierarchyAssignment.entity_type)}
+                  </Badge>
+                  <span className="text-sm text-muted-foreground">
+                    {hierarchyAssignment.entity_name}
+                  </span>
                 </div>
               </div>
             </>

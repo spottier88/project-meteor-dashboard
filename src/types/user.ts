@@ -19,7 +19,7 @@ export interface UserRoleData {
 
 export type EntityType = 'pole' | 'direction' | 'service';
 
-export interface ManagerAssignment {
+export interface HierarchyAssignment {
   id: string;
   user_id: string | null;
   entity_id: string;
@@ -27,7 +27,7 @@ export interface ManagerAssignment {
   created_at?: string;
 }
 
-export interface ManagerAssignmentWithDetails extends ManagerAssignment {
+export interface HierarchyAssignmentWithDetails extends HierarchyAssignment {
   entity_details: {
     name: string;
   };

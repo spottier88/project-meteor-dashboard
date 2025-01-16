@@ -527,6 +527,38 @@ export type Database = {
           },
         ]
       }
+      user_hierarchy_assignments: {
+        Row: {
+          created_at: string | null
+          entity_id: string
+          entity_type: Database["public"]["Enums"]["user_hierarchy_level"]
+          id: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          entity_id: string
+          entity_type: Database["public"]["Enums"]["user_hierarchy_level"]
+          id?: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          entity_id?: string
+          entity_type?: Database["public"]["Enums"]["user_hierarchy_level"]
+          id?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_hierarchy_assignments_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_notifications: {
         Row: {
           created_at: string | null
@@ -651,6 +683,7 @@ export type Database = {
       risk_severity: "low" | "medium" | "high"
       risk_status: "open" | "in_progress" | "resolved"
       task_status: "todo" | "in_progress" | "done"
+      user_hierarchy_level: "pole" | "direction" | "service"
       user_role: "admin" | "chef_projet" | "manager"
     }
     CompositeTypes: {
