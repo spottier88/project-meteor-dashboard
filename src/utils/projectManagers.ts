@@ -12,10 +12,18 @@ export const getProjectManagers = async (
     const { data, error } = await supabase
       .from("profiles")
       .select(`
-        *,
-        user_roles!inner(role)
+        id,
+        email,
+        first_name,
+        last_name,
+        created_at
       `)
-      .eq("user_roles.role", "chef_projet");
+      .in('id', (
+        await supabase
+          .from('user_roles')
+          .select('user_id')
+          .eq('role', 'chef_projet')
+      ).data?.map(ur => ur.user_id) || []);
 
     if (error) {
       console.error("Error fetching project managers:", error);
@@ -71,12 +79,24 @@ export const getProjectManagers = async (
     const { data: projectManagers, error: pmError } = await supabase
       .from("profiles")
       .select(`
-        DISTINCT *,
-        user_roles!inner(role),
-        user_hierarchy_assignments!inner(entity_id)
+        id,
+        email,
+        first_name,
+        last_name,
+        created_at
       `)
-      .eq("user_roles.role", "chef_projet")
-      .filter("user_hierarchy_assignments.entity_id", "in", `(${accessibleEntitiesQuery.join(" UNION ")})`);
+      .in('id', (
+        await supabase
+          .from('user_roles')
+          .select('user_id')
+          .eq('role', 'chef_projet')
+      ).data?.map(ur => ur.user_id) || [])
+      .in('id', (
+        await supabase
+          .from('user_hierarchy_assignments')
+          .select('user_id')
+          .or(accessibleEntitiesQuery.join(' UNION '))
+      ).data?.map(uha => uha.user_id) || []);
 
     if (pmError) {
       console.error("Error fetching project managers for manager:", pmError);
@@ -89,7 +109,7 @@ export const getProjectManagers = async (
   // Pour un chef de projet : uniquement son profil
   const { data: profile, error: profileError } = await supabase
     .from("profiles")
-    .select("*")
+    .select("id, email, first_name, last_name, created_at")
     .eq("id", userId)
     .maybeSingle();
 
