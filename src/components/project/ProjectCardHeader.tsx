@@ -6,7 +6,7 @@ import { StatusIcon } from "./StatusIcon";
 import { useUser } from "@supabase/auth-helpers-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { canEditProject, canViewProjectHistory } from "@/utils/permissions";
+import { canManageProjectItems } from "@/utils/permissions";
 import { UserRoleData } from "@/types/user";
 import { MonitoringBadge } from "../monitoring/MonitoringBadge";
 
@@ -67,13 +67,14 @@ export const ProjectCardHeader = ({
   const roles = userRoles?.map(ur => ur.role);
   const isManager = roles?.includes("manager");
   const isAdmin = roles?.includes("admin");
-  const canEdit = canEditProject(roles, user?.id, owner_id, project_manager, userProfile?.email);
-  const canViewHistory = canViewProjectHistory(roles, user?.id, owner_id, project_manager, userProfile?.email);
+  
+  // Utilisation de canManageProjectItems pour une vérification cohérente
+  const canManage = canManageProjectItems(roles, user?.id, owner_id, project_manager, userProfile?.email);
 
   // Un manager ne peut que consulter les projets auxquels il a accès
   // S'il est uniquement manager (et pas chef de projet du projet), il ne doit pas voir les boutons d'action
   const isOnlyManager = isManager && project_manager !== userProfile?.email && !isAdmin;
-  const showActions = !isOnlyManager;
+  const showActions = !isOnlyManager && canManage;
 
   return (
     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -85,34 +86,30 @@ export const ProjectCardHeader = ({
         {additionalActions}
         {showActions && (
           <>
-            {canEdit && (
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onEdit(id);
-                }}
-                className="h-8 w-8"
-                title="Modifier le projet"
-              >
-                <Pencil className="h-4 w-4" />
-              </Button>
-            )}
-            {canViewHistory && (
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onViewHistory(id, title);
-                }}
-                className="h-8 w-8"
-                title="Historique des revues de projet"
-              >
-                <History className="h-4 w-4" />
-              </Button>
-            )}
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={(e) => {
+                e.stopPropagation();
+                onEdit(id);
+              }}
+              className="h-8 w-8"
+              title="Modifier le projet"
+            >
+              <Pencil className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={(e) => {
+                e.stopPropagation();
+                onViewHistory(id, title);
+              }}
+              className="h-8 w-8"
+              title="Historique des revues de projet"
+            >
+              <History className="h-4 w-4" />
+            </Button>
           </>
         )}
         {status && <StatusIcon status={status} />}
