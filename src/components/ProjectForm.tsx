@@ -7,6 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { ProjectFormFields } from "./form/ProjectFormFields";
 import { ProjectFormActions } from "./form/ProjectFormActions";
 import { MonitoringLevel } from "@/types/monitoring";
+import { getProjectManagers } from "@/utils/projectManagers";
 
 interface ProjectFormProps {
   isOpen: boolean;
@@ -63,30 +64,11 @@ export const ProjectForm = ({ isOpen, onClose, onSubmit, project }: ProjectFormP
   });
 
   const { data: projectManagers } = useQuery({
-    queryKey: ["projectManagers"],
+    queryKey: ["projectManagers", user?.id, userRoles],
     queryFn: async () => {
-      const { data: userRolesData, error: userRolesError } = await supabase
-        .from("user_roles")
-        .select("user_id")
-        .eq("role", "chef_projet");
-
-      if (userRolesError) throw userRolesError;
-
-      if (!userRolesData?.length) return [];
-
-      const userIds = userRolesData.map(ur => ur.user_id);
-
-      const { data: profiles, error: profilesError } = await supabase
-        .from("profiles")
-        .select("*")
-        .in("id", userIds)
-        .order("email");
-
-      if (profilesError) throw profilesError;
-
-      return profiles as UserProfile[];
+      return getProjectManagers(user?.id, userRoles?.map(ur => ur.role));
     },
-    enabled: isOpen && (userRoles?.some(ur => ur.role === "admin") || userRoles?.some(ur => ur.role === "manager")),
+    enabled: isOpen && !!user?.id && !!userRoles,
   });
 
   const isAdmin = userRoles?.some(ur => ur.role === 'admin');
@@ -151,12 +133,13 @@ export const ProjectForm = ({ isOpen, onClose, onSubmit, project }: ProjectFormP
           setDirectionId("none");
           setServiceId("none");
           
-          if (!isAdmin && user?.id) {
+          // Si ce n'est pas un admin, utiliser l'email de l'utilisateur connecté
+          if (user?.email) {
+            setProjectManager(user.email);
             setOwnerId(user.id);
-            setProjectManager(user.email || "");
           } else {
-            setOwnerId("");
             setProjectManager("");
+            setOwnerId("");
           }
         }
       }
