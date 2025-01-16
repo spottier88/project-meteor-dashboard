@@ -42,6 +42,7 @@ export const getProjectManagers = async (
   if (userRoles.includes("manager")) {
     console.log("User is manager, fetching assigned project managers");
     
+    // 1. Récupérer les entités gérées par le manager
     const { data: managerEntities, error: managerError } = await supabase
       .from("manager_assignments")
       .select("entity_type, entity_id")
@@ -55,40 +56,7 @@ export const getProjectManagers = async (
 
     console.log("Manager assignments:", managerEntities);
 
-    // Construire la requête pour les entités accessibles
-    const accessibleEntitiesQuery = managerEntities.map(entity => {
-      if (entity.entity_type === "pole") {
-        return `
-          SELECT entity_id FROM user_hierarchy_assignments
-          WHERE entity_id = '${entity.entity_id}'
-          OR entity_id IN (
-            SELECT id FROM directions WHERE pole_id = '${entity.entity_id}'
-          )
-          OR entity_id IN (
-            SELECT s.id FROM services s
-            JOIN directions d ON d.id = s.direction_id
-            WHERE d.pole_id = '${entity.entity_id}'
-          )
-        `;
-      }
-      if (entity.entity_type === "direction") {
-        return `
-          SELECT entity_id FROM user_hierarchy_assignments
-          WHERE entity_id = '${entity.entity_id}'
-          OR entity_id IN (
-            SELECT id FROM services WHERE direction_id = '${entity.entity_id}'
-          )
-        `;
-      }
-      return `
-        SELECT entity_id FROM user_hierarchy_assignments
-        WHERE entity_id = '${entity.entity_id}'
-      `;
-    });
-
-    console.log("Accessible entities query:", accessibleEntitiesQuery);
-
-    // Récupérer d'abord les IDs des chefs de projet
+    // 2. Récupérer les IDs des chefs de projet
     const { data: chefProjetIds, error: chefProjetError } = await supabase
       .from('user_roles')
       .select('user_id')
@@ -101,20 +69,88 @@ export const getProjectManagers = async (
 
     console.log("Chef projet IDs:", chefProjetIds);
 
-    // Récupérer les affectations hiérarchiques
-    const { data: hierarchyAssignments, error: hierarchyError } = await supabase
-      .from('user_hierarchy_assignments')
-      .select('user_id')
-      .or(accessibleEntitiesQuery.join(' UNION '));
+    // 3. Récupérer les entités accessibles pour chaque type
+    let accessibleUserIds = new Set<string>();
 
-    if (hierarchyError) {
-      console.error("Error fetching hierarchy assignments:", hierarchyError);
-      return [];
+    for (const entity of managerEntities) {
+      if (entity.entity_type === 'pole') {
+        // Récupérer les utilisateurs du pôle
+        const { data: poleUsers } = await supabase
+          .from('user_hierarchy_assignments')
+          .select('user_id')
+          .eq('entity_id', entity.entity_id);
+        
+        poleUsers?.forEach(u => u.user_id && accessibleUserIds.add(u.user_id));
+
+        // Récupérer les directions du pôle
+        const { data: directions } = await supabase
+          .from('directions')
+          .select('id')
+          .eq('pole_id', entity.entity_id);
+
+        // Récupérer les utilisateurs des directions
+        for (const direction of directions || []) {
+          const { data: directionUsers } = await supabase
+            .from('user_hierarchy_assignments')
+            .select('user_id')
+            .eq('entity_id', direction.id);
+          
+          directionUsers?.forEach(u => u.user_id && accessibleUserIds.add(u.user_id));
+
+          // Récupérer les services de la direction
+          const { data: services } = await supabase
+            .from('services')
+            .select('id')
+            .eq('direction_id', direction.id);
+
+          // Récupérer les utilisateurs des services
+          for (const service of services || []) {
+            const { data: serviceUsers } = await supabase
+              .from('user_hierarchy_assignments')
+              .select('user_id')
+              .eq('entity_id', service.id);
+            
+            serviceUsers?.forEach(u => u.user_id && accessibleUserIds.add(u.user_id));
+          }
+        }
+      } else if (entity.entity_type === 'direction') {
+        // Récupérer les utilisateurs de la direction
+        const { data: directionUsers } = await supabase
+          .from('user_hierarchy_assignments')
+          .select('user_id')
+          .eq('entity_id', entity.entity_id);
+        
+        directionUsers?.forEach(u => u.user_id && accessibleUserIds.add(u.user_id));
+
+        // Récupérer les services de la direction
+        const { data: services } = await supabase
+          .from('services')
+          .select('id')
+          .eq('direction_id', entity.entity_id);
+
+        // Récupérer les utilisateurs des services
+        for (const service of services || []) {
+          const { data: serviceUsers } = await supabase
+            .from('user_hierarchy_assignments')
+            .select('user_id')
+            .eq('entity_id', service.id);
+          
+          serviceUsers?.forEach(u => u.user_id && accessibleUserIds.add(u.user_id));
+        }
+      } else if (entity.entity_type === 'service') {
+        // Récupérer les utilisateurs du service
+        const { data: serviceUsers } = await supabase
+          .from('user_hierarchy_assignments')
+          .select('user_id')
+          .eq('entity_id', entity.entity_id);
+        
+        serviceUsers?.forEach(u => u.user_id && accessibleUserIds.add(u.user_id));
+      }
     }
 
-    console.log("Hierarchy assignments:", hierarchyAssignments);
+    console.log("Accessible user IDs:", Array.from(accessibleUserIds));
 
-    // Récupérer les profils des chefs de projet dans la hiérarchie
+    // 4. Récupérer les profils des chefs de projet dans la hiérarchie
     const { data: projectManagers, error: pmError } = await supabase
       .from("profiles")
       .select(`
@@ -125,7 +161,7 @@ export const getProjectManagers = async (
         created_at
       `)
       .in('id', chefProjetIds?.map(cp => cp.user_id) || [])
-      .in('id', hierarchyAssignments?.map(ha => ha.user_id) || []);
+      .in('id', Array.from(accessibleUserIds));
 
     if (pmError) {
       console.error("Error fetching project managers for manager:", pmError);
