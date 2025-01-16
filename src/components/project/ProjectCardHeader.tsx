@@ -65,16 +65,12 @@ export const ProjectCardHeader = ({
   });
 
   const roles = userRoles?.map(ur => ur.role);
-  const isManager = roles?.includes("manager");
-  const isAdmin = roles?.includes("admin");
   
-  // Utilisation de canManageProjectItems pour une vérification cohérente
+  // Vérification des permissions avec canManageProjectItems
   const canManage = canManageProjectItems(roles, user?.id, owner_id, project_manager, userProfile?.email);
 
-  // Un manager ne peut que consulter les projets auxquels il a accès
-  // S'il est uniquement manager (et pas chef de projet du projet), il ne doit pas voir les boutons d'action
-  const isOnlyManager = isManager && project_manager !== userProfile?.email && !isAdmin;
-  const showActions = !isOnlyManager && canManage;
+  // Afficher les boutons si l'utilisateur a les droits de gestion
+  const showActions = canManage;
 
   return (
     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
