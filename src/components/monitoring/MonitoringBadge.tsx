@@ -69,21 +69,21 @@ export const MonitoringBadge = ({ projectId, className }: MonitoringBadgeProps) 
         return (
           <>
             <Shield className="h-4 w-4 mr-1" />
-            Suivi DGS
+            DGS
           </>
         );
       case "pole":
         return (
           <>
             <Flag className="h-4 w-4 mr-1" />
-            Suivi Pôle
+            Pôle
           </>
         );
       case "direction":
         return (
           <>
             <Flag className="h-4 w-4 mr-1" />
-            Suivi Direction
+            Direction
           </>
         );
       default:
