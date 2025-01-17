@@ -73,8 +73,8 @@ const addSummarySlide = (pptx: pptxgen, projectsData: ProjectData[]) => {
     ],
     ...projectsData.map((data, idx) => [
       { text: data.project.title, options: { fill: { color: idx % 2 === 0 ? "F5F5F5" : "FFFFFF" }, fontSize: 11 } },
-      { text: weatherIcons[data.lastReview?.weather || "cloudy"], options: { fill: { color: idx % 2 === 0 ? "F5F5F5" : "FFFFFF" }, fontSize: 11, align: "center" } },
-      { text: progressIcons[data.lastReview?.progress || "stable"], options: { fill: { color: idx % 2 === 0 ? "F5F5F5" : "FFFFFF" }, fontSize: 11, align: "center" } },
+      { text: weatherIcons[data.lastReview?.weather || "cloudy"], options: { fill: { color: idx % 2 === 0 ? "F5F5F5" : "FFFFFF" }, fontSize: 11, align: "center" as pptxgen.HAlign } },
+      { text: progressIcons[data.lastReview?.progress || "stable"], options: { fill: { color: idx % 2 === 0 ? "F5F5F5" : "FFFFFF" }, fontSize: 11, align: "center" as pptxgen.HAlign } },
       { text: data.lastReview?.comment || "-", options: { fill: { color: idx % 2 === 0 ? "F5F5F5" : "FFFFFF" }, fontSize: 11 } }
     ])
   ];
