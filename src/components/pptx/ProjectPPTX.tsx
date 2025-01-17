@@ -79,8 +79,7 @@ const addSummarySlide = (pptx: pptxgen, projectsData: ProjectData[]) => {
     ])
   ];
 
-  slide.addTable({
-    rows: tableRows,
+  slide.addTable(tableRows, {
     x: 0.5,
     y: 1.0,
     w: 9,
