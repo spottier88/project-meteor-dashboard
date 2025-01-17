@@ -94,12 +94,15 @@ export const RiskList = ({ projectId, projectTitle, readOnly = false, onRiskSubm
 
   return (
     <div className="space-y-4">
-      {!readOnly && (
-        <Button onClick={() => setIsRiskFormOpen(true)} className="mb-4">
-          <Plus className="h-4 w-4 mr-2" />
-          Nouveau risque
-        </Button>
-      )}
+      <div className="flex items-center justify-between">
+        <h2 className="text-2xl font-bold">Risques</h2>
+        {!readOnly && (
+          <Button onClick={() => setIsRiskFormOpen(true)}>
+            <Plus className="h-4 w-4 mr-2" />
+            Nouveau risque
+          </Button>
+        )}
+      </div>
 
       <div className="grid gap-4">
         {risks.map((risk) => (

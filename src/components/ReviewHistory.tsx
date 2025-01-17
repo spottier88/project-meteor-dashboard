@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Sun, Cloud, CloudLightning } from "lucide-react";
+import { Sun, Cloud, CloudLightning, ArrowLeft } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { ProjectHeader } from "./ProjectHeader";
@@ -64,12 +64,18 @@ export const ReviewHistory = () => {
 
   return (
     <div className="container mx-auto py-8 space-y-6 animate-fade-in">
+      <Button
+        variant="ghost"
+        onClick={() => navigate("/")}
+        className="mb-4"
+      >
+        <ArrowLeft className="h-4 w-4 mr-2" />
+        Retour à l'accueil
+      </Button>
+
       {project && <ProjectHeader project={project} />}
       
-      <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold">Historique des revues</h2>
-        <Button onClick={() => navigate("/")}>Retour à l'accueil</Button>
-      </div>
+      <h2 className="text-2xl font-bold">Historique des revues</h2>
 
       {isLoading ? (
         <p className="text-muted-foreground">Chargement de l'historique...</p>
