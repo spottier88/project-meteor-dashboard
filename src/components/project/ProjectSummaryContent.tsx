@@ -122,7 +122,6 @@ export const ProjectSummaryContent = ({
       </div>
 
       <div className="space-y-4">
-        <h2 className="text-2xl font-bold">Risques</h2>
         <RiskList 
           projectId={project.id} 
           projectTitle={project.title} 
