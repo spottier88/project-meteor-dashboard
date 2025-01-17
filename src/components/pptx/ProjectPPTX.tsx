@@ -53,6 +53,51 @@ const progressIcons = {
   worse: "↘️",
 };
 
+const addSummarySlide = (pptx: pptxgen, projectsData: ProjectData[]) => {
+  const slide = pptx.addSlide({ masterName: "MAIN_MASTER" });
+  
+  // En-tête avec date
+  slide.addText([
+    { text: "Synthèse des projets", options: { bold: true, color: "FFFFFF", fontSize: 24 } },
+    { text: "\n" },
+    { text: new Date().toLocaleDateString("fr-FR"), options: { color: "FFFFFF", fontSize: 14 } }
+  ], { x: 0.5, y: 0, w: 9, h: 0.8 });
+
+  // Tableau récapitulatif
+  const tableData = projectsData.map(data => [
+    data.project.title,
+    weatherIcons[data.lastReview?.weather || "cloudy"],
+    progressIcons[data.lastReview?.progress || "stable"],
+    data.lastReview?.comment || "-"
+  ]);
+
+  slide.addTable({
+    x: 0.5,
+    y: 1.0,
+    w: 9,
+    colW: [3, 1, 1, 4],
+    rows: [
+      [
+        { text: "Projet", options: { bold: true, fill: pptxColors.secondary, color: "FFFFFF" } },
+        { text: "Météo", options: { bold: true, fill: pptxColors.secondary, color: "FFFFFF" } },
+        { text: "Évolution", options: { bold: true, fill: pptxColors.secondary, color: "FFFFFF" } },
+        { text: "Commentaire", options: { bold: true, fill: pptxColors.secondary, color: "FFFFFF" } }
+      ],
+      ...tableData.map((row, idx) => 
+        row.map(cell => ({
+          text: cell,
+          options: {
+            fill: idx % 2 === 0 ? "F5F5F5" : "FFFFFF",
+            fontSize: 11,
+            align: typeof cell === "string" && cell.length <= 2 ? "center" : "left",
+            valign: "middle"
+          }
+        }))
+      )
+    ]
+  });
+};
+
 export const generateProjectPPTX = async (projectsData: ProjectData[]) => {
   const pptx = new pptxgen();
   
@@ -66,6 +111,11 @@ export const generateProjectPPTX = async (projectsData: ProjectData[]) => {
       { rect: { x: 0, y: 6.7, w: "100%", h: 0.1, fill: { color: "000000" } } },
     ]
   });
+
+  // Ajouter la page de garde uniquement s'il y a plus d'un projet
+  if (projectsData.length > 1) {
+    addSummarySlide(pptx, projectsData);
+  }
 
   for (const data of projectsData) {
     const slide = pptx.addSlide({ masterName: "MAIN_MASTER" });
