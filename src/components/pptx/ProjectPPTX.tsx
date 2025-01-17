@@ -64,37 +64,27 @@ const addSummarySlide = (pptx: pptxgen, projectsData: ProjectData[]) => {
   ], { x: 0.5, y: 0, w: 9, h: 0.8 });
 
   // Tableau récapitulatif
-  const tableData = projectsData.map(data => [
-    data.project.title,
-    weatherIcons[data.lastReview?.weather || "cloudy"],
-    progressIcons[data.lastReview?.progress || "stable"],
-    data.lastReview?.comment || "-"
-  ]);
+  const tableRows = [
+    [
+      { text: "Projet", options: { bold: true, fill: pptxColors.secondary, color: "FFFFFF" } },
+      { text: "Météo", options: { bold: true, fill: pptxColors.secondary, color: "FFFFFF" } },
+      { text: "Évolution", options: { bold: true, fill: pptxColors.secondary, color: "FFFFFF" } },
+      { text: "Commentaire", options: { bold: true, fill: pptxColors.secondary, color: "FFFFFF" } }
+    ],
+    ...projectsData.map((data, idx) => [
+      { text: data.project.title, options: { fill: idx % 2 === 0 ? "F5F5F5" : "FFFFFF", fontSize: 11 } },
+      { text: weatherIcons[data.lastReview?.weather || "cloudy"], options: { fill: idx % 2 === 0 ? "F5F5F5" : "FFFFFF", fontSize: 11, align: "center" } },
+      { text: progressIcons[data.lastReview?.progress || "stable"], options: { fill: idx % 2 === 0 ? "F5F5F5" : "FFFFFF", fontSize: 11, align: "center" } },
+      { text: data.lastReview?.comment || "-", options: { fill: idx % 2 === 0 ? "F5F5F5" : "FFFFFF", fontSize: 11 } }
+    ])
+  ];
 
   slide.addTable({
+    rows: tableRows,
     x: 0.5,
     y: 1.0,
     w: 9,
     colW: [3, 1, 1, 4],
-    rows: [
-      [
-        { text: "Projet", options: { bold: true, fill: pptxColors.secondary, color: "FFFFFF" } },
-        { text: "Météo", options: { bold: true, fill: pptxColors.secondary, color: "FFFFFF" } },
-        { text: "Évolution", options: { bold: true, fill: pptxColors.secondary, color: "FFFFFF" } },
-        { text: "Commentaire", options: { bold: true, fill: pptxColors.secondary, color: "FFFFFF" } }
-      ],
-      ...tableData.map((row, idx) => 
-        row.map(cell => ({
-          text: cell,
-          options: {
-            fill: idx % 2 === 0 ? "F5F5F5" : "FFFFFF",
-            fontSize: 11,
-            align: typeof cell === "string" && cell.length <= 2 ? "center" : "left",
-            valign: "middle"
-          }
-        }))
-      )
-    ]
   });
 };
 
