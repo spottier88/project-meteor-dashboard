@@ -101,7 +101,10 @@ const Index = () => {
       });
 
       if (monitoringLevel === 'none') {
-        const hasNoMonitoring = !project.project_monitoring;
+        // Un projet est considéré comme "non suivi" si project_monitoring est null
+        // ou si son monitoring_level est 'none'
+        const hasNoMonitoring = !project.project_monitoring || 
+                              project.project_monitoring.monitoring_level === 'none';
         console.log(`Project has no monitoring? ${hasNoMonitoring}`);
         return hasNoMonitoring;
       }
