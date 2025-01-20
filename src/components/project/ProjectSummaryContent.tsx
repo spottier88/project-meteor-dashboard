@@ -11,7 +11,7 @@ import { Plus } from "lucide-react";
 import { TaskForm } from "@/components/TaskForm";
 import { canEditProjectItems } from "@/utils/permissions";
 import { InnovationRadarChart } from "../innovation/InnovationRadarChart";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { HelpCircle } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
@@ -128,7 +128,17 @@ export const ProjectSummaryContent = ({
       <div className="grid gap-6 md:grid-cols-2">
         <div className="space-y-4">
           <h2 className="text-2xl font-bold">Dernière revue</h2>
-          {lastReview && <LastReview review={lastReview} />}
+          <Card>
+            {lastReview ? (
+              <LastReview review={lastReview} />
+            ) : (
+              <CardContent className="flex items-center justify-center h-[300px]">
+                <p className="text-muted-foreground text-center">
+                  Aucune revue n'a encore été effectuée pour ce projet.
+                </p>
+              </CardContent>
+            )}
+          </Card>
         </div>
 
         <div className="space-y-4">
