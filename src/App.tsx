@@ -6,34 +6,23 @@ import Login from "./pages/Login";
 import { TaskManagement } from "./pages/TaskManagement";
 import { ProjectSummary } from "./pages/ProjectSummary";
 import { RiskManagement } from "./pages/RiskManagement";
-import { AdminDashboard } from "./pages/AdminDashboard";
 import { UserManagement } from "./pages/UserManagement";
+import { AdminDashboard } from "./pages/AdminDashboard";
 import { OrganizationManagement } from "./pages/OrganizationManagement";
-import { ManagerAssignments } from "./pages/ManagerAssignments";
 import { NotificationManagement } from "./pages/NotificationManagement";
+import { SessionContextProvider } from "@supabase/auth-helpers-react";
+import { supabase } from "@/integrations/supabase/client";
 import { ProtectedRoute } from "./components/ProtectedRoute";
-import { DashboardHeader } from "./components/DashboardHeader";
-import { ProjectCart } from "./components/cart/ProjectCart";
-import { useState } from "react";
-import "./App.css";
+import { ReviewHistory } from "./components/ReviewHistory";
+import { ManagerAssignments } from "./pages/ManagerAssignments";
 
 const queryClient = new QueryClient();
 
 function App() {
-  const [isCartOpen, setIsCartOpen] = useState(false);
-
   return (
     <QueryClientProvider client={queryClient}>
-      <Router>
-        <div className="min-h-screen bg-background">
-          <DashboardHeader 
-            onNewProject={() => {}} 
-            onNewReview={() => {}} 
-          />
-          <ProjectCart 
-            isOpen={isCartOpen} 
-            onClose={() => setIsCartOpen(false)} 
-          />
+      <SessionContextProvider supabaseClient={supabase}>
+        <Router>
           <Routes>
             <Route path="/login" element={<Login />} />
             <Route
@@ -41,30 +30,6 @@ function App() {
               element={
                 <ProtectedRoute>
                   <Index />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/projects/:projectId"
-              element={
-                <ProtectedRoute>
-                  <ProjectSummary />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/tasks"
-              element={
-                <ProtectedRoute>
-                  <TaskManagement />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/risks"
-              element={
-                <ProtectedRoute>
-                  <RiskManagement />
                 </ProtectedRoute>
               }
             />
@@ -77,7 +42,7 @@ function App() {
               }
             />
             <Route
-              path="/users"
+              path="/admin/users"
               element={
                 <ProtectedRoute>
                   <UserManagement />
@@ -85,15 +50,15 @@ function App() {
               }
             />
             <Route
-              path="/organization"
+              path="/admin/notifications"
               element={
                 <ProtectedRoute>
-                  <OrganizationManagement />
+                  <NotificationManagement />
                 </ProtectedRoute>
               }
             />
             <Route
-              path="/assignments"
+              path="/admin/users/:userId/assignments"
               element={
                 <ProtectedRoute>
                   <ManagerAssignments />
@@ -101,17 +66,49 @@ function App() {
               }
             />
             <Route
-              path="/notifications"
+              path="/admin/organization"
               element={
                 <ProtectedRoute>
-                  <NotificationManagement />
+                  <OrganizationManagement />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/tasks/:projectId"
+              element={
+                <ProtectedRoute>
+                  <TaskManagement />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/projects/:projectId"
+              element={
+                <ProtectedRoute>
+                  <ProjectSummary />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/risks/:projectId"
+              element={
+                <ProtectedRoute>
+                  <RiskManagement />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/reviews/:projectId"
+              element={
+                <ProtectedRoute>
+                  <ReviewHistory />
                 </ProtectedRoute>
               }
             />
           </Routes>
-        </div>
+        </Router>
         <Toaster />
-      </Router>
+      </SessionContextProvider>
     </QueryClientProvider>
   );
 }

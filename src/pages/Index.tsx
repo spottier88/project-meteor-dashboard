@@ -1,190 +1,250 @@
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { useUser } from "@supabase/auth-helpers-react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { Button } from "@/components/ui/button";
 import { ProjectForm } from "@/components/ProjectForm";
-import { ProjectCard } from "@/components/ProjectCard";
+import { ProjectGrid } from "@/components/ProjectGrid";
+import { ProjectTable } from "@/components/ProjectTable";
+import { DashboardHeader } from "@/components/DashboardHeader";
+import { ViewToggle, ViewMode } from "@/components/ViewToggle";
+import { ProjectSelectionSheet } from "@/components/ProjectSelectionSheet";
+import { ReviewSheet } from "@/components/ReviewSheet";
+import { MonitoringFilter } from "@/components/monitoring/MonitoringFilter";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { UserInfo } from "@/components/UserInfo";
 import { MonitoringLevel } from "@/types/monitoring";
-import { Project } from "@/types/user";
-import { UserRoleData } from "@/types/user";
 
 const Index = () => {
-  const user = useUser();
-  const queryClient = useQueryClient();
+  const navigate = useNavigate();
   const [isProjectFormOpen, setIsProjectFormOpen] = useState(false);
-  const [selectedProject, setSelectedProject] = useState<Project | null>(null);
-
-  const { data: userRoles } = useQuery({
-    queryKey: ["userRoles", user?.id],
-    queryFn: async () => {
-      if (!user?.id) return null;
-      const { data, error } = await supabase
-        .from("user_roles")
-        .select("*")
-        .eq("user_id", user.id);
-
-      if (error) throw error;
-      console.log("User roles:", data);
-      return data as UserRoleData[];
-    },
-    enabled: !!user?.id,
+  const [isProjectSelectionOpen, setIsProjectSelectionOpen] = useState(false);
+  const [isReviewSheetOpen, setIsReviewSheetOpen] = useState(false);
+  const [selectedProject, setSelectedProject] = useState<any>(null);
+  const [selectedProjectForReview, setSelectedProjectForReview] = useState<{
+    id: string;
+    title: string;
+  } | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [view, setView] = useState<ViewMode>(() => {
+    const savedView = localStorage.getItem("projectViewMode");
+    return (savedView as ViewMode) || "grid";
   });
+  const [monitoringLevel, setMonitoringLevel] = useState<MonitoringLevel | 'all'>('all');
 
-  const { data: projects, isLoading } = useQuery({
+  const user = useUser();
+
+  useEffect(() => {
+    localStorage.setItem("projectViewMode", view);
+  }, [view]);
+
+  const { data: projects, refetch: refetchProjects } = useQuery({
     queryKey: ["projects"],
     queryFn: async () => {
-      const { data, error } = await supabase
+      console.log("Fetching projects with monitoring data...");
+      const { data: projectsData, error: projectsError } = await supabase
         .from("projects")
         .select(`
           *,
-          project_monitoring (
+          poles (
+            id,
+            name
+          ),
+          directions (
+            id,
+            name
+          ),
+          services (
+            id,
+            name
+          ),
+          project_monitoring!left (
             monitoring_level,
             monitoring_entity_id
           )
         `)
         .order("created_at", { ascending: false });
 
-      if (error) throw error;
-      return data as Project[];
+      if (projectsError) {
+        console.error("Error fetching projects:", projectsError);
+        throw projectsError;
+      }
+
+      const { data: reviewsData, error: reviewsError } = await supabase
+        .from("latest_reviews")
+        .select("*");
+
+      if (reviewsError) {
+        console.error("Error fetching reviews:", reviewsError);
+        throw reviewsError;
+      }
+
+      return projectsData?.map(project => {
+        const latestReview = reviewsData?.find(review => review.project_id === project.id);
+        return {
+          ...project,
+          status: latestReview?.weather || null,
+          progress: latestReview?.progress || null,
+          completion: latestReview?.completion || 0,
+          lastReviewDate: project.last_review_date,
+        };
+      }) || [];
     },
   });
 
-  const handleProjectSubmit = async (projectData: {
-    title: string;
-    description: string;
-    project_manager: string;
-    start_date?: string;
-    end_date?: string;
-    priority: string;
-    owner_id: string;
-    pole_id: string | null;
-    direction_id: string | null;
-    service_id: string | null;
-    monitoring_level: MonitoringLevel;
-    monitoring_entity_id: string | null;
-  }) => {
-    if (selectedProject) {
-      // Mise à jour d'un projet existant
-      const { error: projectError } = await supabase
-        .from('projects')
-        .update({
-          title: projectData.title,
-          description: projectData.description,
-          project_manager: projectData.project_manager,
-          start_date: projectData.start_date,
-          end_date: projectData.end_date,
-          priority: projectData.priority,
-          owner_id: projectData.owner_id,
-          pole_id: projectData.pole_id,
-          direction_id: projectData.direction_id,
-          service_id: projectData.service_id,
-        })
-        .eq('id', selectedProject.id);
+  const filteredProjects = projects?.filter(project => {
+    if (monitoringLevel !== 'all') {
+      console.log(`Filtering project ${project.title}:`, {
+        monitoringLevel,
+        projectMonitoring: project.project_monitoring,
+      });
 
-      if (projectError) throw projectError;
+      if (monitoringLevel === 'none') {
+        // Un projet est considéré comme "non suivi" si project_monitoring est null
+        // ou si son monitoring_level est 'none'
+        const hasNoMonitoring = !project.project_monitoring || 
+                              project.project_monitoring.monitoring_level === 'none';
+        console.log(`Project has no monitoring? ${hasNoMonitoring}`);
+        return hasNoMonitoring;
+      }
 
-      const { error: monitoringError } = await supabase
-        .from('project_monitoring')
-        .upsert({
-          project_id: selectedProject.id,
-          monitoring_level: projectData.monitoring_level,
-          monitoring_entity_id: projectData.monitoring_entity_id,
-        }, {
-          onConflict: 'project_id'
-        });
-
-      if (monitoringError) throw monitoringError;
-    } else {
-      // Création d'un nouveau projet
-      const { data: newProject, error: projectError } = await supabase
-        .from('projects')
-        .insert({
-          title: projectData.title,
-          description: projectData.description,
-          project_manager: projectData.project_manager,
-          start_date: projectData.start_date,
-          end_date: projectData.end_date,
-          priority: projectData.priority,
-          owner_id: projectData.owner_id,
-          pole_id: projectData.pole_id,
-          direction_id: projectData.direction_id,
-          service_id: projectData.service_id,
-        })
-        .select()
-        .single();
-
-      if (projectError) throw projectError;
-
-      const { error: monitoringError } = await supabase
-        .from('project_monitoring')
-        .insert({
-          project_id: newProject.id,
-          monitoring_level: projectData.monitoring_level,
-          monitoring_entity_id: projectData.monitoring_entity_id,
-        });
-
-      if (monitoringError) throw monitoringError;
+      const monitoring = project.project_monitoring;
+      if (!monitoring) {
+        console.log(`Project has no monitoring, but filter is not 'none'`);
+        return false;
+      }
+      
+      const levelMatch = monitoring.monitoring_level === monitoringLevel;
+      console.log(`Project monitoring level: ${monitoring.monitoring_level}. Matches filter? ${levelMatch}`);
+      return levelMatch;
     }
 
-    // Rafraîchir la liste des projets
-    queryClient.invalidateQueries({ queryKey: ['projects'] });
-    handleCloseProjectForm();
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase();
+      const matchesTitle = project.title?.toLowerCase().includes(query);
+      const matchesManager = project.project_manager?.toLowerCase().includes(query);
+      return matchesTitle || matchesManager;
+    }
+
+    return true;
+  }) || [];
+
+  console.log("Filtered projects:", filteredProjects.length, "out of", projects?.length);
+
+  const handleEditProject = (projectId: string) => {
+    const project = projects?.find(p => p.id === projectId);
+    if (project) {
+      setSelectedProject(project);
+      setIsProjectFormOpen(true);
+    }
   };
 
-  const handleEditProject = (project: Project) => {
-    setSelectedProject(project);
-    setIsProjectFormOpen(true);
-  };
-
-  const handleCloseProjectForm = () => {
-    setSelectedProject(null);
+  const handleProjectFormClose = () => {
     setIsProjectFormOpen(false);
+    setSelectedProject(null);
   };
 
-  const isAdmin = userRoles?.some(ur => ur.role === 'admin');
+  const handleProjectFormSubmit = () => {
+    refetchProjects();
+  };
 
-  if (!user) {
-    return (
-      <div className="flex items-center justify-center h-screen">
-        <p>Veuillez vous connecter pour accéder à cette page.</p>
-      </div>
-    );
-  }
+  const handleNewReview = () => {
+    setIsProjectSelectionOpen(true);
+  };
+
+  const handleProjectSelect = (projectId: string, projectTitle: string) => {
+    setSelectedProjectForReview({ id: projectId, title: projectTitle });
+    setIsProjectSelectionOpen(false);
+    setIsReviewSheetOpen(true);
+  };
+
+  const handleReviewClose = () => {
+    setIsReviewSheetOpen(false);
+    setSelectedProjectForReview(null);
+  };
+
+  const handleReviewSubmitted = () => {
+    refetchProjects();
+  };
+
+  const handleViewHistory = (projectId: string, projectTitle: string) => {
+    navigate(`/reviews/${projectId}`);
+  };
 
   return (
-    <div className="container mx-auto py-6">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Mes projets</h1>
-        <Button onClick={() => setIsProjectFormOpen(true)}>
-          Nouveau projet
-        </Button>
+    <div className="container mx-auto py-8">
+      <UserInfo />
+      <DashboardHeader
+        onNewProject={() => setIsProjectFormOpen(true)}
+        onNewReview={handleNewReview}
+      />
+
+      <div className="space-y-4 mb-6">
+        <div className="flex flex-col md:flex-row gap-4 items-start md:items-center">
+          <div className="w-full md:w-1/3">
+            <Label htmlFor="search">Rechercher un projet ou un chef de projet</Label>
+            <Input
+              id="search"
+              type="text"
+              placeholder="Rechercher..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="mt-1"
+            />
+          </div>
+          <MonitoringFilter
+            selectedLevel={monitoringLevel}
+            onLevelChange={(level) => {
+              console.log("Monitoring level changed to:", level);
+              setMonitoringLevel(level);
+            }}
+          />
+        </div>
       </div>
 
-      {isLoading ? (
-        <div>Chargement...</div>
+      <ViewToggle currentView={view} onViewChange={setView} />
+
+      {view === "grid" ? (
+        <ProjectGrid 
+          projects={filteredProjects} 
+          onProjectEdit={handleEditProject}
+          onProjectReview={handleProjectSelect}
+          onViewHistory={handleViewHistory}
+        />
       ) : (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {projects?.map((project) => (
-            <ProjectCard
-              key={project.id}
-              {...project}
-              lastReviewDate={project.last_review_date}
-              completion={project.completion || 0}
-              onEdit={() => handleEditProject(project)}
-              onReview={() => {}}
-              onViewHistory={() => {}}
-            />
-          ))}
-        </div>
+        <ProjectTable 
+          projects={filteredProjects} 
+          onProjectEdit={handleEditProject}
+          onProjectReview={handleProjectSelect}
+          onViewHistory={handleViewHistory}
+          onProjectDeleted={refetchProjects}
+        />
       )}
 
       <ProjectForm
         isOpen={isProjectFormOpen}
-        onClose={handleCloseProjectForm}
-        onSubmit={handleProjectSubmit}
-        project={selectedProject || undefined}
+        onClose={handleProjectFormClose}
+        onSubmit={handleProjectFormSubmit}
+        project={selectedProject}
       />
+
+      <ProjectSelectionSheet
+        projects={projects || []}
+        isOpen={isProjectSelectionOpen}
+        onClose={() => setIsProjectSelectionOpen(false)}
+        onProjectSelect={handleProjectSelect}
+      />
+
+      {selectedProjectForReview && (
+        <ReviewSheet
+          projectId={selectedProjectForReview.id}
+          projectTitle={selectedProjectForReview.title}
+          isOpen={isReviewSheetOpen}
+          onClose={handleReviewClose}
+          onReviewSubmitted={handleReviewSubmitted}
+        />
+      )}
     </div>
   );
 };
