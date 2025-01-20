@@ -114,29 +114,7 @@ export const ProjectSummaryContent = ({
         id={project.id}
       />
 
-      {innovationScores && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Innovation</CardTitle>
-            <CardDescription>
-              Évaluation des critères d'innovation du projet
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="h-[300px]">
-              <InnovationRadarChart
-                data={{
-                  novateur: innovationScores.novateur,
-                  usager: innovationScores.usager,
-                  ouverture: innovationScores.ouverture,
-                  agilite: innovationScores.agilite,
-                  impact: innovationScores.impact,
-                }}
-              />
-            </div>
-          </CardContent>
-        </Card>
-      )}
+      
 
       <div className="grid gap-6 md:grid-cols-2">
         <div className="space-y-4">
@@ -150,6 +128,7 @@ export const ProjectSummaryContent = ({
           <h2 className="text-2xl font-bold">Tâches</h2>
           {canEdit && (
             <Button onClick={() => setIsTaskFormOpen(true)} size="sm">
+              <Plus className="h-4 w-4 mr-2" />
               Nouvelle tâche
             </Button>
           )}
@@ -178,5 +157,28 @@ export const ProjectSummaryContent = ({
         task={selectedTask}
       />
     </div>
+    {innovationScores && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Innovation</CardTitle>
+            <CardDescription>
+              Évaluation des critères d'innovation du projet
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="h-[300px]">
+              <InnovationRadarChart
+                data={{
+                  novateur: innovationScores.novateur,
+                  usager: innovationScores.usager,
+                  ouverture: innovationScores.ouverture,
+                  agilite: innovationScores.agilite,
+                  impact: innovationScores.impact,
+                }}
+              />
+            </div>
+          </CardContent>
+        </Card>
+      )}
   );
 };
