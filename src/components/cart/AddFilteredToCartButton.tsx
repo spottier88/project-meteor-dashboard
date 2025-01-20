@@ -8,24 +8,24 @@ interface AddFilteredToCartButtonProps {
 }
 
 export const AddFilteredToCartButton = ({ projectIds }: AddFilteredToCartButtonProps) => {
-  const { cartItems, addToCart } = useProjectCart();
+  const { cartItems, addMultipleToCart } = useProjectCart();
   const { toast } = useToast();
 
   const handleAddAllToCart = () => {
-    let addedCount = 0;
-    projectIds.forEach(id => {
-      if (!cartItems.includes(id)) {
-        addToCart(id);
-        addedCount++;
-      }
-    });
-
-    toast({
-      title: addedCount > 0 ? "Projets ajoutés au panier" : "Information",
-      description: addedCount > 0 
-        ? `${addedCount} projet${addedCount > 1 ? 's' : ''} ajouté${addedCount > 1 ? 's' : ''} au panier`
-        : "Tous les projets filtrés sont déjà dans votre panier",
-    });
+    const projectsToAdd = projectIds.filter(id => !cartItems.includes(id));
+    
+    if (projectsToAdd.length > 0) {
+      addMultipleToCart(projectsToAdd);
+      toast({
+        title: "Projets ajoutés au panier",
+        description: `${projectsToAdd.length} projet${projectsToAdd.length > 1 ? 's' : ''} ajouté${projectsToAdd.length > 1 ? 's' : ''} au panier`,
+      });
+    } else {
+      toast({
+        title: "Information",
+        description: "Tous les projets filtrés sont déjà dans votre panier",
+      });
+    }
   };
 
   return (

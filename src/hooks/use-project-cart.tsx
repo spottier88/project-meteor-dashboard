@@ -7,7 +7,6 @@ export const useProjectCart = () => {
   const queryClient = useQueryClient();
   const user = useUser();
 
-  // Fonction utilitaire pour générer la clé de stockage unique par utilisateur
   const getStorageKey = () => {
     return user?.id ? `projectCart_${user.id}` : null;
   };
@@ -64,6 +63,20 @@ export const useProjectCart = () => {
     },
   });
 
+  const { mutate: addMultipleToCart } = useMutation({
+    mutationFn: async (projectIds: string[]) => {
+      const storageKey = getStorageKey();
+      if (!storageKey) return [];
+      const currentCart = queryClient.getQueryData<string[]>(["projectCart", user?.id]) || [];
+      const newCart = [...new Set([...currentCart, ...projectIds])];
+      localStorage.setItem(storageKey, JSON.stringify(newCart));
+      return newCart;
+    },
+    onSuccess: (newCart) => {
+      queryClient.setQueryData(["projectCart", user?.id], newCart);
+    },
+  });
+
   const { mutate: removeFromCart } = useMutation({
     mutationFn: async (projectId: string) => {
       const storageKey = getStorageKey();
@@ -93,6 +106,7 @@ export const useProjectCart = () => {
   return {
     cartItems,
     addToCart,
+    addMultipleToCart,
     removeFromCart,
     clearCart,
   };
