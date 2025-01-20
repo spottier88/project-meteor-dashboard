@@ -159,6 +159,7 @@ const Index = () => {
     poleId: string;
     directionId: string;
     serviceId: string;
+    lifecycleStatus: ProjectLifecycleStatus;
     innovation: {
       novateur: number;
       usager: number;
@@ -182,6 +183,7 @@ const Index = () => {
         pole_id: projectData.poleId === "none" ? null : projectData.poleId,
         direction_id: projectData.directionId === "none" ? null : projectData.directionId,
         service_id: projectData.serviceId === "none" ? null : projectData.serviceId,
+        lifecycle_status: projectData.lifecycleStatus,
       };
 
       console.log("Prepared project payload:", projectPayload);
