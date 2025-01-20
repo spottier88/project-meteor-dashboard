@@ -16,6 +16,7 @@ interface Project {
   pole_id?: string;
   direction_id?: string;
   service_id?: string;
+  lifecycle_status: ProjectLifecycleStatus;
 }
 
 interface ProjectGridProps {

@@ -29,6 +29,7 @@ interface ProjectFormProps {
     poleId: string;
     directionId: string;
     serviceId: string;
+    lifecycleStatus: string;
     innovation: {
       novateur: number;
       usager: number;
@@ -49,6 +50,7 @@ interface ProjectFormProps {
     pole_id?: string;
     direction_id?: string;
     service_id?: string;
+    lifecycle_status?: string;
     project_monitoring?: {
       monitoring_level: MonitoringLevel;
       monitoring_entity_id: string | null;
@@ -78,6 +80,7 @@ export const ProjectForm = ({ isOpen, onClose, onSubmit, project }: ProjectFormP
   const [agilite, setAgilite] = useState(0);
   const [impact, setImpact] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [lifecycleStatus, setLifecycleStatus] = useState<string>("study");
 
   const { data: userRoles } = useQuery({
     queryKey: ["userRoles", user?.id],
@@ -137,6 +140,7 @@ export const ProjectForm = ({ isOpen, onClose, onSubmit, project }: ProjectFormP
           setDirectionId(project.direction_id || "none");
           setServiceId(project.service_id || "none");
           setOwnerId(project.owner_id || "");
+          setLifecycleStatus(project.lifecycle_status || "study");
 
           if (innovationScores) {
             setNovateur(innovationScores.novateur);
@@ -186,6 +190,7 @@ export const ProjectForm = ({ isOpen, onClose, onSubmit, project }: ProjectFormP
           setOuverture(0);
           setAgilite(0);
           setImpact(0);
+          setLifecycleStatus("study");
           
           if (user?.email) {
             console.log("Setting default project manager to current user:", user.email);
@@ -235,6 +240,7 @@ export const ProjectForm = ({ isOpen, onClose, onSubmit, project }: ProjectFormP
         poleId,
         directionId,
         serviceId,
+        lifecycleStatus,
         innovation: {
           novateur,
           usager,
@@ -310,6 +316,8 @@ export const ProjectForm = ({ isOpen, onClose, onSubmit, project }: ProjectFormP
               setEndDate={setEndDate}
               priority={priority}
               setPriority={setPriority}
+              lifecycleStatus={lifecycleStatus}
+              setLifecycleStatus={setLifecycleStatus}
               isAdmin={isAdmin}
               isManager={isManager}
               projectManagers={projectManagers}
