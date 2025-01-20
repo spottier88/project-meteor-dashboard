@@ -170,6 +170,7 @@ const Index = () => {
               key={project.id}
               {...project}
               lastReviewDate={project.last_review_date}
+              completion={project.completion || 0}
               onEdit={() => handleEditProject(project)}
               onReview={() => {}}
               onViewHistory={() => {}}
