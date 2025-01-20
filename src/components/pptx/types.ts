@@ -1,8 +1,10 @@
+import { ProjectStatus, ProgressStatus, ProjectLifecycleStatus } from "@/types/project";
+
 export interface ProjectData {
   project: {
     title: string;
-    status: "sunny" | "cloudy" | "stormy";
-    progress: "better" | "stable" | "worse";
+    status: ProjectStatus;
+    progress: ProgressStatus;
     completion: number;
     project_manager?: string;
     last_review_date: string;
@@ -12,6 +14,7 @@ export interface ProjectData {
     pole_name?: string;
     direction_name?: string;
     service_name?: string;
+    lifecycle_status: ProjectLifecycleStatus;
   };
   lastReview?: {
     weather: "sunny" | "cloudy" | "stormy";
