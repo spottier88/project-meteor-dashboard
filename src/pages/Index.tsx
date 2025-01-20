@@ -9,7 +9,7 @@ import { MonitoringLevel } from "@/types/monitoring";
 import { Project } from "@/types/user";
 import { UserRoleData } from "@/types/user";
 
-export const Index = () => {
+const Index = () => {
   const user = useUser();
   const queryClient = useQueryClient();
   const [isProjectFormOpen, setIsProjectFormOpen] = useState(false);
@@ -168,18 +168,7 @@ export const Index = () => {
           {projects?.map((project) => (
             <ProjectCard
               key={project.id}
-              id={project.id}
-              title={project.title}
-              description={project.description}
-              status={project.status}
-              progress={project.progress}
-              completion={0}
-              lastReviewDate={project.last_review_date}
-              project_manager={project.project_manager}
-              owner_id={project.owner_id}
-              pole_id={project.pole_id}
-              direction_id={project.direction_id}
-              service_id={project.service_id}
+              {...project}
               onEdit={() => handleEditProject(project)}
               onReview={() => {}}
               onViewHistory={() => {}}
@@ -197,3 +186,5 @@ export const Index = () => {
     </div>
   );
 };
+
+export default Index;

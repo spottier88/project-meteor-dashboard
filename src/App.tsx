@@ -1,28 +1,30 @@
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
-import { Index } from "./pages/Index";
+import Index from "./pages/Index";
 import Login from "./pages/Login";
 import { TaskManagement } from "./pages/TaskManagement";
 import { ProjectSummary } from "./pages/ProjectSummary";
 import { RiskManagement } from "./pages/RiskManagement";
-import { UserManagement } from "./pages/UserManagement";
 import { AdminDashboard } from "./pages/AdminDashboard";
+import { UserManagement } from "./pages/UserManagement";
 import { OrganizationManagement } from "./pages/OrganizationManagement";
-import { NotificationManagement } from "./pages/NotificationManagement";
-import { SessionContextProvider } from "@supabase/auth-helpers-react";
-import { supabase } from "@/integrations/supabase/client";
-import { ProtectedRoute } from "./components/ProtectedRoute";
-import { ReviewHistory } from "./components/ReviewHistory";
 import { ManagerAssignments } from "./pages/ManagerAssignments";
+import { NotificationManagement } from "./pages/NotificationManagement";
+import { ProtectedRoute } from "./components/ProtectedRoute";
+import { DashboardHeader } from "./components/DashboardHeader";
+import { ProjectCart } from "./components/cart/ProjectCart";
+import "./App.css";
 
 const queryClient = new QueryClient();
 
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <SessionContextProvider supabaseClient={supabase}>
-        <Router>
+      <Router>
+        <div className="min-h-screen bg-background">
+          <DashboardHeader />
+          <ProjectCart />
           <Routes>
             <Route path="/login" element={<Login />} />
             <Route
@@ -30,54 +32,6 @@ function App() {
               element={
                 <ProtectedRoute>
                   <Index />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/admin"
-              element={
-                <ProtectedRoute>
-                  <AdminDashboard />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/admin/users"
-              element={
-                <ProtectedRoute>
-                  <UserManagement />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/admin/notifications"
-              element={
-                <ProtectedRoute>
-                  <NotificationManagement />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/admin/users/:userId/assignments"
-              element={
-                <ProtectedRoute>
-                  <ManagerAssignments />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/admin/organization"
-              element={
-                <ProtectedRoute>
-                  <OrganizationManagement />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/tasks/:projectId"
-              element={
-                <ProtectedRoute>
-                  <TaskManagement />
                 </ProtectedRoute>
               }
             />
@@ -90,7 +44,15 @@ function App() {
               }
             />
             <Route
-              path="/risks/:projectId"
+              path="/tasks"
+              element={
+                <ProtectedRoute>
+                  <TaskManagement />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/risks"
               element={
                 <ProtectedRoute>
                   <RiskManagement />
@@ -98,17 +60,49 @@ function App() {
               }
             />
             <Route
-              path="/reviews/:projectId"
+              path="/admin"
               element={
                 <ProtectedRoute>
-                  <ReviewHistory />
+                  <AdminDashboard />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/users"
+              element={
+                <ProtectedRoute>
+                  <UserManagement />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/organization"
+              element={
+                <ProtectedRoute>
+                  <OrganizationManagement />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/assignments"
+              element={
+                <ProtectedRoute>
+                  <ManagerAssignments />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/notifications"
+              element={
+                <ProtectedRoute>
+                  <NotificationManagement />
                 </ProtectedRoute>
               }
             />
           </Routes>
-        </Router>
+        </div>
         <Toaster />
-      </SessionContextProvider>
+      </Router>
     </QueryClientProvider>
   );
 }
