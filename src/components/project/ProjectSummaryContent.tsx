@@ -12,6 +12,8 @@ import { TaskForm } from "@/components/TaskForm";
 import { canEditProjectItems } from "@/utils/permissions";
 import { InnovationRadarChart } from "../innovation/InnovationRadarChart";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { HelpCircle } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface ProjectSummaryContentProps {
   project: any;
@@ -20,6 +22,14 @@ interface ProjectSummaryContentProps {
   tasks: any[];
   canManage: boolean;
 }
+
+const criteriaDescriptions = {
+  novateur: "Évalue le caractère innovant du projet : utilisation de nouvelles technologies, approches inédites, solutions créatives. Un score élevé indique une forte innovation technologique ou méthodologique.",
+  usager: "Mesure l'implication des utilisateurs finaux dans la conception et le développement. Un score élevé signifie une forte prise en compte des besoins utilisateurs et des retours terrain.",
+  ouverture: "Évalue le degré de collaboration et de partage : code source ouvert, données partagées, co-construction avec d'autres services. Un score élevé indique un projet très collaboratif.",
+  agilite: "Mesure la capacité d'adaptation et d'itération rapide : cycles courts, tests fréquents, ajustements continus. Un score élevé reflète une approche très agile.",
+  impact: "Évalue l'impact potentiel sur l'organisation : amélioration des processus, gains d'efficacité, bénéfices pour les agents. Un score élevé indique un fort potentiel de transformation."
+};
 
 export const ProjectSummaryContent = ({
   project,
@@ -115,13 +125,50 @@ export const ProjectSummaryContent = ({
         id={project.id}
       />
 
-      
-
       <div className="grid gap-6 md:grid-cols-2">
         <div className="space-y-4">
           <h2 className="text-2xl font-bold">Dernière revue</h2>
           {lastReview && <LastReview review={lastReview} />}
         </div>
+
+        {innovationScores && (
+          <div className="space-y-4">
+            <div className="flex items-center gap-2">
+              <h2 className="text-2xl font-bold">Innovation</h2>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger>
+                    <HelpCircle className="h-5 w-5 text-muted-foreground" />
+                  </TooltipTrigger>
+                  <TooltipContent className="max-w-sm">
+                    <div className="space-y-2">
+                      {Object.entries(criteriaDescriptions).map(([key, description]) => (
+                        <div key={key}>
+                          <span className="font-bold capitalize">{key}</span>: {description}
+                        </div>
+                      ))}
+                    </div>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </div>
+            <Card>
+              <CardContent className="pt-6">
+                <div className="h-[300px]">
+                  <InnovationRadarChart
+                    data={{
+                      novateur: innovationScores.novateur,
+                      usager: innovationScores.usager,
+                      ouverture: innovationScores.ouverture,
+                      agilite: innovationScores.agilite,
+                      impact: innovationScores.impact,
+                    }}
+                  />
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
       </div>
 
       <div className="space-y-4">
@@ -158,28 +205,5 @@ export const ProjectSummaryContent = ({
         task={selectedTask}
       />
     </div>
-    {innovationScores && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Innovation</CardTitle>
-            <CardDescription>
-              Évaluation des critères d'innovation du projet
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="h-[300px]">
-              <InnovationRadarChart
-                data={{
-                  novateur: innovationScores.novateur,
-                  usager: innovationScores.usager,
-                  ouverture: innovationScores.ouverture,
-                  agilite: innovationScores.agilite,
-                  impact: innovationScores.impact,
-                }}
-              />
-            </div>
-          </CardContent>
-        </Card>
-      )}
   );
 };
