@@ -25,6 +25,7 @@ export const Index = () => {
         .eq("user_id", user.id);
 
       if (error) throw error;
+      console.log("User roles:", data);
       return data as UserRoleData[];
     },
     enabled: !!user?.id,
@@ -128,6 +129,7 @@ export const Index = () => {
 
     // Rafraîchir la liste des projets
     queryClient.invalidateQueries({ queryKey: ['projects'] });
+    handleCloseProjectForm();
   };
 
   const handleEditProject = (project: Project) => {
@@ -166,9 +168,21 @@ export const Index = () => {
           {projects?.map((project) => (
             <ProjectCard
               key={project.id}
-              project={project}
+              id={project.id}
+              title={project.title}
+              description={project.description}
+              status={project.status}
+              progress={project.progress}
+              completion={0}
+              lastReviewDate={project.last_review_date}
+              project_manager={project.project_manager}
+              owner_id={project.owner_id}
+              pole_id={project.pole_id}
+              direction_id={project.direction_id}
+              service_id={project.service_id}
               onEdit={() => handleEditProject(project)}
-              isAdmin={isAdmin}
+              onReview={() => {}}
+              onViewHistory={() => {}}
             />
           ))}
         </div>
