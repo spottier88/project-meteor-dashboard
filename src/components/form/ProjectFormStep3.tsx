@@ -24,11 +24,11 @@ interface ProjectFormStep3Props {
 }
 
 const criteriaDescriptions = {
-  novateur: "Évalue le degré d'innovation et d'originalité du projet",
-  usager: "Mesure la prise en compte des besoins des utilisateurs",
-  ouverture: "Évalue le niveau de collaboration et de co-construction",
-  agilite: "Mesure la capacité d'adaptation et d'expérimentation",
-  impact: "Évalue l'impact potentiel du projet sur l'organisation"
+  novateur: "Évalue le caractère innovant du projet : utilisation de nouvelles technologies, approches inédites, solutions créatives. Un score élevé indique une forte innovation technologique ou méthodologique.",
+  usager: "Mesure l'implication des utilisateurs finaux dans la conception et le développement. Un score élevé signifie une forte prise en compte des besoins utilisateurs et des retours terrain.",
+  ouverture: "Évalue le degré de collaboration et de partage : code source ouvert, données partagées, co-construction avec d'autres services. Un score élevé indique un projet très collaboratif.",
+  agilite: "Mesure la capacité d'adaptation et d'itération rapide : cycles courts, tests fréquents, ajustements continus. Un score élevé reflète une approche très agile.",
+  impact: "Évalue l'impact potentiel sur l'organisation : amélioration des processus, gains d'efficacité, bénéfices pour les agents. Un score élevé indique un fort potentiel de transformation."
 };
 
 export const ProjectFormStep3 = ({
