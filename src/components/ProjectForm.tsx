@@ -8,6 +8,7 @@ import { MonitoringLevel } from "@/types/monitoring";
 import { getProjectManagers } from "@/utils/projectManagers";
 import { ProjectFormStep1 } from "./form/ProjectFormStep1";
 import { ProjectFormStep2 } from "./form/ProjectFormStep2";
+import { ProjectFormStep3 } from "./form/ProjectFormStep3";
 import { ProjectFormNavigation } from "./form/ProjectFormNavigation";
 import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/components/ui/use-toast";
@@ -28,6 +29,13 @@ interface ProjectFormProps {
     poleId: string;
     directionId: string;
     serviceId: string;
+    innovation: {
+      novateur: number;
+      usager: number;
+      ouverture: number;
+      agilite: number;
+      impact: number;
+    };
   }) => void;
   project?: {
     id: string;
@@ -64,6 +72,11 @@ export const ProjectForm = ({ isOpen, onClose, onSubmit, project }: ProjectFormP
   const [poleId, setPoleId] = useState("none");
   const [directionId, setDirectionId] = useState("none");
   const [serviceId, setServiceId] = useState("none");
+  const [novateur, setNovateur] = useState(0);
+  const [usager, setUsager] = useState(0);
+  const [ouverture, setOuverture] = useState(0);
+  const [agilite, setAgilite] = useState(0);
+  const [impact, setImpact] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const { data: userRoles } = useQuery({
@@ -89,6 +102,22 @@ export const ProjectForm = ({ isOpen, onClose, onSubmit, project }: ProjectFormP
     enabled: isOpen && !!user?.id && !!userRoles,
   });
 
+  const { data: innovationScores } = useQuery({
+    queryKey: ["innovationScores", project?.id],
+    queryFn: async () => {
+      if (!project?.id) return null;
+      const { data, error } = await supabase
+        .from("project_innovation_scores")
+        .select("*")
+        .eq("project_id", project.id)
+        .maybeSingle();
+
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!project?.id,
+  });
+
   const isAdmin = userRoles?.some(ur => ur.role === 'admin');
   const isManager = userRoles?.some(ur => ur.role === 'manager');
 
@@ -108,6 +137,14 @@ export const ProjectForm = ({ isOpen, onClose, onSubmit, project }: ProjectFormP
           setDirectionId(project.direction_id || "none");
           setServiceId(project.service_id || "none");
           setOwnerId(project.owner_id || "");
+
+          if (innovationScores) {
+            setNovateur(innovationScores.novateur);
+            setUsager(innovationScores.usager);
+            setOuverture(innovationScores.ouverture);
+            setAgilite(innovationScores.agilite);
+            setImpact(innovationScores.impact);
+          }
 
           try {
             const { data: monitoringData, error } = await supabase
@@ -144,6 +181,11 @@ export const ProjectForm = ({ isOpen, onClose, onSubmit, project }: ProjectFormP
           setPoleId("none");
           setDirectionId("none");
           setServiceId("none");
+          setNovateur(0);
+          setUsager(0);
+          setOuverture(0);
+          setAgilite(0);
+          setImpact(0);
           
           if (user?.email) {
             console.log("Setting default project manager to current user:", user.email);
@@ -159,29 +201,15 @@ export const ProjectForm = ({ isOpen, onClose, onSubmit, project }: ProjectFormP
     };
 
     initializeForm();
-  }, [isOpen, project, user?.email, user?.id]);
+  }, [isOpen, project, user?.email, user?.id, innovationScores]);
 
   const isStep1Valid = title.trim() !== "" && projectManager.trim() !== "";
   const isStep2Valid = true;
+  const isStep3Valid = true;
 
   const handleSubmit = async () => {
     console.log("Handling form submission...");
-    console.log("Form data:", {
-      title,
-      description,
-      projectManager,
-      startDate,
-      endDate,
-      priority,
-      monitoringLevel,
-      monitoringEntityId,
-      ownerId,
-      poleId,
-      directionId,
-      serviceId,
-    });
-
-    if (!isStep2Valid) {
+    if (!isStep3Valid) {
       console.error("Form validation failed");
       toast({
         title: "Erreur",
@@ -207,6 +235,13 @@ export const ProjectForm = ({ isOpen, onClose, onSubmit, project }: ProjectFormP
         poleId,
         directionId,
         serviceId,
+        innovation: {
+          novateur,
+          usager,
+          ouverture,
+          agilite,
+          impact,
+        },
       });
       console.log("Project submitted successfully");
       toast({
@@ -231,6 +266,8 @@ export const ProjectForm = ({ isOpen, onClose, onSubmit, project }: ProjectFormP
     if (currentStep === 0 && isStep1Valid) {
       setCurrentStep(1);
     } else if (currentStep === 1 && isStep2Valid) {
+      setCurrentStep(2);
+    } else if (currentStep === 2 && isStep3Valid) {
       handleSubmit();
     }
   };
@@ -251,9 +288,11 @@ export const ProjectForm = ({ isOpen, onClose, onSubmit, project }: ProjectFormP
           <DialogDescription>
             {currentStep === 0 
               ? "Étape 1: Informations générales du projet" 
-              : "Étape 2: Organisation et niveau de suivi"}
+              : currentStep === 1
+              ? "Étape 2: Organisation et niveau de suivi"
+              : "Étape 3: Critères d'innovation"}
           </DialogDescription>
-          <Progress value={(currentStep + 1) * 50} className="h-2" />
+          <Progress value={(currentStep + 1) * 33.33} className="h-2" />
         </DialogHeader>
         
         <div className="flex-1 overflow-y-auto pr-2">
@@ -275,7 +314,7 @@ export const ProjectForm = ({ isOpen, onClose, onSubmit, project }: ProjectFormP
               isManager={isManager}
               projectManagers={projectManagers}
             />
-          ) : (
+          ) : currentStep === 1 ? (
             <ProjectFormStep2
               monitoringLevel={monitoringLevel}
               setMonitoringLevel={setMonitoringLevel}
@@ -289,6 +328,19 @@ export const ProjectForm = ({ isOpen, onClose, onSubmit, project }: ProjectFormP
               setServiceId={setServiceId}
               project={project}
             />
+          ) : (
+            <ProjectFormStep3
+              novateur={novateur}
+              setNovateur={setNovateur}
+              usager={usager}
+              setUsager={setUsager}
+              ouverture={ouverture}
+              setOuverture={setOuverture}
+              agilite={agilite}
+              setAgilite={setAgilite}
+              impact={impact}
+              setImpact={setImpact}
+            />
           )}
         </div>
         
@@ -297,8 +349,8 @@ export const ProjectForm = ({ isOpen, onClose, onSubmit, project }: ProjectFormP
             currentStep={currentStep}
             onPrevious={handlePrevious}
             onNext={handleNext}
-            canGoNext={currentStep === 0 ? isStep1Valid : isStep2Valid}
-            isLastStep={currentStep === 1}
+            canGoNext={currentStep === 0 ? isStep1Valid : currentStep === 1 ? isStep2Valid : isStep3Valid}
+            isLastStep={currentStep === 2}
             isSubmitting={isSubmitting}
             onClose={onClose}
           />

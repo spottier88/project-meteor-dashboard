@@ -156,6 +156,13 @@ const Index = () => {
     poleId: string;
     directionId: string;
     serviceId: string;
+    innovation: {
+      novateur: number;
+      usager: number;
+      ouverture: number;
+      agilite: number;
+      impact: number;
+    };
   }) => {
     console.log("Handling project form submission in Index.tsx");
     console.log("Project data received:", projectData);
@@ -204,6 +211,20 @@ const Index = () => {
           console.error("Error updating monitoring:", monitoringError);
           throw monitoringError;
         }
+
+        const { error: innovationError } = await supabase
+          .from("project_innovation_scores")
+          .upsert({
+            project_id: selectedProject.id,
+            ...projectData.innovation
+          }, {
+            onConflict: 'project_id'
+          });
+
+        if (innovationError) {
+          console.error("Error updating innovation scores:", innovationError);
+          throw innovationError;
+        }
       } else {
         console.log("Creating new project");
         const { data: newProject, error: projectError } = await supabase
@@ -232,9 +253,21 @@ const Index = () => {
           console.error("Error creating monitoring:", monitoringError);
           throw monitoringError;
         }
+
+        const { error: innovationError } = await supabase
+          .from("project_innovation_scores")
+          .insert({
+            project_id: newProject.id,
+            ...projectData.innovation
+          });
+
+        if (innovationError) {
+          console.error("Error creating innovation scores:", innovationError);
+          throw innovationError;
+        }
       }
 
-      console.log("Project and monitoring saved successfully");
+      console.log("Project, monitoring and innovation scores saved successfully");
       await refetchProjects();
     } catch (error) {
       console.error("Error in handleProjectFormSubmit:", error);

@@ -218,6 +218,50 @@ export type Database = {
         }
         Relationships: []
       }
+      project_innovation_scores: {
+        Row: {
+          agilite: number
+          created_at: string | null
+          id: string
+          impact: number
+          novateur: number
+          ouverture: number
+          project_id: string
+          updated_at: string | null
+          usager: number
+        }
+        Insert: {
+          agilite?: number
+          created_at?: string | null
+          id?: string
+          impact?: number
+          novateur?: number
+          ouverture?: number
+          project_id: string
+          updated_at?: string | null
+          usager?: number
+        }
+        Update: {
+          agilite?: number
+          created_at?: string | null
+          id?: string
+          impact?: number
+          novateur?: number
+          ouverture?: number
+          project_id?: string
+          updated_at?: string | null
+          usager?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_innovation_scores_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: true
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       project_monitoring: {
         Row: {
           created_at: string | null

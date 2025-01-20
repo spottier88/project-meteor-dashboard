@@ -9,6 +9,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useState } from "react";
 import { TaskForm } from "@/components/TaskForm";
 import { canEditProjectItems } from "@/utils/permissions";
+import { InnovationRadarChart } from "../innovation/InnovationRadarChart";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 
 interface ProjectSummaryContentProps {
   project: any;
@@ -89,6 +91,20 @@ export const ProjectSummaryContent = ({
     await queryClient.invalidateQueries({ queryKey: ["risks", project.id] });
   };
 
+  const { data: innovationScores } = useQuery({
+    queryKey: ["innovationScores", project.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("project_innovation_scores")
+        .select("*")
+        .eq("project_id", project.id)
+        .maybeSingle();
+
+      if (error) throw error;
+      return data;
+    },
+  });
+
   return (
     <div className="grid gap-6">
       <ProjectSummaryHeader
@@ -97,6 +113,30 @@ export const ProjectSummaryContent = ({
         project_manager={project.project_manager}
         id={project.id}
       />
+
+      {innovationScores && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Innovation</CardTitle>
+            <CardDescription>
+              Évaluation des critères d'innovation du projet
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="h-[300px]">
+              <InnovationRadarChart
+                data={{
+                  novateur: innovationScores.novateur,
+                  usager: innovationScores.usager,
+                  ouverture: innovationScores.ouverture,
+                  agilite: innovationScores.agilite,
+                  impact: innovationScores.impact,
+                }}
+              />
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       <div className="grid gap-6 md:grid-cols-2">
         <div className="space-y-4">
