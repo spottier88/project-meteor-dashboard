@@ -141,7 +141,7 @@ export const ProjectForm = ({ isOpen, onClose, onSubmit, project }: ProjectFormP
           setDirectionId(project.direction_id || "none");
           setServiceId(project.service_id || "none");
           setOwnerId(project.owner_id || "");
-          setLifecycleStatus(project.lifecycle_status || "study");
+          setLifecycleStatus(project.lifecycle_status as ProjectLifecycleStatus || "study");
 
           if (innovationScores) {
             setNovateur(innovationScores.novateur);
