@@ -6,7 +6,8 @@ import { ProjectMetrics } from "./project/ProjectMetrics";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { AddToCartButton } from "./cart/AddToCartButton";
-import { ProjectStatus, ProgressStatus } from "@/types/project";
+import { ProjectStatus, ProgressStatus, ProjectLifecycleStatus } from "@/types/project";
+import { LifecycleStatusBadge } from "./project/LifecycleStatusBadge";
 
 interface ProjectCardProps {
   title: string;
@@ -21,6 +22,7 @@ interface ProjectCardProps {
   pole_id?: string;
   direction_id?: string;
   service_id?: string;
+  lifecycle_status: ProjectLifecycleStatus;
   onReview: (id: string, title: string) => void;
   onEdit: (id: string) => void;
   onViewHistory: (id: string, title: string) => void;
@@ -39,6 +41,7 @@ export const ProjectCard = ({
   pole_id,
   direction_id,
   service_id,
+  lifecycle_status,
   onEdit,
   onViewHistory,
   onReview,
@@ -119,6 +122,9 @@ export const ProjectCard = ({
       />
       <CardContent>
         <div className="grid gap-4">
+          <div className="flex items-center justify-between">
+            <LifecycleStatusBadge status={lifecycle_status} />
+          </div>
           {description && (
             <p className="text-sm text-muted-foreground">{description}</p>
           )}

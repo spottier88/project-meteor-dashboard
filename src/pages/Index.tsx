@@ -16,6 +16,8 @@ import { Label } from "@/components/ui/label";
 import { UserInfo } from "@/components/UserInfo";
 import { MonitoringLevel } from "@/types/monitoring";
 import { AddFilteredToCartButton } from "@/components/cart/AddFilteredToCartButton";
+import { LifecycleStatusFilter } from "@/components/project/LifecycleStatusFilter";
+import { ProjectLifecycleStatus } from "@/types/project";
 
 const Index = () => {
   const navigate = useNavigate();
@@ -33,6 +35,7 @@ const Index = () => {
     return (savedView as ViewMode) || "grid";
   });
   const [monitoringLevel, setMonitoringLevel] = useState<MonitoringLevel | 'all'>('all');
+  const [lifecycleStatus, setLifecycleStatus] = useState<ProjectLifecycleStatus | 'all'>('all');
 
   const user = useUser();
 
@@ -95,30 +98,29 @@ const Index = () => {
   });
 
   const filteredProjects = projects?.filter(project => {
-    if (monitoringLevel !== 'all') {
-      console.log(`Filtering project ${project.title}:`, {
-        monitoringLevel,
-        projectMonitoring: project.project_monitoring,
-      });
+    // Filtre par statut du cycle de vie
+    if (lifecycleStatus !== 'all' && project.lifecycle_status !== lifecycleStatus) {
+      return false;
+    }
 
+    // Filtre par niveau de monitoring
+    if (monitoringLevel !== 'all') {
       if (monitoringLevel === 'none') {
         const hasNoMonitoring = !project.project_monitoring || 
                               project.project_monitoring.monitoring_level === 'none';
-        console.log(`Project has no monitoring? ${hasNoMonitoring}`);
         return hasNoMonitoring;
       }
 
       const monitoring = project.project_monitoring;
       if (!monitoring) {
-        console.log(`Project has no monitoring, but filter is not 'none'`);
         return false;
       }
       
       const levelMatch = monitoring.monitoring_level === monitoringLevel;
-      console.log(`Project monitoring level: ${monitoring.monitoring_level}. Matches filter? ${levelMatch}`);
       return levelMatch;
     }
 
+    // Filtre par recherche
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
       const matchesTitle = project.title?.toLowerCase().includes(query);
@@ -321,6 +323,10 @@ const Index = () => {
             />
           </div>
           <div className="flex flex-col md:flex-row gap-4 items-center">
+            <LifecycleStatusFilter
+              selectedStatus={lifecycleStatus}
+              onStatusChange={setLifecycleStatus}
+            />
             <MonitoringFilter
               selectedLevel={monitoringLevel}
               onLevelChange={(level) => {

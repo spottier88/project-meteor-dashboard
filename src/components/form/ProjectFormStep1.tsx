@@ -4,6 +4,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { DatePickerField } from "./DatePickerField";
 import { UserProfile } from "@/types/user";
 import { Label } from "@/components/ui/label";
+import { ProjectLifecycleStatus, lifecycleStatusLabels } from "@/types/project";
 
 interface ProjectFormStep1Props {
   title: string;
@@ -18,6 +19,8 @@ interface ProjectFormStep1Props {
   setEndDate: (date: Date | undefined) => void;
   priority: string;
   setPriority: (value: string) => void;
+  lifecycleStatus: ProjectLifecycleStatus;
+  setLifecycleStatus: (value: ProjectLifecycleStatus) => void;
   isAdmin: boolean;
   isManager: boolean;
   projectManagers?: UserProfile[];
@@ -36,6 +39,8 @@ export const ProjectFormStep1 = ({
   setEndDate,
   priority,
   setPriority,
+  lifecycleStatus,
+  setLifecycleStatus,
   isAdmin,
   isManager,
   projectManagers,
@@ -62,6 +67,22 @@ export const ProjectFormStep1 = ({
           onChange={(e) => setDescription(e.target.value)}
           placeholder="Description du projet"
         />
+      </div>
+
+      <div className="grid gap-2">
+        <Label htmlFor="lifecycle-status">Statut du projet</Label>
+        <Select value={lifecycleStatus} onValueChange={(value: ProjectLifecycleStatus) => setLifecycleStatus(value)}>
+          <SelectTrigger>
+            <SelectValue placeholder="Sélectionner un statut" />
+          </SelectTrigger>
+          <SelectContent>
+            {Object.entries(lifecycleStatusLabels).map(([value, label]) => (
+              <SelectItem key={value} value={value}>
+                {label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
       <div className="grid gap-2">

@@ -302,6 +302,7 @@ export type Database = {
           end_date: string | null
           id: string
           last_review_date: string | null
+          lifecycle_status: Database["public"]["Enums"]["project_lifecycle_status"]
           owner_id: string | null
           pole_id: string | null
           priority: string | null
@@ -320,6 +321,7 @@ export type Database = {
           end_date?: string | null
           id?: string
           last_review_date?: string | null
+          lifecycle_status?: Database["public"]["Enums"]["project_lifecycle_status"]
           owner_id?: string | null
           pole_id?: string | null
           priority?: string | null
@@ -338,6 +340,7 @@ export type Database = {
           end_date?: string | null
           id?: string
           last_review_date?: string | null
+          lifecycle_status?: Database["public"]["Enums"]["project_lifecycle_status"]
           owner_id?: string | null
           pole_id?: string | null
           priority?: string | null
@@ -721,6 +724,13 @@ export type Database = {
       monitoring_level: "none" | "dgs" | "pole" | "direction"
       notification_type: "system" | "user"
       progress_status: "better" | "stable" | "worse"
+      project_lifecycle_status:
+        | "study"
+        | "validated"
+        | "in_progress"
+        | "completed"
+        | "suspended"
+        | "abandoned"
       project_status: "sunny" | "cloudy" | "stormy"
       review_type: "weather" | "progress" | "comment" | "action"
       risk_probability: "low" | "medium" | "high"
