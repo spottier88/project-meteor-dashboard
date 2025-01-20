@@ -5,6 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import { UserRoleData, UserProfile } from "@/types/user";
 import { supabase } from "@/integrations/supabase/client";
 import { MonitoringLevel } from "@/types/monitoring";
+import { ProjectLifecycleStatus } from "@/types/project";
 import { getProjectManagers } from "@/utils/projectManagers";
 import { ProjectFormStep1 } from "./form/ProjectFormStep1";
 import { ProjectFormStep2 } from "./form/ProjectFormStep2";
@@ -80,7 +81,7 @@ export const ProjectForm = ({ isOpen, onClose, onSubmit, project }: ProjectFormP
   const [agilite, setAgilite] = useState(0);
   const [impact, setImpact] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [lifecycleStatus, setLifecycleStatus] = useState<string>("study");
+  const [lifecycleStatus, setLifecycleStatus] = useState<ProjectLifecycleStatus>("study");
 
   const { data: userRoles } = useQuery({
     queryKey: ["userRoles", user?.id],
