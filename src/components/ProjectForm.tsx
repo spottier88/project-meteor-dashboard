@@ -4,10 +4,12 @@ import { useUser } from "@supabase/auth-helpers-react";
 import { useQuery } from "@tanstack/react-query";
 import { UserRoleData, UserProfile } from "@/types/user";
 import { supabase } from "@/integrations/supabase/client";
-import { ProjectFormFields } from "./form/ProjectFormFields";
-import { ProjectFormActions } from "./form/ProjectFormActions";
 import { MonitoringLevel } from "@/types/monitoring";
 import { getProjectManagers } from "@/utils/projectManagers";
+import { ProjectFormStep1 } from "./form/ProjectFormStep1";
+import { ProjectFormStep2 } from "./form/ProjectFormStep2";
+import { ProjectFormNavigation } from "./form/ProjectFormNavigation";
+import { Progress } from "@/components/ui/progress";
 
 interface ProjectFormProps {
   isOpen: boolean;
@@ -34,6 +36,7 @@ interface ProjectFormProps {
 
 export const ProjectForm = ({ isOpen, onClose, onSubmit, project }: ProjectFormProps) => {
   const user = useUser();
+  const [currentStep, setCurrentStep] = useState(0);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [projectManager, setProjectManager] = useState("");
@@ -78,7 +81,6 @@ export const ProjectForm = ({ isOpen, onClose, onSubmit, project }: ProjectFormP
     const initializeForm = async () => {
       if (isOpen) {
         if (project) {
-          console.log("Project data:", project);
           setTitle(project.title || "");
           setDescription(project.description || "");
           setProjectManager(project.project_manager || "");
@@ -91,8 +93,6 @@ export const ProjectForm = ({ isOpen, onClose, onSubmit, project }: ProjectFormP
           setOwnerId(project.owner_id || "");
 
           try {
-            console.log("Fetching monitoring data for project:", project.id);
-            
             const { data: monitoringData, error } = await supabase
               .from("project_monitoring")
               .select("monitoring_level, monitoring_entity_id")
@@ -103,17 +103,11 @@ export const ProjectForm = ({ isOpen, onClose, onSubmit, project }: ProjectFormP
               console.error("Error fetching monitoring data:", error);
               return;
             }
-
-            console.log("Monitoring data from DB:", monitoringData);
             
             if (monitoringData) {
-              console.log("Setting monitoring level to:", monitoringData.monitoring_level);
-              console.log("Setting monitoring entity ID to:", monitoringData.monitoring_entity_id);
-              
               setMonitoringLevel(monitoringData.monitoring_level);
               setMonitoringEntityId(monitoringData.monitoring_entity_id);
             } else {
-              console.log("No monitoring data found, setting defaults");
               setMonitoringLevel("none");
               setMonitoringEntityId(null);
             }
@@ -121,7 +115,6 @@ export const ProjectForm = ({ isOpen, onClose, onSubmit, project }: ProjectFormP
             console.error("Error in monitoring data fetch:", error);
           }
         } else {
-          // Réinitialisation pour un nouveau projet
           setTitle("");
           setDescription("");
           setStartDate(undefined);
@@ -133,7 +126,6 @@ export const ProjectForm = ({ isOpen, onClose, onSubmit, project }: ProjectFormP
           setDirectionId("none");
           setServiceId("none");
           
-          // Si ce n'est pas un admin, utiliser l'email de l'utilisateur connecté
           if (user?.email) {
             setProjectManager(user.email);
             setOwnerId(user.id);
@@ -142,11 +134,31 @@ export const ProjectForm = ({ isOpen, onClose, onSubmit, project }: ProjectFormP
             setOwnerId("");
           }
         }
+        setCurrentStep(0);
       }
     };
 
     initializeForm();
   }, [isOpen, project, user?.email, user?.id, isAdmin]);
+
+  const isStep1Valid = title.trim() !== "" && projectManager.trim() !== "";
+  const isStep2Valid = true; // Pas de validation spécifique pour l'étape 2
+
+  const handleNext = async () => {
+    if (currentStep === 0 && isStep1Valid) {
+      setCurrentStep(1);
+    } else if (currentStep === 1 && isStep2Valid) {
+      setIsSubmitting(true);
+      await onSubmit();
+      setIsSubmitting(false);
+    }
+  };
+
+  const handlePrevious = () => {
+    if (currentStep > 0) {
+      setCurrentStep(currentStep - 1);
+    }
+  };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -156,66 +168,61 @@ export const ProjectForm = ({ isOpen, onClose, onSubmit, project }: ProjectFormP
             {project ? "Modifier le projet" : "Nouveau projet"}
           </DialogTitle>
           <DialogDescription>
-            Remplissez les informations du projet. Les champs marqués d'un * sont obligatoires.
+            {currentStep === 0 
+              ? "Étape 1: Informations générales du projet" 
+              : "Étape 2: Organisation et niveau de suivi"}
           </DialogDescription>
         </DialogHeader>
         
+        <div className="mb-4">
+          <Progress value={(currentStep + 1) * 50} className="h-2" />
+        </div>
+
         <div className="flex-1 overflow-y-auto pr-2">
-          <ProjectFormFields
-            title={title}
-            setTitle={setTitle}
-            description={description}
-            setDescription={setDescription}
-            projectManager={projectManager}
-            setProjectManager={setProjectManager}
-            startDate={startDate}
-            setStartDate={setStartDate}
-            endDate={endDate}
-            setEndDate={setEndDate}
-            priority={priority}
-            setPriority={setPriority}
-            monitoringLevel={monitoringLevel}
-            setMonitoringLevel={setMonitoringLevel}
-            monitoringEntityId={monitoringEntityId}
-            setMonitoringEntityId={setMonitoringEntityId}
-            isAdmin={isAdmin}
-            isManager={isManager}
-            ownerId={ownerId}
-            setOwnerId={setOwnerId}
-            poleId={poleId}
-            setPoleId={setPoleId}
-            directionId={directionId}
-            setDirectionId={setDirectionId}
-            serviceId={serviceId}
-            setServiceId={setServiceId}
-            project={project}
-            projectManagers={projectManagers}
-          />
+          {currentStep === 0 ? (
+            <ProjectFormStep1
+              title={title}
+              setTitle={setTitle}
+              description={description}
+              setDescription={setDescription}
+              projectManager={projectManager}
+              setProjectManager={setProjectManager}
+              startDate={startDate}
+              setStartDate={setStartDate}
+              endDate={endDate}
+              setEndDate={setEndDate}
+              priority={priority}
+              setPriority={setPriority}
+              isAdmin={isAdmin}
+              isManager={isManager}
+              projectManagers={projectManagers}
+            />
+          ) : (
+            <ProjectFormStep2
+              monitoringLevel={monitoringLevel}
+              setMonitoringLevel={setMonitoringLevel}
+              monitoringEntityId={monitoringEntityId}
+              setMonitoringEntityId={setMonitoringEntityId}
+              poleId={poleId}
+              setPoleId={setPoleId}
+              directionId={directionId}
+              setDirectionId={setDirectionId}
+              serviceId={serviceId}
+              setServiceId={setServiceId}
+              project={project}
+            />
+          )}
         </div>
         
         <DialogFooter>
-          <ProjectFormActions
+          <ProjectFormNavigation
+            currentStep={currentStep}
+            onPrevious={handlePrevious}
+            onNext={handleNext}
+            canGoNext={currentStep === 0 ? isStep1Valid : isStep2Valid}
+            isLastStep={currentStep === 1}
             isSubmitting={isSubmitting}
             onClose={onClose}
-            onSubmit={onSubmit}
-            project={project}
-            formData={{
-              title,
-              description,
-              projectManager,
-              startDate,
-              endDate,
-              priority,
-              monitoringLevel,
-              monitoringEntityId,
-              ownerId,
-              poleId,
-              directionId,
-              serviceId,
-            }}
-            user={user}
-            isAdmin={isAdmin}
-            isManager={isManager}
           />
         </DialogFooter>
       </DialogContent>
