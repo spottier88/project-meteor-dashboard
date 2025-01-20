@@ -169,6 +169,7 @@ const Index = () => {
             <ProjectCard
               key={project.id}
               {...project}
+              lastReviewDate={project.last_review_date}
               onEdit={() => handleEditProject(project)}
               onReview={() => {}}
               onViewHistory={() => {}}

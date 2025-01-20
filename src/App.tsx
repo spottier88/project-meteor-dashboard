@@ -14,17 +14,26 @@ import { NotificationManagement } from "./pages/NotificationManagement";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import { DashboardHeader } from "./components/DashboardHeader";
 import { ProjectCart } from "./components/cart/ProjectCart";
+import { useState } from "react";
 import "./App.css";
 
 const queryClient = new QueryClient();
 
 function App() {
+  const [isCartOpen, setIsCartOpen] = useState(false);
+
   return (
     <QueryClientProvider client={queryClient}>
       <Router>
         <div className="min-h-screen bg-background">
-          <DashboardHeader />
-          <ProjectCart />
+          <DashboardHeader 
+            onNewProject={() => {}} 
+            onNewReview={() => {}} 
+          />
+          <ProjectCart 
+            isOpen={isCartOpen} 
+            onClose={() => setIsCartOpen(false)} 
+          />
           <Routes>
             <Route path="/login" element={<Login />} />
             <Route
