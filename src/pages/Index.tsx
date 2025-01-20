@@ -101,8 +101,6 @@ const Index = () => {
       });
 
       if (monitoringLevel === 'none') {
-        // Un projet est considéré comme "non suivi" si project_monitoring est null
-        // ou si son monitoring_level est 'none'
         const hasNoMonitoring = !project.project_monitoring || 
                               project.project_monitoring.monitoring_level === 'none';
         console.log(`Project has no monitoring? ${hasNoMonitoring}`);
@@ -145,8 +143,103 @@ const Index = () => {
     setSelectedProject(null);
   };
 
-  const handleProjectFormSubmit = () => {
-    refetchProjects();
+  const handleProjectFormSubmit = async (projectData: {
+    title: string;
+    description: string;
+    projectManager: string;
+    startDate?: Date;
+    endDate?: Date;
+    priority: string;
+    monitoringLevel: MonitoringLevel;
+    monitoringEntityId: string | null;
+    ownerId: string;
+    poleId: string;
+    directionId: string;
+    serviceId: string;
+  }) => {
+    console.log("Handling project form submission in Index.tsx");
+    console.log("Project data received:", projectData);
+
+    try {
+      const projectPayload = {
+        title: projectData.title,
+        description: projectData.description,
+        project_manager: projectData.projectManager,
+        start_date: projectData.startDate?.toISOString().split('T')[0],
+        end_date: projectData.endDate?.toISOString().split('T')[0],
+        priority: projectData.priority,
+        owner_id: projectData.ownerId,
+        pole_id: projectData.poleId === "none" ? null : projectData.poleId,
+        direction_id: projectData.directionId === "none" ? null : projectData.directionId,
+        service_id: projectData.serviceId === "none" ? null : projectData.serviceId,
+      };
+
+      console.log("Prepared project payload:", projectPayload);
+
+      if (selectedProject?.id) {
+        console.log("Updating existing project:", selectedProject.id);
+        const { error: projectError } = await supabase
+          .from("projects")
+          .update(projectPayload)
+          .eq("id", selectedProject.id);
+
+        if (projectError) {
+          console.error("Error updating project:", projectError);
+          throw projectError;
+        }
+
+        console.log("Project updated successfully, updating monitoring...");
+
+        const { error: monitoringError } = await supabase
+          .from("project_monitoring")
+          .upsert({
+            project_id: selectedProject.id,
+            monitoring_level: projectData.monitoringLevel,
+            monitoring_entity_id: projectData.monitoringEntityId,
+          }, {
+            onConflict: 'project_id'
+          });
+
+        if (monitoringError) {
+          console.error("Error updating monitoring:", monitoringError);
+          throw monitoringError;
+        }
+      } else {
+        console.log("Creating new project");
+        const { data: newProject, error: projectError } = await supabase
+          .from("projects")
+          .insert(projectPayload)
+          .select()
+          .single();
+
+        if (projectError) {
+          console.error("Error creating project:", projectError);
+          throw projectError;
+        }
+
+        console.log("New project created:", newProject);
+        console.log("Creating monitoring entry...");
+
+        const { error: monitoringError } = await supabase
+          .from("project_monitoring")
+          .insert({
+            project_id: newProject.id,
+            monitoring_level: projectData.monitoringLevel,
+            monitoring_entity_id: projectData.monitoringEntityId,
+          });
+
+        if (monitoringError) {
+          console.error("Error creating monitoring:", monitoringError);
+          throw monitoringError;
+        }
+      }
+
+      console.log("Project and monitoring saved successfully");
+      await refetchProjects();
+    } catch (error) {
+      console.error("Error in handleProjectFormSubmit:", error);
+      throw error;
+    }
   };
 
   const handleNewReview = () => {

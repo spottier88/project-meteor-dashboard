@@ -94,8 +94,10 @@ export const ProjectForm = ({ isOpen, onClose, onSubmit, project }: ProjectFormP
 
   useEffect(() => {
     const initializeForm = async () => {
+      console.log("Initializing form with project:", project);
       if (isOpen) {
         if (project) {
+          console.log("Setting form values for existing project:", project);
           setTitle(project.title || "");
           setDescription(project.description || "");
           setProjectManager(project.project_manager || "");
@@ -120,6 +122,7 @@ export const ProjectForm = ({ isOpen, onClose, onSubmit, project }: ProjectFormP
             }
             
             if (monitoringData) {
+              console.log("Setting monitoring data:", monitoringData);
               setMonitoringLevel(monitoringData.monitoring_level);
               setMonitoringEntityId(monitoringData.monitoring_entity_id);
             } else {
@@ -130,6 +133,7 @@ export const ProjectForm = ({ isOpen, onClose, onSubmit, project }: ProjectFormP
             console.error("Error in monitoring data fetch:", error);
           }
         } else {
+          console.log("Initializing form for new project");
           setTitle("");
           setDescription("");
           setStartDate(undefined);
@@ -142,6 +146,7 @@ export const ProjectForm = ({ isOpen, onClose, onSubmit, project }: ProjectFormP
           setServiceId("none");
           
           if (user?.email) {
+            console.log("Setting default project manager to current user:", user.email);
             setProjectManager(user.email);
             setOwnerId(user.id);
           } else {
@@ -154,13 +159,30 @@ export const ProjectForm = ({ isOpen, onClose, onSubmit, project }: ProjectFormP
     };
 
     initializeForm();
-  }, [isOpen, project, user?.email, user?.id, isAdmin]);
+  }, [isOpen, project, user?.email, user?.id]);
 
   const isStep1Valid = title.trim() !== "" && projectManager.trim() !== "";
   const isStep2Valid = true;
 
   const handleSubmit = async () => {
+    console.log("Handling form submission...");
+    console.log("Form data:", {
+      title,
+      description,
+      projectManager,
+      startDate,
+      endDate,
+      priority,
+      monitoringLevel,
+      monitoringEntityId,
+      ownerId,
+      poleId,
+      directionId,
+      serviceId,
+    });
+
     if (!isStep2Valid) {
+      console.error("Form validation failed");
       toast({
         title: "Erreur",
         description: "Veuillez remplir tous les champs obligatoires",
@@ -171,6 +193,7 @@ export const ProjectForm = ({ isOpen, onClose, onSubmit, project }: ProjectFormP
 
     setIsSubmitting(true);
     try {
+      console.log("Submitting project data...");
       await onSubmit({
         title,
         description,
@@ -185,6 +208,7 @@ export const ProjectForm = ({ isOpen, onClose, onSubmit, project }: ProjectFormP
         directionId,
         serviceId,
       });
+      console.log("Project submitted successfully");
       toast({
         title: "Succès",
         description: project ? "Projet mis à jour" : "Projet créé",
@@ -203,6 +227,7 @@ export const ProjectForm = ({ isOpen, onClose, onSubmit, project }: ProjectFormP
   };
 
   const handleNext = () => {
+    console.log("Moving to next step, current step:", currentStep);
     if (currentStep === 0 && isStep1Valid) {
       setCurrentStep(1);
     } else if (currentStep === 1 && isStep2Valid) {
