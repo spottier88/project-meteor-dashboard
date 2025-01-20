@@ -15,7 +15,20 @@ import { useToast } from "@/components/ui/use-toast";
 interface ProjectFormProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: () => void;
+  onSubmit: (projectData: {
+    title: string;
+    description: string;
+    projectManager: string;
+    startDate?: Date;
+    endDate?: Date;
+    priority: string;
+    monitoringLevel: MonitoringLevel;
+    monitoringEntityId: string | null;
+    ownerId: string;
+    poleId: string;
+    directionId: string;
+    serviceId: string;
+  }) => void;
   project?: {
     id: string;
     title: string;
@@ -158,7 +171,20 @@ export const ProjectForm = ({ isOpen, onClose, onSubmit, project }: ProjectFormP
 
     setIsSubmitting(true);
     try {
-      await onSubmit();
+      await onSubmit({
+        title,
+        description,
+        projectManager,
+        startDate,
+        endDate,
+        priority,
+        monitoringLevel,
+        monitoringEntityId,
+        ownerId,
+        poleId,
+        directionId,
+        serviceId,
+      });
       toast({
         title: "Succès",
         description: project ? "Projet mis à jour" : "Projet créé",
