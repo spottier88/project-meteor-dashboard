@@ -34,6 +34,7 @@ const ProjectSummaryActions = ({ project, risks, tasks }) => {
           pole_name: project.poles?.name,
           direction_name: project.directions?.name,
           service_name: project.services?.name,
+          lifecycle_status: project.lifecycle_status,
         },
         lastReview: lastReview ? {
           weather: lastReview.weather,
