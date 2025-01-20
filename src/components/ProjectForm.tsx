@@ -10,6 +10,7 @@ import { ProjectFormStep1 } from "./form/ProjectFormStep1";
 import { ProjectFormStep2 } from "./form/ProjectFormStep2";
 import { ProjectFormNavigation } from "./form/ProjectFormNavigation";
 import { Progress } from "@/components/ui/progress";
+import { useToast } from "@/components/ui/use-toast";
 
 interface ProjectFormProps {
   isOpen: boolean;
@@ -35,6 +36,7 @@ interface ProjectFormProps {
 }
 
 export const ProjectForm = ({ isOpen, onClose, onSubmit, project }: ProjectFormProps) => {
+  const { toast } = useToast();
   const user = useUser();
   const [currentStep, setCurrentStep] = useState(0);
   const [title, setTitle] = useState("");
@@ -142,15 +144,43 @@ export const ProjectForm = ({ isOpen, onClose, onSubmit, project }: ProjectFormP
   }, [isOpen, project, user?.email, user?.id, isAdmin]);
 
   const isStep1Valid = title.trim() !== "" && projectManager.trim() !== "";
-  const isStep2Valid = true; // Pas de validation spécifique pour l'étape 2
+  const isStep2Valid = true;
 
-  const handleNext = async () => {
+  const handleSubmit = async () => {
+    if (!isStep2Valid) {
+      toast({
+        title: "Erreur",
+        description: "Veuillez remplir tous les champs obligatoires",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      await onSubmit();
+      toast({
+        title: "Succès",
+        description: project ? "Projet mis à jour" : "Projet créé",
+      });
+      onClose();
+    } catch (error) {
+      console.error("Error submitting project:", error);
+      toast({
+        title: "Erreur",
+        description: "Une erreur est survenue lors de l'enregistrement",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleNext = () => {
     if (currentStep === 0 && isStep1Valid) {
       setCurrentStep(1);
     } else if (currentStep === 1 && isStep2Valid) {
-      setIsSubmitting(true);
-      await onSubmit();
-      setIsSubmitting(false);
+      handleSubmit();
     }
   };
 
@@ -162,8 +192,8 @@ export const ProjectForm = ({ isOpen, onClose, onSubmit, project }: ProjectFormP
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[500px] h-[90vh] flex flex-col">
-        <DialogHeader>
+      <DialogContent className="sm:max-w-[500px] h-[80vh] flex flex-col">
+        <DialogHeader className="space-y-3">
           <DialogTitle>
             {project ? "Modifier le projet" : "Nouveau projet"}
           </DialogTitle>
@@ -172,12 +202,9 @@ export const ProjectForm = ({ isOpen, onClose, onSubmit, project }: ProjectFormP
               ? "Étape 1: Informations générales du projet" 
               : "Étape 2: Organisation et niveau de suivi"}
           </DialogDescription>
+          <Progress value={(currentStep + 1) * 50} className="h-2" />
         </DialogHeader>
         
-        <div className="mb-4">
-          <Progress value={(currentStep + 1) * 50} className="h-2" />
-        </div>
-
         <div className="flex-1 overflow-y-auto pr-2">
           {currentStep === 0 ? (
             <ProjectFormStep1
