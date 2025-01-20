@@ -15,6 +15,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { UserInfo } from "@/components/UserInfo";
 import { MonitoringLevel } from "@/types/monitoring";
+import { AddFilteredToCartButton } from "@/components/cart/AddFilteredToCartButton";
 
 const Index = () => {
   const navigate = useNavigate();
@@ -307,7 +308,7 @@ const Index = () => {
       />
 
       <div className="space-y-4 mb-6">
-        <div className="flex flex-col md:flex-row gap-4 items-start md:items-center">
+        <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
           <div className="w-full md:w-1/3">
             <Label htmlFor="search">Rechercher un projet ou un chef de projet</Label>
             <Input
@@ -319,13 +320,18 @@ const Index = () => {
               className="mt-1"
             />
           </div>
-          <MonitoringFilter
-            selectedLevel={monitoringLevel}
-            onLevelChange={(level) => {
-              console.log("Monitoring level changed to:", level);
-              setMonitoringLevel(level);
-            }}
-          />
+          <div className="flex flex-col md:flex-row gap-4 items-center">
+            <MonitoringFilter
+              selectedLevel={monitoringLevel}
+              onLevelChange={(level) => {
+                console.log("Monitoring level changed to:", level);
+                setMonitoringLevel(level);
+              }}
+            />
+            <AddFilteredToCartButton 
+              projectIds={filteredProjects.map(p => p.id)}
+            />
+          </div>
         </div>
       </div>
 
