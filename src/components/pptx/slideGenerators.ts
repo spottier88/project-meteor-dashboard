@@ -2,6 +2,7 @@ import pptxgen from "pptxgenjs";
 import { ProjectData } from "./types";
 import { weatherIcons, progressIcons } from "./constants";
 import { pptxStyles, pptxColors } from "./PPTXStyles";
+import { lifecycleStatusLabels } from "@/types/project";
 
 export const generateSummarySlide = (pptx: pptxgen, projectsData: ProjectData[]) => {
   const slide = pptx.addSlide({ masterName: "MAIN_MASTER" });
@@ -52,6 +53,8 @@ export const generateProjectSlide = (pptx: pptxgen, data: ProjectData) => {
 const addProjectHeader = (slide: pptxgen.Slide, data: ProjectData) => {
   slide.addText([
     { text: data.project.title, options: { bold: true, color: "FFFFFF", fontSize: 16 } },
+    { text: " - ", options: { color: "FFFFFF", fontSize: 16 } },
+    { text: lifecycleStatusLabels[data.project.lifecycle_status], options: { color: "FFFFFF", fontSize: 12, italic: true } },
     { text: "\n" },
     { text: data.project.description || "", options: { color: "FFFFFF", fontSize: 10 } },
     { text: "\n" }

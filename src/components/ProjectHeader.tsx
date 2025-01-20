@@ -1,5 +1,6 @@
 import { Card, CardContent } from "./ui/card";
 import { Database } from "@/integrations/supabase/types";
+import { LifecycleStatusBadge } from "./project/LifecycleStatusBadge";
 
 type Project = Database["public"]["Tables"]["projects"]["Row"];
 
@@ -12,7 +13,10 @@ export const ProjectHeader = ({ project }: ProjectHeaderProps) => {
     <Card className="mb-8">
       <CardContent className="pt-6">
         <div className="space-y-4">
-          <h1 className="text-2xl font-bold">{project.title}</h1>
+          <div className="flex items-center gap-3">
+            <h1 className="text-2xl font-bold">{project.title}</h1>
+            <LifecycleStatusBadge status={project.lifecycle_status} />
+          </div>
           {project.description && (
             <p className="text-muted-foreground">{project.description}</p>
           )}
