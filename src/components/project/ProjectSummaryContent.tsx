@@ -131,29 +131,29 @@ export const ProjectSummaryContent = ({
           {lastReview && <LastReview review={lastReview} />}
         </div>
 
-        {innovationScores && (
-          <div className="space-y-4">
-            <div className="flex items-center gap-2">
-              <h2 className="text-2xl font-bold">Innovation</h2>
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger>
-                    <HelpCircle className="h-5 w-5 text-muted-foreground" />
-                  </TooltipTrigger>
-                  <TooltipContent className="max-w-sm">
-                    <div className="space-y-2">
-                      {Object.entries(criteriaDescriptions).map(([key, description]) => (
-                        <div key={key}>
-                          <span className="font-bold capitalize">{key}</span>: {description}
-                        </div>
-                      ))}
-                    </div>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-            </div>
-            <Card>
-              <CardContent className="pt-6">
+        <div className="space-y-4">
+          <div className="flex items-center gap-2">
+            <h2 className="text-2xl font-bold">Innovation</h2>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger>
+                  <HelpCircle className="h-5 w-5 text-muted-foreground" />
+                </TooltipTrigger>
+                <TooltipContent className="max-w-sm">
+                  <div className="space-y-2">
+                    {Object.entries(criteriaDescriptions).map(([key, description]) => (
+                      <div key={key}>
+                        <span className="font-bold capitalize">{key}</span>: {description}
+                      </div>
+                    ))}
+                  </div>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </div>
+          <Card>
+            <CardContent className="pt-6">
+              {innovationScores ? (
                 <div className="h-[300px]">
                   <InnovationRadarChart
                     data={{
@@ -165,10 +165,16 @@ export const ProjectSummaryContent = ({
                     }}
                   />
                 </div>
-              </CardContent>
-            </Card>
-          </div>
-        )}
+              ) : (
+                <div className="h-[300px] flex items-center justify-center">
+                  <p className="text-muted-foreground text-center">
+                    Les critères d'innovation n'ont pas encore été définis pour ce projet.
+                  </p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
       </div>
 
       <div className="space-y-4">
