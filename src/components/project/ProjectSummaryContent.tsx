@@ -15,6 +15,27 @@ import { Card, CardContent } from "@/components/ui/card";
 import { HelpCircle } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
+interface ProjectSummaryContentProps {
+  project: {
+    id: string;
+    title: string;
+    description: string | null;
+    project_manager: string | null;
+    owner_id: string | null;
+  };
+  lastReview: {
+    id: string;
+    weather: string;
+    progress: string;
+    completion: number;
+    comment: string;
+    created_at: string;
+  } | null;
+  risks: Array<any>;
+  tasks: Array<any>;
+  canManage: boolean;
+}
+
 const criteriaDescriptions = {
   novateur: "Évalue le caractère innovant du projet : utilisation de nouvelles technologies, approches inédites, solutions créatives. Un score élevé indique une forte innovation technologique ou méthodologique.",
   usager: "Mesure l'implication des utilisateurs finaux dans la conception et le développement. Un score élevé signifie une forte prise en compte des besoins utilisateurs et des retours terrain.",
