@@ -1,13 +1,6 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import {
-  Table,
-  TableBody,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { TaskForm } from "./TaskForm";
 import { useToast } from "@/components/ui/use-toast";
@@ -22,10 +15,11 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Plus } from "lucide-react";
-import { TaskCard } from "./task/TaskCard";
+import { TaskTable } from "./task/TaskTable";
 import { useUser } from "@supabase/auth-helpers-react";
 import { canManageProjectItems } from "@/utils/permissions";
 import { UserRoleData } from "@/types/user";
+import { Input } from "@/components/ui/input";
 
 interface TaskListProps {
   projectId: string;
@@ -37,6 +31,7 @@ export const TaskList = ({ projectId }: TaskListProps) => {
   const [isTaskFormOpen, setIsTaskFormOpen] = useState(false);
   const [selectedTask, setSelectedTask] = useState<any>(null);
   const [taskToDelete, setTaskToDelete] = useState<any>(null);
+  const [searchQuery, setSearchQuery] = useState("");
 
   const { data: project } = useQuery({
     queryKey: ["project", projectId],
@@ -135,6 +130,16 @@ export const TaskList = ({ projectId }: TaskListProps) => {
     }
   };
 
+  const filteredTasks = tasks?.filter(task => {
+    if (!searchQuery) return true;
+    const query = searchQuery.toLowerCase();
+    return (
+      task.title?.toLowerCase().includes(query) ||
+      task.description?.toLowerCase().includes(query) ||
+      task.assignee?.toLowerCase().includes(query)
+    );
+  });
+
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
@@ -153,33 +158,25 @@ export const TaskList = ({ projectId }: TaskListProps) => {
         )}
       </div>
 
+      <div className="flex items-center space-x-2">
+        <Input
+          placeholder="Rechercher une tâche..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="max-w-sm"
+        />
+      </div>
+
       {tasks && tasks.length > 0 ? (
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Titre</TableHead>
-              <TableHead>Description</TableHead>
-              <TableHead>Statut</TableHead>
-              <TableHead>Responsable</TableHead>
-              <TableHead>Échéance</TableHead>
-              <TableHead className="w-[100px]">Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {tasks.map((task) => (
-              <TaskCard
-                key={task.id}
-                task={task}
-                onEdit={(task) => {
-                  setSelectedTask(task);
-                  setIsTaskFormOpen(true);
-                }}
-                onDelete={setTaskToDelete}
-                showActions={canManage}
-              />
-            ))}
-          </TableBody>
-        </Table>
+        <TaskTable
+          tasks={filteredTasks || []}
+          onEdit={(task) => {
+            setSelectedTask(task);
+            setIsTaskFormOpen(true);
+          }}
+          onDelete={setTaskToDelete}
+          showActions={canManage}
+        />
       ) : (
         <div className="text-center py-4 text-muted-foreground">
           Aucune tâche pour ce projet

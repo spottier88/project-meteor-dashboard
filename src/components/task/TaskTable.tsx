@@ -3,6 +3,8 @@ import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
 import { SortableHeader, SortDirection } from "@/components/ui/sortable-header";
+import { Button } from "@/components/ui/button";
+import { Pencil, Trash2 } from "lucide-react";
 
 interface Task {
   id: string;
@@ -15,7 +17,9 @@ interface Task {
 
 interface TaskTableProps {
   tasks: Task[];
-  projectId: string;
+  onEdit?: (task: Task) => void;
+  onDelete?: (task: Task) => void;
+  showActions?: boolean;
 }
 
 const statusColors = {
@@ -30,7 +34,7 @@ const statusLabels = {
   done: "Terminé",
 };
 
-export const TaskTable = ({ tasks }: TaskTableProps) => {
+export const TaskTable = ({ tasks, onEdit, onDelete, showActions }: TaskTableProps) => {
   const [sortKey, setSortKey] = useState<string | null>(null);
   const [sortDirection, setSortDirection] = useState<SortDirection>(null);
 
@@ -45,6 +49,14 @@ export const TaskTable = ({ tasks }: TaskTableProps) => {
       setSortKey(key);
       setSortDirection("asc");
     }
+  };
+
+  const isTaskOverdue = (task: Task) => {
+    if (!task.due_date || task.status === "done") return false;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const dueDate = new Date(task.due_date);
+    return dueDate < today;
   };
 
   const sortedTasks = [...tasks].sort((a: any, b: any) => {
@@ -75,6 +87,20 @@ export const TaskTable = ({ tasks }: TaskTableProps) => {
             onSort={handleSort}
           />
           <SortableHeader
+            label="Description"
+            sortKey="description"
+            currentSort={sortKey}
+            currentDirection={sortDirection}
+            onSort={handleSort}
+          />
+          <SortableHeader
+            label="Statut"
+            sortKey="status"
+            currentSort={sortKey}
+            currentDirection={sortDirection}
+            onSort={handleSort}
+          />
+          <SortableHeader
             label="Assigné à"
             sortKey="assignee"
             currentSort={sortKey}
@@ -88,30 +114,47 @@ export const TaskTable = ({ tasks }: TaskTableProps) => {
             currentDirection={sortDirection}
             onSort={handleSort}
           />
-          <SortableHeader
-            label="Statut"
-            sortKey="status"
-            currentSort={sortKey}
-            currentDirection={sortDirection}
-            onSort={handleSort}
-          />
+          {showActions && <TableHead className="text-right">Actions</TableHead>}
         </TableRow>
       </TableHeader>
       <TableBody>
         {sortedTasks.map((task) => (
           <TableRow key={task.id}>
-            <TableCell>{task.title}</TableCell>
-            <TableCell>{task.assignee || "-"}</TableCell>
-            <TableCell>
-              {task.due_date
-                ? new Date(task.due_date).toLocaleDateString("fr-FR")
-                : "-"}
-            </TableCell>
+            <TableCell className="font-medium">{task.title}</TableCell>
+            <TableCell>{task.description || "-"}</TableCell>
             <TableCell>
               <Badge className={cn(statusColors[task.status])}>
                 {statusLabels[task.status]}
               </Badge>
             </TableCell>
+            <TableCell>{task.assignee || "-"}</TableCell>
+            <TableCell>
+              <span className={cn(
+                isTaskOverdue(task) ? "text-red-600 font-medium" : ""
+              )}>
+                {task.due_date
+                  ? new Date(task.due_date).toLocaleDateString("fr-FR")
+                  : "-"}
+              </span>
+            </TableCell>
+            {showActions && (
+              <TableCell className="text-right">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => onEdit?.(task)}
+                >
+                  <Pencil className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => onDelete?.(task)}
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </TableCell>
+            )}
           </TableRow>
         ))}
       </TableBody>
