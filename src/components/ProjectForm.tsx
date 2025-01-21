@@ -236,7 +236,7 @@ export const ProjectForm = ({ isOpen, onClose, onSubmit, project }: ProjectFormP
         endDate,
         priority,
         monitoringLevel,
-        monitoringEntityId,
+        monitoringEntityId: monitoringEntityId || null,
         ownerId: ownerId || null,
         poleId: poleId === "none" ? null : poleId || null,
         directionId: directionId === "none" ? null : directionId || null,
