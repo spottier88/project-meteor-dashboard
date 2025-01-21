@@ -3,22 +3,14 @@ import { useQuery } from "@tanstack/react-query";
 import { useUser } from "@supabase/auth-helpers-react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { ProjectForm } from "@/components/ProjectForm";
-import { ProjectGrid } from "@/components/ProjectGrid";
-import { ProjectTable } from "@/components/ProjectTable";
 import { DashboardHeader } from "@/components/DashboardHeader";
-import { ViewToggle, ViewMode } from "@/components/ViewToggle";
-import { ProjectSelectionSheet } from "@/components/ProjectSelectionSheet";
-import { ReviewSheet } from "@/components/ReviewSheet";
-import { MonitoringFilter } from "@/components/monitoring/MonitoringFilter";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { UserInfo } from "@/components/UserInfo";
+import { ViewMode } from "@/components/ViewToggle";
 import { MonitoringLevel } from "@/types/monitoring";
-import { AddFilteredToCartButton } from "@/components/cart/AddFilteredToCartButton";
-import { LifecycleStatusFilter } from "@/components/project/LifecycleStatusFilter";
 import { ProjectLifecycleStatus } from "@/types/project";
-import { MyProjectsToggle } from "@/components/MyProjectsToggle";
+import { ProjectFilters } from "@/components/project/ProjectFilters";
+import { ProjectList } from "@/components/project/ProjectList";
+import { ProjectModals } from "@/components/project/ProjectModals";
 
 const Index = () => {
   const navigate = useNavigate();
@@ -360,84 +352,42 @@ const Index = () => {
         onNewReview={handleNewReview}
       />
 
-      <div className="space-y-4 mb-6">
-        <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
-          <div className="w-full md:w-1/3">
-            <Label htmlFor="search">Rechercher un projet ou un chef de projet</Label>
-            <Input
-              id="search"
-              type="text"
-              placeholder="Rechercher..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="mt-1"
-            />
-          </div>
-          <div className="flex flex-col md:flex-row gap-4 items-center">
-            <LifecycleStatusFilter
-              selectedStatus={lifecycleStatus}
-              onStatusChange={setLifecycleStatus}
-            />
-            <MonitoringFilter
-              selectedLevel={monitoringLevel}
-              onLevelChange={(level) => {
-                console.log("Monitoring level changed to:", level);
-                setMonitoringLevel(level);
-              }}
-            />
-            <MyProjectsToggle
-              showMyProjectsOnly={showMyProjectsOnly}
-              onToggle={setShowMyProjectsOnly}
-            />
-            <AddFilteredToCartButton 
-              projectIds={filteredProjects.map(p => p.id)}
-            />
-          </div>
-        </div>
-      </div>
-
-      <ViewToggle currentView={view} onViewChange={setView} />
-
-      {view === "grid" ? (
-        <ProjectGrid 
-          projects={filteredProjects} 
-          onProjectEdit={handleEditProject}
-          onProjectReview={handleProjectSelect}
-          onViewHistory={handleViewHistory}
-        />
-      ) : (
-        <ProjectTable 
-          projects={filteredProjects} 
-          onProjectEdit={handleEditProject}
-          onProjectReview={handleProjectSelect}
-          onViewHistory={handleViewHistory}
-          onProjectDeleted={refetchProjects}
-        />
-      )}
-
-      <ProjectForm
-        isOpen={isProjectFormOpen}
-        onClose={handleProjectFormClose}
-        onSubmit={handleProjectFormSubmit}
-        project={selectedProject}
+      <ProjectFilters
+        searchQuery={searchQuery}
+        onSearchChange={setSearchQuery}
+        lifecycleStatus={lifecycleStatus}
+        onLifecycleStatusChange={setLifecycleStatus}
+        monitoringLevel={monitoringLevel}
+        onMonitoringLevelChange={setMonitoringLevel}
+        showMyProjectsOnly={showMyProjectsOnly}
+        onMyProjectsToggle={setShowMyProjectsOnly}
+        filteredProjectIds={filteredProjects.map(p => p.id)}
       />
 
-      <ProjectSelectionSheet
-        projects={projects || []}
-        isOpen={isProjectSelectionOpen}
-        onClose={() => setIsProjectSelectionOpen(false)}
+      <ProjectList
+        view={view}
+        onViewChange={setView}
+        projects={filteredProjects}
+        onProjectEdit={handleEditProject}
+        onProjectReview={handleProjectSelect}
+        onViewHistory={handleViewHistory}
+        onProjectDeleted={refetchProjects}
+      />
+
+      <ProjectModals
+        isProjectFormOpen={isProjectFormOpen}
+        onProjectFormClose={handleProjectFormClose}
+        onProjectFormSubmit={handleProjectFormSubmit}
+        selectedProject={selectedProject}
+        isProjectSelectionOpen={isProjectSelectionOpen}
+        onProjectSelectionClose={() => setIsProjectSelectionOpen(false)}
         onProjectSelect={handleProjectSelect}
+        projects={projects || []}
+        isReviewSheetOpen={isReviewSheetOpen}
+        onReviewClose={handleReviewClose}
+        selectedProjectForReview={selectedProjectForReview}
+        onReviewSubmitted={handleReviewSubmitted}
       />
-
-      {selectedProjectForReview && (
-        <ReviewSheet
-          projectId={selectedProjectForReview.id}
-          projectTitle={selectedProjectForReview.title}
-          isOpen={isReviewSheetOpen}
-          onClose={handleReviewClose}
-          onReviewSubmitted={handleReviewSubmitted}
-        />
-      )}
     </div>
   );
 };
