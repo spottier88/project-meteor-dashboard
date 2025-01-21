@@ -18,6 +18,7 @@ import { MonitoringLevel } from "@/types/monitoring";
 import { AddFilteredToCartButton } from "@/components/cart/AddFilteredToCartButton";
 import { LifecycleStatusFilter } from "@/components/project/LifecycleStatusFilter";
 import { ProjectLifecycleStatus } from "@/types/project";
+import { MyProjectsToggle } from "@/components/MyProjectsToggle";
 
 const Index = () => {
   const navigate = useNavigate();
@@ -36,12 +37,29 @@ const Index = () => {
   });
   const [monitoringLevel, setMonitoringLevel] = useState<MonitoringLevel | 'all'>('all');
   const [lifecycleStatus, setLifecycleStatus] = useState<ProjectLifecycleStatus | 'all'>('all');
+  const [showMyProjectsOnly, setShowMyProjectsOnly] = useState(false);
 
   const user = useUser();
 
   useEffect(() => {
     localStorage.setItem("projectViewMode", view);
   }, [view]);
+
+  const { data: userProfile } = useQuery({
+    queryKey: ["userProfile", user?.id],
+    queryFn: async () => {
+      if (!user?.id) return null;
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("id", user.id)
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!user?.id,
+  });
 
   const { data: projects, refetch: refetchProjects } = useQuery({
     queryKey: ["projects"],
@@ -120,6 +138,13 @@ const Index = () => {
       return levelMatch;
     }
 
+    // Filtre "Mes projets"
+    if (showMyProjectsOnly && userProfile) {
+      if (project.project_manager !== userProfile.email) {
+        return false;
+      }
+    }
+
     // Filtre par recherche
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
@@ -130,8 +155,6 @@ const Index = () => {
 
     return true;
   }) || [];
-
-  console.log("Filtered projects:", filteredProjects.length, "out of", projects?.length);
 
   const handleEditProject = (projectId: string) => {
     const project = projects?.find(p => p.id === projectId);
@@ -335,6 +358,10 @@ const Index = () => {
                 console.log("Monitoring level changed to:", level);
                 setMonitoringLevel(level);
               }}
+            />
+            <MyProjectsToggle
+              showMyProjectsOnly={showMyProjectsOnly}
+              onToggle={setShowMyProjectsOnly}
             />
             <AddFilteredToCartButton 
               projectIds={filteredProjects.map(p => p.id)}
