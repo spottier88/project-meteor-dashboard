@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Pencil, Trash2 } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { useUser } from "@supabase/auth-helpers-react";
+import { cn } from "@/lib/utils";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -105,6 +106,14 @@ export const KanbanBoard = ({ projectId, readOnly = false, onEditTask }: KanbanB
     }
   };
 
+  const isTaskOverdue = (task: any) => {
+    if (!task.due_date || task.status === "done") return false;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const dueDate = new Date(task.due_date);
+    return dueDate < today;
+  };
+
   const columns = [
     { id: "todo", title: "À faire" },
     { id: "in_progress", title: "En cours" },
@@ -139,7 +148,10 @@ export const KanbanBoard = ({ projectId, readOnly = false, onEditTask }: KanbanB
                       </p>
                     )}
                     {task.due_date && (
-                      <p className="text-sm text-muted-foreground">
+                      <p className={cn(
+                        "text-sm",
+                        isTaskOverdue(task) ? "text-red-600 font-medium" : "text-muted-foreground"
+                      )}>
                         Échéance : {new Date(task.due_date).toLocaleDateString("fr-FR")}
                       </p>
                     )}

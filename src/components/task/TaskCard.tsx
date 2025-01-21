@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { TableCell, TableRow } from "@/components/ui/table";
 import { Pencil, Trash2 } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface TaskCardProps {
   task: {
@@ -29,6 +30,14 @@ const statusLabels = {
 };
 
 export const TaskCard = ({ task, onEdit, onDelete, showActions }: TaskCardProps) => {
+  const isTaskOverdue = () => {
+    if (!task.due_date || task.status === "done") return false;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const dueDate = new Date(task.due_date);
+    return dueDate < today;
+  };
+
   return (
     <TableRow>
       <TableCell className="font-medium">{task.title}</TableCell>
@@ -40,9 +49,13 @@ export const TaskCard = ({ task, onEdit, onDelete, showActions }: TaskCardProps)
       </TableCell>
       <TableCell>{task.assignee || "-"}</TableCell>
       <TableCell>
-        {task.due_date
-          ? new Date(task.due_date).toLocaleDateString("fr-FR")
-          : "-"}
+        <span className={cn(
+          isTaskOverdue() ? "text-red-600 font-medium" : ""
+        )}>
+          {task.due_date
+            ? new Date(task.due_date).toLocaleDateString("fr-FR")
+            : "-"}
+        </span>
       </TableCell>
       <TableCell>
         {showActions && (
