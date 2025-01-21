@@ -1,11 +1,13 @@
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
 import { MonitoringFilter } from "@/components/monitoring/MonitoringFilter";
 import { LifecycleStatusFilter } from "@/components/project/LifecycleStatusFilter";
 import { MyProjectsToggle } from "@/components/MyProjectsToggle";
 import { AddFilteredToCartButton } from "@/components/cart/AddFilteredToCartButton";
 import { MonitoringLevel } from "@/types/monitoring";
 import { ProjectLifecycleStatus } from "@/types/project";
+import { RotateCcw } from "lucide-react";
 
 interface ProjectFiltersProps {
   searchQuery: string;
@@ -30,6 +32,14 @@ export const ProjectFilters = ({
   onMyProjectsToggle,
   filteredProjectIds,
 }: ProjectFiltersProps) => {
+
+  const handleResetFilters = () => {
+    onSearchChange('');
+    onLifecycleStatusChange('all');
+    onMonitoringLevelChange('all');
+    onMyProjectsToggle(false);
+  };
+
   return (
     <div className="space-y-6 mb-6 bg-gray-50 p-4 rounded-lg">
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -75,8 +85,16 @@ export const ProjectFilters = ({
         </div>
       </div>
 
-      {/* Add to Cart Button - Moved to bottom right */}
-      <div className="flex justify-end mt-4">
+      {/* Reset and Cart Buttons */}
+      <div className="flex justify-between items-center mt-4">
+        <Button
+          variant="outline"
+          onClick={handleResetFilters}
+          className="flex items-center gap-2"
+        >
+          <RotateCcw className="h-4 w-4" />
+          Réinitialiser les filtres
+        </Button>
         <AddFilteredToCartButton projectIds={filteredProjectIds} />
       </div>
     </div>
