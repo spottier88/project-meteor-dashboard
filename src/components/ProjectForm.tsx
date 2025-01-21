@@ -144,11 +144,19 @@ export const ProjectForm = ({ isOpen, onClose, onSubmit, project }: ProjectFormP
           setLifecycleStatus(project.lifecycle_status as ProjectLifecycleStatus || "study");
 
           if (innovationScores) {
+            console.log("Setting innovation scores from existing project:", innovationScores);
             setNovateur(innovationScores.novateur);
             setUsager(innovationScores.usager);
             setOuverture(innovationScores.ouverture);
             setAgilite(innovationScores.agilite);
             setImpact(innovationScores.impact);
+          } else {
+            console.log("No innovation scores found, resetting to 0");
+            setNovateur(0);
+            setUsager(0);
+            setOuverture(0);
+            setAgilite(0);
+            setImpact(0);
           }
 
           try {
