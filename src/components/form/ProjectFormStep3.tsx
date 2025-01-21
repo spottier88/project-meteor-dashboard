@@ -25,8 +25,8 @@ interface ProjectFormStep3Props {
 
 const criteriaDescriptions = {
   novateur: "Évalue le caractère innovant du projet : utilisation de nouvelles technologies, approches inédites, solutions créatives. Un score élevé indique une forte innovation technologique ou méthodologique.",
-  usager: "Mesure l'implication des utilisateurs finaux dans la conception et le développement. Un score élevé signifie une forte prise en compte des besoins utilisateurs et des retours terrain.",
-  ouverture: "Évalue le degré de collaboration et de partage : code source ouvert, données partagées, co-construction avec d'autres services. Un score élevé indique un projet très collaboratif.",
+  usager: "Mesure l'implication des bénéficiaires finaux du projet dans la conception et le développement. Un score élevé signifie une forte prise en compte des besoins utilisateurs et des retours terrain.",
+  ouverture: "Évalue le degré de collaboration et de partage : données partagées, co-construction avec d'autres services/usagers. Un score élevé indique un projet très collaboratif.",
   agilite: "Mesure la capacité d'adaptation et d'itération rapide : cycles courts, tests fréquents, ajustements continus. Un score élevé reflète une approche très agile.",
   impact: "Évalue l'impact potentiel sur l'organisation : amélioration des processus, gains d'efficacité, bénéfices pour les agents. Un score élevé indique un fort potentiel de transformation."
 };
