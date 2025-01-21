@@ -75,7 +75,7 @@ export const ProjectFormStep3 = ({
               <Slider
                 id={key}
                 min={0}
-                max={5}
+                max={4}
                 step={1}
                 value={[innovationData[key as keyof typeof innovationData]]}
                 onValueChange={(value) => {
