@@ -31,36 +31,53 @@ export const ProjectFilters = ({
   filteredProjectIds,
 }: ProjectFiltersProps) => {
   return (
-    <div className="space-y-4 mb-6">
-      <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
-        <div className="w-full md:w-1/3">
-          <Label htmlFor="search">Rechercher un projet ou un chef de projet</Label>
+    <div className="space-y-6 mb-6 bg-gray-50 p-4 rounded-lg">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        {/* Search Field */}
+        <div className="space-y-2">
+          <Label htmlFor="search" className="text-sm font-medium">
+            Recherche
+          </Label>
           <Input
             id="search"
             type="text"
-            placeholder="Rechercher..."
+            placeholder="Projet ou chef de projet..."
             value={searchQuery}
             onChange={(e) => onSearchChange(e.target.value)}
-            className="mt-1"
           />
         </div>
-        <div className="flex flex-col md:flex-row gap-4 items-center">
+
+        {/* Lifecycle Status Filter */}
+        <div>
           <LifecycleStatusFilter
             selectedStatus={lifecycleStatus}
             onStatusChange={onLifecycleStatusChange}
           />
+        </div>
+
+        {/* Monitoring Level Filter */}
+        <div>
+          <Label className="text-sm font-medium mb-2 block">
+            Niveau de suivi
+          </Label>
           <MonitoringFilter
             selectedLevel={monitoringLevel}
             onLevelChange={onMonitoringLevelChange}
           />
+        </div>
+
+        {/* My Projects Toggle */}
+        <div className="flex items-end">
           <MyProjectsToggle
             showMyProjectsOnly={showMyProjectsOnly}
             onToggle={onMyProjectsToggle}
           />
-          <AddFilteredToCartButton 
-            projectIds={filteredProjectIds}
-          />
         </div>
+      </div>
+
+      {/* Add to Cart Button - Moved to bottom right */}
+      <div className="flex justify-end mt-4">
+        <AddFilteredToCartButton projectIds={filteredProjectIds} />
       </div>
     </div>
   );
