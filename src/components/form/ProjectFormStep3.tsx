@@ -100,7 +100,7 @@ export const ProjectFormStep3 = ({
               />
               <div className="flex justify-between text-xs text-muted-foreground">
                 <span>0</span>
-                <span>5</span>
+                <span>4</span>
               </div>
             </div>
           ))}
