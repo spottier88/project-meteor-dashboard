@@ -11,17 +11,9 @@ import { Plus } from "lucide-react";
 import { TaskForm } from "@/components/TaskForm";
 import { canEditProjectItems } from "@/utils/permissions";
 import { InnovationRadarChart } from "../innovation/InnovationRadarChart";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { HelpCircle } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-
-interface ProjectSummaryContentProps {
-  project: any;
-  lastReview: any;
-  risks: any[];
-  tasks: any[];
-  canManage: boolean;
-}
 
 const criteriaDescriptions = {
   novateur: "Évalue le caractère innovant du projet : utilisation de nouvelles technologies, approches inédites, solutions créatives. Un score élevé indique une forte innovation technologique ou méthodologique.",
@@ -116,6 +108,10 @@ export const ProjectSummaryContent = ({
     },
   });
 
+  const handleReviewSubmitted = () => {
+    queryClient.invalidateQueries({ queryKey: ["lastReview", project.id] });
+  };
+
   return (
     <div className="grid gap-6">
       <ProjectSummaryHeader
@@ -130,7 +126,12 @@ export const ProjectSummaryContent = ({
           <h2 className="text-2xl font-bold">Dernière revue</h2>
           <Card>
             {lastReview ? (
-              <LastReview review={lastReview} />
+              <LastReview 
+                review={lastReview} 
+                projectId={project.id}
+                projectTitle={project.title}
+                onReviewSubmitted={handleReviewSubmitted}
+              />
             ) : (
               <CardContent className="flex items-center justify-center h-[300px]">
                 <p className="text-muted-foreground text-center">
