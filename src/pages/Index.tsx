@@ -30,20 +30,46 @@ const Index = () => {
     id: string;
     title: string;
   } | null>(null);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [view, setView] = useState<ViewMode>(() => {
-    const savedView = localStorage.getItem("projectViewMode");
-    return (savedView as ViewMode) || "grid";
+  
+  // Initialize states with localStorage values
+  const [searchQuery, setSearchQuery] = useState(() => {
+    return localStorage.getItem("projectSearchQuery") || "";
   });
-  const [monitoringLevel, setMonitoringLevel] = useState<MonitoringLevel | 'all'>('all');
-  const [lifecycleStatus, setLifecycleStatus] = useState<ProjectLifecycleStatus | 'all'>('all');
-  const [showMyProjectsOnly, setShowMyProjectsOnly] = useState(false);
+  const [view, setView] = useState<ViewMode>(() => {
+    return (localStorage.getItem("projectViewMode") as ViewMode) || "grid";
+  });
+  const [monitoringLevel, setMonitoringLevel] = useState<MonitoringLevel | 'all'>(() => {
+    return (localStorage.getItem("projectMonitoringLevel") as MonitoringLevel | 'all') || 'all';
+  });
+  const [lifecycleStatus, setLifecycleStatus] = useState<ProjectLifecycleStatus | 'all'>(() => {
+    return (localStorage.getItem("projectLifecycleStatus") as ProjectLifecycleStatus | 'all') || 'all';
+  });
+  const [showMyProjectsOnly, setShowMyProjectsOnly] = useState(() => {
+    return localStorage.getItem("showMyProjectsOnly") === "true";
+  });
 
   const user = useUser();
 
+  // Save filter values to localStorage when they change
   useEffect(() => {
     localStorage.setItem("projectViewMode", view);
   }, [view]);
+
+  useEffect(() => {
+    localStorage.setItem("projectSearchQuery", searchQuery);
+  }, [searchQuery]);
+
+  useEffect(() => {
+    localStorage.setItem("projectMonitoringLevel", monitoringLevel);
+  }, [monitoringLevel]);
+
+  useEffect(() => {
+    localStorage.setItem("projectLifecycleStatus", lifecycleStatus);
+  }, [lifecycleStatus]);
+
+  useEffect(() => {
+    localStorage.setItem("showMyProjectsOnly", showMyProjectsOnly.toString());
+  }, [showMyProjectsOnly]);
 
   const { data: userProfile } = useQuery({
     queryKey: ["userProfile", user?.id],
