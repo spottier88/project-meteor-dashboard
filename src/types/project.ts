@@ -10,3 +10,19 @@ export const lifecycleStatusLabels: Record<ProjectLifecycleStatus, string> = {
   suspended: "Suspendu",
   abandoned: "Abandonné",
 };
+
+export interface Project {
+  id: string;
+  title: string;
+  description?: string;
+  status: ProjectStatus | null;
+  progress: ProgressStatus | null;
+  completion: number;
+  lastReviewDate: string | null;
+  project_manager?: string;
+  owner_id?: string;
+  pole_id?: string;
+  direction_id?: string;
+  service_id?: string;
+  lifecycle_status: ProjectLifecycleStatus;
+}
