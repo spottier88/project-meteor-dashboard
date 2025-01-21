@@ -11,28 +11,15 @@ import { Plus } from "lucide-react";
 import { TaskForm } from "@/components/TaskForm";
 import { canEditProjectItems } from "@/utils/permissions";
 import { InnovationRadarChart } from "../innovation/InnovationRadarChart";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { HelpCircle } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface ProjectSummaryContentProps {
-  project: {
-    id: string;
-    title: string;
-    description: string | null;
-    project_manager: string | null;
-    owner_id: string | null;
-  };
-  lastReview: {
-    id: string;
-    weather: "sunny" | "cloudy" | "stormy";
-    progress: "better" | "stable" | "worse";
-    completion: number;
-    comment: string;
-    created_at: string;
-  } | null;
-  risks: Array<any>;
-  tasks: Array<any>;
+  project: any;
+  lastReview: any;
+  risks: any[];
+  tasks: any[];
   canManage: boolean;
 }
 
@@ -129,10 +116,6 @@ export const ProjectSummaryContent = ({
     },
   });
 
-  const handleReviewSubmitted = () => {
-    queryClient.invalidateQueries({ queryKey: ["lastReview", project.id] });
-  };
-
   return (
     <div className="grid gap-6">
       <ProjectSummaryHeader
@@ -147,12 +130,7 @@ export const ProjectSummaryContent = ({
           <h2 className="text-2xl font-bold">Dernière revue</h2>
           <Card>
             {lastReview ? (
-              <LastReview 
-                review={lastReview} 
-                projectId={project.id}
-                projectTitle={project.title}
-                onReviewSubmitted={handleReviewSubmitted}
-              />
+              <LastReview review={lastReview} />
             ) : (
               <CardContent className="flex items-center justify-center h-[300px]">
                 <p className="text-muted-foreground text-center">
