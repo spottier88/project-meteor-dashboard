@@ -25,8 +25,8 @@ interface ProjectSummaryContentProps {
   };
   lastReview: {
     id: string;
-    weather: string;
-    progress: string;
+    weather: "sunny" | "cloudy" | "stormy";
+    progress: "better" | "stable" | "worse";
     completion: number;
     comment: string;
     created_at: string;
