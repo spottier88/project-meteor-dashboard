@@ -712,6 +712,13 @@ export type Database = {
         }
         Returns: boolean
       }
+      get_users_last_login: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          user_id: string
+          last_sign_in_at: string
+        }[]
+      }
       get_users_without_profile: {
         Args: Record<PropertyKey, never>
         Returns: {

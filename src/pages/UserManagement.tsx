@@ -29,6 +29,7 @@ import { UserProfile, UserRole, UserRoleData } from "@/types/user";
 
 interface UserWithRoles extends UserProfile {
   roles: UserRole[];
+  lastLogin?: Date;
 }
 
 const getRoleLabel = (role: UserRole): string => {
@@ -52,6 +53,18 @@ export const UserManagement = () => {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [userToDelete, setUserToDelete] = useState<UserWithRoles | null>(null);
 
+  const { data: lastLogins } = useQuery({
+    queryKey: ["lastLogins"],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("get_users_last_login");
+      if (error) throw error;
+      return data.reduce((acc: Record<string, Date>, curr: { user_id: string, last_sign_in_at: string }) => {
+        acc[curr.user_id] = new Date(curr.last_sign_in_at);
+        return acc;
+      }, {});
+    },
+  });
+
   const { data: users, isLoading } = useQuery({
     queryKey: ["users"],
     queryFn: async () => {
@@ -72,8 +85,10 @@ export const UserManagement = () => {
         roles: rolesData
           .filter((role: UserRoleData) => role.user_id === profile.id)
           .map((role: UserRoleData) => role.role),
+        lastLogin: lastLogins?.[profile.id],
       }));
     },
+    enabled: !!lastLogins,
   });
 
   const handleEdit = (user: UserWithRoles) => {
@@ -118,6 +133,14 @@ export const UserManagement = () => {
     return <div>Chargement...</div>;
   }
 
+  const formatLastLogin = (date?: Date) => {
+    if (!date) return "Jamais connecté";
+    return date.toLocaleString("fr-FR", {
+      dateStyle: "short",
+      timeStyle: "short",
+    });
+  };
+
   return (
     <div className="container mx-auto py-8 px-4">
       <div className="mb-8">
@@ -151,6 +174,7 @@ export const UserManagement = () => {
             <TableHead>Prénom</TableHead>
             <TableHead>Nom</TableHead>
             <TableHead>Rôles</TableHead>
+            <TableHead>Dernière connexion</TableHead>
             <TableHead className="text-right">Actions</TableHead>
           </TableRow>
         </TableHeader>
@@ -169,6 +193,7 @@ export const UserManagement = () => {
                   ))}
                 </div>
               </TableCell>
+              <TableCell>{formatLastLogin(user.lastLogin)}</TableCell>
               <TableCell className="text-right space-x-2">
                 <Button
                   variant="ghost"
