@@ -62,6 +62,8 @@ This project is built with .
 
 ## How can I deploy this project?
 
+publication du dockerHub
+
 Simply open [Lovable](https://lovable.dev/projects/43774b00-8c33-4464-90db-40c5bcf5157e) and click on Share -> Publish.
 
 ## I want to use a custom domain - is that possible?
