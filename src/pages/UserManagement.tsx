@@ -14,6 +14,7 @@ import { useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { UserForm } from "@/components/UserForm";
 import { useToast } from "@/components/ui/use-toast";
+import { Input } from "@/components/ui/input";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -52,6 +53,7 @@ export const UserManagement = () => {
   const [selectedUser, setSelectedUser] = useState<UserWithRoles | null>(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [userToDelete, setUserToDelete] = useState<UserWithRoles | null>(null);
+  const [searchTerm, setSearchTerm] = useState("");
 
   const { data: lastLogins } = useQuery({
     queryKey: ["lastLogins"],
@@ -141,6 +143,13 @@ export const UserManagement = () => {
     });
   };
 
+  const filteredUsers = users?.filter(user => {
+    const searchLower = searchTerm.toLowerCase();
+    const firstName = user.first_name?.toLowerCase() || "";
+    const lastName = user.last_name?.toLowerCase() || "";
+    return firstName.includes(searchLower) || lastName.includes(searchLower);
+  });
+
   return (
     <div className="container mx-auto py-8 px-4">
       <div className="mb-8">
@@ -167,6 +176,15 @@ export const UserManagement = () => {
         </div>
       </div>
 
+      <div className="mb-4">
+        <Input
+          placeholder="Rechercher par nom ou prénom..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="max-w-sm"
+        />
+      </div>
+
       <Table>
         <TableHeader>
           <TableRow>
@@ -179,7 +197,7 @@ export const UserManagement = () => {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {users?.map((user) => (
+          {filteredUsers?.map((user) => (
             <TableRow key={user.id}>
               <TableCell>{user.email}</TableCell>
               <TableCell>{user.first_name || "-"}</TableCell>
