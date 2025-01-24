@@ -21,6 +21,7 @@ export const TeamManagement = ({ isOpen, onClose, projectId }: TeamManagementPro
   const { data: currentMembers, refetch: refetchMembers } = useQuery({
     queryKey: ["projectMembers", projectId],
     queryFn: async () => {
+      console.log("Fetching current project members for project:", projectId);
       const { data, error } = await supabase
         .from("project_members")
         .select(`
@@ -34,7 +35,11 @@ export const TeamManagement = ({ isOpen, onClose, projectId }: TeamManagementPro
         `)
         .eq("project_id", projectId);
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error fetching project members:", error);
+        throw error;
+      }
+      console.log("Current project members:", data);
       return data;
     },
   });
@@ -43,6 +48,9 @@ export const TeamManagement = ({ isOpen, onClose, projectId }: TeamManagementPro
   const { data: availableUsers } = useQuery({
     queryKey: ["availableMembers", searchQuery],
     queryFn: async () => {
+      console.log("Searching for available members with query:", searchQuery);
+      console.log("Current members to exclude:", currentMembers?.map(m => m.user_id));
+      
       const { data, error } = await supabase
         .from("profiles")
         .select(`
@@ -58,7 +66,11 @@ export const TeamManagement = ({ isOpen, onClose, projectId }: TeamManagementPro
         .ilike("email", `%${searchQuery}%`)
         .not("id", "in", (currentMembers || []).map(m => m.user_id));
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error searching for available members:", error);
+        throw error;
+      }
+      console.log("Available users found:", data);
       return data;
     },
     enabled: searchQuery.length > 2,
@@ -66,6 +78,7 @@ export const TeamManagement = ({ isOpen, onClose, projectId }: TeamManagementPro
 
   const handleAddMember = async (userId: string) => {
     try {
+      console.log("Adding member to project:", { userId, projectId });
       const { error } = await supabase
         .from("project_members")
         .insert({
@@ -73,7 +86,10 @@ export const TeamManagement = ({ isOpen, onClose, projectId }: TeamManagementPro
           user_id: userId,
         });
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error adding member:", error);
+        throw error;
+      }
 
       toast({
         title: "Succès",
@@ -93,13 +109,17 @@ export const TeamManagement = ({ isOpen, onClose, projectId }: TeamManagementPro
 
   const handleRemoveMember = async (userId: string) => {
     try {
+      console.log("Removing member from project:", { userId, projectId });
       const { error } = await supabase
         .from("project_members")
         .delete()
         .eq("project_id", projectId)
         .eq("user_id", userId);
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error removing member:", error);
+        throw error;
+      }
 
       toast({
         title: "Succès",
