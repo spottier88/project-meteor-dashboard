@@ -46,12 +46,13 @@ export const TeamManagement = ({ isOpen, onClose, projectId }: TeamManagementPro
 
   // Récupérer les utilisateurs disponibles (avec le rôle 'membre')
   const { data: availableUsers } = useQuery({
-    queryKey: ["availableMembers", searchQuery],
+    queryKey: ["availableMembers", searchQuery, currentMembers],
     queryFn: async () => {
       console.log("Searching for available members with query:", searchQuery);
-      console.log("Current members to exclude:", currentMembers?.map(m => m.user_id));
+      const memberIds = (currentMembers || []).map(m => m.user_id);
+      console.log("Current members to exclude:", memberIds);
       
-      const { data, error } = await supabase
+      let query = supabase
         .from("profiles")
         .select(`
           id,
@@ -63,8 +64,14 @@ export const TeamManagement = ({ isOpen, onClose, projectId }: TeamManagementPro
           )
         `)
         .eq("user_roles.role", "membre")
-        .ilike("email", `%${searchQuery}%`)
-        .not("id", "in", (currentMembers || []).map(m => m.user_id));
+        .ilike("email", `%${searchQuery}%`);
+
+      // N'ajouter la condition not.in que s'il y a des membres à exclure
+      if (memberIds.length > 0) {
+        query = query.not('id', 'in', memberIds);
+      }
+
+      const { data, error } = await query;
 
       if (error) {
         console.error("Error searching for available members:", error);
