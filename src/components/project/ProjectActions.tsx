@@ -1,8 +1,9 @@
 import { Button } from "@/components/ui/button";
-import { Pencil, History, ListTodo, ShieldAlert, Trash2 } from "lucide-react";
+import { Pencil, History, ListTodo, ShieldAlert, Trash2, Users } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { DeleteProjectDialog } from "./DeleteProjectDialog";
+import { TeamManagement } from "./TeamManagement";
 import { UserRole } from "@/types/user";
 import { useUser } from "@supabase/auth-helpers-react";
 import { canViewProjectHistory, canManageTasks, canManageRisks, canEditProject } from "@/utils/permissions";
@@ -30,6 +31,7 @@ export const ProjectActions = ({
 }: ProjectActionsProps) => {
   const navigate = useNavigate();
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isTeamManagementOpen, setIsTeamManagementOpen] = useState(false);
   const isAdmin = userRoles?.includes("admin");
   const user = useUser();
   const [canEdit, setCanEdit] = useState(false);
@@ -60,6 +62,7 @@ export const ProjectActions = ({
   const canViewHistory = canViewProjectHistory(userRoles, user?.id, owner_id, project_manager, user?.email);
   const canManageProjectTasks = canManageTasks(userRoles, user?.id, owner_id, project_manager, user?.email);
   const canManageProjectRisks = canManageRisks(userRoles, user?.id, owner_id, project_manager, user?.email);
+  const canManageTeam = isAdmin || (user?.email === project_manager);
 
   return (
     <>
@@ -109,6 +112,17 @@ export const ProjectActions = ({
           <ShieldAlert className="h-4 w-4" />
         </Button>
       )}
+      {canManageTeam && (
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={(e) => handleClick(e, () => setIsTeamManagementOpen(true))}
+          className="h-8 w-8"
+          title="Gérer l'équipe"
+        >
+          <Users className="h-4 w-4" />
+        </Button>
+      )}
       {isAdmin && (
         <Button
           variant="ghost"
@@ -127,6 +141,12 @@ export const ProjectActions = ({
         projectId={projectId}
         projectTitle={projectTitle}
         onProjectDeleted={onProjectDeleted}
+      />
+
+      <TeamManagement
+        isOpen={isTeamManagementOpen}
+        onClose={() => setIsTeamManagementOpen(false)}
+        projectId={projectId}
       />
     </>
   );
