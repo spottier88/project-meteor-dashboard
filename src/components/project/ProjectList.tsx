@@ -27,7 +27,7 @@ export const ProjectList = ({
   return (
     <div className="mt-6">
       <div className="flex justify-end mb-4">
-        <ViewToggle view={view} onViewChange={onViewChange} />
+        <ViewToggle currentView={view} onViewChange={onViewChange} />
       </div>
       {view === "grid" ? (
         <ProjectGrid

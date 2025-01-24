@@ -30,13 +30,16 @@ interface ProjectTableProps {
   onProjectEdit: (id: string) => void;
   onViewHistory: (id: string, title: string) => void;
   onProjectDeleted: () => void;
+  onTeamManagement: (projectId: string) => void;
 }
 
 export const ProjectTable = ({
   projects,
   onProjectEdit,
+  onProjectReview,
   onViewHistory,
   onProjectDeleted,
+  onTeamManagement,
 }: ProjectTableProps) => {
   const user = useUser();
   const [sortKey, setSortKey] = useState<string | null>(null);
@@ -194,6 +197,7 @@ export const ProjectTable = ({
               onProjectEdit={onProjectEdit}
               onViewHistory={onViewHistory}
               onProjectDeleted={onProjectDeleted}
+              onTeamManagement={onTeamManagement}
             />
           ))}
         </TableBody>
