@@ -6,7 +6,7 @@ import { Project } from "@/types/project";
 interface ProjectListProps {
   view: ViewMode;
   onViewChange: (view: ViewMode) => void;
-  projects: any[];
+  projects: Project[];
   onProjectEdit: (projectId: string) => void;
   onProjectReview: (projectId: string, title: string) => void;
   onViewHistory: (projectId: string, title: string) => void;
@@ -32,19 +32,19 @@ export const ProjectList = ({
       {view === "grid" ? (
         <ProjectGrid
           projects={projects}
-          onEdit={onProjectEdit}
-          onReview={onProjectReview}
+          onProjectEdit={onProjectEdit}
+          onProjectReview={onProjectReview}
           onViewHistory={onViewHistory}
-          onDeleted={onProjectDeleted}
+          onProjectDeleted={onProjectDeleted}
           onTeamManagement={onTeamManagement}
         />
       ) : (
         <ProjectTable
           projects={projects}
-          onEdit={onProjectEdit}
-          onReview={onProjectReview}
+          onProjectEdit={onProjectEdit}
+          onProjectReview={onProjectReview}
           onViewHistory={onViewHistory}
-          onDeleted={onProjectDeleted}
+          onProjectDeleted={onProjectDeleted}
           onTeamManagement={onTeamManagement}
         />
       )}

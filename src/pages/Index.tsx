@@ -64,22 +64,6 @@ const Index = () => {
     localStorage.setItem("showMyProjectsOnly", showMyProjectsOnly.toString());
   }, [showMyProjectsOnly]);
 
-  const { data: userProfile } = useQuery({
-    queryKey: ["userProfile", user?.id],
-    queryFn: async () => {
-      if (!user?.id) return null;
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("*")
-        .eq("id", user.id)
-        .single();
-
-      if (error) throw error;
-      return data;
-    },
-    enabled: !!user?.id,
-  });
-
   const { data: projects, refetch: refetchProjects } = useQuery({
     queryKey: ["projects"],
     queryFn: async () => {
@@ -134,17 +118,111 @@ const Index = () => {
     },
   });
 
+  const handleProjectFormClose = () => {
+    setIsProjectFormOpen(false);
+    setSelectedProject(null);
+  };
+
+  const handleProjectFormSubmit = async (projectData: any) => {
+    try {
+      if (selectedProject) {
+        // Update existing project
+        const { error: updateError } = await supabase
+          .from("projects")
+          .update({
+            title: projectData.title,
+            description: projectData.description,
+            project_manager: projectData.projectManager,
+            start_date: projectData.startDate,
+            end_date: projectData.endDate,
+            priority: projectData.priority,
+            owner_id: projectData.ownerId,
+            pole_id: projectData.poleId,
+            direction_id: projectData.directionId,
+            service_id: projectData.serviceId,
+            lifecycle_status: projectData.lifecycleStatus,
+          })
+          .eq("id", selectedProject.id);
+
+        if (updateError) throw updateError;
+
+        // Update monitoring
+        const { error: monitoringError } = await supabase
+          .from("project_monitoring")
+          .upsert({
+            project_id: selectedProject.id,
+            monitoring_level: projectData.monitoringLevel,
+            monitoring_entity_id: projectData.monitoringEntityId,
+          });
+
+        if (monitoringError) throw monitoringError;
+
+        // Update innovation scores
+        const { error: innovationError } = await supabase
+          .from("project_innovation_scores")
+          .upsert({
+            project_id: selectedProject.id,
+            ...projectData.innovation,
+          });
+
+        if (innovationError) throw innovationError;
+      } else {
+        // Create new project
+        const { data: newProject, error: createError } = await supabase
+          .from("projects")
+          .insert({
+            title: projectData.title,
+            description: projectData.description,
+            project_manager: projectData.projectManager,
+            start_date: projectData.startDate,
+            end_date: projectData.endDate,
+            priority: projectData.priority,
+            owner_id: projectData.ownerId,
+            pole_id: projectData.poleId,
+            direction_id: projectData.directionId,
+            service_id: projectData.serviceId,
+            lifecycle_status: projectData.lifecycleStatus,
+          })
+          .select()
+          .single();
+
+        if (createError) throw createError;
+
+        // Create monitoring
+        const { error: monitoringError } = await supabase
+          .from("project_monitoring")
+          .insert({
+            project_id: newProject.id,
+            monitoring_level: projectData.monitoringLevel,
+            monitoring_entity_id: projectData.monitoringEntityId,
+          });
+
+        if (monitoringError) throw monitoringError;
+
+        // Create innovation scores
+        const { error: innovationError } = await supabase
+          .from("project_innovation_scores")
+          .insert({
+            project_id: newProject.id,
+            ...projectData.innovation,
+          });
+
+        if (innovationError) throw innovationError;
+      }
+
+      await refetchProjects();
+    } catch (error) {
+      console.error("Error submitting project:", error);
+      throw error;
+    }
+  };
+
   const handleEditProject = (projectId: string) => {
     const project = projects?.find(p => p.id === projectId);
     if (project) {
       setSelectedProject(project);
       setIsProjectFormOpen(true);
     }
-  };
-
-  const handleProjectFormClose = () => {
-    setIsProjectFormOpen(false);
-    setSelectedProject(null);
   };
 
   const handleTeamManagement = (projectId: string) => {
