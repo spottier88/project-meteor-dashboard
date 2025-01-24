@@ -68,7 +68,7 @@ export const TeamManagement = ({ isOpen, onClose, projectId }: TeamManagementPro
 
       // N'ajouter la condition not.in que s'il y a des membres à exclure
       if (memberIds.length > 0) {
-        query = query.not('id', 'in', memberIds);
+        query = query.not('id', 'in', `(${memberIds.join(',')})`);
       }
 
       const { data, error } = await query;
