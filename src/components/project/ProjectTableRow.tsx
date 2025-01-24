@@ -1,160 +1,52 @@
-import { TableCell, TableRow } from "@/components/ui/table";
-import { Star } from "lucide-react";
-import { ProjectStatus, ProgressStatus } from "@/types/project";
-import { cn } from "@/lib/utils";
-import { useNavigate } from "react-router-dom";
-import { useUser } from "@supabase/auth-helpers-react";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import { canEditProject } from "@/utils/permissions";
-import { UserRoleData } from "@/types/user";
-import { ProjectActions } from "./ProjectActions";
-import { StatusIcon } from "./StatusIcon";
-import { OrganizationCell } from "./OrganizationCell";
-import { AddToCartButton } from "@/components/cart/AddToCartButton";
-import { MonitoringBadge } from "@/components/monitoring/MonitoringBadge";
+import { TableRow, TableCell } from "@/components/ui/table";
+import { Button } from "@/components/ui/button";
+import { Pencil, Users } from "lucide-react";
+import { Project } from "@/types/project";
 
-interface ProjectTableRowProps {
-  project: {
-    id: string;
-    title: string;
-    status: ProjectStatus | null;
-    progress: ProgressStatus | null;
-    completion: number;
-    lastReviewDate: string | null;
-    project_manager?: string;
-    owner_id?: string;
-    suivi_dgs?: boolean;
-    pole_id?: string;
-    direction_id?: string;
-    service_id?: string;
-  };
+export interface ProjectTableRowProps {
+  project: Project;
   onProjectEdit: (id: string) => void;
-  onViewHistory: (id: string, title: string) => void;
+  onViewHistory: (id: string) => void;
   onProjectDeleted: () => void;
+  onTeamManagement: (projectId: string) => void;
 }
-
-const statusLabels = {
-  sunny: "Ensoleillé",
-  cloudy: "Nuageux",
-  stormy: "Orageux",
-} as const;
-
-const progressLabels = {
-  better: "En amélioration",
-  stable: "Stable",
-  worse: "En dégradation",
-} as const;
 
 export const ProjectTableRow = ({
   project,
   onProjectEdit,
   onViewHistory,
   onProjectDeleted,
+  onTeamManagement,
 }: ProjectTableRowProps) => {
-  const navigate = useNavigate();
-  const user = useUser();
-
-  const { data: userRoles } = useQuery({
-    queryKey: ["userRoles", user?.id],
-    queryFn: async () => {
-      if (!user?.id) return null;
-      const { data, error } = await supabase
-        .from("user_roles")
-        .select("*")
-        .eq("user_id", user.id);
-
-      if (error) throw error;
-      return data as UserRoleData[];
-    },
-    enabled: !!user?.id,
-  });
-
-  const { data: latestReview } = useQuery({
-    queryKey: ["latestReview", project.id],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("latest_reviews")
-        .select("*")
-        .eq("project_id", project.id)
-        .maybeSingle();
-
-      if (error) {
-        console.error("Error fetching latest review:", error);
-        return null;
-      }
-      
-      return data;
-    },
-    enabled: !!project.id,
-  });
-
-  const roles = userRoles?.map(ur => ur.role);
-
   return (
-    <TableRow
-      key={project.id}
-      className="hover:bg-muted/50 cursor-pointer"
-      onClick={() => navigate(`/projects/${project.id}`)}
-    >
-      <TableCell className="font-medium">
-        {project.title}
-      </TableCell>
+    <TableRow>
+      <TableCell>{project.title}</TableCell>
+      <TableCell>{project.status}</TableCell>
+      <TableCell>{project.progress}</TableCell>
+      <TableCell>{project.completion}%</TableCell>
       <TableCell>{project.project_manager || "-"}</TableCell>
       <TableCell>
-        <OrganizationCell
-          poleId={project.pole_id}
-          directionId={project.direction_id}
-          serviceId={project.service_id}
-        />
+        {project.lastReviewDate
+          ? new Date(project.lastReviewDate).toLocaleDateString("fr-FR")
+          : "-"}
       </TableCell>
       <TableCell>
-        {latestReview?.weather ? (
-          <div className="flex items-center gap-2">
-            <StatusIcon status={latestReview.weather} />
-            <span>{statusLabels[latestReview.weather]}</span>
-          </div>
-        ) : (
-          <span className="text-muted-foreground">Pas de revue</span>
-        )}
-      </TableCell>
-      <TableCell>
-        {latestReview?.progress ? (
-          <span
-            className={cn(
-              "text-sm font-medium",
-              latestReview.progress === "better" ? "text-success" : latestReview.progress === "stable" ? "text-neutral" : "text-danger"
-            )}
+        <div className="flex gap-2">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => onTeamManagement(project.id)}
           >
-            {progressLabels[latestReview.progress]}
-          </span>
-        ) : (
-          <span className="text-muted-foreground">Pas de revue</span>
-        )}
-      </TableCell>
-      <TableCell>{latestReview?.completion || 0}%</TableCell>
-      <TableCell>
-        {latestReview?.created_at ? (
-          new Date(latestReview.created_at).toLocaleDateString("fr-FR")
-        ) : (
-          <span className="text-muted-foreground">Pas de revue</span>
-        )}
-      </TableCell>
-      <TableCell>
-        <MonitoringBadge projectId={project.id} />
-      </TableCell>
-      <TableCell className="text-right space-x-2">
-        <AddToCartButton projectId={project.id} projectTitle={project.title} />
-        <ProjectActions
-          projectId={project.id}
-          projectTitle={project.title}
-          onEdit={onProjectEdit}
-          onViewHistory={onViewHistory}
-          userRoles={roles}
-          onProjectDeleted={onProjectDeleted}
-          owner_id={project.owner_id}
-          project_manager={project.project_manager}
-        />
+            <Users className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => onProjectEdit(project.id)}
+          >
+            <Pencil className="h-4 w-4" />
+          </Button>
+        </div>
       </TableCell>
     </TableRow>
   );

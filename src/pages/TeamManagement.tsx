@@ -3,20 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
-import { Project } from "@/types/user";
-import { TeamManagement as TeamManagementComponent } from "@/components/project/TeamManagement";
-
-const statusLabels = {
-  sunny: "Ensoleillé",
-  cloudy: "Nuageux",
-  stormy: "Orageux",
-};
-
-const progressLabels = {
-  better: "En amélioration",
-  stable: "Stable",
-  worse: "En dégradation",
-};
+import { Project } from "@/types/project";
 
 export const TeamManagement = () => {
   const { projectId } = useParams<{ projectId: string }>();
@@ -75,11 +62,11 @@ export const TeamManagement = () => {
           </div>
           <div>
             <span className="text-sm text-muted-foreground">Statut</span>
-            <p className="font-medium">{project.status ? statusLabels[project.status] : "-"}</p>
+            <p className="font-medium">{project.status || "-"}</p>
           </div>
           <div>
             <span className="text-sm text-muted-foreground">Progression</span>
-            <p className="font-medium">{project.progress ? progressLabels[project.progress] : "-"}</p>
+            <p className="font-medium">{project.progress || "-"}</p>
           </div>
           <div>
             <span className="text-sm text-muted-foreground">Avancement</span>
@@ -94,7 +81,11 @@ export const TeamManagement = () => {
         </div>
       </div>
 
-      <TeamManagementComponent projectId={projectId || ""} />
+      {/* Team management content will be implemented here */}
+      <div className="bg-card rounded-lg border p-6">
+        <h2 className="text-xl font-semibold mb-4">Gestion de l'équipe</h2>
+        {/* Team management implementation will go here */}
+      </div>
     </div>
   );
 };

@@ -21,9 +21,9 @@ interface Project {
 
 interface ProjectGridProps {
   projects: Project[];
-  onProjectReview: (id: string, title: string) => void;
+  onProjectReview: (id: string) => void;
   onProjectEdit: (id: string) => void;
-  onViewHistory: (id: string, title: string) => void;
+  onViewHistory: (id: string) => void;
   onProjectDeleted: () => void;
   onTeamManagement: (projectId: string) => void;
 }
@@ -155,11 +155,11 @@ export const ProjectGrid = ({
         <ProjectCard
           key={project.id}
           {...project}
-          onReview={onProjectReview}
-          onEdit={onProjectEdit}
-          onViewHistory={onViewHistory}
+          onReview={() => onProjectReview(project.id)}
+          onEdit={() => onProjectEdit(project.id)}
+          onViewHistory={() => onViewHistory(project.id)}
           onDeleted={onProjectDeleted}
-          onTeamManagement={onTeamManagement}
+          onTeamManagement={() => onTeamManagement(project.id)}
         />
       ))}
     </div>
