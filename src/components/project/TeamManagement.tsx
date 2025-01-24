@@ -144,9 +144,14 @@ export const TeamManagement = ({ isOpen, onClose, projectId }: TeamManagementPro
     }
   };
 
+  const handleClose = () => {
+    setSearchQuery("");
+    onClose();
+  };
+
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[600px]">
+    <Dialog open={isOpen} onOpenChange={handleClose}>
+      <DialogContent className="sm:max-w-[600px]" onInteractOutside={(e) => e.preventDefault()}>
         <DialogHeader>
           <DialogTitle>Gestion de l'équipe projet</DialogTitle>
         </DialogHeader>
