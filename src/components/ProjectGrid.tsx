@@ -21,11 +21,9 @@ interface Project {
 
 interface ProjectGridProps {
   projects: Project[];
-  onProjectReview: (id: string) => void;
+  onProjectReview: (id: string, title: string) => void;
   onProjectEdit: (id: string) => void;
-  onViewHistory: (id: string) => void;
-  onProjectDeleted: () => void;
-  onTeamManagement: (projectId: string) => void;
+  onViewHistory: (id: string, title: string) => void;
 }
 
 export const ProjectGrid = ({
@@ -33,8 +31,6 @@ export const ProjectGrid = ({
   onProjectReview,
   onProjectEdit,
   onViewHistory,
-  onProjectDeleted,
-  onTeamManagement,
 }: ProjectGridProps) => {
   const user = useUser();
 
@@ -151,15 +147,13 @@ export const ProjectGrid = ({
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-      {filteredProjects?.map((project) => (
+      {filteredProjects.map((project) => (
         <ProjectCard
           key={project.id}
           {...project}
-          onReview={() => onProjectReview(project.id)}
-          onEdit={() => onProjectEdit(project.id)}
-          onViewHistory={() => onViewHistory(project.id)}
-          onDeleted={onProjectDeleted}
-          onTeamManagement={() => onTeamManagement(project.id)}
+          onReview={onProjectReview}
+          onEdit={onProjectEdit}
+          onViewHistory={onViewHistory}
         />
       ))}
     </div>

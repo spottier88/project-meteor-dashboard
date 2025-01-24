@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
@@ -63,11 +63,8 @@ export const TeamManagement = ({ isOpen, onClose, projectId }: TeamManagementPro
             role
           )
         `)
-        .eq("user_roles.role", "membre");
-
-      if (searchQuery) {
-        query = query.ilike("email", `%${searchQuery}%`);
-      }
+        .eq("user_roles.role", "membre")
+        .ilike("email", `%${searchQuery}%`);
 
       // N'ajouter la condition not.in que s'il y a des membres à exclure
       if (memberIds.length > 0) {
@@ -107,7 +104,6 @@ export const TeamManagement = ({ isOpen, onClose, projectId }: TeamManagementPro
       });
 
       refetchMembers();
-      setSearchQuery("");
     } catch (error) {
       console.error("Error adding member:", error);
       toast({
@@ -154,13 +150,13 @@ export const TeamManagement = ({ isOpen, onClose, projectId }: TeamManagementPro
   };
 
   return (
-    <Sheet open={isOpen} onOpenChange={handleClose}>
-      <SheetContent side="right" className="w-[400px] sm:w-[540px]">
-        <SheetHeader>
-          <SheetTitle>Gestion de l'équipe projet</SheetTitle>
-        </SheetHeader>
+    <Dialog open={isOpen} onOpenChange={handleClose}>
+      <DialogContent className="sm:max-w-[600px]" onInteractOutside={(e) => e.preventDefault()}>
+        <DialogHeader>
+          <DialogTitle>Gestion de l'équipe projet</DialogTitle>
+        </DialogHeader>
 
-        <div className="space-y-6 mt-6">
+        <div className="space-y-6">
           <div>
             <h3 className="text-lg font-medium mb-4">Ajouter des membres</h3>
             <div className="flex gap-4 items-center">
@@ -232,7 +228,7 @@ export const TeamManagement = ({ isOpen, onClose, projectId }: TeamManagementPro
             </div>
           </div>
         </div>
-      </SheetContent>
-    </Sheet>
+      </DialogContent>
+    </Dialog>
   );
 };

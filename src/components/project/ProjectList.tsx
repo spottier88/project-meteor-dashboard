@@ -7,11 +7,10 @@ interface ProjectListProps {
   view: ViewMode;
   onViewChange: (view: ViewMode) => void;
   projects: Project[];
-  onProjectEdit: (projectId: string) => void;
-  onProjectReview: (projectId: string, title: string) => void;
-  onViewHistory: (projectId: string, title: string) => void;
+  onProjectEdit: (id: string) => void;
+  onProjectReview: (id: string, title: string) => void;
+  onViewHistory: (id: string, title: string) => void;
   onProjectDeleted: () => void;
-  onTeamManagement: (projectId: string) => void;
 }
 
 export const ProjectList = ({
@@ -22,32 +21,26 @@ export const ProjectList = ({
   onProjectReview,
   onViewHistory,
   onProjectDeleted,
-  onTeamManagement,
 }: ProjectListProps) => {
   return (
-    <div className="mt-6">
-      <div className="flex justify-end mb-4">
-        <ViewToggle currentView={view} onViewChange={onViewChange} />
-      </div>
+    <>
+      <ViewToggle currentView={view} onViewChange={onViewChange} />
       {view === "grid" ? (
-        <ProjectGrid
-          projects={projects}
+        <ProjectGrid 
+          projects={projects} 
           onProjectEdit={onProjectEdit}
           onProjectReview={onProjectReview}
           onViewHistory={onViewHistory}
-          onProjectDeleted={onProjectDeleted}
-          onTeamManagement={onTeamManagement}
         />
       ) : (
-        <ProjectTable
-          projects={projects}
+        <ProjectTable 
+          projects={projects} 
           onProjectEdit={onProjectEdit}
           onProjectReview={onProjectReview}
           onViewHistory={onViewHistory}
           onProjectDeleted={onProjectDeleted}
-          onTeamManagement={onTeamManagement}
         />
       )}
-    </div>
+    </>
   );
 };
