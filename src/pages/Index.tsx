@@ -11,6 +11,7 @@ import { ProjectLifecycleStatus } from "@/types/project";
 import { ProjectFilters } from "@/components/project/ProjectFilters";
 import { ProjectList } from "@/components/project/ProjectList";
 import { ProjectModals } from "@/components/project/ProjectModals";
+import { TeamManagement } from "@/components/project/TeamManagement";
 
 const Index = () => {
   const navigate = useNavigate();
@@ -22,8 +23,9 @@ const Index = () => {
     id: string;
     title: string;
   } | null>(null);
+  const [isTeamManagementOpen, setIsTeamManagementOpen] = useState(false);
+  const [selectedProjectForTeam, setSelectedProjectForTeam] = useState<string | null>(null);
   
-  // Initialize states with localStorage values
   const [searchQuery, setSearchQuery] = useState(() => {
     return localStorage.getItem("projectSearchQuery") || "";
   });
@@ -42,7 +44,6 @@ const Index = () => {
 
   const user = useUser();
 
-  // Save filter values to localStorage when they change
   useEffect(() => {
     localStorage.setItem("projectViewMode", view);
   }, [view]);
@@ -133,47 +134,6 @@ const Index = () => {
     },
   });
 
-  const filteredProjects = projects?.filter(project => {
-    // Filtre par statut du cycle de vie
-    if (lifecycleStatus !== 'all' && project.lifecycle_status !== lifecycleStatus) {
-      return false;
-    }
-
-    // Filtre par niveau de monitoring
-    if (monitoringLevel !== 'all') {
-      if (monitoringLevel === 'none') {
-        const hasNoMonitoring = !project.project_monitoring || 
-                              project.project_monitoring.monitoring_level === 'none';
-        return hasNoMonitoring;
-      }
-
-      const monitoring = project.project_monitoring;
-      if (!monitoring) {
-        return false;
-      }
-      
-      const levelMatch = monitoring.monitoring_level === monitoringLevel;
-      return levelMatch;
-    }
-
-    // Filtre "Mes projets"
-    if (showMyProjectsOnly && userProfile) {
-      if (project.project_manager !== userProfile.email) {
-        return false;
-      }
-    }
-
-    // Filtre par recherche
-    if (searchQuery) {
-      const query = searchQuery.toLowerCase();
-      const matchesTitle = project.title?.toLowerCase().includes(query);
-      const matchesManager = project.project_manager?.toLowerCase().includes(query);
-      return matchesTitle || matchesManager;
-    }
-
-    return true;
-  }) || [];
-
   const handleEditProject = (projectId: string) => {
     const project = projects?.find(p => p.id === projectId);
     if (project) {
@@ -187,138 +147,14 @@ const Index = () => {
     setSelectedProject(null);
   };
 
-  const handleProjectFormSubmit = async (projectData: {
-    title: string;
-    description: string;
-    projectManager: string;
-    startDate?: Date;
-    endDate?: Date;
-    priority: string;
-    monitoringLevel: MonitoringLevel;
-    monitoringEntityId: string | null;
-    ownerId: string;
-    poleId: string;
-    directionId: string;
-    serviceId: string;
-    lifecycleStatus: ProjectLifecycleStatus;
-    innovation: {
-      novateur: number;
-      usager: number;
-      ouverture: number;
-      agilite: number;
-      impact: number;
-    };
-  }) => {
-    console.log("Handling project form submission in Index.tsx");
-    console.log("Project data received:", projectData);
+  const handleTeamManagement = (projectId: string) => {
+    setSelectedProjectForTeam(projectId);
+    setIsTeamManagementOpen(true);
+  };
 
-    try {
-      const projectPayload = {
-        title: projectData.title,
-        description: projectData.description,
-        project_manager: projectData.projectManager,
-        start_date: projectData.startDate?.toISOString().split('T')[0],
-        end_date: projectData.endDate?.toISOString().split('T')[0],
-        priority: projectData.priority,
-        owner_id: projectData.ownerId,
-        pole_id: projectData.poleId === "none" ? null : projectData.poleId,
-        direction_id: projectData.directionId === "none" ? null : projectData.directionId,
-        service_id: projectData.serviceId === "none" ? null : projectData.serviceId,
-        lifecycle_status: projectData.lifecycleStatus,
-      };
-
-      console.log("Prepared project payload:", projectPayload);
-
-      if (selectedProject?.id) {
-        console.log("Updating existing project:", selectedProject.id);
-        const { error: projectError } = await supabase
-          .from("projects")
-          .update(projectPayload)
-          .eq("id", selectedProject.id);
-
-        if (projectError) {
-          console.error("Error updating project:", projectError);
-          throw projectError;
-        }
-
-        console.log("Project updated successfully, updating monitoring...");
-
-        const { error: monitoringError } = await supabase
-          .from("project_monitoring")
-          .upsert({
-            project_id: selectedProject.id,
-            monitoring_level: projectData.monitoringLevel,
-            monitoring_entity_id: projectData.monitoringEntityId,
-          }, {
-            onConflict: 'project_id'
-          });
-
-        if (monitoringError) {
-          console.error("Error updating monitoring:", monitoringError);
-          throw monitoringError;
-        }
-
-        const { error: innovationError } = await supabase
-          .from("project_innovation_scores")
-          .upsert({
-            project_id: selectedProject.id,
-            ...projectData.innovation
-          }, {
-            onConflict: 'project_id'
-          });
-
-        if (innovationError) {
-          console.error("Error updating innovation scores:", innovationError);
-          throw innovationError;
-        }
-      } else {
-        console.log("Creating new project");
-        const { data: newProject, error: projectError } = await supabase
-          .from("projects")
-          .insert(projectPayload)
-          .select()
-          .single();
-
-        if (projectError) {
-          console.error("Error creating project:", projectError);
-          throw projectError;
-        }
-
-        console.log("New project created:", newProject);
-        console.log("Creating monitoring entry...");
-
-        const { error: monitoringError } = await supabase
-          .from("project_monitoring")
-          .insert({
-            project_id: newProject.id,
-            monitoring_level: projectData.monitoringLevel,
-            monitoring_entity_id: projectData.monitoringEntityId,
-          });
-
-        if (monitoringError) {
-          console.error("Error creating monitoring:", monitoringError);
-          throw monitoringError;
-        }
-
-        const { error: innovationError } = await supabase
-          .from("project_innovation_scores")
-          .insert({
-            project_id: newProject.id,
-            ...projectData.innovation
-          });
-
-        if (innovationError) {
-          console.error("Error creating innovation scores:", innovationError);
-          throw innovationError;
-        }
-      }
-
-      console.log("Project, monitoring and innovation scores saved successfully");
-      await refetchProjects();
-    } catch (error) {
-      console.error("Error in handleProjectFormSubmit:", error);
-      throw error;
-    }
+  const handleTeamManagementClose = () => {
+    setIsTeamManagementOpen(false);
+    setSelectedProjectForTeam(null);
   };
 
   const handleNewReview = () => {
@@ -361,17 +197,18 @@ const Index = () => {
         onMonitoringLevelChange={setMonitoringLevel}
         showMyProjectsOnly={showMyProjectsOnly}
         onMyProjectsToggle={setShowMyProjectsOnly}
-        filteredProjectIds={filteredProjects.map(p => p.id)}
+        filteredProjectIds={projects?.map(p => p.id) || []}
       />
 
       <ProjectList
         view={view}
         onViewChange={setView}
-        projects={filteredProjects}
+        projects={projects || []}
         onProjectEdit={handleEditProject}
         onProjectReview={handleProjectSelect}
         onViewHistory={handleViewHistory}
         onProjectDeleted={refetchProjects}
+        onTeamManagement={handleTeamManagement}
       />
 
       <ProjectModals
@@ -388,6 +225,14 @@ const Index = () => {
         selectedProjectForReview={selectedProjectForReview}
         onReviewSubmitted={handleReviewSubmitted}
       />
+
+      {selectedProjectForTeam && (
+        <TeamManagement
+          isOpen={isTeamManagementOpen}
+          onClose={handleTeamManagementClose}
+          projectId={selectedProjectForTeam}
+        />
+      )}
     </div>
   );
 };
