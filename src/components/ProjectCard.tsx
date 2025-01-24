@@ -1,149 +1,74 @@
-import { Card, CardContent } from "@/components/ui/card";
-import { TaskSummary } from "./TaskSummary";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Users, Pencil } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { ProjectCardHeader } from "./project/ProjectCardHeader";
-import { ProjectMetrics } from "./project/ProjectMetrics";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import { AddToCartButton } from "./cart/AddToCartButton";
-import { ProjectStatus, ProgressStatus, ProjectLifecycleStatus } from "@/types/project";
-import { LifecycleStatusBadge } from "./project/LifecycleStatusBadge";
+import { useUser } from "@/hooks/useUser";
+import { canManageProjectItems } from "@/utils/permissions";
 
 interface ProjectCardProps {
-  title: string;
-  description?: string;
-  status: ProjectStatus | null;
-  progress: ProgressStatus | null;
-  completion: number;
-  lastReviewDate: string | null;
   id: string;
+  title: string;
+  status: string;
+  progress: string;
+  completion: number;
   project_manager?: string;
-  owner_id?: string;
-  pole_id?: string;
-  direction_id?: string;
-  service_id?: string;
-  lifecycle_status: ProjectLifecycleStatus;
-  onReview: (id: string, title: string) => void;
+  last_review_date?: string;
+  onReview: (id: string) => void;
   onEdit: (id: string) => void;
-  onViewHistory: (id: string, title: string) => void;
+  onViewHistory: (id: string) => void;
+  owner_id?: string;
 }
 
 export const ProjectCard = ({
+  id,
   title,
-  description,
   status,
   progress,
   completion,
-  lastReviewDate,
-  id,
   project_manager,
-  owner_id,
-  pole_id,
-  direction_id,
-  service_id,
-  lifecycle_status,
+  last_review_date,
+  onReview,
   onEdit,
   onViewHistory,
-  onReview,
+  owner_id,
 }: ProjectCardProps) => {
   const navigate = useNavigate();
-
-  const { data: organization } = useQuery({
-    queryKey: ["organization", pole_id, direction_id, service_id],
-    queryFn: async () => {
-      let org = { name: "", level: "" };
-
-      if (service_id) {
-        const { data } = await supabase
-          .from("services")
-          .select("name")
-          .eq("id", service_id)
-          .maybeSingle();
-        if (data) {
-          org = { name: data.name, level: "Service" };
-        }
-      } else if (direction_id) {
-        const { data } = await supabase
-          .from("directions")
-          .select("name")
-          .eq("id", direction_id)
-          .maybeSingle();
-        if (data) {
-          org = { name: data.name, level: "Direction" };
-        }
-      } else if (pole_id) {
-        const { data } = await supabase
-          .from("poles")
-          .select("name")
-          .eq("id", pole_id)
-          .maybeSingle();
-        if (data) {
-          org = { name: data.name, level: "Pôle" };
-        }
-      }
-
-      return org;
-    },
-    enabled: !!(pole_id || direction_id || service_id),
-  });
-
-  const { data: latestReview } = useQuery({
-    queryKey: ["latestReview", id],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("latest_reviews")
-        .select("*")
-        .eq("project_id", id)
-        .maybeSingle();
-        
-      if (error) {
-        console.error("Error fetching latest review:", error);
-        return null;
-      }
-      
-      return data;
-    },
-    enabled: !!id,
-  });
+  const user = useUser();
+  
+  const handleTeamManagementClick = () => {
+    navigate(`/projects/${id}/team`);
+  };
 
   return (
-    <Card className="w-full transition-all duration-300 hover:shadow-lg animate-fade-in">
-      <ProjectCardHeader
-        title={title}
-        status={latestReview?.weather || null}
-        onEdit={onEdit}
-        onViewHistory={onViewHistory}
-        id={id}
-        owner_id={owner_id}
-        project_manager={project_manager}
-        additionalActions={
-          <AddToCartButton projectId={id} projectTitle={title} />
-        }
-      />
+    <Card className="relative">
+      <CardHeader>
+        <CardTitle>{title}</CardTitle>
+        <p>Status: {status}</p>
+        <p>Progress: {progress}</p>
+        <p>Completion: {completion}%</p>
+        <p>Project Manager: {project_manager || "-"}</p>
+        <p>Last Review Date: {last_review_date ? new Date(last_review_date).toLocaleDateString("fr-FR") : "-"}</p>
+      </CardHeader>
       <CardContent>
-        <div className="grid gap-4">
-          <div className="flex items-center justify-between">
-            <LifecycleStatusBadge status={lifecycle_status} />
-          </div>
-          {description && (
-            <p className="text-sm text-muted-foreground">{description}</p>
+        <div className="absolute top-4 right-4 flex gap-2">
+          {canManageProjectItems(user?.roles, user?.id, owner_id, project_manager, user?.email) && (
+            <>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={handleTeamManagementClick}
+              >
+                <Users className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => onEdit(id)}
+              >
+                <Pencil className="h-4 w-4" />
+              </Button>
+            </>
           )}
-          {organization?.name && (
-            <p className="text-sm text-muted-foreground">
-              {organization.level}: {organization.name}
-            </p>
-          )}
-          <div 
-            className="cursor-pointer"
-            onClick={() => navigate(`/projects/${id}`)}
-          >
-            <ProjectMetrics
-              progress={latestReview?.progress || null}
-              completion={latestReview?.completion || 0}
-              lastReviewDate={latestReview?.created_at || null}
-            />
-          </div>
-          <TaskSummary projectId={id} />
         </div>
       </CardContent>
     </Card>
