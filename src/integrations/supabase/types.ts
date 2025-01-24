@@ -745,7 +745,7 @@ export type Database = {
       risk_status: "open" | "in_progress" | "resolved"
       task_status: "todo" | "in_progress" | "done"
       user_hierarchy_level: "pole" | "direction" | "service"
-      user_role: "admin" | "chef_projet" | "manager"
+      user_role: "admin" | "chef_projet" | "manager" | "membre"
     }
     CompositeTypes: {
       [_ in never]: never

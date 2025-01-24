@@ -1,6 +1,6 @@
 import { ProjectStatus, ProgressStatus } from "./project";
 
-export type UserRole = "admin" | "chef_projet" | "manager";
+export type UserRole = "admin" | "chef_projet" | "manager" | "membre";
 
 export interface UserProfile {
   id: string;

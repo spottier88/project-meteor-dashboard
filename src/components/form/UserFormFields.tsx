@@ -123,6 +123,16 @@ export const UserFormFields = ({
               Manager
             </Label>
           </div>
+          <div className="flex items-center space-x-2">
+            <Checkbox
+              id="membre"
+              checked={roles.includes("membre")}
+              onCheckedChange={() => handleRoleToggle("membre")}
+            />
+            <Label htmlFor="membre" className="font-normal">
+              Membre
+            </Label>
+          </div>
         </div>
       </div>
     </div>

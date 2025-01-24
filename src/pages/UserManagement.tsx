@@ -41,6 +41,8 @@ const getRoleLabel = (role: UserRole): string => {
       return "Chef de projet";
     case "manager":
       return "Manager";
+    case "membre":
+      return "Membre";
     default:
       return role;
   }
