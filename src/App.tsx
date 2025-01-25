@@ -15,6 +15,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import { ReviewHistory } from "./components/ReviewHistory";
 import { ManagerAssignments } from "./pages/ManagerAssignments";
+import { ProjectTeamManagement } from "./pages/ProjectTeamManagement";
 
 const queryClient = new QueryClient();
 
@@ -86,6 +87,14 @@ function App() {
               element={
                 <ProtectedRoute>
                   <ProjectSummary />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/projects/:projectId/team"
+              element={
+                <ProtectedRoute>
+                  <ProjectTeamManagement />
                 </ProtectedRoute>
               }
             />

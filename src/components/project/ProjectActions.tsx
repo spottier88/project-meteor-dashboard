@@ -3,7 +3,6 @@ import { Pencil, History, ListTodo, ShieldAlert, Trash2, Users } from "lucide-re
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { DeleteProjectDialog } from "./DeleteProjectDialog";
-import { TeamManagement } from "./TeamManagement";
 import { UserRole } from "@/types/user";
 import { useUser } from "@supabase/auth-helpers-react";
 import { canViewProjectHistory, canManageTasks, canManageRisks, canEditProject } from "@/utils/permissions";
@@ -31,7 +30,6 @@ export const ProjectActions = ({
 }: ProjectActionsProps) => {
   const navigate = useNavigate();
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [isTeamManagementOpen, setIsTeamManagementOpen] = useState(false);
   const isAdmin = userRoles?.includes("admin");
   const user = useUser();
   const [canEdit, setCanEdit] = useState(false);
@@ -116,7 +114,7 @@ export const ProjectActions = ({
         <Button
           variant="ghost"
           size="icon"
-          onClick={(e) => handleClick(e, () => setIsTeamManagementOpen(true))}
+          onClick={(e) => handleClick(e, () => navigate(`/projects/${projectId}/team`))}
           className="h-8 w-8"
           title="Gérer l'équipe"
         >
@@ -141,12 +139,6 @@ export const ProjectActions = ({
         projectId={projectId}
         projectTitle={projectTitle}
         onProjectDeleted={onProjectDeleted}
-      />
-
-      <TeamManagement
-        isOpen={isTeamManagementOpen}
-        onClose={() => setIsTeamManagementOpen(false)}
-        projectId={projectId}
       />
     </>
   );

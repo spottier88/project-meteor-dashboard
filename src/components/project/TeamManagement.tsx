@@ -1,19 +1,16 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { Search, UserMinus } from "lucide-react";
 
 interface TeamManagementProps {
-  isOpen: boolean;
-  onClose: () => void;
   projectId: string;
 }
 
-export const TeamManagement = ({ isOpen, onClose, projectId }: TeamManagementProps) => {
+export const TeamManagement = ({ projectId }: TeamManagementProps) => {
   const { toast } = useToast();
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -144,91 +141,78 @@ export const TeamManagement = ({ isOpen, onClose, projectId }: TeamManagementPro
     }
   };
 
-  const handleClose = () => {
-    setSearchQuery("");
-    onClose();
-  };
-
   return (
-    <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-[600px]" onInteractOutside={(e) => e.preventDefault()}>
-        <DialogHeader>
-          <DialogTitle>Gestion de l'équipe projet</DialogTitle>
-        </DialogHeader>
-
-        <div className="space-y-6">
-          <div>
-            <h3 className="text-lg font-medium mb-4">Ajouter des membres</h3>
-            <div className="flex gap-4 items-center">
-              <Search className="w-4 h-4 text-muted-foreground" />
-              <Input
-                placeholder="Rechercher un utilisateur par email..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="flex-1"
-              />
-            </div>
-            {searchQuery.length > 2 && availableUsers && (
-              <div className="mt-4 space-y-2">
-                {availableUsers.map((user) => (
-                  <div
-                    key={user.id}
-                    className="flex items-center justify-between p-2 border rounded-lg"
-                  >
-                    <div>
-                      <p className="font-medium">
-                        {user.first_name} {user.last_name}
-                      </p>
-                      <p className="text-sm text-muted-foreground">{user.email}</p>
-                    </div>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleAddMember(user.id)}
-                    >
-                      Ajouter
-                    </Button>
-                  </div>
-                ))}
-                {availableUsers.length === 0 && (
-                  <p className="text-muted-foreground">Aucun utilisateur trouvé</p>
-                )}
+    <div className="space-y-6">
+      <div>
+        <h3 className="text-lg font-medium mb-4">Ajouter des membres</h3>
+        <div className="flex gap-4 items-center">
+          <Search className="w-4 h-4 text-muted-foreground" />
+          <Input
+            placeholder="Rechercher un utilisateur par email..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="flex-1"
+          />
+        </div>
+        {searchQuery.length > 2 && availableUsers && (
+          <div className="mt-4 space-y-2">
+            {availableUsers.map((user) => (
+              <div
+                key={user.id}
+                className="flex items-center justify-between p-2 border rounded-lg"
+              >
+                <div>
+                  <p className="font-medium">
+                    {user.first_name} {user.last_name}
+                  </p>
+                  <p className="text-sm text-muted-foreground">{user.email}</p>
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleAddMember(user.id)}
+                >
+                  Ajouter
+                </Button>
               </div>
+            ))}
+            {availableUsers.length === 0 && (
+              <p className="text-muted-foreground">Aucun utilisateur trouvé</p>
             )}
           </div>
+        )}
+      </div>
 
-          <div>
-            <h3 className="text-lg font-medium mb-4">Membres actuels</h3>
-            <div className="space-y-2">
-              {currentMembers?.map((member) => (
-                <div
-                  key={member.user_id}
-                  className="flex items-center justify-between p-2 border rounded-lg"
-                >
-                  <div>
-                    <p className="font-medium">
-                      {member.profiles.first_name} {member.profiles.last_name}
-                    </p>
-                    <p className="text-sm text-muted-foreground">
-                      {member.profiles.email}
-                    </p>
-                  </div>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => handleRemoveMember(member.user_id)}
-                  >
-                    <UserMinus className="h-4 w-4 text-destructive" />
-                  </Button>
-                </div>
-              ))}
-              {(!currentMembers || currentMembers.length === 0) && (
-                <p className="text-muted-foreground">Aucun membre dans l'équipe</p>
-              )}
+      <div>
+        <h3 className="text-lg font-medium mb-4">Membres actuels</h3>
+        <div className="space-y-2">
+          {currentMembers?.map((member) => (
+            <div
+              key={member.user_id}
+              className="flex items-center justify-between p-2 border rounded-lg"
+            >
+              <div>
+                <p className="font-medium">
+                  {member.profiles.first_name} {member.profiles.last_name}
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  {member.profiles.email}
+                </p>
+              </div>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => handleRemoveMember(member.user_id)}
+              >
+                <UserMinus className="h-4 w-4 text-destructive" />
+              </Button>
             </div>
-          </div>
+          ))}
+          {(!currentMembers || currentMembers.length === 0) && (
+            <p className="text-muted-foreground">Aucun membre dans l'équipe</p>
+          )}
         </div>
-      </DialogContent>
-    </Dialog>
+      </div>
+    </div>
   );
 };
