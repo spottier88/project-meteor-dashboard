@@ -1,3 +1,4 @@
+import React from 'react';
 import { ProjectCard } from "./ProjectCard";
 import { ProjectStatus, ProgressStatus, ProjectLifecycleStatus } from "@/types/project";
 import { useUser } from "@supabase/auth-helpers-react";
