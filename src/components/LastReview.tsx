@@ -8,7 +8,7 @@ interface LastReviewProps {
     progress: "better" | "stable" | "worse";
     comment?: string;
     created_at: string;
-  };
+  } | null;
 }
 
 const weatherIcons = {
@@ -30,6 +30,19 @@ const progressLabels = {
 };
 
 export const LastReview = ({ review }: LastReviewProps) => {
+  if (!review) {
+    return (
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle>Dernière revue</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-muted-foreground text-center">Aucune revue disponible</p>
+        </CardContent>
+      </Card>
+    );
+  }
+
   const WeatherIcon = weatherIcons[review.weather].icon;
 
   return (
