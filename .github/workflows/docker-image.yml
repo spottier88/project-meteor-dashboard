@@ -27,7 +27,7 @@ jobs:
 
      # Étape 3 : Construire l'image Docker
       - name: Build the Docker image
-        run: docker build . --file Dockerfile --tag project-meteor:$(date +%s)
+        run: docker build . --file Dockerfile --tag spottier88/project-meteor:$(date +%s)
 
       # Étape 4 : Pousser l'image vers Docker Hub
       - name: Push Docker Image
