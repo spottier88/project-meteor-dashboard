@@ -28,7 +28,7 @@ const Login = () => {
         <Auth
           supabaseClient={supabase}
           appearance={{ theme: ThemeSupa }}
-          providers={['azure']}
+          providers={[]}
           redirectTo={window.location.origin}
           localization={{
             variables: {
