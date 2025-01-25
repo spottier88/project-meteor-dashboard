@@ -7,6 +7,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { DatePickerField } from "./form/DatePickerField";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useQuery } from "@tanstack/react-query";
 
 interface TaskFormProps {
   isOpen: boolean;
@@ -32,7 +34,29 @@ export const TaskForm = ({ isOpen, onClose, onSubmit, projectId, task }: TaskFor
     task?.due_date ? new Date(task.due_date) : undefined
   );
   const [assignee, setAssignee] = useState(task?.assignee || "");
+  const [assignmentMode, setAssignmentMode] = useState<"free" | "member">("free");
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const { data: projectMembers } = useQuery({
+    queryKey: ["projectMembers", projectId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("project_members")
+        .select(`
+          user_id,
+          profiles:user_id (
+            id,
+            email,
+            first_name,
+            last_name
+          )
+        `)
+        .eq("project_id", projectId);
+
+      if (error) throw error;
+      return data;
+    },
+  });
 
   // Reset form when task changes or when form is closed
   useEffect(() => {
@@ -42,10 +66,16 @@ export const TaskForm = ({ isOpen, onClose, onSubmit, projectId, task }: TaskFor
       setStatus(task.status);
       setDueDate(task.due_date ? new Date(task.due_date) : undefined);
       setAssignee(task.assignee || "");
+      // Determine initial assignment mode
+      setAssignmentMode(
+        projectMembers?.some(m => m.profiles.email === task.assignee)
+          ? "member"
+          : "free"
+      );
     } else {
       resetForm();
     }
-  }, [task, isOpen]);
+  }, [task, isOpen, projectMembers]);
 
   const resetForm = () => {
     setTitle("");
@@ -53,6 +83,7 @@ export const TaskForm = ({ isOpen, onClose, onSubmit, projectId, task }: TaskFor
     setStatus("todo");
     setDueDate(undefined);
     setAssignee("");
+    setAssignmentMode("free");
   };
 
   const handleSubmit = async () => {
@@ -162,15 +193,39 @@ export const TaskForm = ({ isOpen, onClose, onSubmit, projectId, task }: TaskFor
             </Select>
           </div>
           <div className="grid gap-2">
-            <label htmlFor="assignee" className="text-sm font-medium">
+            <label className="text-sm font-medium">
               Responsable
             </label>
-            <Input
-              id="assignee"
-              value={assignee}
-              onChange={(e) => setAssignee(e.target.value)}
-              placeholder="Nom du responsable"
-            />
+            <Tabs value={assignmentMode} onValueChange={(value: "free" | "member") => setAssignmentMode(value)}>
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="free">Saisie libre</TabsTrigger>
+                <TabsTrigger value="member">Membre du projet</TabsTrigger>
+              </TabsList>
+              <TabsContent value="free">
+                <Input
+                  value={assignee}
+                  onChange={(e) => setAssignee(e.target.value)}
+                  placeholder="Nom du responsable"
+                />
+              </TabsContent>
+              <TabsContent value="member">
+                <Select
+                  value={assignee}
+                  onValueChange={setAssignee}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Sélectionner un membre" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {projectMembers?.map((member) => (
+                      <SelectItem key={member.user_id} value={member.profiles.email}>
+                        {member.profiles.first_name} {member.profiles.last_name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </TabsContent>
+            </Tabs>
           </div>
           <DatePickerField
             label="Date d'échéance"
