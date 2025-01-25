@@ -14,6 +14,26 @@ export const TeamManagement = ({ projectId }: TeamManagementProps) => {
   const { toast } = useToast();
   const [searchQuery, setSearchQuery] = useState("");
 
+  // Récupérer les informations du projet
+  const { data: project } = useQuery({
+    queryKey: ["project", projectId],
+    queryFn: async () => {
+      console.log("Fetching project info for:", projectId);
+      const { data, error } = await supabase
+        .from("projects")
+        .select("project_manager")
+        .eq("id", projectId)
+        .single();
+
+      if (error) {
+        console.error("Error fetching project:", error);
+        throw error;
+      }
+      console.log("Project info:", data);
+      return data;
+    },
+  });
+
   // Récupérer les membres actuels du projet
   const { data: currentMembers, refetch: refetchMembers } = useQuery({
     queryKey: ["projectMembers", projectId],
@@ -43,7 +63,7 @@ export const TeamManagement = ({ projectId }: TeamManagementProps) => {
 
   // Récupérer les utilisateurs disponibles (avec le rôle 'membre')
   const { data: availableUsers } = useQuery({
-    queryKey: ["availableMembers", searchQuery, currentMembers],
+    queryKey: ["availableMembers", searchQuery, currentMembers, project?.project_manager],
     queryFn: async () => {
       console.log("Searching for available members with query:", searchQuery);
       const memberIds = (currentMembers || []).map(m => m.user_id);
@@ -66,6 +86,11 @@ export const TeamManagement = ({ projectId }: TeamManagementProps) => {
       // N'ajouter la condition not.in que s'il y a des membres à exclure
       if (memberIds.length > 0) {
         query = query.not('id', 'in', `(${memberIds.join(',')})`);
+      }
+
+      // Exclure le chef de projet
+      if (project?.project_manager) {
+        query = query.neq('email', project.project_manager);
       }
 
       const { data, error } = await query;
