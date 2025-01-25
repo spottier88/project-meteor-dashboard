@@ -133,6 +133,12 @@ const Index = () => {
     },
   });
 
+  const [accessibleProjectIds, setAccessibleProjectIds] = useState<string[]>([]);
+
+  const handleFilteredProjectsChange = (projectIds: string[]) => {
+    setAccessibleProjectIds(projectIds);
+  };
+
   const filteredProjects = projects?.filter(project => {
     // Filtre par statut du cycle de vie
     if (lifecycleStatus !== 'all' && project.lifecycle_status !== lifecycleStatus) {
@@ -361,7 +367,7 @@ const Index = () => {
         onMonitoringLevelChange={setMonitoringLevel}
         showMyProjectsOnly={showMyProjectsOnly}
         onMyProjectsToggle={setShowMyProjectsOnly}
-        filteredProjectIds={filteredProjects.map(p => p.id)}
+        filteredProjectIds={accessibleProjectIds}
       />
 
       <ProjectList
@@ -372,6 +378,7 @@ const Index = () => {
         onProjectReview={handleProjectSelect}
         onViewHistory={handleViewHistory}
         onProjectDeleted={refetchProjects}
+        onFilteredProjectsChange={handleFilteredProjectsChange}
       />
 
       <ProjectModals

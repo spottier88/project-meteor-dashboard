@@ -24,6 +24,7 @@ interface ProjectGridProps {
   onProjectReview: (id: string, title: string) => void;
   onProjectEdit: (id: string) => void;
   onViewHistory: (id: string, title: string) => void;
+  onFilteredProjectsChange?: (projectIds: string[]) => void;
 }
 
 export const ProjectGrid = ({
@@ -31,6 +32,7 @@ export const ProjectGrid = ({
   onProjectReview,
   onProjectEdit,
   onViewHistory,
+  onFilteredProjectsChange,
 }: ProjectGridProps) => {
   const user = useUser();
 
@@ -139,7 +141,12 @@ export const ProjectGrid = ({
     enabled: !!user?.id && !!userRoles && !!userProfile,
   });
 
-  console.log("Filtered projects:", filteredProjects?.length || 0, "out of", projects.length);
+  // Notifier le parent des projets filtrés
+  React.useEffect(() => {
+    if (filteredProjects && onFilteredProjectsChange) {
+      onFilteredProjectsChange(filteredProjects.map(project => project.id));
+    }
+  }, [filteredProjects, onFilteredProjectsChange]);
 
   if (!filteredProjects) {
     return null;

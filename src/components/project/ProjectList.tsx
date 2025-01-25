@@ -11,6 +11,7 @@ interface ProjectListProps {
   onProjectReview: (id: string, title: string) => void;
   onViewHistory: (id: string, title: string) => void;
   onProjectDeleted: () => void;
+  onFilteredProjectsChange?: (projectIds: string[]) => void;
 }
 
 export const ProjectList = ({
@@ -21,6 +22,7 @@ export const ProjectList = ({
   onProjectReview,
   onViewHistory,
   onProjectDeleted,
+  onFilteredProjectsChange,
 }: ProjectListProps) => {
   return (
     <>
@@ -31,6 +33,7 @@ export const ProjectList = ({
           onProjectEdit={onProjectEdit}
           onProjectReview={onProjectReview}
           onViewHistory={onViewHistory}
+          onFilteredProjectsChange={onFilteredProjectsChange}
         />
       ) : (
         <ProjectTable 
