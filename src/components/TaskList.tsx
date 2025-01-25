@@ -4,6 +4,14 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { TaskForm } from "./TaskForm";
 import { useToast } from "@/components/ui/use-toast";
+import { Plus } from "lucide-react";
+import { TaskTable } from "./task/TaskTable";
+import { useUser } from "@supabase/auth-helpers-react";
+import { canManageProjectItems } from "@/utils/permissions";
+import { UserRoleData } from "@/types/user";
+import { Input } from "@/components/ui/input";
+import { ViewToggle, ViewMode } from "@/components/ViewToggle";
+import { KanbanBoard } from "@/components/KanbanBoard";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -14,12 +22,6 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Plus } from "lucide-react";
-import { TaskTable } from "./task/TaskTable";
-import { useUser } from "@supabase/auth-helpers-react";
-import { canManageProjectItems } from "@/utils/permissions";
-import { UserRoleData } from "@/types/user";
-import { Input } from "@/components/ui/input";
 
 interface TaskListProps {
   projectId: string;
@@ -32,6 +34,7 @@ export const TaskList = ({ projectId }: TaskListProps) => {
   const [selectedTask, setSelectedTask] = useState<any>(null);
   const [taskToDelete, setTaskToDelete] = useState<any>(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const [view, setView] = useState<ViewMode>("table");
 
   const { data: project } = useQuery({
     queryKey: ["project", projectId],
@@ -158,25 +161,40 @@ export const TaskList = ({ projectId }: TaskListProps) => {
         )}
       </div>
 
-      <div className="flex items-center space-x-2">
-        <Input
-          placeholder="Rechercher une tâche..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="max-w-sm"
-        />
+      <div className="flex flex-col space-y-4">
+        <ViewToggle currentView={view} onViewChange={setView} />
+        
+        <div className="flex items-center space-x-2">
+          <Input
+            placeholder="Rechercher une tâche..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="max-w-sm"
+          />
+        </div>
       </div>
 
       {tasks && tasks.length > 0 ? (
-        <TaskTable
-          tasks={filteredTasks || []}
-          onEdit={(task) => {
-            setSelectedTask(task);
-            setIsTaskFormOpen(true);
-          }}
-          onDelete={setTaskToDelete}
-          showActions={canManage}
-        />
+        view === "table" ? (
+          <TaskTable
+            tasks={filteredTasks || []}
+            onEdit={(task) => {
+              setSelectedTask(task);
+              setIsTaskFormOpen(true);
+            }}
+            onDelete={setTaskToDelete}
+            showActions={canManage}
+          />
+        ) : (
+          <KanbanBoard
+            projectId={projectId}
+            readOnly={!canManage}
+            onEditTask={(task) => {
+              setSelectedTask(task);
+              setIsTaskFormOpen(true);
+            }}
+          />
+        )
       ) : (
         <div className="text-center py-4 text-muted-foreground">
           Aucune tâche pour ce projet
