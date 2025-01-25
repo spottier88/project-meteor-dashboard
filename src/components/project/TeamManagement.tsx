@@ -23,7 +23,7 @@ export const TeamManagement = ({ projectId }: TeamManagementProps) => {
         .from("projects")
         .select("project_manager")
         .eq("id", projectId)
-        .single();
+        .maybeSingle();
 
       if (error) {
         console.error("Error fetching project:", error);
