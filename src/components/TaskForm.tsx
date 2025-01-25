@@ -40,6 +40,8 @@ export const TaskForm = ({ isOpen, onClose, onSubmit, projectId, task }: TaskFor
   const { data: projectMembers } = useQuery({
     queryKey: ["projectMembers", projectId],
     queryFn: async () => {
+      if (!projectId) return null;
+      
       const { data, error } = await supabase
         .from("project_members")
         .select(`
@@ -56,24 +58,28 @@ export const TaskForm = ({ isOpen, onClose, onSubmit, projectId, task }: TaskFor
       if (error) throw error;
       return data;
     },
+    enabled: !!projectId && isOpen,
   });
 
   // Reset form when task changes or when form is closed
   useEffect(() => {
-    if (task) {
-      setTitle(task.title);
-      setDescription(task.description || "");
-      setStatus(task.status);
-      setDueDate(task.due_date ? new Date(task.due_date) : undefined);
-      setAssignee(task.assignee || "");
-      // Determine initial assignment mode
-      setAssignmentMode(
-        projectMembers?.some(m => m.profiles.email === task.assignee)
-          ? "member"
-          : "free"
-      );
-    } else {
-      resetForm();
+    if (isOpen) {
+      if (task) {
+        setTitle(task.title);
+        setDescription(task.description || "");
+        setStatus(task.status);
+        setDueDate(task.due_date ? new Date(task.due_date) : undefined);
+        setAssignee(task.assignee || "");
+        
+        // Determine initial assignment mode
+        setAssignmentMode(
+          projectMembers?.some(m => m.profiles.email === task.assignee)
+            ? "member"
+            : "free"
+        );
+      } else {
+        resetForm();
+      }
     }
   }, [task, isOpen, projectMembers]);
 
