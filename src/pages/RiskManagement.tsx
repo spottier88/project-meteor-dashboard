@@ -33,12 +33,12 @@ export const RiskManagement = () => {
           .from("projects")
           .select("*")
           .eq("id", projectId)
-          .single(),
+          .maybeSingle(),
         supabase
           .from("latest_reviews")
           .select("*")
           .eq("project_id", projectId)
-          .single()
+          .maybeSingle()
       ]);
 
       if (projectResult.error) throw projectResult.error;
@@ -47,7 +47,8 @@ export const RiskManagement = () => {
         ...projectResult.data,
         status: reviewResult.data?.weather || null,
         progress: reviewResult.data?.progress || null,
-        completion: reviewResult.data?.completion || 0
+        completion: reviewResult.data?.completion || 0,
+        last_review_date: reviewResult.data?.created_at || null
       } as Project;
     },
   });
@@ -76,11 +77,11 @@ export const RiskManagement = () => {
           </div>
           <div>
             <span className="text-sm text-muted-foreground">Statut</span>
-            <p className="font-medium">{project.status ? statusLabels[project.status] : "-"}</p>
+            <p className="font-medium">{project.status ? statusLabels[project.status] : "Pas de revue"}</p>
           </div>
           <div>
             <span className="text-sm text-muted-foreground">Progression</span>
-            <p className="font-medium">{project.progress ? progressLabels[project.progress] : "-"}</p>
+            <p className="font-medium">{project.progress ? progressLabels[project.progress] : "Pas de revue"}</p>
           </div>
           <div>
             <span className="text-sm text-muted-foreground">Avancement</span>
@@ -89,7 +90,7 @@ export const RiskManagement = () => {
           <div>
             <span className="text-sm text-muted-foreground">Dernière revue</span>
             <p className="font-medium">
-              {project.last_review_date ? new Date(project.last_review_date).toLocaleDateString("fr-FR") : "-"}
+              {project.last_review_date ? new Date(project.last_review_date).toLocaleDateString("fr-FR") : "Pas de revue"}
             </p>
           </div>
         </div>
