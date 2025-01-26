@@ -13,6 +13,10 @@ RUN npm install
 # Copier le reste des fichiers du projet
 COPY . .
 
+# Définition des variables avant le build
+ENV VITE_SUPABASE_URL="https://rgfabywkwllxoqsahrpt.supabase.co"
+ENV VITE_SUPABASE_PUBLISHABLE_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJnZmFieXdrd2xseG9xc2FocnB0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzUwMzExMjUsImV4cCI6MjA1MDYwNzEyNX0.aAbMpn2Hq1vLQrh2XINRiEJIYng8lG4yBV_lSogf1MU"
+
 # Construire l'application
 RUN npm run build
 
