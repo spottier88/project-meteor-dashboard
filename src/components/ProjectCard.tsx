@@ -106,6 +106,26 @@ export const ProjectCard = ({
     enabled: !!id,
   });
 
+  const { data: isMember } = useQuery({
+    queryKey: ["projectMember", id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("project_members")
+        .select("*")
+        .eq("project_id", id)
+        .eq("user_id", (await supabase.auth.getUser()).data.user?.id)
+        .maybeSingle();
+
+      if (error) {
+        console.error("Error checking project membership:", error);
+        return false;
+      }
+
+      return !!data;
+    },
+    enabled: !!id,
+  });
+
   return (
     <Card className="w-full transition-all duration-300 hover:shadow-lg animate-fade-in">
       <ProjectCardHeader
@@ -124,6 +144,11 @@ export const ProjectCard = ({
         <div className="grid gap-4">
           <div className="flex items-center justify-between">
             <LifecycleStatusBadge status={lifecycle_status} />
+            {isMember && (
+              <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
+                Membre du projet
+              </span>
+            )}
           </div>
           {description && (
             <p className="text-sm text-muted-foreground">{description}</p>

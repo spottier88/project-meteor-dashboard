@@ -75,8 +75,27 @@ export const ProjectTable = ({
     enabled: !!user?.id,
   });
 
+  const { data: projectMemberships } = useQuery({
+    queryKey: ["projectMemberships", user?.id],
+    queryFn: async () => {
+      if (!user?.id) return [];
+      const { data, error } = await supabase
+        .from("project_members")
+        .select("project_id")
+        .eq("user_id", user.id);
+
+      if (error) {
+        console.error("Error fetching project memberships:", error);
+        return [];
+      }
+
+      return data.map(pm => pm.project_id);
+    },
+    enabled: !!user?.id,
+  });
+
   const { data: filteredProjects } = useQuery({
-    queryKey: ["filteredProjects", projects, user?.id, userRoles, userProfile],
+    queryKey: ["filteredProjects", projects, user?.id, userRoles, userProfile, projectMemberships],
     queryFn: async () => {
       if (!user) {
         console.log("No user logged in (table)");
@@ -92,9 +111,10 @@ export const ProjectTable = ({
       const filteredResults = await Promise.all(
         projects.map(async project => {
           const isProjectManager = project.project_manager === userProfile?.email;
+          const isMember = projectMemberships?.includes(project.id);
           
-          if (isProjectManager) {
-            console.log(`Project ${project.id} accessible (project manager) (table)`);
+          if (isProjectManager || isMember) {
+            console.log(`Project ${project.id} accessible (project manager or member) (table)`);
             return true;
           }
 
@@ -127,6 +147,7 @@ export const ProjectTable = ({
             },
             access: {
               isProjectManager,
+              isMember,
               canAccess,
               userEmail: userProfile?.email,
               projectManager: project.project_manager
