@@ -208,7 +208,6 @@ export const ProjectSummaryContent = ({
         <RiskList 
           projectId={project.id} 
           projectTitle={project.title} 
-          readOnly={!canEdit}
           onRiskSubmit={handleRiskSubmit}
         />
       </div>

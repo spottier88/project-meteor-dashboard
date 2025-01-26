@@ -4,6 +4,7 @@ export type RiskStatus = "open" | "in_progress" | "resolved";
 
 export interface Risk {
   id: string;
+  project_id: string;
   description: string;
   probability: RiskProbability;
   severity: RiskSeverity;

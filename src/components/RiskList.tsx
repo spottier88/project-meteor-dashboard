@@ -102,7 +102,7 @@ export const RiskList = ({ projectId, projectTitle, onRiskSubmit }: RiskListProp
       </div>
 
       <div className="grid gap-4">
-        {risks.map((risk) => (
+        {riskData?.map((risk) => (
           <RiskCard
             key={risk.id}
             risk={risk}
