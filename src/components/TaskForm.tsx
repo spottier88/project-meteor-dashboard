@@ -23,9 +23,17 @@ interface TaskFormProps {
     due_date?: string;
     assignee?: string;
   };
+  readOnlyFields?: boolean;
 }
 
-export const TaskForm = ({ isOpen, onClose, onSubmit, projectId, task }: TaskFormProps) => {
+export const TaskForm = ({ 
+  isOpen, 
+  onClose, 
+  onSubmit, 
+  projectId, 
+  task,
+  readOnlyFields = false
+}: TaskFormProps) => {
   const { toast } = useToast();
   const [title, setTitle] = useState(task?.title || "");
   const [description, setDescription] = useState(task?.description || "");
@@ -170,6 +178,8 @@ export const TaskForm = ({ isOpen, onClose, onSubmit, projectId, task }: TaskFor
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder="Titre de la tâche"
+              readOnly={readOnlyFields}
+              className={readOnlyFields ? "bg-gray-100" : ""}
             />
           </div>
           <div className="grid gap-2">
@@ -198,46 +208,50 @@ export const TaskForm = ({ isOpen, onClose, onSubmit, projectId, task }: TaskFor
               </SelectContent>
             </Select>
           </div>
-          <div className="grid gap-2">
-            <label className="text-sm font-medium">
-              Responsable
-            </label>
-            <Tabs value={assignmentMode} onValueChange={(value: "free" | "member") => setAssignmentMode(value)}>
-              <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="free">Saisie libre</TabsTrigger>
-                <TabsTrigger value="member">Membre du projet</TabsTrigger>
-              </TabsList>
-              <TabsContent value="free">
-                <Input
-                  value={assignee}
-                  onChange={(e) => setAssignee(e.target.value)}
-                  placeholder="Nom du responsable"
-                />
-              </TabsContent>
-              <TabsContent value="member">
-                <Select
-                  value={assignee}
-                  onValueChange={setAssignee}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Sélectionner un membre" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {projectMembers?.map((member) => (
-                      <SelectItem key={member.user_id} value={member.profiles.email}>
-                        {member.profiles.first_name} {member.profiles.last_name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </TabsContent>
-            </Tabs>
-          </div>
-          <DatePickerField
-            label="Date d'échéance"
-            value={dueDate}
-            onChange={setDueDate}
-          />
+          {!readOnlyFields && (
+            <>
+              <div className="grid gap-2">
+                <label className="text-sm font-medium">
+                  Responsable
+                </label>
+                <Tabs value={assignmentMode} onValueChange={(value: "free" | "member") => setAssignmentMode(value)}>
+                  <TabsList className="grid w-full grid-cols-2">
+                    <TabsTrigger value="free">Saisie libre</TabsTrigger>
+                    <TabsTrigger value="member">Membre du projet</TabsTrigger>
+                  </TabsList>
+                  <TabsContent value="free">
+                    <Input
+                      value={assignee}
+                      onChange={(e) => setAssignee(e.target.value)}
+                      placeholder="Nom du responsable"
+                    />
+                  </TabsContent>
+                  <TabsContent value="member">
+                    <Select
+                      value={assignee}
+                      onValueChange={setAssignee}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Sélectionner un membre" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {projectMembers?.map((member) => (
+                          <SelectItem key={member.user_id} value={member.profiles.email}>
+                            {member.profiles.first_name} {member.profiles.last_name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </TabsContent>
+                </Tabs>
+              </div>
+              <DatePickerField
+                label="Date d'échéance"
+                value={dueDate}
+                onChange={setDueDate}
+              />
+            </>
+          )}
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={onClose}>

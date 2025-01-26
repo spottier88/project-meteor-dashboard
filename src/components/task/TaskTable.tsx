@@ -19,7 +19,7 @@ interface TaskTableProps {
   tasks: Task[];
   onEdit?: (task: Task) => void;
   onDelete?: (task: Task) => void;
-  showActions?: boolean;
+  showActions?: (task: Task) => boolean;
 }
 
 const statusColors = {
@@ -34,7 +34,7 @@ const statusLabels = {
   done: "Terminé",
 };
 
-export const TaskTable = ({ tasks, onEdit, onDelete, showActions }: TaskTableProps) => {
+export const TaskTable = ({ tasks, onEdit, onDelete, showActions = () => true }: TaskTableProps) => {
   const [sortKey, setSortKey] = useState<string | null>(null);
   const [sortDirection, setSortDirection] = useState<SortDirection>(null);
 

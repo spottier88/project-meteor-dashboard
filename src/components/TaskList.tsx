@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { TaskForm } from "./TaskForm";
@@ -7,11 +7,10 @@ import { useToast } from "@/components/ui/use-toast";
 import { Plus } from "lucide-react";
 import { TaskTable } from "./task/TaskTable";
 import { useUser } from "@supabase/auth-helpers-react";
-import { canManageProjectItems } from "@/utils/permissions";
-import { UserRoleData } from "@/types/user";
 import { Input } from "@/components/ui/input";
 import { ViewToggle, ViewMode } from "@/components/ViewToggle";
 import { KanbanBoard } from "@/components/KanbanBoard";
+import { useTaskPermissions } from "@/hooks/use-task-permissions";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -29,57 +28,14 @@ interface TaskListProps {
 
 export const TaskList = ({ projectId }: TaskListProps) => {
   const { toast } = useToast();
-  const user = useUser();
   const [isTaskFormOpen, setIsTaskFormOpen] = useState(false);
   const [selectedTask, setSelectedTask] = useState<any>(null);
   const [taskToDelete, setTaskToDelete] = useState<any>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [view, setView] = useState<ViewMode>("table");
+  const queryClient = useQueryClient();
 
-  const { data: project } = useQuery({
-    queryKey: ["project", projectId],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("projects")
-        .select("*")
-        .eq("id", projectId)
-        .single();
-
-      if (error) throw error;
-      return data;
-    },
-  });
-
-  const { data: userProfile } = useQuery({
-    queryKey: ["userProfile", user?.id],
-    queryFn: async () => {
-      if (!user?.id) return null;
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("*")
-        .eq("id", user.id)
-        .single();
-
-      if (error) throw error;
-      return data;
-    },
-    enabled: !!user?.id,
-  });
-
-  const { data: userRoles } = useQuery({
-    queryKey: ["userRoles", user?.id],
-    queryFn: async () => {
-      if (!user?.id) return null;
-      const { data, error } = await supabase
-        .from("user_roles")
-        .select("*")
-        .eq("user_id", user.id);
-
-      if (error) throw error;
-      return data as UserRoleData[];
-    },
-    enabled: !!user?.id,
-  });
+  const { canCreateTask, canEditTask, canDeleteTask, userEmail } = useTaskPermissions(projectId);
 
   const { data: tasks, refetch } = useQuery({
     queryKey: ["tasks", projectId],
@@ -94,15 +50,6 @@ export const TaskList = ({ projectId }: TaskListProps) => {
       return data;
     },
   });
-
-  const roles = userRoles?.map(ur => ur.role);
-  const canManage = canManageProjectItems(
-    roles,
-    user?.id,
-    project?.owner_id,
-    project?.project_manager,
-    userProfile?.email
-  );
 
   const handleDeleteTask = async () => {
     if (!taskToDelete) return;
@@ -147,7 +94,7 @@ export const TaskList = ({ projectId }: TaskListProps) => {
     <div className="space-y-4">
       <div className="flex justify-between items-center">
         <h3 className="text-lg font-semibold">Tâches</h3>
-        {canManage && (
+        {canCreateTask && (
           <Button
             onClick={() => {
               setSelectedTask(null);
@@ -179,19 +126,27 @@ export const TaskList = ({ projectId }: TaskListProps) => {
           <TaskTable
             tasks={filteredTasks || []}
             onEdit={(task) => {
-              setSelectedTask(task);
-              setIsTaskFormOpen(true);
+              if (canEditTask(task.assignee)) {
+                setSelectedTask(task);
+                setIsTaskFormOpen(true);
+              }
             }}
-            onDelete={setTaskToDelete}
-            showActions={canManage}
+            onDelete={task => {
+              if (canDeleteTask) {
+                setTaskToDelete(task);
+              }
+            }}
+            showActions={(task) => canEditTask(task.assignee) || canDeleteTask}
           />
         ) : (
           <KanbanBoard
             projectId={projectId}
-            readOnly={!canManage}
+            readOnly={!canCreateTask}
             onEditTask={(task) => {
-              setSelectedTask(task);
-              setIsTaskFormOpen(true);
+              if (canEditTask(task.assignee)) {
+                setSelectedTask(task);
+                setIsTaskFormOpen(true);
+              }
             }}
           />
         )
@@ -209,7 +164,8 @@ export const TaskList = ({ projectId }: TaskListProps) => {
         }}
         onSubmit={refetch}
         projectId={projectId}
-        task={selectedTask || undefined}
+        task={selectedTask}
+        readOnlyFields={!canCreateTask}
       />
 
       <AlertDialog open={!!taskToDelete} onOpenChange={() => setTaskToDelete(null)}>
