@@ -42,6 +42,7 @@ export const ProjectList = ({
           onProjectReview={onProjectReview}
           onViewHistory={onViewHistory}
           onProjectDeleted={onProjectDeleted}
+          onFilteredProjectsChange={onFilteredProjectsChange}
         />
       )}
     </>
