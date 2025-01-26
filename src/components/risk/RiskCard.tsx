@@ -2,10 +2,12 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ShieldAlert, Edit, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useProjectPermissions } from "@/hooks/use-project-permissions";
 
 interface RiskCardProps {
   risk: {
     id: string;
+    project_id: string;
     description: string;
     probability: "low" | "medium" | "high";
     severity: "low" | "medium" | "high";
@@ -14,7 +16,6 @@ interface RiskCardProps {
   };
   onEdit: (risk: any) => void;
   onDelete: (risk: any) => void;
-  showActions: boolean;
 }
 
 const probabilityLabels = {
@@ -61,7 +62,9 @@ const getImpactColor = (probability: "low" | "medium" | "high", severity: "low" 
   }
 };
 
-export const RiskCard = ({ risk, onEdit, onDelete, showActions }: RiskCardProps) => {
+export const RiskCard = ({ risk, onEdit, onDelete }: RiskCardProps) => {
+  const { canManageRisks } = useProjectPermissions(risk.project_id);
+
   return (
     <Card>
       <CardHeader className="pb-2">
@@ -70,7 +73,7 @@ export const RiskCard = ({ risk, onEdit, onDelete, showActions }: RiskCardProps)
             <ShieldAlert className="h-5 w-5 text-muted-foreground" />
             <CardTitle className="text-lg">{risk.description}</CardTitle>
           </div>
-          {showActions && (
+          {canManageRisks && (
             <div className="flex items-center gap-2">
               <Button
                 variant="ghost"

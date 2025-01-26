@@ -1,11 +1,12 @@
 import { Button } from "@/components/ui/button";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Risk } from "@/types/risk";
 import { Plus } from "lucide-react";
 import { RiskForm } from "./RiskForm";
 import { RiskCard } from "./risk/RiskCard";
+import { useProjectPermissions } from "@/hooks/use-project-permissions";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -21,17 +22,17 @@ import { useToast } from "@/hooks/use-toast";
 interface RiskListProps {
   projectId: string;
   projectTitle: string;
-  readOnly?: boolean;
   onRiskSubmit?: () => void;
 }
 
-export const RiskList = ({ projectId, projectTitle, readOnly = false, onRiskSubmit }: RiskListProps) => {
+export const RiskList = ({ projectId, projectTitle, onRiskSubmit }: RiskListProps) => {
   const [risks, setRisks] = useState<Risk[]>([]);
   const [isRiskFormOpen, setIsRiskFormOpen] = useState(false);
   const [selectedRisk, setSelectedRisk] = useState<Risk | undefined>(undefined);
   const [riskToDelete, setRiskToDelete] = useState<Risk | null>(null);
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  const { canManageRisks } = useProjectPermissions(projectId);
 
   const { data: riskData } = useQuery({
     queryKey: ["risks", projectId],
@@ -47,18 +48,14 @@ export const RiskList = ({ projectId, projectTitle, readOnly = false, onRiskSubm
     enabled: !!projectId,
   });
 
-  useEffect(() => {
-    if (riskData) {
-      setRisks(riskData);
-    }
-  }, [riskData]);
-
   const handleEditRisk = (risk: Risk) => {
+    if (!canManageRisks) return;
     setSelectedRisk(risk);
     setIsRiskFormOpen(true);
   };
 
   const handleDeleteRisk = async (risk: Risk) => {
+    if (!canManageRisks) return;
     try {
       const { error } = await supabase
         .from("risks")
@@ -96,7 +93,7 @@ export const RiskList = ({ projectId, projectTitle, readOnly = false, onRiskSubm
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-bold">Risques</h2>
-        {!readOnly && (
+        {canManageRisks && (
           <Button onClick={() => setIsRiskFormOpen(true)}>
             <Plus className="h-4 w-4 mr-2" />
             Nouveau risque
@@ -111,39 +108,42 @@ export const RiskList = ({ projectId, projectTitle, readOnly = false, onRiskSubm
             risk={risk}
             onEdit={handleEditRisk}
             onDelete={() => setRiskToDelete(risk)}
-            showActions={!readOnly}
           />
         ))}
       </div>
 
-      <RiskForm
-        isOpen={isRiskFormOpen}
-        onClose={() => {
-          setIsRiskFormOpen(false);
-          setSelectedRisk(undefined);
-        }}
-        onSubmit={handleRiskFormSubmit}
-        projectId={projectId}
-        risk={selectedRisk}
-      />
+      {canManageRisks && (
+        <>
+          <RiskForm
+            isOpen={isRiskFormOpen}
+            onClose={() => {
+              setIsRiskFormOpen(false);
+              setSelectedRisk(undefined);
+            }}
+            onSubmit={handleRiskFormSubmit}
+            projectId={projectId}
+            risk={selectedRisk}
+          />
 
-      <AlertDialog open={!!riskToDelete} onOpenChange={() => setRiskToDelete(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Êtes-vous sûr ?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Cette action va supprimer définitivement le risque.
-              Cette action est irréversible.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Annuler</AlertDialogCancel>
-            <AlertDialogAction onClick={() => riskToDelete && handleDeleteRisk(riskToDelete)}>
-              Supprimer
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+          <AlertDialog open={!!riskToDelete} onOpenChange={() => setRiskToDelete(null)}>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Êtes-vous sûr ?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Cette action va supprimer définitivement le risque.
+                  Cette action est irréversible.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Annuler</AlertDialogCancel>
+                <AlertDialogAction onClick={() => riskToDelete && handleDeleteRisk(riskToDelete)}>
+                  Supprimer
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        </>
+      )}
     </div>
   );
 };
