@@ -15,7 +15,7 @@ jobs:
     steps:
      # Étape 1 : Récupérer le code source
       - name : Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v3
 
      # Étape 2 : Définir une variable pour le tag
       - name: Set dynamic tag
@@ -43,6 +43,6 @@ jobs:
       #Etape 7 : Tage avec la version
       - name : Tat avec la version
         run : |
-          docker tag ${{ secrets.DOCKERHUB_USERNAME }}/project-meteor:latest \
-                     ${{ secrets.DOCKERHUB_USERNAME }}/project-meteor:${{ env.TAG }}
-          docker push ${{ secrets.DOCKERHUB_USERNAME }}/project-meteor:${{ env.TAG }}
+          docker tag ${{ secrets.DOCKER_USERNAME }}/project-meteor:latest \
+                     ${{ secrets.DOCKER_USERNAME }}/project-meteor:${{ env.TAG }}
+          docker push ${{ secrets.DOCKER_USERNAME }}/project-meteor:${{ env.TAG }}
