@@ -102,9 +102,9 @@ export const ProjectTableRow = ({
       <TableCell>{project.project_manager}</TableCell>
       <TableCell>
         <OrganizationCell
-          pole_id={project.pole_id}
-          direction_id={project.direction_id}
-          service_id={project.service_id}
+          poleId={project.pole_id}
+          directionId={project.direction_id}
+          serviceId={project.service_id}
         />
       </TableCell>
       <TableCell>

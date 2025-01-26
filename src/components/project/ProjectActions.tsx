@@ -16,6 +16,7 @@ interface ProjectActionsProps {
   onProjectDeleted: () => void;
   owner_id?: string;
   project_manager?: string;
+  isMember?: boolean;
 }
 
 export const ProjectActions = ({
@@ -27,6 +28,7 @@ export const ProjectActions = ({
   onProjectDeleted,
   owner_id,
   project_manager,
+  isMember,
 }: ProjectActionsProps) => {
   const navigate = useNavigate();
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
@@ -58,8 +60,8 @@ export const ProjectActions = ({
   };
 
   const canViewHistory = canViewProjectHistory(userRoles, user?.id, owner_id, project_manager, user?.email);
-  const canManageProjectTasks = canManageTasks(userRoles, user?.id, owner_id, project_manager, user?.email);
-  const canManageProjectRisks = canManageRisks(userRoles, user?.id, owner_id, project_manager, user?.email);
+  const canManageProjectTasks = canManageTasks(userRoles, user?.id, owner_id, project_manager, user?.email) || isMember;
+  const canManageProjectRisks = canManageRisks(userRoles, user?.id, owner_id, project_manager, user?.email) || isMember;
   const canManageTeam = isAdmin || (user?.email === project_manager);
 
   return (
