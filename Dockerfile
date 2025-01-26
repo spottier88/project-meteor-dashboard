@@ -1,4 +1,4 @@
-or# Étape 1 : Construction de l'application
+# Étape 1 : Construction de l'application
 FROM node:18 AS builder
 
 # Définir le répertoire de travail
