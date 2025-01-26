@@ -32,6 +32,39 @@ export const KanbanBoard = ({ projectId, readOnly = false, onEditTask }: KanbanB
   const user = useUser();
   const [taskToDelete, setTaskToDelete] = useState<string | null>(null);
 
+  // Récupérer les rôles de l'utilisateur
+  const { data: userRoles } = useQuery({
+    queryKey: ["userRoles", user?.id],
+    queryFn: async () => {
+      if (!user?.id) return [];
+      const { data, error } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", user.id);
+
+      if (error) throw error;
+      return data.map(d => d.role);
+    },
+    enabled: !!user?.id,
+  });
+
+  // Récupérer l'email de l'utilisateur
+  const { data: userProfile } = useQuery({
+    queryKey: ["userProfile", user?.id],
+    queryFn: async () => {
+      if (!user?.id) return null;
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("email")
+        .eq("id", user.id)
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!user?.id,
+  });
+
   const { data: taskData, refetch } = useQuery({
     queryKey: ["tasks", projectId],
     queryFn: async () => {
@@ -114,6 +147,26 @@ export const KanbanBoard = ({ projectId, readOnly = false, onEditTask }: KanbanB
     return dueDate < today;
   };
 
+  const canEditTask = (task: any) => {
+    if (!user || !userProfile) return false;
+    
+    // Les admins peuvent tout modifier
+    if (userRoles?.includes("admin")) return true;
+    
+    // Les chefs de projet peuvent tout modifier
+    if (userRoles?.includes("chef_projet")) return true;
+    
+    // Les membres ne peuvent modifier que leurs tâches assignées
+    return task.assignee === userProfile.email;
+  };
+
+  const canDeleteTask = () => {
+    if (!user) return false;
+    
+    // Seuls les admins et chefs de projet peuvent supprimer
+    return userRoles?.includes("admin") || userRoles?.includes("chef_projet");
+  };
+
   const columns = [
     { id: "todo", title: "À faire" },
     { id: "in_progress", title: "En cours" },
@@ -157,20 +210,24 @@ export const KanbanBoard = ({ projectId, readOnly = false, onEditTask }: KanbanB
                     )}
                     {!readOnly && (
                       <div className="flex items-center justify-end gap-2 pt-2">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => onEditTask?.(task)}
-                        >
-                          <Pencil className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => setTaskToDelete(task.id)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
+                        {canEditTask(task) && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => onEditTask?.(task)}
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                        )}
+                        {canDeleteTask() && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => setTaskToDelete(task.id)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        )}
                       </div>
                     )}
                   </Card>
