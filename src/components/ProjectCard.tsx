@@ -8,6 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { AddToCartButton } from "./cart/AddToCartButton";
 import { ProjectStatus, ProgressStatus, ProjectLifecycleStatus } from "@/types/project";
 import { LifecycleStatusBadge } from "./project/LifecycleStatusBadge";
+import { useUser } from "@supabase/auth-helpers-react";
 
 interface ProjectCardProps {
   title: string;
@@ -47,6 +48,7 @@ export const ProjectCard = ({
   onReview,
 }: ProjectCardProps) => {
   const navigate = useNavigate();
+  const user = useUser();
 
   const { data: organization } = useQuery({
     queryKey: ["organization", pole_id, direction_id, service_id],
@@ -106,6 +108,22 @@ export const ProjectCard = ({
     enabled: !!id,
   });
 
+  const { data: userProfile } = useQuery({
+    queryKey: ["userProfile", user?.id],
+    queryFn: async () => {
+      if (!user?.id) return null;
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("id", user.id)
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!user?.id,
+  });
+
   const { data: isMember } = useQuery({
     queryKey: ["projectMember", id],
     queryFn: async () => {
@@ -113,7 +131,7 @@ export const ProjectCard = ({
         .from("project_members")
         .select("*")
         .eq("project_id", id)
-        .eq("user_id", (await supabase.auth.getUser()).data.user?.id)
+        .eq("user_id", user?.id)
         .maybeSingle();
 
       if (error) {
@@ -123,8 +141,32 @@ export const ProjectCard = ({
 
       return !!data;
     },
-    enabled: !!id,
+    enabled: !!id && !!user?.id,
   });
+
+  const { data: isManager } = useQuery({
+    queryKey: ["isProjectManager", id, user?.id],
+    queryFn: async () => {
+      if (!user?.id) return false;
+
+      const { data: userRoles } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", user.id);
+
+      if (!userRoles?.some(ur => ur.role === "manager")) return false;
+
+      const { data } = await supabase.rpc("can_manager_access_project", {
+        p_user_id: user.id,
+        p_project_id: id
+      });
+
+      return !!data;
+    },
+    enabled: !!id && !!user?.id,
+  });
+
+  const isProjectManager = userProfile?.email === project_manager;
 
   return (
     <Card className="w-full transition-all duration-300 hover:shadow-lg animate-fade-in">
@@ -144,11 +186,23 @@ export const ProjectCard = ({
         <div className="grid gap-4">
           <div className="flex items-center justify-between">
             <LifecycleStatusBadge status={lifecycle_status} />
-            {isMember && (
-              <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
-                Membre du projet
-              </span>
-            )}
+            <div className="flex gap-2">
+              {isProjectManager && (
+                <span className="text-xs bg-blue-800 text-white px-2 py-1 rounded">
+                  Chef de projet
+                </span>
+              )}
+              {isManager && (
+                <span className="text-xs bg-purple-600 text-white px-2 py-1 rounded">
+                  Manager
+                </span>
+              )}
+              {isMember && (
+                <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
+                  Membre du projet
+                </span>
+              )}
+            </div>
           </div>
           {description && (
             <p className="text-sm text-muted-foreground">{description}</p>
