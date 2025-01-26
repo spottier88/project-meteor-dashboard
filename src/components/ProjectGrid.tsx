@@ -74,8 +74,27 @@ export const ProjectGrid = ({
     enabled: !!user?.id,
   });
 
+  const { data: projectMemberships } = useQuery({
+    queryKey: ["projectMemberships", user?.id],
+    queryFn: async () => {
+      if (!user?.id) return [];
+      const { data, error } = await supabase
+        .from("project_members")
+        .select("project_id")
+        .eq("user_id", user.id);
+
+      if (error) {
+        console.error("Error fetching project memberships:", error);
+        return [];
+      }
+
+      return data.map(pm => pm.project_id);
+    },
+    enabled: !!user?.id,
+  });
+
   const { data: filteredProjects } = useQuery({
-    queryKey: ["filteredProjects", projects, user?.id, userRoles, userProfile],
+    queryKey: ["filteredProjects", projects, user?.id, userRoles, userProfile, projectMemberships],
     queryFn: async () => {
       if (!user) {
         console.log("No user logged in");
@@ -91,9 +110,10 @@ export const ProjectGrid = ({
       const filteredResults = await Promise.all(
         projects.map(async project => {
           const isProjectManager = project.project_manager === userProfile?.email;
+          const isMember = projectMemberships?.includes(project.id);
           
-          if (isProjectManager) {
-            console.log(`Project ${project.id} accessible (project manager)`);
+          if (isProjectManager || isMember) {
+            console.log(`Project ${project.id} accessible (project manager or member)`);
             return true;
           }
 
@@ -108,31 +128,6 @@ export const ProjectGrid = ({
             return false;
           }
 
-          let projectLevel = "Non défini";
-          if (project.service_id) {
-            projectLevel = "Service";
-          } else if (project.direction_id) {
-            projectLevel = "Direction";
-          } else if (project.pole_id) {
-            projectLevel = "Pôle";
-          }
-
-          console.log(`Project ${project.id} - ${project.title}:`, {
-            projectLevel,
-            hierarchyDetails: {
-              pole_id: project.pole_id,
-              direction_id: project.direction_id,
-              service_id: project.service_id
-            },
-            access: {
-              isProjectManager,
-              canAccess,
-              userEmail: userProfile?.email,
-              projectManager: project.project_manager
-            },
-            userRoles: userRoles?.map(r => r.role)
-          });
-
           return canAccess;
         })
       );
@@ -142,7 +137,6 @@ export const ProjectGrid = ({
     enabled: !!user?.id && !!userRoles && !!userProfile,
   });
 
-  // Notifier le parent des projets filtrés
   React.useEffect(() => {
     if (filteredProjects && onFilteredProjectsChange) {
       onFilteredProjectsChange(filteredProjects.map(project => project.id));

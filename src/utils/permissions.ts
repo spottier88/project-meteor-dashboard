@@ -6,7 +6,8 @@ export const canManageProjectItems = (
   userId: string | undefined,
   projectOwnerId: string | undefined,
   projectManagerEmail?: string | undefined,
-  userEmail?: string | undefined
+  userEmail?: string | undefined,
+  isMember?: boolean
 ): boolean => {
   if (!roles || !userId) return false;
 
@@ -18,6 +19,9 @@ export const canManageProjectItems = (
 
   // Le chef de projet assigné peut tout faire
   if (projectManagerEmail && userEmail && projectManagerEmail === userEmail) return true;
+
+  // Les membres peuvent voir les tâches et les risques
+  if (isMember) return true;
 
   // Les managers peuvent consulter
   if (roles.includes("manager")) return true;
@@ -30,7 +34,8 @@ export const canEditProjectItems = (
   userId: string | undefined,
   projectOwnerId: string | undefined,
   projectManagerEmail?: string | undefined,
-  userEmail?: string | undefined
+  userEmail?: string | undefined,
+  isAssignedToTask?: boolean
 ): boolean => {
   if (!roles || !userId) return false;
 
@@ -42,6 +47,9 @@ export const canEditProjectItems = (
 
   // Le chef de projet assigné peut tout faire
   if (projectManagerEmail && userEmail && projectManagerEmail === userEmail) return true;
+
+  // Les utilisateurs peuvent modifier leurs tâches assignées
+  if (isAssignedToTask) return true;
 
   return false;
 };
