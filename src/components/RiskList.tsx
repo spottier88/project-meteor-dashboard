@@ -32,10 +32,8 @@ export const RiskList = ({ projectId, projectTitle, onRiskSubmit }: RiskListProp
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
-  // Optimisation : Utiliser staleTime et cacheTime pour réduire les appels
   const { canManageRisks } = useProjectPermissions(projectId);
 
-  // Optimisation : Ajout de staleTime et cacheTime pour la requête des risques
   const { data: riskData } = useQuery({
     queryKey: ["risks", projectId],
     queryFn: async () => {
@@ -50,7 +48,7 @@ export const RiskList = ({ projectId, projectTitle, onRiskSubmit }: RiskListProp
     },
     enabled: !!projectId,
     staleTime: 30 * 1000, // Cache valide pendant 30 secondes
-    cacheTime: 5 * 60 * 1000, // Garde en cache pendant 5 minutes
+    gcTime: 5 * 60 * 1000, // Garde en cache pendant 5 minutes
   });
 
   const handleEditRisk = (risk: Risk) => {

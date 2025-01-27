@@ -61,7 +61,6 @@ export const useProjectPermissions = (projectId: string) => {
       const isAdmin = userRoles?.some(role => role.role === "admin");
       const isProjectManager = project?.project_manager === userProfile?.email;
 
-      // Si l'utilisateur est admin ou chef de projet, pas besoin de vérifier l'accès manager
       if (!user?.id || !projectId || isAdmin || isProjectManager) {
         return false;
       }
@@ -81,7 +80,7 @@ export const useProjectPermissions = (projectId: string) => {
     },
     enabled: !!user?.id && !!projectId,
     staleTime: 5 * 60 * 1000, // Cache pendant 5 minutes
-    cacheTime: 10 * 60 * 1000, // Garde en cache pendant 10 minutes
+    gcTime: 10 * 60 * 1000, // Garde en cache pendant 10 minutes
     retry: 1,
     retryDelay: 1000,
   });
