@@ -47,7 +47,6 @@ export const ProjectGrid = ({
         .eq("user_id", user.id);
 
       if (error) throw error;
-      console.log("User roles:", data);
       return data as UserRoleData[];
     },
     enabled: !!user?.id,
@@ -68,7 +67,6 @@ export const ProjectGrid = ({
         return null;
       }
       
-      console.log("User profile:", data);
       return data;
     },
     enabled: !!user?.id,
@@ -94,7 +92,7 @@ export const ProjectGrid = ({
   });
 
   const { data: filteredProjects } = useQuery({
-    queryKey: ["filteredProjects", projects, user?.id, userRoles, userProfile, projectMemberships],
+    queryKey: ["filteredProjects", user?.id, userRoles, userProfile, projectMemberships],
     queryFn: async () => {
       if (!user) {
         console.log("No user logged in");
@@ -113,7 +111,6 @@ export const ProjectGrid = ({
           const isMember = projectMemberships?.includes(project.id);
           
           if (isProjectManager || isMember) {
-            console.log(`Project ${project.id} accessible (project manager or member)`);
             return true;
           }
 

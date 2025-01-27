@@ -55,7 +55,6 @@ export const ProjectTable = ({
         .eq("user_id", user.id);
 
       if (error) throw error;
-      console.log("User roles (table):", data);
       return data as UserRoleData[];
     },
     enabled: !!user?.id,
@@ -72,7 +71,6 @@ export const ProjectTable = ({
         .single();
 
       if (error) throw error;
-      console.log("User profile (table):", data);
       return data;
     },
     enabled: !!user?.id,
@@ -98,7 +96,7 @@ export const ProjectTable = ({
   });
 
   const { data: filteredProjects } = useQuery({
-    queryKey: ["filteredProjects", projects, user?.id, userRoles, userProfile, projectMemberships],
+    queryKey: ["filteredProjects", user?.id, userRoles, userProfile, projectMemberships],
     queryFn: async () => {
       if (!user) {
         console.log("No user logged in (table)");
@@ -117,7 +115,6 @@ export const ProjectTable = ({
           const isMember = projectMemberships?.includes(project.id);
           
           if (isProjectManager || isMember) {
-            console.log(`Project ${project.id} accessible (project manager or member) (table)`);
             return true;
           }
 

@@ -71,7 +71,6 @@ export const ProjectActions = ({
               Historique des revues
             </DropdownMenuItem>
           )}
-          {/* Nouveaux boutons pour les tâches, risques et membres */}
           {(permissions.canCreateTask || permissions.canViewProject) && (
             <DropdownMenuItem onClick={() => navigate(`/tasks/${projectId}`)}>
               <ClipboardList className="mr-2 h-4 w-4" />
@@ -85,7 +84,7 @@ export const ProjectActions = ({
             </DropdownMenuItem>
           )}
           {(permissions.canManageMembers || permissions.canViewMembers) && (
-            <DropdownMenuItem onClick={() => navigate(`/team/${projectId}`)}>
+            <DropdownMenuItem onClick={() => navigate(`/projects/${projectId}/team`)}>
               <Users className="mr-2 h-4 w-4" />
               Équipe
             </DropdownMenuItem>
