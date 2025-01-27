@@ -26,17 +26,20 @@ interface RiskListProps {
 }
 
 export const RiskList = ({ projectId, projectTitle, onRiskSubmit }: RiskListProps) => {
-  const [risks, setRisks] = useState<Risk[]>([]);
   const [isRiskFormOpen, setIsRiskFormOpen] = useState(false);
   const [selectedRisk, setSelectedRisk] = useState<Risk | undefined>(undefined);
   const [riskToDelete, setRiskToDelete] = useState<Risk | null>(null);
   const queryClient = useQueryClient();
   const { toast } = useToast();
+
+  // Optimisation : Utiliser staleTime et cacheTime pour réduire les appels
   const { canManageRisks } = useProjectPermissions(projectId);
 
+  // Optimisation : Ajout de staleTime et cacheTime pour la requête des risques
   const { data: riskData } = useQuery({
     queryKey: ["risks", projectId],
     queryFn: async () => {
+      console.log("[RiskList] Fetching risks for project:", projectId);
       const { data, error } = await supabase
         .from("risks")
         .select("*")
@@ -46,6 +49,8 @@ export const RiskList = ({ projectId, projectTitle, onRiskSubmit }: RiskListProp
       return data as Risk[];
     },
     enabled: !!projectId,
+    staleTime: 30 * 1000, // Cache valide pendant 30 secondes
+    cacheTime: 5 * 60 * 1000, // Garde en cache pendant 5 minutes
   });
 
   const handleEditRisk = (risk: Risk) => {

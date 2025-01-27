@@ -19,7 +19,7 @@ export const useProjectPermissions = (projectId: string) => {
       return data;
     },
     enabled: !!user?.id,
-    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
+    staleTime: 5 * 60 * 1000, // Cache pendant 5 minutes
   });
 
   const { data: userRoles } = useQuery({
@@ -35,7 +35,7 @@ export const useProjectPermissions = (projectId: string) => {
       return data;
     },
     enabled: !!user?.id,
-    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
+    staleTime: 5 * 60 * 1000, // Cache pendant 5 minutes
   });
 
   const { data: project } = useQuery({
@@ -52,63 +52,25 @@ export const useProjectPermissions = (projectId: string) => {
       return data;
     },
     enabled: !!projectId,
-    staleTime: 30 * 1000, // Cache for 30 seconds
+    staleTime: 30 * 1000, // Cache pendant 30 secondes
   });
 
-  const { data: isMember } = useQuery({
-    queryKey: ["projectMember", projectId, user?.id],
-    queryFn: async () => {
-      if (!projectId || !user?.id) return false;
-      const { data, error } = await supabase
-        .from("project_members")
-        .select("*")
-        .eq("project_id", projectId)
-        .eq("user_id", user.id)
-        .maybeSingle();
-
-      if (error) throw error;
-      return !!data;
-    },
-    enabled: !!projectId && !!user?.id,
-    staleTime: 30 * 1000, // Cache for 30 seconds
-  });
-
-  const isAdmin = userRoles?.some(role => role.role === "admin");
-  const isProjectManager = project?.project_manager === userProfile?.email;
-
-  // Ajout des logs pour tracer les appels à can_manager_access_project
   const { data: canAccess } = useQuery({
     queryKey: ["managerAccess", projectId, user?.id],
     queryFn: async () => {
+      const isAdmin = userRoles?.some(role => role.role === "admin");
+      const isProjectManager = project?.project_manager === userProfile?.email;
+
+      // Si l'utilisateur est admin ou chef de projet, pas besoin de vérifier l'accès manager
       if (!user?.id || !projectId || isAdmin || isProjectManager) {
-        console.log("[useProjectPermissions] Skipping manager access check:", {
-          userId: user?.id,
-          projectId,
-          isAdmin,
-          isProjectManager
-        });
         return false;
       }
 
-      console.log("[useProjectPermissions] Checking manager access:", {
-        userId: user?.id,
-        projectId,
-        timestamp: new Date().toISOString()
-      });
-
-      const startTime = performance.now();
       const { data: canAccess, error } = await supabase
         .rpc('can_manager_access_project', {
           p_user_id: user.id,
           p_project_id: projectId
         });
-      const endTime = performance.now();
-
-      console.log("[useProjectPermissions] Manager access check completed:", {
-        result: canAccess,
-        duration: `${(endTime - startTime).toFixed(2)}ms`,
-        error: error?.message
-      });
 
       if (error) {
         console.error("[useProjectPermissions] Error checking access:", error);
@@ -117,23 +79,24 @@ export const useProjectPermissions = (projectId: string) => {
 
       return canAccess;
     },
-    enabled: !!user?.id && !!projectId && !isAdmin && !isProjectManager,
-    staleTime: 30 * 1000, // Cache for 30 seconds
-    retry: 1, // Limit retries on error
-    retryDelay: 1000, // Wait 1 second before retry
+    enabled: !!user?.id && !!projectId,
+    staleTime: 5 * 60 * 1000, // Cache pendant 5 minutes
+    cacheTime: 10 * 60 * 1000, // Garde en cache pendant 10 minutes
+    retry: 1,
+    retryDelay: 1000,
   });
 
-  const canEditProject = isAdmin || isProjectManager || canAccess;
-  const canManageRisks = isAdmin || isProjectManager;
-  const canViewProject = isAdmin || isProjectManager || isMember || canAccess;
+  const isAdmin = userRoles?.some(role => role.role === "admin");
+  const isProjectManager = project?.project_manager === userProfile?.email;
+  const isOwner = project?.owner_id === user?.id;
+
+  const canManageRisks = isAdmin || isProjectManager || isOwner || canAccess;
 
   return {
-    canEditProject,
     canManageRisks,
-    canViewProject,
     isAdmin,
     isProjectManager,
-    isMember,
+    isOwner,
     userEmail: userProfile?.email,
   };
 };
