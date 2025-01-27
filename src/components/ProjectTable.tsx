@@ -99,13 +99,11 @@ export const ProjectTable = ({
     queryKey: ["filteredProjects", user?.id, userRoles, userProfile, projectMemberships],
     queryFn: async () => {
       if (!user) {
-        console.log("No user logged in (table)");
         return [];
       }
 
       const isAdmin = userRoles?.some(role => role.role === "admin");
       if (isAdmin) {
-        console.log("User is admin (table), showing all projects");
         return projects;
       }
 
@@ -125,7 +123,7 @@ export const ProjectTable = ({
             });
 
           if (error) {
-            console.error("Error checking project access (table):", error);
+            console.error("Error checking project access:", error);
             return false;
           }
 
@@ -138,14 +136,11 @@ export const ProjectTable = ({
     enabled: !!user?.id && !!userRoles && !!userProfile,
   });
 
-  // Ajout de l'effet pour notifier le parent des projets filtrés
   useEffect(() => {
     if (filteredProjects && onFilteredProjectsChange) {
       onFilteredProjectsChange(filteredProjects.map(project => project.id));
     }
   }, [filteredProjects, onFilteredProjectsChange]);
-
-  console.log("Filtered projects (table):", filteredProjects?.length || 0, "out of", projects.length);
 
   const handleSort = (key: string) => {
     if (sortKey === key) {

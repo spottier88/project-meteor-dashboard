@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { Search, UserMinus } from "lucide-react";
+import { useUser } from "@supabase/auth-helpers-react";
 
 interface TeamManagementProps {
   projectId: string;
@@ -13,12 +14,12 @@ interface TeamManagementProps {
 export const TeamManagement = ({ projectId }: TeamManagementProps) => {
   const { toast } = useToast();
   const [searchQuery, setSearchQuery] = useState("");
+  const user = useUser();
 
   // Récupérer les informations du projet
   const { data: project } = useQuery({
     queryKey: ["project", projectId],
     queryFn: async () => {
-      console.log("Fetching project info for:", projectId);
       const { data, error } = await supabase
         .from("projects")
         .select("project_manager")
@@ -29,16 +30,52 @@ export const TeamManagement = ({ projectId }: TeamManagementProps) => {
         console.error("Error fetching project:", error);
         throw error;
       }
-      console.log("Project info:", data);
       return data;
     },
   });
+
+  // Récupérer le profil de l'utilisateur
+  const { data: userProfile } = useQuery({
+    queryKey: ["userProfile", user?.id],
+    queryFn: async () => {
+      if (!user?.id) return null;
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("email")
+        .eq("id", user.id)
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!user?.id,
+  });
+
+  // Récupérer les rôles de l'utilisateur
+  const { data: userRoles } = useQuery({
+    queryKey: ["userRoles", user?.id],
+    queryFn: async () => {
+      if (!user?.id) return null;
+      const { data, error } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", user.id);
+
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!user?.id,
+  });
+
+  // Vérifier si l'utilisateur peut modifier l'équipe
+  const canModifyTeam = 
+    userRoles?.some(role => role.role === "admin") || 
+    (project?.project_manager === userProfile?.email);
 
   // Récupérer les membres actuels du projet
   const { data: currentMembers, refetch: refetchMembers } = useQuery({
     queryKey: ["projectMembers", projectId],
     queryFn: async () => {
-      console.log("Fetching current project members for project:", projectId);
       const { data, error } = await supabase
         .from("project_members")
         .select(`
@@ -56,7 +93,6 @@ export const TeamManagement = ({ projectId }: TeamManagementProps) => {
         console.error("Error fetching project members:", error);
         throw error;
       }
-      console.log("Current project members:", data);
       return data;
     },
   });
@@ -65,9 +101,9 @@ export const TeamManagement = ({ projectId }: TeamManagementProps) => {
   const { data: availableUsers } = useQuery({
     queryKey: ["availableMembers", searchQuery, currentMembers, project?.project_manager],
     queryFn: async () => {
-      console.log("Searching for available members with query:", searchQuery);
+      if (!canModifyTeam) return [];
+      
       const memberIds = (currentMembers || []).map(m => m.user_id);
-      console.log("Current members to exclude:", memberIds);
       
       let query = supabase
         .from("profiles")
@@ -83,12 +119,10 @@ export const TeamManagement = ({ projectId }: TeamManagementProps) => {
         .eq("user_roles.role", "membre")
         .ilike("email", `%${searchQuery}%`);
 
-      // N'ajouter la condition not.in que s'il y a des membres à exclure
       if (memberIds.length > 0) {
         query = query.not('id', 'in', `(${memberIds.join(',')})`);
       }
 
-      // Exclure le chef de projet
       if (project?.project_manager) {
         query = query.neq('email', project.project_manager);
       }
@@ -99,15 +133,22 @@ export const TeamManagement = ({ projectId }: TeamManagementProps) => {
         console.error("Error searching for available members:", error);
         throw error;
       }
-      console.log("Available users found:", data);
       return data;
     },
-    enabled: searchQuery.length > 2,
+    enabled: searchQuery.length > 2 && canModifyTeam,
   });
 
   const handleAddMember = async (userId: string) => {
+    if (!canModifyTeam) {
+      toast({
+        title: "Erreur",
+        description: "Vous n'avez pas les droits pour ajouter des membres à l'équipe",
+        variant: "destructive",
+      });
+      return;
+    }
+
     try {
-      console.log("Adding member to project:", { userId, projectId });
       const { error } = await supabase
         .from("project_members")
         .insert({
@@ -115,10 +156,7 @@ export const TeamManagement = ({ projectId }: TeamManagementProps) => {
           user_id: userId,
         });
 
-      if (error) {
-        console.error("Error adding member:", error);
-        throw error;
-      }
+      if (error) throw error;
 
       toast({
         title: "Succès",
@@ -137,18 +175,23 @@ export const TeamManagement = ({ projectId }: TeamManagementProps) => {
   };
 
   const handleRemoveMember = async (userId: string) => {
+    if (!canModifyTeam) {
+      toast({
+        title: "Erreur",
+        description: "Vous n'avez pas les droits pour retirer des membres de l'équipe",
+        variant: "destructive",
+      });
+      return;
+    }
+
     try {
-      console.log("Removing member from project:", { userId, projectId });
       const { error } = await supabase
         .from("project_members")
         .delete()
         .eq("project_id", projectId)
         .eq("user_id", userId);
 
-      if (error) {
-        console.error("Error removing member:", error);
-        throw error;
-      }
+      if (error) throw error;
 
       toast({
         title: "Succès",
@@ -168,45 +211,47 @@ export const TeamManagement = ({ projectId }: TeamManagementProps) => {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h3 className="text-lg font-medium mb-4">Ajouter des membres</h3>
-        <div className="flex gap-4 items-center">
-          <Search className="w-4 h-4 text-muted-foreground" />
-          <Input
-            placeholder="Rechercher un utilisateur par email..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="flex-1"
-          />
-        </div>
-        {searchQuery.length > 2 && availableUsers && (
-          <div className="mt-4 space-y-2">
-            {availableUsers.map((user) => (
-              <div
-                key={user.id}
-                className="flex items-center justify-between p-2 border rounded-lg"
-              >
-                <div>
-                  <p className="font-medium">
-                    {user.first_name} {user.last_name}
-                  </p>
-                  <p className="text-sm text-muted-foreground">{user.email}</p>
-                </div>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handleAddMember(user.id)}
-                >
-                  Ajouter
-                </Button>
-              </div>
-            ))}
-            {availableUsers.length === 0 && (
-              <p className="text-muted-foreground">Aucun utilisateur trouvé</p>
-            )}
+      {canModifyTeam && (
+        <div>
+          <h3 className="text-lg font-medium mb-4">Ajouter des membres</h3>
+          <div className="flex gap-4 items-center">
+            <Search className="w-4 h-4 text-muted-foreground" />
+            <Input
+              placeholder="Rechercher un utilisateur par email..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="flex-1"
+            />
           </div>
-        )}
-      </div>
+          {searchQuery.length > 2 && availableUsers && (
+            <div className="mt-4 space-y-2">
+              {availableUsers.map((user) => (
+                <div
+                  key={user.id}
+                  className="flex items-center justify-between p-2 border rounded-lg"
+                >
+                  <div>
+                    <p className="font-medium">
+                      {user.first_name} {user.last_name}
+                    </p>
+                    <p className="text-sm text-muted-foreground">{user.email}</p>
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleAddMember(user.id)}
+                  >
+                    Ajouter
+                  </Button>
+                </div>
+              ))}
+              {availableUsers.length === 0 && (
+                <p className="text-muted-foreground">Aucun utilisateur trouvé</p>
+              )}
+            </div>
+          )}
+        </div>
+      )}
 
       <div>
         <h3 className="text-lg font-medium mb-4">Membres actuels</h3>
@@ -224,13 +269,15 @@ export const TeamManagement = ({ projectId }: TeamManagementProps) => {
                   {member.profiles.email}
                 </p>
               </div>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => handleRemoveMember(member.user_id)}
-              >
-                <UserMinus className="h-4 w-4 text-destructive" />
-              </Button>
+              {canModifyTeam && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => handleRemoveMember(member.user_id)}
+                >
+                  <UserMinus className="h-4 w-4 text-destructive" />
+                </Button>
+              )}
             </div>
           ))}
           {(!currentMembers || currentMembers.length === 0) && (
