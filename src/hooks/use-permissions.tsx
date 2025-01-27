@@ -30,9 +30,12 @@ export const usePermissions = (projectId?: string): PermissionsResult => {
         .from("profiles")
         .select("*")
         .eq("id", user.id)
-        .single();
+        .maybeSingle();
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error fetching user profile:", error);
+        return null;
+      }
       return data;
     },
     enabled: !!user?.id,
@@ -47,7 +50,10 @@ export const usePermissions = (projectId?: string): PermissionsResult => {
         .select("*")
         .eq("user_id", user.id);
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error fetching user roles:", error);
+        return null;
+      }
       return data as UserRoleData[];
     },
     enabled: !!user?.id,
@@ -61,9 +67,12 @@ export const usePermissions = (projectId?: string): PermissionsResult => {
         .from("projects")
         .select("*")
         .eq("id", projectId)
-        .single();
+        .maybeSingle();
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error fetching project:", error);
+        return null;
+      }
       return data;
     },
     enabled: !!projectId,
@@ -78,76 +87,106 @@ export const usePermissions = (projectId?: string): PermissionsResult => {
   const canCreateProject = roles.some(role => role === "admin" || role === "chef_projet");
 
   const canEditProject = async (projectId: string): Promise<boolean> => {
-    if (!user?.id) return false;
-    if (isAdmin) return true;
+    try {
+      if (!user?.id) return false;
+      if (isAdmin) return true;
 
-    const { data: project } = await supabase
-      .from("projects")
-      .select("*")
-      .eq("id", projectId)
-      .single();
+      const { data: project } = await supabase
+        .from("projects")
+        .select("*")
+        .eq("id", projectId)
+        .maybeSingle();
 
-    if (!project) return false;
+      if (!project) return false;
 
-    if (project.owner_id === user.id) return true;
-    if (project.project_manager === userProfile?.email) return true;
+      if (project.owner_id === user.id) return true;
+      if (project.project_manager === userProfile?.email) return true;
 
-    if (isManager) {
-      const { data: canAccess } = await supabase
-        .rpc('can_manager_access_project', {
-          p_user_id: user.id,
-          p_project_id: projectId
-        });
+      if (isManager) {
+        try {
+          const { data: canAccess, error } = await supabase
+            .rpc('can_manager_access_project', {
+              p_user_id: user.id,
+              p_project_id: projectId
+            });
 
-      return !!canAccess;
+          if (error) {
+            console.error("Error checking project access:", error);
+            return false;
+          }
+
+          return !!canAccess;
+        } catch (error) {
+          console.error("Error in RPC call:", error);
+          return false;
+        }
+      }
+
+      return false;
+    } catch (error) {
+      console.error("Error in canEditProject:", error);
+      return false;
     }
-
-    return false;
   };
 
   const canManageProjectMembers = async (projectId: string): Promise<boolean> => {
-    if (!user?.id) return false;
-    if (isAdmin) return true;
+    try {
+      if (!user?.id) return false;
+      if (isAdmin) return true;
 
-    const { data: project } = await supabase
-      .from("projects")
-      .select("*")
-      .eq("id", projectId)
-      .single();
+      const { data: project } = await supabase
+        .from("projects")
+        .select("*")
+        .eq("id", projectId)
+        .maybeSingle();
 
-    return project?.project_manager === userProfile?.email;
+      return project?.project_manager === userProfile?.email;
+    } catch (error) {
+      console.error("Error in canManageProjectMembers:", error);
+      return false;
+    }
   };
 
   const canManageRisks = async (projectId: string): Promise<boolean> => {
-    if (!user?.id) return false;
-    if (isAdmin) return true;
+    try {
+      if (!user?.id) return false;
+      if (isAdmin) return true;
 
-    const { data: project } = await supabase
-      .from("projects")
-      .select("*")
-      .eq("id", projectId)
-      .single();
+      const { data: project } = await supabase
+        .from("projects")
+        .select("*")
+        .eq("id", projectId)
+        .maybeSingle();
 
-    if (!project) return false;
+      if (!project) return false;
 
-    return project.owner_id === user.id || 
-           project.project_manager === userProfile?.email;
+      return project.owner_id === user.id || 
+             project.project_manager === userProfile?.email;
+    } catch (error) {
+      console.error("Error in canManageRisks:", error);
+      return false;
+    }
   };
 
   const canManageTasks = async (projectId: string): Promise<boolean> => {
-    if (!user?.id) return false;
-    if (isAdmin) return true;
+    try {
+      if (!user?.id) return false;
+      if (isAdmin) return true;
 
-    const { data: project } = await supabase
-      .from("projects")
-      .select("*")
-      .eq("id", projectId)
-      .single();
+      const { data: project } = await supabase
+        .from("projects")
+        .select("*")
+        .eq("id", projectId)
+        .maybeSingle();
 
-    if (!project) return false;
+      if (!project) return false;
 
-    return project.owner_id === user.id || 
-           project.project_manager === userProfile?.email;
+      return project.owner_id === user.id || 
+             project.project_manager === userProfile?.email;
+    } catch (error) {
+      console.error("Error in canManageTasks:", error);
+      return false;
+    }
   };
 
   const canViewProjectHistory = async (projectId: string): Promise<boolean> => {
