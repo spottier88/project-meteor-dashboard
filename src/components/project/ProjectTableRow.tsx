@@ -130,11 +130,8 @@ export const ProjectTableRow = ({
             projectTitle={project.title}
             onEdit={onProjectEdit}
             onViewHistory={onViewHistory}
-            userRoles={userRoles?.map(ur => ur.role)}
             onProjectDeleted={onProjectDeleted}
-            owner_id={project.owner_id}
-            project_manager={project.project_manager}
-            isMember={isMember}
+            onReview={(id, title) => navigate(`/reviews/${id}`)}
           />
         </div>
       </TableCell>
