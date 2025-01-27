@@ -6,7 +6,7 @@ import { ProjectTableRow } from "./project/ProjectTableRow";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { UserRoleData } from "@/types/user";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { SortDirection } from "./ui/sortable-header";
 
 interface Project {
@@ -30,6 +30,7 @@ interface ProjectTableProps {
   onProjectEdit: (id: string) => void;
   onViewHistory: (id: string, title: string) => void;
   onProjectDeleted: () => void;
+  onFilteredProjectsChange?: (projectIds: string[]) => void;
 }
 
 export const ProjectTable = ({
@@ -37,6 +38,7 @@ export const ProjectTable = ({
   onProjectEdit,
   onViewHistory,
   onProjectDeleted,
+  onFilteredProjectsChange,
 }: ProjectTableProps) => {
   const user = useUser();
   const [sortKey, setSortKey] = useState<string | null>(null);
@@ -129,32 +131,6 @@ export const ProjectTable = ({
             return false;
           }
 
-          let projectLevel = "Non défini";
-          if (project.service_id) {
-            projectLevel = "Service";
-          } else if (project.direction_id) {
-            projectLevel = "Direction";
-          } else if (project.pole_id) {
-            projectLevel = "Pôle";
-          }
-
-          console.log(`Project ${project.id} - ${project.title} (table):`, {
-            projectLevel,
-            hierarchyDetails: {
-              pole_id: project.pole_id,
-              direction_id: project.direction_id,
-              service_id: project.service_id
-            },
-            access: {
-              isProjectManager,
-              isMember,
-              canAccess,
-              userEmail: userProfile?.email,
-              projectManager: project.project_manager
-            },
-            userRoles: userRoles?.map(r => r.role)
-          });
-
           return canAccess;
         })
       );
@@ -163,6 +139,13 @@ export const ProjectTable = ({
     },
     enabled: !!user?.id && !!userRoles && !!userProfile,
   });
+
+  // Ajout de l'effet pour notifier le parent des projets filtrés
+  useEffect(() => {
+    if (filteredProjects && onFilteredProjectsChange) {
+      onFilteredProjectsChange(filteredProjects.map(project => project.id));
+    }
+  }, [filteredProjects, onFilteredProjectsChange]);
 
   console.log("Filtered projects (table):", filteredProjects?.length || 0, "out of", projects.length);
 
