@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { Table, TableBody } from "@/components/ui/table";
 import { ProjectStatus, ProgressStatus, ProjectLifecycleStatus } from "@/types/project";
 import { useUser } from "@supabase/auth-helpers-react";
@@ -42,8 +42,8 @@ export const ProjectTable = ({
   onFilteredProjectsChange,
 }: ProjectTableProps) => {
   const user = useUser();
-  const [sortKey, setSortKey] = useState<string | null>(null);
-  const [sortDirection, setSortDirection] = useState<SortDirection>(null);
+  const [sortKey, setSortKey] = React.useState<string | null>(null);
+  const [sortDirection, setSortDirection] = React.useState<SortDirection>(null);
 
   const { data: userRoles } = useQuery({
     queryKey: ["userRoles", user?.id],
@@ -132,17 +132,6 @@ export const ProjectTable = ({
             return false;
           }
 
-          console.log(`Project ${project.id} - ${project.title} (table):`, {
-            access: {
-              isProjectManager,
-              isMember,
-              canAccess,
-              userEmail: userProfile?.email,
-              projectManager: project.project_manager
-            },
-            userRoles: userRoles?.map(r => r.role)
-          });
-
           return canAccess;
         })
       );
@@ -152,16 +141,13 @@ export const ProjectTable = ({
     enabled: !!user?.id && !!userRoles && !!userProfile,
   });
 
-  // Notifier le parent des IDs des projets filtrés
-  useEffect(() => {
+  React.useEffect(() => {
     if (isSuccess && filteredProjects && onFilteredProjectsChange) {
       const projectIds = filteredProjects.map(p => p.id);
       console.log("Notifying parent of filtered projects (table):", projectIds);
       onFilteredProjectsChange(projectIds);
     }
   }, [filteredProjects, onFilteredProjectsChange, isSuccess]);
-
-  console.log("Filtered projects (table):", filteredProjects?.length || 0, "out of", projects.length);
 
   const handleSort = (key: string) => {
     if (sortKey === key) {
