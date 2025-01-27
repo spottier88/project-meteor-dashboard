@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { MoreHorizontal, History, Pencil, Trash2, FileEdit } from "lucide-react";
+import { MoreHorizontal, History, Pencil, Trash2, FileEdit, Users, AlertCircle, ClipboardList } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -10,6 +10,7 @@ import { DeleteProjectDialog } from "./DeleteProjectDialog";
 import { useState } from "react";
 import { AddToCartButton } from "../cart/AddToCartButton";
 import { useCompletePermissions } from "@/hooks/use-complete-permissions";
+import { useNavigate } from "react-router-dom";
 
 interface ProjectActionsProps {
   projectId: string;
@@ -30,6 +31,7 @@ export const ProjectActions = ({
 }: ProjectActionsProps) => {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const permissions = useCompletePermissions(projectId);
+  const navigate = useNavigate();
 
   return (
     <div className="flex items-center gap-2">
@@ -67,6 +69,25 @@ export const ProjectActions = ({
             >
               <History className="mr-2 h-4 w-4" />
               Historique des revues
+            </DropdownMenuItem>
+          )}
+          {/* Nouveaux boutons pour les tâches, risques et membres */}
+          {(permissions.canCreateTask || permissions.canViewProject) && (
+            <DropdownMenuItem onClick={() => navigate(`/tasks/${projectId}`)}>
+              <ClipboardList className="mr-2 h-4 w-4" />
+              Tâches
+            </DropdownMenuItem>
+          )}
+          {(permissions.canCreateRisk || permissions.canViewProject) && (
+            <DropdownMenuItem onClick={() => navigate(`/risks/${projectId}`)}>
+              <AlertCircle className="mr-2 h-4 w-4" />
+              Risques
+            </DropdownMenuItem>
+          )}
+          {(permissions.canManageMembers || permissions.canViewMembers) && (
+            <DropdownMenuItem onClick={() => navigate(`/team/${projectId}`)}>
+              <Users className="mr-2 h-4 w-4" />
+              Équipe
             </DropdownMenuItem>
           )}
           {permissions.canDeleteProject && (
