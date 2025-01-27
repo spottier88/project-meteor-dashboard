@@ -9,6 +9,7 @@ import { AddToCartButton } from "./cart/AddToCartButton";
 import { ProjectStatus, ProgressStatus, ProjectLifecycleStatus } from "@/types/project";
 import { LifecycleStatusBadge } from "./project/LifecycleStatusBadge";
 import { useUser } from "@supabase/auth-helpers-react";
+import { useManagerPermissions } from "@/hooks/use-manager-permissions";
 
 interface ProjectCardProps {
   title: string;
@@ -49,6 +50,7 @@ export const ProjectCard = ({
 }: ProjectCardProps) => {
   const navigate = useNavigate();
   const user = useUser();
+  const isManager = useManagerPermissions(id);
 
   const { data: organization } = useQuery({
     queryKey: ["organization", pole_id, direction_id, service_id],
@@ -87,6 +89,7 @@ export const ProjectCard = ({
       return org;
     },
     enabled: !!(pole_id || direction_id || service_id),
+    staleTime: 5 * 60 * 1000, // Cache pendant 5 minutes
   });
 
   const { data: latestReview } = useQuery({
@@ -122,10 +125,11 @@ export const ProjectCard = ({
       return data;
     },
     enabled: !!user?.id,
+    staleTime: 5 * 60 * 1000, // Cache pendant 5 minutes
   });
 
   const { data: isMember } = useQuery({
-    queryKey: ["projectMember", id],
+    queryKey: ["projectMember", id, user?.id],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("project_members")
@@ -142,28 +146,7 @@ export const ProjectCard = ({
       return !!data;
     },
     enabled: !!id && !!user?.id,
-  });
-
-  const { data: isManager } = useQuery({
-    queryKey: ["isProjectManager", id, user?.id],
-    queryFn: async () => {
-      if (!user?.id) return false;
-
-      const { data: userRoles } = await supabase
-        .from("user_roles")
-        .select("role")
-        .eq("user_id", user.id);
-
-      if (!userRoles?.some(ur => ur.role === "manager")) return false;
-
-      const { data } = await supabase.rpc("can_manager_access_project", {
-        p_user_id: user.id,
-        p_project_id: id
-      });
-
-      return !!data;
-    },
-    enabled: !!id && !!user?.id,
+    staleTime: 5 * 60 * 1000, // Cache pendant 5 minutes
   });
 
   const isProjectManager = userProfile?.email === project_manager;
@@ -227,4 +210,3 @@ export const ProjectCard = ({
       </CardContent>
     </Card>
   );
-};
