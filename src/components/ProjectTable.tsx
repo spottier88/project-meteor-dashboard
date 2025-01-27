@@ -7,7 +7,7 @@ import { ProjectTableRow } from "./project/ProjectTableRow";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { UserRoleData } from "@/types/user";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { SortDirection } from "./ui/sortable-header";
 
 interface Project {
@@ -133,22 +133,7 @@ export const ProjectTable = ({
             return false;
           }
 
-          let projectLevel = "Non défini";
-          if (project.service_id) {
-            projectLevel = "Service";
-          } else if (project.direction_id) {
-            projectLevel = "Direction";
-          } else if (project.pole_id) {
-            projectLevel = "Pôle";
-          }
-
           console.log(`Project ${project.id} - ${project.title} (table):`, {
-            projectLevel,
-            hierarchyDetails: {
-              pole_id: project.pole_id,
-              direction_id: project.direction_id,
-              service_id: project.service_id
-            },
             access: {
               isProjectManager,
               isMember,
@@ -169,9 +154,11 @@ export const ProjectTable = ({
   });
 
   // Notifier le parent des IDs des projets filtrés
-  React.useEffect(() => {
+  useEffect(() => {
     if (filteredProjects && onFilteredProjectsChange) {
-      onFilteredProjectsChange(filteredProjects.map(p => p.id));
+      const projectIds = filteredProjects.map(p => p.id);
+      console.log("Notifying parent of filtered projects:", projectIds);
+      onFilteredProjectsChange(projectIds);
     }
   }, [filteredProjects, onFilteredProjectsChange]);
 

@@ -8,6 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useUser } from "@supabase/auth-helpers-react";
 import { LifecycleStatusBadge } from "./LifecycleStatusBadge";
 import { ProjectLifecycleStatus } from "@/types/project";
+import { AddToCartButton } from "../cart/AddToCartButton";
 
 interface Project {
   id: string;
@@ -124,7 +125,8 @@ export const ProjectTableRow = ({
       </TableCell>
       <TableCell>{project.suivi_dgs ? "DGS" : "-"}</TableCell>
       <TableCell>
-        <div className="flex justify-center" onClick={(e) => e.stopPropagation()}>
+        <div className="flex justify-center items-center gap-1" onClick={(e) => e.stopPropagation()}>
+          <AddToCartButton projectId={project.id} projectTitle={project.title} />
           <ProjectActions
             projectId={project.id}
             projectTitle={project.title}
