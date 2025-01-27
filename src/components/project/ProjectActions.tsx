@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { MoreHorizontal, History, Pencil, Trash } from "lucide-react";
+import { MoreHorizontal, History, Pencil, Trash2, FileEdit } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -9,21 +9,15 @@ import {
 import { DeleteProjectDialog } from "./DeleteProjectDialog";
 import { useState } from "react";
 import { AddToCartButton } from "../cart/AddToCartButton";
-import { canEditProject } from "@/utils/permissions";
-import { useUser } from "@supabase/auth-helpers-react";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { useCompletePermissions } from "@/hooks/use-complete-permissions";
 
 interface ProjectActionsProps {
   projectId: string;
   projectTitle: string;
   onEdit: (id: string) => void;
   onViewHistory: (id: string, title: string) => void;
-  userRoles?: string[];
   onProjectDeleted: () => void;
-  owner_id?: string;
-  project_manager?: string;
-  isMember?: boolean;
+  onReview?: (id: string, title: string) => void;
 }
 
 export const ProjectActions = ({
@@ -31,54 +25,17 @@ export const ProjectActions = ({
   projectTitle,
   onEdit,
   onViewHistory,
-  userRoles = [],
   onProjectDeleted,
-  owner_id,
-  project_manager,
-  isMember,
+  onReview,
 }: ProjectActionsProps) => {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
-  const user = useUser();
-
-  const { data: canEdit } = useQuery({
-    queryKey: ["projectPermissions", projectId, user?.id],
-    queryFn: async () => {
-      if (!user?.id) return false;
-      
-      // Vérifier si l'utilisateur est admin
-      const isAdmin = userRoles?.includes("admin");
-      if (isAdmin) return true;
-
-      // Vérifier si l'utilisateur est le propriétaire ou le chef de projet
-      const { data: userProfile } = await supabase
-        .from("profiles")
-        .select("email")
-        .eq("id", user.id)
-        .single();
-
-      if (owner_id === user.id || project_manager === userProfile?.email) {
-        return true;
-      }
-
-      // Vérifier si l'utilisateur est un manager avec accès
-      const isManager = userRoles?.includes("manager");
-      if (isManager) {
-        const { data: canAccess } = await supabase
-          .rpc('can_manager_access_project', {
-            p_user_id: user.id,
-            p_project_id: projectId
-          });
-        return canAccess;
-      }
-
-      return false;
-    },
-    enabled: !!user?.id && !!projectId,
-  });
+  const permissions = useCompletePermissions(projectId);
 
   return (
     <div className="flex items-center gap-2">
-      <AddToCartButton projectId={projectId} projectTitle={projectTitle} />
+      {permissions.canViewProject && (
+        <AddToCartButton projectId={projectId} projectTitle={projectTitle} />
+      )}
       
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
@@ -92,24 +49,32 @@ export const ProjectActions = ({
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
-          {canEdit && (
+          {permissions.canEditProject && (
             <DropdownMenuItem onClick={() => onEdit(projectId)}>
               <Pencil className="mr-2 h-4 w-4" />
               Modifier
             </DropdownMenuItem>
           )}
-          <DropdownMenuItem
-            onClick={() => onViewHistory(projectId, projectTitle)}
-          >
-            <History className="mr-2 h-4 w-4" />
-            Historique des revues
-          </DropdownMenuItem>
-          {canEdit && (
+          {permissions.canCreateReview && onReview && (
+            <DropdownMenuItem onClick={() => onReview(projectId, projectTitle)}>
+              <FileEdit className="mr-2 h-4 w-4" />
+              Nouvelle revue
+            </DropdownMenuItem>
+          )}
+          {permissions.canViewReviews && (
+            <DropdownMenuItem
+              onClick={() => onViewHistory(projectId, projectTitle)}
+            >
+              <History className="mr-2 h-4 w-4" />
+              Historique des revues
+            </DropdownMenuItem>
+          )}
+          {permissions.canDeleteProject && (
             <DropdownMenuItem
               onClick={() => setShowDeleteDialog(true)}
               className="text-red-600"
             >
-              <Trash className="mr-2 h-4 w-4" />
+              <Trash2 className="mr-2 h-4 w-4" />
               Supprimer
             </DropdownMenuItem>
           )}
