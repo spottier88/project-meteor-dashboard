@@ -13,16 +13,16 @@ import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 
 interface DeleteProjectDialogProps {
-  isOpen: boolean;
-  onClose: () => void;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
   projectId: string;
   projectTitle: string;
   onProjectDeleted: () => void;
 }
 
 export const DeleteProjectDialog = ({
-  isOpen,
-  onClose,
+  open,
+  onOpenChange,
   projectId,
   projectTitle,
   onProjectDeleted,
@@ -50,12 +50,12 @@ export const DeleteProjectDialog = ({
       description: "Le projet a été supprimé avec succès",
     });
     onProjectDeleted();
-    onClose();
+    onOpenChange(false);
     navigate("/"); // Redirection vers la page d'accueil après la suppression
   };
 
   return (
-    <AlertDialog open={isOpen} onOpenChange={onClose}>
+    <AlertDialog open={open} onOpenChange={onOpenChange}>
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>Êtes-vous sûr ?</AlertDialogTitle>
