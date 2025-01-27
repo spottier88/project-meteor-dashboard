@@ -1,5 +1,5 @@
 import { Table, TableBody } from "@/components/ui/table";
-import { ProjectStatus, ProgressStatus } from "@/types/project";
+import { ProjectStatus, ProgressStatus, ProjectLifecycleStatus } from "@/types/project";
 import { useUser } from "@supabase/auth-helpers-react";
 import { ProjectTableHeader } from "./project/ProjectTableHeader";
 import { ProjectTableRow } from "./project/ProjectTableRow";
@@ -22,6 +22,7 @@ interface Project {
   pole_id?: string;
   direction_id?: string;
   service_id?: string;
+  lifecycle_status: ProjectLifecycleStatus;
 }
 
 interface ProjectTableProps {
