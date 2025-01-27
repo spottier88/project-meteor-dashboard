@@ -1,0 +1,152 @@
+import { useState, useEffect } from "react";
+import { useUser } from "@supabase/auth-helpers-react";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { MonitoringLevel } from "@/types/monitoring";
+import { ProjectLifecycleStatus } from "@/types/project";
+
+export const useProjectFormState = (isOpen: boolean, project?: any) => {
+  const [currentStep, setCurrentStep] = useState(0);
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [projectManager, setProjectManager] = useState("");
+  const [startDate, setStartDate] = useState<Date | undefined>(undefined);
+  const [endDate, setEndDate] = useState<Date | undefined>(undefined);
+  const [priority, setPriority] = useState("medium");
+  const [monitoringLevel, setMonitoringLevel] = useState<MonitoringLevel>("none");
+  const [monitoringEntityId, setMonitoringEntityId] = useState<string | null>(null);
+  const [ownerId, setOwnerId] = useState("");
+  const [poleId, setPoleId] = useState("none");
+  const [directionId, setDirectionId] = useState("none");
+  const [serviceId, setServiceId] = useState("none");
+  const [novateur, setNovateur] = useState(0);
+  const [usager, setUsager] = useState(0);
+  const [ouverture, setOuverture] = useState(0);
+  const [agilite, setAgilite] = useState(0);
+  const [impact, setImpact] = useState(0);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [lifecycleStatus, setLifecycleStatus] = useState<ProjectLifecycleStatus>("study");
+
+  const user = useUser();
+
+  useEffect(() => {
+    const initializeForm = async () => {
+      if (isOpen) {
+        if (project) {
+          setTitle(project.title || "");
+          setDescription(project.description || "");
+          setProjectManager(project.project_manager || "");
+          setStartDate(project.start_date ? new Date(project.start_date) : undefined);
+          setEndDate(project.end_date ? new Date(project.end_date) : undefined);
+          setPriority(project.priority || "medium");
+          setPoleId(project.pole_id || "none");
+          setDirectionId(project.direction_id || "none");
+          setServiceId(project.service_id || "none");
+          setOwnerId(project.owner_id || "");
+          setLifecycleStatus(project.lifecycle_status as ProjectLifecycleStatus || "study");
+
+          try {
+            const { data: monitoringData, error } = await supabase
+              .from("project_monitoring")
+              .select("monitoring_level, monitoring_entity_id")
+              .eq("project_id", project.id)
+              .maybeSingle();
+
+            if (!error && monitoringData) {
+              setMonitoringLevel(monitoringData.monitoring_level);
+              setMonitoringEntityId(monitoringData.monitoring_entity_id);
+            } else {
+              setMonitoringLevel("none");
+              setMonitoringEntityId(null);
+            }
+          } catch (error) {
+            console.error("Error in monitoring data fetch:", error);
+          }
+
+          const { data: innovationScores } = await supabase
+            .from("project_innovation_scores")
+            .select("*")
+            .eq("project_id", project.id)
+            .maybeSingle();
+
+          if (innovationScores) {
+            setNovateur(innovationScores.novateur);
+            setUsager(innovationScores.usager);
+            setOuverture(innovationScores.ouverture);
+            setAgilite(innovationScores.agilite);
+            setImpact(innovationScores.impact);
+          }
+        } else {
+          // Reset form for new project
+          setTitle("");
+          setDescription("");
+          setStartDate(undefined);
+          setEndDate(undefined);
+          setPriority("medium");
+          setMonitoringLevel("none");
+          setMonitoringEntityId(null);
+          setPoleId("none");
+          setDirectionId("none");
+          setServiceId("none");
+          setNovateur(0);
+          setUsager(0);
+          setOuverture(0);
+          setAgilite(0);
+          setImpact(0);
+          setLifecycleStatus("study");
+          
+          if (user?.email) {
+            setProjectManager(user.email);
+            setOwnerId(user.id);
+          }
+        }
+        setCurrentStep(0);
+      }
+    };
+
+    initializeForm();
+  }, [isOpen, project, user?.email, user?.id]);
+
+  return {
+    currentStep,
+    setCurrentStep,
+    title,
+    setTitle,
+    description,
+    setDescription,
+    projectManager,
+    setProjectManager,
+    startDate,
+    setStartDate,
+    endDate,
+    setEndDate,
+    priority,
+    setPriority,
+    monitoringLevel,
+    setMonitoringLevel,
+    monitoringEntityId,
+    setMonitoringEntityId,
+    ownerId,
+    setOwnerId,
+    poleId,
+    setPoleId,
+    directionId,
+    setDirectionId,
+    serviceId,
+    setServiceId,
+    novateur,
+    setNovateur,
+    usager,
+    setUsager,
+    ouverture,
+    setOuverture,
+    agilite,
+    setAgilite,
+    impact,
+    setImpact,
+    isSubmitting,
+    setIsSubmitting,
+    lifecycleStatus,
+    setLifecycleStatus,
+  };
+};
