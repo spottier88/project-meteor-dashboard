@@ -57,7 +57,11 @@ export const ProjectTable = ({
         return [];
       }
 
-      return data;
+      // Transform the data to match our expected format
+      return data.map((project: any) => ({
+        ...project,
+        lastReviewDate: project.last_review_date
+      }));
     },
     enabled: !!user?.id,
   });
