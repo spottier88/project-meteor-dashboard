@@ -19,6 +19,7 @@ export const useTaskPermissions = (projectId: string) => {
       return data;
     },
     enabled: !!user?.id,
+    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
   });
 
   const { data: userRoles } = useQuery({
@@ -34,6 +35,7 @@ export const useTaskPermissions = (projectId: string) => {
       return data;
     },
     enabled: !!user?.id,
+    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
   });
 
   const { data: project } = useQuery({
@@ -50,6 +52,7 @@ export const useTaskPermissions = (projectId: string) => {
       return data;
     },
     enabled: !!projectId,
+    staleTime: 30 * 1000, // Cache for 30 seconds
   });
 
   // Ajout des logs pour tracer les appels à can_manager_access_project
@@ -97,6 +100,9 @@ export const useTaskPermissions = (projectId: string) => {
       return canAccess;
     },
     enabled: !!user?.id && !!projectId,
+    staleTime: 30 * 1000, // Cache for 30 seconds
+    retry: 1, // Limit retries on error
+    retryDelay: 1000, // Wait 1 second before retry
   });
 
   const isAdmin = userRoles?.some(role => role.role === "admin");

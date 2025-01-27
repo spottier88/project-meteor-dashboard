@@ -19,6 +19,7 @@ export const useProjectPermissions = (projectId: string) => {
       return data;
     },
     enabled: !!user?.id,
+    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
   });
 
   const { data: userRoles } = useQuery({
@@ -34,6 +35,7 @@ export const useProjectPermissions = (projectId: string) => {
       return data;
     },
     enabled: !!user?.id,
+    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
   });
 
   const { data: project } = useQuery({
@@ -50,6 +52,7 @@ export const useProjectPermissions = (projectId: string) => {
       return data;
     },
     enabled: !!projectId,
+    staleTime: 30 * 1000, // Cache for 30 seconds
   });
 
   const { data: isMember } = useQuery({
@@ -67,6 +70,7 @@ export const useProjectPermissions = (projectId: string) => {
       return !!data;
     },
     enabled: !!projectId && !!user?.id,
+    staleTime: 30 * 1000, // Cache for 30 seconds
   });
 
   const isAdmin = userRoles?.some(role => role.role === "admin");
@@ -114,6 +118,9 @@ export const useProjectPermissions = (projectId: string) => {
       return canAccess;
     },
     enabled: !!user?.id && !!projectId && !isAdmin && !isProjectManager,
+    staleTime: 30 * 1000, // Cache for 30 seconds
+    retry: 1, // Limit retries on error
+    retryDelay: 1000, // Wait 1 second before retry
   });
 
   const canEditProject = isAdmin || isProjectManager || canAccess;
