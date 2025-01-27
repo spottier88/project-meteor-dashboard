@@ -72,9 +72,53 @@ export const useProjectPermissions = (projectId: string) => {
   const isAdmin = userRoles?.some(role => role.role === "admin");
   const isProjectManager = project?.project_manager === userProfile?.email;
 
-  const canEditProject = isAdmin || isProjectManager;
+  // Ajout des logs pour tracer les appels à can_manager_access_project
+  const { data: canAccess } = useQuery({
+    queryKey: ["managerAccess", projectId, user?.id],
+    queryFn: async () => {
+      if (!user?.id || !projectId || isAdmin || isProjectManager) {
+        console.log("[useProjectPermissions] Skipping manager access check:", {
+          userId: user?.id,
+          projectId,
+          isAdmin,
+          isProjectManager
+        });
+        return false;
+      }
+
+      console.log("[useProjectPermissions] Checking manager access:", {
+        userId: user?.id,
+        projectId,
+        timestamp: new Date().toISOString()
+      });
+
+      const startTime = performance.now();
+      const { data: canAccess, error } = await supabase
+        .rpc('can_manager_access_project', {
+          p_user_id: user.id,
+          p_project_id: projectId
+        });
+      const endTime = performance.now();
+
+      console.log("[useProjectPermissions] Manager access check completed:", {
+        result: canAccess,
+        duration: `${(endTime - startTime).toFixed(2)}ms`,
+        error: error?.message
+      });
+
+      if (error) {
+        console.error("[useProjectPermissions] Error checking access:", error);
+        return false;
+      }
+
+      return canAccess;
+    },
+    enabled: !!user?.id && !!projectId && !isAdmin && !isProjectManager,
+  });
+
+  const canEditProject = isAdmin || isProjectManager || canAccess;
   const canManageRisks = isAdmin || isProjectManager;
-  const canViewProject = isAdmin || isProjectManager || isMember;
+  const canViewProject = isAdmin || isProjectManager || isMember || canAccess;
 
   return {
     canEditProject,
