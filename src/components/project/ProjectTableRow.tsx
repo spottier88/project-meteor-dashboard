@@ -2,12 +2,10 @@ import { TableCell, TableRow } from "@/components/ui/table";
 import { ProjectActions } from "./ProjectActions";
 import { OrganizationCell } from "./OrganizationCell";
 import { StatusIcon } from "./StatusIcon";
-import { LifecycleStatusBadge } from "./LifecycleStatusBadge";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useUser } from "@supabase/auth-helpers-react";
-import { ProjectLifecycleStatus } from "@/types/project";
 
 interface Project {
   id: string;
@@ -22,7 +20,6 @@ interface Project {
   direction_id?: string;
   service_id?: string;
   suivi_dgs?: boolean;
-  lifecycle_status: ProjectLifecycleStatus;
 }
 
 interface ProjectTableRowProps {
@@ -113,9 +110,7 @@ export const ProjectTableRow = ({
       <TableCell>
         <StatusIcon status={latestReview?.weather || null} />
       </TableCell>
-      <TableCell>
-        <LifecycleStatusBadge status={project.lifecycle_status} />
-      </TableCell>
+      <TableCell>{latestReview?.progress || "-"}</TableCell>
       <TableCell>{latestReview?.completion || 0}%</TableCell>
       <TableCell>
         {latestReview?.created_at
@@ -130,8 +125,11 @@ export const ProjectTableRow = ({
             projectTitle={project.title}
             onEdit={onProjectEdit}
             onViewHistory={onViewHistory}
+            userRoles={userRoles?.map(ur => ur.role)}
             onProjectDeleted={onProjectDeleted}
-            onReview={(id, title) => navigate(`/reviews/${id}`)}
+            owner_id={project.owner_id}
+            project_manager={project.project_manager}
+            isMember={isMember}
           />
         </div>
       </TableCell>

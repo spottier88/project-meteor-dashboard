@@ -1,24 +1,22 @@
 import { Button } from "@/components/ui/button";
-import { MoreHorizontal, History, Pencil, Trash2, FileEdit, Users, AlertCircle, ClipboardList } from "lucide-react";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { DeleteProjectDialog } from "./DeleteProjectDialog";
-import { useState } from "react";
-import { AddToCartButton } from "../cart/AddToCartButton";
-import { useCompletePermissions } from "@/hooks/use-complete-permissions";
+import { Pencil, History, ListTodo, ShieldAlert, Trash2, Users } from "lucide-react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { DeleteProjectDialog } from "./DeleteProjectDialog";
+import { UserRole } from "@/types/user";
+import { useUser } from "@supabase/auth-helpers-react";
+import { canViewProjectHistory, canManageTasks, canManageRisks, canEditProject } from "@/utils/permissions";
 
 interface ProjectActionsProps {
   projectId: string;
   projectTitle: string;
   onEdit: (id: string) => void;
   onViewHistory: (id: string, title: string) => void;
+  userRoles?: UserRole[];
   onProjectDeleted: () => void;
-  onReview?: (id: string, title: string) => void;
+  owner_id?: string;
+  project_manager?: string;
+  isMember?: boolean;
 }
 
 export const ProjectActions = ({
@@ -26,88 +24,124 @@ export const ProjectActions = ({
   projectTitle,
   onEdit,
   onViewHistory,
+  userRoles,
   onProjectDeleted,
-  onReview,
+  owner_id,
+  project_manager,
+  isMember,
 }: ProjectActionsProps) => {
-  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
-  const permissions = useCompletePermissions(projectId);
   const navigate = useNavigate();
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const isAdmin = userRoles?.includes("admin");
+  const user = useUser();
+  const [canEdit, setCanEdit] = useState(false);
+
+  useEffect(() => {
+    const checkEditPermission = async () => {
+      if (user) {
+        const hasEditPermission = await canEditProject(
+          userRoles,
+          user.id,
+          owner_id,
+          projectId,
+          project_manager,
+          user.email || undefined
+        );
+        setCanEdit(hasEditPermission);
+      }
+    };
+    
+    checkEditPermission();
+  }, [userRoles, user, owner_id, projectId, project_manager]);
+
+  const handleClick = (e: React.MouseEvent, action: () => void) => {
+    e.stopPropagation();
+    action();
+  };
+
+  const canViewHistory = canViewProjectHistory(userRoles, user?.id, owner_id, project_manager, user?.email);
+  const canManageProjectTasks = canManageTasks(userRoles, user?.id, owner_id, project_manager, user?.email) || isMember;
+  const canManageProjectRisks = canManageRisks(userRoles, user?.id, owner_id, project_manager, user?.email) || isMember;
+  const canManageTeam = isAdmin || (user?.email === project_manager);
 
   return (
-    <div className="flex items-center gap-2">
-      {permissions.canViewProject && (
-        <AddToCartButton projectId={projectId} projectTitle={projectTitle} />
+    <>
+      {canEdit && (
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={(e) => handleClick(e, () => onEdit(projectId))}
+          className="h-8 w-8"
+          title="Modifier le projet"
+        >
+          <Pencil className="h-4 w-4" />
+        </Button>
       )}
-      
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button
-            variant="ghost"
-            className="h-8 w-8 p-0"
-            title="Plus d'actions"
-          >
-            <span className="sr-only">Ouvrir le menu</span>
-            <MoreHorizontal className="h-4 w-4" />
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end">
-          {permissions.canEditProject && (
-            <DropdownMenuItem onClick={() => onEdit(projectId)}>
-              <Pencil className="mr-2 h-4 w-4" />
-              Modifier
-            </DropdownMenuItem>
-          )}
-          {permissions.canCreateReview && onReview && (
-            <DropdownMenuItem onClick={() => onReview(projectId, projectTitle)}>
-              <FileEdit className="mr-2 h-4 w-4" />
-              Nouvelle revue
-            </DropdownMenuItem>
-          )}
-          {permissions.canViewReviews && (
-            <DropdownMenuItem
-              onClick={() => onViewHistory(projectId, projectTitle)}
-            >
-              <History className="mr-2 h-4 w-4" />
-              Historique des revues
-            </DropdownMenuItem>
-          )}
-          {(permissions.canCreateTask || permissions.canViewProject) && (
-            <DropdownMenuItem onClick={() => navigate(`/tasks/${projectId}`)}>
-              <ClipboardList className="mr-2 h-4 w-4" />
-              Tâches
-            </DropdownMenuItem>
-          )}
-          {(permissions.canCreateRisk || permissions.canViewProject) && (
-            <DropdownMenuItem onClick={() => navigate(`/risks/${projectId}`)}>
-              <AlertCircle className="mr-2 h-4 w-4" />
-              Risques
-            </DropdownMenuItem>
-          )}
-          {(permissions.canManageMembers || permissions.canViewMembers) && (
-            <DropdownMenuItem onClick={() => navigate(`/projects/${projectId}/team`)}>
-              <Users className="mr-2 h-4 w-4" />
-              Équipe
-            </DropdownMenuItem>
-          )}
-          {permissions.canDeleteProject && (
-            <DropdownMenuItem
-              onClick={() => setShowDeleteDialog(true)}
-              className="text-red-600"
-            >
-              <Trash2 className="mr-2 h-4 w-4" />
-              Supprimer
-            </DropdownMenuItem>
-          )}
-        </DropdownMenuContent>
-      </DropdownMenu>
+      {canViewHistory && (
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={(e) =>
+            handleClick(e, () => onViewHistory(projectId, projectTitle))
+          }
+          className="h-8 w-8"
+          title="Historique des revues projets"
+        >
+          <History className="h-4 w-4" />
+        </Button>
+      )}
+      {canManageProjectTasks && (
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={(e) => handleClick(e, () => navigate(`/tasks/${projectId}`))}
+          className="h-8 w-8"
+          title="Gérer les tâches"
+        >
+          <ListTodo className="h-4 w-4" />
+        </Button>
+      )}
+      {canManageProjectRisks && (
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={(e) => handleClick(e, () => navigate(`/risks/${projectId}`))}
+          className="h-8 w-8"
+          title="Gérer les risques"
+        >
+          <ShieldAlert className="h-4 w-4" />
+        </Button>
+      )}
+      {canManageTeam && (
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={(e) => handleClick(e, () => navigate(`/projects/${projectId}/team`))}
+          className="h-8 w-8"
+          title="Gérer l'équipe"
+        >
+          <Users className="h-4 w-4" />
+        </Button>
+      )}
+      {isAdmin && (
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={(e) => handleClick(e, () => setIsDeleteDialogOpen(true))}
+          className="h-8 w-8"
+          title="Supprimer le projet"
+        >
+          <Trash2 className="h-4 w-4 text-destructive" />
+        </Button>
+      )}
 
       <DeleteProjectDialog
-        open={showDeleteDialog}
-        onOpenChange={setShowDeleteDialog}
+        isOpen={isDeleteDialogOpen}
+        onClose={() => setIsDeleteDialogOpen(false)}
         projectId={projectId}
         projectTitle={projectTitle}
         onProjectDeleted={onProjectDeleted}
       />
-    </div>
+    </>
   );
 };

@@ -1,11 +1,12 @@
 import { Table, TableBody } from "@/components/ui/table";
-import { ProjectStatus, ProgressStatus, ProjectLifecycleStatus } from "@/types/project";
+import { ProjectStatus, ProgressStatus } from "@/types/project";
 import { useUser } from "@supabase/auth-helpers-react";
 import { ProjectTableHeader } from "./project/ProjectTableHeader";
 import { ProjectTableRow } from "./project/ProjectTableRow";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useState, useEffect } from "react";
+import { UserRoleData } from "@/types/user";
+import { useState } from "react";
 import { SortDirection } from "./ui/sortable-header";
 
 interface Project {
@@ -21,7 +22,6 @@ interface Project {
   pole_id?: string;
   direction_id?: string;
   service_id?: string;
-  lifecycle_status: ProjectLifecycleStatus;
 }
 
 interface ProjectTableProps {
@@ -30,47 +30,141 @@ interface ProjectTableProps {
   onProjectEdit: (id: string) => void;
   onViewHistory: (id: string, title: string) => void;
   onProjectDeleted: () => void;
-  onFilteredProjectsChange?: (projectIds: string[]) => void;
 }
 
 export const ProjectTable = ({
+  projects,
   onProjectEdit,
   onViewHistory,
   onProjectDeleted,
-  onFilteredProjectsChange,
 }: ProjectTableProps) => {
   const user = useUser();
   const [sortKey, setSortKey] = useState<string | null>(null);
   const [sortDirection, setSortDirection] = useState<SortDirection>(null);
 
-  const { data: accessibleProjects } = useQuery({
-    queryKey: ["accessibleProjects", user?.id],
+  const { data: userRoles } = useQuery({
+    queryKey: ["userRoles", user?.id],
     queryFn: async () => {
-      if (!user?.id) return [];
+      if (!user?.id) return null;
       const { data, error } = await supabase
-        .rpc('get_accessible_projects', {
-          p_user_id: user.id
-        });
+        .from("user_roles")
+        .select("*")
+        .eq("user_id", user.id);
 
-      if (error) {
-        console.error("Error fetching accessible projects:", error);
-        return [];
-      }
-
-      // Transform the data to match our expected format
-      return data.map((project: any) => ({
-        ...project,
-        lastReviewDate: project.last_review_date
-      }));
+      if (error) throw error;
+      console.log("User roles (table):", data);
+      return data as UserRoleData[];
     },
     enabled: !!user?.id,
   });
 
-  useEffect(() => {
-    if (accessibleProjects && onFilteredProjectsChange) {
-      onFilteredProjectsChange(accessibleProjects.map(project => project.id));
-    }
-  }, [accessibleProjects, onFilteredProjectsChange]);
+  const { data: userProfile } = useQuery({
+    queryKey: ["userProfile", user?.id],
+    queryFn: async () => {
+      if (!user?.id) return null;
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("id", user.id)
+        .single();
+
+      if (error) throw error;
+      console.log("User profile (table):", data);
+      return data;
+    },
+    enabled: !!user?.id,
+  });
+
+  const { data: projectMemberships } = useQuery({
+    queryKey: ["projectMemberships", user?.id],
+    queryFn: async () => {
+      if (!user?.id) return [];
+      const { data, error } = await supabase
+        .from("project_members")
+        .select("project_id")
+        .eq("user_id", user.id);
+
+      if (error) {
+        console.error("Error fetching project memberships:", error);
+        return [];
+      }
+
+      return data.map(pm => pm.project_id);
+    },
+    enabled: !!user?.id,
+  });
+
+  const { data: filteredProjects } = useQuery({
+    queryKey: ["filteredProjects", projects, user?.id, userRoles, userProfile, projectMemberships],
+    queryFn: async () => {
+      if (!user) {
+        console.log("No user logged in (table)");
+        return [];
+      }
+
+      const isAdmin = userRoles?.some(role => role.role === "admin");
+      if (isAdmin) {
+        console.log("User is admin (table), showing all projects");
+        return projects;
+      }
+
+      const filteredResults = await Promise.all(
+        projects.map(async project => {
+          const isProjectManager = project.project_manager === userProfile?.email;
+          const isMember = projectMemberships?.includes(project.id);
+          
+          if (isProjectManager || isMember) {
+            console.log(`Project ${project.id} accessible (project manager or member) (table)`);
+            return true;
+          }
+
+          const { data: canAccess, error } = await supabase
+            .rpc('can_manager_access_project', {
+              p_user_id: user.id,
+              p_project_id: project.id
+            });
+
+          if (error) {
+            console.error("Error checking project access (table):", error);
+            return false;
+          }
+
+          let projectLevel = "Non défini";
+          if (project.service_id) {
+            projectLevel = "Service";
+          } else if (project.direction_id) {
+            projectLevel = "Direction";
+          } else if (project.pole_id) {
+            projectLevel = "Pôle";
+          }
+
+          console.log(`Project ${project.id} - ${project.title} (table):`, {
+            projectLevel,
+            hierarchyDetails: {
+              pole_id: project.pole_id,
+              direction_id: project.direction_id,
+              service_id: project.service_id
+            },
+            access: {
+              isProjectManager,
+              isMember,
+              canAccess,
+              userEmail: userProfile?.email,
+              projectManager: project.project_manager
+            },
+            userRoles: userRoles?.map(r => r.role)
+          });
+
+          return canAccess;
+        })
+      );
+
+      return projects.filter((_, index) => filteredResults[index]);
+    },
+    enabled: !!user?.id && !!userRoles && !!userProfile,
+  });
+
+  console.log("Filtered projects (table):", filteredProjects?.length || 0, "out of", projects.length);
 
   const handleSort = (key: string) => {
     if (sortKey === key) {
@@ -85,11 +179,11 @@ export const ProjectTable = ({
     }
   };
 
-  if (!accessibleProjects) {
+  if (!filteredProjects) {
     return null;
   }
 
-  const sortedProjects = [...accessibleProjects].sort((a: any, b: any) => {
+  const sortedProjects = [...filteredProjects].sort((a: any, b: any) => {
     if (!sortKey || !sortDirection) return 0;
 
     const aValue = a[sortKey];

@@ -15,7 +15,7 @@ jobs:
     steps:
      # Étape 1 : Récupérer le code source
       - name : Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
      # Étape 2 : Définir une variable pour le tag
       - name: Set dynamic tag
@@ -30,7 +30,7 @@ jobs:
      
      # Étape 4 : Construire l'image Docker
       - name: Build the Docker image
-        run: docker build --file Dockerfile --tag ${{ secrets.DOCKER_USERNAME }}/project-meteor:latest .
+        run: docker build --file Dockerfile --tag spottier88/project-meteor:${{ env.TAG }} .
 
       # Étape 5 : Vérification des images Docker locales
       - name: List Docker Images
@@ -38,11 +38,4 @@ jobs:
 
       # Étape 6 : Pousser l'image vers Docker Hub
       - name: Push Docker Image
-        run: docker push ${{ secrets.DOCKER_USERNAME }}/project-meteor:latest
-
-      #Etape 7 : Tage avec la version
-      - name : Tat avec la version
-        run : |
-          docker tag ${{ secrets.DOCKER_USERNAME }}/project-meteor:latest \
-                     ${{ secrets.DOCKER_USERNAME }}/project-meteor:${{ env.TAG }}
-          docker push ${{ secrets.DOCKER_USERNAME }}/project-meteor:${{ env.TAG }}
+        run: docker push spottier88/project-meteor:${{ env.TAG }}

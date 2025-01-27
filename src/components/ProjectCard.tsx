@@ -8,7 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { AddToCartButton } from "./cart/AddToCartButton";
 import { ProjectStatus, ProgressStatus, ProjectLifecycleStatus } from "@/types/project";
 import { LifecycleStatusBadge } from "./project/LifecycleStatusBadge";
-import { useCompletePermissions } from "@/hooks/use-complete-permissions";
+import { useUser } from "@supabase/auth-helpers-react";
 
 interface ProjectCardProps {
   title: string;
@@ -32,6 +32,10 @@ interface ProjectCardProps {
 export const ProjectCard = ({
   title,
   description,
+  status,
+  progress,
+  completion,
+  lastReviewDate,
   id,
   project_manager,
   owner_id,
@@ -41,9 +45,10 @@ export const ProjectCard = ({
   lifecycle_status,
   onEdit,
   onViewHistory,
+  onReview,
 }: ProjectCardProps) => {
   const navigate = useNavigate();
-  const permissions = useCompletePermissions(id);
+  const user = useUser();
 
   const { data: organization } = useQuery({
     queryKey: ["organization", pole_id, direction_id, service_id],
@@ -103,20 +108,78 @@ export const ProjectCard = ({
     enabled: !!id,
   });
 
+  const { data: userProfile } = useQuery({
+    queryKey: ["userProfile", user?.id],
+    queryFn: async () => {
+      if (!user?.id) return null;
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("id", user.id)
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!user?.id,
+  });
+
+  const { data: isMember } = useQuery({
+    queryKey: ["projectMember", id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("project_members")
+        .select("*")
+        .eq("project_id", id)
+        .eq("user_id", user?.id)
+        .maybeSingle();
+
+      if (error) {
+        console.error("Error checking project membership:", error);
+        return false;
+      }
+
+      return !!data;
+    },
+    enabled: !!id && !!user?.id,
+  });
+
+  const { data: isManager } = useQuery({
+    queryKey: ["isProjectManager", id, user?.id],
+    queryFn: async () => {
+      if (!user?.id) return false;
+
+      const { data: userRoles } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", user.id);
+
+      if (!userRoles?.some(ur => ur.role === "manager")) return false;
+
+      const { data } = await supabase.rpc("can_manager_access_project", {
+        p_user_id: user.id,
+        p_project_id: id
+      });
+
+      return !!data;
+    },
+    enabled: !!id && !!user?.id,
+  });
+
+  const isProjectManager = userProfile?.email === project_manager;
+
   return (
     <Card className="w-full transition-all duration-300 hover:shadow-lg animate-fade-in">
       <ProjectCardHeader
         title={title}
         status={latestReview?.weather || null}
-        onEdit={permissions.canEditProject ? onEdit : undefined}
-        onViewHistory={permissions.canViewReviews ? onViewHistory : undefined}
+        onEdit={onEdit}
+        onViewHistory={onViewHistory}
         id={id}
         owner_id={owner_id}
         project_manager={project_manager}
         additionalActions={
-          permissions.canViewProject ? (
-            <AddToCartButton projectId={id} projectTitle={title} />
-          ) : null
+          <AddToCartButton projectId={id} projectTitle={title} />
         }
       />
       <CardContent>
@@ -124,17 +187,17 @@ export const ProjectCard = ({
           <div className="flex items-center justify-between">
             <LifecycleStatusBadge status={lifecycle_status} />
             <div className="flex gap-2">
-              {permissions.isProjectManager && (
+              {isProjectManager && (
                 <span className="text-xs bg-blue-800 text-white px-2 py-1 rounded">
                   Chef de projet
                 </span>
               )}
-              {permissions.isManager && (
+              {isManager && (
                 <span className="text-xs bg-purple-600 text-white px-2 py-1 rounded">
                   Manager
                 </span>
               )}
-              {permissions.isMember && (
+              {isMember && (
                 <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
                   Membre du projet
                 </span>

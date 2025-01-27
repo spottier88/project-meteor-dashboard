@@ -44,8 +44,8 @@ export const ProjectTableHeader = ({
           onSort={onSort}
         />
         <SortableHeader
-          label="État"
-          sortKey="lifecycle_status"
+          label="Progression"
+          sortKey="progress"
           currentSort={currentSort}
           currentDirection={currentDirection}
           onSort={onSort}
