@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Table, TableBody } from "@/components/ui/table";
 import { ProjectStatus, ProgressStatus, ProjectLifecycleStatus } from "@/types/project";
 import { useUser } from "@supabase/auth-helpers-react";
@@ -7,7 +7,6 @@ import { ProjectTableRow } from "./project/ProjectTableRow";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { UserRoleData } from "@/types/user";
-import { useState, useEffect } from "react";
 import { SortDirection } from "./ui/sortable-header";
 
 interface Project {
@@ -98,7 +97,7 @@ export const ProjectTable = ({
     enabled: !!user?.id,
   });
 
-  const { data: filteredProjects } = useQuery({
+  const { data: filteredProjects, isSuccess } = useQuery({
     queryKey: ["filteredProjects", projects, user?.id, userRoles, userProfile, projectMemberships],
     queryFn: async () => {
       if (!user) {
@@ -155,12 +154,12 @@ export const ProjectTable = ({
 
   // Notifier le parent des IDs des projets filtrés
   useEffect(() => {
-    if (filteredProjects && onFilteredProjectsChange) {
+    if (isSuccess && filteredProjects && onFilteredProjectsChange) {
       const projectIds = filteredProjects.map(p => p.id);
-      console.log("Notifying parent of filtered projects:", projectIds);
+      console.log("Notifying parent of filtered projects (table):", projectIds);
       onFilteredProjectsChange(projectIds);
     }
-  }, [filteredProjects, onFilteredProjectsChange]);
+  }, [filteredProjects, onFilteredProjectsChange, isSuccess]);
 
   console.log("Filtered projects (table):", filteredProjects?.length || 0, "out of", projects.length);
 
