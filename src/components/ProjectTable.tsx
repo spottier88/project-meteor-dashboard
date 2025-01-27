@@ -1,5 +1,5 @@
 import { Table, TableBody } from "@/components/ui/table";
-import { ProjectStatus, ProgressStatus } from "@/types/project";
+import { ProjectStatus, ProgressStatus, ProjectLifecycleStatus } from "@/types/project";
 import { useUser } from "@supabase/auth-helpers-react";
 import { ProjectTableHeader } from "./project/ProjectTableHeader";
 import { ProjectTableRow } from "./project/ProjectTableRow";
@@ -22,6 +22,7 @@ interface Project {
   pole_id?: string;
   direction_id?: string;
   service_id?: string;
+  lifecycle_status: ProjectLifecycleStatus;
 }
 
 interface ProjectTableProps {
@@ -30,6 +31,7 @@ interface ProjectTableProps {
   onProjectEdit: (id: string) => void;
   onViewHistory: (id: string, title: string) => void;
   onProjectDeleted: () => void;
+  onFilteredProjectsChange?: (projectIds: string[]) => void;
 }
 
 export const ProjectTable = ({
@@ -37,6 +39,7 @@ export const ProjectTable = ({
   onProjectEdit,
   onViewHistory,
   onProjectDeleted,
+  onFilteredProjectsChange,
 }: ProjectTableProps) => {
   const user = useUser();
   const [sortKey, setSortKey] = useState<string | null>(null);
@@ -163,6 +166,13 @@ export const ProjectTable = ({
     },
     enabled: !!user?.id && !!userRoles && !!userProfile,
   });
+
+  // Notifier le parent des IDs des projets filtrés
+  React.useEffect(() => {
+    if (filteredProjects && onFilteredProjectsChange) {
+      onFilteredProjectsChange(filteredProjects.map(p => p.id));
+    }
+  }, [filteredProjects, onFilteredProjectsChange]);
 
   console.log("Filtered projects (table):", filteredProjects?.length || 0, "out of", projects.length);
 

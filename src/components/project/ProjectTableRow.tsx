@@ -6,6 +6,7 @@ import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useUser } from "@supabase/auth-helpers-react";
+import { LifecycleStatusBadge } from "./LifecycleStatusBadge";
 
 interface Project {
   id: string;
@@ -20,6 +21,7 @@ interface Project {
   direction_id?: string;
   service_id?: string;
   suivi_dgs?: boolean;
+  lifecycle_status: string;
 }
 
 interface ProjectTableRowProps {
@@ -110,7 +112,9 @@ export const ProjectTableRow = ({
       <TableCell>
         <StatusIcon status={latestReview?.weather || null} />
       </TableCell>
-      <TableCell>{latestReview?.progress || "-"}</TableCell>
+      <TableCell>
+        <LifecycleStatusBadge status={project.lifecycle_status} />
+      </TableCell>
       <TableCell>{latestReview?.completion || 0}%</TableCell>
       <TableCell>
         {latestReview?.created_at

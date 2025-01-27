@@ -754,6 +754,26 @@ export type Database = {
         }
         Returns: boolean
       }
+      get_accessible_projects: {
+        Args: {
+          p_user_id: string
+        }
+        Returns: {
+          id: string
+          title: string
+          status: Database["public"]["Enums"]["project_status"]
+          progress: Database["public"]["Enums"]["progress_status"]
+          last_review_date: string
+          project_manager: string
+          owner_id: string
+          pole_id: string
+          direction_id: string
+          service_id: string
+          lifecycle_status: Database["public"]["Enums"]["project_lifecycle_status"]
+          completion: number
+          suivi_dgs: boolean
+        }[]
+      }
       get_users_last_login: {
         Args: Record<PropertyKey, never>
         Returns: {
