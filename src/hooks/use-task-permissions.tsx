@@ -5,7 +5,6 @@ export const useTaskPermissions = (projectId: string) => {
   const permissions = usePermissions(projectId);
   const { data: canAccess } = useProjectAccess(projectId);
   
-  // Un manager a les mêmes droits qu'un admin sur son périmètre
   const canCreateTask = permissions.isAdmin || (permissions.isManager && canAccess) || permissions.isProjectManager;
   
   const canEditTask = (assignee?: string) => {

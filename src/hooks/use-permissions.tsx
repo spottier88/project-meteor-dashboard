@@ -97,7 +97,6 @@ export const usePermissions = (projectId?: string): PermissionsResult => {
     }
   };
 
-  // Les autres fonctions de permission utilisent maintenant la même logique
   const canManageProjectMembers = canEditProject;
   const canManageRisks = canEditProject;
   const canManageTasks = canEditProject;

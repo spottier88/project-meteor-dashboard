@@ -12,36 +12,73 @@ export const canViewProjectHistory = (
   return true; // Tout le monde peut voir l'historique
 };
 
-export const canManageTasks = (
+export const canManageTasks = async (
   userRoles?: UserRole[],
   userId?: string,
-  ownerId?: string,
+  projectId?: string,
   projectManager?: string,
   userEmail?: string
-): boolean => {
-  if (!userRoles || !userId) return false;
+): Promise<boolean> => {
+  if (!userRoles || !userId || !projectId) return false;
   if (userRoles.includes("admin")) return true;
   if (projectManager && userEmail && projectManager === userEmail) return true;
-  return userRoles.includes("manager");
+
+  // Vérifier si l'utilisateur est manager avec accès au projet
+  if (userRoles.includes("manager")) {
+    const { data: canAccess } = await supabase
+      .rpc('can_manager_access_project', {
+        p_user_id: userId,
+        p_project_id: projectId
+      });
+    return !!canAccess;
+  }
+
+  // Vérifier si l'utilisateur est membre du projet
+  const { data: isMember } = await supabase
+    .from("project_members")
+    .select("*")
+    .eq("project_id", projectId)
+    .eq("user_id", userId)
+    .maybeSingle();
+
+  return !!isMember;
 };
 
-export const canManageRisks = (
+export const canManageRisks = async (
   userRoles?: UserRole[],
   userId?: string,
-  ownerId?: string,
+  projectId?: string,
   projectManager?: string,
   userEmail?: string
-): boolean => {
-  if (!userRoles || !userId) return false;
+): Promise<boolean> => {
+  if (!userRoles || !userId || !projectId) return false;
   if (userRoles.includes("admin")) return true;
   if (projectManager && userEmail && projectManager === userEmail) return true;
-  return userRoles.includes("manager");
+
+  // Vérifier si l'utilisateur est manager avec accès au projet
+  if (userRoles.includes("manager")) {
+    const { data: canAccess } = await supabase
+      .rpc('can_manager_access_project', {
+        p_user_id: userId,
+        p_project_id: projectId
+      });
+    return !!canAccess;
+  }
+
+  // Vérifier si l'utilisateur est membre du projet
+  const { data: isMember } = await supabase
+    .from("project_members")
+    .select("*")
+    .eq("project_id", projectId)
+    .eq("user_id", userId)
+    .maybeSingle();
+
+  return !!isMember;
 };
 
 export const canEditProject = async (
   userRoles?: UserRole[],
   userId?: string,
-  ownerId?: string,
   projectId?: string,
   projectManager?: string,
   userEmail?: string
