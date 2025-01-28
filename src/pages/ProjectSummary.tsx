@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 import { useUser } from "@supabase/auth-helpers-react";
 import { canManageProjectItems } from "@/utils/permissions";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { TaskForm } from "@/components/TaskForm";
 import { ProjectSummaryContent } from "@/components/project/ProjectSummaryContent";
 import { useToast } from "@/components/ui/use-toast";
@@ -15,6 +15,7 @@ export const ProjectSummary = () => {
   const navigate = useNavigate();
   const user = useUser();
   const [isTaskFormOpen, setIsTaskFormOpen] = useState(false);
+  const [canManage, setCanManage] = useState(false);
   const { toast } = useToast();
 
   const { data: project, isError: projectError } = useQuery({
@@ -139,18 +140,27 @@ export const ProjectSummary = () => {
     enabled: !!user?.id,
   });
 
+  useEffect(() => {
+    const checkPermissions = async () => {
+      if (!project) return;
+      
+      const roles = userRoles?.map(ur => ur.role);
+      const hasPermission = await canManageProjectItems(
+        roles,
+        user?.id,
+        project.id,
+        project.project_manager,
+        userProfile?.email
+      );
+      setCanManage(hasPermission);
+    };
+
+    checkPermissions();
+  }, [project, userRoles, user?.id, userProfile?.email]);
+
   if (!project || projectError) {
     return null;
   }
-
-  const roles = userRoles?.map(ur => ur.role);
-  const canManage = canManageProjectItems(
-    roles,
-    user?.id,
-    project.owner_id,
-    project.project_manager,
-    userProfile?.email
-  );
 
   return (
     <div className="container mx-auto py-6 space-y-6">
