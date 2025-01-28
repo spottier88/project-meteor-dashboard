@@ -1,16 +1,18 @@
 import { usePermissions } from "./use-permissions";
+import { useProjectAccess } from "./use-project-access";
 
 export const useTaskPermissions = (projectId: string) => {
   const permissions = usePermissions(projectId);
+  const { data: canAccess } = useProjectAccess(projectId);
   
-  const canCreateTask = permissions.isAdmin || permissions.isProjectManager;
+  const canCreateTask = permissions.isAdmin || permissions.isProjectManager || canAccess;
   
   const canEditTask = (assignee?: string) => {
-    if (permissions.isAdmin || permissions.isProjectManager) return true;
+    if (permissions.isAdmin || permissions.isProjectManager || canAccess) return true;
     return assignee === permissions.userEmail;
   };
 
-  const canDeleteTask = permissions.isAdmin || permissions.isProjectManager;
+  const canDeleteTask = permissions.isAdmin || permissions.isProjectManager || canAccess;
 
   return {
     canCreateTask,

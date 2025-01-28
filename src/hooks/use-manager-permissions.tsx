@@ -1,9 +1,9 @@
 import { usePermissions } from "./use-permissions";
-import { useHierarchyPermissions } from "./use-hierarchy-permissions";
+import { useProjectAccess } from "./use-project-access";
 
 export const useManagerPermissions = (projectId: string) => {
   const permissions = usePermissions(projectId);
-  const { canAccess } = useHierarchyPermissions(projectId);
+  const { data: canAccess } = useProjectAccess(projectId);
   
-  return permissions.isAdmin || permissions.isManager || permissions.isProjectManager || canAccess;
+  return permissions.isAdmin || permissions.isManager || permissions.isProjectManager || !!canAccess;
 };
