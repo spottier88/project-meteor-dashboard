@@ -4,9 +4,15 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Settings } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { NewAssignmentForm } from "@/components/manager/NewAssignmentForm";
+import { HierarchyPathAssignmentForm } from "@/components/manager/HierarchyPathAssignmentForm";
 import { AssignmentsList } from "@/components/manager/AssignmentsList";
-import { ManagerAssignment, ManagerAssignmentWithDetails } from "@/types/user";
+import { HierarchyPath } from "@/types/user";
+
+interface ManagerPathAssignmentWithDetails {
+  id: string;
+  path_id: string;
+  path: HierarchyPath;
+}
 
 export const ManagerAssignments = () => {
   const { userId } = useParams();
@@ -30,44 +36,30 @@ export const ManagerAssignments = () => {
   });
 
   const { data: assignments, isLoading: isLoadingAssignments } = useQuery({
-    queryKey: ["manager_assignments", userId],
+    queryKey: ["manager_path_assignments", userId],
     queryFn: async () => {
       if (!userId) return [];
       const { data: assignmentsData, error } = await supabase
-        .from("manager_assignments")
-        .select("*")
+        .from("manager_path_assignments")
+        .select(`
+          id,
+          path_id,
+          path:hierarchy_paths (*)
+        `)
         .eq("user_id", userId);
 
       if (error) throw error;
-
-      const detailedAssignments = await Promise.all(
-        assignmentsData.map(async (assignment) => {
-          const tableName = `${assignment.entity_type}s` as "poles" | "directions" | "services";
-          const { data: entityData } = await supabase
-            .from(tableName)
-            .select("name")
-            .eq("id", assignment.entity_id)
-            .maybeSingle();
-
-          return {
-            ...assignment,
-            entity_details: entityData || { name: 'Unknown' }
-          } as ManagerAssignmentWithDetails;
-        })
-      );
-
-      return detailedAssignments;
+      return assignmentsData as ManagerPathAssignmentWithDetails[];
     },
     enabled: !!userId,
   });
 
   const addAssignment = useMutation({
-    mutationFn: async (assignment: Omit<ManagerAssignment, 'id' | 'created_at'>) => {
+    mutationFn: async (pathId: string) => {
       const { error } = await supabase
-        .from("manager_assignments")
-        .insert([assignment]);
+        .from("manager_path_assignments")
+        .insert([{ user_id: userId, path_id: pathId }]);
       if (error) {
-        // Gérer spécifiquement l'erreur de violation de contrainte unique
         if (error.code === '23505') {
           throw new Error("Cette affectation existe déjà pour cet utilisateur.");
         }
@@ -75,7 +67,7 @@ export const ManagerAssignments = () => {
       }
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["manager_assignments"] });
+      queryClient.invalidateQueries({ queryKey: ["manager_path_assignments"] });
       toast({
         title: "Succès",
         description: "L'affectation a été ajoutée",
@@ -93,13 +85,13 @@ export const ManagerAssignments = () => {
   const deleteAssignment = useMutation({
     mutationFn: async (assignmentId: string) => {
       const { error } = await supabase
-        .from("manager_assignments")
+        .from("manager_path_assignments")
         .delete()
         .eq("id", assignmentId);
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["manager_assignments"] });
+      queryClient.invalidateQueries({ queryKey: ["manager_path_assignments"] });
       toast({
         title: "Succès",
         description: "L'affectation a été supprimée",
@@ -131,7 +123,7 @@ export const ManagerAssignments = () => {
         </Button>
         <div>
           <h1 className="text-3xl font-bold tracking-tight">
-            Gestion des affectations
+            Gestion des affectations hiérarchiques
           </h1>
           <p className="text-muted-foreground">
             {profile.first_name} {profile.last_name}
@@ -140,12 +132,18 @@ export const ManagerAssignments = () => {
       </div>
 
       <div className="grid gap-8">
-        <NewAssignmentForm 
+        <HierarchyPathAssignmentForm 
           userId={userId!} 
-          onAssignmentAdd={(assignment) => addAssignment.mutate(assignment)} 
+          onAssignmentAdd={(pathId) => addAssignment.mutate(pathId)} 
         />
         <AssignmentsList 
-          assignments={assignments || []} 
+          assignments={assignments.map(a => ({
+            id: a.id,
+            entity_type: 'path',
+            entity_details: {
+              name: a.path.path_string
+            }
+          }))} 
           onAssignmentDelete={(id) => deleteAssignment.mutate(id)} 
         />
       </div>

@@ -2,10 +2,17 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Trash2 } from "lucide-react";
-import { ManagerAssignmentWithDetails } from "@/types/user";
+
+interface Assignment {
+  id: string;
+  entity_type: string;
+  entity_details: {
+    name: string;
+  };
+}
 
 interface AssignmentsListProps {
-  assignments: ManagerAssignmentWithDetails[];
+  assignments: Assignment[];
   onAssignmentDelete: (assignmentId: string) => void;
 }
 
@@ -21,9 +28,7 @@ export const AssignmentsList = ({ assignments, onAssignmentDelete }: Assignments
             <div key={assignment.id} className="flex items-center justify-between p-4 border rounded-lg">
               <div className="flex flex-wrap gap-2">
                 <Badge variant="secondary">
-                  {assignment.entity_type === 'pole' && `Pôle: ${assignment.entity_details.name}`}
-                  {assignment.entity_type === 'direction' && `Direction: ${assignment.entity_details.name}`}
-                  {assignment.entity_type === 'service' && `Service: ${assignment.entity_details.name}`}
+                  {assignment.entity_details.name}
                 </Badge>
               </div>
               <Button
