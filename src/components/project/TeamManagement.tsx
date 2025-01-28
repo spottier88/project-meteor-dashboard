@@ -43,7 +43,7 @@ export const TeamManagement = ({ projectId }: TeamManagementProps) => {
         .from("project_members")
         .select(`
           user_id,
-          profiles:user_id (
+          user:profiles!inner (
             id,
             email,
             first_name,
@@ -218,10 +218,10 @@ export const TeamManagement = ({ projectId }: TeamManagementProps) => {
             >
               <div>
                 <p className="font-medium">
-                  {member.profiles.first_name} {member.profiles.last_name}
+                  {member.user.first_name} {member.user.last_name}
                 </p>
                 <p className="text-sm text-muted-foreground">
-                  {member.profiles.email}
+                  {member.user.email}
                 </p>
               </div>
               <Button
