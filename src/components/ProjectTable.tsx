@@ -8,6 +8,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { UserRoleData } from "@/types/user";
 import { SortDirection } from "./ui/sortable-header";
+import { useManagerProjectAccess } from "@/hooks/use-manager-project-access";
 
 interface Project {
   id: string;
@@ -95,8 +96,11 @@ export const ProjectTable = ({
     enabled: !!user?.id,
   });
 
+  const projectIds = projects.map(p => p.id);
+  const { data: projectAccess } = useManagerProjectAccess(projectIds);
+
   const { data: filteredProjects } = useQuery({
-    queryKey: ["filteredProjects", projects, user?.id, userRoles, userProfile, projectMemberships],
+    queryKey: ["filteredProjects", projects, user?.id, userRoles, userProfile, projectMemberships, projectAccess],
     queryFn: async () => {
       if (!user) {
         console.log("No user logged in");
@@ -109,33 +113,15 @@ export const ProjectTable = ({
         return projects;
       }
 
-      const filteredResults = await Promise.all(
-        projects.map(async project => {
-          const isProjectManager = project.project_manager === userProfile?.email;
-          const isMember = projectMemberships?.includes(project.id);
-          
-          if (isProjectManager || isMember) {
-            return true;
-          }
-
-          const { data: canAccess, error } = await supabase
-            .rpc('can_manager_access_project', {
-              p_user_id: user.id,
-              p_project_id: project.id
-            });
-
-          if (error) {
-            console.error("Error checking project access:", error);
-            return false;
-          }
-
-          return canAccess;
-        })
-      );
-
-      return projects.filter((_, index) => filteredResults[index]);
+      return projects.filter(project => {
+        const isProjectManager = project.project_manager === userProfile?.email;
+        const isMember = projectMemberships?.includes(project.id);
+        const hasManagerAccess = projectAccess?.get(project.id) || false;
+        
+        return isProjectManager || isMember || hasManagerAccess;
+      });
     },
-    enabled: !!user?.id && !!userRoles && !!userProfile,
+    enabled: !!user?.id && !!userRoles && !!userProfile && !!projectAccess,
   });
 
   React.useEffect(() => {

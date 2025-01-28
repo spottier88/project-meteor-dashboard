@@ -856,6 +856,16 @@ export type Database = {
         }
         Returns: boolean
       }
+      can_manager_access_projects: {
+        Args: {
+          p_user_id: string
+          p_project_ids: string[]
+        }
+        Returns: {
+          project_id: string
+          can_access: boolean
+        }[]
+      }
       get_accessible_projects: {
         Args: {
           p_user_id: string
