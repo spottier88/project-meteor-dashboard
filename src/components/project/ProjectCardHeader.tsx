@@ -6,9 +6,10 @@ import { StatusIcon } from "./StatusIcon";
 import { useUser } from "@supabase/auth-helpers-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { canManageProjectItems } from "@/utils/permissions";
 import { UserRoleData } from "@/types/user";
 import { MonitoringBadge } from "../monitoring/MonitoringBadge";
+import { useEffect, useState } from "react";
+import { canEditProject } from "@/utils/permissions";
 
 interface ProjectCardHeaderProps {
   title: string;
@@ -32,6 +33,7 @@ export const ProjectCardHeader = ({
   additionalActions,
 }: ProjectCardHeaderProps) => {
   const user = useUser();
+  const [canManage, setCanManage] = useState(false);
 
   const { data: userRoles } = useQuery({
     queryKey: ["userRoles", user?.id],
@@ -64,13 +66,24 @@ export const ProjectCardHeader = ({
     enabled: !!user?.id,
   });
 
-  const roles = userRoles?.map(ur => ur.role);
-  
-  // Vérification des permissions avec canManageProjectItems
-  const canManage = canManageProjectItems(roles, user?.id, owner_id, project_manager, userProfile?.email);
+  useEffect(() => {
+    const checkPermissions = async () => {
+      if (!user?.id || !userRoles) return;
+      
+      const roles = userRoles.map(ur => ur.role);
+      const hasEditPermission = await canEditProject(
+        roles,
+        user.id,
+        id,
+        project_manager,
+        userProfile?.email
+      );
+      
+      setCanManage(hasEditPermission);
+    };
 
-  // Afficher les boutons si l'utilisateur a les droits de gestion
-  const showActions = canManage;
+    checkPermissions();
+  }, [user?.id, userRoles, id, project_manager, userProfile?.email]);
 
   return (
     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -80,7 +93,7 @@ export const ProjectCardHeader = ({
       </div>
       <div className="flex items-center gap-2">
         {additionalActions}
-        {showActions && (
+        {canManage && (
           <>
             <Button
               variant="ghost"

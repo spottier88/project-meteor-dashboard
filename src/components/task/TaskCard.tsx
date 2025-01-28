@@ -2,9 +2,7 @@ import { Button } from "@/components/ui/button";
 import { TableCell, TableRow } from "@/components/ui/table";
 import { Pencil, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useUser } from "@supabase/auth-helpers-react";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { useTaskPermissions } from "@/hooks/use-task-permissions";
 
 interface TaskCardProps {
   task: {
@@ -14,10 +12,11 @@ interface TaskCardProps {
     status: "todo" | "in_progress" | "done";
     assignee?: string;
     due_date?: string;
+    project_id: string;
   };
   onEdit: (task: any) => void;
   onDelete: (task: any) => void;
-  showActions: boolean;
+  showActions?: boolean;
 }
 
 const statusColors = {
@@ -32,39 +31,8 @@ const statusLabels = {
   done: "Terminé",
 };
 
-export const TaskCard = ({ task, onEdit, onDelete, showActions }: TaskCardProps) => {
-  const user = useUser();
-
-  const { data: userRoles } = useQuery({
-    queryKey: ["userRoles", user?.id],
-    queryFn: async () => {
-      if (!user?.id) return [];
-      const { data, error } = await supabase
-        .from("user_roles")
-        .select("role")
-        .eq("user_id", user.id);
-
-      if (error) throw error;
-      return data.map(d => d.role);
-    },
-    enabled: !!user?.id,
-  });
-
-  const { data: userProfile } = useQuery({
-    queryKey: ["userProfile", user?.id],
-    queryFn: async () => {
-      if (!user?.id) return null;
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("email")
-        .eq("id", user.id)
-        .single();
-
-      if (error) throw error;
-      return data;
-    },
-    enabled: !!user?.id,
-  });
+export const TaskCard = ({ task, onEdit, onDelete, showActions = true }: TaskCardProps) => {
+  const { canEditTask, canDeleteTask, userEmail } = useTaskPermissions(task.project_id);
 
   const isTaskOverdue = () => {
     if (!task.due_date || task.status === "done") return false;
@@ -74,25 +42,8 @@ export const TaskCard = ({ task, onEdit, onDelete, showActions }: TaskCardProps)
     return dueDate < today;
   };
 
-  const canEditTask = () => {
-    if (!user || !userProfile) return false;
-    
-    // Les admins peuvent tout modifier
-    if (userRoles?.includes("admin")) return true;
-    
-    // Les chefs de projet peuvent tout modifier
-    if (userRoles?.includes("chef_projet")) return true;
-    
-    // Les membres ne peuvent modifier que leurs tâches assignées
-    return task.assignee === userProfile.email;
-  };
-
-  const canDeleteTask = () => {
-    if (!user) return false;
-    
-    // Seuls les admins et chefs de projet peuvent supprimer
-    return userRoles?.includes("admin") || userRoles?.includes("chef_projet");
-  };
+  const canEdit = canEditTask(task.assignee);
+  const canRemove = canDeleteTask;
 
   return (
     <TableRow>
@@ -116,7 +67,7 @@ export const TaskCard = ({ task, onEdit, onDelete, showActions }: TaskCardProps)
       <TableCell>
         {showActions && (
           <div className="flex items-center gap-2">
-            {canEditTask() && (
+            {canEdit && (
               <Button
                 variant="ghost"
                 size="icon"
@@ -125,7 +76,7 @@ export const TaskCard = ({ task, onEdit, onDelete, showActions }: TaskCardProps)
                 <Pencil className="h-4 w-4" />
               </Button>
             )}
-            {canDeleteTask() && (
+            {canRemove && (
               <Button
                 variant="ghost"
                 size="icon"
