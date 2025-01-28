@@ -125,7 +125,7 @@ export const ProjectTableRow = ({
       </TableCell>
       <TableCell>{project.suivi_dgs ? "DGS" : "-"}</TableCell>
       <TableCell>
-        <div className="flex justify-center items-center gap-1" onClick={(e) => e.stopPropagation()}>
+        <div className="flex justify-end items-center gap-1" onClick={(e) => e.stopPropagation()}>
           <AddToCartButton projectId={project.id} projectTitle={project.title} />
           <ProjectActions
             projectId={project.id}
