@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Risk } from "@/types/risk";
 import { Plus } from "lucide-react";
 import { RiskForm } from "./RiskForm";
@@ -30,6 +30,7 @@ export const RiskList = ({ projectId, projectTitle, onRiskSubmit }: RiskListProp
   const [selectedRisk, setSelectedRisk] = useState<Risk | undefined>(undefined);
   const [riskToDelete, setRiskToDelete] = useState<Risk | null>(null);
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   const { canManageRisks } = useRiskPermissions(projectId);
 
