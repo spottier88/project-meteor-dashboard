@@ -1,69 +1,9 @@
 import { UserRole } from "@/types/user";
 import { supabase } from "@/integrations/supabase/client";
 
-export const canManageProjectItems = (
+export const canManageProjectItems = async (
   roles: UserRole[] | undefined,
   userId: string | undefined,
-  projectOwnerId: string | undefined,
-  projectManagerEmail?: string | undefined,
-  userEmail?: string | undefined,
-  isMember?: boolean
-): boolean => {
-  if (!roles || !userId) return false;
-
-  // Les admins peuvent tout faire
-  if (roles.includes("admin")) return true;
-
-  // Le propriétaire du projet peut tout faire
-  if (userId === projectOwnerId) return true;
-
-  // Le chef de projet assigné peut tout faire
-  if (projectManagerEmail && userEmail && projectManagerEmail === userEmail) return true;
-
-  // Les membres peuvent voir les tâches et les risques
-  if (isMember) return true;
-
-  // Les managers peuvent consulter
-  if (roles.includes("manager")) return true;
-
-  return false;
-};
-
-export const canEditProjectItems = (
-  roles: UserRole[] | undefined,
-  userId: string | undefined,
-  projectOwnerId: string | undefined,
-  projectManagerEmail?: string | undefined,
-  userEmail?: string | undefined,
-  isAssignedToTask?: boolean
-): boolean => {
-  if (!roles || !userId) return false;
-
-  // Les admins peuvent tout faire
-  if (roles.includes("admin")) return true;
-
-  // Le propriétaire du projet peut tout faire
-  if (userId === projectOwnerId) return true;
-
-  // Le chef de projet assigné peut tout faire
-  if (projectManagerEmail && userEmail && projectManagerEmail === userEmail) return true;
-
-  // Les utilisateurs peuvent modifier leurs tâches assignées
-  if (isAssignedToTask) return true;
-
-  return false;
-};
-
-export const canCreateProject = (roles: UserRole[] | undefined): boolean => {
-  if (!roles) return false;
-  // Les managers ne peuvent pas créer de projets
-  return roles.some(role => role === "admin" || role === "chef_projet");
-};
-
-export const canEditProject = async (
-  roles: UserRole[] | undefined,
-  userId: string | undefined,
-  projectOwnerId: string | undefined,
   projectId: string | undefined,
   projectManagerEmail?: string | undefined,
   userEmail?: string | undefined
@@ -73,81 +13,44 @@ export const canEditProject = async (
   // Les admins peuvent tout faire
   if (roles.includes("admin")) return true;
 
-  // Le propriétaire du projet peut tout faire
-  if (userId === projectOwnerId) return true;
-
-  // Le chef de projet assigné peut tout faire
-  if (projectManagerEmail && userEmail && projectManagerEmail === userEmail) return true;
-
-  // Vérifier si l'utilisateur est un manager avec accès au projet
+  // Les managers peuvent tout faire dans leur périmètre
   if (roles.includes("manager")) {
-    const { data: canAccess, error } = await supabase
+    const { data: canAccess } = await supabase
       .rpc('can_manager_access_project', {
         p_user_id: userId,
         p_project_id: projectId
       });
 
-    if (error) {
-      console.error("Error checking project access:", error);
-      return false;
-    }
-
-    return canAccess;
+    return !!canAccess;
   }
 
-  return false;
-};
-
-export const canViewProjectHistory = (
-  roles: UserRole[] | undefined,
-  userId: string | undefined,
-  projectOwnerId: string | undefined,
-  projectManagerEmail?: string | undefined,
-  userEmail?: string | undefined
-): boolean => {
-  return canManageProjectItems(roles, userId, projectOwnerId, projectManagerEmail, userEmail);
-};
-
-export const canManageTasks = (
-  roles: UserRole[] | undefined,
-  userId: string | undefined,
-  projectOwnerId: string | undefined,
-  projectManagerEmail?: string | undefined,
-  userEmail?: string | undefined
-): boolean => {
-  if (!roles || !userId) return false;
-
-  // Les admins peuvent tout faire
-  if (roles.includes("admin")) return true;
-
-  // Le propriétaire du projet peut tout faire
-  if (userId === projectOwnerId) return true;
-
   // Le chef de projet assigné peut tout faire
   if (projectManagerEmail && userEmail && projectManagerEmail === userEmail) return true;
 
-  // Les managers ne peuvent pas gérer les tâches
   return false;
 };
 
-export const canManageRisks = (
+export const canEditProjectItems = async (
   roles: UserRole[] | undefined,
   userId: string | undefined,
-  projectOwnerId: string | undefined,
+  projectId: string | undefined,
   projectManagerEmail?: string | undefined,
-  userEmail?: string | undefined
-): boolean => {
-  if (!roles || !userId) return false;
+  userEmail?: string | undefined,
+  isAssignedToTask?: boolean
+): Promise<boolean> => {
+  // Vérifier d'abord les droits de gestion généraux
+  const canManage = await canManageProjectItems(roles, userId, projectId, projectManagerEmail, userEmail);
+  if (canManage) return true;
 
-  // Les admins peuvent tout faire
-  if (roles.includes("admin")) return true;
+  // Les utilisateurs peuvent modifier leurs tâches assignées
+  if (isAssignedToTask) return true;
 
-  // Le propriétaire du projet peut tout faire
-  if (userId === projectOwnerId) return true;
-
-  // Le chef de projet assigné peut tout faire
-  if (projectManagerEmail && userEmail && projectManagerEmail === userEmail) return true;
-
-  // Les managers ne peuvent pas gérer les risques
   return false;
 };
+
+export const canCreateProject = (roles: UserRole[] | undefined): boolean => {
+  if (!roles) return false;
+  return roles.some(role => role === "admin" || role === "chef_projet");
+};
+
+// Les autres fonctions sont supprimées car elles sont maintenant gérées par canManageProjectItems

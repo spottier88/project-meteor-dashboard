@@ -5,14 +5,15 @@ export const useTaskPermissions = (projectId: string) => {
   const permissions = usePermissions(projectId);
   const { data: canAccess } = useProjectAccess(projectId);
   
-  const canCreateTask = permissions.isAdmin || permissions.isProjectManager || canAccess;
+  // Un manager a les mêmes droits qu'un admin sur son périmètre
+  const canCreateTask = permissions.isAdmin || (permissions.isManager && canAccess) || permissions.isProjectManager;
   
   const canEditTask = (assignee?: string) => {
-    if (permissions.isAdmin || permissions.isProjectManager || canAccess) return true;
+    if (permissions.isAdmin || (permissions.isManager && canAccess) || permissions.isProjectManager) return true;
     return assignee === permissions.userEmail;
   };
 
-  const canDeleteTask = permissions.isAdmin || permissions.isProjectManager || canAccess;
+  const canDeleteTask = permissions.isAdmin || (permissions.isManager && canAccess) || permissions.isProjectManager;
 
   return {
     canCreateTask,

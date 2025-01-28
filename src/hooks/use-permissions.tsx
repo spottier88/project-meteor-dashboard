@@ -1,7 +1,7 @@
 import { useUser } from "@supabase/auth-helpers-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { UserRole, UserRoleData } from "@/types/user";
+import { UserRole } from "@/types/user";
 
 interface PermissionsResult {
   isAdmin: boolean;
@@ -54,7 +54,7 @@ export const usePermissions = (projectId?: string): PermissionsResult => {
         console.error("Error fetching user roles:", error);
         return null;
       }
-      return data as UserRoleData[];
+      return data;
     },
     enabled: !!user?.id,
   });
@@ -72,34 +72,36 @@ export const usePermissions = (projectId?: string): PermissionsResult => {
       if (!user?.id) return false;
       if (isAdmin) return true;
 
-      const { data: canAccess } = await supabase
-        .rpc('can_manager_access_project', {
-          p_user_id: user.id,
-          p_project_id: projectId
-        });
+      // Pour les managers, on vérifie l'accès via la fonction can_manager_access_project
+      if (isManager) {
+        const { data: canAccess } = await supabase
+          .rpc('can_manager_access_project', {
+            p_user_id: user.id,
+            p_project_id: projectId
+          });
 
-      return !!canAccess;
+        return !!canAccess;
+      }
+
+      // Pour les autres, on vérifie s'ils sont chef de projet
+      const { data: project } = await supabase
+        .from("projects")
+        .select("project_manager")
+        .eq("id", projectId)
+        .single();
+
+      return project?.project_manager === userProfile?.email;
     } catch (error) {
       console.error("Error in canEditProject:", error);
       return false;
     }
   };
 
-  const canManageProjectMembers = async (projectId: string): Promise<boolean> => {
-    return canEditProject(projectId);
-  };
-
-  const canManageRisks = async (projectId: string): Promise<boolean> => {
-    return canEditProject(projectId);
-  };
-
-  const canManageTasks = async (projectId: string): Promise<boolean> => {
-    return canEditProject(projectId);
-  };
-
-  const canViewProjectHistory = async (projectId: string): Promise<boolean> => {
-    return canEditProject(projectId);
-  };
+  // Les autres fonctions de permission utilisent maintenant la même logique
+  const canManageProjectMembers = canEditProject;
+  const canManageRisks = canEditProject;
+  const canManageTasks = canEditProject;
+  const canViewProjectHistory = canEditProject;
 
   return {
     isAdmin,

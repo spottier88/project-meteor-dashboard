@@ -6,7 +6,8 @@ export const useProjectPermissions = (projectId: string) => {
   const { data: canAccess } = useProjectAccess(projectId);
   
   return {
-    canManageRisks: permissions.isAdmin || permissions.isProjectManager || canAccess,
+    // Un manager a les mêmes droits qu'un admin sur son périmètre
+    canManageRisks: permissions.isAdmin || (permissions.isManager && canAccess) || permissions.isProjectManager,
     isAdmin: permissions.isAdmin,
     isProjectManager: permissions.isProjectManager,
     isOwner: false,
