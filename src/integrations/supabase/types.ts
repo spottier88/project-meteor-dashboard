@@ -836,6 +836,13 @@ export type Database = {
       }
     }
     Functions: {
+      can_access_project: {
+        Args: {
+          p_user_id: string
+          p_project_id: string
+        }
+        Returns: boolean
+      }
       can_manage_project_members: {
         Args: {
           p_project_id: string
