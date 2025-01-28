@@ -59,30 +59,11 @@ export const usePermissions = (projectId?: string): PermissionsResult => {
     enabled: !!user?.id,
   });
 
-  const { data: project, isLoading: isLoadingProject } = useQuery({
-    queryKey: ["project", projectId],
-    queryFn: async () => {
-      if (!projectId) return null;
-      const { data, error } = await supabase
-        .from("projects")
-        .select("*")
-        .eq("id", projectId)
-        .maybeSingle();
-
-      if (error) {
-        console.error("Error fetching project:", error);
-        return null;
-      }
-      return data;
-    },
-    enabled: !!projectId,
-  });
-
   const roles = userRoles?.map(ur => ur.role) || [];
   const isAdmin = roles.includes("admin");
   const isManager = roles.includes("manager");
   const isMember = roles.includes("membre");
-  const isProjectManager = project?.project_manager === userProfile?.email;
+  const isProjectManager = false; // Sera déterminé par projet
 
   const canCreateProject = roles.some(role => role === "admin" || role === "chef_projet");
 
@@ -91,38 +72,13 @@ export const usePermissions = (projectId?: string): PermissionsResult => {
       if (!user?.id) return false;
       if (isAdmin) return true;
 
-      const { data: project } = await supabase
-        .from("projects")
-        .select("*")
-        .eq("id", projectId)
-        .maybeSingle();
+      const { data: canAccess } = await supabase
+        .rpc('can_manager_access_project', {
+          p_user_id: user.id,
+          p_project_id: projectId
+        });
 
-      if (!project) return false;
-
-      if (project.owner_id === user.id) return true;
-      if (project.project_manager === userProfile?.email) return true;
-
-      if (isManager) {
-        try {
-          const { data: canAccess, error } = await supabase
-            .rpc('can_manager_access_project', {
-              p_user_id: user.id,
-              p_project_id: projectId
-            });
-
-          if (error) {
-            console.error("Error checking project access:", error);
-            return false;
-          }
-
-          return !!canAccess;
-        } catch (error) {
-          console.error("Error in RPC call:", error);
-          return false;
-        }
-      }
-
-      return false;
+      return !!canAccess;
     } catch (error) {
       console.error("Error in canEditProject:", error);
       return false;
@@ -130,63 +86,15 @@ export const usePermissions = (projectId?: string): PermissionsResult => {
   };
 
   const canManageProjectMembers = async (projectId: string): Promise<boolean> => {
-    try {
-      if (!user?.id) return false;
-      if (isAdmin) return true;
-
-      const { data: project } = await supabase
-        .from("projects")
-        .select("*")
-        .eq("id", projectId)
-        .maybeSingle();
-
-      return project?.project_manager === userProfile?.email;
-    } catch (error) {
-      console.error("Error in canManageProjectMembers:", error);
-      return false;
-    }
+    return canEditProject(projectId);
   };
 
   const canManageRisks = async (projectId: string): Promise<boolean> => {
-    try {
-      if (!user?.id) return false;
-      if (isAdmin) return true;
-
-      const { data: project } = await supabase
-        .from("projects")
-        .select("*")
-        .eq("id", projectId)
-        .maybeSingle();
-
-      if (!project) return false;
-
-      return project.owner_id === user.id || 
-             project.project_manager === userProfile?.email;
-    } catch (error) {
-      console.error("Error in canManageRisks:", error);
-      return false;
-    }
+    return canEditProject(projectId);
   };
 
   const canManageTasks = async (projectId: string): Promise<boolean> => {
-    try {
-      if (!user?.id) return false;
-      if (isAdmin) return true;
-
-      const { data: project } = await supabase
-        .from("projects")
-        .select("*")
-        .eq("id", projectId)
-        .maybeSingle();
-
-      if (!project) return false;
-
-      return project.owner_id === user.id || 
-             project.project_manager === userProfile?.email;
-    } catch (error) {
-      console.error("Error in canManageTasks:", error);
-      return false;
-    }
+    return canEditProject(projectId);
   };
 
   const canViewProjectHistory = async (projectId: string): Promise<boolean> => {
@@ -206,6 +114,6 @@ export const usePermissions = (projectId?: string): PermissionsResult => {
     canViewProjectHistory,
     userEmail: userProfile?.email,
     userRoles: roles,
-    isLoading: isLoadingProfile || isLoadingRoles || (!!projectId && isLoadingProject),
+    isLoading: isLoadingProfile || isLoadingRoles,
   };
 };

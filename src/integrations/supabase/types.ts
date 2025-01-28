@@ -38,6 +38,55 @@ export type Database = {
           },
         ]
       }
+      hierarchy_paths: {
+        Row: {
+          created_at: string | null
+          direction_id: string | null
+          id: string
+          path_string: string
+          pole_id: string | null
+          service_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          direction_id?: string | null
+          id?: string
+          path_string: string
+          pole_id?: string | null
+          service_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          direction_id?: string | null
+          id?: string
+          path_string?: string
+          pole_id?: string | null
+          service_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "hierarchy_paths_direction_id_fkey"
+            columns: ["direction_id"]
+            isOneToOne: false
+            referencedRelation: "directions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "hierarchy_paths_pole_id_fkey"
+            columns: ["pole_id"]
+            isOneToOne: false
+            referencedRelation: "poles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "hierarchy_paths_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       manager_assignments: {
         Row: {
           created_at: string | null
@@ -63,6 +112,42 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "temp_manager_assignments_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      manager_path_assignments: {
+        Row: {
+          created_at: string | null
+          id: string
+          path_id: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          path_id?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          path_id?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "manager_path_assignments_path_id_fkey"
+            columns: ["path_id"]
+            isOneToOne: false
+            referencedRelation: "hierarchy_paths"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "manager_path_assignments_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
@@ -340,6 +425,7 @@ export type Database = {
           last_review_date: string | null
           lifecycle_status: Database["public"]["Enums"]["project_lifecycle_status"]
           owner_id: string | null
+          path_id: string | null
           pole_id: string | null
           priority: string | null
           progress: Database["public"]["Enums"]["progress_status"] | null
@@ -359,6 +445,7 @@ export type Database = {
           last_review_date?: string | null
           lifecycle_status?: Database["public"]["Enums"]["project_lifecycle_status"]
           owner_id?: string | null
+          path_id?: string | null
           pole_id?: string | null
           priority?: string | null
           progress?: Database["public"]["Enums"]["progress_status"] | null
@@ -378,6 +465,7 @@ export type Database = {
           last_review_date?: string | null
           lifecycle_status?: Database["public"]["Enums"]["project_lifecycle_status"]
           owner_id?: string | null
+          path_id?: string | null
           pole_id?: string | null
           priority?: string | null
           progress?: Database["public"]["Enums"]["progress_status"] | null
@@ -394,6 +482,13 @@ export type Database = {
             columns: ["direction_id"]
             isOneToOne: false
             referencedRelation: "directions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "projects_path_id_fkey"
+            columns: ["path_id"]
+            isOneToOne: false
+            referencedRelation: "hierarchy_paths"
             referencedColumns: ["id"]
           },
           {

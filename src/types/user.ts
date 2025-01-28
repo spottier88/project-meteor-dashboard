@@ -33,6 +33,22 @@ export interface HierarchyAssignmentWithDetails extends HierarchyAssignment {
   };
 }
 
+export interface HierarchyPath {
+  id: string;
+  pole_id: string | null;
+  direction_id: string | null;
+  service_id: string | null;
+  path_string: string;
+  created_at?: string;
+}
+
+export interface ManagerPathAssignment {
+  id: string;
+  user_id: string | null;
+  path_id: string;
+  created_at?: string;
+}
+
 export interface ManagerAssignment {
   id: string;
   user_id: string | null;
