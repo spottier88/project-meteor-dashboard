@@ -32,7 +32,7 @@ const statusLabels = {
 };
 
 export const TaskCard = ({ task, onEdit, onDelete, showActions = true }: TaskCardProps) => {
-  const { canEditTask, canDeleteTask, userEmail } = useTaskPermissions(task.project_id);
+  const { canEditTask, canDeleteTask } = useTaskPermissions(task.project_id);
 
   const isTaskOverdue = () => {
     if (!task.due_date || task.status === "done") return false;
@@ -41,9 +41,6 @@ export const TaskCard = ({ task, onEdit, onDelete, showActions = true }: TaskCar
     const dueDate = new Date(task.due_date);
     return dueDate < today;
   };
-
-  const canEdit = canEditTask(task.assignee);
-  const canRemove = canDeleteTask;
 
   return (
     <TableRow>
@@ -67,7 +64,7 @@ export const TaskCard = ({ task, onEdit, onDelete, showActions = true }: TaskCar
       <TableCell>
         {showActions && (
           <div className="flex items-center gap-2">
-            {canEdit && (
+            {canEditTask(task.assignee) && (
               <Button
                 variant="ghost"
                 size="icon"
@@ -76,7 +73,7 @@ export const TaskCard = ({ task, onEdit, onDelete, showActions = true }: TaskCar
                 <Pencil className="h-4 w-4" />
               </Button>
             )}
-            {canRemove && (
+            {canDeleteTask && (
               <Button
                 variant="ghost"
                 size="icon"

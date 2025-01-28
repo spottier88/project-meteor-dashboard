@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { Risk } from "@/types/risk";
 import { Plus } from "lucide-react";
 import { RiskForm } from "./RiskForm";
@@ -29,7 +29,6 @@ export const RiskList = ({ projectId, projectTitle, onRiskSubmit }: RiskListProp
   const [isRiskFormOpen, setIsRiskFormOpen] = useState(false);
   const [selectedRisk, setSelectedRisk] = useState<Risk | undefined>(undefined);
   const [riskToDelete, setRiskToDelete] = useState<Risk | null>(null);
-  const queryClient = useQueryClient();
   const { toast } = useToast();
 
   const { canManageRisks } = useRiskPermissions(projectId);
@@ -47,8 +46,6 @@ export const RiskList = ({ projectId, projectTitle, onRiskSubmit }: RiskListProp
       return data as Risk[];
     },
     enabled: !!projectId,
-    staleTime: 30 * 1000, // Cache valide pendant 30 secondes
-    gcTime: 5 * 60 * 1000, // Garde en cache pendant 5 minutes
   });
 
   const handleEditRisk = (risk: Risk) => {
@@ -72,6 +69,7 @@ export const RiskList = ({ projectId, projectTitle, onRiskSubmit }: RiskListProp
         description: "Le risque a été supprimé",
       });
       
+      // Rafraîchir la liste
       queryClient.invalidateQueries({ queryKey: ["risks", projectId] });
     } catch (error) {
       console.error("Error deleting risk:", error);
@@ -86,7 +84,7 @@ export const RiskList = ({ projectId, projectTitle, onRiskSubmit }: RiskListProp
   };
 
   const handleRiskFormSubmit = async () => {
-    await queryClient.invalidateQueries({ queryKey: ["risks", projectId] });
+    queryClient.invalidateQueries({ queryKey: ["risks", projectId] });
     setIsRiskFormOpen(false);
     setSelectedRisk(undefined);
     onRiskSubmit?.();
