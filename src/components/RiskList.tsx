@@ -6,7 +6,7 @@ import { Risk } from "@/types/risk";
 import { Plus } from "lucide-react";
 import { RiskForm } from "./RiskForm";
 import { RiskCard } from "./risk/RiskCard";
-import { useProjectPermissions } from "@/hooks/use-project-permissions";
+import { useRiskPermissions } from "@/hooks/use-risk-permissions";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -32,7 +32,7 @@ export const RiskList = ({ projectId, projectTitle, onRiskSubmit }: RiskListProp
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
-  const { canManageRisks } = useProjectPermissions(projectId);
+  const { canManageRisks } = useRiskPermissions(projectId);
 
   const { data: riskData } = useQuery({
     queryKey: ["risks", projectId],

@@ -5,7 +5,7 @@ import { useNavigate } from "react-router-dom";
 import { DeleteProjectDialog } from "./DeleteProjectDialog";
 import { UserRole } from "@/types/user";
 import { useUser } from "@supabase/auth-helpers-react";
-import { canViewProjectHistory, canManageTasks, canManageRisks, canEditProject } from "@/utils/permissions";
+import { canViewProjectHistory, canEditProject } from "@/utils/permissions";
 
 interface ProjectActionsProps {
   projectId: string;
@@ -42,7 +42,6 @@ export const ProjectActions = ({
         const hasEditPermission = await canEditProject(
           userRoles,
           user.id,
-          owner_id,
           projectId,
           project_manager,
           user.email || undefined
@@ -52,7 +51,7 @@ export const ProjectActions = ({
     };
     
     checkEditPermission();
-  }, [userRoles, user, owner_id, projectId, project_manager]);
+  }, [userRoles, user, projectId, project_manager]);
 
   const handleClick = (e: React.MouseEvent, action: () => void) => {
     e.stopPropagation();
@@ -60,8 +59,6 @@ export const ProjectActions = ({
   };
 
   const canViewHistory = canViewProjectHistory(userRoles, user?.id, owner_id, project_manager, user?.email);
-  const canManageProjectTasks = canManageTasks(userRoles, user?.id, owner_id, project_manager, user?.email) || isMember;
-  const canManageProjectRisks = canManageRisks(userRoles, user?.id, owner_id, project_manager, user?.email) || isMember;
   const canManageTeam = isAdmin || (user?.email === project_manager);
 
   return (
@@ -90,7 +87,7 @@ export const ProjectActions = ({
           <History className="h-4 w-4" />
         </Button>
       )}
-      {canManageProjectTasks && (
+      {(canEdit || isMember) && (
         <Button
           variant="ghost"
           size="icon"
@@ -101,7 +98,7 @@ export const ProjectActions = ({
           <ListTodo className="h-4 w-4" />
         </Button>
       )}
-      {canManageProjectRisks && (
+      {(canEdit || isMember) && (
         <Button
           variant="ghost"
           size="icon"
