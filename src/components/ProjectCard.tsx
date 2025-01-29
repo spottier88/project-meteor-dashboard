@@ -9,7 +9,7 @@ import { AddToCartButton } from "./cart/AddToCartButton";
 import { ProjectStatus, ProgressStatus, ProjectLifecycleStatus } from "@/types/project";
 import { LifecycleStatusBadge } from "./project/LifecycleStatusBadge";
 import { useUser } from "@supabase/auth-helpers-react";
-import { useManagerPermissions } from "@/hooks/use-manager-permissions";
+import { useProjectPermissions } from "@/hooks/use-project-permissions";
 
 interface ProjectCardProps {
   title: string;
@@ -50,7 +50,9 @@ export const ProjectCard = ({
 }: ProjectCardProps) => {
   const navigate = useNavigate();
   const user = useUser();
-  const isManager = useManagerPermissions(id);
+  const permissions = useProjectPermissions(id);
+
+  console.log('ProjectCard permissions for project:', id, permissions);
 
   const { data: organization } = useQuery({
     queryKey: ["organization", pole_id, direction_id, service_id],
@@ -89,7 +91,7 @@ export const ProjectCard = ({
       return org;
     },
     enabled: !!(pole_id || direction_id || service_id),
-    staleTime: 5 * 60 * 1000, // Cache pendant 5 minutes
+    staleTime: 5 * 60 * 1000,
   });
 
   const { data: latestReview } = useQuery({
@@ -125,7 +127,7 @@ export const ProjectCard = ({
       return data;
     },
     enabled: !!user?.id,
-    staleTime: 5 * 60 * 1000, // Cache pendant 5 minutes
+    staleTime: 5 * 60 * 1000,
   });
 
   const { data: isMember } = useQuery({
@@ -146,7 +148,7 @@ export const ProjectCard = ({
       return !!data;
     },
     enabled: !!id && !!user?.id,
-    staleTime: 5 * 60 * 1000, // Cache pendant 5 minutes
+    staleTime: 5 * 60 * 1000,
   });
 
   const isProjectManager = userProfile?.email === project_manager;
@@ -175,7 +177,7 @@ export const ProjectCard = ({
                   Chef de projet
                 </span>
               )}
-              {isManager && (
+              {permissions.canEdit && !isProjectManager && (
                 <span className="text-xs bg-purple-600 text-white px-2 py-1 rounded">
                   Manager
                 </span>
