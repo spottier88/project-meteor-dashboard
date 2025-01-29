@@ -843,8 +843,29 @@ export type Database = {
         }
         Returns: boolean
       }
+      can_manage_project: {
+        Args: {
+          p_user_id: string
+          p_project_id: string
+        }
+        Returns: boolean
+      }
       can_manage_project_members: {
         Args: {
+          p_project_id: string
+        }
+        Returns: boolean
+      }
+      can_manage_project_organization: {
+        Args: {
+          p_user_id: string
+          p_project_id: string
+        }
+        Returns: boolean
+      }
+      can_manage_project_team: {
+        Args: {
+          p_user_id: string
           p_project_id: string
         }
         Returns: boolean
