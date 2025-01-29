@@ -25,7 +25,7 @@ interface ProjectActionsProps {
   projectTitle: string;
   onEdit: (id: string) => void;
   onViewHistory: (id: string, title: string) => void;
-  onProjectDeleted: () => void;
+  onProjectDeleted?: () => void;
   owner_id?: string;
   project_manager?: string;
   isMember?: boolean;
@@ -43,15 +43,21 @@ export const ProjectActions = ({
 }: ProjectActionsProps) => {
   const navigate = useNavigate();
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const { isAdmin, isProjectManager, canManageRisks } = useProjectPermissions(projectId);
+  const { isAdmin, isProjectManager, canEdit, canManageTeam } = useProjectPermissions(projectId);
+
+  console.log('ProjectActions permissions:', {
+    projectId,
+    isAdmin,
+    isProjectManager,
+    canEdit,
+    canManageTeam,
+    isMember
+  });
 
   const handleClick = (e: React.MouseEvent, action: () => void) => {
     e.stopPropagation();
     action();
   };
-
-  const canEdit = isAdmin || isProjectManager;
-  const canManageTeam = isAdmin || isProjectManager;
 
   return (
     <>

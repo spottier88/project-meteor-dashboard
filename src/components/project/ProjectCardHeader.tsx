@@ -1,6 +1,4 @@
 import { CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Pencil, History } from "lucide-react";
 import { ProjectStatus } from "@/types/project";
 import { StatusIcon } from "./StatusIcon";
 import { useUser } from "@supabase/auth-helpers-react";
@@ -8,8 +6,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { UserRoleData } from "@/types/user";
 import { MonitoringBadge } from "../monitoring/MonitoringBadge";
-import { useEffect, useState } from "react";
-import { canEditProject } from "@/utils/permissions";
+import { ProjectActions } from "./ProjectActions";
 
 interface ProjectCardHeaderProps {
   title: string;
@@ -33,22 +30,6 @@ export const ProjectCardHeader = ({
   additionalActions,
 }: ProjectCardHeaderProps) => {
   const user = useUser();
-  const [canManage, setCanManage] = useState(false);
-
-  const { data: userRoles } = useQuery({
-    queryKey: ["userRoles", user?.id],
-    queryFn: async () => {
-      if (!user?.id) return null;
-      const { data, error } = await supabase
-        .from("user_roles")
-        .select("*")
-        .eq("user_id", user.id);
-
-      if (error) throw error;
-      return data as UserRoleData[];
-    },
-    enabled: !!user?.id,
-  });
 
   const { data: userProfile } = useQuery({
     queryKey: ["userProfile", user?.id],
@@ -64,35 +45,29 @@ export const ProjectCardHeader = ({
       return data;
     },
     enabled: !!user?.id,
+    staleTime: 5 * 60 * 1000,
   });
 
-  useEffect(() => {
-    const checkPermissions = async () => {
-      if (!user?.id || !userRoles) return;
-      
-      const roles = userRoles.map(ur => ur.role);
-      const hasEditPermission = await canEditProject(
-        roles,
-        user.id,
-        id,
-        project_manager,
-        userProfile?.email
-      );
-      
-      console.log('ProjectCardHeader permissions check:', {
-        userId: user.id,
-        projectId: id,
-        roles,
-        projectManager: project_manager,
-        userEmail: userProfile?.email,
-        hasEditPermission
-      });
-      
-      setCanManage(hasEditPermission);
-    };
+  const { data: isMember } = useQuery({
+    queryKey: ["projectMember", id, user?.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("project_members")
+        .select("*")
+        .eq("project_id", id)
+        .eq("user_id", user?.id)
+        .maybeSingle();
 
-    checkPermissions();
-  }, [user?.id, userRoles, id, project_manager, userProfile?.email]);
+      if (error) {
+        console.error("Error checking project membership:", error);
+        return false;
+      }
+
+      return !!data;
+    },
+    enabled: !!id && !!user?.id,
+    staleTime: 5 * 60 * 1000,
+  });
 
   return (
     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -102,34 +77,15 @@ export const ProjectCardHeader = ({
       </div>
       <div className="flex items-center gap-2">
         {additionalActions}
-        {canManage && (
-          <>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={(e) => {
-                e.stopPropagation();
-                onEdit(id);
-              }}
-              className="h-8 w-8"
-              title="Modifier le projet"
-            >
-              <Pencil className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={(e) => {
-                e.stopPropagation();
-                onViewHistory(id, title);
-              }}
-              className="h-8 w-8"
-              title="Historique des revues de projet"
-            >
-              <History className="h-4 w-4" />
-            </Button>
-          </>
-        )}
+        <ProjectActions
+          projectId={id}
+          projectTitle={title}
+          onEdit={onEdit}
+          onViewHistory={onViewHistory}
+          owner_id={owner_id}
+          project_manager={project_manager}
+          isMember={isMember}
+        />
         {status && <StatusIcon status={status} />}
       </div>
     </CardHeader>
