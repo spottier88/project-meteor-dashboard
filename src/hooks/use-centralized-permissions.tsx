@@ -33,7 +33,7 @@ export const useCentralizedPermissions = (projectId?: string) => {
     },
     enabled: !!user?.id,
     staleTime: 5 * 60 * 1000, // Cache de 5 minutes
-    cacheTime: 10 * 60 * 1000, // Garde en cache 10 minutes
+    gcTime: 10 * 60 * 1000, // Garde en cache 10 minutes
   });
 
   // Requête pour les rôles avec cache
@@ -51,7 +51,7 @@ export const useCentralizedPermissions = (projectId?: string) => {
     },
     enabled: !!user?.id,
     staleTime: 5 * 60 * 1000,
-    cacheTime: 10 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
   });
 
   // Requête pour l'accès au projet spécifique avec cache
@@ -89,7 +89,7 @@ export const useCentralizedPermissions = (projectId?: string) => {
     },
     enabled: !!user?.id && !!projectId && !!userProfile,
     staleTime: 5 * 60 * 1000,
-    cacheTime: 10 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
   });
 
   const roles = userRoles?.map(ur => ur.role as UserRole) || [];

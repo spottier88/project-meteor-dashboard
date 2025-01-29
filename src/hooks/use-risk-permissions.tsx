@@ -1,14 +1,10 @@
-import { usePermissions } from "./use-permissions";
-import { useProjectAccess } from "./use-project-access";
+import { useCentralizedPermissions } from "./use-centralized-permissions";
 
 export const useRiskPermissions = (projectId: string) => {
-  const permissions = usePermissions(projectId);
-  const projectAccess = useProjectAccess(projectId);
+  const permissions = useCentralizedPermissions(projectId);
   
-  const canManageRisks = permissions.isAdmin || (permissions.isManager && projectAccess.canAccess) || permissions.isProjectManager;
-
   return {
-    canManageRisks,
+    canManageRisks: permissions.isAdmin || permissions.canEdit,
     isAdmin: permissions.isAdmin,
     isProjectManager: permissions.isProjectManager,
     userEmail: permissions.userEmail,

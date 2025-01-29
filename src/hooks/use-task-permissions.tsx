@@ -1,18 +1,16 @@
-import { usePermissions } from "./use-permissions";
-import { useProjectAccess } from "./use-project-access";
+import { useCentralizedPermissions } from "./use-centralized-permissions";
 
 export const useTaskPermissions = (projectId: string) => {
-  const permissions = usePermissions(projectId);
-  const projectAccess = useProjectAccess(projectId);
+  const permissions = useCentralizedPermissions(projectId);
   
-  const canCreateTask = permissions.isAdmin || (permissions.isManager && projectAccess.canAccess) || permissions.isProjectManager;
+  const canCreateTask = permissions.isAdmin || permissions.canEdit;
   
   const canEditTask = (assignee?: string) => {
-    if (permissions.isAdmin || (permissions.isManager && projectAccess.canAccess) || permissions.isProjectManager) return true;
+    if (permissions.isAdmin || permissions.canEdit) return true;
     return assignee === permissions.userEmail;
   };
 
-  const canDeleteTask = permissions.isAdmin || (permissions.isManager && projectAccess.canAccess) || permissions.isProjectManager;
+  const canDeleteTask = permissions.isAdmin || permissions.canEdit;
 
   return {
     canCreateTask,
@@ -20,7 +18,7 @@ export const useTaskPermissions = (projectId: string) => {
     canDeleteTask,
     isAdmin: permissions.isAdmin,
     isProjectManager: permissions.isProjectManager,
-    isMember: permissions.isMember,
+    isMember: false,
     userEmail: permissions.userEmail,
   };
 };
