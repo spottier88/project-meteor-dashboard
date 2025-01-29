@@ -8,12 +8,10 @@ import {
   Users, 
   MoreVertical 
 } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { DeleteProjectDialog } from "./DeleteProjectDialog";
-import { UserRole } from "@/types/user";
-import { useUser } from "@supabase/auth-helpers-react";
-import { canViewProjectHistory, canEditProject } from "@/utils/permissions";
+import { useProjectPermissions } from "@/hooks/use-project-permissions";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -27,7 +25,6 @@ interface ProjectActionsProps {
   projectTitle: string;
   onEdit: (id: string) => void;
   onViewHistory: (id: string, title: string) => void;
-  userRoles?: UserRole[];
   onProjectDeleted: () => void;
   owner_id?: string;
   project_manager?: string;
@@ -39,7 +36,6 @@ export const ProjectActions = ({
   projectTitle,
   onEdit,
   onViewHistory,
-  userRoles,
   onProjectDeleted,
   owner_id,
   project_manager,
@@ -47,34 +43,15 @@ export const ProjectActions = ({
 }: ProjectActionsProps) => {
   const navigate = useNavigate();
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const isAdmin = userRoles?.includes("admin");
-  const user = useUser();
-  const [canEdit, setCanEdit] = useState(false);
-
-  useEffect(() => {
-    const checkEditPermission = async () => {
-      if (user) {
-        const hasEditPermission = await canEditProject(
-          userRoles,
-          user.id,
-          projectId,
-          project_manager,
-          user.email || undefined
-        );
-        setCanEdit(hasEditPermission);
-      }
-    };
-    
-    checkEditPermission();
-  }, [userRoles, user, projectId, project_manager]);
+  const { isAdmin, isProjectManager, canManageRisks } = useProjectPermissions(projectId);
 
   const handleClick = (e: React.MouseEvent, action: () => void) => {
     e.stopPropagation();
     action();
   };
 
-  const canViewHistory = canViewProjectHistory(userRoles, user?.id, owner_id, project_manager, user?.email);
-  const canManageTeam = isAdmin || (user?.email === project_manager);
+  const canEdit = isAdmin || isProjectManager;
+  const canManageTeam = isAdmin || isProjectManager;
 
   return (
     <>
@@ -90,19 +67,17 @@ export const ProjectActions = ({
           <Pencil className="h-4 w-4" />
         </Button>
       )}
-      {canViewHistory && (
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={(e) =>
-            handleClick(e, () => onViewHistory(projectId, projectTitle))
-          }
-          className="h-8 w-8"
-          title="Historique des revues projets"
-        >
-          <History className="h-4 w-4" />
-        </Button>
-      )}
+      <Button
+        variant="ghost"
+        size="icon"
+        onClick={(e) =>
+          handleClick(e, () => onViewHistory(projectId, projectTitle))
+        }
+        className="h-8 w-8"
+        title="Historique des revues projets"
+      >
+        <History className="h-4 w-4" />
+      </Button>
 
       {/* Menu déroulant pour les actions secondaires */}
       {(canEdit || isMember || canManageTeam || isAdmin) && (

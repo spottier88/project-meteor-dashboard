@@ -1,12 +1,12 @@
-import { ViewToggle, ViewMode } from "@/components/ViewToggle";
+import { ViewMode } from "@/components/ViewToggle";
 import { ProjectGrid } from "@/components/ProjectGrid";
 import { ProjectTable } from "@/components/ProjectTable";
-import { Project } from "@/types/project";
+import { ViewToggle } from "@/components/ViewToggle";
 
 interface ProjectListProps {
   view: ViewMode;
   onViewChange: (view: ViewMode) => void;
-  projects: Project[];
+  projects: any[];
   onProjectEdit: (id: string) => void;
   onProjectReview: (id: string, title: string) => void;
   onViewHistory: (id: string, title: string) => void;
@@ -25,26 +25,29 @@ export const ProjectList = ({
   onFilteredProjectsChange,
 }: ProjectListProps) => {
   return (
-    <>
-      <ViewToggle currentView={view} onViewChange={onViewChange} />
+    <div className="space-y-4">
+      <div className="flex justify-end">
+        <ViewToggle view={view} onViewChange={onViewChange} />
+      </div>
       {view === "grid" ? (
-        <ProjectGrid 
-          projects={projects} 
-          onProjectEdit={onProjectEdit}
-          onProjectReview={onProjectReview}
-          onViewHistory={onViewHistory}
-          onFilteredProjectsChange={onFilteredProjectsChange}
-        />
-      ) : (
-        <ProjectTable 
-          projects={projects} 
+        <ProjectGrid
+          projects={projects}
           onProjectEdit={onProjectEdit}
           onProjectReview={onProjectReview}
           onViewHistory={onViewHistory}
           onProjectDeleted={onProjectDeleted}
           onFilteredProjectsChange={onFilteredProjectsChange}
         />
+      ) : (
+        <ProjectTable
+          projects={projects}
+          onProjectReview={onProjectReview}
+          onProjectEdit={onProjectEdit}
+          onViewHistory={onViewHistory}
+          onProjectDeleted={onProjectDeleted}
+          onFilteredProjectsChange={onFilteredProjectsChange}
+        />
       )}
-    </>
+    </div>
   );
 };

@@ -1,15 +1,15 @@
 import { usePermissions } from "./use-permissions";
-import { useManagerProjectAccess } from "./use-manager-project-access";
+import { useProjectAccess } from "./use-project-access";
 
 export const useProjectPermissions = (projectId: string) => {
   const permissions = usePermissions(projectId);
-  const { data: projectAccess } = useManagerProjectAccess([projectId]);
+  const { canAccess, canManage } = useProjectAccess(projectId);
   
   return {
-    canManageRisks: permissions.isAdmin || (permissions.isManager && (projectAccess?.get(projectId) || false)) || permissions.isProjectManager,
+    canManageRisks: permissions.isAdmin || (permissions.isManager && canAccess) || permissions.isProjectManager,
     isAdmin: permissions.isAdmin,
     isProjectManager: permissions.isProjectManager,
-    isOwner: false,
+    isOwner: false, // À implémenter si nécessaire
     userEmail: permissions.userEmail,
   };
 };
