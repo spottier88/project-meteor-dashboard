@@ -55,7 +55,6 @@ export const ProjectActions = ({
 
   return (
     <>
-      {/* Actions principales toujours visibles */}
       {canEdit && (
         <Button
           variant="ghost"
@@ -79,7 +78,6 @@ export const ProjectActions = ({
         <History className="h-4 w-4" />
       </Button>
 
-      {/* Menu déroulant pour les actions secondaires */}
       {(canEdit || isMember || canManageTeam || isAdmin) && (
         <DropdownMenu>
           <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
