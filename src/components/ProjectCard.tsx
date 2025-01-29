@@ -52,8 +52,6 @@ export const ProjectCard = ({
   const user = useUser();
   const permissions = useProjectPermissions(id);
 
-  console.log('ProjectCard permissions for project:', id, permissions);
-
   const { data: organization } = useQuery({
     queryKey: ["organization", pole_id, direction_id, service_id],
     queryFn: async () => {
@@ -113,23 +111,6 @@ export const ProjectCard = ({
     enabled: !!id,
   });
 
-  const { data: userProfile } = useQuery({
-    queryKey: ["userProfile", user?.id],
-    queryFn: async () => {
-      if (!user?.id) return null;
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("*")
-        .eq("id", user.id)
-        .single();
-
-      if (error) throw error;
-      return data;
-    },
-    enabled: !!user?.id,
-    staleTime: 5 * 60 * 1000,
-  });
-
   const { data: isMember } = useQuery({
     queryKey: ["projectMember", id, user?.id],
     queryFn: async () => {
@@ -151,8 +132,6 @@ export const ProjectCard = ({
     staleTime: 5 * 60 * 1000,
   });
 
-  const isProjectManager = userProfile?.email === project_manager;
-
   return (
     <Card className="w-full transition-all duration-300 hover:shadow-lg animate-fade-in">
       <ProjectCardHeader
@@ -163,6 +142,7 @@ export const ProjectCard = ({
         id={id}
         owner_id={owner_id}
         project_manager={project_manager}
+        permissions={permissions}
         additionalActions={
           <AddToCartButton projectId={id} projectTitle={title} />
         }
@@ -172,12 +152,12 @@ export const ProjectCard = ({
           <div className="flex items-center justify-between">
             <LifecycleStatusBadge status={lifecycle_status} />
             <div className="flex gap-2">
-              {isProjectManager && (
+              {permissions.isProjectManager && (
                 <span className="text-xs bg-blue-800 text-white px-2 py-1 rounded">
                   Chef de projet
                 </span>
               )}
-              {permissions.canEdit && !isProjectManager && (
+              {permissions.canEdit && !permissions.isProjectManager && (
                 <span className="text-xs bg-purple-600 text-white px-2 py-1 rounded">
                   Manager
                 </span>

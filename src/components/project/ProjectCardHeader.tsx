@@ -1,12 +1,7 @@
-import { CardHeader, CardTitle } from "@/components/ui/card";
-import { ProjectStatus } from "@/types/project";
+import { CardHeader } from "@/components/ui/card";
+import { ProjectActions } from "../ProjectActions";
 import { StatusIcon } from "./StatusIcon";
-import { useUser } from "@supabase/auth-helpers-react";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import { UserRoleData } from "@/types/user";
-import { MonitoringBadge } from "../monitoring/MonitoringBadge";
-import { ProjectActions } from "./ProjectActions";
+import { ProjectStatus } from "@/types/project";
 
 interface ProjectCardHeaderProps {
   title: string;
@@ -16,6 +11,12 @@ interface ProjectCardHeaderProps {
   id: string;
   owner_id?: string;
   project_manager?: string;
+  permissions: {
+    canEdit: boolean;
+    isAdmin: boolean;
+    isProjectManager: boolean;
+    canManageTeam: boolean;
+  };
   additionalActions?: React.ReactNode;
 }
 
@@ -27,55 +28,16 @@ export const ProjectCardHeader = ({
   id,
   owner_id,
   project_manager,
+  permissions,
   additionalActions,
 }: ProjectCardHeaderProps) => {
-  const user = useUser();
-
-  const { data: userProfile } = useQuery({
-    queryKey: ["userProfile", user?.id],
-    queryFn: async () => {
-      if (!user?.id) return null;
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("*")
-        .eq("id", user.id)
-        .single();
-
-      if (error) throw error;
-      return data;
-    },
-    enabled: !!user?.id,
-    staleTime: 5 * 60 * 1000,
-  });
-
-  const { data: isMember } = useQuery({
-    queryKey: ["projectMember", id, user?.id],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("project_members")
-        .select("*")
-        .eq("project_id", id)
-        .eq("user_id", user?.id)
-        .maybeSingle();
-
-      if (error) {
-        console.error("Error checking project membership:", error);
-        return false;
-      }
-
-      return !!data;
-    },
-    enabled: !!id && !!user?.id,
-    staleTime: 5 * 60 * 1000,
-  });
-
   return (
     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-      <div className="flex items-center gap-2">
-        <MonitoringBadge projectId={id} />
-        <CardTitle className="text-xl font-semibold">{title}</CardTitle>
+      <div className="flex items-center space-x-2">
+        <StatusIcon status={status} />
+        <h2 className="text-xl font-semibold">{title}</h2>
       </div>
-      <div className="flex items-center gap-2">
+      <div className="flex items-center space-x-2">
         {additionalActions}
         <ProjectActions
           projectId={id}
@@ -84,9 +46,8 @@ export const ProjectCardHeader = ({
           onViewHistory={onViewHistory}
           owner_id={owner_id}
           project_manager={project_manager}
-          isMember={isMember}
+          permissions={permissions}
         />
-        {status && <StatusIcon status={status} />}
       </div>
     </CardHeader>
   );
