@@ -4,24 +4,16 @@ import { KanbanBoard } from "@/components/KanbanBoard";
 import { LastReview } from "@/components/LastReview";
 import { ProjectSummaryHeader } from "@/components/project/ProjectSummaryHeader";
 import { useUser } from "@supabase/auth-helpers-react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useState } from "react";
 import { Plus } from "lucide-react";
 import { TaskForm } from "@/components/TaskForm";
-import { canEditProjectItems } from "@/utils/permissions";
 import { InnovationRadarChart } from "../innovation/InnovationRadarChart";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { HelpCircle } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-
-interface ProjectSummaryContentProps {
-  project: any;
-  lastReview: any;
-  risks: any[];
-  tasks: any[];
-  canManage: boolean;
-}
+import { useProjectPermissions } from "@/hooks/use-project-permissions";
 
 const criteriaDescriptions = {
   novateur: "Évalue le caractère innovant du projet : utilisation de nouvelles technologies, approches inédites, solutions créatives. Un score élevé indique une forte innovation technologique ou méthodologique.",
@@ -31,76 +23,23 @@ const criteriaDescriptions = {
   impact: "Évalue l'impact potentiel sur l'organisation : amélioration des processus, gains d'efficacité, bénéfices pour les agents. Un score élevé indique un fort potentiel de transformation."
 };
 
+interface ProjectSummaryContentProps {
+  project: any;
+  lastReview: any;
+  risks: any[];
+  tasks: any[];
+}
+
 export const ProjectSummaryContent = ({
   project,
   lastReview,
   risks,
   tasks,
-  canManage,
 }: ProjectSummaryContentProps) => {
   const user = useUser();
   const [isTaskFormOpen, setIsTaskFormOpen] = useState(false);
   const [selectedTask, setSelectedTask] = useState<any>(null);
-  const queryClient = useQueryClient();
-
-  const { data: userProfile } = useQuery({
-    queryKey: ["userProfile", user?.id],
-    queryFn: async () => {
-      if (!user?.id) return null;
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("*")
-        .eq("id", user.id)
-        .single();
-
-      if (error) throw error;
-      return data;
-    },
-    enabled: !!user?.id,
-  });
-
-  const { data: userRoles } = useQuery({
-    queryKey: ["userRoles", user?.id],
-    queryFn: async () => {
-      if (!user?.id) return null;
-      const { data, error } = await supabase
-        .from("user_roles")
-        .select("*")
-        .eq("user_id", user.id);
-
-      if (error) throw error;
-      return data;
-    },
-    enabled: !!user?.id,
-  });
-
-  const roles = userRoles?.map(ur => ur.role);
-  const canEdit = canEditProjectItems(
-    roles,
-    user?.id,
-    project.owner_id,
-    project.project_manager,
-    userProfile?.email
-  );
-
-  const handleTaskEdit = (task: any) => {
-    setSelectedTask(task);
-    setIsTaskFormOpen(true);
-  };
-
-  const handleTaskFormClose = () => {
-    setIsTaskFormOpen(false);
-    setSelectedTask(null);
-  };
-
-  const handleTaskSubmit = async () => {
-    await queryClient.invalidateQueries({ queryKey: ["tasks", project.id] });
-    handleTaskFormClose();
-  };
-
-  const handleRiskSubmit = async () => {
-    await queryClient.invalidateQueries({ queryKey: ["risks", project.id] });
-  };
+  const { canEdit, canManageTeam } = useProjectPermissions(project.id);
 
   const { data: innovationScores } = useQuery({
     queryKey: ["innovationScores", project.id],
@@ -115,6 +54,16 @@ export const ProjectSummaryContent = ({
       return data;
     },
   });
+
+  const handleTaskEdit = (task: any) => {
+    setSelectedTask(task);
+    setIsTaskFormOpen(true);
+  };
+
+  const handleTaskFormClose = () => {
+    setIsTaskFormOpen(false);
+    setSelectedTask(null);
+  };
 
   return (
     <div className="grid gap-6">
@@ -207,15 +156,13 @@ export const ProjectSummaryContent = ({
       <div className="space-y-4">
         <RiskList 
           projectId={project.id} 
-          projectTitle={project.title} 
-          onRiskSubmit={handleRiskSubmit}
+          projectTitle={project.title}
         />
       </div>
 
       <TaskForm
         isOpen={isTaskFormOpen}
         onClose={handleTaskFormClose}
-        onSubmit={handleTaskSubmit}
         projectId={project.id}
         task={selectedTask}
       />
