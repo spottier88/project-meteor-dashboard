@@ -3,8 +3,8 @@ import { useProjectAccess } from "./use-project-access";
 
 export const useManagerPermissions = (projectId: string) => {
   const permissions = usePermissions(projectId);
-  const { data: canAccess } = useProjectAccess(projectId);
+  const projectAccess = useProjectAccess(projectId);
   
   // Un manager a les mêmes droits qu'un admin sur son périmètre
-  return permissions.isAdmin || (permissions.isManager && canAccess);
+  return permissions.isAdmin || (permissions.isManager && projectAccess.canAccess);
 };
