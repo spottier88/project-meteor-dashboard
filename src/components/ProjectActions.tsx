@@ -10,7 +10,7 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { DeleteProjectDialog } from "./DeleteProjectDialog";
+import { DeleteProjectDialog } from "@/components/project/DeleteProjectDialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
