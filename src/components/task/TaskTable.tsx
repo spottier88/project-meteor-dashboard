@@ -5,6 +5,7 @@ import { useState } from "react";
 import { SortableHeader, SortDirection } from "@/components/ui/sortable-header";
 import { Button } from "@/components/ui/button";
 import { Pencil, Trash2 } from "lucide-react";
+import { useTaskPermissions } from "@/hooks/use-task-permissions";
 
 interface Task {
   id: string;
@@ -13,13 +14,13 @@ interface Task {
   status: "todo" | "in_progress" | "done";
   assignee?: string;
   due_date?: string;
+  project_id: string;
 }
 
 interface TaskTableProps {
   tasks: Task[];
   onEdit?: (task: Task) => void;
   onDelete?: (task: Task) => void;
-  showActions?: (task: Task) => boolean;
 }
 
 const statusColors = {
@@ -34,9 +35,10 @@ const statusLabels = {
   done: "Terminé",
 };
 
-export const TaskTable = ({ tasks, onEdit, onDelete, showActions = () => true }: TaskTableProps) => {
+export const TaskTable = ({ tasks, onEdit, onDelete }: TaskTableProps) => {
   const [sortKey, setSortKey] = useState<string | null>(null);
   const [sortDirection, setSortDirection] = useState<SortDirection>(null);
+  const { canEditTask, canDeleteTask } = useTaskPermissions(tasks[0]?.project_id || "");
 
   const handleSort = (key: string) => {
     if (sortKey === key) {
@@ -114,7 +116,9 @@ export const TaskTable = ({ tasks, onEdit, onDelete, showActions = () => true }:
             currentDirection={sortDirection}
             onSort={handleSort}
           />
-          {showActions && <TableHead className="text-right">Actions</TableHead>}
+          {(canEditTask || canDeleteTask) && (
+            <TableHead className="text-right">Actions</TableHead>
+          )}
         </TableRow>
       </TableHeader>
       <TableBody>
@@ -137,22 +141,26 @@ export const TaskTable = ({ tasks, onEdit, onDelete, showActions = () => true }:
                   : "-"}
               </span>
             </TableCell>
-            {showActions && (
+            {(canEditTask || canDeleteTask) && (
               <TableCell className="text-right">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => onEdit?.(task)}
-                >
-                  <Pencil className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => onDelete?.(task)}
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
+                {canEditTask(task.assignee) && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => onEdit?.(task)}
+                  >
+                    <Pencil className="h-4 w-4" />
+                  </Button>
+                )}
+                {canDeleteTask && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => onDelete?.(task)}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                )}
               </TableCell>
             )}
           </TableRow>

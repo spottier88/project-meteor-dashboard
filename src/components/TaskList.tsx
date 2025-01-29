@@ -6,7 +6,6 @@ import { TaskForm } from "./TaskForm";
 import { useToast } from "@/components/ui/use-toast";
 import { Plus } from "lucide-react";
 import { TaskTable } from "./task/TaskTable";
-import { useUser } from "@supabase/auth-helpers-react";
 import { Input } from "@/components/ui/input";
 import { ViewToggle, ViewMode } from "@/components/ViewToggle";
 import { KanbanBoard } from "@/components/KanbanBoard";
@@ -35,7 +34,7 @@ export const TaskList = ({ projectId }: TaskListProps) => {
   const [view, setView] = useState<ViewMode>("table");
   const queryClient = useQueryClient();
 
-  const { canCreateTask, canEditTask, canDeleteTask, userEmail } = useTaskPermissions(projectId);
+  const { canCreateTask, canEditTask, canDeleteTask } = useTaskPermissions(projectId);
 
   const { data: tasks, refetch } = useQuery({
     queryKey: ["tasks", projectId],
@@ -136,7 +135,6 @@ export const TaskList = ({ projectId }: TaskListProps) => {
                 setTaskToDelete(task);
               }
             }}
-            showActions={(task) => canEditTask(task.assignee) || canDeleteTask}
           />
         ) : (
           <KanbanBoard
