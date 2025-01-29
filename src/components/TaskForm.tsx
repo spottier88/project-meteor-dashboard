@@ -13,7 +13,7 @@ import { useQuery } from "@tanstack/react-query";
 interface TaskFormProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: () => void;
+  onSubmit?: () => void;  // Rendu optionnel
   projectId: string;
   task?: {
     id: string;
@@ -29,7 +29,7 @@ interface TaskFormProps {
 export const TaskForm = ({ 
   isOpen, 
   onClose, 
-  onSubmit, 
+  onSubmit = () => {}, // Valeur par défaut
   projectId, 
   task,
   readOnlyFields = false
