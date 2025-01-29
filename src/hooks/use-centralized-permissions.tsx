@@ -1,7 +1,11 @@
 import { useUser } from "@supabase/auth-helpers-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { UserRole } from "@/types/user";
+
+interface ProjectAccess {
+  canAccess: boolean;
+  isProjectManager: boolean;
+}
 
 interface PermissionsResult {
   isAdmin: boolean;
@@ -9,7 +13,7 @@ interface PermissionsResult {
   isProjectManager: boolean;
   canEdit: boolean;
   canManageTeam: boolean;
-  userEmail?: string | null;
+  userEmail: string | null;
   isLoading: boolean;
   error: Error | null;
 }
@@ -36,11 +40,11 @@ export const useCentralizedPermissions = (projectId?: string): PermissionsResult
       return data;
     },
     enabled: !!user?.id,
-    staleTime: 5 * 60 * 1000, // Cache de 5 minutes
-    gcTime: 10 * 60 * 1000, // Garde en cache 10 minutes
+    staleTime: 300000, // 5 minutes
+    gcTime: 600000, // 10 minutes
   });
 
-  // Requête pour les rôles avec cache
+  // Requête pour les rôles utilisateur avec cache
   const { data: userRoles, isLoading: isLoadingRoles } = useQuery({
     queryKey: ["userRoles", user?.id],
     queryFn: async () => {
@@ -55,20 +59,22 @@ export const useCentralizedPermissions = (projectId?: string): PermissionsResult
       return data;
     },
     enabled: !!user?.id,
-    staleTime: 5 * 60 * 1000,
-    gcTime: 10 * 60 * 1000,
+    staleTime: 300000,
+    gcTime: 600000,
   });
 
-  // Requête pour l'accès au projet spécifique avec cache
-  const { data: projectAccess, isLoading: isLoadingAccess } = useQuery({
-    queryKey: ["projectAccess", projectId, user?.id],
-    queryFn: async () => {
-      if (!user?.id || !projectId) return null;
-      
-      // Vérifie si l'utilisateur est le chef de projet
+  // Requête pour l'accès au projet avec cache
+  const { data: projectAccess, isLoading: isLoadingAccess, error } = useQuery({
+    queryKey: ["projectAccess", user?.id, projectId],
+    queryFn: async (): Promise<ProjectAccess> => {
+      if (!user?.id || !projectId) {
+        return { canAccess: false, isProjectManager: false };
+      }
+
+      // Récupérer les informations du projet
       const { data: project } = await supabase
         .from("projects")
-        .select("project_manager")
+        .select("*")
         .eq("id", projectId)
         .single();
 
@@ -83,7 +89,7 @@ export const useCentralizedPermissions = (projectId?: string): PermissionsResult
       // Vérifie l'accès via la fonction RPC
       if (userRoles?.some(ur => ur.role === 'manager')) {
         const { data: canAccess } = await supabase
-          .rpc('can_manager_access_project', {
+          .rpc("can_manager_access_project", {
             p_user_id: user.id,
             p_project_id: projectId
           });
@@ -106,11 +112,12 @@ export const useCentralizedPermissions = (projectId?: string): PermissionsResult
       };
     },
     enabled: !!user?.id && !!projectId && !!userProfile,
-    staleTime: 5 * 60 * 1000,
-    gcTime: 10 * 60 * 1000,
+    staleTime: 300000,
+    gcTime: 600000,
   });
 
-  const roles = userRoles?.map(ur => ur.role as UserRole) || [];
+  const isLoading = isLoadingProfile || isLoadingRoles || isLoadingAccess;
+  const roles = userRoles?.map(ur => ur.role) || [];
   const isAdmin = roles.includes("admin");
   const isManager = roles.includes("manager");
 
@@ -125,10 +132,10 @@ export const useCentralizedPermissions = (projectId?: string): PermissionsResult
     isAdmin,
     isManager,
     isProjectManager: projectAccess?.isProjectManager || false,
-    canEdit: isAdmin || projectAccess?.canAccess || false,
-    canManageTeam: isAdmin || projectAccess?.canAccess || false,
-    userEmail: userProfile?.email,
-    isLoading: isLoadingProfile || isLoadingRoles || isLoadingAccess,
-    error: null,
+    canEdit: isAdmin || isManager || projectAccess?.isProjectManager || false,
+    canManageTeam: isAdmin || projectAccess?.isProjectManager || false,
+    userEmail: userProfile?.email || null,
+    isLoading,
+    error,
   };
 };

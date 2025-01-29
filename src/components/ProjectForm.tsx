@@ -61,7 +61,8 @@ export const ProjectForm = ({ isOpen, onClose, onSubmit, project }: ProjectFormP
 
     formState.setIsSubmitting(true);
     try {
-      console.log("Submitting project data:", {
+      // Préparation des données avec gestion correcte des UUIDs
+      const projectData = {
         title: formState.title,
         description: formState.description,
         projectManager: formState.projectManager,
@@ -69,31 +70,8 @@ export const ProjectForm = ({ isOpen, onClose, onSubmit, project }: ProjectFormP
         endDate: formState.endDate,
         priority: formState.priority,
         monitoringLevel: formState.monitoringLevel,
-        monitoringEntityId: formState.monitoringEntityId,
-        ownerId: formState.ownerId,
-        poleId: formState.poleId,
-        directionId: formState.directionId,
-        serviceId: formState.serviceId,
-        lifecycleStatus: formState.lifecycleStatus,
-        innovation: {
-          novateur: formState.novateur,
-          usager: formState.usager,
-          ouverture: formState.ouverture,
-          agilite: formState.agilite,
-          impact: formState.impact,
-        },
-      });
-
-      await onSubmit({
-        title: formState.title,
-        description: formState.description,
-        projectManager: formState.projectManager,
-        startDate: formState.startDate,
-        endDate: formState.endDate,
-        priority: formState.priority,
-        monitoringLevel: formState.monitoringLevel,
-        monitoringEntityId: formState.monitoringEntityId,
-        ownerId: formState.ownerId,
+        monitoringEntityId: formState.monitoringEntityId || null,
+        ownerId: formState.ownerId || null,
         poleId: formState.poleId === "none" ? null : formState.poleId,
         directionId: formState.directionId === "none" ? null : formState.directionId,
         serviceId: formState.serviceId === "none" ? null : formState.serviceId,
@@ -105,7 +83,11 @@ export const ProjectForm = ({ isOpen, onClose, onSubmit, project }: ProjectFormP
           agilite: formState.agilite,
           impact: formState.impact,
         },
-      });
+      };
+
+      console.log("Submitting project data:", projectData);
+
+      await onSubmit(projectData);
       
       toast({
         title: "Succès",
