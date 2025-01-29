@@ -10,7 +10,7 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { DeleteProjectDialog } from "./project/DeleteProjectDialog";
+import { DeleteProjectDialog } from "./DeleteProjectDialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -45,8 +45,6 @@ export const ProjectActions = ({
 }: ProjectActionsProps) => {
   const navigate = useNavigate();
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-
-  console.log('ProjectActions permissions for project:', projectId, permissions);
 
   const handleClick = (e: React.MouseEvent, action: () => void) => {
     e.stopPropagation();
