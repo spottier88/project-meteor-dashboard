@@ -95,6 +95,11 @@ export const ProjectCard = ({
   const { data: latestReview } = useQuery({
     queryKey: ["latestReview", id],
     queryFn: async () => {
+      if (!id) {
+        console.error("No project ID provided for latest review query");
+        return null;
+      }
+
       const { data, error } = await supabase
         .from("latest_reviews")
         .select("*")
@@ -114,11 +119,16 @@ export const ProjectCard = ({
   const { data: isMember } = useQuery({
     queryKey: ["projectMember", id, user?.id],
     queryFn: async () => {
+      if (!id || !user?.id) {
+        console.error("Missing project ID or user ID for member check");
+        return false;
+      }
+
       const { data, error } = await supabase
         .from("project_members")
         .select("*")
         .eq("project_id", id)
-        .eq("user_id", user?.id)
+        .eq("user_id", user.id)
         .maybeSingle();
 
       if (error) {
