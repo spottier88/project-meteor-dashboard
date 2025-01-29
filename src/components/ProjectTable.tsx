@@ -148,11 +148,9 @@ export const ProjectTable = ({
     }
   };
 
-  if (!filteredProjects) {
-    return null;
-  }
-
+  // Toujours appeler useMemo, même si on retourne les projets non triés
   const sortedProjects = React.useMemo(() => {
+    if (!filteredProjects) return [];
     if (!sortKey || !sortDirection) return filteredProjects;
     
     return [...filteredProjects].sort((a: any, b: any) => {
@@ -169,6 +167,10 @@ export const ProjectTable = ({
       }
     });
   }, [filteredProjects, sortKey, sortDirection]);
+
+  if (!filteredProjects) {
+    return null;
+  }
 
   return (
     <div className="rounded-md border">
