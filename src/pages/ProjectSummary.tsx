@@ -4,7 +4,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 import { useUser } from "@supabase/auth-helpers-react";
-import { canManageProjectItems } from "@/utils/permissions";
 import { useState, useEffect } from "react";
 import { TaskForm } from "@/components/TaskForm";
 import { ProjectSummaryContent } from "@/components/project/ProjectSummaryContent";
@@ -15,7 +14,6 @@ export const ProjectSummary = () => {
   const navigate = useNavigate();
   const user = useUser();
   const [isTaskFormOpen, setIsTaskFormOpen] = useState(false);
-  const [canManage, setCanManage] = useState(false);
   const { toast } = useToast();
 
   const { data: project, isError: projectError } = useQuery({
@@ -109,55 +107,6 @@ export const ProjectSummary = () => {
     enabled: !!projectId,
   });
 
-  const { data: userRoles } = useQuery({
-    queryKey: ["userRoles", user?.id],
-    queryFn: async () => {
-      if (!user?.id) return null;
-      const { data, error } = await supabase
-        .from("user_roles")
-        .select("*")
-        .eq("user_id", user.id);
-
-      if (error) throw error;
-      return data;
-    },
-    enabled: !!user?.id,
-  });
-
-  const { data: userProfile } = useQuery({
-    queryKey: ["userProfile", user?.id],
-    queryFn: async () => {
-      if (!user?.id) return null;
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("*")
-        .eq("id", user.id)
-        .single();
-
-      if (error) throw error;
-      return data;
-    },
-    enabled: !!user?.id,
-  });
-
-  useEffect(() => {
-    const checkPermissions = async () => {
-      if (!project) return;
-      
-      const roles = userRoles?.map(ur => ur.role);
-      const hasPermission = await canManageProjectItems(
-        roles,
-        user?.id,
-        project.id,
-        project.project_manager,
-        userProfile?.email
-      );
-      setCanManage(hasPermission);
-    };
-
-    checkPermissions();
-  }, [project, userRoles, user?.id, userProfile?.email]);
-
   if (!project || projectError) {
     return null;
   }
@@ -179,15 +128,11 @@ export const ProjectSummary = () => {
         lastReview={lastReview}
         risks={risks || []}
         tasks={tasks || []}
-        canManage={canManage}
       />
 
       <TaskForm
         isOpen={isTaskFormOpen}
         onClose={() => setIsTaskFormOpen(false)}
-        onSubmit={() => {
-          setIsTaskFormOpen(false);
-        }}
         projectId={projectId || ""}
       />
     </div>
