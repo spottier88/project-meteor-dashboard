@@ -46,6 +46,7 @@ export const ProjectTable = ({
   const [sortKey, setSortKey] = React.useState<string | null>(null);
   const [sortDirection, setSortDirection] = React.useState<SortDirection>(null);
 
+  // Optimisation : utilisation de staleTime et mémoisation des données
   const { data: userRoles } = useQuery({
     queryKey: ["userRoles", user?.id],
     queryFn: async () => {
@@ -59,6 +60,7 @@ export const ProjectTable = ({
       return data as UserRoleData[];
     },
     enabled: !!user?.id,
+    staleTime: 300000, // 5 minutes
   });
 
   const { data: userProfile } = useQuery({
@@ -75,6 +77,7 @@ export const ProjectTable = ({
       return data;
     },
     enabled: !!user?.id,
+    staleTime: 300000, // 5 minutes
   });
 
   const { data: projectMemberships } = useQuery({
@@ -94,13 +97,14 @@ export const ProjectTable = ({
       return data.map(pm => pm.project_id);
     },
     enabled: !!user?.id,
+    staleTime: 300000, // 5 minutes
   });
 
-  const projectIds = projects.map(p => p.id);
+  const projectIds = React.useMemo(() => projects.map(p => p.id), [projects]);
   const { data: projectAccess } = useManagerProjectAccess(projectIds);
 
   const { data: filteredProjects } = useQuery({
-    queryKey: ["filteredProjects", projects, user?.id, userRoles, userProfile, projectMemberships, projectAccess],
+    queryKey: ["filteredProjects", projectIds, user?.id, userRoles, userProfile, projectMemberships, projectAccess],
     queryFn: async () => {
       if (!user) {
         console.log("No user logged in");
@@ -122,6 +126,7 @@ export const ProjectTable = ({
       });
     },
     enabled: !!user?.id && !!userRoles && !!userProfile && !!projectAccess,
+    staleTime: 300000, // 5 minutes
   });
 
   React.useEffect(() => {
@@ -147,21 +152,23 @@ export const ProjectTable = ({
     return null;
   }
 
-  const sortedProjects = [...filteredProjects].sort((a: any, b: any) => {
-    if (!sortKey || !sortDirection) return 0;
+  const sortedProjects = React.useMemo(() => {
+    if (!sortKey || !sortDirection) return filteredProjects;
+    
+    return [...filteredProjects].sort((a: any, b: any) => {
+      const aValue = a[sortKey];
+      const bValue = b[sortKey];
 
-    const aValue = a[sortKey];
-    const bValue = b[sortKey];
+      if (aValue === null) return 1;
+      if (bValue === null) return -1;
 
-    if (aValue === null) return 1;
-    if (bValue === null) return -1;
-
-    if (sortDirection === "asc") {
-      return aValue > bValue ? 1 : -1;
-    } else {
-      return aValue < bValue ? 1 : -1;
-    }
-  });
+      if (sortDirection === "asc") {
+        return aValue > bValue ? 1 : -1;
+      } else {
+        return aValue < bValue ? 1 : -1;
+      }
+    });
+  }, [filteredProjects, sortKey, sortDirection]);
 
   return (
     <div className="rounded-md border">

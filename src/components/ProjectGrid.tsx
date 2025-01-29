@@ -38,6 +38,7 @@ export const ProjectGrid = ({
 }: ProjectGridProps) => {
   const user = useUser();
 
+  // Optimisation : utilisation de staleTime pour réduire les requêtes
   const { data: userRoles } = useQuery({
     queryKey: ["userRoles", user?.id],
     queryFn: async () => {
@@ -51,6 +52,7 @@ export const ProjectGrid = ({
       return data as UserRoleData[];
     },
     enabled: !!user?.id,
+    staleTime: 300000, // 5 minutes
   });
 
   const { data: userProfile } = useQuery({
@@ -71,6 +73,7 @@ export const ProjectGrid = ({
       return data;
     },
     enabled: !!user?.id,
+    staleTime: 300000, // 5 minutes
   });
 
   const { data: projectMemberships } = useQuery({
@@ -90,13 +93,14 @@ export const ProjectGrid = ({
       return data.map(pm => pm.project_id);
     },
     enabled: !!user?.id,
+    staleTime: 300000, // 5 minutes
   });
 
-  const projectIds = projects.map(p => p.id);
+  const projectIds = React.useMemo(() => projects.map(p => p.id), [projects]);
   const { data: projectAccess } = useManagerProjectAccess(projectIds);
 
   const { data: filteredProjects } = useQuery({
-    queryKey: ["filteredProjects", projects, user?.id, userRoles, userProfile, projectMemberships, projectAccess],
+    queryKey: ["filteredProjects", projectIds, user?.id, userRoles, userProfile, projectMemberships, projectAccess],
     queryFn: async () => {
       if (!user) {
         console.log("No user logged in");
@@ -118,6 +122,7 @@ export const ProjectGrid = ({
       });
     },
     enabled: !!user?.id && !!userRoles && !!userProfile && !!projectAccess,
+    staleTime: 300000, // 5 minutes
   });
 
   React.useEffect(() => {
