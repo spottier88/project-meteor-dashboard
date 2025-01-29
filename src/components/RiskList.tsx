@@ -70,7 +70,6 @@ export const RiskList = ({ projectId, projectTitle, onRiskSubmit }: RiskListProp
         description: "Le risque a été supprimé",
       });
       
-      // Rafraîchir la liste
       queryClient.invalidateQueries({ queryKey: ["risks", projectId] });
     } catch (error) {
       console.error("Error deleting risk:", error);

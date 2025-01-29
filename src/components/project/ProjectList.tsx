@@ -27,7 +27,7 @@ export const ProjectList = ({
   return (
     <div className="space-y-4">
       <div className="flex justify-end">
-        <ViewToggle view={view} onViewChange={onViewChange} />
+        <ViewToggle currentView={view} onViewChange={onViewChange} />
       </div>
       {view === "grid" ? (
         <ProjectGrid
@@ -35,7 +35,6 @@ export const ProjectList = ({
           onProjectEdit={onProjectEdit}
           onProjectReview={onProjectReview}
           onViewHistory={onViewHistory}
-          onProjectDeleted={onProjectDeleted}
           onFilteredProjectsChange={onFilteredProjectsChange}
         />
       ) : (
