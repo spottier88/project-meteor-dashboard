@@ -11,6 +11,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { useProjectFormState } from "./form/useProjectFormState";
 import { useProjectFormValidation } from "./form/useProjectFormValidation";
 import { getProjectManagers } from "@/utils/projectManagers";
+import { useCentralizedPermissions } from "@/hooks/use-centralized-permissions";
 
 interface ProjectFormProps {
   isOpen: boolean;
@@ -24,6 +25,11 @@ export const ProjectForm = ({ isOpen, onClose, onSubmit, project }: ProjectFormP
   const user = useUser();
   const formState = useProjectFormState(isOpen, project);
   const validation = useProjectFormValidation();
+  const permissions = useCentralizedPermissions(project?.id);
+
+  console.log("ProjectForm - Permissions:", permissions);
+  console.log("ProjectForm - Current project:", project);
+  console.log("ProjectForm - Form state:", formState);
 
   const { data: projectManagers } = useQuery({
     queryKey: ["projectManagers", user?.id, validation.userRoles],
@@ -43,8 +49,41 @@ export const ProjectForm = ({ isOpen, onClose, onSubmit, project }: ProjectFormP
       return;
     }
 
+    if (!permissions.canEdit) {
+      console.error("User doesn't have permission to edit project");
+      toast({
+        title: "Erreur",
+        description: "Vous n'avez pas les droits nécessaires pour modifier ce projet",
+        variant: "destructive",
+      });
+      return;
+    }
+
     formState.setIsSubmitting(true);
     try {
+      console.log("Submitting project data:", {
+        title: formState.title,
+        description: formState.description,
+        projectManager: formState.projectManager,
+        startDate: formState.startDate,
+        endDate: formState.endDate,
+        priority: formState.priority,
+        monitoringLevel: formState.monitoringLevel,
+        monitoringEntityId: formState.monitoringEntityId,
+        ownerId: formState.ownerId,
+        poleId: formState.poleId,
+        directionId: formState.directionId,
+        serviceId: formState.serviceId,
+        lifecycleStatus: formState.lifecycleStatus,
+        innovation: {
+          novateur: formState.novateur,
+          usager: formState.usager,
+          ouverture: formState.ouverture,
+          agilite: formState.agilite,
+          impact: formState.impact,
+        },
+      });
+
       await onSubmit({
         title: formState.title,
         description: formState.description,
@@ -67,16 +106,17 @@ export const ProjectForm = ({ isOpen, onClose, onSubmit, project }: ProjectFormP
           impact: formState.impact,
         },
       });
+      
       toast({
         title: "Succès",
         description: project ? "Projet mis à jour" : "Projet créé",
       });
       onClose();
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error submitting project:", error);
       toast({
         title: "Erreur",
-        description: "Une erreur est survenue lors de l'enregistrement",
+        description: error.message || "Une erreur est survenue lors de l'enregistrement",
         variant: "destructive",
       });
     } finally {

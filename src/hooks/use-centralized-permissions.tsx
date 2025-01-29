@@ -14,8 +14,11 @@ interface PermissionsResult {
   error: Error | null;
 }
 
-export const useCentralizedPermissions = (projectId?: string) => {
+export const useCentralizedPermissions = (projectId?: string): PermissionsResult => {
   const user = useUser();
+
+  console.log("useCentralizedPermissions - Current user:", user?.id);
+  console.log("useCentralizedPermissions - Project ID:", projectId);
 
   // Requête pour le profil utilisateur avec cache
   const { data: userProfile, isLoading: isLoadingProfile } = useQuery({
@@ -29,6 +32,7 @@ export const useCentralizedPermissions = (projectId?: string) => {
         .single();
 
       if (error) throw error;
+      console.log("User profile data:", data);
       return data;
     },
     enabled: !!user?.id,
@@ -47,6 +51,7 @@ export const useCentralizedPermissions = (projectId?: string) => {
         .eq("user_id", user.id);
 
       if (error) throw error;
+      console.log("User roles data:", data);
       return data;
     },
     enabled: !!user?.id,
@@ -69,6 +74,12 @@ export const useCentralizedPermissions = (projectId?: string) => {
 
       const isProjectManager = project?.project_manager === userProfile?.email;
 
+      console.log("Project manager check:", {
+        projectManager: project?.project_manager,
+        userEmail: userProfile?.email,
+        isProjectManager
+      });
+
       // Vérifie l'accès via la fonction RPC
       if (userRoles?.some(ur => ur.role === 'manager')) {
         const { data: canAccess } = await supabase
@@ -76,6 +87,13 @@ export const useCentralizedPermissions = (projectId?: string) => {
             p_user_id: user.id,
             p_project_id: projectId
           });
+
+        console.log("Manager access check:", {
+          canAccess,
+          userId: user.id,
+          projectId
+        });
+
         return {
           canAccess: canAccess || isProjectManager,
           isProjectManager
@@ -95,6 +113,13 @@ export const useCentralizedPermissions = (projectId?: string) => {
   const roles = userRoles?.map(ur => ur.role as UserRole) || [];
   const isAdmin = roles.includes("admin");
   const isManager = roles.includes("manager");
+
+  console.log("Final permissions state:", {
+    isAdmin,
+    isManager,
+    projectAccess,
+    userEmail: userProfile?.email
+  });
 
   return {
     isAdmin,
