@@ -79,6 +79,15 @@ export const ProjectCardHeader = ({
         userProfile?.email
       );
       
+      console.log('ProjectCardHeader permissions check:', {
+        userId: user.id,
+        projectId: id,
+        roles,
+        projectManager: project_manager,
+        userEmail: userProfile?.email,
+        hasEditPermission
+      });
+      
       setCanManage(hasEditPermission);
     };
 

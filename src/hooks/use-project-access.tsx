@@ -33,6 +33,7 @@ export const useProjectAccess = (projectId: string) => {
       // Vérifier si l'utilisateur est admin
       const isAdmin = userRoles?.includes("admin") || false;
       if (isAdmin) {
+        console.log('User is admin, granting full access');
         return {
           canAccess: true,
           canManage: true,
@@ -74,6 +75,13 @@ export const useProjectAccess = (projectId: string) => {
         });
 
       const isManagerWithAccess = !!managerAccess;
+
+      console.log('Project access check for project:', projectId, {
+        isProjectManager,
+        isMember,
+        isManagerWithAccess,
+        userRoles
+      });
 
       return {
         canAccess: isProjectManager || isMember || isManagerWithAccess,
