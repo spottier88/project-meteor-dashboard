@@ -39,14 +39,12 @@ export const ProjectActions = ({
 }: ProjectActionsProps) => {
   const navigate = useNavigate();
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const { userProfile, userRoles, isAdmin } = usePermissionsContext();
+  const { userProfile, isAdmin, isManager, isProjectManager } = usePermissionsContext();
 
-  // Vérification des rôles
-  const isManager = userRoles?.includes("manager");
-  const isProjectManager = userProfile?.email === projectTitle; // Vérifie si l'utilisateur est le chef de projet
-
+  // Vérification des droits selon la hiérarchie des rôles
   const canEdit = isAdmin || isManager || isProjectManager;
   const canManageTeam = isAdmin || isProjectManager;
+  const canDelete = isAdmin;
 
   console.log("ProjectActions - Permissions check:", {
     isAdmin,
@@ -54,7 +52,7 @@ export const ProjectActions = ({
     isProjectManager,
     canEdit,
     canManageTeam,
-    userRoles,
+    canDelete,
     userProfile
   });
 
@@ -88,7 +86,7 @@ export const ProjectActions = ({
         <History className="h-4 w-4" />
       </Button>
 
-      {(canEdit || isMember || canManageTeam || isAdmin) && (
+      {(canEdit || isMember || canManageTeam) && (
         <DropdownMenu>
           <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
             <Button variant="ghost" size="icon" className="h-8 w-8">
@@ -117,7 +115,7 @@ export const ProjectActions = ({
                 </DropdownMenuItem>
               </>
             )}
-            {isAdmin && (
+            {canDelete && (
               <>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem 

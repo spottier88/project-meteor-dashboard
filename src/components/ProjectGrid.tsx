@@ -37,12 +37,14 @@ export const ProjectGrid = ({
   onFilteredProjectsChange,
 }: ProjectGridProps) => {
   const user = useUser();
-  const { userProfile, userRoles, isAdmin, isLoading } = usePermissionsContext();
+  const { userProfile, isAdmin, isManager, isProjectManager, isMember, isLoading } = usePermissionsContext();
 
   console.log("ProjectGrid - Permissions state:", {
     userProfile,
-    userRoles,
     isAdmin,
+    isManager,
+    isProjectManager,
+    isMember,
     isLoading,
     userId: user?.id
   });
@@ -73,7 +75,7 @@ export const ProjectGrid = ({
   const { data: projectAccess } = useManagerProjectAccess(projectIds);
 
   const { data: filteredProjects } = useQuery({
-    queryKey: ["filteredProjects", projectIds, user?.id, userRoles, userProfile, projectMemberships, projectAccess, isAdmin],
+    queryKey: ["filteredProjects", projectIds, user?.id, isAdmin, isManager, isProjectManager, projectMemberships, projectAccess],
     queryFn: async () => {
       if (!user) {
         console.log("No user logged in");
@@ -82,30 +84,36 @@ export const ProjectGrid = ({
 
       console.log("Filtering projects with params:", {
         isAdmin,
+        isManager,
+        isProjectManager,
         projectMemberships,
         projectAccess,
         totalProjects: projects.length
       });
 
+      // Admin voit tout
       if (isAdmin) {
         console.log("User is admin, showing all projects:", projects.length);
         return projects;
       }
 
       const filtered = projects.filter(project => {
-        const isProjectManager = project.project_manager === userProfile?.email;
-        const isMember = projectMemberships?.includes(project.id);
-        const hasManagerAccess = projectAccess?.get(project.id) || false;
+        // Chef de projet voit ses projets
+        const isProjectOwner = project.project_manager === userProfile?.email;
+        // Membre voit les projets où il est membre
+        const isMemberOfProject = projectMemberships?.includes(project.id);
+        // Manager voit les projets de son périmètre
+        const hasManagerAccess = isManager && projectAccess?.get(project.id) || false;
         
         console.log(`Project ${project.id} access check:`, {
-          isProjectManager,
-          isMember,
+          isProjectOwner,
+          isMemberOfProject,
           hasManagerAccess,
           userEmail: userProfile?.email,
           projectManager: project.project_manager
         });
 
-        return isProjectManager || isMember || hasManagerAccess;
+        return isProjectOwner || isMemberOfProject || hasManagerAccess;
       });
 
       console.log("Filtered projects result:", filtered.length);

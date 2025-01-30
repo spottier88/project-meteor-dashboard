@@ -8,6 +8,9 @@ interface PermissionsContextType {
   userRoles: UserRole[] | undefined;
   userProfile: any | null;
   isAdmin: boolean;
+  isManager: boolean;
+  isProjectManager: boolean;
+  isMember: boolean;
   isLoading: boolean;
 }
 
@@ -60,17 +63,21 @@ export function PermissionsProvider({ children }: { children: React.ReactNode })
     staleTime: 300000, // 5 minutes
   });
 
-  // Vérifie si l'utilisateur a le rôle admin parmi ses rôles
+  // Vérification des rôles par ordre de priorité
   const isAdmin = Array.isArray(userRoles) && userRoles.includes('admin');
+  const isManager = Array.isArray(userRoles) && userRoles.includes('manager');
+  const isProjectManager = Array.isArray(userRoles) && userRoles.includes('chef_projet');
+  const isMember = Array.isArray(userRoles) && userRoles.includes('membre');
   const isLoading = isLoadingRoles || isLoadingProfile;
 
   console.log("PermissionsContext state:", {
     userRoles,
     isAdmin,
+    isManager,
+    isProjectManager,
+    isMember,
     userProfile,
     isLoading,
-    hasMultipleRoles: Array.isArray(userRoles) ? userRoles.length > 1 : false,
-    allRoles: userRoles
   });
 
   return (
@@ -78,6 +85,9 @@ export function PermissionsProvider({ children }: { children: React.ReactNode })
       userRoles,
       userProfile,
       isAdmin,
+      isManager,
+      isProjectManager,
+      isMember,
       isLoading,
     }}>
       {children}
