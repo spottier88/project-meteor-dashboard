@@ -11,7 +11,6 @@ import { useToast } from "@/components/ui/use-toast";
 import { useProjectFormState } from "./form/useProjectFormState";
 import { useProjectFormValidation } from "./form/useProjectFormValidation";
 import { getProjectManagers } from "@/utils/projectManagers";
-import { useCentralizedPermissions } from "@/hooks/use-centralized-permissions";
 
 interface ProjectFormProps {
   isOpen: boolean;
