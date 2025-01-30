@@ -9,7 +9,7 @@ import { AddToCartButton } from "./cart/AddToCartButton";
 import { ProjectStatus, ProgressStatus, ProjectLifecycleStatus } from "@/types/project";
 import { LifecycleStatusBadge } from "./project/LifecycleStatusBadge";
 import { useUser } from "@supabase/auth-helpers-react";
-import { useProjectPermissions } from "@/hooks/use-project-permissions";
+import { usePermissionsContext } from "@/contexts/PermissionsContext";
 
 interface ProjectCardProps {
   title: string;
@@ -50,7 +50,7 @@ export const ProjectCard = ({
 }: ProjectCardProps) => {
   const navigate = useNavigate();
   const user = useUser();
-  const permissions = useProjectPermissions(id);
+  const { userProfile, userRoles, isAdmin } = usePermissionsContext();
 
   const { data: organization } = useQuery({
     queryKey: ["organization", pole_id, direction_id, service_id],
@@ -142,6 +142,12 @@ export const ProjectCard = ({
     staleTime: 5 * 60 * 1000,
   });
 
+  // Vérification des rôles
+  const isManager = userRoles?.includes("manager");
+  const isProjectManager = userProfile?.email === project_manager;
+
+  const canEdit = isAdmin || isManager || isProjectManager;
+
   return (
     <Card className="w-full transition-all duration-300 hover:shadow-lg animate-fade-in">
       <ProjectCardHeader
@@ -150,9 +156,7 @@ export const ProjectCard = ({
         onEdit={onEdit}
         onViewHistory={onViewHistory}
         id={id}
-        owner_id={owner_id}
-        project_manager={project_manager}
-        permissions={permissions}
+        isMember={isMember}
         additionalActions={
           <AddToCartButton projectId={id} projectTitle={title} />
         }
@@ -162,12 +166,12 @@ export const ProjectCard = ({
           <div className="flex items-center justify-between">
             <LifecycleStatusBadge status={lifecycle_status} />
             <div className="flex gap-2">
-              {permissions.isProjectManager && (
+              {isProjectManager && (
                 <span className="text-xs bg-blue-800 text-white px-2 py-1 rounded">
                   Chef de projet
                 </span>
               )}
-              {permissions.canEdit && !permissions.isProjectManager && (
+              {canEdit && !isProjectManager && (
                 <span className="text-xs bg-purple-600 text-white px-2 py-1 rounded">
                   Manager
                 </span>
