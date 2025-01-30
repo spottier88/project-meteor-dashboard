@@ -11,6 +11,7 @@ import { ProjectLifecycleStatus } from "@/types/project";
 import { ProjectFilters } from "@/components/project/ProjectFilters";
 import { ProjectList } from "@/components/project/ProjectList";
 import { ProjectModals } from "@/components/project/ProjectModals";
+import { PermissionsProvider } from "@/contexts/PermissionsContext";
 
 const Index = () => {
   const navigate = useNavigate();
@@ -23,7 +24,6 @@ const Index = () => {
     title: string;
   } | null>(null);
   
-  // Initialize states with localStorage values
   const [searchQuery, setSearchQuery] = useState(() => {
     return localStorage.getItem("projectSearchQuery") || "";
   });
@@ -42,7 +42,6 @@ const Index = () => {
 
   const user = useUser();
 
-  // Save filter values to localStorage when they change
   useEffect(() => {
     localStorage.setItem("projectViewMode", view);
   }, [view]);
@@ -62,22 +61,6 @@ const Index = () => {
   useEffect(() => {
     localStorage.setItem("showMyProjectsOnly", showMyProjectsOnly.toString());
   }, [showMyProjectsOnly]);
-
-  const { data: userProfile } = useQuery({
-    queryKey: ["userProfile", user?.id],
-    queryFn: async () => {
-      if (!user?.id) return null;
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("*")
-        .eq("id", user.id)
-        .single();
-
-      if (error) throw error;
-      return data;
-    },
-    enabled: !!user?.id,
-  });
 
   const { data: projects, refetch: refetchProjects } = useQuery({
     queryKey: ["projects"],
@@ -131,6 +114,7 @@ const Index = () => {
         };
       }) || [];
     },
+    staleTime: 300000, // 5 minutes de cache
   });
 
   const [accessibleProjectIds, setAccessibleProjectIds] = useState<string[]>([]);
@@ -140,12 +124,10 @@ const Index = () => {
   };
 
   const filteredProjects = projects?.filter(project => {
-    // Filtre par statut du cycle de vie
     if (lifecycleStatus !== 'all' && project.lifecycle_status !== lifecycleStatus) {
       return false;
     }
 
-    // Filtre par niveau de monitoring
     if (monitoringLevel !== 'all') {
       if (monitoringLevel === 'none') {
         const hasNoMonitoring = !project.project_monitoring || 
@@ -162,14 +144,12 @@ const Index = () => {
       return levelMatch;
     }
 
-    // Filtre "Mes projets"
     if (showMyProjectsOnly && userProfile) {
       if (project.project_manager !== userProfile.email) {
         return false;
       }
     }
 
-    // Filtre par recherche
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
       const matchesTitle = project.title?.toLowerCase().includes(query);
@@ -351,51 +331,53 @@ const Index = () => {
   };
 
   return (
-    <div className="container mx-auto py-8">
-      <UserInfo />
-      <DashboardHeader
-        onNewProject={() => setIsProjectFormOpen(true)}
-        onNewReview={handleNewReview}
-      />
+    <PermissionsProvider>
+      <div className="container mx-auto py-8">
+        <UserInfo />
+        <DashboardHeader
+          onNewProject={() => setIsProjectFormOpen(true)}
+          onNewReview={handleNewReview}
+        />
 
-      <ProjectFilters
-        searchQuery={searchQuery}
-        onSearchChange={setSearchQuery}
-        lifecycleStatus={lifecycleStatus}
-        onLifecycleStatusChange={setLifecycleStatus}
-        monitoringLevel={monitoringLevel}
-        onMonitoringLevelChange={setMonitoringLevel}
-        showMyProjectsOnly={showMyProjectsOnly}
-        onMyProjectsToggle={setShowMyProjectsOnly}
-        filteredProjectIds={accessibleProjectIds}
-      />
+        <ProjectFilters
+          searchQuery={searchQuery}
+          onSearchChange={setSearchQuery}
+          lifecycleStatus={lifecycleStatus}
+          onLifecycleStatusChange={setLifecycleStatus}
+          monitoringLevel={monitoringLevel}
+          onMonitoringLevelChange={setMonitoringLevel}
+          showMyProjectsOnly={showMyProjectsOnly}
+          onMyProjectsToggle={setShowMyProjectsOnly}
+          filteredProjectIds={accessibleProjectIds}
+        />
 
-      <ProjectList
-        view={view}
-        onViewChange={setView}
-        projects={filteredProjects}
-        onProjectEdit={handleEditProject}
-        onProjectReview={handleProjectSelect}
-        onViewHistory={handleViewHistory}
-        onProjectDeleted={refetchProjects}
-        onFilteredProjectsChange={handleFilteredProjectsChange}
-      />
+        <ProjectList
+          view={view}
+          onViewChange={setView}
+          projects={filteredProjects}
+          onProjectEdit={handleEditProject}
+          onProjectReview={handleProjectSelect}
+          onViewHistory={handleViewHistory}
+          onProjectDeleted={refetchProjects}
+          onFilteredProjectsChange={handleFilteredProjectsChange}
+        />
 
-      <ProjectModals
-        isProjectFormOpen={isProjectFormOpen}
-        onProjectFormClose={handleProjectFormClose}
-        onProjectFormSubmit={handleProjectFormSubmit}
-        selectedProject={selectedProject}
-        isProjectSelectionOpen={isProjectSelectionOpen}
-        onProjectSelectionClose={() => setIsProjectSelectionOpen(false)}
-        onProjectSelect={handleProjectSelect}
-        projects={projects || []}
-        isReviewSheetOpen={isReviewSheetOpen}
-        onReviewClose={handleReviewClose}
-        selectedProjectForReview={selectedProjectForReview}
-        onReviewSubmitted={handleReviewSubmitted}
-      />
-    </div>
+        <ProjectModals
+          isProjectFormOpen={isProjectFormOpen}
+          onProjectFormClose={handleProjectFormClose}
+          onProjectFormSubmit={handleProjectFormSubmit}
+          selectedProject={selectedProject}
+          isProjectSelectionOpen={isProjectSelectionOpen}
+          onProjectSelectionClose={() => setIsProjectSelectionOpen(false)}
+          onProjectSelect={handleProjectSelect}
+          projects={projects || []}
+          isReviewSheetOpen={isReviewSheetOpen}
+          onReviewClose={handleReviewClose}
+          selectedProjectForReview={selectedProjectForReview}
+          onReviewSubmitted={handleReviewSubmitted}
+        />
+      </div>
+    </PermissionsProvider>
   );
 };
 
