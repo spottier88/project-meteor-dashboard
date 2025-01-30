@@ -73,7 +73,7 @@ export const ProjectGrid = ({
   const { data: projectAccess } = useManagerProjectAccess(projectIds);
 
   const { data: filteredProjects } = useQuery({
-    queryKey: ["filteredProjects", projectIds, user?.id, userRoles, userProfile, projectMemberships, projectAccess],
+    queryKey: ["filteredProjects", projectIds, user?.id, userRoles, userProfile, projectMemberships, projectAccess, isAdmin],
     queryFn: async () => {
       if (!user) {
         console.log("No user logged in");
@@ -111,8 +111,7 @@ export const ProjectGrid = ({
       console.log("Filtered projects result:", filtered.length);
       return filtered;
     },
-    enabled: !!user?.id && !!userRoles && !!userProfile && !!projectAccess && !isLoading,
-    staleTime: 300000, // 5 minutes
+    enabled: !!user?.id && !isLoading,
   });
 
   React.useEffect(() => {

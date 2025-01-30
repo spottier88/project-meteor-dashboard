@@ -39,7 +39,7 @@ export const ProjectActions = ({
 }: ProjectActionsProps) => {
   const navigate = useNavigate();
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const { isAdmin, userRoles, userProfile } = usePermissionsContext();
+  const { userProfile, userRoles, isAdmin } = usePermissionsContext();
 
   // Vérification des rôles
   const isManager = userRoles?.includes("manager");
@@ -47,6 +47,16 @@ export const ProjectActions = ({
 
   const canEdit = isAdmin || isManager || isProjectManager;
   const canManageTeam = isAdmin || isProjectManager;
+
+  console.log("ProjectActions - Permissions check:", {
+    isAdmin,
+    isManager,
+    isProjectManager,
+    canEdit,
+    canManageTeam,
+    userRoles,
+    userProfile
+  });
 
   const handleClick = (e: React.MouseEvent, action: () => void) => {
     e.stopPropagation();

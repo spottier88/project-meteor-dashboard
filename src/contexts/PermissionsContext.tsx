@@ -23,15 +23,16 @@ export function PermissionsProvider({ children }: { children: React.ReactNode })
       console.log("Fetching roles for user:", user.id);
       const { data, error } = await supabase
         .from("user_roles")
-        .select("*")
+        .select("role")
         .eq("user_id", user.id);
 
       if (error) {
         console.error("Error fetching user roles:", error);
         throw error;
       }
-      console.log("Fetched user roles:", data);
-      return data.map(ur => ur.role);
+      const roles = data.map(ur => ur.role);
+      console.log("Fetched user roles:", roles);
+      return roles;
     },
     enabled: !!user?.id,
     staleTime: 300000, // 5 minutes
@@ -59,7 +60,7 @@ export function PermissionsProvider({ children }: { children: React.ReactNode })
     staleTime: 300000, // 5 minutes
   });
 
-  const isAdmin = userRoles?.includes('admin') || false;
+  const isAdmin = Array.isArray(userRoles) && userRoles.includes('admin');
   const isLoading = isLoadingRoles || isLoadingProfile;
 
   console.log("PermissionsContext state:", {
