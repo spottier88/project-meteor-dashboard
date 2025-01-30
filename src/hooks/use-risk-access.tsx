@@ -1,4 +1,4 @@
-import { useProjectAccess } from "./use-project-access";
+
 
 export const useRiskAccess = (projectId: string) => {
   const { canManage } = useProjectAccess(projectId);
