@@ -10,6 +10,8 @@ interface ProjectSummaryHeaderProps {
   description?: string;
   project_manager?: string;
   id: string;
+  isProjectManager: boolean;
+  isAdmin: boolean;
 }
 
 const progressLabels = {
@@ -23,6 +25,8 @@ export const ProjectSummaryHeader = ({
   description,
   project_manager,
   id,
+  isProjectManager,
+  isAdmin,
 }: ProjectSummaryHeaderProps) => {
   const { data: latestReview } = useQuery({
     queryKey: ["latestReview", id],

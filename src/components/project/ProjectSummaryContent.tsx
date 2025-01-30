@@ -27,6 +27,8 @@ interface ProjectSummaryContentProps {
   lastReview: any;
   risks: any[];
   tasks: any[];
+  isProjectManager: boolean;
+  isAdmin: boolean;
 }
 
 export const ProjectSummaryContent = ({
@@ -34,13 +36,14 @@ export const ProjectSummaryContent = ({
   lastReview,
   risks,
   tasks,
+  isProjectManager,
+  isAdmin,
 }: ProjectSummaryContentProps) => {
   const [isTaskFormOpen, setIsTaskFormOpen] = useState(false);
   const [selectedTask, setSelectedTask] = useState<any>(null);
-  const { userProfile, userRoles, isAdmin } = usePermissionsContext();
+  const { userProfile, userRoles } = usePermissionsContext();
 
   const isManager = userRoles?.includes("manager");
-  const isProjectManager = userProfile?.email === project.project_manager;
   const canEdit = isAdmin || isManager || isProjectManager;
 
   const { data: innovationScores } = useQuery({
