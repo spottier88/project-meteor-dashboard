@@ -4,7 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useUser } from '@supabase/auth-helpers-react';
 import { UserRole } from '@/types/user';
 
-interface PermissionsContextType {
+interface PermissionsState {
   userRoles: UserRole[] | undefined;
   userProfile: any | null;
   isAdmin: boolean;
@@ -16,23 +16,18 @@ interface PermissionsContextType {
   isLoading: boolean;
 }
 
-const PermissionsContext = createContext<PermissionsContextType | undefined>(undefined);
+const PermissionsContext = createContext<PermissionsState | undefined>(undefined);
 
 const roleHierarchy: UserRole[] = ['admin', 'manager', 'chef_projet', 'membre'];
 
 export function PermissionsProvider({ children }: { children: React.ReactNode }) {
   const user = useUser();
 
-  console.log("PermissionsProvider - Current user:", {
-    id: user?.id,
-    email: user?.email,
-  });
-
   const { data: userRoles, isLoading: isLoadingRoles } = useQuery({
     queryKey: ["userRoles", user?.id],
     queryFn: async () => {
       if (!user?.id) return null;
-      console.log("Fetching roles for user:", user.id);
+      console.log("PermissionsContext - Fetching roles for user:", user.id);
       const { data, error } = await supabase
         .from("user_roles")
         .select("role")
@@ -43,7 +38,7 @@ export function PermissionsProvider({ children }: { children: React.ReactNode })
         throw error;
       }
       const roles = data.map(ur => ur.role as UserRole);
-      console.log("Fetched user roles:", roles);
+      console.log("PermissionsContext - Fetched roles:", roles);
       return roles;
     },
     enabled: !!user?.id,
@@ -54,7 +49,7 @@ export function PermissionsProvider({ children }: { children: React.ReactNode })
     queryKey: ["userProfile", user?.id],
     queryFn: async () => {
       if (!user?.id) return null;
-      console.log("Fetching profile for user:", user.id);
+      console.log("PermissionsContext - Fetching profile for user:", user.id);
       const { data, error } = await supabase
         .from("profiles")
         .select("*")
@@ -65,7 +60,7 @@ export function PermissionsProvider({ children }: { children: React.ReactNode })
         console.error("Error fetching user profile:", error);
         throw error;
       }
-      console.log("Fetched user profile:", data);
+      console.log("PermissionsContext - Fetched profile:", data);
       return data;
     },
     enabled: !!user?.id,
@@ -84,7 +79,7 @@ export function PermissionsProvider({ children }: { children: React.ReactNode })
   const hasRole = (role: UserRole): boolean => {
     if (!userRoles) return false;
     const hasRequestedRole = userRoles.includes(role);
-    console.log(`Checking role ${role} for user ${userProfile?.email}:`, hasRequestedRole);
+    console.log(`PermissionsContext - Checking role ${role} for user ${userProfile?.email}:`, hasRequestedRole);
     return hasRequestedRole;
   };
 
@@ -96,7 +91,8 @@ export function PermissionsProvider({ children }: { children: React.ReactNode })
   const isMember = hasRole('membre');
   const isLoading = isLoadingRoles || isLoadingProfile;
 
-  console.log("PermissionsContext state for user:", userProfile?.email, {
+  console.log("PermissionsContext - Final state:", {
+    userEmail: userProfile?.email,
     userRoles,
     highestRole,
     isAdmin,
