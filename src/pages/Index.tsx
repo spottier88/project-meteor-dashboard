@@ -11,15 +11,15 @@ import { ProjectLifecycleStatus } from "@/types/project";
 import { ProjectFilters } from "@/components/project/ProjectFilters";
 import { ProjectList } from "@/components/project/ProjectList";
 import { ProjectModals } from "@/components/project/ProjectModals";
-import { PermissionsProvider, usePermissionsContext } from "@/contexts/PermissionsContext";
+import { usePermissionsContext } from "@/contexts/PermissionsContext";
 
 const LoadingSpinner = () => (
-  <div className="flex justify-center items-center h-screen">
-    <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-gray-900"></div>
+  <div className="flex justify-center items-center h-48">
+    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
   </div>
 );
 
-const IndexContent = () => {
+const Index = () => {
   const navigate = useNavigate();
   const { isLoading: isPermissionsLoading, isError: isPermissionsError, userProfile } = usePermissionsContext();
   const user = useUser();
@@ -399,14 +399,6 @@ const IndexContent = () => {
         onReviewSubmitted={handleReviewSubmitted}
       />
     </div>
-  );
-};
-
-const Index = () => {
-  return (
-    <PermissionsProvider>
-      <IndexContent />
-    </PermissionsProvider>
   );
 };
 

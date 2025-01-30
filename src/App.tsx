@@ -16,6 +16,7 @@ import { ProtectedRoute } from "./components/ProtectedRoute";
 import { ReviewHistory } from "./components/ReviewHistory";
 import { ManagerAssignments } from "./pages/ManagerAssignments";
 import { ProjectTeamManagement } from "./pages/ProjectTeamManagement";
+import { PermissionsProvider } from "@/contexts/PermissionsContext";
 
 const queryClient = new QueryClient();
 
@@ -23,100 +24,102 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <SessionContextProvider supabaseClient={supabase}>
-        <Router>
-          <Routes>
-            <Route path="/login" element={<Login />} />
-            <Route
-              path="/"
-              element={
-                <ProtectedRoute>
-                  <Index />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/admin"
-              element={
-                <ProtectedRoute>
-                  <AdminDashboard />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/admin/users"
-              element={
-                <ProtectedRoute>
-                  <UserManagement />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/admin/notifications"
-              element={
-                <ProtectedRoute>
-                  <NotificationManagement />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/admin/users/:userId/assignments"
-              element={
-                <ProtectedRoute>
-                  <ManagerAssignments />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/admin/organization"
-              element={
-                <ProtectedRoute>
-                  <OrganizationManagement />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/tasks/:projectId"
-              element={
-                <ProtectedRoute>
-                  <TaskManagement />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/projects/:projectId"
-              element={
-                <ProtectedRoute>
-                  <ProjectSummary />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/projects/:projectId/team"
-              element={
-                <ProtectedRoute>
-                  <ProjectTeamManagement />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/risks/:projectId"
-              element={
-                <ProtectedRoute>
-                  <RiskManagement />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/reviews/:projectId"
-              element={
-                <ProtectedRoute>
-                  <ReviewHistory />
-                </ProtectedRoute>
-              }
-            />
-          </Routes>
-        </Router>
-        <Toaster />
+        <PermissionsProvider>
+          <Router>
+            <Routes>
+              <Route path="/login" element={<Login />} />
+              <Route
+                path="/"
+                element={
+                  <ProtectedRoute>
+                    <Index />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin"
+                element={
+                  <ProtectedRoute>
+                    <AdminDashboard />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/users"
+                element={
+                  <ProtectedRoute>
+                    <UserManagement />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/notifications"
+                element={
+                  <ProtectedRoute>
+                    <NotificationManagement />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/users/:userId/assignments"
+                element={
+                  <ProtectedRoute>
+                    <ManagerAssignments />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/organization"
+                element={
+                  <ProtectedRoute>
+                    <OrganizationManagement />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/tasks/:projectId"
+                element={
+                  <ProtectedRoute>
+                    <TaskManagement />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/projects/:projectId"
+                element={
+                  <ProtectedRoute>
+                    <ProjectSummary />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/projects/:projectId/team"
+                element={
+                  <ProtectedRoute>
+                    <ProjectTeamManagement />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/risks/:projectId"
+                element={
+                  <ProtectedRoute>
+                    <RiskManagement />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/reviews/:projectId"
+                element={
+                  <ProtectedRoute>
+                    <ReviewHistory />
+                  </ProtectedRoute>
+                }
+              />
+            </Routes>
+          </Router>
+          <Toaster />
+        </PermissionsProvider>
       </SessionContextProvider>
     </QueryClientProvider>
   );
