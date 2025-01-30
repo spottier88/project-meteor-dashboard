@@ -13,7 +13,7 @@ import { ProjectList } from "@/components/project/ProjectList";
 import { ProjectModals } from "@/components/project/ProjectModals";
 import { PermissionsProvider, usePermissionsContext } from "@/contexts/PermissionsContext";
 
-const Index = () => {
+const IndexContent = () => {
   const navigate = useNavigate();
   const [isProjectFormOpen, setIsProjectFormOpen] = useState(false);
   const [isProjectSelectionOpen, setIsProjectSelectionOpen] = useState(false);
@@ -332,52 +332,58 @@ const Index = () => {
   };
 
   return (
+    <div className="container mx-auto py-8">
+      <UserInfo />
+      <DashboardHeader
+        onNewProject={() => setIsProjectFormOpen(true)}
+        onNewReview={handleNewReview}
+      />
+
+      <ProjectFilters
+        searchQuery={searchQuery}
+        onSearchChange={setSearchQuery}
+        lifecycleStatus={lifecycleStatus}
+        onLifecycleStatusChange={setLifecycleStatus}
+        monitoringLevel={monitoringLevel}
+        onMonitoringLevelChange={setMonitoringLevel}
+        showMyProjectsOnly={showMyProjectsOnly}
+        onMyProjectsToggle={setShowMyProjectsOnly}
+        filteredProjectIds={accessibleProjectIds}
+      />
+
+      <ProjectList
+        view={view}
+        onViewChange={setView}
+        projects={filteredProjects}
+        onProjectEdit={handleEditProject}
+        onProjectReview={handleProjectSelect}
+        onViewHistory={handleViewHistory}
+        onProjectDeleted={refetchProjects}
+        onFilteredProjectsChange={handleFilteredProjectsChange}
+      />
+
+      <ProjectModals
+        isProjectFormOpen={isProjectFormOpen}
+        onProjectFormClose={handleProjectFormClose}
+        onProjectFormSubmit={handleProjectFormSubmit}
+        selectedProject={selectedProject}
+        isProjectSelectionOpen={isProjectSelectionOpen}
+        onProjectSelectionClose={() => setIsProjectSelectionOpen(false)}
+        onProjectSelect={handleProjectSelect}
+        projects={projects || []}
+        isReviewSheetOpen={isReviewSheetOpen}
+        onReviewClose={handleReviewClose}
+        selectedProjectForReview={selectedProjectForReview}
+        onReviewSubmitted={handleReviewSubmitted}
+      />
+    </div>
+  );
+};
+
+const Index = () => {
+  return (
     <PermissionsProvider>
-      <div className="container mx-auto py-8">
-        <UserInfo />
-        <DashboardHeader
-          onNewProject={() => setIsProjectFormOpen(true)}
-          onNewReview={handleNewReview}
-        />
-
-        <ProjectFilters
-          searchQuery={searchQuery}
-          onSearchChange={setSearchQuery}
-          lifecycleStatus={lifecycleStatus}
-          onLifecycleStatusChange={setLifecycleStatus}
-          monitoringLevel={monitoringLevel}
-          onMonitoringLevelChange={setMonitoringLevel}
-          showMyProjectsOnly={showMyProjectsOnly}
-          onMyProjectsToggle={setShowMyProjectsOnly}
-          filteredProjectIds={accessibleProjectIds}
-        />
-
-        <ProjectList
-          view={view}
-          onViewChange={setView}
-          projects={filteredProjects}
-          onProjectEdit={handleEditProject}
-          onProjectReview={handleProjectSelect}
-          onViewHistory={handleViewHistory}
-          onProjectDeleted={refetchProjects}
-          onFilteredProjectsChange={handleFilteredProjectsChange}
-        />
-
-        <ProjectModals
-          isProjectFormOpen={isProjectFormOpen}
-          onProjectFormClose={handleProjectFormClose}
-          onProjectFormSubmit={handleProjectFormSubmit}
-          selectedProject={selectedProject}
-          isProjectSelectionOpen={isProjectSelectionOpen}
-          onProjectSelectionClose={() => setIsProjectSelectionOpen(false)}
-          onProjectSelect={handleProjectSelect}
-          projects={projects || []}
-          isReviewSheetOpen={isReviewSheetOpen}
-          onReviewClose={handleReviewClose}
-          selectedProjectForReview={selectedProjectForReview}
-          onReviewSubmitted={handleReviewSubmitted}
-        />
-      </div>
+      <IndexContent />
     </PermissionsProvider>
   );
 };
