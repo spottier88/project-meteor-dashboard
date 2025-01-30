@@ -21,21 +21,18 @@ const PermissionsContext = createContext<PermissionsState | undefined>(undefined
 
 const roleHierarchy: UserRole[] = ['admin', 'manager', 'chef_projet', 'membre'];
 
-let hookCallCount = 0;
-
 export function PermissionsProvider({ children }: { children: React.ReactNode }) {
   const user = useUser();
   const session = useSession();
-  hookCallCount++;
-  
-  console.log(`[PermissionsProvider] Hook called ${hookCallCount} times`, {
+
+  console.log("[PermissionsProvider] Session state:", {
     userId: user?.id,
     sessionStatus: !!session,
     timestamp: new Date().toISOString()
   });
 
   const { data: userRoles, isLoading: isLoadingRoles, isError: isRolesError } = useQuery({
-    queryKey: ["userRoles", user?.id],
+    queryKey: ["userRoles", user?.id, session?.access_token],
     queryFn: async () => {
       if (!user?.id) {
         console.log("[PermissionsProvider] No user ID available");
@@ -56,12 +53,12 @@ export function PermissionsProvider({ children }: { children: React.ReactNode })
       return roles;
     },
     enabled: !!user?.id && !!session,
-    staleTime: 60000,
-    retry: 3,
+    staleTime: 0, // Désactive le cache pour forcer le rechargement
+    cacheTime: 0,
   });
 
   const { data: userProfile, isLoading: isLoadingProfile, isError: isProfileError } = useQuery({
-    queryKey: ["userProfile", user?.id],
+    queryKey: ["userProfile", user?.id, session?.access_token],
     queryFn: async () => {
       if (!user?.id) {
         console.log("[PermissionsProvider] No user ID available for profile");
@@ -82,8 +79,8 @@ export function PermissionsProvider({ children }: { children: React.ReactNode })
       return data;
     },
     enabled: !!user?.id && !!session,
-    staleTime: 60000,
-    retry: 3,
+    staleTime: 0,
+    cacheTime: 0,
   });
 
   const getHighestRole = (roles: UserRole[]): UserRole | null => {
@@ -131,11 +128,13 @@ export function PermissionsProvider({ children }: { children: React.ReactNode })
     });
   }, [user?.id, userProfile, userRoles, highestRole, isAdmin, isManager, isProjectManager, isMember, isLoading, isError, session]);
 
-  if (!session || isLoading) {
-    console.log("[PermissionsProvider] Loading state:", {
-      session: !!session,
-      isLoading
-    });
+  if (!session) {
+    console.log("[PermissionsProvider] No session available");
+    return null;
+  }
+
+  if (isLoading) {
+    console.log("[PermissionsProvider] Loading state");
     return null;
   }
 

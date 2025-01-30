@@ -1,8 +1,7 @@
 import { usePermissionsContext } from "@/contexts/PermissionsContext";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-
-let hookCallCount = 0;
+import { useMemo } from "react";
 
 interface ProjectPermissions {
   canEdit: boolean;
@@ -13,18 +12,10 @@ interface ProjectPermissions {
 }
 
 export const useProjectPermissions = (projectId: string): ProjectPermissions => {
-  hookCallCount++;
   const { userProfile, isAdmin, isManager } = usePermissionsContext();
   
-  console.log(`[useProjectPermissions] Hook called ${hookCallCount} times`, {
-    projectId,
-    userEmail: userProfile?.email,
-    isAdmin,
-    isManager
-  });
-  
   const { data: projectData } = useQuery({
-    queryKey: ["project", projectId],
+    queryKey: ["project", projectId, userProfile?.id],
     queryFn: async () => {
       if (!projectId) {
         console.log("[useProjectPermissions] No project ID provided");
@@ -42,18 +33,16 @@ export const useProjectPermissions = (projectId: string): ProjectPermissions => 
         return null;
       }
 
-      console.log("[useProjectPermissions] Project data:", data);
       return data;
     },
-    enabled: !!projectId,
-    staleTime: 300000, // 5 minutes
+    enabled: !!projectId && !!userProfile?.id,
+    staleTime: 0,
   });
 
   const { data: isMember } = useQuery({
     queryKey: ["projectMember", projectId, userProfile?.id],
     queryFn: async () => {
       if (!userProfile?.id || !projectId) {
-        console.log("[useProjectPermissions] Missing user ID or project ID for member check");
         return false;
       }
 
@@ -69,26 +58,16 @@ export const useProjectPermissions = (projectId: string): ProjectPermissions => 
         return false;
       }
 
-      console.log("[useProjectPermissions] Membership check:", {
-        projectId,
-        userId: userProfile.id,
-        isMember: !!data
-      });
       return !!data;
     },
     enabled: !!userProfile?.id && !!projectId,
-    staleTime: 300000, // 5 minutes
+    staleTime: 0,
   });
 
   const { data: managerAccess } = useQuery({
     queryKey: ["managerProjectAccess", projectId, userProfile?.id],
     queryFn: async () => {
       if (!userProfile?.id || !projectId || !isManager) {
-        console.log("[useProjectPermissions] Missing data for manager access check", {
-          userId: userProfile?.id,
-          projectId,
-          isManager
-        });
         return false;
       }
 
@@ -98,36 +77,19 @@ export const useProjectPermissions = (projectId: string): ProjectPermissions => 
           p_project_id: projectId
         });
 
-      console.log("[useProjectPermissions] Manager access check:", {
-        projectId,
-        userId: userProfile.id,
-        canAccess
-      });
       return !!canAccess;
     },
     enabled: !!userProfile?.id && !!projectId && isManager,
-    staleTime: 300000, // 5 minutes
+    staleTime: 0,
   });
 
   const isProjectManager = projectData?.project_manager === userProfile?.email;
 
-  const permissions = {
+  return useMemo(() => ({
     canEdit: isAdmin || isProjectManager || (isManager && managerAccess),
     canManageTeam: isAdmin || isProjectManager,
     canDelete: isAdmin,
     isMember: !!isMember,
     isProjectManager,
-  };
-
-  console.log("[useProjectPermissions] Final permissions:", {
-    projectId,
-    userEmail: userProfile?.email,
-    permissions,
-    isAdmin,
-    isManager,
-    managerAccess,
-    isProjectManager
-  });
-
-  return permissions;
+  }), [isAdmin, isProjectManager, isManager, managerAccess, isMember]);
 };

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { ProjectCard } from "./ProjectCard";
 import { ProjectStatus, ProgressStatus, ProjectLifecycleStatus } from "@/types/project";
 import { useUser } from "@supabase/auth-helpers-react";
@@ -6,8 +6,6 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useManagerProjectAccess } from "@/hooks/use-manager-project-access";
 import { usePermissionsContext } from "@/contexts/PermissionsContext";
-
-let gridHookCallCount = 0;
 
 interface Project {
   id: string;
@@ -39,10 +37,9 @@ export const ProjectGrid = ({
   onFilteredProjectsChange,
 }: ProjectGridProps) => {
   const user = useUser();
-  const { userProfile, isAdmin, isManager, isProjectManager, isMember, hasRole, highestRole, isLoading } = usePermissionsContext();
+  const { userProfile, isAdmin, isManager, isProjectManager, isMember, highestRole, isLoading } = usePermissionsContext();
   
-  gridHookCallCount++;
-  console.log(`[ProjectGrid] Hook called ${gridHookCallCount} times`, {
+  console.log(`[ProjectGrid] Rendering with permissions:`, {
     timestamp: new Date().toISOString(),
     projectsCount: projects.length,
     userEmail: userProfile?.email,
@@ -60,7 +57,6 @@ export const ProjectGrid = ({
         console.log("[ProjectGrid] No user ID for memberships query");
         return [];
       }
-      console.log("[ProjectGrid] Fetching memberships for user:", user.id);
       const { data, error } = await supabase
         .from("project_members")
         .select("project_id")
@@ -71,68 +67,37 @@ export const ProjectGrid = ({
         return [];
       }
 
-      console.log("[ProjectGrid] Fetched memberships:", data);
       return data.map(pm => pm.project_id);
     },
     enabled: !!user?.id,
-    staleTime: 300000,
+    staleTime: 0,
   });
 
-  const projectIds = React.useMemo(() => projects.map(p => p.id), [projects]);
+  const projectIds = useMemo(() => projects.map(p => p.id), [projects]);
   const { data: projectAccess } = useManagerProjectAccess(projectIds);
 
-  const { data: filteredProjects } = useQuery({
-    queryKey: ["filteredProjects", projectIds, user?.id, highestRole, projectMemberships, projectAccess, isAdmin],
-    queryFn: async () => {
-      if (!user) {
-        console.log("[ProjectGrid] No user logged in");
-        return [];
-      }
+  const filteredProjects = useMemo(() => {
+    if (!user) {
+      console.log("[ProjectGrid] No user logged in");
+      return [];
+    }
 
-      console.log("[ProjectGrid] Filtering projects with params:", {
-        isAdmin,
-        isManager,
-        isProjectManager,
-        highestRole,
-        totalProjects: projects.length,
-        projectMemberships: projectMemberships?.length,
-        projectAccess: projectAccess ? Array.from(projectAccess.entries()) : null
-      });
+    if (isAdmin) {
+      console.log("[ProjectGrid] User is admin, showing all projects:", projects.length);
+      return projects;
+    }
 
-      if (isAdmin) {
-        console.log("[ProjectGrid] User is admin, showing all projects:", projects.length);
-        return projects;
-      }
-
-      const filtered = projects.filter(project => {
-        const isProjectOwner = project.project_manager === userProfile?.email;
-        const isMemberOfProject = projectMemberships?.includes(project.id);
-        const hasManagerAccess = isManager && projectAccess?.get(project.id) || false;
-        
-        console.log(`[ProjectGrid] Project ${project.id} access check:`, {
-          isProjectOwner,
-          isMemberOfProject,
-          hasManagerAccess,
-          projectManager: project.project_manager,
-          userEmail: userProfile?.email
-        });
-
-        return isProjectOwner || isMemberOfProject || hasManagerAccess;
-      });
-
-      console.log("[ProjectGrid] Filtered projects result:", {
-        before: projects.length,
-        after: filtered.length,
-        isAdmin
-      });
+    return projects.filter(project => {
+      const isProjectOwner = project.project_manager === userProfile?.email;
+      const isMemberOfProject = projectMemberships?.includes(project.id);
+      const hasManagerAccess = isManager && projectAccess?.get(project.id) || false;
       
-      return filtered;
-    },
-    enabled: !!user?.id && !isLoading,
-  });
+      return isProjectOwner || isMemberOfProject || hasManagerAccess;
+    });
+  }, [projects, user, isAdmin, userProfile?.email, projectMemberships, isManager, projectAccess]);
 
   React.useEffect(() => {
-    if (filteredProjects && onFilteredProjectsChange) {
+    if (onFilteredProjectsChange) {
       onFilteredProjectsChange(filteredProjects.map(project => project.id));
     }
   }, [filteredProjects, onFilteredProjectsChange]);
@@ -141,10 +106,6 @@ export const ProjectGrid = ({
     return <div className="flex justify-center items-center h-48">
       <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
     </div>;
-  }
-
-  if (!filteredProjects) {
-    return null;
   }
 
   return (
