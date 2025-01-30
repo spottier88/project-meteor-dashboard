@@ -43,7 +43,7 @@ export const ProjectTable = ({
   onFilteredProjectsChange,
 }: ProjectTableProps) => {
   const user = useUser();
-  const { userProfile, userRoles, isAdmin } = usePermissionsContext();
+  const { userProfile, userRoles, isAdmin, isLoading } = usePermissionsContext();
   const [sortKey, setSortKey] = React.useState<string | null>(null);
   const [sortDirection, setSortDirection] = React.useState<SortDirection>(null);
 
@@ -91,7 +91,7 @@ export const ProjectTable = ({
         return isProjectManager || isMember || hasManagerAccess;
       });
     },
-    enabled: !!user?.id && !!userRoles && !!userProfile && !!projectAccess,
+    enabled: !!user?.id && !!userRoles && !!userProfile && !!projectAccess && !isLoading,
     staleTime: 300000, // 5 minutes
   });
 
@@ -132,6 +132,12 @@ export const ProjectTable = ({
       }
     });
   }, [filteredProjects, sortKey, sortDirection]);
+
+  if (isLoading) {
+    return <div className="flex justify-center items-center h-48">
+      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+    </div>;
+  }
 
   if (!filteredProjects) {
     return null;

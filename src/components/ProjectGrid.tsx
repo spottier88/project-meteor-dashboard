@@ -37,12 +37,13 @@ export const ProjectGrid = ({
   onFilteredProjectsChange,
 }: ProjectGridProps) => {
   const user = useUser();
-  const { userProfile, userRoles, isAdmin } = usePermissionsContext();
+  const { userProfile, userRoles, isAdmin, isLoading } = usePermissionsContext();
 
   console.log("ProjectGrid - Permissions state:", {
     userProfile,
     userRoles,
     isAdmin,
+    isLoading,
     userId: user?.id
   });
 
@@ -110,7 +111,7 @@ export const ProjectGrid = ({
       console.log("Filtered projects result:", filtered.length);
       return filtered;
     },
-    enabled: !!user?.id && !!userRoles && !!userProfile && !!projectAccess,
+    enabled: !!user?.id && !!userRoles && !!userProfile && !!projectAccess && !isLoading,
     staleTime: 300000, // 5 minutes
   });
 
@@ -119,6 +120,12 @@ export const ProjectGrid = ({
       onFilteredProjectsChange(filteredProjects.map(project => project.id));
     }
   }, [filteredProjects, onFilteredProjectsChange]);
+
+  if (isLoading) {
+    return <div className="flex justify-center items-center h-48">
+      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+    </div>;
+  }
 
   if (!filteredProjects) {
     return null;
