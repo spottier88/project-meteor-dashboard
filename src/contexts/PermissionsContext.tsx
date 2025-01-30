@@ -20,12 +20,17 @@ export function PermissionsProvider({ children }: { children: React.ReactNode })
     queryKey: ["userRoles", user?.id],
     queryFn: async () => {
       if (!user?.id) return null;
+      console.log("Fetching roles for user:", user.id);
       const { data, error } = await supabase
         .from("user_roles")
         .select("*")
         .eq("user_id", user.id);
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error fetching user roles:", error);
+        throw error;
+      }
+      console.log("Fetched user roles:", data);
       return data.map(ur => ur.role);
     },
     enabled: !!user?.id,
@@ -36,13 +41,18 @@ export function PermissionsProvider({ children }: { children: React.ReactNode })
     queryKey: ["userProfile", user?.id],
     queryFn: async () => {
       if (!user?.id) return null;
+      console.log("Fetching profile for user:", user.id);
       const { data, error } = await supabase
         .from("profiles")
         .select("*")
         .eq("id", user.id)
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error fetching user profile:", error);
+        throw error;
+      }
+      console.log("Fetched user profile:", data);
       return data;
     },
     enabled: !!user?.id,
@@ -51,6 +61,13 @@ export function PermissionsProvider({ children }: { children: React.ReactNode })
 
   const isAdmin = userRoles?.includes('admin') || false;
   const isLoading = isLoadingRoles || isLoadingProfile;
+
+  console.log("PermissionsContext state:", {
+    userRoles,
+    isAdmin,
+    userProfile,
+    isLoading
+  });
 
   return (
     <PermissionsContext.Provider value={{

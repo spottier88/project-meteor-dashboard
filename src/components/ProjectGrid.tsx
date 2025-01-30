@@ -39,10 +39,18 @@ export const ProjectGrid = ({
   const user = useUser();
   const { userProfile, userRoles, isAdmin } = usePermissionsContext();
 
+  console.log("ProjectGrid - Permissions state:", {
+    userProfile,
+    userRoles,
+    isAdmin,
+    userId: user?.id
+  });
+
   const { data: projectMemberships } = useQuery({
     queryKey: ["projectMemberships", user?.id],
     queryFn: async () => {
       if (!user?.id) return [];
+      console.log("Fetching project memberships for user:", user.id);
       const { data, error } = await supabase
         .from("project_members")
         .select("project_id")
@@ -53,6 +61,7 @@ export const ProjectGrid = ({
         return [];
       }
 
+      console.log("Fetched project memberships:", data);
       return data.map(pm => pm.project_id);
     },
     enabled: !!user?.id,
@@ -70,18 +79,36 @@ export const ProjectGrid = ({
         return [];
       }
 
+      console.log("Filtering projects with params:", {
+        isAdmin,
+        projectMemberships,
+        projectAccess,
+        totalProjects: projects.length
+      });
+
       if (isAdmin) {
-        console.log("User is admin, showing all projects");
+        console.log("User is admin, showing all projects:", projects.length);
         return projects;
       }
 
-      return projects.filter(project => {
+      const filtered = projects.filter(project => {
         const isProjectManager = project.project_manager === userProfile?.email;
         const isMember = projectMemberships?.includes(project.id);
         const hasManagerAccess = projectAccess?.get(project.id) || false;
         
+        console.log(`Project ${project.id} access check:`, {
+          isProjectManager,
+          isMember,
+          hasManagerAccess,
+          userEmail: userProfile?.email,
+          projectManager: project.project_manager
+        });
+
         return isProjectManager || isMember || hasManagerAccess;
       });
+
+      console.log("Filtered projects result:", filtered.length);
+      return filtered;
     },
     enabled: !!user?.id && !!userRoles && !!userProfile && !!projectAccess,
     staleTime: 300000, // 5 minutes
