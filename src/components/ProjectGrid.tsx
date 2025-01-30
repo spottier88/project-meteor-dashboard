@@ -39,6 +39,12 @@ export const ProjectGrid = ({
   const user = useUser();
   const { userProfile, isAdmin, isManager, isProjectManager, isMember, hasRole, highestRole, isLoading } = usePermissionsContext();
 
+  console.log("ProjectGrid - Current user:", {
+    id: user?.id,
+    email: user?.email,
+    userProfile,
+  });
+
   console.log("ProjectGrid - Permissions state:", {
     userProfile,
     isAdmin,
@@ -76,7 +82,7 @@ export const ProjectGrid = ({
   const { data: projectAccess } = useManagerProjectAccess(projectIds);
 
   const { data: filteredProjects } = useQuery({
-    queryKey: ["filteredProjects", projectIds, user?.id, highestRole, projectMemberships, projectAccess],
+    queryKey: ["filteredProjects", projectIds, user?.id, highestRole, projectMemberships, projectAccess, isAdmin],
     queryFn: async () => {
       if (!user) {
         console.log("No user logged in");
@@ -90,7 +96,8 @@ export const ProjectGrid = ({
         highestRole,
         projectMemberships,
         projectAccess,
-        totalProjects: projects.length
+        totalProjects: projects.length,
+        userEmail: userProfile?.email
       });
 
       // Admin voit tout

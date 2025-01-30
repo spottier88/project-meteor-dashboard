@@ -18,11 +18,15 @@ interface PermissionsContextType {
 
 const PermissionsContext = createContext<PermissionsContextType | undefined>(undefined);
 
-// Définition de la hiérarchie des rôles (du plus élevé au plus bas)
 const roleHierarchy: UserRole[] = ['admin', 'manager', 'chef_projet', 'membre'];
 
 export function PermissionsProvider({ children }: { children: React.ReactNode }) {
   const user = useUser();
+
+  console.log("PermissionsProvider - Current user:", {
+    id: user?.id,
+    email: user?.email,
+  });
 
   const { data: userRoles, isLoading: isLoadingRoles } = useQuery({
     queryKey: ["userRoles", user?.id],
@@ -68,7 +72,6 @@ export function PermissionsProvider({ children }: { children: React.ReactNode })
     staleTime: 300000, // 5 minutes
   });
 
-  // Fonction pour déterminer le rôle le plus élevé
   const getHighestRole = (roles: UserRole[]): UserRole | null => {
     for (const hierarchyRole of roleHierarchy) {
       if (roles.includes(hierarchyRole)) {
@@ -78,29 +81,28 @@ export function PermissionsProvider({ children }: { children: React.ReactNode })
     return null;
   };
 
-  // Fonction pour vérifier si l'utilisateur a un rôle spécifique
   const hasRole = (role: UserRole): boolean => {
     if (!userRoles) return false;
-    return userRoles.includes(role);
+    const hasRequestedRole = userRoles.includes(role);
+    console.log(`Checking role ${role} for user ${userProfile?.email}:`, hasRequestedRole);
+    return hasRequestedRole;
   };
 
   const highestRole = userRoles ? getHighestRole(userRoles) : null;
 
-  // Vérification des rôles par ordre de priorité
   const isAdmin = hasRole('admin');
   const isManager = hasRole('manager');
   const isProjectManager = hasRole('chef_projet');
   const isMember = hasRole('membre');
   const isLoading = isLoadingRoles || isLoadingProfile;
 
-  console.log("PermissionsContext state:", {
+  console.log("PermissionsContext state for user:", userProfile?.email, {
     userRoles,
     highestRole,
     isAdmin,
     isManager,
     isProjectManager,
     isMember,
-    userProfile,
     isLoading,
   });
 
