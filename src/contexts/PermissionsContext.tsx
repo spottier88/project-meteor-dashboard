@@ -1,4 +1,4 @@
-import React, { createContext, useContext } from 'react';
+import React, { createContext, useContext, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useUser } from '@supabase/auth-helpers-react';
@@ -14,6 +14,7 @@ interface PermissionsState {
   highestRole: UserRole | null;
   hasRole: (role: UserRole) => boolean;
   isLoading: boolean;
+  isError: boolean;
 }
 
 const PermissionsContext = createContext<PermissionsState | undefined>(undefined);
@@ -23,10 +24,13 @@ const roleHierarchy: UserRole[] = ['admin', 'manager', 'chef_projet', 'membre'];
 export function PermissionsProvider({ children }: { children: React.ReactNode }) {
   const user = useUser();
 
-  const { data: userRoles, isLoading: isLoadingRoles } = useQuery({
+  const { data: userRoles, isLoading: isLoadingRoles, isError: isRolesError } = useQuery({
     queryKey: ["userRoles", user?.id],
     queryFn: async () => {
-      if (!user?.id) return [];
+      if (!user?.id) {
+        console.log("PermissionsContext - No user ID available");
+        return [];
+      }
       console.log("PermissionsContext - Fetching roles for user:", user.id);
       const { data, error } = await supabase
         .from("user_roles")
@@ -35,20 +39,24 @@ export function PermissionsProvider({ children }: { children: React.ReactNode })
 
       if (error) {
         console.error("Error fetching user roles:", error);
-        return [];
+        throw error;
       }
       const roles = data.map(ur => ur.role as UserRole);
       console.log("PermissionsContext - Fetched roles:", roles);
       return roles;
     },
     enabled: !!user?.id,
-    staleTime: 300000, // 5 minutes
+    staleTime: 60000, // Réduit à 1 minute
+    retry: 3,
   });
 
-  const { data: userProfile, isLoading: isLoadingProfile } = useQuery({
+  const { data: userProfile, isLoading: isLoadingProfile, isError: isProfileError } = useQuery({
     queryKey: ["userProfile", user?.id],
     queryFn: async () => {
-      if (!user?.id) return null;
+      if (!user?.id) {
+        console.log("PermissionsContext - No user ID available for profile");
+        return null;
+      }
       console.log("PermissionsContext - Fetching profile for user:", user.id);
       const { data, error } = await supabase
         .from("profiles")
@@ -58,13 +66,14 @@ export function PermissionsProvider({ children }: { children: React.ReactNode })
 
       if (error) {
         console.error("Error fetching user profile:", error);
-        return null;
+        throw error;
       }
       console.log("PermissionsContext - Fetched profile:", data);
       return data;
     },
     enabled: !!user?.id,
-    staleTime: 300000, // 5 minutes
+    staleTime: 60000, // Réduit à 1 minute
+    retry: 3,
   });
 
   const getHighestRole = (roles: UserRole[]): UserRole | null => {
@@ -82,29 +91,40 @@ export function PermissionsProvider({ children }: { children: React.ReactNode })
     const hasRequestedRole = userRoles.includes(role);
     console.log(`PermissionsContext - Checking role ${role} for user ${userProfile?.email}:`, {
       hasRequestedRole,
-      userRoles
+      userRoles,
+      userId: user?.id
     });
     return hasRequestedRole;
   };
 
   const highestRole = userRoles && userRoles.length > 0 ? getHighestRole(userRoles) : null;
-
   const isAdmin = hasRole('admin');
   const isManager = hasRole('manager');
   const isProjectManager = hasRole('chef_projet');
   const isMember = hasRole('membre');
   const isLoading = isLoadingRoles || isLoadingProfile;
+  const isError = isRolesError || isProfileError;
 
-  console.log("PermissionsContext - Final state:", {
-    userEmail: userProfile?.email,
-    userRoles,
-    highestRole,
-    isAdmin,
-    isManager,
-    isProjectManager,
-    isMember,
-    isLoading,
-  });
+  // Log l'état complet du contexte à chaque changement
+  useEffect(() => {
+    console.log("PermissionsContext - State update:", {
+      userId: user?.id,
+      userEmail: userProfile?.email,
+      userRoles,
+      highestRole,
+      isAdmin,
+      isManager,
+      isProjectManager,
+      isMember,
+      isLoading,
+      isError
+    });
+  }, [user?.id, userProfile, userRoles, highestRole, isAdmin, isManager, isProjectManager, isMember, isLoading, isError]);
+
+  if (isError) {
+    console.error("PermissionsContext - Error loading permissions");
+    return null;
+  }
 
   return (
     <PermissionsContext.Provider value={{
@@ -117,6 +137,7 @@ export function PermissionsProvider({ children }: { children: React.ReactNode })
       highestRole,
       hasRole,
       isLoading,
+      isError,
     }}>
       {children}
     </PermissionsContext.Provider>

@@ -13,8 +13,17 @@ import { ProjectList } from "@/components/project/ProjectList";
 import { ProjectModals } from "@/components/project/ProjectModals";
 import { PermissionsProvider, usePermissionsContext } from "@/contexts/PermissionsContext";
 
+const LoadingSpinner = () => (
+  <div className="flex justify-center items-center h-screen">
+    <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-gray-900"></div>
+  </div>
+);
+
 const IndexContent = () => {
   const navigate = useNavigate();
+  const { isLoading: isPermissionsLoading, isError: isPermissionsError } = usePermissionsContext();
+  const user = useUser();
+
   const [isProjectFormOpen, setIsProjectFormOpen] = useState(false);
   const [isProjectSelectionOpen, setIsProjectSelectionOpen] = useState(false);
   const [isReviewSheetOpen, setIsReviewSheetOpen] = useState(false);
@@ -39,9 +48,6 @@ const IndexContent = () => {
   const [showMyProjectsOnly, setShowMyProjectsOnly] = useState(() => {
     return localStorage.getItem("showMyProjectsOnly") === "true";
   });
-
-  const user = useUser();
-  const { userProfile, isAdmin } = usePermissionsContext();
 
   useEffect(() => {
     localStorage.setItem("projectViewMode", view);
@@ -331,6 +337,23 @@ const IndexContent = () => {
   const handleViewHistory = (projectId: string, projectTitle: string) => {
     navigate(`/reviews/${projectId}`);
   };
+
+  // Si les permissions sont en cours de chargement, afficher le spinner
+  if (isPermissionsLoading) {
+    return <LoadingSpinner />;
+  }
+
+  // Si une erreur s'est produite lors du chargement des permissions
+  if (isPermissionsError) {
+    return (
+      <div className="flex justify-center items-center h-screen">
+        <div className="text-red-600">
+          Une erreur s'est produite lors du chargement des permissions.
+          Veuillez rafraîchir la page.
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="container mx-auto py-8">
