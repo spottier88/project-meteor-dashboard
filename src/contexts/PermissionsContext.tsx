@@ -53,8 +53,8 @@ export function PermissionsProvider({ children }: { children: React.ReactNode })
       return roles;
     },
     enabled: !!user?.id && !!session,
-    staleTime: 0, // Désactive le cache pour forcer le rechargement
-    cacheTime: 0,
+    staleTime: 0,
+    gcTime: 0,
   });
 
   const { data: userProfile, isLoading: isLoadingProfile, isError: isProfileError } = useQuery({
@@ -80,7 +80,7 @@ export function PermissionsProvider({ children }: { children: React.ReactNode })
     },
     enabled: !!user?.id && !!session,
     staleTime: 0,
-    cacheTime: 0,
+    gcTime: 0,
   });
 
   const getHighestRole = (roles: UserRole[]): UserRole | null => {
