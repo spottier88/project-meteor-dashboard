@@ -30,7 +30,7 @@ export function PermissionsProvider({ children }: { children: React.ReactNode })
         console.error("Error fetching user roles:", error);
         throw error;
       }
-      const roles = data.map(ur => ur.role);
+      const roles = data.map(ur => ur.role as UserRole);
       console.log("Fetched user roles:", roles);
       return roles;
     },
@@ -60,6 +60,7 @@ export function PermissionsProvider({ children }: { children: React.ReactNode })
     staleTime: 300000, // 5 minutes
   });
 
+  // Vérifie si l'utilisateur a le rôle admin parmi ses rôles
   const isAdmin = Array.isArray(userRoles) && userRoles.includes('admin');
   const isLoading = isLoadingRoles || isLoadingProfile;
 
@@ -67,7 +68,9 @@ export function PermissionsProvider({ children }: { children: React.ReactNode })
     userRoles,
     isAdmin,
     userProfile,
-    isLoading
+    isLoading,
+    hasMultipleRoles: Array.isArray(userRoles) ? userRoles.length > 1 : false,
+    allRoles: userRoles
   });
 
   return (
