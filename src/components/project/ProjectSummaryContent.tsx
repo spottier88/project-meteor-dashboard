@@ -3,7 +3,6 @@ import { RiskList } from "@/components/RiskList";
 import { KanbanBoard } from "@/components/KanbanBoard";
 import { LastReview } from "@/components/LastReview";
 import { ProjectSummaryHeader } from "@/components/project/ProjectSummaryHeader";
-import { useUser } from "@supabase/auth-helpers-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useState } from "react";
@@ -13,7 +12,7 @@ import { InnovationRadarChart } from "../innovation/InnovationRadarChart";
 import { Card, CardContent } from "@/components/ui/card";
 import { HelpCircle } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { useProjectPermissions } from "@/hooks/use-project-permissions";
+import { usePermissionsContext } from "@/contexts/PermissionsContext";
 
 const criteriaDescriptions = {
   novateur: "Évalue le caractère innovant du projet : utilisation de nouvelles technologies, approches inédites, solutions créatives. Un score élevé indique une forte innovation technologique ou méthodologique.",
@@ -36,10 +35,13 @@ export const ProjectSummaryContent = ({
   risks,
   tasks,
 }: ProjectSummaryContentProps) => {
-  const user = useUser();
   const [isTaskFormOpen, setIsTaskFormOpen] = useState(false);
   const [selectedTask, setSelectedTask] = useState<any>(null);
-  const { canEdit, canManageTeam } = useProjectPermissions(project.id);
+  const { userProfile, userRoles, isAdmin } = usePermissionsContext();
+
+  const isManager = userRoles?.includes("manager");
+  const isProjectManager = userProfile?.email === project.project_manager;
+  const canEdit = isAdmin || isManager || isProjectManager;
 
   const { data: innovationScores } = useQuery({
     queryKey: ["innovationScores", project.id],
@@ -72,6 +74,8 @@ export const ProjectSummaryContent = ({
         description={project.description}
         project_manager={project.project_manager}
         id={project.id}
+        isProjectManager={isProjectManager}
+        isAdmin={isAdmin}
       />
 
       <div className="grid gap-6 md:grid-cols-2">
