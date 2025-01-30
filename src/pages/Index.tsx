@@ -21,7 +21,7 @@ const LoadingSpinner = () => (
 
 const IndexContent = () => {
   const navigate = useNavigate();
-  const { isLoading: isPermissionsLoading, isError: isPermissionsError } = usePermissionsContext();
+  const { isLoading: isPermissionsLoading, isError: isPermissionsError, userProfile } = usePermissionsContext();
   const user = useUser();
 
   const [isProjectFormOpen, setIsProjectFormOpen] = useState(false);
@@ -338,12 +338,10 @@ const IndexContent = () => {
     navigate(`/reviews/${projectId}`);
   };
 
-  // Si les permissions sont en cours de chargement, afficher le spinner
   if (isPermissionsLoading) {
     return <LoadingSpinner />;
   }
 
-  // Si une erreur s'est produite lors du chargement des permissions
   if (isPermissionsError) {
     return (
       <div className="flex justify-center items-center h-screen">
