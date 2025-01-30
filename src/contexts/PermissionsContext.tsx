@@ -11,10 +11,15 @@ interface PermissionsContextType {
   isManager: boolean;
   isProjectManager: boolean;
   isMember: boolean;
+  highestRole: UserRole | null;
+  hasRole: (role: UserRole) => boolean;
   isLoading: boolean;
 }
 
 const PermissionsContext = createContext<PermissionsContextType | undefined>(undefined);
+
+// Définition de la hiérarchie des rôles (du plus élevé au plus bas)
+const roleHierarchy: UserRole[] = ['admin', 'manager', 'chef_projet', 'membre'];
 
 export function PermissionsProvider({ children }: { children: React.ReactNode }) {
   const user = useUser();
@@ -63,15 +68,34 @@ export function PermissionsProvider({ children }: { children: React.ReactNode })
     staleTime: 300000, // 5 minutes
   });
 
+  // Fonction pour déterminer le rôle le plus élevé
+  const getHighestRole = (roles: UserRole[]): UserRole | null => {
+    for (const hierarchyRole of roleHierarchy) {
+      if (roles.includes(hierarchyRole)) {
+        return hierarchyRole;
+      }
+    }
+    return null;
+  };
+
+  // Fonction pour vérifier si l'utilisateur a un rôle spécifique
+  const hasRole = (role: UserRole): boolean => {
+    if (!userRoles) return false;
+    return userRoles.includes(role);
+  };
+
+  const highestRole = userRoles ? getHighestRole(userRoles) : null;
+
   // Vérification des rôles par ordre de priorité
-  const isAdmin = Array.isArray(userRoles) && userRoles.includes('admin');
-  const isManager = Array.isArray(userRoles) && userRoles.includes('manager');
-  const isProjectManager = Array.isArray(userRoles) && userRoles.includes('chef_projet');
-  const isMember = Array.isArray(userRoles) && userRoles.includes('membre');
+  const isAdmin = hasRole('admin');
+  const isManager = hasRole('manager');
+  const isProjectManager = hasRole('chef_projet');
+  const isMember = hasRole('membre');
   const isLoading = isLoadingRoles || isLoadingProfile;
 
   console.log("PermissionsContext state:", {
     userRoles,
+    highestRole,
     isAdmin,
     isManager,
     isProjectManager,
@@ -88,6 +112,8 @@ export function PermissionsProvider({ children }: { children: React.ReactNode })
       isManager,
       isProjectManager,
       isMember,
+      highestRole,
+      hasRole,
       isLoading,
     }}>
       {children}
