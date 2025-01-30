@@ -26,7 +26,7 @@ export function PermissionsProvider({ children }: { children: React.ReactNode })
   const { data: userRoles, isLoading: isLoadingRoles } = useQuery({
     queryKey: ["userRoles", user?.id],
     queryFn: async () => {
-      if (!user?.id) return null;
+      if (!user?.id) return [];
       console.log("PermissionsContext - Fetching roles for user:", user.id);
       const { data, error } = await supabase
         .from("user_roles")
@@ -35,7 +35,7 @@ export function PermissionsProvider({ children }: { children: React.ReactNode })
 
       if (error) {
         console.error("Error fetching user roles:", error);
-        throw error;
+        return [];
       }
       const roles = data.map(ur => ur.role as UserRole);
       console.log("PermissionsContext - Fetched roles:", roles);
@@ -58,7 +58,7 @@ export function PermissionsProvider({ children }: { children: React.ReactNode })
 
       if (error) {
         console.error("Error fetching user profile:", error);
-        throw error;
+        return null;
       }
       console.log("PermissionsContext - Fetched profile:", data);
       return data;
@@ -77,13 +77,13 @@ export function PermissionsProvider({ children }: { children: React.ReactNode })
   };
 
   const hasRole = (role: UserRole): boolean => {
-    if (!userRoles) return false;
+    if (!userRoles || userRoles.length === 0) return false;
     const hasRequestedRole = userRoles.includes(role);
     console.log(`PermissionsContext - Checking role ${role} for user ${userProfile?.email}:`, hasRequestedRole);
     return hasRequestedRole;
   };
 
-  const highestRole = userRoles ? getHighestRole(userRoles) : null;
+  const highestRole = userRoles && userRoles.length > 0 ? getHighestRole(userRoles) : null;
 
   const isAdmin = hasRole('admin');
   const isManager = hasRole('manager');
