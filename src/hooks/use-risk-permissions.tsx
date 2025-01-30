@@ -1,12 +1,12 @@
-import { useCentralizedPermissions } from "./use-centralized-permissions";
+import { usePermissionsContext } from "@/contexts/PermissionsContext";
 
 export const useRiskPermissions = (projectId: string) => {
-  const permissions = useCentralizedPermissions(projectId);
+  const { isAdmin, userEmail } = usePermissionsContext();
   
   return {
-    canManageRisks: permissions.isAdmin || permissions.canEdit,
-    isAdmin: permissions.isAdmin,
-    isProjectManager: permissions.isProjectManager,
-    userEmail: permissions.userEmail,
+    canManageRisks: isAdmin,
+    isAdmin,
+    isProjectManager: false,
+    userEmail,
   };
 };

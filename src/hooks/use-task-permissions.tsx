@@ -1,24 +1,24 @@
-import { useCentralizedPermissions } from "./use-centralized-permissions";
+import { usePermissionsContext } from "@/contexts/PermissionsContext";
 
 export const useTaskPermissions = (projectId: string) => {
-  const permissions = useCentralizedPermissions(projectId);
+  const { isAdmin, userEmail } = usePermissionsContext();
   
-  const canCreateTask = permissions.isAdmin || permissions.canEdit;
+  const canCreateTask = isAdmin;
   
   const canEditTask = (assignee?: string) => {
-    if (permissions.isAdmin || permissions.canEdit) return true;
-    return assignee === permissions.userEmail;
+    if (isAdmin) return true;
+    return assignee === userEmail;
   };
 
-  const canDeleteTask = permissions.isAdmin || permissions.canEdit;
+  const canDeleteTask = isAdmin;
 
   return {
     canCreateTask,
     canEditTask,
     canDeleteTask,
-    isAdmin: permissions.isAdmin,
-    isProjectManager: permissions.isProjectManager,
+    isAdmin,
+    isProjectManager: false,
     isMember: false,
-    userEmail: permissions.userEmail,
+    userEmail,
   };
 };
