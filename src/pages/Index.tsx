@@ -11,7 +11,7 @@ import { ProjectLifecycleStatus } from "@/types/project";
 import { ProjectFilters } from "@/components/project/ProjectFilters";
 import { ProjectList } from "@/components/project/ProjectList";
 import { ProjectModals } from "@/components/project/ProjectModals";
-import { PermissionsProvider } from "@/contexts/PermissionsContext";
+import { PermissionsProvider, usePermissionsContext } from "@/contexts/PermissionsContext";
 
 const Index = () => {
   const navigate = useNavigate();
@@ -41,6 +41,7 @@ const Index = () => {
   });
 
   const user = useUser();
+  const { userProfile } = usePermissionsContext();
 
   useEffect(() => {
     localStorage.setItem("projectViewMode", view);
