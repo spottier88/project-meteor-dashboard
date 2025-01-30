@@ -8,8 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { AddToCartButton } from "./cart/AddToCartButton";
 import { ProjectStatus, ProgressStatus, ProjectLifecycleStatus } from "@/types/project";
 import { LifecycleStatusBadge } from "./project/LifecycleStatusBadge";
-import { useUser } from "@supabase/auth-helpers-react";
-import { usePermissionsContext } from "@/contexts/PermissionsContext";
+import { useProjectPermissions } from "@/hooks/useProjectPermissions";
 
 interface ProjectCardProps {
   title: string;
@@ -49,8 +48,7 @@ export const ProjectCard = ({
   onReview,
 }: ProjectCardProps) => {
   const navigate = useNavigate();
-  const user = useUser();
-  const { userProfile, isAdmin, isManager, hasRole, highestRole } = usePermissionsContext();
+  const { canEdit, isMember, isProjectManager } = useProjectPermissions(id);
 
   const { data: organization } = useQuery({
     queryKey: ["organization", pole_id, direction_id, service_id],
@@ -116,42 +114,10 @@ export const ProjectCard = ({
     enabled: !!id,
   });
 
-  const { data: isMember } = useQuery({
-    queryKey: ["projectMember", id, user?.id],
-    queryFn: async () => {
-      if (!id || !user?.id) {
-        console.error("Missing project ID or user ID for member check");
-        return false;
-      }
-
-      const { data, error } = await supabase
-        .from("project_members")
-        .select("*")
-        .eq("project_id", id)
-        .eq("user_id", user.id)
-        .maybeSingle();
-
-      if (error) {
-        console.error("Error checking project membership:", error);
-        return false;
-      }
-
-      return !!data;
-    },
-    enabled: !!id && !!user?.id,
-    staleTime: 5 * 60 * 1000,
-  });
-
-  const isProjectManager = userProfile?.email === project_manager;
-  const canEdit = isAdmin || isManager || isProjectManager;
-
   console.log("ProjectCard permissions:", {
-    isAdmin,
-    isManager,
-    isProjectManager,
     canEdit,
-    highestRole,
-    userEmail: userProfile?.email,
+    isProjectManager,
+    isMember,
     projectManager: project_manager
   });
 
