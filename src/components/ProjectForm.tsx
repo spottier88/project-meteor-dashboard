@@ -11,6 +11,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { useProjectFormState } from "./form/useProjectFormState";
 import { useProjectFormValidation } from "./form/useProjectFormValidation";
 import { getProjectManagers } from "@/utils/projectManagers";
+import { usePermissionsContext } from "@/contexts/PermissionsContext";
 
 interface ProjectFormProps {
   isOpen: boolean;
@@ -24,9 +25,9 @@ export const ProjectForm = ({ isOpen, onClose, onSubmit, project }: ProjectFormP
   const user = useUser();
   const formState = useProjectFormState(isOpen, project);
   const validation = useProjectFormValidation();
-  const permissions = useCentralizedPermissions(project?.id);
+  const { isAdmin, userProfile } = usePermissionsContext();
 
-  console.log("ProjectForm - Permissions:", permissions);
+  console.log("ProjectForm - Permissions:", { isAdmin, userEmail: userProfile?.email });
   console.log("ProjectForm - Current project:", project);
   console.log("ProjectForm - Form state:", formState);
 
@@ -48,7 +49,7 @@ export const ProjectForm = ({ isOpen, onClose, onSubmit, project }: ProjectFormP
       return;
     }
 
-    if (!permissions.canEdit) {
+    if (!isAdmin) {
       console.error("User doesn't have permission to edit project");
       toast({
         title: "Erreur",
@@ -60,7 +61,6 @@ export const ProjectForm = ({ isOpen, onClose, onSubmit, project }: ProjectFormP
 
     formState.setIsSubmitting(true);
     try {
-      // Préparation des données avec gestion correcte des UUIDs
       const projectData = {
         title: formState.title,
         description: formState.description,

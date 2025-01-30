@@ -1,9 +1,9 @@
-
+import { usePermissionsContext } from "@/contexts/PermissionsContext";
 
 export const useReviewAccess = (projectId: string) => {
-  const { canManage, userRoles } = useProjectAccess(projectId);
+  const { isAdmin, isManager, isProjectManager } = usePermissionsContext();
   
-  const canCreateReview = canManage || userRoles?.includes("manager");
+  const canCreateReview = isAdmin || isManager || isProjectManager;
 
   return {
     canCreateReview,

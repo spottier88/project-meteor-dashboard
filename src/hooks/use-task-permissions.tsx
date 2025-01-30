@@ -1,13 +1,13 @@
 import { usePermissionsContext } from "@/contexts/PermissionsContext";
 
 export const useTaskPermissions = (projectId: string) => {
-  const { isAdmin, userEmail } = usePermissionsContext();
+  const { isAdmin, userProfile } = usePermissionsContext();
   
   const canCreateTask = isAdmin;
   
   const canEditTask = (assignee?: string) => {
     if (isAdmin) return true;
-    return assignee === userEmail;
+    return assignee === userProfile?.email;
   };
 
   const canDeleteTask = isAdmin;
@@ -19,6 +19,6 @@ export const useTaskPermissions = (projectId: string) => {
     isAdmin,
     isProjectManager: false,
     isMember: false,
-    userEmail,
+    userEmail: userProfile?.email,
   };
 };
