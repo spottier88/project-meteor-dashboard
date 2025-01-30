@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { useUser } from '@supabase/auth-helpers-react';
+import { useUser, useSession } from '@supabase/auth-helpers-react';
 import { UserRole } from '@/types/user';
 
 interface PermissionsState {
@@ -25,10 +25,12 @@ let hookCallCount = 0;
 
 export function PermissionsProvider({ children }: { children: React.ReactNode }) {
   const user = useUser();
+  const session = useSession();
   hookCallCount++;
   
   console.log(`[PermissionsProvider] Hook called ${hookCallCount} times`, {
     userId: user?.id,
+    sessionStatus: !!session,
     timestamp: new Date().toISOString()
   });
 
@@ -53,7 +55,7 @@ export function PermissionsProvider({ children }: { children: React.ReactNode })
       console.log("[PermissionsProvider] Fetched roles:", roles);
       return roles;
     },
-    enabled: !!user?.id,
+    enabled: !!user?.id && !!session,
     staleTime: 60000,
     retry: 3,
   });
@@ -79,7 +81,7 @@ export function PermissionsProvider({ children }: { children: React.ReactNode })
       console.log("[PermissionsProvider] Fetched profile:", data);
       return data;
     },
-    enabled: !!user?.id,
+    enabled: !!user?.id && !!session,
     staleTime: 60000,
     retry: 3,
   });
@@ -124,12 +126,21 @@ export function PermissionsProvider({ children }: { children: React.ReactNode })
       isProjectManager,
       isMember,
       isLoading,
-      isError
+      isError,
+      sessionStatus: !!session
     });
-  }, [user?.id, userProfile, userRoles, highestRole, isAdmin, isManager, isProjectManager, isMember, isLoading, isError]);
+  }, [user?.id, userProfile, userRoles, highestRole, isAdmin, isManager, isProjectManager, isMember, isLoading, isError, session]);
+
+  if (!session || isLoading) {
+    console.log("[PermissionsProvider] Loading state:", {
+      session: !!session,
+      isLoading
+    });
+    return null;
+  }
 
   if (isError) {
-    console.error("PermissionsContext - Error loading permissions");
+    console.error("[PermissionsProvider] Error loading permissions");
     return null;
   }
 

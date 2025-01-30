@@ -10,40 +10,68 @@ import { UserManagement } from "./pages/UserManagement";
 import { AdminDashboard } from "./pages/AdminDashboard";
 import { OrganizationManagement } from "./pages/OrganizationManagement";
 import { NotificationManagement } from "./pages/NotificationManagement";
-import { SessionContextProvider } from "@supabase/auth-helpers-react";
+import { SessionContextProvider, useSession } from "@supabase/auth-helpers-react";
 import { supabase } from "@/integrations/supabase/client";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import { ReviewHistory } from "./components/ReviewHistory";
 import { ManagerAssignments } from "./pages/ManagerAssignments";
 import { ProjectTeamManagement } from "./pages/ProjectTeamManagement";
 import { PermissionsProvider } from "@/contexts/PermissionsContext";
+import { useEffect } from "react";
+import { useToast } from "./components/ui/use-toast";
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 5 * 60 * 1000, // 5 minutes
+      retry: 1,
+    },
+  },
+});
 
-function App() {
+function AppContent() {
+  const session = useSession();
+  const { toast } = useToast();
+
+  useEffect(() => {
+    console.log("[AppContent] Session state:", {
+      isAuthenticated: !!session,
+      user: session?.user,
+      timestamp: new Date().toISOString(),
+    });
+  }, [session]);
+
+  if (!session) {
+    return (
+      <Router>
+        <Routes>
+          <Route path="*" element={<Login />} />
+        </Routes>
+      </Router>
+    );
+  }
+
   return (
-    <QueryClientProvider client={queryClient}>
-      <SessionContextProvider supabaseClient={supabase}>
-        <PermissionsProvider>
-          <Router>
-            <Routes>
-              <Route path="/login" element={<Login />} />
-              <Route
-                path="/"
-                element={
-                  <ProtectedRoute>
-                    <Index />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/admin"
-                element={
-                  <ProtectedRoute>
-                    <AdminDashboard />
-                  </ProtectedRoute>
-                }
-              />
+    <PermissionsProvider>
+      <Router>
+        <Routes>
+          <Route path="/login" element={<Login />} />
+          <Route
+            path="/"
+            element={
+              <ProtectedRoute>
+                <Index />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin"
+            element={
+              <ProtectedRoute>
+                <AdminDashboard />
+              </ProtectedRoute>
+            }
+          />
               <Route
                 path="/admin/users"
                 element={
@@ -116,10 +144,18 @@ function App() {
                   </ProtectedRoute>
                 }
               />
-            </Routes>
-          </Router>
-          <Toaster />
-        </PermissionsProvider>
+        </Routes>
+      </Router>
+      <Toaster />
+    </PermissionsProvider>
+  );
+}
+
+function App() {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <SessionContextProvider supabaseClient={supabase}>
+        <AppContent />
       </SessionContextProvider>
     </QueryClientProvider>
   );
