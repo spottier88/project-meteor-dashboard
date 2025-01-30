@@ -7,6 +7,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useManagerProjectAccess } from "@/hooks/use-manager-project-access";
 import { usePermissionsContext } from "@/contexts/PermissionsContext";
 
+let gridHookCallCount = 0;
+
 interface Project {
   id: string;
   title: string;
@@ -38,44 +40,44 @@ export const ProjectGrid = ({
 }: ProjectGridProps) => {
   const user = useUser();
   const { userProfile, isAdmin, isManager, isProjectManager, isMember, hasRole, highestRole, isLoading } = usePermissionsContext();
-
-  console.log("ProjectGrid - Current user:", {
-    id: user?.id,
-    email: user?.email,
-    userProfile,
+  
+  gridHookCallCount++;
+  console.log(`[ProjectGrid] Hook called ${gridHookCallCount} times`, {
+    timestamp: new Date().toISOString(),
+    projectsCount: projects.length
   });
 
-  console.log("ProjectGrid - Permissions state:", {
-    userProfile,
+  console.log("[ProjectGrid] Permissions state:", {
+    userId: user?.id,
+    userEmail: userProfile?.email,
     isAdmin,
     isManager,
     isProjectManager,
     isMember,
     highestRole,
-    isLoading,
-    userId: user?.id
+    isLoading
   });
 
   const { data: projectMemberships } = useQuery({
     queryKey: ["projectMemberships", user?.id],
     queryFn: async () => {
       if (!user?.id) return [];
-      console.log("Fetching project memberships for user:", user.id);
+      console.log("[ProjectGrid] Fetching memberships for user:", user.id);
       const { data, error } = await supabase
         .from("project_members")
         .select("project_id")
         .eq("user_id", user.id);
 
       if (error) {
-        console.error("Error fetching project memberships:", error);
+        console.error("[ProjectGrid] Error fetching memberships:", error);
         return [];
       }
 
-      console.log("Fetched project memberships:", data);
+      console.log("[ProjectGrid] Fetched memberships:", data);
       return data.map(pm => pm.project_id);
     },
     enabled: !!user?.id,
-    staleTime: 300000, // 5 minutes
+    staleTime: 300000,
   });
 
   const projectIds = React.useMemo(() => projects.map(p => p.id), [projects]);
@@ -85,48 +87,46 @@ export const ProjectGrid = ({
     queryKey: ["filteredProjects", projectIds, user?.id, highestRole, projectMemberships, projectAccess, isAdmin],
     queryFn: async () => {
       if (!user) {
-        console.log("No user logged in");
+        console.log("[ProjectGrid] No user logged in");
         return [];
       }
 
-      console.log("Filtering projects with params:", {
+      console.log("[ProjectGrid] Filtering projects with params:", {
         isAdmin,
         isManager,
         isProjectManager,
         highestRole,
-        projectMemberships,
-        projectAccess,
         totalProjects: projects.length,
-        userEmail: userProfile?.email
+        projectMemberships: projectMemberships?.length,
+        projectAccess: projectAccess ? Array.from(projectAccess.entries()) : null
       });
 
-      // Admin voit tout
       if (isAdmin) {
-        console.log("User is admin, showing all projects:", projects.length);
+        console.log("[ProjectGrid] User is admin, showing all projects:", projects.length);
         return projects;
       }
 
       const filtered = projects.filter(project => {
-        // Chef de projet voit ses projets
         const isProjectOwner = project.project_manager === userProfile?.email;
-        // Membre voit les projets où il est membre
         const isMemberOfProject = projectMemberships?.includes(project.id);
-        // Manager voit les projets de son périmètre
         const hasManagerAccess = isManager && projectAccess?.get(project.id) || false;
         
-        console.log(`Project ${project.id} access check:`, {
+        console.log(`[ProjectGrid] Project ${project.id} access check:`, {
           isProjectOwner,
           isMemberOfProject,
           hasManagerAccess,
-          userEmail: userProfile?.email,
           projectManager: project.project_manager,
-          highestRole
+          userEmail: userProfile?.email
         });
 
         return isProjectOwner || isMemberOfProject || hasManagerAccess;
       });
 
-      console.log("Filtered projects result:", filtered.length);
+      console.log("[ProjectGrid] Filtered projects result:", {
+        before: projects.length,
+        after: filtered.length
+      });
+      
       return filtered;
     },
     enabled: !!user?.id && !isLoading,

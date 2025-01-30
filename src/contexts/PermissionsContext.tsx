@@ -21,32 +21,40 @@ const PermissionsContext = createContext<PermissionsState | undefined>(undefined
 
 const roleHierarchy: UserRole[] = ['admin', 'manager', 'chef_projet', 'membre'];
 
+let hookCallCount = 0;
+
 export function PermissionsProvider({ children }: { children: React.ReactNode }) {
   const user = useUser();
+  hookCallCount++;
+  
+  console.log(`[PermissionsProvider] Hook called ${hookCallCount} times`, {
+    userId: user?.id,
+    timestamp: new Date().toISOString()
+  });
 
   const { data: userRoles, isLoading: isLoadingRoles, isError: isRolesError } = useQuery({
     queryKey: ["userRoles", user?.id],
     queryFn: async () => {
       if (!user?.id) {
-        console.log("PermissionsContext - No user ID available");
+        console.log("[PermissionsProvider] No user ID available");
         return [];
       }
-      console.log("PermissionsContext - Fetching roles for user:", user.id);
+      console.log("[PermissionsProvider] Fetching roles for user:", user.id);
       const { data, error } = await supabase
         .from("user_roles")
         .select("role")
         .eq("user_id", user.id);
 
       if (error) {
-        console.error("Error fetching user roles:", error);
+        console.error("[PermissionsProvider] Error fetching user roles:", error);
         throw error;
       }
       const roles = data.map(ur => ur.role as UserRole);
-      console.log("PermissionsContext - Fetched roles:", roles);
+      console.log("[PermissionsProvider] Fetched roles:", roles);
       return roles;
     },
     enabled: !!user?.id,
-    staleTime: 60000, // Réduit à 1 minute
+    staleTime: 60000,
     retry: 3,
   });
 
@@ -54,10 +62,10 @@ export function PermissionsProvider({ children }: { children: React.ReactNode })
     queryKey: ["userProfile", user?.id],
     queryFn: async () => {
       if (!user?.id) {
-        console.log("PermissionsContext - No user ID available for profile");
+        console.log("[PermissionsProvider] No user ID available for profile");
         return null;
       }
-      console.log("PermissionsContext - Fetching profile for user:", user.id);
+      console.log("[PermissionsProvider] Fetching profile for user:", user.id);
       const { data, error } = await supabase
         .from("profiles")
         .select("*")
@@ -65,14 +73,14 @@ export function PermissionsProvider({ children }: { children: React.ReactNode })
         .single();
 
       if (error) {
-        console.error("Error fetching user profile:", error);
+        console.error("[PermissionsProvider] Error fetching user profile:", error);
         throw error;
       }
-      console.log("PermissionsContext - Fetched profile:", data);
+      console.log("[PermissionsProvider] Fetched profile:", data);
       return data;
     },
     enabled: !!user?.id,
-    staleTime: 60000, // Réduit à 1 minute
+    staleTime: 60000,
     retry: 3,
   });
 
@@ -89,7 +97,7 @@ export function PermissionsProvider({ children }: { children: React.ReactNode })
   const hasRole = (role: UserRole): boolean => {
     if (!userRoles || userRoles.length === 0) return false;
     const hasRequestedRole = userRoles.includes(role);
-    console.log(`PermissionsContext - Checking role ${role} for user ${userProfile?.email}:`, {
+    console.log(`[PermissionsProvider] Checking role ${role}:`, {
       hasRequestedRole,
       userRoles,
       userId: user?.id
@@ -105,7 +113,6 @@ export function PermissionsProvider({ children }: { children: React.ReactNode })
   const isLoading = isLoadingRoles || isLoadingProfile;
   const isError = isRolesError || isProfileError;
 
-  // Log l'état complet du contexte à chaque changement
   useEffect(() => {
     console.log("PermissionsContext - State update:", {
       userId: user?.id,
