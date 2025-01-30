@@ -9,14 +9,7 @@ interface ProjectCardHeaderProps {
   onEdit: (id: string) => void;
   onViewHistory: (id: string, title: string) => void;
   id: string;
-  owner_id?: string;
-  project_manager?: string;
-  permissions: {
-    canEdit: boolean;
-    isAdmin: boolean;
-    isProjectManager: boolean;
-    canManageTeam: boolean;
-  };
+  isMember?: boolean;
   additionalActions?: React.ReactNode;
 }
 
@@ -26,9 +19,7 @@ export const ProjectCardHeader = ({
   onEdit,
   onViewHistory,
   id,
-  owner_id,
-  project_manager,
-  permissions,
+  isMember,
   additionalActions,
 }: ProjectCardHeaderProps) => {
   return (
@@ -44,9 +35,7 @@ export const ProjectCardHeader = ({
           projectTitle={title}
           onEdit={onEdit}
           onViewHistory={onViewHistory}
-          owner_id={owner_id}
-          project_manager={project_manager}
-          permissions={permissions}
+          isMember={isMember}
         />
       </div>
     </CardHeader>

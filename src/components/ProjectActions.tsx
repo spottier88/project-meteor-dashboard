@@ -11,6 +11,7 @@ import {
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { DeleteProjectDialog } from "@/components/project/DeleteProjectDialog";
+import { usePermissionsContext } from "@/contexts/PermissionsContext";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -25,14 +26,7 @@ interface ProjectActionsProps {
   onEdit: (id: string) => void;
   onViewHistory: (id: string, title: string) => void;
   onProjectDeleted?: () => void;
-  owner_id?: string;
-  project_manager?: string;
-  permissions: {
-    canEdit: boolean;
-    isAdmin: boolean;
-    isProjectManager: boolean;
-    canManageTeam: boolean;
-  };
+  isMember?: boolean;
 }
 
 export const ProjectActions = ({
@@ -41,10 +35,18 @@ export const ProjectActions = ({
   onEdit,
   onViewHistory,
   onProjectDeleted,
-  permissions,
+  isMember,
 }: ProjectActionsProps) => {
   const navigate = useNavigate();
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const { isAdmin, userRoles, userProfile } = usePermissionsContext();
+
+  // Vérification des rôles
+  const isManager = userRoles?.includes("manager");
+  const isProjectManager = userProfile?.email === projectTitle; // Vérifie si l'utilisateur est le chef de projet
+
+  const canEdit = isAdmin || isManager || isProjectManager;
+  const canManageTeam = isAdmin || isProjectManager;
 
   const handleClick = (e: React.MouseEvent, action: () => void) => {
     e.stopPropagation();
@@ -53,7 +55,7 @@ export const ProjectActions = ({
 
   return (
     <>
-      {permissions.canEdit && (
+      {canEdit && (
         <Button
           variant="ghost"
           size="icon"
@@ -76,7 +78,7 @@ export const ProjectActions = ({
         <History className="h-4 w-4" />
       </Button>
 
-      {(permissions.canEdit || permissions.canManageTeam || permissions.isAdmin) && (
+      {(canEdit || isMember || canManageTeam || isAdmin) && (
         <DropdownMenu>
           <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
             <Button variant="ghost" size="icon" className="h-8 w-8">
@@ -84,7 +86,7 @@ export const ProjectActions = ({
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            {permissions.canEdit && (
+            {(canEdit || isMember) && (
               <>
                 <DropdownMenuItem onClick={() => navigate(`/tasks/${projectId}`)}>
                   <ListTodo className="mr-2 h-4 w-4" />
@@ -96,16 +98,16 @@ export const ProjectActions = ({
                 </DropdownMenuItem>
               </>
             )}
-            {permissions.canManageTeam && (
+            {canManageTeam && (
               <>
-                {permissions.canEdit && <DropdownMenuSeparator />}
+                {(canEdit || isMember) && <DropdownMenuSeparator />}
                 <DropdownMenuItem onClick={() => navigate(`/projects/${projectId}/team`)}>
                   <Users className="mr-2 h-4 w-4" />
                   Gérer l'équipe
                 </DropdownMenuItem>
               </>
             )}
-            {permissions.isAdmin && (
+            {isAdmin && (
               <>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem 
