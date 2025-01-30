@@ -1,5 +1,4 @@
-import { usePermissions } from "./use-permissions";
-import { useProjectAccess } from "./use-project-access";
+
 
 export const useManagerPermissions = (projectId: string) => {
   const permissions = usePermissions(projectId);
