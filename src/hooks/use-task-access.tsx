@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useUser } from "@supabase/auth-helpers-react";
-import { useProjectAccess } from "./use-project-access";
+
 
 export const useTaskAccess = (projectId: string, taskAssignee?: string) => {
   const user = useUser();
