@@ -68,6 +68,7 @@ export function PermissionsProvider({ children }: { children: React.ReactNode })
   });
 
   const getHighestRole = (roles: UserRole[]): UserRole | null => {
+    if (!roles || roles.length === 0) return null;
     for (const hierarchyRole of roleHierarchy) {
       if (roles.includes(hierarchyRole)) {
         return hierarchyRole;
@@ -79,7 +80,10 @@ export function PermissionsProvider({ children }: { children: React.ReactNode })
   const hasRole = (role: UserRole): boolean => {
     if (!userRoles || userRoles.length === 0) return false;
     const hasRequestedRole = userRoles.includes(role);
-    console.log(`PermissionsContext - Checking role ${role} for user ${userProfile?.email}:`, hasRequestedRole);
+    console.log(`PermissionsContext - Checking role ${role} for user ${userProfile?.email}:`, {
+      hasRequestedRole,
+      userRoles
+    });
     return hasRequestedRole;
   };
 
