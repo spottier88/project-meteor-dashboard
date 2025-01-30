@@ -49,7 +49,7 @@ export const HierarchyAssignmentFields = ({
       console.log("Directions fetched:", data);
       return data;
     },
-    enabled: selectedPoleId !== "none",
+    enabled: selectedPoleId !== "none" && selectedPoleId !== "",
   });
 
   const { data: services, isLoading: isLoadingServices } = useQuery({
@@ -66,7 +66,7 @@ export const HierarchyAssignmentFields = ({
       console.log("Services fetched:", data);
       return data;
     },
-    enabled: selectedDirectionId !== "none",
+    enabled: selectedDirectionId !== "none" && selectedDirectionId !== "",
   });
 
   useEffect(() => {
