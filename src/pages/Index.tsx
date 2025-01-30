@@ -41,7 +41,7 @@ const IndexContent = () => {
   });
 
   const user = useUser();
-  const { userProfile } = usePermissionsContext();
+  const { userProfile, isAdmin } = usePermissionsContext();
 
   useEffect(() => {
     localStorage.setItem("projectViewMode", view);
@@ -115,6 +115,7 @@ const IndexContent = () => {
         };
       }) || [];
     },
+    enabled: !!user?.id,
     staleTime: 300000, // 5 minutes de cache
   });
 

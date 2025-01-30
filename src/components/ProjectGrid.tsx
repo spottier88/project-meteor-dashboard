@@ -4,8 +4,8 @@ import { ProjectStatus, ProgressStatus, ProjectLifecycleStatus } from "@/types/p
 import { useUser } from "@supabase/auth-helpers-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { UserRoleData } from "@/types/user";
 import { useManagerProjectAccess } from "@/hooks/use-manager-project-access";
+import { usePermissionsContext } from "@/contexts/PermissionsContext";
 
 interface Project {
   id: string;
@@ -37,44 +37,7 @@ export const ProjectGrid = ({
   onFilteredProjectsChange,
 }: ProjectGridProps) => {
   const user = useUser();
-
-  // Optimisation : utilisation de staleTime pour réduire les requêtes
-  const { data: userRoles } = useQuery({
-    queryKey: ["userRoles", user?.id],
-    queryFn: async () => {
-      if (!user?.id) return null;
-      const { data, error } = await supabase
-        .from("user_roles")
-        .select("*")
-        .eq("user_id", user.id);
-
-      if (error) throw error;
-      return data as UserRoleData[];
-    },
-    enabled: !!user?.id,
-    staleTime: 300000, // 5 minutes
-  });
-
-  const { data: userProfile } = useQuery({
-    queryKey: ["userProfile", user?.id],
-    queryFn: async () => {
-      if (!user?.id) return null;
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("*")
-        .eq("id", user.id)
-        .maybeSingle();
-
-      if (error) {
-        console.error("Error fetching user profile:", error);
-        return null;
-      }
-      
-      return data;
-    },
-    enabled: !!user?.id,
-    staleTime: 300000, // 5 minutes
-  });
+  const { userProfile, userRoles, isAdmin } = usePermissionsContext();
 
   const { data: projectMemberships } = useQuery({
     queryKey: ["projectMemberships", user?.id],
@@ -107,7 +70,6 @@ export const ProjectGrid = ({
         return [];
       }
 
-      const isAdmin = userRoles?.some(role => role.role === "admin");
       if (isAdmin) {
         console.log("User is admin, showing all projects");
         return projects;

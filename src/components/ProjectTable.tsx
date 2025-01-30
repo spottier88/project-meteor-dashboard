@@ -6,9 +6,9 @@ import { ProjectTableHeader } from "./project/ProjectTableHeader";
 import { ProjectTableRow } from "./project/ProjectTableRow";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { UserRoleData } from "@/types/user";
 import { SortDirection } from "./ui/sortable-header";
 import { useManagerProjectAccess } from "@/hooks/use-manager-project-access";
+import { usePermissionsContext } from "@/contexts/PermissionsContext";
 
 interface Project {
   id: string;
@@ -43,42 +43,9 @@ export const ProjectTable = ({
   onFilteredProjectsChange,
 }: ProjectTableProps) => {
   const user = useUser();
+  const { userProfile, userRoles, isAdmin } = usePermissionsContext();
   const [sortKey, setSortKey] = React.useState<string | null>(null);
   const [sortDirection, setSortDirection] = React.useState<SortDirection>(null);
-
-  // Optimisation : utilisation de staleTime et mémoisation des données
-  const { data: userRoles } = useQuery({
-    queryKey: ["userRoles", user?.id],
-    queryFn: async () => {
-      if (!user?.id) return null;
-      const { data, error } = await supabase
-        .from("user_roles")
-        .select("*")
-        .eq("user_id", user.id);
-
-      if (error) throw error;
-      return data as UserRoleData[];
-    },
-    enabled: !!user?.id,
-    staleTime: 300000, // 5 minutes
-  });
-
-  const { data: userProfile } = useQuery({
-    queryKey: ["userProfile", user?.id],
-    queryFn: async () => {
-      if (!user?.id) return null;
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("*")
-        .eq("id", user.id)
-        .single();
-
-      if (error) throw error;
-      return data;
-    },
-    enabled: !!user?.id,
-    staleTime: 300000, // 5 minutes
-  });
 
   const { data: projectMemberships } = useQuery({
     queryKey: ["projectMemberships", user?.id],
@@ -111,7 +78,6 @@ export const ProjectTable = ({
         return [];
       }
 
-      const isAdmin = userRoles?.some(role => role.role === "admin");
       if (isAdmin) {
         console.log("User is admin, showing all projects");
         return projects;
@@ -148,7 +114,6 @@ export const ProjectTable = ({
     }
   };
 
-  // Toujours appeler useMemo, même si on retourne les projets non triés
   const sortedProjects = React.useMemo(() => {
     if (!filteredProjects) return [];
     if (!sortKey || !sortDirection) return filteredProjects;
