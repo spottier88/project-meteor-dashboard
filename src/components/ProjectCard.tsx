@@ -50,7 +50,7 @@ export const ProjectCard = ({
 }: ProjectCardProps) => {
   const navigate = useNavigate();
   const user = useUser();
-  const { userProfile, userRoles, isAdmin } = usePermissionsContext();
+  const { userProfile, isAdmin, isManager, hasRole, highestRole } = usePermissionsContext();
 
   const { data: organization } = useQuery({
     queryKey: ["organization", pole_id, direction_id, service_id],
@@ -142,11 +142,18 @@ export const ProjectCard = ({
     staleTime: 5 * 60 * 1000,
   });
 
-  // Vérification des rôles
-  const isManager = userRoles?.includes("manager");
   const isProjectManager = userProfile?.email === project_manager;
-
   const canEdit = isAdmin || isManager || isProjectManager;
+
+  console.log("ProjectCard permissions:", {
+    isAdmin,
+    isManager,
+    isProjectManager,
+    canEdit,
+    highestRole,
+    userEmail: userProfile?.email,
+    projectManager: project_manager
+  });
 
   return (
     <Card className="w-full transition-all duration-300 hover:shadow-lg animate-fade-in">

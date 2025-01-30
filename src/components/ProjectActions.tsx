@@ -39,7 +39,7 @@ export const ProjectActions = ({
 }: ProjectActionsProps) => {
   const navigate = useNavigate();
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const { userProfile, isAdmin, isManager, isProjectManager } = usePermissionsContext();
+  const { userProfile, isAdmin, isManager, isProjectManager, hasRole, highestRole } = usePermissionsContext();
 
   // Vérification des droits selon la hiérarchie des rôles
   const canEdit = isAdmin || isManager || isProjectManager;
@@ -53,7 +53,9 @@ export const ProjectActions = ({
     canEdit,
     canManageTeam,
     canDelete,
-    userProfile
+    userProfile,
+    highestRole,
+    roles: hasRole('admin')
   });
 
   const handleClick = (e: React.MouseEvent, action: () => void) => {
