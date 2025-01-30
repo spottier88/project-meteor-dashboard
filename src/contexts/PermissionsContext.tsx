@@ -114,7 +114,7 @@ export function PermissionsProvider({ children }: { children: React.ReactNode })
   const isError = isRolesError || isProfileError;
 
   useEffect(() => {
-    console.log("PermissionsContext - State update:", {
+    console.log("[PermissionsProvider] State update:", {
       userId: user?.id,
       userEmail: userProfile?.email,
       userRoles,

@@ -44,24 +44,22 @@ export const ProjectGrid = ({
   gridHookCallCount++;
   console.log(`[ProjectGrid] Hook called ${gridHookCallCount} times`, {
     timestamp: new Date().toISOString(),
-    projectsCount: projects.length
-  });
-
-  console.log("[ProjectGrid] Permissions state:", {
-    userId: user?.id,
+    projectsCount: projects.length,
     userEmail: userProfile?.email,
     isAdmin,
     isManager,
     isProjectManager,
     isMember,
-    highestRole,
-    isLoading
+    highestRole
   });
 
   const { data: projectMemberships } = useQuery({
     queryKey: ["projectMemberships", user?.id],
     queryFn: async () => {
-      if (!user?.id) return [];
+      if (!user?.id) {
+        console.log("[ProjectGrid] No user ID for memberships query");
+        return [];
+      }
       console.log("[ProjectGrid] Fetching memberships for user:", user.id);
       const { data, error } = await supabase
         .from("project_members")
@@ -124,7 +122,8 @@ export const ProjectGrid = ({
 
       console.log("[ProjectGrid] Filtered projects result:", {
         before: projects.length,
-        after: filtered.length
+        after: filtered.length,
+        isAdmin
       });
       
       return filtered;
