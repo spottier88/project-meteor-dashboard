@@ -22,13 +22,14 @@ const criteriaDescriptions = {
   impact: "Évalue l'impact potentiel sur l'organisation : amélioration des processus, gains d'efficacité, bénéfices pour les agents. Un score élevé indique un fort potentiel de transformation."
 };
 
-interface ProjectSummaryContentProps {
+export interface ProjectSummaryContentProps {
   project: any;
   lastReview: any;
   risks: any[];
   tasks: any[];
   isProjectManager: boolean;
   isAdmin: boolean;
+  canEdit: boolean;
 }
 
 export const ProjectSummaryContent = ({
@@ -38,13 +39,13 @@ export const ProjectSummaryContent = ({
   tasks,
   isProjectManager,
   isAdmin,
+  canEdit,
 }: ProjectSummaryContentProps) => {
   const [isTaskFormOpen, setIsTaskFormOpen] = useState(false);
   const [selectedTask, setSelectedTask] = useState<any>(null);
   const { userProfile, userRoles } = usePermissionsContext();
 
   const isManager = userRoles?.includes("manager");
-  const canEdit = isAdmin || isManager || isProjectManager;
 
   const { data: innovationScores } = useQuery({
     queryKey: ["innovationScores", project.id],
@@ -164,6 +165,9 @@ export const ProjectSummaryContent = ({
         <RiskList 
           projectId={project.id} 
           projectTitle={project.title}
+          canEdit={canEdit}
+          isProjectManager={isProjectManager}
+          isAdmin={isAdmin}
         />
       </div>
 

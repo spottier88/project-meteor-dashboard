@@ -3,12 +3,13 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useMemo } from "react";
 
-interface ProjectPermissions {
+export interface ProjectPermissions {
   canEdit: boolean;
   canManageTeam: boolean;
   canDelete: boolean;
   isMember: boolean;
   isProjectManager: boolean;
+  isAdmin: boolean;
 }
 
 export const useProjectPermissions = (projectId: string): ProjectPermissions => {
@@ -91,5 +92,6 @@ export const useProjectPermissions = (projectId: string): ProjectPermissions => 
     canDelete: isAdmin,
     isMember: !!isMember,
     isProjectManager,
+    isAdmin,
   }), [isAdmin, isProjectManager, isManager, managerAccess, isMember]);
 };

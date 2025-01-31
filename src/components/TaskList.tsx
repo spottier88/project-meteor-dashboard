@@ -21,11 +21,19 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
-interface TaskListProps {
+export interface TaskListProps {
   projectId: string;
+  canEdit: boolean;
+  isProjectManager: boolean;
+  isAdmin: boolean;
 }
 
-export const TaskList = ({ projectId }: TaskListProps) => {
+export const TaskList = ({
+  projectId,
+  canEdit,
+  isProjectManager,
+  isAdmin,
+}: TaskListProps) => {
   const { toast } = useToast();
   const [isTaskFormOpen, setIsTaskFormOpen] = useState(false);
   const [selectedTask, setSelectedTask] = useState<any>(null);

@@ -1,149 +1,60 @@
-import { Button } from "@/components/ui/button";
-import { useState } from "react";
+import React from "react";
+import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Risk } from "@/types/risk";
-import { Plus } from "lucide-react";
-import { RiskForm } from "./RiskForm";
-import { RiskCard } from "./risk/RiskCard";
-import { useRiskPermissions } from "@/hooks/use-risk-permissions";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import { useToast } from "@/hooks/use-toast";
+import { Button } from "@/components/ui/button";
 
-interface RiskListProps {
+export interface RiskListProps {
   projectId: string;
   projectTitle: string;
-  onRiskSubmit?: () => void;
+  canEdit: boolean;
+  isProjectManager: boolean;
+  isAdmin: boolean;
 }
 
-export const RiskList = ({ projectId, projectTitle, onRiskSubmit }: RiskListProps) => {
-  const [isRiskFormOpen, setIsRiskFormOpen] = useState(false);
-  const [selectedRisk, setSelectedRisk] = useState<Risk | undefined>(undefined);
-  const [riskToDelete, setRiskToDelete] = useState<Risk | null>(null);
-  const { toast } = useToast();
-  const queryClient = useQueryClient();
-
-  const { canManageRisks } = useRiskPermissions(projectId);
-
-  const { data: riskData } = useQuery({
+export const RiskList = ({
+  projectId,
+  projectTitle,
+  canEdit,
+  isProjectManager,
+  isAdmin,
+}: RiskListProps) => {
+  const { data: risks, isLoading, isError } = useQuery({
     queryKey: ["risks", projectId],
     queryFn: async () => {
-      console.log("[RiskList] Fetching risks for project:", projectId);
       const { data, error } = await supabase
         .from("risks")
         .select("*")
         .eq("project_id", projectId);
 
       if (error) throw error;
-      return data as Risk[];
+      return data;
     },
     enabled: !!projectId,
   });
 
-  const handleEditRisk = (risk: Risk) => {
-    if (!canManageRisks) return;
-    setSelectedRisk(risk);
-    setIsRiskFormOpen(true);
-  };
-
-  const handleDeleteRisk = async (risk: Risk) => {
-    if (!canManageRisks) return;
-    try {
-      const { error } = await supabase
-        .from("risks")
-        .delete()
-        .eq("id", risk.id);
-
-      if (error) throw error;
-
-      toast({
-        title: "Succès",
-        description: "Le risque a été supprimé",
-      });
-      
-      queryClient.invalidateQueries({ queryKey: ["risks", projectId] });
-    } catch (error) {
-      console.error("Error deleting risk:", error);
-      toast({
-        title: "Erreur",
-        description: "Une erreur est survenue lors de la suppression",
-        variant: "destructive",
-      });
-    } finally {
-      setRiskToDelete(null);
-    }
-  };
-
-  const handleRiskFormSubmit = async () => {
-    queryClient.invalidateQueries({ queryKey: ["risks", projectId] });
-    setIsRiskFormOpen(false);
-    setSelectedRisk(undefined);
-    onRiskSubmit?.();
-  };
+  if (isLoading) return <div>Loading...</div>;
+  if (isError) return <div>Error loading risks.</div>;
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold">Risques</h2>
-        {canManageRisks && (
-          <Button onClick={() => setIsRiskFormOpen(true)}>
-            <Plus className="h-4 w-4 mr-2" />
-            Nouveau risque
-          </Button>
-        )}
-      </div>
-
-      <div className="grid gap-4">
-        {riskData?.map((risk) => (
-          <RiskCard
-            key={risk.id}
-            risk={risk}
-            onEdit={handleEditRisk}
-            onDelete={() => setRiskToDelete(risk)}
-          />
-        ))}
-      </div>
-
-      {canManageRisks && (
-        <>
-          <RiskForm
-            isOpen={isRiskFormOpen}
-            onClose={() => {
-              setIsRiskFormOpen(false);
-              setSelectedRisk(undefined);
-            }}
-            onSubmit={handleRiskFormSubmit}
-            projectId={projectId}
-            risk={selectedRisk}
-          />
-
-          <AlertDialog open={!!riskToDelete} onOpenChange={() => setRiskToDelete(null)}>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>Êtes-vous sûr ?</AlertDialogTitle>
-                <AlertDialogDescription>
-                  Cette action va supprimer définitivement le risque.
-                  Cette action est irréversible.
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel>Annuler</AlertDialogCancel>
-                <AlertDialogAction onClick={() => riskToDelete && handleDeleteRisk(riskToDelete)}>
-                  Supprimer
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
-        </>
+    <div>
+      <h2 className="text-2xl font-bold mb-4">Risks for {projectTitle}</h2>
+      {risks && risks.length > 0 ? (
+        <ul>
+          {risks.map((risk) => (
+            <li key={risk.id} className="mb-2">
+              <div className="flex justify-between">
+                <span>{risk.description}</span>
+                {canEdit && (
+                  <Button variant="outline" size="sm">
+                    Edit
+                  </Button>
+                )}
+              </div>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p>No risks found for this project.</p>
       )}
     </div>
   );
