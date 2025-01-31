@@ -93,18 +93,28 @@ export const ProfileForm = ({ isOpen, onClose, profile }: ProfileFormProps) => {
 
       const enrichedAssignments = await Promise.all(
         assignments.map(async (assignment) => {
-          const { data: entityData, error: entityError } = await supabase
-            .from(`${assignment.entity_type}s`)
-            .select("name")
-            .eq("id", assignment.entity_id)
-            .single();
-
-          if (entityError) {
-            console.error("Error fetching entity data:", entityError);
-            return {
-              ...assignment,
-              entity_name: "Inconnu",
-            };
+          let entityData;
+          if (assignment.entity_type === 'pole') {
+            const { data } = await supabase
+              .from('poles')
+              .select('name')
+              .eq('id', assignment.entity_id)
+              .single();
+            entityData = data;
+          } else if (assignment.entity_type === 'direction') {
+            const { data } = await supabase
+              .from('directions')
+              .select('name')
+              .eq('id', assignment.entity_id)
+              .single();
+            entityData = data;
+          } else if (assignment.entity_type === 'service') {
+            const { data } = await supabase
+              .from('services')
+              .select('name')
+              .eq('id', assignment.entity_id)
+              .single();
+            entityData = data;
           }
 
           return {
