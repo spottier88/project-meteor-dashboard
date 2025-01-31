@@ -23,8 +23,9 @@ export const TeamMemberForm = ({ isOpen, onClose, projectId }: TeamMemberFormPro
   const form = useForm<FormValues>();
 
   const { data: availableUsers } = useQuery({
-    queryKey: ["availableUsers"],
+    queryKey: ["availableMembers", projectId],
     queryFn: async () => {
+      // Get existing team members
       const { data: existingMembers } = await supabase
         .from("project_members")
         .select("user_id")
@@ -32,10 +33,19 @@ export const TeamMemberForm = ({ isOpen, onClose, projectId }: TeamMemberFormPro
 
       const existingUserIds = existingMembers?.map(m => m.user_id) || [];
 
+      // Get users with 'membre' role who are not already team members
       const { data: users } = await supabase
         .from("profiles")
-        .select("id, email, first_name, last_name")
-        .not("id", "in", `(${existingUserIds.join(",")})`);
+        .select(`
+          id,
+          email,
+          first_name,
+          last_name,
+          user_roles!inner(role)
+        `)
+        .eq('user_roles.role', 'membre')
+        .not('id', 'in', `(${existingUserIds.join(",")})`)
+        .order('first_name');
 
       return users || [];
     },
