@@ -41,11 +41,11 @@ export const TeamManagement = ({
         .from("project_members")
         .select(`
           id,
-          role,
           profiles (
             id,
             email,
-            full_name
+            first_name,
+            last_name
           )
         `)
         .eq("project_id", projectId);
@@ -65,7 +65,7 @@ export const TeamManagement = ({
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries(["projectMembers"]);
+      queryClient.invalidateQueries({ queryKey: ["projectMembers", projectId] });
       toast({
         title: "Membre supprimé",
         description: "Le membre a été retiré de l'équipe avec succès.",
@@ -105,16 +105,16 @@ export const TeamManagement = ({
               <TableRow>
                 <TableHead>Nom</TableHead>
                 <TableHead>Email</TableHead>
-                <TableHead>Rôle</TableHead>
                 {canManageTeam && <TableHead className="w-[100px]">Actions</TableHead>}
               </TableRow>
             </TableHeader>
             <TableBody>
               {members?.map((member) => (
                 <TableRow key={member.id}>
-                  <TableCell>{member.profiles.full_name || "-"}</TableCell>
+                  <TableCell>
+                    {member.profiles.first_name} {member.profiles.last_name}
+                  </TableCell>
                   <TableCell>{member.profiles.email}</TableCell>
-                  <TableCell className="capitalize">{member.role}</TableCell>
                   {canManageTeam && (
                     <TableCell>
                       <Button
@@ -130,7 +130,7 @@ export const TeamManagement = ({
               ))}
               {(!members || members.length === 0) && (
                 <TableRow>
-                  <TableCell colSpan={4} className="text-center text-muted-foreground">
+                  <TableCell colSpan={3} className="text-center text-muted-foreground">
                     Aucun membre dans l'équipe
                   </TableCell>
                 </TableRow>
