@@ -86,26 +86,35 @@ export const ProfileForm = ({ isOpen, onClose, profile }: ProfileFormProps) => {
 
       const { data: assignments, error } = await supabase
         .from("user_hierarchy_assignments")
-        .select(`
-          id,
-          entity_type,
-          entity_id,
-          poles (name),
-          directions (name),
-          services (name)
-        `)
+        .select("id, entity_type, entity_id")
         .eq("user_id", profile.id);
 
       if (error) throw error;
 
-      return assignments.map(assignment => ({
-        ...assignment,
-        entity_name: 
-          assignment.poles?.name ||
-          assignment.directions?.name ||
-          assignment.services?.name ||
-          'Inconnu'
-      }));
+      const enrichedAssignments = await Promise.all(
+        assignments.map(async (assignment) => {
+          const { data: entityData, error: entityError } = await supabase
+            .from(`${assignment.entity_type}s`)
+            .select("name")
+            .eq("id", assignment.entity_id)
+            .single();
+
+          if (entityError) {
+            console.error("Error fetching entity data:", entityError);
+            return {
+              ...assignment,
+              entity_name: "Inconnu",
+            };
+          }
+
+          return {
+            ...assignment,
+            entity_name: entityData?.name || "Inconnu",
+          };
+        })
+      );
+
+      return enrichedAssignments;
     },
     enabled: !!profile?.id,
   });
