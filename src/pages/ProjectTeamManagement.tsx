@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 import { ProjectStatus, ProgressStatus } from "@/types/project";
 import { TeamManagement } from "@/components/project/TeamManagement";
+import { useProjectPermissions } from "@/hooks/useProjectPermissions";
+import { useToast } from "@/components/ui/use-toast";
 
 interface Project {
   id: string;
@@ -31,11 +33,16 @@ const progressLabels = {
 export const ProjectTeamManagement = () => {
   const { projectId } = useParams<{ projectId: string }>();
   const navigate = useNavigate();
+  const { toast } = useToast();
+  const { canEdit, isProjectManager, isAdmin, canManageTeam } = useProjectPermissions(projectId || "");
 
   const { data: project } = useQuery({
     queryKey: ["project", projectId],
     queryFn: async () => {
-      if (!projectId) return null;
+      if (!projectId) {
+        navigate("/");
+        return null;
+      }
 
       const [projectResult, reviewResult] = await Promise.all([
         supabase
@@ -50,7 +57,24 @@ export const ProjectTeamManagement = () => {
           .maybeSingle()
       ]);
 
-      if (projectResult.error) throw projectResult.error;
+      if (projectResult.error) {
+        toast({
+          variant: "destructive",
+          title: "Erreur",
+          description: "Impossible de charger le projet",
+        });
+        throw projectResult.error;
+      }
+
+      if (!projectResult.data) {
+        toast({
+          variant: "destructive",
+          title: "Projet non trouvé",
+          description: "Le projet demandé n'existe pas",
+        });
+        navigate("/");
+        return null;
+      }
 
       return {
         ...projectResult.data,
@@ -64,6 +88,11 @@ export const ProjectTeamManagement = () => {
 
   if (!project) {
     return <div>Chargement...</div>;
+  }
+
+  if (!canManageTeam) {
+    navigate("/");
+    return null;
   }
 
   return (
@@ -105,7 +134,13 @@ export const ProjectTeamManagement = () => {
         </div>
       </div>
 
-      <TeamManagement projectId={projectId || ""} />
+      <TeamManagement 
+        projectId={projectId || ""} 
+        canEdit={canEdit}
+        isProjectManager={isProjectManager}
+        isAdmin={isAdmin}
+        canManageTeam={canManageTeam}
+      />
     </div>
   );
 };

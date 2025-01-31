@@ -6,6 +6,8 @@ import { ArrowLeft } from "lucide-react";
 import { RiskList } from "@/components/RiskList";
 import { ProjectStatus, ProgressStatus } from "@/types/project";
 import { Project } from "@/types/user";
+import { useProjectPermissions } from "@/hooks/useProjectPermissions";
+import { useToast } from "@/components/ui/use-toast";
 
 const statusLabels = {
   sunny: "Ensoleillé",
@@ -22,11 +24,16 @@ const progressLabels = {
 export const RiskManagement = () => {
   const { projectId } = useParams<{ projectId: string }>();
   const navigate = useNavigate();
+  const { toast } = useToast();
+  const { canEdit, isProjectManager, isAdmin } = useProjectPermissions(projectId || "");
 
   const { data: project } = useQuery({
     queryKey: ["project", projectId],
     queryFn: async () => {
-      if (!projectId) return null;
+      if (!projectId) {
+        navigate("/");
+        return null;
+      }
 
       const [projectResult, reviewResult] = await Promise.all([
         supabase
@@ -41,7 +48,24 @@ export const RiskManagement = () => {
           .maybeSingle()
       ]);
 
-      if (projectResult.error) throw projectResult.error;
+      if (projectResult.error) {
+        toast({
+          variant: "destructive",
+          title: "Erreur",
+          description: "Impossible de charger le projet",
+        });
+        throw projectResult.error;
+      }
+
+      if (!projectResult.data) {
+        toast({
+          variant: "destructive",
+          title: "Projet non trouvé",
+          description: "Le projet demandé n'existe pas",
+        });
+        navigate("/");
+        return null;
+      }
 
       return {
         ...projectResult.data,
@@ -96,7 +120,13 @@ export const RiskManagement = () => {
         </div>
       </div>
 
-      <RiskList projectId={projectId || ""} projectTitle={project.title} />
+      <RiskList 
+        projectId={projectId || ""} 
+        projectTitle={project.title}
+        canEdit={canEdit}
+        isProjectManager={isProjectManager}
+        isAdmin={isAdmin}
+      />
     </div>
   );
 };

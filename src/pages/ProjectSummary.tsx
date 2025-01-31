@@ -7,14 +7,14 @@ import { useState } from "react";
 import { TaskForm } from "@/components/TaskForm";
 import { ProjectSummaryContent } from "@/components/project/ProjectSummaryContent";
 import { useToast } from "@/components/ui/use-toast";
-import { usePermissionsContext } from "@/contexts/PermissionsContext";
+import { useProjectPermissions } from "@/hooks/useProjectPermissions";
 
 export const ProjectSummary = () => {
   const { projectId } = useParams<{ projectId: string }>();
   const navigate = useNavigate();
   const [isTaskFormOpen, setIsTaskFormOpen] = useState(false);
   const { toast } = useToast();
-  const { userProfile, isAdmin } = usePermissionsContext();
+  const { canEdit, isProjectManager, isAdmin } = useProjectPermissions(projectId || "");
 
   const { data: project, isError: projectError } = useQuery({
     queryKey: ["project", projectId],
@@ -111,8 +111,6 @@ export const ProjectSummary = () => {
     return null;
   }
 
-  const isProjectManager = userProfile?.email === project.project_manager;
-
   return (
     <div className="container mx-auto py-6 space-y-6">
       <div className="flex items-center justify-between">
@@ -132,6 +130,7 @@ export const ProjectSummary = () => {
         tasks={tasks || []}
         isProjectManager={isProjectManager}
         isAdmin={isAdmin}
+        canEdit={canEdit}
       />
 
       <TaskForm
