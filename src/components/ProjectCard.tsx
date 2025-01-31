@@ -129,6 +129,7 @@ export const ProjectCard = ({
         onEdit={onEdit}
         onViewHistory={onViewHistory}
         id={id}
+        canEdit={canEdit}
         isMember={isMember}
         additionalActions={
           <AddToCartButton projectId={id} projectTitle={title} />
