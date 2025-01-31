@@ -31,6 +31,8 @@ const getRoleLabel = (role: string): string => {
       return "Chef de projet";
     case "manager":
       return "Manager";
+    case "membre":
+      return "Membre";
     default:
       return role;
   }
@@ -77,37 +79,35 @@ export const ProfileForm = ({ isOpen, onClose, profile }: ProfileFormProps) => {
     enabled: !!profile?.id,
   });
 
-  const isManager = userRoles?.some(role => role.role === "manager");
-
-  const { data: hierarchyAssignment } = useQuery({
-    queryKey: ["hierarchyAssignment", profile?.id],
+  const { data: hierarchyAssignments } = useQuery({
+    queryKey: ["hierarchyAssignments", profile?.id],
     queryFn: async () => {
-      if (!profile?.id || !isManager) return null;
+      if (!profile?.id) return null;
 
-      const { data: assignment, error: assignmentError } = await supabase
+      const { data: assignments, error } = await supabase
         .from("user_hierarchy_assignments")
-        .select("*")
-        .eq("user_id", profile.id)
-        .single();
+        .select(`
+          id,
+          entity_type,
+          entity_id,
+          poles (name),
+          directions (name),
+          services (name)
+        `)
+        .eq("user_id", profile.id);
 
-      if (assignmentError) throw assignmentError;
+      if (error) throw error;
 
-      if (assignment) {
-        const { data: entityData } = await supabase
-          .from(`${assignment.entity_type}s`)
-          .select("name")
-          .eq("id", assignment.entity_id)
-          .single();
-
-        return entityData ? {
-          ...assignment,
-          entity_name: entityData.name
-        } : null;
-      }
-
-      return null;
+      return assignments.map(assignment => ({
+        ...assignment,
+        entity_name: 
+          assignment.poles?.name ||
+          assignment.directions?.name ||
+          assignment.services?.name ||
+          'Inconnu'
+      }));
     },
-    enabled: !!profile?.id && isManager,
+    enabled: !!profile?.id,
   });
 
   const handleSubmit = async () => {
@@ -190,18 +190,22 @@ export const ProfileForm = ({ isOpen, onClose, profile }: ProfileFormProps) => {
             </div>
           </div>
 
-          {isManager && hierarchyAssignment && (
+          {hierarchyAssignments && hierarchyAssignments.length > 0 && (
             <>
               <Separator className="my-2" />
               <div className="grid gap-2">
-                <Label>Affectation hiérarchique</Label>
-                <div className="flex items-center gap-2">
-                  <Badge variant="outline">
-                    {getEntityTypeLabel(hierarchyAssignment.entity_type)}
-                  </Badge>
-                  <span className="text-sm text-muted-foreground">
-                    {hierarchyAssignment.entity_name}
-                  </span>
+                <Label>Affectations</Label>
+                <div className="space-y-2">
+                  {hierarchyAssignments.map((assignment) => (
+                    <div key={assignment.id} className="flex items-center gap-2">
+                      <Badge variant="outline">
+                        {getEntityTypeLabel(assignment.entity_type)}
+                      </Badge>
+                      <span className="text-sm text-muted-foreground">
+                        {assignment.entity_name}
+                      </span>
+                    </div>
+                  ))}
                 </div>
               </div>
             </>

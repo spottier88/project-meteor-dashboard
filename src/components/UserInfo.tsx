@@ -3,7 +3,7 @@ import { useSupabaseClient, useUser } from "@supabase/auth-helpers-react";
 import { Button } from "./ui/button";
 import { useNavigate } from "react-router-dom";
 import { LogOut, Settings } from "lucide-react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "./ui/use-toast";
 import { UserProfile, UserRoleData } from "@/types/user";
 import { ProfileForm } from "./profile/ProfileForm";
@@ -14,6 +14,7 @@ export const UserInfo = () => {
   const supabase = useSupabaseClient();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const [isProfileFormOpen, setIsProfileFormOpen] = useState(false);
 
   const { data: profile } = useQuery({
@@ -53,6 +54,9 @@ export const UserInfo = () => {
     try {
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
+
+      // Invalider le cache avant la déconnexion
+      queryClient.clear();
 
       await new Promise(resolve => setTimeout(resolve, 100));
 
