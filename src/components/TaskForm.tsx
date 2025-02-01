@@ -8,12 +8,12 @@ import { DatePickerField } from "./form/DatePickerField";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 interface TaskFormProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit?: () => void;  // Rendu optionnel
+  onSubmit?: () => void;
   projectId: string;
   task?: {
     id: string;
@@ -29,12 +29,13 @@ interface TaskFormProps {
 export const TaskForm = ({ 
   isOpen, 
   onClose, 
-  onSubmit = () => {}, // Valeur par défaut
+  onSubmit = () => {}, 
   projectId, 
   task,
   readOnlyFields = false
 }: TaskFormProps) => {
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const [title, setTitle] = useState(task?.title || "");
   const [description, setDescription] = useState(task?.description || "");
   const [status, setStatus] = useState<"todo" | "in_progress" | "done">(task?.status || "todo");
@@ -146,6 +147,10 @@ export const TaskForm = ({
         resetForm();
       }
 
+      // Invalider les queries liées aux tâches
+      queryClient.invalidateQueries({ queryKey: ["tasks", projectId] });
+      queryClient.invalidateQueries({ queryKey: ["taskCounts", projectId] });
+      
       onSubmit();
       onClose();
     } catch (error) {
