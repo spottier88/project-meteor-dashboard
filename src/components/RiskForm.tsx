@@ -30,7 +30,6 @@ export const RiskForm = ({ isOpen, onClose, onSubmit, projectId, risk }: RiskFor
   const [mitigationPlan, setMitigationPlan] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Charger les données du risque lors de l'édition
   useEffect(() => {
     if (risk) {
       setDescription(risk.description);
@@ -41,7 +40,6 @@ export const RiskForm = ({ isOpen, onClose, onSubmit, projectId, risk }: RiskFor
     }
   }, [risk]);
 
-  // Réinitialiser le formulaire lors de la fermeture
   useEffect(() => {
     if (!isOpen) {
       setDescription("");
