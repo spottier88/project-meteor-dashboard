@@ -1,7 +1,7 @@
 import { usePermissionsContext } from "@/contexts/PermissionsContext";
 
 export const useRiskAccess = (projectId: string) => {
-  const { isAdmin, isProjectManager } = usePermissionsContext();
+  const { isAdmin, isManager, isProjectManager } = usePermissionsContext();
   
   const canManage = isAdmin || isManager || isProjectManager;
 
