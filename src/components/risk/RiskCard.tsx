@@ -3,7 +3,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Pencil, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useRiskPermissions } from "@/hooks/use-risk-permissions";
+import { useRiskAccess } from "@/hooks/use-risk-access";
 
 interface RiskCardProps {
   risk: {
@@ -37,7 +37,7 @@ const statusColors = {
 };
 
 export const RiskCard = ({ risk, onEdit, onDelete }: RiskCardProps) => {
-  const { canManageRisks } = useRiskPermissions(risk.project_id);
+  const { canEditRisk, canDeleteRisk } = useRiskAccess(risk.project_id);
 
   return (
     <TableRow>
@@ -57,23 +57,27 @@ export const RiskCard = ({ risk, onEdit, onDelete }: RiskCardProps) => {
           {risk.status === "open" ? "Ouvert" : risk.status === "in_progress" ? "En cours" : "Résolu"}
         </Badge>
       </TableCell>
-      {canManageRisks && (
+      {(canEditRisk || canDeleteRisk) && (
         <TableCell>
           <div className="flex items-center gap-2">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => onEdit(risk)}
-            >
-              <Pencil className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => onDelete(risk)}
-            >
-              <Trash2 className="h-4 w-4" />
-            </Button>
+            {canEditRisk && (
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => onEdit(risk)}
+              >
+                <Pencil className="h-4 w-4" />
+              </Button>
+            )}
+            {canDeleteRisk && (
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => onDelete(risk)}
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            )}
           </div>
         </TableCell>
       )}

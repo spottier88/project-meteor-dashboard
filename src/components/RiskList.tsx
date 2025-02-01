@@ -1,10 +1,13 @@
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Plus, Pencil, Trash2 } from "lucide-react";
+import { Plus } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
-import { cn } from "@/lib/utils";
+import { useToast } from "@/components/ui/use-toast";
+import { RiskForm } from "./RiskForm";
+import { RiskCard } from "./risk/RiskCard";
+import { useRiskAccess } from "@/hooks/use-risk-access";
 
 export interface RiskListProps {
   projectId: string;
@@ -14,24 +17,6 @@ export interface RiskListProps {
   isAdmin: boolean;
 }
 
-const probabilityColors = {
-  low: "bg-green-100 text-green-800",
-  medium: "bg-yellow-100 text-yellow-800",
-  high: "bg-red-100 text-red-800",
-};
-
-const severityColors = {
-  low: "bg-green-100 text-green-800",
-  medium: "bg-yellow-100 text-yellow-800",
-  high: "bg-red-100 text-red-800",
-};
-
-const statusColors = {
-  open: "bg-red-100 text-red-800",
-  in_progress: "bg-yellow-100 text-yellow-800",
-  resolved: "bg-green-100 text-green-800",
-};
-
 export const RiskList = ({
   projectId,
   projectTitle,
@@ -39,7 +24,12 @@ export const RiskList = ({
   isProjectManager,
   isAdmin,
 }: RiskListProps) => {
-  const { data: risks, isLoading, isError } = useQuery({
+  const { toast } = useToast();
+  const [isFormOpen, setIsFormOpen] = useState(false);
+  const [selectedRisk, setSelectedRisk] = useState<any>(null);
+  const { canCreateRisk, canEditRisk, canDeleteRisk } = useRiskAccess(projectId);
+
+  const { data: risks, isLoading, isError, refetch } = useQuery({
     queryKey: ["risks", projectId],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -53,6 +43,46 @@ export const RiskList = ({
     enabled: !!projectId,
   });
 
+  const handleEdit = (risk: any) => {
+    setSelectedRisk(risk);
+    setIsFormOpen(true);
+  };
+
+  const handleDelete = async (risk: any) => {
+    try {
+      const { error } = await supabase
+        .from("risks")
+        .delete()
+        .eq("id", risk.id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Succès",
+        description: "Le risque a été supprimé",
+      });
+
+      refetch();
+    } catch (error) {
+      console.error("Error:", error);
+      toast({
+        title: "Erreur",
+        description: "Une erreur est survenue lors de la suppression",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleFormClose = () => {
+    setIsFormOpen(false);
+    setSelectedRisk(null);
+  };
+
+  const handleFormSubmit = () => {
+    refetch();
+    handleFormClose();
+  };
+
   if (isLoading) return <div>Chargement...</div>;
   if (isError) return <div>Erreur lors du chargement des risques.</div>;
 
@@ -60,8 +90,8 @@ export const RiskList = ({
     <div className="space-y-4">
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold">Risques du projet</h2>
-        {canEdit && (
-          <Button>
+        {canCreateRisk && (
+          <Button onClick={() => setIsFormOpen(true)}>
             <Plus className="h-4 w-4 mr-2" />
             Nouveau risque
           </Button>
@@ -76,47 +106,31 @@ export const RiskList = ({
               <TableHead>Probabilité</TableHead>
               <TableHead>Gravité</TableHead>
               <TableHead>Statut</TableHead>
-              {canEdit && <TableHead className="w-[100px]">Actions</TableHead>}
+              {(canEditRisk || canDeleteRisk) && <TableHead className="w-[100px]">Actions</TableHead>}
             </TableRow>
           </TableHeader>
           <TableBody>
             {risks.map((risk) => (
-              <TableRow key={risk.id}>
-                <TableCell>{risk.description}</TableCell>
-                <TableCell>
-                  <Badge className={cn(probabilityColors[risk.probability])}>
-                    {risk.probability === "low" ? "Faible" : risk.probability === "medium" ? "Moyenne" : "Élevée"}
-                  </Badge>
-                </TableCell>
-                <TableCell>
-                  <Badge className={cn(severityColors[risk.severity])}>
-                    {risk.severity === "low" ? "Faible" : risk.severity === "medium" ? "Moyenne" : "Élevée"}
-                  </Badge>
-                </TableCell>
-                <TableCell>
-                  <Badge className={cn(statusColors[risk.status])}>
-                    {risk.status === "open" ? "Ouvert" : risk.status === "in_progress" ? "En cours" : "Résolu"}
-                  </Badge>
-                </TableCell>
-                {canEdit && (
-                  <TableCell>
-                    <div className="flex items-center gap-2">
-                      <Button variant="ghost" size="icon">
-                        <Pencil className="h-4 w-4" />
-                      </Button>
-                      <Button variant="ghost" size="icon">
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </TableCell>
-                )}
-              </TableRow>
+              <RiskCard
+                key={risk.id}
+                risk={risk}
+                onEdit={handleEdit}
+                onDelete={handleDelete}
+              />
             ))}
           </TableBody>
         </Table>
       ) : (
         <p>Aucun risque trouvé pour ce projet.</p>
       )}
+
+      <RiskForm
+        isOpen={isFormOpen}
+        onClose={handleFormClose}
+        onSubmit={handleFormSubmit}
+        projectId={projectId}
+        risk={selectedRisk}
+      />
     </div>
   );
 };
