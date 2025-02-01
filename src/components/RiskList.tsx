@@ -27,7 +27,7 @@ export const RiskList = ({
   const { toast } = useToast();
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [selectedRisk, setSelectedRisk] = useState<any>(null);
-  const { canCreateRisk, canEditRisk, canDeleteRisk } = useRiskAccess(projectId);
+  const { canCreateRisk } = useRiskAccess(projectId);
 
   const { data: risks, isLoading, isError, refetch } = useQuery({
     queryKey: ["risks", projectId],
@@ -106,7 +106,7 @@ export const RiskList = ({
               <TableHead>Probabilité</TableHead>
               <TableHead>Gravité</TableHead>
               <TableHead>Statut</TableHead>
-              {(canEditRisk || canDeleteRisk) && <TableHead className="w-[100px]">Actions</TableHead>}
+              <TableHead className="w-[100px]">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>

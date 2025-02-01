@@ -3,6 +3,9 @@ import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
 import { SortableHeader, SortDirection } from "@/components/ui/sortable-header";
+import { Button } from "@/components/ui/button";
+import { Pencil, Trash2 } from "lucide-react";
+import { useRiskAccess } from "@/hooks/use-risk-access";
 
 interface Risk {
   id: string;
@@ -11,11 +14,14 @@ interface Risk {
   severity: "low" | "medium" | "high";
   status: "open" | "in_progress" | "resolved";
   mitigation_plan?: string;
+  project_id: string;
 }
 
 interface RiskTableProps {
   risks: Risk[];
   projectId: string;
+  onEdit?: (risk: Risk) => void;
+  onDelete?: (risk: Risk) => void;
 }
 
 const probabilityColors = {
@@ -36,9 +42,10 @@ const statusColors = {
   resolved: "bg-green-100 text-green-800",
 };
 
-export const RiskTable = ({ risks }: RiskTableProps) => {
+export const RiskTable = ({ risks, projectId, onEdit, onDelete }: RiskTableProps) => {
   const [sortKey, setSortKey] = useState<string | null>(null);
   const [sortDirection, setSortDirection] = useState<SortDirection>(null);
+  const { canEditRisk, canDeleteRisk } = useRiskAccess(projectId);
 
   const handleSort = (key: string) => {
     if (sortKey === key) {
@@ -101,6 +108,9 @@ export const RiskTable = ({ risks }: RiskTableProps) => {
             currentDirection={sortDirection}
             onSort={handleSort}
           />
+          {(canEditRisk || canDeleteRisk) && (
+            <TableHead>Actions</TableHead>
+          )}
         </TableRow>
       </TableHeader>
       <TableBody>
@@ -122,6 +132,30 @@ export const RiskTable = ({ risks }: RiskTableProps) => {
                 {risk.status === "open" ? "Ouvert" : risk.status === "in_progress" ? "En cours" : "Résolu"}
               </Badge>
             </TableCell>
+            {(canEditRisk || canDeleteRisk) && (
+              <TableCell>
+                <div className="flex items-center gap-2">
+                  {canEditRisk && onEdit && (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => onEdit(risk)}
+                    >
+                      <Pencil className="h-4 w-4" />
+                    </Button>
+                  )}
+                  {canDeleteRisk && onDelete && (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => onDelete(risk)}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  )}
+                </div>
+              </TableCell>
+            )}
           </TableRow>
         ))}
       </TableBody>
