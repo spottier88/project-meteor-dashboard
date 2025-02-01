@@ -57,30 +57,28 @@ export const RiskCard = ({ risk, onEdit, onDelete }: RiskCardProps) => {
           {risk.status === "open" ? "Ouvert" : risk.status === "in_progress" ? "En cours" : "Résolu"}
         </Badge>
       </TableCell>
-      {(canEditRisk || canDeleteRisk) && (
-        <TableCell>
-          <div className="flex items-center gap-2">
-            {canEditRisk && (
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => onEdit(risk)}
-              >
-                <Pencil className="h-4 w-4" />
-              </Button>
-            )}
-            {canDeleteRisk && (
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => onDelete(risk)}
-              >
-                <Trash2 className="h-4 w-4" />
-              </Button>
-            )}
-          </div>
-        </TableCell>
-      )}
+      <TableCell>
+        <div className="flex items-center gap-2">
+          {canEditRisk && (
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => onEdit(risk)}
+            >
+              <Pencil className="h-4 w-4" />
+            </Button>
+          )}
+          {canDeleteRisk && (
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => onDelete(risk)}
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          )}
+        </div>
+      </TableCell>
     </TableRow>
   );
 };
