@@ -112,9 +112,11 @@ export const TeamManagement = ({
               {members?.map((member) => (
                 <TableRow key={member.id}>
                   <TableCell>
-                    {member.profiles.first_name} {member.profiles.last_name}
+                    {member.profiles && (member.profiles.first_name || member.profiles.last_name) 
+                      ? `${member.profiles.first_name || ''} ${member.profiles.last_name || ''}`.trim()
+                      : member.profiles?.email || 'Utilisateur inconnu'}
                   </TableCell>
-                  <TableCell>{member.profiles.email}</TableCell>
+                  <TableCell>{member.profiles?.email || 'Email non disponible'}</TableCell>
                   {canManageTeam && (
                     <TableCell>
                       <Button
