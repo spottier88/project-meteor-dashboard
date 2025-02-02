@@ -18,7 +18,7 @@ import {
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { format } from "date-fns";
+import { format, isValid, parseISO } from "date-fns";
 import { fr } from "date-fns/locale";
 import { Notification } from "@/types/notification";
 import { useToast } from "@/components/ui/use-toast";
@@ -106,6 +106,15 @@ export const UserNotificationsDropdown = () => {
     setSelectedNotification(null);
   };
 
+  const formatDate = (dateString: string) => {
+    const date = parseISO(dateString);
+    if (!isValid(date)) {
+      console.error("Invalid date:", dateString);
+      return "Date invalide";
+    }
+    return format(date, "d MMMM yyyy", { locale: fr });
+  };
+
   return (
     <>
       <DropdownMenu open={dropdownOpen} onOpenChange={setDropdownOpen}>
@@ -139,7 +148,7 @@ export const UserNotificationsDropdown = () => {
                         {notification.content}
                       </div>
                       <div className="text-xs text-muted-foreground mt-1">
-                        {format(new Date(notification.publication_date), "d MMMM yyyy", { locale: fr })}
+                        {formatDate(notification.publication_date)}
                       </div>
                     </div>
                     <Button 
@@ -177,7 +186,7 @@ export const UserNotificationsDropdown = () => {
               {selectedNotification?.content}
             </p>
             <div className="mt-4 text-xs text-muted-foreground">
-              Publié le {selectedNotification && format(new Date(selectedNotification.publication_date), "d MMMM yyyy", { locale: fr })}
+              Publié le {selectedNotification && formatDate(selectedNotification.publication_date)}
             </div>
           </div>
           <DialogClose />
