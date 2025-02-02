@@ -45,9 +45,9 @@ export const canManagerAccessProject = async (
     .eq("id", projectId)
     .single();
 
-  console.log("Checking access for project:", projectId);
-  console.log("Project data:", projectData);
-  console.log("User assignments:", assignments);
+  // console.log("Checking access for project:", projectId);
+  // console.log("Project data:", projectData);
+  // console.log("User assignments:", assignments);
 
   if (!assignments || !projectData) return false;
 
