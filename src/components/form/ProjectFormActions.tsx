@@ -109,7 +109,12 @@ export const ProjectFormActions = ({
           .eq("id", project.id);
 
         if (projectError) {
-          console.error("Project update error:", projectError);
+</lov-replace>
+
+<lov-search>
+          console.error("Monitoring error:", monitoringError);
+</lov-search>
+<lov-replace>
           toast({
             title: "Erreur",
             description: "Vous n'avez pas les droits nécessaires pour modifier ce projet",

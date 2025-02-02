@@ -72,7 +72,12 @@ const Index = () => {
   const { data: projects, refetch: refetchProjects } = useQuery({
     queryKey: ["projects"],
     queryFn: async () => {
-      console.log("Fetching projects with monitoring data...");
+</lov-replace>
+
+<lov-search>
+      console.error("Error fetching projects:", projectsError);
+</lov-search>
+<lov-replace>
       const { data: projectsData, error: projectsError } = await supabase
         .from("projects")
         .select(`
@@ -106,7 +111,13 @@ const Index = () => {
         .select("*");
 
       if (reviewsError) {
-        console.error("Error fetching reviews:", reviewsError);
+  </lov-replace>
+
+<lov-search>
+    console.log("Handling project form submission in Index.tsx");
+    console.log("Project data received:", projectData);
+</lov-search>
+<lov-replace>
         throw reviewsError;
       }
 
@@ -221,7 +232,12 @@ const Index = () => {
         lifecycle_status: projectData.lifecycleStatus,
       };
 
-      console.log("Prepared project payload:", projectPayload);
+</lov-replace>
+
+<lov-search>
+      console.log("Updating existing project:", selectedProject.id);
+</lov-search>
+<lov-replace>
 
       if (selectedProject?.id) {
         console.log("Updating existing project:", selectedProject.id);
@@ -231,7 +247,12 @@ const Index = () => {
           .eq("id", selectedProject.id);
 
         if (projectError) {
-          console.error("Error updating project:", projectError);
+    </lov-replace>
+
+<lov-search>
+      console.log("Project updated successfully, updating monitoring...");
+</lov-search>
+<lov-replace>
           throw projectError;
         }
 
@@ -248,7 +269,12 @@ const Index = () => {
           });
 
         if (monitoringError) {
-          console.error("Error updating monitoring:", monitoringError);
+    </lov-replace>
+
+<lov-search>
+      console.error("Error updating innovation scores:", innovationError);
+</lov-search>
+<lov-replace>
           throw monitoringError;
         }
 
@@ -266,7 +292,12 @@ const Index = () => {
           throw innovationError;
         }
       } else {
-        console.log("Creating new project");
+  </lov-replace>
+
+<lov-search>
+      console.error("Error creating project:", projectError);
+</lov-search>
+<lov-replace>
         const { data: newProject, error: projectError } = await supabase
           .from("projects")
           .insert(projectPayload)
@@ -278,8 +309,12 @@ const Index = () => {
           throw projectError;
         }
 
-        console.log("New project created:", newProject);
-        console.log("Creating monitoring entry...");
+  </lov-replace>
+
+  <lov-search>
+        console.error("Error creating monitoring:", monitoringError);
+  </lov-search>
+  <lov-replace>
 
         const { error: monitoringError } = await supabase
           .from("project_monitoring")
@@ -302,7 +337,12 @@ const Index = () => {
           });
 
         if (innovationError) {
-          console.error("Error creating innovation scores:", innovationError);
+    </lov-replace>
+
+<lov-search>
+      console.log("Project, monitoring and innovation scores saved successfully");
+</lov-search>
+<lov-replace>
           throw innovationError;
         }
       }

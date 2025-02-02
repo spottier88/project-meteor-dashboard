@@ -27,9 +27,12 @@ export const ProjectForm = ({ isOpen, onClose, onSubmit, project }: ProjectFormP
   const validation = useProjectFormValidation();
   const { isAdmin, userProfile } = usePermissionsContext();
 
-  console.log("ProjectForm - Permissions:", { isAdmin, userEmail: userProfile?.email });
-  console.log("ProjectForm - Current project:", project);
-  console.log("ProjectForm - Form state:", formState);
+</lov-replace>
+
+<lov-search>
+      console.log("Submitting project data:", projectData);
+</lov-search>
+<lov-replace>
 
   const { data: projectManagers } = useQuery({
     queryKey: ["projectManagers", user?.id, validation.userRoles],
