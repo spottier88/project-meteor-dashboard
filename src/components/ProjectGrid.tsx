@@ -83,7 +83,7 @@ export const ProjectGrid = ({
     }
 
     if (isAdmin) {
-      console.log("[ProjectGrid] User is admin, showing all projects:", projects.length);
+      // console.log("[ProjectGrid] User is admin, showing all projects:", projects.length);
       return projects;
     }
 
