@@ -7,8 +7,8 @@ export const getProjectManagers = async (
 ): Promise<UserProfile[]> => {
   if (!userId || !userRoles) return [];
 
-  console.log("Getting project managers for user:", userId);
-  console.log("User roles:", userRoles);
+  // console.log("Getting project managers for user:", userId);
+  // console.log("User roles:", userRoles);
 
   // Pour un admin : tous les chefs de projet
   if (userRoles.includes("admin")) {
@@ -34,13 +34,13 @@ export const getProjectManagers = async (
       return [];
     }
 
-    console.log("Found project managers for admin:", data?.length);
+    // console.log("Found project managers for admin:", data?.length);
     return data as UserProfile[];
   }
 
   // Pour un manager : chefs de projet dans sa hiérarchie
   if (userRoles.includes("manager")) {
-    console.log("User is manager, fetching assigned project managers");
+    // console.log("User is manager, fetching assigned project managers");
     
     // 1. Récupérer les entités gérées par le manager
     const { data: managerEntities, error: managerError } = await supabase
@@ -54,7 +54,7 @@ export const getProjectManagers = async (
       return [];
     }
 
-    console.log("Manager assignments:", managerEntities);
+    // console.log("Manager assignments:", managerEntities);
 
     // 2. Récupérer les IDs des chefs de projet
     const { data: chefProjetIds, error: chefProjetError } = await supabase
@@ -67,7 +67,7 @@ export const getProjectManagers = async (
       return [];
     }
 
-    console.log("Chef projet IDs:", chefProjetIds);
+    // console.log("Chef projet IDs:", chefProjetIds);
 
     // 3. Récupérer les entités accessibles pour chaque type
     let accessibleUserIds = new Set<string>();
@@ -148,7 +148,7 @@ export const getProjectManagers = async (
       }
     }
 
-    console.log("Accessible user IDs:", Array.from(accessibleUserIds));
+    // console.log("Accessible user IDs:", Array.from(accessibleUserIds));
 
     // 4. Récupérer les profils des chefs de projet dans la hiérarchie
     const { data: projectManagers, error: pmError } = await supabase
@@ -173,7 +173,7 @@ export const getProjectManagers = async (
   }
 
   // Pour un chef de projet : uniquement son profil
-  console.log("User is chef de projet, returning only their profile");
+ // console.log("User is chef de projet, returning only their profile");
   const { data: profile, error: profileError } = await supabase
     .from("profiles")
     .select("id, email, first_name, last_name, created_at")
