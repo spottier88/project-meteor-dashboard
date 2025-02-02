@@ -45,14 +45,14 @@ export const ProjectActions = ({
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const { isAdmin, isProjectManager, canEdit, canManageTeam } = useProjectPermissions(projectId);
 
-  console.log('ProjectActions permissions:', {
-    projectId,
-    isAdmin,
-    isProjectManager,
-    canEdit,
-    canManageTeam,
-    isMember
-  });
+  // console.log('ProjectActions permissions:', {
+  //   projectId,
+  //   isAdmin,
+  //   isProjectManager,
+  //   canEdit,
+  //   canManageTeam,
+  //   isMember
+  // });
 
   const handleClick = (e: React.MouseEvent, action: () => void) => {
     e.stopPropagation();
