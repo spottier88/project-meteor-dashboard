@@ -5,8 +5,8 @@ export interface Notification {
   title: string;
   content: string;
   type: NotificationType;
-  publication_date: string;
-  created_at: string;
+  publication_date: string | null;
+  created_at: string | null;
   created_by?: string;
   published: boolean | null;
 }

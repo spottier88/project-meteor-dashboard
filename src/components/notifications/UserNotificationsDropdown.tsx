@@ -68,7 +68,8 @@ export const UserNotificationsDropdown = () => {
       return notifs;
     },
     enabled: !!user?.id,
-    refetchInterval: 30000,
+    refetchInterval: 30000, // Refetch toutes les 30 secondes
+    staleTime: 20000, // Considérer les données comme périmées après 20 secondes
   });
 
   const handleMarkAsRead = async (notificationId: string) => {
@@ -135,12 +136,12 @@ export const UserNotificationsDropdown = () => {
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-80">
           <ScrollArea className="h-[300px]">
-            {notifications?.length === 0 ? (
+            {!notifications || notifications.length === 0 ? (
               <div className="p-4 text-center text-sm text-muted-foreground">
                 Aucune notification
               </div>
             ) : (
-              notifications?.map((notification) => (
+              notifications.map((notification) => (
                 <DropdownMenuItem 
                   key={notification.id} 
                   className="flex flex-col items-start p-4 cursor-pointer"
