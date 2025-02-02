@@ -25,11 +25,11 @@ export function PermissionsProvider({ children }: { children: React.ReactNode })
   const user = useUser();
   const session = useSession();
 
-  console.log("[PermissionsProvider] Session state:", {
-    userId: user?.id,
-    sessionStatus: !!session,
-    timestamp: new Date().toISOString()
-  });
+  // console.log("[PermissionsProvider] Session state:", {
+  //   userId: user?.id,
+  //   sessionStatus: !!session,
+  //   timestamp: new Date().toISOString()
+  // });
 
   const { data: userRoles, isLoading: isLoadingRoles, isError: isRolesError } = useQuery({
     queryKey: ["userRoles", user?.id, session?.access_token],
@@ -38,7 +38,7 @@ export function PermissionsProvider({ children }: { children: React.ReactNode })
         console.log("[PermissionsProvider] No user ID available");
         return [];
       }
-      console.log("[PermissionsProvider] Fetching roles for user:", user.id);
+      // console.log("[PermissionsProvider] Fetching roles for user:", user.id);
       const { data, error } = await supabase
         .from("user_roles")
         .select("role")
@@ -49,7 +49,7 @@ export function PermissionsProvider({ children }: { children: React.ReactNode })
         throw error;
       }
       const roles = data.map(ur => ur.role as UserRole);
-      console.log("[PermissionsProvider] Fetched roles:", roles);
+      // console.log("[PermissionsProvider] Fetched roles:", roles);
       return roles;
     },
     enabled: !!user?.id && !!session,
@@ -61,10 +61,10 @@ export function PermissionsProvider({ children }: { children: React.ReactNode })
     queryKey: ["userProfile", user?.id, session?.access_token],
     queryFn: async () => {
       if (!user?.id) {
-        console.log("[PermissionsProvider] No user ID available for profile");
+        // console.log("[PermissionsProvider] No user ID available for profile");
         return null;
       }
-      console.log("[PermissionsProvider] Fetching profile for user:", user.id);
+      // console.log("[PermissionsProvider] Fetching profile for user:", user.id);
       const { data, error } = await supabase
         .from("profiles")
         .select("*")
@@ -75,7 +75,7 @@ export function PermissionsProvider({ children }: { children: React.ReactNode })
         console.error("[PermissionsProvider] Error fetching user profile:", error);
         throw error;
       }
-      console.log("[PermissionsProvider] Fetched profile:", data);
+      // console.log("[PermissionsProvider] Fetched profile:", data);
       return data;
     },
     enabled: !!user?.id && !!session,
@@ -96,11 +96,11 @@ export function PermissionsProvider({ children }: { children: React.ReactNode })
   const hasRole = (role: UserRole): boolean => {
     if (!userRoles || userRoles.length === 0) return false;
     const hasRequestedRole = userRoles.includes(role);
-    console.log(`[PermissionsProvider] Checking role ${role}:`, {
-      hasRequestedRole,
-      userRoles,
-      userId: user?.id
-    });
+    // console.log(`[PermissionsProvider] Checking role ${role}:`, {
+    //   hasRequestedRole,
+    //   userRoles,
+    //   userId: user?.id
+    // });
     return hasRequestedRole;
   };
 
@@ -129,12 +129,12 @@ export function PermissionsProvider({ children }: { children: React.ReactNode })
   }, [user?.id, userProfile, userRoles, highestRole, isAdmin, isManager, isProjectManager, isMember, isLoading, isError, session]);
 
   if (!session) {
-    console.log("[PermissionsProvider] No session available");
+    // console.log("[PermissionsProvider] No session available");
     return null;
   }
 
   if (isLoading) {
-    console.log("[PermissionsProvider] Loading state");
+    // console.log("[PermissionsProvider] Loading state");
     return null;
   }
 
