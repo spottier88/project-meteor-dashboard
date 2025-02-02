@@ -207,6 +207,7 @@ const Index = () => {
       };
 
       if (selectedProject?.id) {
+        // Mise à jour du projet
         const { error: projectError } = await supabase
           .from("projects")
           .update(projectPayload)
@@ -214,6 +215,21 @@ const Index = () => {
 
         if (projectError) {
           throw projectError;
+        }
+
+        // Mise à jour des scores d'innovation
+        const { error: innovationError } = await supabase
+          .from("project_innovation_scores")
+          .upsert({
+            project_id: selectedProject.id,
+            ...projectData.innovation,
+            updated_at: new Date().toISOString()
+          }, {
+            onConflict: 'project_id'
+          });
+
+        if (innovationError) {
+          throw innovationError;
         }
 
         const { error: monitoringError } = await supabase
@@ -230,6 +246,7 @@ const Index = () => {
           throw monitoringError;
         }
       } else {
+        // Création d'un nouveau projet
         const { data: newProject, error: projectError } = await supabase
           .from("projects")
           .insert(projectPayload)
@@ -238,6 +255,18 @@ const Index = () => {
 
         if (projectError) {
           throw projectError;
+        }
+
+        // Création des scores d'innovation
+        const { error: innovationError } = await supabase
+          .from("project_innovation_scores")
+          .insert({
+            project_id: newProject.id,
+            ...projectData.innovation
+          });
+
+        if (innovationError) {
+          throw innovationError;
         }
 
         const { error: monitoringError } = await supabase
