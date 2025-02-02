@@ -114,12 +114,12 @@ export const ProjectCard = ({
     enabled: !!id,
   });
 
-  console.log("ProjectCard permissions:", {
-    canEdit,
-    isProjectManager,
-    isMember,
-    projectManager: project_manager
-  });
+  // console.log("ProjectCard permissions:", {
+  //  canEdit,
+  //  isProjectManager,
+  //  isMember,
+  //  projectManager: project_manager
+  // });
 
   return (
     <Card className="w-full transition-all duration-300 hover:shadow-lg animate-fade-in">
