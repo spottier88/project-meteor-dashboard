@@ -101,20 +101,12 @@ export const ProjectFormActions = ({
       };
 
       if (project?.id) {
-        // La vérification des droits est maintenant gérée par les politiques RLS
-        // Nous laissons Supabase gérer les autorisations
         const { error: projectError } = await supabase
           .from("projects")
           .update(projectData)
           .eq("id", project.id);
 
         if (projectError) {
-</lov-replace>
-
-<lov-search>
-          console.error("Monitoring error:", monitoringError);
-</lov-search>
-<lov-replace>
           toast({
             title: "Erreur",
             description: "Vous n'avez pas les droits nécessaires pour modifier ce projet",
@@ -134,7 +126,6 @@ export const ProjectFormActions = ({
           });
 
         if (monitoringError) {
-          console.error("Monitoring error:", monitoringError);
           toast({
             title: "Erreur",
             description: monitoringError.message,
@@ -172,7 +163,6 @@ export const ProjectFormActions = ({
           });
 
         if (monitoringError) {
-          console.error("Monitoring error:", monitoringError);
           toast({
             title: "Erreur",
             description: monitoringError.message,
@@ -190,7 +180,6 @@ export const ProjectFormActions = ({
       onSubmit();
       onClose();
     } catch (error: any) {
-      console.error("Error submitting project:", error);
       toast({
         title: "Erreur",
         description: error.message || "Une erreur est survenue",
