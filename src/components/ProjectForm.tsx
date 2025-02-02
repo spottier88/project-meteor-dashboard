@@ -23,12 +23,12 @@ export const ProjectForm = ({ isOpen, onClose, onSubmit, project }: ProjectFormP
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const formState = useProjectFormState(isOpen, project);
-  const validation = useProjectFormValidation();
-  const { isAdmin, userProfile } = usePermissionsContext();
+  const { isAdmin, isManager, userProfile } = usePermissionsContext();
   const { canEdit } = useProjectPermissions(project?.id || "");
+  const validation = useProjectFormValidation(formState, userProfile);
 
   const { data: projectManagers } = useQuery({
-    queryKey: ["projectManagers", user?.id, validation.userRoles],
+    queryKey: ["projectManagers", user?.id],
     queryFn: () => getProjectManagers(user?.id),
     enabled: !!user?.id,
   });
@@ -56,7 +56,7 @@ export const ProjectForm = ({ isOpen, onClose, onSubmit, project }: ProjectFormP
       return;
     }
 
-    const validationError = validation.validateForm(formState);
+    const validationError = validation.validateForm();
     if (validationError) {
       toast({
         title: "Erreur de validation",
@@ -124,16 +124,44 @@ export const ProjectForm = ({ isOpen, onClose, onSubmit, project }: ProjectFormP
         <form onSubmit={handleSubmit} className="space-y-8">
           <ProjectFormNavigation
             currentStep={formState.currentStep}
-            setCurrentStep={formState.setCurrentStep}
+            onPrevious={() => formState.setCurrentStep(formState.currentStep - 1)}
+            onNext={() => formState.setCurrentStep(formState.currentStep + 1)}
+            canGoNext={true}
+            isLastStep={formState.currentStep === 2}
+            isSubmitting={formState.isSubmitting}
+            onClose={onClose}
           />
           <ProjectFormFields
-            formState={formState}
+            title={formState.title}
+            setTitle={formState.setTitle}
+            description={formState.description}
+            setDescription={formState.setDescription}
+            projectManager={formState.projectManager}
+            setProjectManager={formState.setProjectManager}
+            startDate={formState.startDate}
+            setStartDate={formState.setStartDate}
+            endDate={formState.endDate}
+            setEndDate={formState.setEndDate}
+            priority={formState.priority}
+            setPriority={formState.setPriority}
+            monitoringLevel={formState.monitoringLevel}
+            setMonitoringLevel={formState.setMonitoringLevel}
+            monitoringEntityId={formState.monitoringEntityId}
+            setMonitoringEntityId={formState.setMonitoringEntityId}
             currentStep={formState.currentStep}
             projectManagers={projectManagers || []}
+            isAdmin={isAdmin}
+            isManager={isManager}
           />
           <ProjectFormActions
             isSubmitting={formState.isSubmitting}
             onClose={onClose}
+            onSubmit={handleSubmit}
+            project={project}
+            formData={formState}
+            user={user}
+            isAdmin={isAdmin}
+            isManager={isManager}
           />
         </form>
       </DialogContent>

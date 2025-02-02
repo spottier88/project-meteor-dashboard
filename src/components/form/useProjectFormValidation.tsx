@@ -3,7 +3,7 @@ import { useUser } from "@supabase/auth-helpers-react";
 import { supabase } from "@/integrations/supabase/client";
 import { UserRoleData } from "@/types/user";
 
-export const useProjectFormValidation = () => {
+export const useProjectFormValidation = (formState: any, userProfile: any) => {
   const user = useUser();
 
   const { data: userRoles } = useQuery({
@@ -36,6 +36,19 @@ export const useProjectFormValidation = () => {
     return true;
   };
 
+  const validateForm = () => {
+    if (!formState.title.trim()) {
+      return "Le titre du projet est requis";
+    }
+    if (!formState.projectManager.trim()) {
+      return "Le chef de projet est requis";
+    }
+    if (formState.startDate && formState.endDate && formState.startDate > formState.endDate) {
+      return "La date de fin doit être postérieure à la date de début";
+    }
+    return null;
+  };
+
   return {
     isAdmin,
     isManager,
@@ -43,5 +56,6 @@ export const useProjectFormValidation = () => {
     validateStep1,
     validateStep2,
     validateStep3,
+    validateForm
   };
 };
