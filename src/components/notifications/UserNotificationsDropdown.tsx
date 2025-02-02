@@ -106,7 +106,12 @@ export const UserNotificationsDropdown = () => {
     setSelectedNotification(null);
   };
 
-  const formatDate = (dateString: string) => {
+  const formatDate = (dateString: string | null | undefined) => {
+    if (!dateString) {
+      console.error("Date string is null or undefined");
+      return "Date invalide";
+    }
+    
     const date = parseISO(dateString);
     if (!isValid(date)) {
       console.error("Invalid date:", dateString);
