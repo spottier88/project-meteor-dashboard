@@ -12,6 +12,7 @@ import { useProjectFormState } from "./form/useProjectFormState";
 import { useProjectFormValidation } from "./form/useProjectFormValidation";
 import { getProjectManagers } from "@/utils/projectManagers";
 import { usePermissionsContext } from "@/contexts/PermissionsContext";
+import { useProjectPermissions } from "@/hooks/useProjectPermissions";
 
 interface ProjectFormProps {
   isOpen: boolean;
@@ -26,6 +27,7 @@ export const ProjectForm = ({ isOpen, onClose, onSubmit, project }: ProjectFormP
   const formState = useProjectFormState(isOpen, project);
   const validation = useProjectFormValidation();
   const { isAdmin, userProfile } = usePermissionsContext();
+  const { canEdit } = useProjectPermissions(project?.id || "");
 
   const { data: projectManagers } = useQuery({
     queryKey: ["projectManagers", user?.id, validation.userRoles],
@@ -45,7 +47,7 @@ export const ProjectForm = ({ isOpen, onClose, onSubmit, project }: ProjectFormP
       return;
     }
 
-    if (!isAdmin) {
+    if (!canEdit) {
       console.error("User doesn't have permission to edit project");
       toast({
         title: "Erreur",
