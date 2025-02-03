@@ -58,10 +58,18 @@ export const UserNotificationsDropdown = () => {
       if (error) throw error;
 
       const notifs = data
-        .map(item => ({
-          ...item.notifications,
-          read_at: item.read_at
-        }))
+        .map(item => {
+          const notification = item.notifications;
+          if (!notification) return null;
+          
+          // Conversion explicite des dates en chaînes ISO
+          return {
+            ...notification,
+            publication_date: notification.publication_date ? new Date(notification.publication_date).toISOString() : null,
+            created_at: notification.created_at ? new Date(notification.created_at).toISOString() : null,
+            read_at: item.read_at
+          };
+        })
         .filter(Boolean) as (Notification & { read_at: string | null })[];
       
       setUnreadCount(notifs.length);
@@ -106,6 +114,15 @@ export const UserNotificationsDropdown = () => {
     setSelectedNotification(null);
   };
 
+  const formatNotificationDate = (dateString: string) => {
+    try {
+      return format(new Date(dateString), "d MMMM yyyy", { locale: fr });
+    } catch (error) {
+      console.error("Error formatting date:", error);
+      return "Date invalide";
+    }
+  };
+
   return (
     <>
       <DropdownMenu open={dropdownOpen} onOpenChange={setDropdownOpen}>
@@ -139,7 +156,7 @@ export const UserNotificationsDropdown = () => {
                         {notification.content}
                       </div>
                       <div className="text-xs text-muted-foreground mt-1">
-                        {format(new Date(notification.publication_date), "d MMMM yyyy", { locale: fr })}
+                        {formatNotificationDate(notification.publication_date)}
                       </div>
                     </div>
                     <Button 
@@ -177,7 +194,7 @@ export const UserNotificationsDropdown = () => {
               {selectedNotification?.content}
             </p>
             <div className="mt-4 text-xs text-muted-foreground">
-              Publié le {selectedNotification && format(new Date(selectedNotification.publication_date), "d MMMM yyyy", { locale: fr })}
+              Publié le {selectedNotification && formatNotificationDate(selectedNotification.publication_date)}
             </div>
           </div>
           <DialogClose />
