@@ -175,6 +175,6 @@ export const ProjectCard = ({
       </CardContent>
     </Card>
   );
-});
+};
 
 export default ProjectCard;
