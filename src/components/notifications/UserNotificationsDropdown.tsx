@@ -18,7 +18,7 @@ import {
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { format, isValid, parseISO } from "date-fns";
+import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { Notification } from "@/types/notification";
 import { useToast } from "@/components/ui/use-toast";
@@ -68,8 +68,7 @@ export const UserNotificationsDropdown = () => {
       return notifs;
     },
     enabled: !!user?.id,
-    refetchInterval: 30000, // Refetch toutes les 30 secondes
-    staleTime: 20000, // Considérer les données comme périmées après 20 secondes
+    refetchInterval: 30000,
   });
 
   const handleMarkAsRead = async (notificationId: string) => {
@@ -107,20 +106,6 @@ export const UserNotificationsDropdown = () => {
     setSelectedNotification(null);
   };
 
-  const formatDate = (dateString: string | null | undefined) => {
-    if (!dateString) {
-      console.error("Date string is null or undefined");
-      return "Date invalide";
-    }
-    
-    const date = parseISO(dateString);
-    if (!isValid(date)) {
-      console.error("Invalid date:", dateString);
-      return "Date invalide";
-    }
-    return format(date, "d MMMM yyyy", { locale: fr });
-  };
-
   return (
     <>
       <DropdownMenu open={dropdownOpen} onOpenChange={setDropdownOpen}>
@@ -136,12 +121,12 @@ export const UserNotificationsDropdown = () => {
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-80">
           <ScrollArea className="h-[300px]">
-            {!notifications || notifications.length === 0 ? (
+            {notifications?.length === 0 ? (
               <div className="p-4 text-center text-sm text-muted-foreground">
                 Aucune notification
               </div>
             ) : (
-              notifications.map((notification) => (
+              notifications?.map((notification) => (
                 <DropdownMenuItem 
                   key={notification.id} 
                   className="flex flex-col items-start p-4 cursor-pointer"
@@ -154,7 +139,7 @@ export const UserNotificationsDropdown = () => {
                         {notification.content}
                       </div>
                       <div className="text-xs text-muted-foreground mt-1">
-                        {formatDate(notification.publication_date)}
+                        {format(new Date(notification.publication_date), "d MMMM yyyy", { locale: fr })}
                       </div>
                     </div>
                     <Button 
@@ -192,7 +177,7 @@ export const UserNotificationsDropdown = () => {
               {selectedNotification?.content}
             </p>
             <div className="mt-4 text-xs text-muted-foreground">
-              Publié le {selectedNotification && formatDate(selectedNotification.publication_date)}
+              Publié le {selectedNotification && format(new Date(selectedNotification.publication_date), "d MMMM yyyy", { locale: fr })}
             </div>
           </div>
           <DialogClose />

@@ -223,7 +223,7 @@ const Index = () => {
           .upsert({
             project_id: selectedProject.id,
             ...projectData.innovation,
-            updated_at: new Date().toISOString().replace('T', ' ').replace('Z', '+00')
+            updated_at: new Date().toISOString()
           }, {
             onConflict: 'project_id'
           });
