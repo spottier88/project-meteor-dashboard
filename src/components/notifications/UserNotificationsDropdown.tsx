@@ -59,8 +59,11 @@ export const UserNotificationsDropdown = () => {
 
       const notifs = data
         .map(item => {
-          const notification = item.notifications;
-          if (!notification) return null;
+          //const notification = item.notifications;
+          // Accéder au premier élément du tableau notifications
+        const notification = Array.isArray(item.notifications) ? 
+        item.notifications[0] : item.notifications;
+        if (!notification) return null;
           
           // Conversion explicite des dates en chaînes ISO
           return {
