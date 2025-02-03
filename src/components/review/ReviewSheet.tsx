@@ -5,10 +5,10 @@ import { Button } from "@/components/ui/button";
 import { useForm } from "react-hook-form";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { useQuery } from "@tanstack/react-query";
-import { ReviewForm } from "./types";
-import { ReviewFormFields } from "./ReviewFormFields";
-import { ReviewActionFields } from "./ReviewActionFields";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { ReviewForm } from "@/components/review/types";
+import { ReviewFormFields } from "@/components/review/ReviewFormFields";
+import { ReviewActionFields } from "@/components/review/ReviewActionFields";
 
 interface ReviewSheetProps {
   projectId: string;
@@ -27,6 +27,7 @@ export const ReviewSheet = ({
 }: ReviewSheetProps) => {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const queryClient = useQueryClient();
 
   // Récupération de la dernière revue pour initialiser l'avancement
   const { data: lastReview } = useQuery({
@@ -105,6 +106,9 @@ export const ReviewSheet = ({
 
       if (projectError) throw projectError;
 
+      // Invalider toutes les requêtes liées aux projets
+      await queryClient.invalidateQueries({ queryKey: ["projects"] });
+      
       toast({
         title: "Revue enregistrée",
         description: "La revue du projet a été enregistrée avec succès.",

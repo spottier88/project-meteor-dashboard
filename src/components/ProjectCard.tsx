@@ -91,7 +91,7 @@ export const ProjectCard = ({
   });
 
   const { data: latestReview } = useQuery({
-    queryKey: ["latestReview", id],
+    queryKey: ["projects", id, "latest-review"],
     queryFn: async () => {
       if (!id) {
         console.error("No project ID provided for latest review query");
@@ -175,6 +175,6 @@ export const ProjectCard = ({
       </CardContent>
     </Card>
   );
-};
+});
 
 export default ProjectCard;
