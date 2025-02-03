@@ -75,9 +75,6 @@ export const UserNotificationsDropdown = () => {
         })
         .filter(Boolean) as (Notification & { read_at: string | null })[];
 
-      console.log("Raw data from Supabase:", data);
-      console.log("After transformation:", notifs);
-
       
       setUnreadCount(notifs.length);
       return notifs;
