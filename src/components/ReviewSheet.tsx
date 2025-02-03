@@ -1,16 +1,14 @@
 import { useState } from "react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
-import { Form, FormControl, FormField, FormItem, FormLabel } from "@/components/ui/form";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Textarea } from "@/components/ui/textarea";
-import { Input } from "@/components/ui/input";
+import { Form } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
-import { Sun, Cloud, CloudLightning, Plus, Trash2 } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { Slider } from "@/components/ui/slider";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { ReviewForm } from "./types";
+import { ReviewFormFields } from "./ReviewFormFields";
+import { ReviewActionFields } from "./ReviewActionFields";
 
 interface ReviewSheetProps {
   projectId: string;
@@ -18,14 +16,6 @@ interface ReviewSheetProps {
   isOpen: boolean;
   onClose: () => void;
   onReviewSubmitted: () => void;
-}
-
-interface ReviewForm {
-  weather: "sunny" | "cloudy" | "stormy";
-  progress: "better" | "stable" | "worse";
-  completion: number;
-  comment: string;
-  actions: { description: string }[];
 }
 
 export const ReviewSheet = ({
@@ -37,6 +27,7 @@ export const ReviewSheet = ({
 }: ReviewSheetProps) => {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const queryClient = useQueryClient();
 
   // Récupération de la dernière revue pour initialiser l'avancement
   const { data: lastReview } = useQuery({
@@ -115,6 +106,9 @@ export const ReviewSheet = ({
 
       if (projectError) throw projectError;
 
+      // Invalider toutes les requêtes liées aux projets
+      await queryClient.invalidateQueries({ queryKey: ["projects"] });
+      
       toast({
         title: "Revue enregistrée",
         description: "La revue du projet a été enregistrée avec succès.",
@@ -142,173 +136,10 @@ export const ReviewSheet = ({
         </SheetHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 mt-6">
-            <FormField
-              control={form.control}
-              name="weather"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Météo du projet</FormLabel>
-                  <FormControl>
-                    <RadioGroup
-                      onValueChange={field.onChange}
-                      defaultValue={field.value}
-                      className="flex gap-4"
-                    >
-                      <FormItem className="flex items-center space-x-2">
-                        <FormControl>
-                          <RadioGroupItem value="sunny" />
-                        </FormControl>
-                        <Sun className="h-5 w-5 text-warning" />
-                      </FormItem>
-                      <FormItem className="flex items-center space-x-2">
-                        <FormControl>
-                          <RadioGroupItem value="cloudy" />
-                        </FormControl>
-                        <Cloud className="h-5 w-5 text-neutral" />
-                      </FormItem>
-                      <FormItem className="flex items-center space-x-2">
-                        <FormControl>
-                          <RadioGroupItem value="stormy" />
-                        </FormControl>
-                        <CloudLightning className="h-5 w-5 text-danger" />
-                      </FormItem>
-                    </RadioGroup>
-                  </FormControl>
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="progress"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>État de progression</FormLabel>
-                  <FormControl>
-                    <RadioGroup
-                      onValueChange={field.onChange}
-                      defaultValue={field.value}
-                      className="flex gap-4"
-                    >
-                      <FormItem className="flex items-center space-x-2">
-                        <FormControl>
-                          <RadioGroupItem value="better" />
-                        </FormControl>
-                        <span className="text-success">Meilleur</span>
-                      </FormItem>
-                      <FormItem className="flex items-center space-x-2">
-                        <FormControl>
-                          <RadioGroupItem value="stable" />
-                        </FormControl>
-                        <span className="text-neutral">Stable</span>
-                      </FormItem>
-                      <FormItem className="flex items-center space-x-2">
-                        <FormControl>
-                          <RadioGroupItem value="worse" />
-                        </FormControl>
-                        <span className="text-danger">Moins bien</span>
-                      </FormItem>
-                    </RadioGroup>
-                  </FormControl>
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="completion"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Avancement (%)</FormLabel>
-                  <FormControl>
-                    <div className="flex flex-col space-y-2">
-                      <Slider
-                        min={0}
-                        max={100}
-                        step={1}
-                        value={[field.value]}
-                        onValueChange={(values) => field.onChange(values[0])}
-                        className="w-full"
-                      />
-                      <span className="text-sm text-muted-foreground text-right">
-                        {field.value}%
-                      </span>
-                    </div>
-                  </FormControl>
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="comment"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Commentaires</FormLabel>
-                  <FormControl>
-                    <Textarea
-                      placeholder="Ajoutez vos commentaires ici..."
-                      className="min-h-[100px]"
-                      {...field}
-                    />
-                  </FormControl>
-                </FormItem>
-              )}
-            />
-
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <FormLabel>Actions correctives</FormLabel>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => {
-                    const actions = form.getValues("actions");
-                    form.setValue("actions", [...actions, { description: "" }]);
-                  }}
-                >
-                  <Plus className="h-4 w-4 mr-2" />
-                  Ajouter une action
-                </Button>
-              </div>
-              {form.watch("actions").map((_, index) => (
-                <div key={index} className="flex gap-2">
-                  <FormField
-                    control={form.control}
-                    name={`actions.${index}.description`}
-                    render={({ field }) => (
-                      <FormItem className="flex-1">
-                        <FormControl>
-                          <Input
-                            placeholder="Description de l'action..."
-                            {...field}
-                          />
-                        </FormControl>
-                      </FormItem>
-                    )}
-                  />
-                  {index > 0 && (
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => {
-                        const actions = form.getValues("actions");
-                        form.setValue(
-                          "actions",
-                          actions.filter((_, i) => i !== index)
-                        );
-                      }}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  )}
-                </div>
-              ))}
-            </div>
-
-            <div className="flex justify-end gap-2">
+            <ReviewFormFields form={form} />
+            <ReviewActionFields form={form} />
+            
+            <div className="flex justify-end space-x-2">
               <Button type="button" variant="outline" onClick={onClose}>
                 Annuler
               </Button>

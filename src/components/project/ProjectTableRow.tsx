@@ -79,7 +79,7 @@ export const ProjectTableRow = ({
   });
 
   const { data: latestReview } = useQuery({
-    queryKey: ["latestReview", project.id],
+    queryKey: ["projects", project.id, "latest-review"],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("latest_reviews")

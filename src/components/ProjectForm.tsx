@@ -1,5 +1,5 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useUser } from "@supabase/auth-helpers-react";
 import { supabase } from "@/integrations/supabase/client";
 import { ProjectFormStep1 } from "./form/ProjectFormStep1";
@@ -28,6 +28,7 @@ export const ProjectForm = ({ isOpen, onClose, onSubmit, project }: ProjectFormP
   const validation = useProjectFormValidation();
   const { isAdmin, userProfile } = usePermissionsContext();
   const { canEdit } = useProjectPermissions(project?.id || "");
+  const queryClient = useQueryClient();
 
   const { data: projectManagers } = useQuery({
     queryKey: ["projectManagers", user?.id, validation.userRoles],
@@ -85,6 +86,8 @@ export const ProjectForm = ({ isOpen, onClose, onSubmit, project }: ProjectFormP
       console.log("Submitting project data:", projectData);
 
       await onSubmit(projectData);
+      
+      await queryClient.invalidateQueries({ queryKey: ["projects"] });
       
       toast({
         title: "Succès",
