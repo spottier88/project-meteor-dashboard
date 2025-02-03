@@ -6,9 +6,9 @@ import { useForm } from "react-hook-form";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { ReviewForm } from "./types";
-import { ReviewFormFields } from "./ReviewFormFields";
-import { ReviewActionFields } from "./ReviewActionFields";
+import { ReviewForm } from "@/components/review/types";
+import { ReviewFormFields } from "@/components/review/ReviewFormFields";
+import { ReviewActionFields } from "@/components/review/ReviewActionFields";
 
 interface ReviewSheetProps {
   projectId: string;
