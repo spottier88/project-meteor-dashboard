@@ -48,7 +48,7 @@ export const ProjectCard = ({
   onReview,
 }: ProjectCardProps) => {
   const navigate = useNavigate();
-  const { canEdit, isMember, isProjectManager } = useProjectPermissions(id);
+  const { canEdit, isMember, isProjectManager, isAdmin, canManageTeam } = useProjectPermissions(id);
 
   const { data: organization } = useQuery({
     queryKey: ["organization", pole_id, direction_id, service_id],
@@ -114,13 +114,6 @@ export const ProjectCard = ({
     enabled: !!id,
   });
 
-  // console.log("ProjectCard permissions:", {
-  //  canEdit,
-  //  isProjectManager,
-  //  isMember,
-  //  projectManager: project_manager
-  // });
-
   return (
     <Card className="w-full transition-all duration-300 hover:shadow-lg animate-fade-in">
       <ProjectCardHeader
@@ -131,6 +124,8 @@ export const ProjectCard = ({
         id={id}
         canEdit={canEdit}
         isMember={isMember}
+        canManageTeam={canManageTeam}
+        isAdmin={isAdmin}
         additionalActions={
           <AddToCartButton projectId={id} projectTitle={title} />
         }

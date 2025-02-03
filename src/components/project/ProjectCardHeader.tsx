@@ -11,6 +11,8 @@ interface ProjectCardHeaderProps {
   id: string;
   canEdit?: boolean;
   isMember?: boolean;
+  canManageTeam?: boolean;
+  isAdmin?: boolean;
   additionalActions?: React.ReactNode;
 }
 
@@ -22,6 +24,8 @@ export const ProjectCardHeader = ({
   id,
   canEdit,
   isMember,
+  canManageTeam,
+  isAdmin,
   additionalActions,
 }: ProjectCardHeaderProps) => {
   return (
@@ -39,6 +43,8 @@ export const ProjectCardHeader = ({
           onViewHistory={onViewHistory}
           canEdit={canEdit}
           isMember={isMember}
+          canManageTeam={canManageTeam}
+          isAdmin={isAdmin}
         />
       </div>
     </CardHeader>
