@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { ProjectCard } from "./ProjectCard";
 import { ProjectStatus, ProgressStatus, ProjectLifecycleStatus } from "@/types/project";
 import { useUser } from "@supabase/auth-helpers-react";
@@ -37,18 +37,24 @@ export const ProjectGrid = ({
   onFilteredProjectsChange,
 }: ProjectGridProps) => {
   const user = useUser();
+  const [isPermissionsLoaded, setIsPermissionsLoaded] = useState(false);
   const { userProfile, isAdmin, isManager, isProjectManager, isMember, highestRole, isLoading } = usePermissionsContext();
   
-  console.log(`[ProjectGrid] Rendering with permissions:`, {
-    timestamp: new Date().toISOString(),
-    projectsCount: projects.length,
-    userEmail: userProfile?.email,
-    isAdmin,
-    isManager,
-    isProjectManager,
-    isMember,
-    highestRole
-  });
+  useEffect(() => {
+    if (!isLoading && !isPermissionsLoaded) {
+      console.log(`[ProjectGrid] Initial permissions loaded:`, {
+        timestamp: new Date().toISOString(),
+        projectsCount: projects.length,
+        userEmail: userProfile?.email,
+        isAdmin,
+        isManager,
+        isProjectManager,
+        isMember,
+        highestRole
+      });
+      setIsPermissionsLoaded(true);
+    }
+  }, [isLoading, isPermissionsLoaded, userProfile?.email, isAdmin, isManager, isProjectManager, isMember, highestRole, projects.length]);
 
   const { data: projectMemberships } = useQuery({
     queryKey: ["projectMemberships", user?.id],
@@ -69,8 +75,8 @@ export const ProjectGrid = ({
 
       return data.map(pm => pm.project_id);
     },
-    enabled: !!user?.id,
-    staleTime: 0,
+    enabled: !!user?.id && !isPermissionsLoaded,
+    staleTime: 5 * 60 * 1000, // 5 minutes
   });
 
   const projectIds = useMemo(() => projects.map(p => p.id), [projects]);
@@ -83,7 +89,6 @@ export const ProjectGrid = ({
     }
 
     if (isAdmin) {
-      // console.log("[ProjectGrid] User is admin, showing all projects:", projects.length);
       return projects;
     }
 
