@@ -3,6 +3,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import Index from "./pages/Index";
 import Login from "./pages/Login";
+import AuthCallback from "./pages/AuthCallback";
 import { TaskManagement } from "./pages/TaskManagement";
 import { ProjectSummary } from "./pages/ProjectSummary";
 import { RiskManagement } from "./pages/RiskManagement";
@@ -45,6 +46,8 @@ function AppContent() {
     return (
       <Router>
         <Routes>
+          <Route path="/login" element={<Login />} />
+          <Route path="/auth/callback" element={<AuthCallback />} />
           <Route path="*" element={<Login />} />
         </Routes>
       </Router>
@@ -56,6 +59,7 @@ function AppContent() {
       <Router>
         <Routes>
           <Route path="/login" element={<Login />} />
+          <Route path="/auth/callback" element={<AuthCallback />} />
           <Route
             path="/"
             element={
