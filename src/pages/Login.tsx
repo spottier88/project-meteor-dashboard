@@ -29,20 +29,31 @@ const Login = () => {
           supabaseClient={supabase}
           appearance={{ theme: ThemeSupa }}
           providers={[]}
-          redirectTo={window.location.origin}
+          redirectTo={`${window.location.origin}/auth/callback`}
+          magicLink={true}
           localization={{
             variables: {
               sign_in: {
                 email_label: "Email",
                 password_label: "Mot de passe",
+                email_input_placeholder: "Votre adresse email",
+                password_input_placeholder: "Votre mot de passe",
                 button_label: "Se connecter",
                 loading_button_label: "Connexion en cours...",
+                link_text: "Déjà inscrit ? Connectez-vous",
+                magic_link_text: "Se connecter avec un magic link",
+                magic_link_button_label: "Envoyer le magic link",
+                magic_link_button_loading: "Envoi en cours...",
+                magic_link_sent_text: "Un email contenant le magic link a été envoyé à votre adresse email",
               },
               sign_up: {
                 email_label: "Email",
                 password_label: "Mot de passe",
+                email_input_placeholder: "Votre adresse email",
+                password_input_placeholder: "Votre mot de passe",
                 button_label: "S'inscrire",
                 loading_button_label: "Inscription en cours...",
+                link_text: "Pas encore de compte ? Inscrivez-vous",
               },
             },
           }}
