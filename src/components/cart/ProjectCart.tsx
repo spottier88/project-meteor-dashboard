@@ -3,9 +3,11 @@ import { Button } from "@/components/ui/button";
 import { useProjectCart } from "@/hooks/use-project-cart";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Trash2, Presentation } from "lucide-react";
+import { Trash2, Presentation, GanttChartSquare } from "lucide-react";
 import { useToast } from "../ui/use-toast";
 import { generateProjectPPTX } from "../pptx/ProjectPPTX";
+import { useState } from "react";
+import { ProjectGanttSheet } from "./ProjectGanttSheet";
 
 interface ProjectCartProps {
   isOpen: boolean;
@@ -15,6 +17,7 @@ interface ProjectCartProps {
 export const ProjectCart = ({ isOpen, onClose }: ProjectCartProps) => {
   const { cartItems, removeFromCart, clearCart } = useProjectCart();
   const { toast } = useToast();
+  const [isGanttOpen, setIsGanttOpen] = useState(false);
 
   const { data: projectsData } = useQuery({
     queryKey: ["selectedProjects", cartItems],
@@ -132,47 +135,60 @@ export const ProjectCart = ({ isOpen, onClose }: ProjectCartProps) => {
   };
 
   return (
-    <Sheet open={isOpen} onOpenChange={onClose}>
-      <SheetContent className="w-full sm:max-w-xl overflow-y-auto">
-        <SheetHeader>
-          <SheetTitle>Projets sélectionnés ({cartItems.length})</SheetTitle>
-        </SheetHeader>
-        <div className="mt-6 space-y-4">
-          {cartItems.length === 0 ? (
-            <p className="text-center text-muted-foreground">Aucun projet dans le panier</p>
-          ) : (
-            <>
-              <div className="space-y-4">
-                {projectsData?.map((data) => (
-                  <div key={data.project.title} className="flex items-center justify-between">
-                    <span>{data.project.title}</span>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => removeFromCart(cartItems[projectsData.indexOf(data)])}
-                    >
-                      <Trash2 className="h-4 w-4 text-destructive" />
-                    </Button>
-                  </div>
-                ))}
-              </div>
-              <div className="flex justify-between mt-4 pt-4 border-t">
-                <Button variant="outline" onClick={() => clearCart()}>
-                  Vider le panier
-                </Button>
-                <div className="space-x-2">
-                  {projectsData && (
-                    <Button onClick={handlePPTXExport} variant="outline">
-                      <Presentation className="h-4 w-4 mr-2" />
-                      PPTX
-                    </Button>
-                  )}
+    <>
+      <Sheet open={isOpen} onOpenChange={onClose}>
+        <SheetContent className="w-full sm:max-w-xl overflow-y-auto">
+          <SheetHeader>
+            <SheetTitle>Projets sélectionnés ({cartItems.length})</SheetTitle>
+          </SheetHeader>
+          <div className="mt-6 space-y-4">
+            {cartItems.length === 0 ? (
+              <p className="text-center text-muted-foreground">Aucun projet dans le panier</p>
+            ) : (
+              <>
+                <div className="space-y-4">
+                  {projectsData?.map((data) => (
+                    <div key={data.project.title} className="flex items-center justify-between">
+                      <span>{data.project.title}</span>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => removeFromCart(cartItems[projectsData.indexOf(data)])}
+                      >
+                        <Trash2 className="h-4 w-4 text-destructive" />
+                      </Button>
+                    </div>
+                  ))}
                 </div>
-              </div>
-            </>
-          )}
-        </div>
-      </SheetContent>
-    </Sheet>
+                <div className="flex justify-between mt-4 pt-4 border-t">
+                  <Button variant="outline" onClick={() => clearCart()}>
+                    Vider le panier
+                  </Button>
+                  <div className="space-x-2">
+                    {projectsData && (
+                      <>
+                        <Button onClick={handlePPTXExport} variant="outline">
+                          <Presentation className="h-4 w-4 mr-2" />
+                          PPTX
+                        </Button>
+                        <Button onClick={() => setIsGanttOpen(true)} variant="outline">
+                          <GanttChartSquare className="h-4 w-4 mr-2" />
+                          Gantt
+                        </Button>
+                      </>
+                    )}
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
+        </SheetContent>
+      </Sheet>
+      <ProjectGanttSheet
+        isOpen={isGanttOpen}
+        onClose={() => setIsGanttOpen(false)}
+        projectIds={cartItems}
+      />
+    </>
   );
 };
