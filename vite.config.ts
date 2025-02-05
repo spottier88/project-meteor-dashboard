@@ -19,4 +19,12 @@ export default defineConfig(({ mode }) => ({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  optimizeDeps: {
+    include: ['@dhtmlx/trial-react-gantt']
+  },
+  build: {
+    commonjsOptions: {
+      include: [/@dhtmlx\/trial-react-gantt/]
+    }
+  }
 }));

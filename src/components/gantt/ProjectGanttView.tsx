@@ -1,5 +1,5 @@
 import { Gantt, Task, ViewMode } from "@dhtmlx/trial-react-gantt";
-import "@dhtmlx/trial-react-gantt/dist/style.css";
+import "@dhtmlx/trial-react-gantt/codebase/dhtmlxgantt.css";
 import { ProjectStatus, ProgressStatus, ProjectLifecycleStatus } from "@/types/project";
 
 interface GanttTask extends Task {
