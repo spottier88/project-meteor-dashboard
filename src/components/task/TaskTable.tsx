@@ -14,6 +14,7 @@ interface Task {
   status: "todo" | "in_progress" | "done";
   assignee?: string;
   due_date?: string;
+  start_date?: string;
   project_id: string;
 }
 
@@ -110,6 +111,13 @@ export const TaskTable = ({ tasks, onEdit, onDelete }: TaskTableProps) => {
             onSort={handleSort}
           />
           <SortableHeader
+            label="Date de début"
+            sortKey="start_date"
+            currentSort={sortKey}
+            currentDirection={sortDirection}
+            onSort={handleSort}
+          />
+          <SortableHeader
             label="Date limite"
             sortKey="due_date"
             currentSort={sortKey}
@@ -132,6 +140,11 @@ export const TaskTable = ({ tasks, onEdit, onDelete }: TaskTableProps) => {
               </Badge>
             </TableCell>
             <TableCell>{task.assignee || "-"}</TableCell>
+            <TableCell>
+              {task.start_date
+                ? new Date(task.start_date).toLocaleDateString("fr-FR")
+                : "-"}
+            </TableCell>
             <TableCell>
               <span className={cn(
                 isTaskOverdue(task) ? "text-red-600 font-medium" : ""

@@ -669,6 +669,7 @@ export type Database = {
           due_date: string | null
           id: string
           project_id: string
+          start_date: string | null
           status: Database["public"]["Enums"]["task_status"]
           title: string
           updated_at: string | null
@@ -680,6 +681,7 @@ export type Database = {
           due_date?: string | null
           id?: string
           project_id: string
+          start_date?: string | null
           status?: Database["public"]["Enums"]["task_status"]
           title: string
           updated_at?: string | null
@@ -691,6 +693,7 @@ export type Database = {
           due_date?: string | null
           id?: string
           project_id?: string
+          start_date?: string | null
           status?: Database["public"]["Enums"]["task_status"]
           title?: string
           updated_at?: string | null

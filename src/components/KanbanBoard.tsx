@@ -200,6 +200,11 @@ export const KanbanBoard = ({ projectId, readOnly = false, onEditTask }: KanbanB
                         Assigné à : {task.assignee}
                       </p>
                     )}
+                    {task.start_date && (
+                      <p className="text-sm text-muted-foreground">
+                        Début : {new Date(task.start_date).toLocaleDateString("fr-FR")}
+                      </p>
+                    )}
                     {task.due_date && (
                       <p className={cn(
                         "text-sm",

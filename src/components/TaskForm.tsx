@@ -21,6 +21,7 @@ interface TaskFormProps {
     description?: string;
     status: "todo" | "in_progress" | "done";
     due_date?: string;
+    start_date?: string;
     assignee?: string;
   };
   readOnlyFields?: boolean;
@@ -41,6 +42,9 @@ export const TaskForm = ({
   const [status, setStatus] = useState<"todo" | "in_progress" | "done">(task?.status || "todo");
   const [dueDate, setDueDate] = useState<Date | undefined>(
     task?.due_date ? new Date(task.due_date) : undefined
+  );
+  const [startDate, setStartDate] = useState<Date | undefined>(
+    task?.start_date ? new Date(task.start_date) : undefined
   );
   const [assignee, setAssignee] = useState(task?.assignee || "");
   const [assignmentMode, setAssignmentMode] = useState<"free" | "member">("free");
@@ -78,9 +82,8 @@ export const TaskForm = ({
         setDescription(task.description || "");
         setStatus(task.status);
         setDueDate(task.due_date ? new Date(task.due_date) : undefined);
+        setStartDate(task.start_date ? new Date(task.start_date) : undefined);
         setAssignee(task.assignee || "");
-        
-        // Determine initial assignment mode
         setAssignmentMode(
           projectMembers?.some(m => m.profiles.email === task.assignee)
             ? "member"
@@ -97,6 +100,7 @@ export const TaskForm = ({
     setDescription("");
     setStatus("todo");
     setDueDate(undefined);
+    setStartDate(undefined);
     setAssignee("");
     setAssignmentMode("free");
   };
@@ -111,6 +115,16 @@ export const TaskForm = ({
       return;
     }
 
+    // Validation des dates
+    if (startDate && dueDate && startDate > dueDate) {
+      toast({
+        title: "Erreur",
+        description: "La date de début doit être antérieure à la date d'échéance",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
@@ -119,6 +133,7 @@ export const TaskForm = ({
         description,
         status,
         due_date: dueDate?.toISOString().split('T')[0],
+        start_date: startDate?.toISOString().split('T')[0],
         assignee,
         project_id: projectId,
       };
@@ -147,9 +162,7 @@ export const TaskForm = ({
         resetForm();
       }
 
-      // Invalider les queries liées aux tâches
       queryClient.invalidateQueries({ queryKey: ["tasks", projectId] });
-      queryClient.invalidateQueries({ queryKey: ["taskCounts", projectId] });
       
       onSubmit();
       onClose();
@@ -250,6 +263,11 @@ export const TaskForm = ({
                   </TabsContent>
                 </Tabs>
               </div>
+              <DatePickerField
+                label="Date de début"
+                value={startDate}
+                onChange={setStartDate}
+              />
               <DatePickerField
                 label="Date d'échéance"
                 value={dueDate}
