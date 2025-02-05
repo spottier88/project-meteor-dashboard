@@ -35,10 +35,10 @@ export const ProjectGanttView = ({ projects }: ProjectGanttViewProps) => {
       text: project.title,
       start_date: project.start_date ? new Date(project.start_date) : new Date(),
       end_date: project.end_date ? new Date(project.end_date) : new Date(),
-      progress: 0,
       type: "project",
       status: project.status,
       lifecycle_status: project.lifecycle_status,
+      progress: project.progress || "stable"
     };
 
     const subTasks: GanttTask[] = (project.tasks || []).map((task) => ({
@@ -47,8 +47,8 @@ export const ProjectGanttView = ({ projects }: ProjectGanttViewProps) => {
       start_date: task.start_date ? new Date(task.start_date) : new Date(),
       end_date: task.due_date ? new Date(task.due_date) : new Date(),
       parent: project.id,
-      progress: task.status === "done" ? 1 : task.status === "in_progress" ? 0.5 : 0,
       type: "task",
+      progress: task.status === "done" ? "better" : task.status === "in_progress" ? "stable" : "worse"
     }));
 
     return [projectTask, ...subTasks];
@@ -80,14 +80,15 @@ export const ProjectGanttView = ({ projects }: ProjectGanttViewProps) => {
             }
           } else {
             switch (task.progress) {
-              case 1:
+              case "better":
                 bgColor = "bg-green-200";
                 break;
-              case 0.5:
+              case "stable":
                 bgColor = "bg-blue-200";
                 break;
-              default:
+              case "worse":
                 bgColor = "bg-gray-200";
+                break;
             }
           }
           
