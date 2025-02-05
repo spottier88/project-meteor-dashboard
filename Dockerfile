@@ -15,7 +15,7 @@ COPY . .
 
 # Définition des variables avant le build
 ENV VITE_SUPABASE_URL=https://meteor.famillepottier.fr
-ENV VITE_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.ewogICJyb2xlIjogImFub24iLAogICJpc3MiOiAic3VwYWJhc2UiLAogICJpYXQiOiAxNzM2NDYzNjAwLAogICJleHAiOiAxODk0MjMwMDAwCn0.Mw5JSVXI_frTAM1esPMePHAz5EjbvTLXyz0Zl-TGYkw
+ENV VITE_SUPABASE_PUBLISHABLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.ewogICJyb2xlIjogImFub24iLAogICJpc3MiOiAic3VwYWJhc2UiLAogICJpYXQiOiAxNzM2NDYzNjAwLAogICJleHAiOiAxODk0MjMwMDAwCn0.Mw5JSVXI_frTAM1esPMePHAz5EjbvTLXyz0Zl-TGYkw
 
 # Construire l'application
 RUN npm run build
