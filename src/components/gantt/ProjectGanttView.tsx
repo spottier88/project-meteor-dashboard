@@ -2,7 +2,7 @@ import React from 'react';
 import Timeline from 'react-gantt-timeline';
 import { ProjectStatus, ProgressStatus, ProjectLifecycleStatus } from '@/types/project';
 import { Button } from '@/components/ui/button';
-import { Download, ZoomIn, ZoomOut } from 'lucide-react';
+import { Download, Calendar } from 'lucide-react';
 import html2canvas from 'html2canvas';
 
 interface GanttTask {
@@ -40,7 +40,7 @@ interface ProjectGanttViewProps {
 }
 
 export const ProjectGanttView = ({ projects }: ProjectGanttViewProps) => {
-  const [mode, setMode] = React.useState<'day' | 'week' | 'month'>('month');
+  const [mode, setMode] = React.useState<'week' | 'month' | 'year'>('month');
   const [dayWidth, setDayWidth] = React.useState(30);
   const ganttRef = React.useRef<HTMLDivElement>(null);
 
@@ -88,7 +88,10 @@ export const ProjectGanttView = ({ projects }: ProjectGanttViewProps) => {
   const handleExport = async () => {
     if (ganttRef.current) {
       try {
-        const canvas = await html2canvas(ganttRef.current);
+        const canvas = await html2canvas(ganttRef.current, {
+          height: ganttRef.current.scrollHeight,
+          windowHeight: ganttRef.current.scrollHeight
+        });
         const link = document.createElement('a');
         link.download = 'gantt-export.png';
         link.href = canvas.toDataURL('image/png');
@@ -99,12 +102,19 @@ export const ProjectGanttView = ({ projects }: ProjectGanttViewProps) => {
     }
   };
 
-  const zoomIn = () => {
-    setDayWidth(prev => Math.min(prev + 10, 100));
-  };
-
-  const zoomOut = () => {
-    setDayWidth(prev => Math.max(prev - 10, 20));
+  const setViewMode = (newMode: 'week' | 'month' | 'year') => {
+    setMode(newMode);
+    switch (newMode) {
+      case 'week':
+        setDayWidth(60);
+        break;
+      case 'month':
+        setDayWidth(30);
+        break;
+      case 'year':
+        setDayWidth(15);
+        break;
+    }
   };
 
   return (
@@ -112,20 +122,28 @@ export const ProjectGanttView = ({ projects }: ProjectGanttViewProps) => {
       <div className="flex justify-between items-center mb-4">
         <div className="space-x-2">
           <Button
-            variant="outline"
+            variant={mode === 'week' ? "default" : "outline"}
             size="sm"
-            onClick={zoomIn}
+            onClick={() => setViewMode('week')}
           >
-            <ZoomIn className="h-4 w-4 mr-2" />
-            Zoom +
+            <Calendar className="h-4 w-4 mr-2" />
+            Semaine
           </Button>
           <Button
-            variant="outline"
+            variant={mode === 'month' ? "default" : "outline"}
             size="sm"
-            onClick={zoomOut}
+            onClick={() => setViewMode('month')}
           >
-            <ZoomOut className="h-4 w-4 mr-2" />
-            Zoom -
+            <Calendar className="h-4 w-4 mr-2" />
+            Mois
+          </Button>
+          <Button
+            variant={mode === 'year' ? "default" : "outline"}
+            size="sm"
+            onClick={() => setViewMode('year')}
+          >
+            <Calendar className="h-4 w-4 mr-2" />
+            Année
           </Button>
         </div>
         <Button
@@ -166,14 +184,14 @@ export const ProjectGanttView = ({ projects }: ProjectGanttViewProps) => {
             links={[]}
             mode={mode}
             onSelectItem={(item) => console.log("Item clicked:", item)}
-            itemHeight={40}
+            itemHeight={50}
+            rowHeight={45}
+            taskHeight={40}
             nonWorkingDays={[6, 0]}
             dayWidth={dayWidth}
             config={{
-              handleWidth: 0, // Désactive l'édition
+              handleWidth: 0,
               showProjectLabel: true,
-              rowHeight: 40,
-              taskHeight: 35,
               projectBackgroundColor: '#9b87f5',
               projectBackgroundSelectedColor: '#8b77e5',
               projectSelectedColor: '#7a66d4',
@@ -189,6 +207,17 @@ export const ProjectGanttView = ({ projects }: ProjectGanttViewProps) => {
               todayColor: 'rgba(252, 220, 0, 0.4)',
               viewMode: mode,
               locale: 'fr-FR',
+              dateFormat: {
+                month: {
+                  short: ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin', 'Juil', 'Août', 'Sept', 'Oct', 'Nov', 'Déc'],
+                  long: ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre']
+                },
+                week: {
+                  letter: ['D', 'L', 'M', 'M', 'J', 'V', 'S'],
+                  short: ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam'],
+                  long: ['Dimanche', 'Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi']
+                }
+              }
             }}
           />
         </div>
