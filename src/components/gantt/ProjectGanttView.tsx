@@ -2,7 +2,7 @@ import React from 'react';
 import Timeline from 'react-gantt-timeline';
 import { ProjectStatus, ProgressStatus, ProjectLifecycleStatus } from '@/types/project';
 import { Button } from '@/components/ui/button';
-import { Download, Calendar } from 'lucide-react';
+import { Download, Calendar, Eye, EyeOff } from 'lucide-react';
 import html2canvas from 'html2canvas';
 
 interface GanttTask {
@@ -42,6 +42,7 @@ interface ProjectGanttViewProps {
 export const ProjectGanttView = ({ projects }: ProjectGanttViewProps) => {
   const [mode, setMode] = React.useState<'week' | 'month' | 'year'>('month');
   const [dayWidth, setDayWidth] = React.useState(30);
+  const [showTasks, setShowTasks] = React.useState(false);
   const ganttRef = React.useRef<HTMLDivElement>(null);
 
   const getColorForStatus = (status: ProjectLifecycleStatus | string, isProject: boolean = false) => {
@@ -71,6 +72,10 @@ export const ProjectGanttView = ({ projects }: ProjectGanttViewProps) => {
       type: 'project',
       completion: project.completion
     };
+
+    if (!showTasks) {
+      return [projectTask];
+    }
 
     const subTasks: GanttTask[] = (project.tasks || []).map((task) => ({
       id: `${project.id}-${task.id}`,
@@ -145,6 +150,23 @@ export const ProjectGanttView = ({ projects }: ProjectGanttViewProps) => {
             <Calendar className="h-4 w-4 mr-2" />
             Année
           </Button>
+          <Button
+            variant={showTasks ? "default" : "outline"}
+            size="sm"
+            onClick={() => setShowTasks(!showTasks)}
+          >
+            {showTasks ? (
+              <>
+                <EyeOff className="h-4 w-4 mr-2" />
+                Masquer les tâches
+              </>
+            ) : (
+              <>
+                <Eye className="h-4 w-4 mr-2" />
+                Afficher les tâches
+              </>
+            )}
+          </Button>
         </div>
         <Button
           variant="outline"
@@ -163,18 +185,22 @@ export const ProjectGanttView = ({ projects }: ProjectGanttViewProps) => {
               <div className="w-4 h-4 rounded bg-[#9b87f5] mr-2"></div>
               <span>Projet</span>
             </div>
-            <div className="flex items-center">
-              <div className="w-4 h-4 rounded bg-[#F2FCE2] mr-2"></div>
-              <span>À faire</span>
-            </div>
-            <div className="flex items-center">
-              <div className="w-4 h-4 rounded bg-[#D3E4FD] mr-2"></div>
-              <span>En cours</span>
-            </div>
-            <div className="flex items-center">
-              <div className="w-4 h-4 rounded bg-[#E2E8F0] mr-2"></div>
-              <span>Terminé</span>
-            </div>
+            {showTasks && (
+              <>
+                <div className="flex items-center">
+                  <div className="w-4 h-4 rounded bg-[#F2FCE2] mr-2"></div>
+                  <span>À faire</span>
+                </div>
+                <div className="flex items-center">
+                  <div className="w-4 h-4 rounded bg-[#D3E4FD] mr-2"></div>
+                  <span>En cours</span>
+                </div>
+                <div className="flex items-center">
+                  <div className="w-4 h-4 rounded bg-[#E2E8F0] mr-2"></div>
+                  <span>Terminé</span>
+                </div>
+              </>
+            )}
           </div>
         </div>
 
