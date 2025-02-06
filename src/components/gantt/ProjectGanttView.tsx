@@ -190,6 +190,22 @@ export const ProjectGanttView = ({ projects }: ProjectGanttViewProps) => {
             nonWorkingDays={[6, 0]}
             dayWidth={dayWidth}
             config={{
+              taskList:{//the right side task list
+                    		title:{//The title od the task list
+                    			label:"Projets",//The caption to display as title
+                    			style:{backgroundColor:  '#333333',borderBottom:  'solid 1px silver',
+                    				   color:  'white',textAlign:  'center'}//The style to be applied to the title
+                    		},
+                    		task:{// The items inside the list diplaying the task
+                    			style:{backgroundColor:  '#fbf9f9',textAlign: 'left'}// the style to be applied
+                    		},
+                    		verticalSeparator:{//the vertical seperator use to resize he width of the task list
+                    			style:{backgroundColor:  '#333333',},//the style
+                    			grip:{//the four square grip inside the vertical separator
+                    				style:{backgroundColor:  '#cfcfcd'}//the style to be applied
+                    			}
+                    		}
+                    	},
               handleWidth: 0,
               showProjectLabel: true,
               projectBackgroundColor: '#9b87f5',
