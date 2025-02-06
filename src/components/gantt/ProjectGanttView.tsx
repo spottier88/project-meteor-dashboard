@@ -239,9 +239,6 @@ export const ProjectGanttView = ({ projects }: ProjectGanttViewProps) => {
                     textAlign: 'center'
                   }
                 },
-                task: {
-                  style: {backgroundColor: '#fbf9f9', textAlign: 'left'}
-                },
                 verticalSeparator: {
                   style: {backgroundColor: '#333333'},
                   grip: {
@@ -259,7 +256,7 @@ export const ProjectGanttView = ({ projects }: ProjectGanttViewProps) => {
                     position: 'absolute',
                     borderRadius: 14,
                     color: 'white',
-                    textAlign: 'center',
+                    textAlign: 'left',
                     backgroundColor: 'grey'
                   },
                   selectedStyle: {}
