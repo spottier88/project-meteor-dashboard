@@ -2,8 +2,9 @@ import React from 'react';
 import Timeline from 'react-gantt-timeline';
 import { ProjectStatus, ProgressStatus, ProjectLifecycleStatus } from '@/types/project';
 import { Button } from '@/components/ui/button';
-import { Download, Calendar, Eye, EyeOff } from 'lucide-react';
+import { Download, Calendar, Eye, EyeOff, FileSpreadsheet, Image } from 'lucide-react';
 import html2canvas from 'html2canvas';
+import * as XLSX from 'xlsx';
 
 interface GanttTask {
   id: string;
@@ -90,7 +91,37 @@ export const ProjectGanttView = ({ projects }: ProjectGanttViewProps) => {
     return [projectTask, ...subTasks];
   });
 
-  const handleExport = async () => {
+  const handleExportToExcel = () => {
+    const data = tasks.map(task => ({
+      'Nom': task.name,
+      'Date de début': task.start.toLocaleDateString('fr-FR'),
+      'Date de fin': task.end.toLocaleDateString('fr-FR'),
+      'Type': task.type === 'project' ? 'Projet' : 'Tâche',
+      'Statut': task.type === 'project' 
+        ? task.lifecycle_status 
+        : task.status,
+      'Avancement (%)': task.type === 'project' ? task.completion || 0 : ''
+    }));
+
+    const ws = XLSX.utils.json_to_sheet(data);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Planning");
+
+    // Ajuster la largeur des colonnes
+    const colWidths = [
+      { wch: 40 }, // Nom
+      { wch: 15 }, // Date de début
+      { wch: 15 }, // Date de fin
+      { wch: 10 }, // Type
+      { wch: 15 }, // Statut
+      { wch: 15 }, // Avancement
+    ];
+    ws['!cols'] = colWidths;
+
+    XLSX.writeFile(wb, "planning-projets.xlsx");
+  };
+
+  const handleExportToPng = async () => {
     if (ganttRef.current) {
       try {
         const canvas = await html2canvas(ganttRef.current, {
@@ -168,14 +199,24 @@ export const ProjectGanttView = ({ projects }: ProjectGanttViewProps) => {
             )}
           </Button>
         </div>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={handleExport}
-        >
-          <Download className="h-4 w-4 mr-2" />
-          Exporter
-        </Button>
+        <div className="space-x-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleExportToExcel}
+          >
+            <FileSpreadsheet className="h-4 w-4 mr-2" />
+            Excel
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleExportToPng}
+          >
+            <Image className="h-4 w-4 mr-2" />
+            Image
+          </Button>
+        </div>
       </div>
 
       <div className="bg-white p-4 rounded-lg shadow">
