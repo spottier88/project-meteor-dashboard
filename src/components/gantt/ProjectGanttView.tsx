@@ -118,7 +118,7 @@ export const ProjectGanttView = ({ projects }: ProjectGanttViewProps) => {
                     backgroundColor: '#333333',
                     borderBottom: 'solid 1px silver',
                     color: 'white',
-                    textAlign: 'center'
+                    textAlign: 'left'
                   }
                 },
                 verticalSeparator: {
