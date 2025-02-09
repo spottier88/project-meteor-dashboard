@@ -81,7 +81,7 @@ export const ProjectForm = ({ isOpen, onClose, onSubmit, project }: ProjectFormP
         priority: formState.priority,
         monitoringLevel: formState.monitoringLevel,
         monitoringEntityId: formState.monitoringEntityId || null,
-        ownerId: formState.ownerId || null,
+        owner_id: user?.id || null, // Ajout de l'owner_id
         poleId: formState.poleId === "none" ? null : formState.poleId,
         directionId: formState.directionId === "none" ? null : formState.directionId,
         serviceId: formState.serviceId === "none" ? null : formState.serviceId,
