@@ -1,75 +1,32 @@
+
 import { usePermissionsContext } from "@/contexts/PermissionsContext";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useMemo } from "react";
 
-export interface ProjectPermissions {
-  canEdit: boolean;
-  canManageTeam: boolean;
-  canDelete: boolean;
-  isMember: boolean;
-  isProjectManager: boolean;
-  isAdmin: boolean;
-}
-
-export const useProjectPermissions = (projectId: string): ProjectPermissions => {
-  const { userProfile, isAdmin, isManager } = usePermissionsContext();
+export const useProjectPermissions = (projectId: string) => {
+  const { userProfile, isAdmin } = usePermissionsContext();
   
-  const { data: projectData } = useQuery({
-    queryKey: ["project", projectId, userProfile?.id],
+  const { data: projectAccess } = useQuery({
+    queryKey: ["projectAccess", projectId, userProfile?.id],
     queryFn: async () => {
-      if (!projectId) {
-        console.log("[useProjectPermissions] No project ID provided");
-        return null;
-      }
-      
-      const { data, error } = await supabase
+      if (!userProfile?.id || !projectId) return {
+        canEdit: false,
+        isProjectManager: false,
+      };
+
+      const { data: project } = await supabase
         .from("projects")
         .select("project_manager")
         .eq("id", projectId)
         .single();
 
-      if (error) {
-        console.error("[useProjectPermissions] Error fetching project:", error);
-        return null;
-      }
+      const isProjectManager = project?.project_manager === userProfile.email;
 
-      return data;
-    },
-    enabled: !!projectId && !!userProfile?.id,
-    staleTime: 0,
-  });
-
-  const { data: isMember } = useQuery({
-    queryKey: ["projectMember", projectId, userProfile?.id],
-    queryFn: async () => {
-      if (!userProfile?.id || !projectId) {
-        return false;
-      }
-
-      const { data, error } = await supabase
-        .from("project_members")
-        .select("*")
-        .eq("project_id", projectId)
-        .eq("user_id", userProfile.id)
-        .maybeSingle();
-
-      if (error) {
-        console.error("[useProjectPermissions] Error checking project membership:", error);
-        return false;
-      }
-
-      return !!data;
-    },
-    enabled: !!userProfile?.id && !!projectId,
-    staleTime: 0,
-  });
-
-  const { data: managerAccess } = useQuery({
-    queryKey: ["managerProjectAccess", projectId, userProfile?.id],
-    queryFn: async () => {
-      if (!userProfile?.id || !projectId || !isManager) {
-        return false;
+      if (isAdmin || isProjectManager) {
+        return {
+          canEdit: true,
+          isProjectManager,
+        };
       }
 
       const { data: canAccess } = await supabase
@@ -78,20 +35,37 @@ export const useProjectPermissions = (projectId: string): ProjectPermissions => 
           p_project_id: projectId
         });
 
-      return !!canAccess;
+      return {
+        canEdit: !!canAccess,
+        isProjectManager,
+      };
     },
-    enabled: !!userProfile?.id && !!projectId && isManager,
-    staleTime: 0,
+    enabled: !!userProfile?.id && !!projectId,
+    staleTime: 300000, // 5 minutes
   });
 
-  const isProjectManager = projectData?.project_manager === userProfile?.email;
+  const { data: userRoles } = useQuery({
+    queryKey: ["userRoles", userProfile?.id],
+    queryFn: async () => {
+      if (!userProfile?.id) return [];
+      const { data } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", userProfile.id);
+      return data || [];
+    },
+    enabled: !!userProfile?.id,
+  });
 
-  return useMemo(() => ({
-    canEdit: isAdmin || isProjectManager || (isManager && managerAccess),
-    canManageTeam: isAdmin || isProjectManager,
-    canDelete: isAdmin,
-    isMember: !!isMember,
-    isProjectManager,
+  const isProjectManager = userRoles?.some(ur => ur.role === 'chef_projet') || false;
+
+  return {
+    canManageRisks: isAdmin || projectAccess?.canEdit || false,
+    canEdit: projectAccess?.canEdit || false,
+    canCreate: isAdmin || isProjectManager,
+    canManageTeam: isAdmin || projectAccess?.isProjectManager || false,
     isAdmin,
-  }), [isAdmin, isProjectManager, isManager, managerAccess, isMember]);
+    isProjectManager: projectAccess?.isProjectManager || false,
+    userEmail: userProfile?.email,
+  };
 };

@@ -1,3 +1,4 @@
+
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useUser } from "@supabase/auth-helpers-react";
@@ -27,7 +28,7 @@ export const ProjectForm = ({ isOpen, onClose, onSubmit, project }: ProjectFormP
   const formState = useProjectFormState(isOpen, project);
   const validation = useProjectFormValidation();
   const { isAdmin, userProfile } = usePermissionsContext();
-  const { canEdit } = useProjectPermissions(project?.id || "");
+  const { canEdit, canCreate } = useProjectPermissions(project?.id || "");
   const queryClient = useQueryClient();
 
   const { data: projectManagers } = useQuery({
@@ -48,11 +49,22 @@ export const ProjectForm = ({ isOpen, onClose, onSubmit, project }: ProjectFormP
       return;
     }
 
-    if (!canEdit) {
+    // Vérifier les permissions en fonction du contexte (création ou modification)
+    if (project?.id && !canEdit) {
       console.error("User doesn't have permission to edit project");
       toast({
         title: "Erreur",
         description: "Vous n'avez pas les droits nécessaires pour modifier ce projet",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!project?.id && !canCreate) {
+      console.error("User doesn't have permission to create project");
+      toast({
+        title: "Erreur",
+        description: "Vous n'avez pas les droits nécessaires pour créer un projet",
         variant: "destructive",
       });
       return;
