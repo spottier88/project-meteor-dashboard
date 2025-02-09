@@ -179,7 +179,7 @@ const Index = () => {
     priority: string;
     monitoringLevel: MonitoringLevel;
     monitoringEntityId: string | null;
-    ownerId: string;
+    owner_id: string | null;
     poleId: string;
     directionId: string;
     serviceId: string;
@@ -200,7 +200,7 @@ const Index = () => {
         start_date: projectData.startDate?.toISOString().split('T')[0],
         end_date: projectData.endDate?.toISOString().split('T')[0],
         priority: projectData.priority,
-        owner_id: projectData.ownerId,
+        owner_id: projectData.owner_id,
         pole_id: projectData.poleId === "none" ? null : projectData.poleId,
         direction_id: projectData.directionId === "none" ? null : projectData.directionId,
         service_id: projectData.serviceId === "none" ? null : projectData.serviceId,
