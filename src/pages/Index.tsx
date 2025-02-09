@@ -207,6 +207,8 @@ const Index = () => {
         lifecycle_status: projectData.lifecycleStatus,
       };
 
+      console.log("[ProjectForm] Current user:", user);
+      console.log("[ProjectForm] User roles:", userProfile?.roles);
       console.log("[ProjectForm] Starting project operation:", selectedProject ? "UPDATE" : "INSERT");
       console.log("[ProjectForm] Project payload:", projectPayload);
 
@@ -216,8 +218,7 @@ const Index = () => {
           .from("projects")
           .update(projectPayload)
           .eq("id", selectedProject.id)
-          .select()
-          .single();
+          .select();
 
         console.log("[ProjectForm] Project update result:", { updatedProject, error: projectError });
 
@@ -275,8 +276,13 @@ const Index = () => {
         console.log("[ProjectForm] Project creation result:", { newProject, error: projectError });
 
         if (projectError) {
-          console.error("[ProjectForm] Project creation error:", projectError);
+          console.error("[ProjectForm] Project creation error:", projectError.message);
+          console.error("[ProjectForm] Project creation error details:", projectError);
           throw projectError;
+        }
+
+        if (!newProject) {
+          throw new Error("No project data returned after creation");
         }
 
         console.log("[ProjectForm] Creating innovation scores for new project:", newProject.id);
@@ -291,7 +297,8 @@ const Index = () => {
         console.log("[ProjectForm] Innovation scores creation result:", { innovationData, error: innovationError });
 
         if (innovationError) {
-          console.error("[ProjectForm] Innovation scores creation error:", innovationError);
+          console.error("[ProjectForm] Innovation scores creation error:", innovationError.message);
+          console.error("[ProjectForm] Innovation scores creation error details:", innovationError);
           throw innovationError;
         }
 
@@ -308,7 +315,8 @@ const Index = () => {
         console.log("[ProjectForm] Monitoring creation result:", { monitoringData, error: monitoringError });
 
         if (monitoringError) {
-          console.error("[ProjectForm] Monitoring creation error:", monitoringError);
+          console.error("[ProjectForm] Monitoring creation error:", monitoringError.message);
+          console.error("[ProjectForm] Monitoring creation error details:", monitoringError);
           throw monitoringError;
         }
       }
