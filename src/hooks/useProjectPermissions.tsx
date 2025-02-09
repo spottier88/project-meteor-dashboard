@@ -12,6 +12,7 @@ export const useProjectPermissions = (projectId: string) => {
       if (!userProfile?.id || !projectId) return {
         canEdit: false,
         isProjectManager: false,
+        isMember: false
       };
 
       const { data: project } = await supabase
@@ -26,6 +27,7 @@ export const useProjectPermissions = (projectId: string) => {
         return {
           canEdit: true,
           isProjectManager,
+          isMember: true
         };
       }
 
@@ -35,9 +37,17 @@ export const useProjectPermissions = (projectId: string) => {
           p_project_id: projectId
         });
 
+      const { data: isMember } = await supabase
+        .from("project_members")
+        .select("user_id")
+        .eq("project_id", projectId)
+        .eq("user_id", userProfile.id)
+        .maybeSingle();
+
       return {
         canEdit: !!canAccess,
         isProjectManager,
+        isMember: !!isMember
       };
     },
     enabled: !!userProfile?.id && !!projectId,
@@ -66,6 +76,8 @@ export const useProjectPermissions = (projectId: string) => {
     canManageTeam: isAdmin || projectAccess?.isProjectManager || false,
     isAdmin,
     isProjectManager: projectAccess?.isProjectManager || false,
+    isMember: projectAccess?.isMember || false,
     userEmail: userProfile?.email,
   };
 };
+
