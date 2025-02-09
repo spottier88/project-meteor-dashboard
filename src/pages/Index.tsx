@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useUser } from "@supabase/auth-helpers-react";
@@ -206,19 +207,27 @@ const Index = () => {
         lifecycle_status: projectData.lifecycleStatus,
       };
 
+      console.log("[ProjectForm] Starting project operation:", selectedProject ? "UPDATE" : "INSERT");
+      console.log("[ProjectForm] Project payload:", projectPayload);
+
       if (selectedProject?.id) {
-        // Mise à jour du projet
-        const { error: projectError } = await supabase
+        console.log("[ProjectForm] Updating project:", selectedProject.id);
+        const { data: updatedProject, error: projectError } = await supabase
           .from("projects")
           .update(projectPayload)
-          .eq("id", selectedProject.id);
+          .eq("id", selectedProject.id)
+          .select()
+          .single();
+
+        console.log("[ProjectForm] Project update result:", { updatedProject, error: projectError });
 
         if (projectError) {
+          console.error("[ProjectForm] Project update error:", projectError);
           throw projectError;
         }
 
-        // Mise à jour des scores d'innovation
-        const { error: innovationError } = await supabase
+        console.log("[ProjectForm] Updating innovation scores for project:", selectedProject.id);
+        const { data: innovationData, error: innovationError } = await supabase
           .from("project_innovation_scores")
           .upsert({
             project_id: selectedProject.id,
@@ -226,13 +235,18 @@ const Index = () => {
             updated_at: new Date().toISOString()
           }, {
             onConflict: 'project_id'
-          });
+          })
+          .select();
+
+        console.log("[ProjectForm] Innovation scores update result:", { innovationData, error: innovationError });
 
         if (innovationError) {
+          console.error("[ProjectForm] Innovation scores update error:", innovationError);
           throw innovationError;
         }
 
-        const { error: monitoringError } = await supabase
+        console.log("[ProjectForm] Updating monitoring for project:", selectedProject.id);
+        const { data: monitoringData, error: monitoringError } = await supabase
           .from("project_monitoring")
           .upsert({
             project_id: selectedProject.id,
@@ -240,51 +254,69 @@ const Index = () => {
             monitoring_entity_id: projectData.monitoringEntityId,
           }, {
             onConflict: 'project_id'
-          });
+          })
+          .select();
+
+        console.log("[ProjectForm] Monitoring update result:", { monitoringData, error: monitoringError });
 
         if (monitoringError) {
+          console.error("[ProjectForm] Monitoring update error:", monitoringError);
           throw monitoringError;
         }
+
       } else {
-        // Création d'un nouveau projet
+        console.log("[ProjectForm] Creating new project");
         const { data: newProject, error: projectError } = await supabase
           .from("projects")
           .insert(projectPayload)
           .select()
           .single();
 
+        console.log("[ProjectForm] Project creation result:", { newProject, error: projectError });
+
         if (projectError) {
+          console.error("[ProjectForm] Project creation error:", projectError);
           throw projectError;
         }
 
-        // Création des scores d'innovation
-        const { error: innovationError } = await supabase
+        console.log("[ProjectForm] Creating innovation scores for new project:", newProject.id);
+        const { data: innovationData, error: innovationError } = await supabase
           .from("project_innovation_scores")
           .insert({
             project_id: newProject.id,
             ...projectData.innovation
-          });
+          })
+          .select();
+
+        console.log("[ProjectForm] Innovation scores creation result:", { innovationData, error: innovationError });
 
         if (innovationError) {
+          console.error("[ProjectForm] Innovation scores creation error:", innovationError);
           throw innovationError;
         }
 
-        const { error: monitoringError } = await supabase
+        console.log("[ProjectForm] Creating monitoring for new project:", newProject.id);
+        const { data: monitoringData, error: monitoringError } = await supabase
           .from("project_monitoring")
           .insert({
             project_id: newProject.id,
             monitoring_level: projectData.monitoringLevel,
             monitoring_entity_id: projectData.monitoringEntityId,
-          });
+          })
+          .select();
+
+        console.log("[ProjectForm] Monitoring creation result:", { monitoringData, error: monitoringError });
 
         if (monitoringError) {
+          console.error("[ProjectForm] Monitoring creation error:", monitoringError);
           throw monitoringError;
         }
       }
 
+      console.log("[ProjectForm] Project operation completed successfully");
       await refetchProjects();
     } catch (error) {
-      console.error("Error in handleProjectFormSubmit:", error);
+      console.error("[ProjectForm] Operation failed:", error);
       throw error;
     }
   };
