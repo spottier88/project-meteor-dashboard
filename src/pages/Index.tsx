@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useUser } from "@supabase/auth-helpers-react";
@@ -193,6 +192,10 @@ const Index = () => {
     };
   }) => {
     try {
+      console.log("[ProjectForm] Starting project operation with detailed logs");
+      console.log("[ProjectForm] Current user session:", await supabase.auth.getSession());
+      console.log("[ProjectForm] User roles from context:", userProfile?.roles);
+
       const projectPayload = {
         title: projectData.title,
         description: projectData.description,
@@ -207,10 +210,18 @@ const Index = () => {
         lifecycle_status: projectData.lifecycleStatus,
       };
 
-      console.log("[ProjectForm] Current user:", user);
-      console.log("[ProjectForm] User roles:", userProfile?.roles);
-      console.log("[ProjectForm] Starting project operation:", selectedProject ? "UPDATE" : "INSERT");
       console.log("[ProjectForm] Project payload:", projectPayload);
+
+      // Test préalable des rôles
+      const { data: userRoles, error: rolesError } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', user?.id);
+      
+      console.log("[ProjectForm] User roles from direct query:", userRoles);
+      if (rolesError) {
+        console.error("[ProjectForm] Error fetching roles:", rolesError);
+      }
 
       if (selectedProject?.id) {
         console.log("[ProjectForm] Updating project:", selectedProject.id);
@@ -266,7 +277,7 @@ const Index = () => {
         }
 
       } else {
-        console.log("[ProjectForm] Creating new project");
+        console.log("[ProjectForm] Creating new project with user:", user?.id);
         const { data: newProject, error: projectError } = await supabase
           .from("projects")
           .insert(projectPayload)
@@ -279,10 +290,6 @@ const Index = () => {
           console.error("[ProjectForm] Project creation error:", projectError.message);
           console.error("[ProjectForm] Project creation error details:", projectError);
           throw projectError;
-        }
-
-        if (!newProject) {
-          throw new Error("No project data returned after creation");
         }
 
         console.log("[ProjectForm] Creating innovation scores for new project:", newProject.id);
