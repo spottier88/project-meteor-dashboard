@@ -1,3 +1,4 @@
+
 import {
   AlertDialog,
   AlertDialogAction,
@@ -17,7 +18,7 @@ interface DeleteProjectDialogProps {
   onClose: () => void;
   projectId: string;
   projectTitle: string;
-  onProjectDeleted: () => void;
+  onProjectDeleted?: () => void;  // Rendu optionnel avec ?
 }
 
 export const DeleteProjectDialog = ({
@@ -49,7 +50,12 @@ export const DeleteProjectDialog = ({
       title: "Succès",
       description: "Le projet a été supprimé avec succès",
     });
-    onProjectDeleted();
+    
+    // Appel de onProjectDeleted seulement s'il existe
+    if (onProjectDeleted) {
+      onProjectDeleted();
+    }
+    
     onClose();
     navigate("/"); // Redirection vers la page d'accueil après la suppression
   };
