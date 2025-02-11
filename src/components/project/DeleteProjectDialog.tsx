@@ -33,6 +33,27 @@ export const DeleteProjectDialog = ({
 
   const handleDelete = async () => {
     try {
+      // Vérifions d'abord si le projet existe
+      const { data: existingProject, error: checkError } = await supabase
+        .from("projects")
+        .select("id")
+        .eq("id", projectId)
+        .maybeSingle();
+
+      if (checkError) {
+        throw checkError;
+      }
+
+      if (!existingProject) {
+        toast({
+          title: "Erreur",
+          description: "Le projet n'existe plus ou a déjà été supprimé",
+          variant: "destructive",
+        });
+        onClose();
+        return;
+      }
+
       const { error } = await supabase
         .from("projects")
         .delete()
@@ -61,8 +82,6 @@ export const DeleteProjectDialog = ({
         description: "Le projet a été supprimé avec succès",
       });
 
-      // Finalement, comme nous sommes déjà sur la page d'index, pas besoin de navigate
-      // Le navigate est retiré car il causait des problèmes de rafraîchissement
     } catch (error) {
       console.error("Erreur lors de la suppression:", error);
       toast({
