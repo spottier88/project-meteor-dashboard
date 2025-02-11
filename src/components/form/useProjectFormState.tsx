@@ -5,6 +5,50 @@ import { supabase } from "@/integrations/supabase/client";
 import { MonitoringLevel } from "@/types/monitoring";
 import { ProjectLifecycleStatus } from "@/types/project";
 
+export interface ProjectFormState {
+  currentStep: number;
+  setCurrentStep: (step: number) => void;
+  title: string;
+  setTitle: (title: string) => void;
+  description: string;
+  setDescription: (description: string) => void;
+  projectManager: string;
+  setProjectManager: (manager: string) => void;
+  startDate: Date | undefined;
+  setStartDate: (date: Date | undefined) => void;
+  endDate: Date | undefined;
+  setEndDate: (date: Date | undefined) => void;
+  priority: string;
+  setPriority: (priority: string) => void;
+  monitoringLevel: MonitoringLevel;
+  setMonitoringLevel: (level: MonitoringLevel) => void;
+  monitoringEntityId: string | null;
+  setMonitoringEntityId: (id: string | null) => void;
+  ownerId: string;
+  setOwnerId: (id: string) => void;
+  poleId: string;
+  setPoleId: (id: string) => void;
+  directionId: string;
+  setDirectionId: (id: string) => void;
+  serviceId: string;
+  setServiceId: (id: string) => void;
+  novateur: number;
+  setNovateur: (value: number) => void;
+  usager: number;
+  setUsager: (value: number) => void;
+  ouverture: number;
+  setOuverture: (value: number) => void;
+  agilite: number;
+  setAgilite: (value: number) => void;
+  impact: number;
+  setImpact: (value: number) => void;
+  isSubmitting: boolean;
+  setIsSubmitting: (value: boolean) => void;
+  lifecycleStatus: ProjectLifecycleStatus;
+  setLifecycleStatus: (status: ProjectLifecycleStatus) => void;
+  validateStep3: () => boolean;
+}
+
 export const useProjectFormState = (isOpen: boolean, project?: any) => {
   const [currentStep, setCurrentStep] = useState(0);
   const [title, setTitle] = useState("");
@@ -107,6 +151,10 @@ export const useProjectFormState = (isOpen: boolean, project?: any) => {
     initializeForm();
   }, [isOpen, project, user?.email, user?.id]);
 
+  const validateStep3 = () => {
+    return true;
+  };
+
   return {
     currentStep,
     setCurrentStep,
@@ -148,5 +196,6 @@ export const useProjectFormState = (isOpen: boolean, project?: any) => {
     setIsSubmitting,
     lifecycleStatus,
     setLifecycleStatus,
+    validateStep3,
   };
 };
