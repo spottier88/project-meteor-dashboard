@@ -12,6 +12,8 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
+import { useState } from "react";
 
 interface DeleteProjectDialogProps {
   isOpen: boolean;
@@ -30,9 +32,13 @@ export const DeleteProjectDialog = ({
 }: DeleteProjectDialogProps) => {
   const { toast } = useToast();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const handleDelete = async () => {
     try {
+      setIsDeleting(true);
+
       // Vérifions d'abord si le projet existe
       const { data: existingProject, error: checkError } = await supabase
         .from("projects")
@@ -68,12 +74,18 @@ export const DeleteProjectDialog = ({
         return;
       }
 
-      // D'abord, rafraîchir la liste des projets
+      // Invalider le cache des projets pour forcer un rafraîchissement
+      await queryClient.invalidateQueries(["projects"]);
+
+      // Attendre un court instant pour s'assurer que la requête est bien invalidée
+      await new Promise(resolve => setTimeout(resolve, 100));
+
+      // Rafraîchir la liste des projets via le callback
       if (onProjectDeleted) {
-        onProjectDeleted();
+        await onProjectDeleted();
       }
 
-      // Ensuite, fermer le dialogue
+      // Fermer le dialogue
       onClose();
 
       // Afficher le toast de confirmation
@@ -89,6 +101,8 @@ export const DeleteProjectDialog = ({
         description: "Une erreur inattendue est survenue",
         variant: "destructive",
       });
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -103,8 +117,14 @@ export const DeleteProjectDialog = ({
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel>Annuler</AlertDialogCancel>
-          <AlertDialogAction onClick={handleDelete}>Supprimer</AlertDialogAction>
+          <AlertDialogCancel disabled={isDeleting}>Annuler</AlertDialogCancel>
+          <AlertDialogAction 
+            onClick={handleDelete} 
+            disabled={isDeleting}
+            className={isDeleting ? "opacity-50 cursor-not-allowed" : ""}
+          >
+            {isDeleting ? "Suppression..." : "Supprimer"}
+          </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
