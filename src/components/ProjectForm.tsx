@@ -49,9 +49,7 @@ export const ProjectForm = ({ isOpen, onClose, onSubmit, project }: ProjectFormP
       return;
     }
 
-    // Vérifier les permissions en fonction du contexte (création ou modification)
     if (project?.id && !canEdit) {
-      console.error("User doesn't have permission to edit project");
       toast({
         title: "Erreur",
         description: "Vous n'avez pas les droits nécessaires pour modifier ce projet",
@@ -61,7 +59,6 @@ export const ProjectForm = ({ isOpen, onClose, onSubmit, project }: ProjectFormP
     }
 
     if (!project?.id && !canCreate) {
-      console.error("User doesn't have permission to create project");
       toast({
         title: "Erreur",
         description: "Vous n'avez pas les droits nécessaires pour créer un projet",
@@ -81,7 +78,7 @@ export const ProjectForm = ({ isOpen, onClose, onSubmit, project }: ProjectFormP
         priority: formState.priority,
         monitoringLevel: formState.monitoringLevel,
         monitoringEntityId: formState.monitoringEntityId || null,
-        owner_id: user?.id || null, // Ajout de l'owner_id
+        owner_id: user?.id || null,
         poleId: formState.poleId === "none" ? null : formState.poleId,
         directionId: formState.directionId === "none" ? null : formState.directionId,
         serviceId: formState.serviceId === "none" ? null : formState.serviceId,
@@ -95,8 +92,6 @@ export const ProjectForm = ({ isOpen, onClose, onSubmit, project }: ProjectFormP
         },
       };
 
-      console.log("Submitting project data:", projectData);
-
       await onSubmit(projectData);
       
       await queryClient.invalidateQueries({ queryKey: ["projects"] });
@@ -107,7 +102,6 @@ export const ProjectForm = ({ isOpen, onClose, onSubmit, project }: ProjectFormP
       });
       onClose();
     } catch (error: any) {
-      console.error("Error submitting project:", error);
       toast({
         title: "Erreur",
         description: error.message || "Une erreur est survenue lors de l'enregistrement",
