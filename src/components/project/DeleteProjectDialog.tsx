@@ -18,7 +18,7 @@ interface DeleteProjectDialogProps {
   onClose: () => void;
   projectId: string;
   projectTitle: string;
-  onProjectDeleted?: () => void;  // Rendu optionnel avec ?
+  onProjectDeleted?: () => void;
 }
 
 export const DeleteProjectDialog = ({
@@ -32,32 +32,45 @@ export const DeleteProjectDialog = ({
   const navigate = useNavigate();
 
   const handleDelete = async () => {
-    const { error } = await supabase
-      .from("projects")
-      .delete()
-      .eq("id", projectId);
+    try {
+      const { error } = await supabase
+        .from("projects")
+        .delete()
+        .eq("id", projectId);
 
-    if (error) {
+      if (error) {
+        toast({
+          title: "Erreur",
+          description: "Une erreur est survenue lors de la suppression du projet",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // D'abord, rafraîchir la liste des projets
+      if (onProjectDeleted) {
+        onProjectDeleted();
+      }
+
+      // Ensuite, fermer le dialogue
+      onClose();
+
+      // Afficher le toast de confirmation
+      toast({
+        title: "Succès",
+        description: "Le projet a été supprimé avec succès",
+      });
+
+      // Finalement, comme nous sommes déjà sur la page d'index, pas besoin de navigate
+      // Le navigate est retiré car il causait des problèmes de rafraîchissement
+    } catch (error) {
+      console.error("Erreur lors de la suppression:", error);
       toast({
         title: "Erreur",
-        description: "Une erreur est survenue lors de la suppression du projet",
+        description: "Une erreur inattendue est survenue",
         variant: "destructive",
       });
-      return;
     }
-
-    toast({
-      title: "Succès",
-      description: "Le projet a été supprimé avec succès",
-    });
-    
-    // Appel de onProjectDeleted seulement s'il existe
-    if (onProjectDeleted) {
-      onProjectDeleted();
-    }
-    
-    onClose();
-    navigate("/"); // Redirection vers la page d'accueil après la suppression
   };
 
   return (
