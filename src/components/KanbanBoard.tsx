@@ -1,13 +1,14 @@
+
 import { useEffect, useState } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Pencil, Trash2 } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
-import { useUser } from "@supabase/auth-helpers-react";
 import { cn } from "@/lib/utils";
+import { useTaskPermissions } from "@/hooks/use-task-permissions";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -29,41 +30,9 @@ export const KanbanBoard = ({ projectId, readOnly = false, onEditTask }: KanbanB
   const [tasks, setTasks] = useState<any[]>([]);
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const user = useUser();
   const [taskToDelete, setTaskToDelete] = useState<string | null>(null);
 
-  // Récupérer les rôles de l'utilisateur
-  const { data: userRoles } = useQuery({
-    queryKey: ["userRoles", user?.id],
-    queryFn: async () => {
-      if (!user?.id) return [];
-      const { data, error } = await supabase
-        .from("user_roles")
-        .select("role")
-        .eq("user_id", user.id);
-
-      if (error) throw error;
-      return data.map(d => d.role);
-    },
-    enabled: !!user?.id,
-  });
-
-  // Récupérer l'email de l'utilisateur
-  const { data: userProfile } = useQuery({
-    queryKey: ["userProfile", user?.id],
-    queryFn: async () => {
-      if (!user?.id) return null;
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("email")
-        .eq("id", user.id)
-        .single();
-
-      if (error) throw error;
-      return data;
-    },
-    enabled: !!user?.id,
-  });
+  const { canEditTask, canDeleteTask } = useTaskPermissions(projectId);
 
   const { data: taskData, refetch } = useQuery({
     queryKey: ["tasks", projectId],
@@ -147,26 +116,6 @@ export const KanbanBoard = ({ projectId, readOnly = false, onEditTask }: KanbanB
     return dueDate < today;
   };
 
-  const canEditTask = (task: any) => {
-    if (!user || !userProfile) return false;
-    
-    // Les admins peuvent tout modifier
-    if (userRoles?.includes("admin")) return true;
-    
-    // Les chefs de projet peuvent tout modifier
-    if (userRoles?.includes("chef_projet")) return true;
-    
-    // Les membres ne peuvent modifier que leurs tâches assignées
-    return task.assignee === userProfile.email;
-  };
-
-  const canDeleteTask = () => {
-    if (!user) return false;
-    
-    // Seuls les admins et chefs de projet peuvent supprimer
-    return userRoles?.includes("admin") || userRoles?.includes("chef_projet");
-  };
-
   const columns = [
     { id: "todo", title: "À faire" },
     { id: "in_progress", title: "En cours" },
@@ -215,7 +164,7 @@ export const KanbanBoard = ({ projectId, readOnly = false, onEditTask }: KanbanB
                     )}
                     {!readOnly && (
                       <div className="flex items-center justify-end gap-2 pt-2">
-                        {canEditTask(task) && (
+                        {canEditTask(task.assignee) && (
                           <Button
                             variant="ghost"
                             size="icon"
@@ -224,7 +173,7 @@ export const KanbanBoard = ({ projectId, readOnly = false, onEditTask }: KanbanB
                             <Pencil className="h-4 w-4" />
                           </Button>
                         )}
-                        {canDeleteTask() && (
+                        {canDeleteTask && (
                           <Button
                             variant="ghost"
                             size="icon"
