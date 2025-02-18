@@ -2,31 +2,62 @@ import { Auth } from "@supabase/auth-ui-react";
 import { ThemeSupa } from "@supabase/auth-ui-shared";
 import { supabase } from "@/integrations/supabase/client";
 import { useState, useEffect } from "react";
-import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
-
+import { useToast } from "@/components/ui/use-toast";
 
 const Login = () => {
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
-  const [isMagicLink, setIsMagicLink] = useState(true); // Toggle entre Magic Link et Login/MDP
+  const [isMagicLink, setIsMagicLink] = useState(true);
 
   useEffect(() => {
     // Vérifier si l'utilisateur est déjà connecté
     const checkSession = async () => {
-      const { data } = await supabase.auth.getSession();
-      if (data.session) {
+      const { data: sessionData } = await supabase.auth.getSession();
+      if (sessionData.session) {
+        const { data: profileData } = await supabase
+          .from('profiles')
+          .select()
+          .eq('id', sessionData.session.user.id)
+          .maybeSingle();
+
+        if (!profileData) {
+          toast({
+            title: "Erreur",
+            description: "Votre profil n'a pas été correctement créé. Veuillez contacter l'administrateur.",
+            variant: "destructive",
+          });
+          await supabase.auth.signOut();
+          return;
+        }
         navigate("/");
       }
     };
     checkSession();
 
     // Écouter les changements d'authentification
-    const { data: listener } = supabase.auth.onAuthStateChange((event, session) => {
+    const { data: listener } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (session) {
+        // Vérifier l'existence du profil
+        const { data: profileData } = await supabase
+          .from('profiles')
+          .select()
+          .eq('id', session.user.id)
+          .maybeSingle();
+
+        if (!profileData) {
+          toast({
+            title: "Erreur",
+            description: "Votre profil n'a pas été correctement créé. Veuillez contacter l'administrateur.",
+            variant: "destructive",
+          });
+          await supabase.auth.signOut();
+          return;
+        }
         navigate("/");
       }
     });
@@ -34,7 +65,7 @@ const Login = () => {
     return () => {
       listener.subscription.unsubscribe();
     };
-  }, [navigate]);
+  }, [navigate, toast]);
 
   // 🔹 Connexion avec Magic Link
   const handleMagicLink = async (e) => {
@@ -75,7 +106,7 @@ const Login = () => {
     if (error) {
       setMessage("Erreur : " + error.message);
     } else {
-      navigate("/");
+      // La vérification du profil est maintenant gérée dans onAuthStateChange
     }
   };
 
@@ -88,6 +119,9 @@ const Login = () => {
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
+      options: {
+        emailRedirectTo: `${window.location.origin}/auth/callback`,
+      },
     });
 
     setLoading(false);
@@ -204,4 +238,3 @@ const Login = () => {
 };
 
 export default Login;
-
