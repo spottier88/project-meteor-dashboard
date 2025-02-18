@@ -30,7 +30,7 @@ jobs:
      
      # Étape 4 : Construire l'image Docker
       - name: Build the Docker image
-        run: docker build --file Dockerfile --tag ${{ secrets.DOCKER_USERNAME }}/project-meteor:latest .
+        run: docker build --file Dockerfile --build-arg ENV=docker --tag ${{ secrets.DOCKER_USERNAME }}/project-meteor:latest .
 
       # Étape 5 : Vérification des images Docker locales
       - name: List Docker Images
