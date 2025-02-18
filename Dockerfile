@@ -7,17 +7,17 @@ WORKDIR /app
 # Copier les fichiers de configuration et de dépendances
 COPY package.json package-lock.json ./
 
-# Définition d'un argument pour choisir le bon fichier de connexion à la base
-ARG ENV=dev
-
-# Copier le fichier approprié en fonction de l'environnement
-COPY src/integrations/supabase/client_${ENV}.ts src/integrations/supabase/client.ts
-
 # Installer les dépendances
 RUN npm install --legacy-peer-deps
 
 # Copier le reste des fichiers du projet
 COPY . .
+
+# Définition d'un argument pour choisir le bon fichier de connexion à la base
+ARG ENV=dev
+
+# Copier le fichier approprié en fonction de l'environnement
+COPY src/integrations/supabase/client_${ENV}.ts src/integrations/supabase/client.ts
 
 # Définition des variables avant le build
 #ENV VITE_SUPABASE_URL=https://meteor.famillepottier.fr
