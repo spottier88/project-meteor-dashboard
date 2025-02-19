@@ -1,4 +1,5 @@
-export type NotificationType = 'system' | 'user';
+
+export type NotificationType = 'system' | 'user' | 'feedback';
 
 export interface Notification {
   id: string;
@@ -9,6 +10,9 @@ export interface Notification {
   created_at: string;
   created_by?: string;
   published: boolean | null;
+  profiles?: {
+    email: string;
+  } | null;
 }
 
 export interface UserNotification {

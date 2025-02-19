@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
@@ -31,17 +32,23 @@ export function NotificationList({ onDelete }: NotificationListProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [selectedNotification, setSelectedNotification] = useState<string | null>(null);
+  const [selectedContent, setSelectedContent] = useState<Notification | null>(null);
 
   const { data: notifications, isLoading } = useQuery({
     queryKey: ["notifications"],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("notifications")
-        .select("*")
+        .select(`
+          *,
+          profiles:created_by (
+            email
+          )
+        `)
         .order("created_at", { ascending: false });
 
       if (error) throw error;
-      return data as Notification[];
+      return data as (Notification & { profiles: { email: string } | null })[];
     },
   });
 
@@ -54,7 +61,6 @@ export function NotificationList({ onDelete }: NotificationListProps) {
 
       if (error) throw error;
 
-      // Invalider le cache des notifications
       await queryClient.invalidateQueries({ queryKey: ["notifications"] });
       
       toast({
@@ -73,17 +79,31 @@ export function NotificationList({ onDelete }: NotificationListProps) {
     }
   };
 
+  const getNotificationType = (type: string) => {
+    switch (type) {
+      case "system":
+        return "Système";
+      case "user":
+        return "Utilisateur";
+      case "feedback":
+        return "Retour utilisateur";
+      default:
+        return type;
+    }
+  };
+
   if (isLoading) {
     return <div>Chargement...</div>;
   }
 
   return (
     <>
-      <Table>
+      <Table className="cursor-pointer">
         <TableHeader>
           <TableRow>
             <TableHead>Titre</TableHead>
             <TableHead>Type</TableHead>
+            <TableHead>Créé par</TableHead>
             <TableHead>Date de publication</TableHead>
             <TableHead>Statut</TableHead>
             <TableHead className="w-[150px]">Actions</TableHead>
@@ -91,11 +111,13 @@ export function NotificationList({ onDelete }: NotificationListProps) {
         </TableHeader>
         <TableBody>
           {notifications?.map((notification) => (
-            <TableRow key={notification.id}>
+            <TableRow 
+              key={notification.id}
+              onClick={() => setSelectedContent(notification)}
+            >
               <TableCell>{notification.title}</TableCell>
-              <TableCell>
-                {notification.type === "system" ? "Système" : "Utilisateur"}
-              </TableCell>
+              <TableCell>{getNotificationType(notification.type)}</TableCell>
+              <TableCell>{notification.profiles?.email || "Système"}</TableCell>
               <TableCell>
                 {format(new Date(notification.publication_date), "Pp", {
                   locale: fr,
@@ -109,7 +131,10 @@ export function NotificationList({ onDelete }: NotificationListProps) {
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => setSelectedNotification(notification.id)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setSelectedNotification(notification.id);
+                    }}
                   >
                     <Send className="h-4 w-4" />
                   </Button>
@@ -117,7 +142,10 @@ export function NotificationList({ onDelete }: NotificationListProps) {
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={() => handleDelete(notification.id)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleDelete(notification.id);
+                  }}
                 >
                   <Trash2 className="h-4 w-4" />
                 </Button>
@@ -145,6 +173,48 @@ export function NotificationList({ onDelete }: NotificationListProps) {
                 }}
                 onCancel={() => setSelectedNotification(null)}
               />
+            </div>
+          )}
+        </SheetContent>
+      </Sheet>
+
+      <Sheet 
+        open={!!selectedContent} 
+        onOpenChange={() => setSelectedContent(null)}
+      >
+        <SheetContent>
+          <SheetHeader>
+            <SheetTitle>{selectedContent?.title}</SheetTitle>
+          </SheetHeader>
+          {selectedContent && (
+            <div className="mt-8 space-y-4">
+              <div>
+                <h3 className="font-semibold mb-2">Contenu :</h3>
+                <p className="whitespace-pre-wrap">{selectedContent.content}</p>
+              </div>
+              <div>
+                <h3 className="font-semibold mb-2">Informations :</h3>
+                <ul className="space-y-2">
+                  <li>
+                    <span className="font-medium">Type : </span>
+                    {getNotificationType(selectedContent.type)}
+                  </li>
+                  <li>
+                    <span className="font-medium">Créé par : </span>
+                    {selectedContent.profiles?.email || "Système"}
+                  </li>
+                  <li>
+                    <span className="font-medium">Date de publication : </span>
+                    {format(new Date(selectedContent.publication_date), "Pp", {
+                      locale: fr,
+                    })}
+                  </li>
+                  <li>
+                    <span className="font-medium">Statut : </span>
+                    {selectedContent.published ? "Publiée" : "Non publiée"}
+                  </li>
+                </ul>
+              </div>
             </div>
           )}
         </SheetContent>
