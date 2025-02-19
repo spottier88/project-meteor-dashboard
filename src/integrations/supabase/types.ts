@@ -927,7 +927,7 @@ export type Database = {
     }
     Enums: {
       monitoring_level: "none" | "dgs" | "pole" | "direction"
-      notification_type: "system" | "user"
+      notification_type: "system" | "user" | "feedback"
       progress_status: "better" | "stable" | "worse"
       project_lifecycle_status:
         | "study"

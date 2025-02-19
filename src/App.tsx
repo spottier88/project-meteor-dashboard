@@ -1,3 +1,4 @@
+
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
@@ -18,6 +19,7 @@ import { ReviewHistory } from "./components/ReviewHistory";
 import { ManagerAssignments } from "./pages/ManagerAssignments";
 import { ProjectTeamManagement } from "./pages/ProjectTeamManagement";
 import { PermissionsProvider } from "@/contexts/PermissionsContext";
+import { FeedbackButton } from "@/components/feedback/FeedbackButton";
 import { useEffect } from "react";
 import { useToast } from "./components/ui/use-toast";
 
@@ -149,6 +151,7 @@ function AppContent() {
                 }
               />
         </Routes>
+        <FeedbackButton />
       </Router>
       <Toaster />
     </PermissionsProvider>
