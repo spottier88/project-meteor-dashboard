@@ -1,3 +1,4 @@
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ProjectStatus, ProgressStatus } from "@/types/project";
 import { statusIcons } from "@/lib/project-status";
@@ -47,6 +48,25 @@ export const ProjectSummaryHeader = ({
     enabled: !!id,
   });
 
+  const { data: projectManagerProfile } = useQuery({
+    queryKey: ["projectManagerProfile", project_manager],
+    queryFn: async () => {
+      if (!project_manager) return null;
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("email", project_manager)
+        .maybeSingle();
+
+      if (error) {
+        console.error("Error fetching project manager profile:", error);
+        return null;
+      }
+      return data;
+    },
+    enabled: !!project_manager,
+  });
+
   const getStatusIcon = () => {
     const status = latestReview?.weather;
     if (!status || !statusIcons[status]) {
@@ -59,6 +79,14 @@ export const ProjectSummaryHeader = ({
         aria-label={statusIcons[status].label}
       />
     );
+  };
+
+  const getProjectManagerDisplay = () => {
+    if (!project_manager) return "-";
+    if (projectManagerProfile?.first_name && projectManagerProfile?.last_name) {
+      return `${projectManagerProfile.first_name} ${projectManagerProfile.last_name}`;
+    }
+    return project_manager;
   };
 
   return (
@@ -76,7 +104,7 @@ export const ProjectSummaryHeader = ({
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <div>
             <span className="text-sm text-muted-foreground">Chef de projet</span>
-            <p className="font-medium">{project_manager || "-"}</p>
+            <p className="font-medium">{getProjectManagerDisplay()}</p>
           </div>
           <div>
             <span className="text-sm text-muted-foreground">Avancement</span>
