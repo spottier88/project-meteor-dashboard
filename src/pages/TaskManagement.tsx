@@ -1,3 +1,4 @@
+
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -7,28 +8,7 @@ import { ArrowLeft } from "lucide-react";
 import { ProjectStatus, ProgressStatus } from "@/types/project";
 import { useProjectPermissions } from "@/hooks/useProjectPermissions";
 import { useToast } from "@/components/ui/use-toast";
-
-interface Project {
-  id: string;
-  title: string;
-  status: ProjectStatus;
-  progress: ProgressStatus;
-  completion: number;
-  last_review_date: string;
-  project_manager?: string;
-}
-
-const statusLabels = {
-  sunny: "Ensoleillé",
-  cloudy: "Nuageux",
-  stormy: "Orageux",
-};
-
-const progressLabels = {
-  better: "En amélioration",
-  stable: "Stable",
-  worse: "En dégradation",
-};
+import { ProjectSummaryHeader } from "@/components/project/ProjectSummaryHeader";
 
 export const TaskManagement = () => {
   const { projectId } = useParams<{ projectId: string }>();
@@ -44,29 +24,22 @@ export const TaskManagement = () => {
         return null;
       }
 
-      const [projectResult, reviewResult] = await Promise.all([
-        supabase
-          .from("projects")
-          .select("*")
-          .eq("id", projectId)
-          .maybeSingle(),
-        supabase
-          .from("latest_reviews")
-          .select("*")
-          .eq("project_id", projectId)
-          .maybeSingle()
-      ]);
+      const { data, error } = await supabase
+        .from("projects")
+        .select("*")
+        .eq("id", projectId)
+        .maybeSingle();
 
-      if (projectResult.error) {
+      if (error) {
         toast({
           variant: "destructive",
           title: "Erreur",
           description: "Impossible de charger le projet",
         });
-        throw projectResult.error;
+        throw error;
       }
 
-      if (!projectResult.data) {
+      if (!data) {
         toast({
           variant: "destructive",
           title: "Projet non trouvé",
@@ -76,13 +49,7 @@ export const TaskManagement = () => {
         return null;
       }
 
-      return {
-        ...projectResult.data,
-        status: reviewResult.data?.weather || null,
-        progress: reviewResult.data?.progress || null,
-        completion: reviewResult.data?.completion || 0,
-        last_review_date: reviewResult.data?.created_at || null
-      } as Project;
+      return data;
     },
   });
 
@@ -101,40 +68,23 @@ export const TaskManagement = () => {
         Retour aux projets
       </Button>
 
-      <div className="bg-card rounded-lg border p-6 mb-8">
-        <h1 className="text-2xl font-bold mb-4">{project.title}</h1>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div>
-            <span className="text-sm text-muted-foreground">Chef de projet</span>
-            <p className="font-medium">{project.project_manager || "-"}</p>
-          </div>
-          <div>
-            <span className="text-sm text-muted-foreground">Statut</span>
-            <p className="font-medium">{project.status ? statusLabels[project.status] : "Pas de revue"}</p>
-          </div>
-          <div>
-            <span className="text-sm text-muted-foreground">Progression</span>
-            <p className="font-medium">{project.progress ? progressLabels[project.progress] : "Pas de revue"}</p>
-          </div>
-          <div>
-            <span className="text-sm text-muted-foreground">Avancement</span>
-            <p className="font-medium">{project.completion || 0}%</p>
-          </div>
-          <div>
-            <span className="text-sm text-muted-foreground">Dernière revue</span>
-            <p className="font-medium">
-              {project.last_review_date ? new Date(project.last_review_date).toLocaleDateString("fr-FR") : "Pas de revue"}
-            </p>
-          </div>
-        </div>
-      </div>
-
-      <TaskList 
-        projectId={projectId || ""} 
-        canEdit={canEdit}
+      <ProjectSummaryHeader
+        title={project.title}
+        description={project.description}
+        project_manager={project.project_manager}
+        id={project.id}
         isProjectManager={isProjectManager}
         isAdmin={isAdmin}
       />
+
+      <div className="mt-8">
+        <TaskList 
+          projectId={projectId || ""}
+          canEdit={canEdit}
+          isProjectManager={isProjectManager}
+          isAdmin={isAdmin}
+        />
+      </div>
     </div>
   );
 };
