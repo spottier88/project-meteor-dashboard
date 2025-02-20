@@ -1,3 +1,4 @@
+
 import { TableCell, TableRow } from "@/components/ui/table";
 import { ProjectActions } from "./ProjectActions";
 import { OrganizationCell } from "./OrganizationCell";
@@ -41,6 +42,25 @@ export const ProjectTableRow = ({
 }: ProjectTableRowProps) => {
   const navigate = useNavigate();
   const user = useUser();
+
+  const { data: userProfile } = useQuery({
+    queryKey: ["projectManagerProfile", project.project_manager],
+    queryFn: async () => {
+      if (!project.project_manager) return null;
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("email", project.project_manager)
+        .maybeSingle();
+
+      if (error) {
+        console.error("Error fetching project manager profile:", error);
+        return null;
+      }
+      return data;
+    },
+    enabled: !!project.project_manager,
+  });
 
   const { data: userRoles } = useQuery({
     queryKey: ["userRoles", user?.id],
@@ -97,13 +117,21 @@ export const ProjectTableRow = ({
     enabled: !!project.id,
   });
 
+  const getProjectManagerDisplay = () => {
+    if (!project.project_manager) return "-";
+    if (userProfile?.first_name && userProfile?.last_name) {
+      return `${userProfile.first_name} ${userProfile.last_name}`;
+    }
+    return project.project_manager;
+  };
+
   return (
     <TableRow
       className="cursor-pointer hover:bg-muted/50"
       onClick={() => navigate(`/projects/${project.id}`)}
     >
       <TableCell className="font-medium">{project.title}</TableCell>
-      <TableCell>{project.project_manager}</TableCell>
+      <TableCell>{getProjectManagerDisplay()}</TableCell>
       <TableCell>
         <OrganizationCell
           poleId={project.pole_id}

@@ -1,3 +1,4 @@
+
 import { Card, CardContent } from "@/components/ui/card";
 import { TaskSummary } from "./TaskSummary";
 import { useNavigate } from "react-router-dom";
@@ -114,6 +115,33 @@ export const ProjectCard = ({
     enabled: !!id,
   });
 
+  const { data: projectManagerProfile } = useQuery({
+    queryKey: ["projectManagerProfile", project_manager],
+    queryFn: async () => {
+      if (!project_manager) return null;
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("email", project_manager)
+        .maybeSingle();
+
+      if (error) {
+        console.error("Error fetching project manager profile:", error);
+        return null;
+      }
+      return data;
+    },
+    enabled: !!project_manager,
+  });
+
+  const getProjectManagerDisplay = () => {
+    if (!project_manager) return "-";
+    if (projectManagerProfile?.first_name && projectManagerProfile?.last_name) {
+      return `${projectManagerProfile.first_name} ${projectManagerProfile.last_name}`;
+    }
+    return project_manager;
+  };
+
   return (
     <Card className="w-full transition-all duration-300 hover:shadow-lg animate-fade-in">
       <ProjectCardHeader
@@ -155,6 +183,9 @@ export const ProjectCard = ({
           {description && (
             <p className="text-sm text-muted-foreground">{description}</p>
           )}
+          <div className="text-sm text-muted-foreground">
+            Chef de projet : {getProjectManagerDisplay()}
+          </div>
           {organization?.name && (
             <p className="text-sm text-muted-foreground">
               {organization.level}: {organization.name}
