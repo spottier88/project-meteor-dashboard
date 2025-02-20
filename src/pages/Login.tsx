@@ -15,17 +15,24 @@ const Login = () => {
   const [isMagicLink, setIsMagicLink] = useState(true);
 
   useEffect(() => {
+    console.log("[Login] Composant monté, vérification de la session...");
     // Vérifier si l'utilisateur est déjà connecté
     const checkSession = async () => {
       const { data: sessionData } = await supabase.auth.getSession();
+      console.log("[Login] Session actuelle:", sessionData);
+      
       if (sessionData.session) {
+        console.log("[Login] Session trouvée, vérification du profil...");
         const { data: profileData } = await supabase
           .from('profiles')
           .select()
           .eq('id', sessionData.session.user.id)
           .maybeSingle();
 
+        console.log("[Login] Données du profil:", profileData);
+
         if (!profileData) {
+          console.log("[Login] Profil non trouvé, déconnexion...");
           toast({
             title: "Erreur",
             description: "Votre profil n'a pas été correctement créé. Veuillez contacter l'administrateur.",
@@ -34,6 +41,7 @@ const Login = () => {
           await supabase.auth.signOut();
           return;
         }
+        console.log("[Login] Profil trouvé, redirection vers /...");
         navigate("/");
       }
     };
@@ -41,7 +49,10 @@ const Login = () => {
 
     // Écouter les changements d'authentification
     const { data: listener } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log("[Login] Événement auth détecté:", event, "Session:", session);
+      
       if (session) {
+        console.log("[Login] Nouvelle session détectée, vérification du profil...");
         // Vérifier l'existence du profil
         const { data: profileData } = await supabase
           .from('profiles')
@@ -49,7 +60,10 @@ const Login = () => {
           .eq('id', session.user.id)
           .maybeSingle();
 
+        console.log("[Login] Données du profil après changement d'auth:", profileData);
+
         if (!profileData) {
+          console.log("[Login] Profil non trouvé après changement d'auth, déconnexion...");
           toast({
             title: "Erreur",
             description: "Votre profil n'a pas été correctement créé. Veuillez contacter l'administrateur.",
@@ -58,11 +72,13 @@ const Login = () => {
           await supabase.auth.signOut();
           return;
         }
+        console.log("[Login] Profil validé, redirection vers /...");
         navigate("/");
       }
     });
 
     return () => {
+      console.log("[Login] Nettoyage du composant, désabonnement des événements");
       listener.subscription.unsubscribe();
     };
   }, [navigate, toast]);
@@ -93,6 +109,7 @@ const Login = () => {
   // 🔹 Connexion avec email/mot de passe
   const handleLogin = async (e) => {
     e.preventDefault();
+    console.log("[Login] Tentative de connexion avec email/mot de passe...");
     setLoading(true);
     setMessage("");
 
@@ -101,11 +118,15 @@ const Login = () => {
       password,
     });
 
+    console.log("[Login] Résultat de la connexion:", { data, error });
+
     setLoading(false);
 
     if (error) {
+      console.log("[Login] Erreur de connexion:", error);
       setMessage("Erreur : " + error.message);
     } else {
+      console.log("[Login] Connexion réussie, attente de l'événement onAuthStateChange...");
       // La vérification du profil est maintenant gérée dans onAuthStateChange
     }
   };
@@ -113,6 +134,7 @@ const Login = () => {
   // 🔹 Inscription avec email/mot de passe
   const handleSignup = async (e) => {
     e.preventDefault();
+    console.log("[Login] Tentative d'inscription...");
     setLoading(true);
     setMessage("");
 
@@ -124,9 +146,12 @@ const Login = () => {
       },
     });
 
+    console.log("[Login] Résultat de l'inscription:", { data, error });
+
     setLoading(false);
 
     if (error) {
+      console.log("[Login] Erreur d'inscription:", error);
       setMessage("Erreur : " + error.message);
     } else {
       setMessage("Compte créé ! Vérifiez votre email pour confirmer votre inscription.");
