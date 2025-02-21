@@ -4,9 +4,9 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useUser } from '@supabase/auth-helpers-react';
-import { format, startOfWeek, startOfMonth, startOfDay, endOfMonth, addDays } from "date-fns";
+import { format, startOfWeek, startOfMonth, startOfDay, endOfMonth, addDays, addWeeks, addMonths, subWeeks, subMonths } from "date-fns";
 import { fr } from "date-fns/locale";
-import { BarChartIcon, List } from "lucide-react";
+import { BarChartIcon, List, ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ActivityFilters } from './ActivityFilters';
 import { ActivityList } from './ActivityList';
@@ -23,7 +23,7 @@ export const WeeklyDashboard = () => {
   const user = useUser();
   const location = useLocation();
   const isTeamView = location.pathname === '/team-activities';
-  const today = new Date();
+  const [currentDate, setCurrentDate] = useState(new Date());
   const [viewMode, setViewMode] = useState<'chart' | 'list'>('chart');
   const [period, setPeriod] = useState('week');
   const [projectId, setProjectId] = useState('all');
@@ -32,16 +32,57 @@ export const WeeklyDashboard = () => {
   const getPeriodDates = () => {
     switch (period) {
       case 'day':
-        return { start: startOfDay(today) };
+        return { start: startOfDay(currentDate) };
       case 'month':
-        return { start: startOfMonth(today) };
+        return { start: startOfMonth(currentDate) };
       case 'week':
       default:
-        return { start: startOfWeek(today, { locale: fr }) };
+        return { start: startOfWeek(currentDate, { locale: fr }) };
+    }
+  };
+
+  const handleNavigateBack = () => {
+    switch (period) {
+      case 'day':
+        setCurrentDate(prev => addDays(prev, -1));
+        break;
+      case 'week':
+        setCurrentDate(prev => subWeeks(prev, 1));
+        break;
+      case 'month':
+        setCurrentDate(prev => subMonths(prev, 1));
+        break;
+    }
+  };
+
+  const handleNavigateForward = () => {
+    switch (period) {
+      case 'day':
+        setCurrentDate(prev => addDays(prev, 1));
+        break;
+      case 'week':
+        setCurrentDate(prev => addWeeks(prev, 1));
+        break;
+      case 'month':
+        setCurrentDate(prev => addMonths(prev, 1));
+        break;
     }
   };
 
   const { start: periodStart } = getPeriodDates();
+
+  const getPeriodLabel = () => {
+    switch (period) {
+      case 'day':
+        return format(currentDate, 'dd MMMM yyyy', { locale: fr });
+      case 'month':
+        return format(currentDate, 'MMMM yyyy', { locale: fr });
+      case 'week':
+      default:
+        const weekEnd = addDays(periodStart, 6);
+        return `${format(periodStart, 'dd')} - ${format(weekEnd, 'dd MMMM yyyy', { locale: fr })}`;
+    }
+  };
 
   const { data: activities, isLoading, error } = useQuery({
     queryKey: ['activities', isTeamView, period, projectId, activityType, periodStart.toISOString()],
@@ -64,7 +105,6 @@ export const WeeklyDashboard = () => {
         .order('start_time', { ascending: true });
 
       if (!isTeamView) {
-        // Pour la vue "Mes activités", on filtre par l'utilisateur courant
         query = query.eq('user_id', user?.id);
       }
 
@@ -93,7 +133,7 @@ export const WeeklyDashboard = () => {
       case 'day':
         return 1;
       case 'month':
-        return endOfMonth(today).getDate();
+        return endOfMonth(currentDate).getDate();
       case 'week':
       default:
         return 7;
@@ -173,14 +213,35 @@ export const WeeklyDashboard = () => {
           </div>
         </CardHeader>
         <CardContent>
-          <Filters
-            period={period}
-            setPeriod={setPeriod}
-            projectId={projectId}
-            setProjectId={setProjectId}
-            activityType={activityType}
-            setActivityType={setActivityType}
-          />
+          <div className="flex flex-col md:flex-row md:items-center gap-4 mb-6">
+            <div className="flex-grow">
+              <Filters
+                period={period}
+                setPeriod={setPeriod}
+                projectId={projectId}
+                setProjectId={setProjectId}
+                activityType={activityType}
+                setActivityType={setActivityType}
+              />
+            </div>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleNavigateBack}
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+              <span className="min-w-32 text-center">{getPeriodLabel()}</span>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleNavigateForward}
+              >
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
           
           {!activities || activities.length === 0 ? (
             <p className="text-center text-muted-foreground py-8">
