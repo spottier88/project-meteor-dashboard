@@ -51,11 +51,12 @@ export const ActivityFilters = ({
         .select(`
           id,
           title,
-          project_manager,
+          project_manager_id,
           project_members!project_members_project_id_fkey (
             user_id
           ),
-          profiles!projects_project_manager_fkey (
+          profiles!projects_project_manager_id_fkey (
+            id,
             email
           )
         `)
@@ -70,7 +71,7 @@ export const ActivityFilters = ({
       const filteredProjects = projectsData?.filter(project => {
         if (isAdmin) return true;
         if (isManager) return true;
-        if (project.project_manager === user?.email) return true;
+        if (project.project_manager_id === user?.id) return true;
         // Vérifier si l'utilisateur est membre de l'équipe
         return project.project_members?.some(member => member.user_id === user?.id);
       });

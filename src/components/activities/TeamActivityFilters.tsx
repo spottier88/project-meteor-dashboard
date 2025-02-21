@@ -51,8 +51,9 @@ export const TeamActivityFilters = ({
         .select(`
           id,
           title,
-          project_manager,
-          profiles!projects_project_manager_fkey (
+          project_manager_id,
+          profiles!projects_project_manager_id_fkey (
+            id,
             email
           )
         `)
@@ -67,7 +68,7 @@ export const TeamActivityFilters = ({
       const filteredProjects = projectsData?.filter(project => {
         if (isAdmin) return true;
         if (isManager) return true;
-        return project.project_manager === user?.email;
+        return project.project_manager_id === user?.id;
       });
 
       console.log("[TeamActivityFilters] Filtered projects:", filteredProjects);

@@ -474,6 +474,7 @@ export type Database = {
           priority: string | null
           progress: Database["public"]["Enums"]["progress_status"] | null
           project_manager: string | null
+          project_manager_id: string | null
           service_id: string | null
           start_date: string | null
           status: Database["public"]["Enums"]["project_status"] | null
@@ -494,6 +495,7 @@ export type Database = {
           priority?: string | null
           progress?: Database["public"]["Enums"]["progress_status"] | null
           project_manager?: string | null
+          project_manager_id?: string | null
           service_id?: string | null
           start_date?: string | null
           status?: Database["public"]["Enums"]["project_status"] | null
@@ -514,6 +516,7 @@ export type Database = {
           priority?: string | null
           progress?: Database["public"]["Enums"]["progress_status"] | null
           project_manager?: string | null
+          project_manager_id?: string | null
           service_id?: string | null
           start_date?: string | null
           status?: Database["public"]["Enums"]["project_status"] | null
@@ -521,6 +524,13 @@ export type Database = {
           title?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "fk_project_manager"
+            columns: ["project_manager_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "projects_direction_id_fkey"
             columns: ["direction_id"]
@@ -540,6 +550,13 @@ export type Database = {
             columns: ["pole_id"]
             isOneToOne: false
             referencedRelation: "poles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "projects_project_manager_id_fkey"
+            columns: ["project_manager_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
           {
