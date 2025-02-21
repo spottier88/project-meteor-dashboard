@@ -1,48 +1,34 @@
+import { Button } from "@/components/ui/button";
+import { Plus, History } from "lucide-react";
+import { CartButton } from "./cart/CartButton";
+import { ProjectCart } from "./cart/ProjectCart";
+import { useState } from "react";
 
-import React from "react";
-import { Button } from "./ui/button";
-import { usePermissionsContext } from "@/contexts/PermissionsContext";
-
-export const DashboardHeader = ({
-  onNewProject,
-  onNewReview,
-}: {
+interface DashboardHeaderProps {
   onNewProject: () => void;
   onNewReview: () => void;
-}) => {
-  const { userProfile } = usePermissionsContext();
-  const canCreateProjects = userProfile?.roles?.some(
-    (role) => role === "admin" || role === "project_creator"
-  );
+}
+
+export const DashboardHeader = ({ onNewProject, onNewReview }: DashboardHeaderProps) => {
+  const [isCartOpen, setIsCartOpen] = useState(false);
 
   return (
-    <div className="mb-8">
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center space-x-4">
-          <img
-            src="/lovable-uploads/6e5660c0-6a3a-46d7-9632-b2935a4bf13c.png"
-            alt="Logo"
-            className="w-12 h-12 animate-[scale-in_0.5s_ease-out,fade-in_0.5s_ease-out]"
-          />
-          <h1 className="text-3xl font-bold">Tableau de bord</h1>
+    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
+      <h1 className="text-3xl font-bold">Tableau de bord</h1>
+      <div className="flex flex-wrap items-center gap-2">
+        <div onClick={() => setIsCartOpen(true)}>
+          <CartButton />
         </div>
-        <div className="flex space-x-4">
-          {canCreateProjects && (
-            <Button
-              onClick={onNewProject}
-              className="bg-blue-600 hover:bg-blue-700 text-white"
-            >
-              Nouveau projet
-            </Button>
-          )}
-          <Button
-            onClick={onNewReview}
-            className="bg-green-600 hover:bg-green-700 text-white"
-          >
-            Nouvelle revue
-          </Button>
-        </div>
+        <Button onClick={onNewReview} variant="outline" size="sm">
+          <History className="h-4 w-4 mr-2" />
+          Nouvelle revue
+        </Button>
+        <Button onClick={onNewProject} size="sm">
+          <Plus className="h-4 w-4 mr-2" />
+          Nouveau projet
+        </Button>
       </div>
+      <ProjectCart isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} />
     </div>
   );
 };
