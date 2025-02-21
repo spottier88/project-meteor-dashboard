@@ -13,6 +13,9 @@ import { ActivityList } from './ActivityList';
 import { ActivityChart } from './ActivityChart';
 import { ActivityTypeChart } from './ActivityTypeChart';
 import { ProjectTimeChart } from './ProjectTimeChart';
+import { Database } from "@/integrations/supabase/types";
+
+type ActivityType = Database["public"]["Enums"]["activity_type"];
 
 export const WeeklyDashboard = () => {
   const user = useUser();
@@ -20,7 +23,7 @@ export const WeeklyDashboard = () => {
   const [viewMode, setViewMode] = useState<'chart' | 'list'>('chart');
   const [period, setPeriod] = useState('week');
   const [projectId, setProjectId] = useState('all');
-  const [activityType, setActivityType] = useState('all');
+  const [activityType, setActivityType] = useState<'all' | ActivityType>('all');
 
   const getPeriodDates = () => {
     switch (period) {
@@ -159,7 +162,7 @@ export const WeeklyDashboard = () => {
             setActivityType={setActivityType}
           />
           
-          {!hasActivities ? (
+          {!activities || activities.length === 0 ? (
             <p className="text-center text-muted-foreground py-8">
               Aucune activité enregistrée sur cette période
             </p>

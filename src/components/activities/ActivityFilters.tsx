@@ -4,14 +4,17 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Label } from "@/components/ui/label";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { Database } from "@/integrations/supabase/types";
+
+type ActivityType = Database["public"]["Enums"]["activity_type"];
 
 interface ActivityFiltersProps {
   period: string;
   setPeriod: (period: string) => void;
   projectId: string;
   setProjectId: (projectId: string) => void;
-  activityType: string;
-  setActivityType: (type: string) => void;
+  activityType: 'all' | ActivityType;
+  setActivityType: (type: 'all' | ActivityType) => void;
 }
 
 export const ActivityFilters = ({ 
@@ -35,13 +38,13 @@ export const ActivityFilters = ({
     },
   });
 
-  const activityTypes = [
-    "developpement",
+  const activityTypes: ActivityType[] = [
+    "meeting",
+    "development",
+    "testing",
     "documentation",
-    "reunion",
-    "review",
     "support",
-    "test"
+    "other"
   ];
 
   return (
@@ -79,7 +82,7 @@ export const ActivityFilters = ({
 
       <div className="space-y-2">
         <Label htmlFor="type">Type d'activité</Label>
-        <Select value={activityType} onValueChange={setActivityType}>
+        <Select value={activityType} onValueChange={setActivityType as (value: string) => void}>
           <SelectTrigger id="type">
             <SelectValue placeholder="Tous les types" />
           </SelectTrigger>
@@ -96,4 +99,3 @@ export const ActivityFilters = ({
     </div>
   );
 };
-
