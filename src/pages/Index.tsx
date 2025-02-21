@@ -4,7 +4,6 @@ import { useUser } from "@supabase/auth-helpers-react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { DashboardHeader } from "@/components/DashboardHeader";
-import { UserInfo } from "@/components/UserInfo";
 import { ViewMode } from "@/components/ViewToggle";
 import { MonitoringLevel } from "@/types/monitoring";
 import { ProjectLifecycleStatus } from "@/types/project";
@@ -212,7 +211,6 @@ const Index = () => {
 
       console.log("[ProjectForm] Project payload:", projectPayload);
 
-      // Test préalable des rôles
       const { data: userRoles, error: rolesError } = await supabase
         .from('user_roles')
         .select('role')
@@ -376,7 +374,6 @@ const Index = () => {
 
   return (
     <div className="container mx-auto py-8">
-      <UserInfo />
       <DashboardHeader
         onNewProject={() => setIsProjectFormOpen(true)}
         onNewReview={handleNewReview}
