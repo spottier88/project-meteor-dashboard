@@ -106,16 +106,16 @@ export const WeeklyDashboard = () => {
         .from('activities')
         .select(`
           *,
-          projects (
+          projects!inner (
             title,
             project_manager_id,
-            profiles:project_manager_id (
+            profiles!projects_project_manager_id_fkey (
               first_name,
               last_name,
               email
             )
           ),
-          profiles (
+          profiles!fk_activities_user_id (
             first_name,
             last_name,
             email
