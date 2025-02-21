@@ -46,7 +46,7 @@ export const TeamActivityFilters = ({
     queryFn: async () => {
       console.log("[TeamActivityFilters] Fetching projects with role context:", { isAdmin, isManager });
       
-      const { data, error } = await supabase
+      const { data: projectsData, error } = await supabase
         .from("projects")
         .select(`
           id,
@@ -63,8 +63,8 @@ export const TeamActivityFilters = ({
         throw error;
       }
 
-      // Filtrer les projets en fonction des rôles - uniquement si manager, admin ou chef de projet
-      const filteredProjects = data?.filter(project => {
+      // Filtrer les projets - uniquement pour admin, manager ou chef de projet
+      const filteredProjects = projectsData?.filter(project => {
         if (isAdmin) return true;
         if (isManager) return true;
         return project.project_manager === user?.email;
