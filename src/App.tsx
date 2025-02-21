@@ -22,6 +22,7 @@ import { FeedbackButton } from "@/components/feedback/FeedbackButton";
 import { useEffect } from "react";
 import { useToast } from "./components/ui/use-toast";
 import { ActivityManagement } from "./components/activities/ActivityManagement";
+import { TeamActivities } from "./pages/TeamActivities";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -75,6 +76,14 @@ function AppContent() {
             element={
               <ProtectedRoute>
                 <ActivityManagement />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/team-activities"
+            element={
+              <ProtectedRoute>
+                <TeamActivities />
               </ProtectedRoute>
             }
           />

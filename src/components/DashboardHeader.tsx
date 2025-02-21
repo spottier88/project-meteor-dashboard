@@ -1,41 +1,49 @@
 
+import React from 'react';
 import { Button } from "@/components/ui/button";
-import { Plus, History, Calendar } from "lucide-react";
-import { CartButton } from "./cart/CartButton";
-import { ProjectCart } from "./cart/ProjectCart";
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { NavigationMenu, NavigationMenuItem, NavigationMenuLink, NavigationMenuList } from "@/components/ui/navigation-menu";
+import { UserInfo } from "./UserInfo";
+import { Link } from "react-router-dom";
+import { usePermissionsContext } from '@/contexts/PermissionsContext';
 
-interface DashboardHeaderProps {
-  onNewProject: () => void;
-  onNewReview: () => void;
-}
-
-export const DashboardHeader = ({ onNewProject, onNewReview }: DashboardHeaderProps) => {
-  const [isCartOpen, setIsCartOpen] = useState(false);
-  const navigate = useNavigate();
+export const DashboardHeader = () => {
+  const { isAdmin, isManager, hasRole } = usePermissionsContext();
+  const showTeamActivities = isAdmin || isManager || hasRole('chef_projet');
 
   return (
-    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
-      <h1 className="text-3xl font-bold">Tableau de bord</h1>
-      <div className="flex flex-wrap items-center gap-2">
-        <div onClick={() => setIsCartOpen(true)}>
-          <CartButton />
+    <div className="border-b">
+      <div className="flex h-16 items-center px-4 container">
+        <NavigationMenu>
+          <NavigationMenuList>
+            <NavigationMenuItem>
+              <Link to="/">
+                <Button variant="ghost">
+                  Dashboard
+                </Button>
+              </Link>
+            </NavigationMenuItem>
+            <NavigationMenuItem>
+              <Link to="/activities">
+                <Button variant="ghost">
+                  Mes activités
+                </Button>
+              </Link>
+            </NavigationMenuItem>
+            {showTeamActivities && (
+              <NavigationMenuItem>
+                <Link to="/team-activities">
+                  <Button variant="ghost">
+                    Activités de l'équipe
+                  </Button>
+                </Link>
+              </NavigationMenuItem>
+            )}
+          </NavigationMenuList>
+        </NavigationMenu>
+        <div className="ml-auto">
+          <UserInfo />
         </div>
-        <Button onClick={() => navigate('/activities')} variant="outline" size="sm">
-          <Calendar className="h-4 w-4 mr-2" />
-          Mes activités
-        </Button>
-        <Button onClick={onNewReview} variant="outline" size="sm">
-          <History className="h-4 w-4 mr-2" />
-          Nouvelle revue
-        </Button>
-        <Button onClick={onNewProject} size="sm">
-          <Plus className="h-4 w-4 mr-2" />
-          Nouveau projet
-        </Button>
       </div>
-      <ProjectCart isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} />
     </div>
   );
 };
