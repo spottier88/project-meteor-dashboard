@@ -4,7 +4,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Database } from "@/integrations/supabase/types";
-import { useUser } from "@supabase/auth-helpers-react";
 
 type ActivityType = Database["public"]["Enums"]["activity_type"];
 
@@ -29,8 +28,6 @@ export const TeamActivityFilters = ({
   selectedUserId,
   setSelectedUserId,
 }: TeamActivityFiltersProps) => {
-  const user = useUser();
-
   // Récupérer la liste des utilisateurs
   const { data: users } = useQuery({
     queryKey: ["team-users"],
@@ -40,7 +37,10 @@ export const TeamActivityFilters = ({
         .select('*')
         .order('first_name', { ascending: true });
 
-      if (error) throw error;
+      if (error) {
+        console.error("[TeamActivityFilters] Error fetching users:", error);
+        throw error;
+      }
       return data;
     },
   });
@@ -51,10 +51,22 @@ export const TeamActivityFilters = ({
     queryFn: async () => {
       const { data, error } = await supabase
         .from('projects')
-        .select('*')
+        .select(`
+          id,
+          title,
+          project_manager_id,
+          profiles:project_manager_id (
+            first_name,
+            last_name,
+            email
+          )
+        `)
         .order('title', { ascending: true });
 
-      if (error) throw error;
+      if (error) {
+        console.error("[TeamActivityFilters] Error fetching projects:", error);
+        throw error;
+      }
       return data;
     },
   });

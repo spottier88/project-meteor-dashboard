@@ -4,7 +4,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useUser } from '@supabase/auth-helpers-react';
-import { format, startOfWeek, startOfMonth, startOfDay, endOfMonth, addDays, addWeeks, addMonths, subWeeks, subMonths } from "date-fns";
+import { format, startOfWeek, startOfMonth, startOfDay, addDays, addWeeks, addMonths, subWeeks, subMonths } from "date-fns";
 import { fr } from "date-fns/locale";
 import { BarChartIcon, List, ChevronLeft, ChevronRight, FileSpreadsheet } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -16,6 +16,7 @@ import { ProjectTimeChart } from './ProjectTimeChart';
 import { TeamActivityFilters } from './TeamActivityFilters';
 import { Database } from "@/integrations/supabase/types";
 import { useLocation } from 'react-router-dom';
+import { useToast } from "@/components/ui/use-toast";
 import * as XLSX from 'xlsx';
 
 type ActivityType = Database["public"]["Enums"]["activity_type"];
@@ -105,7 +106,15 @@ export const WeeklyDashboard = () => {
         .from('activities')
         .select(`
           *,
-          projects (title),
+          projects (
+            title,
+            project_manager_id,
+            profiles:project_manager_id (
+              first_name,
+              last_name,
+              email
+            )
+          ),
           profiles:user_id (
             first_name,
             last_name,
@@ -329,4 +338,3 @@ export const WeeklyDashboard = () => {
     </div>
   );
 };
-
