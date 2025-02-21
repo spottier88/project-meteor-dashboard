@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -108,13 +109,13 @@ export const WeeklyDashboard = () => {
           projects (
             title,
             project_manager_id,
-            profiles:project_manager_id (
+            profiles:project_manager_id!fk_project_manager (
               first_name,
               last_name,
               email
             )
           ),
-          profiles:user_id (
+          profiles!activities_user_id_fkey (
             first_name,
             last_name,
             email
