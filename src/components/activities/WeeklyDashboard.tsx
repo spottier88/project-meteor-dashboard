@@ -109,13 +109,13 @@ export const WeeklyDashboard = () => {
           projects (
             title,
             project_manager_id,
-            profiles:project_manager_id!fk_project_manager (
+            profiles:project_manager_id (
               first_name,
               last_name,
               email
             )
           ),
-          profiles!activities_user_id_fkey (
+          profiles (
             first_name,
             last_name,
             email
