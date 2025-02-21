@@ -1,10 +1,9 @@
-
 import React, { useState } from 'react';
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useUser } from '@supabase/auth-helpers-react';
-import { format, startOfWeek, startOfMonth, startOfDay, addDays, addWeeks, addMonths, subWeeks, subMonths } from "date-fns";
+import { format, startOfWeek, startOfMonth, startOfDay, endOfMonth, addDays, addWeeks, addMonths, subWeeks, subMonths } from "date-fns";
 import { fr } from "date-fns/locale";
 import { BarChartIcon, List, ChevronLeft, ChevronRight, FileSpreadsheet } from "lucide-react";
 import { Button } from "@/components/ui/button";
