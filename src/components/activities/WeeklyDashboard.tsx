@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -22,7 +23,7 @@ export const WeeklyDashboard = () => {
   startOfWeek.setDate(today.getDate() - today.getDay());
 
   const { data: activities } = useQuery({
-    queryKey: ['activities', 'weekly', startOfWeek],
+    queryKey: ['activities', 'weekly', startOfWeek.toISOString()],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('activities')
