@@ -1,12 +1,19 @@
-
 import React from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useUser } from '@supabase/auth-helpers-react';
-import { supabase } from "@/integrations/supabase/client";
-import { format } from 'date-fns';
-import { fr } from 'date-fns/locale';
-import { Chart, BarChart } from 'recharts';
+import { format } from "date-fns";
+import { fr } from "date-fns/locale";
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  Tooltip,
+  Legend,
+  ResponsiveContainer
+} from "recharts";
 
 export const WeeklyDashboard = () => {
   const user = useUser();
@@ -61,19 +68,18 @@ export const WeeklyDashboard = () => {
         </CardHeader>
         <CardContent>
           <div className="w-full aspect-[2/1]">
-            <BarChart
-              data={chartData}
-              width={800}
-              height={300}
-              margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
-            >
-              <Chart />
-              <XAxis dataKey="day" />
-              <YAxis />
-              <Tooltip />
-              <Legend />
-              <Bar dataKey="total" name="Heures" fill="#8884d8" />
-            </BarChart>
+            <ResponsiveContainer width="100%" height={300}>
+              <BarChart
+                data={chartData}
+                margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+              >
+                <XAxis dataKey="day" />
+                <YAxis />
+                <Tooltip />
+                <Legend />
+                <Bar dataKey="total" name="Heures" fill="#8884d8" />
+              </BarChart>
+            </ResponsiveContainer>
           </div>
         </CardContent>
       </Card>
@@ -110,4 +116,3 @@ export const WeeklyDashboard = () => {
     </div>
   );
 };
-

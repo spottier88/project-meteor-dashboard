@@ -21,6 +21,7 @@ import { PermissionsProvider } from "@/contexts/PermissionsContext";
 import { FeedbackButton } from "@/components/feedback/FeedbackButton";
 import { useEffect } from "react";
 import { useToast } from "./components/ui/use-toast";
+import { ActivityManagement } from "./components/activities/ActivityManagement";
 
 const queryClient = new QueryClient({
   defaultOptions: {
