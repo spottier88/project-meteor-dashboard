@@ -18,14 +18,12 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({ onNewProject, 
   const { cartItems } = useProjectCart();
 
   return (
+
+    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
     <div className="border-b">
       <div className="flex h-16 items-center px-4 container justify-between">
+        <h1 className="text-3xl font-bold">Tableau de bord</h1>
         <div className="flex items-center gap-2">
-          <Link to="/">
-            <Button variant="ghost" className="text-lg font-semibold">
-              Tableau de bord
-            </Button>
-          </Link>
 
           <NavigationMenu>
             <NavigationMenuList className="gap-2">
@@ -49,28 +47,21 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({ onNewProject, 
           </NavigationMenu>
         </div>
 
-        <div className="flex items-center gap-2">
-          {onNewProject && (
-            <Button variant="outline" onClick={onNewProject}>
-              Nouveau projet
-            </Button>
-          )}
-          {onNewReview && (
-            <Button variant="outline" onClick={onNewReview}>
-              Nouvelle revue
-            </Button>
-          )}
-          <Link to="/cart">
-            <Button variant="ghost" className="relative">
-              <ShoppingCart className="h-5 w-5" />
-              {cartItems.length > 0 && (
-                <span className="absolute -top-1 -right-1 bg-primary text-primary-foreground rounded-full h-5 w-5 text-xs flex items-center justify-center">
-                  {cartItems.length}
-                </span>
-              )}
-            </Button>
-          </Link>
-        </div>
+        <div className="flex flex-wrap items-center gap-2">
+          <div onClick={() => setIsCartOpen(true)}>
+            <CartButton />
+          </div>
+          <Button onClick={onNewReview} variant="outline" size="sm">
+            <History className="h-4 w-4 mr-2" />
+            Nouvelle revue
+          </Button>
+          <Button onClick={onNewProject} size="sm">
+            <Plus className="h-4 w-4 mr-2" />
+            Nouveau projet
+          </Button>
+      </div>
+      <ProjectCart isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} />
+    </div>
       </div>
     </div>
   );
