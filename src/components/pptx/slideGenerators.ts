@@ -1,3 +1,4 @@
+
 import pptxgen from "pptxgenjs";
 import { ProjectData } from "./types";
 import { weatherIcons, progressIcons } from "./constants";
@@ -153,14 +154,23 @@ const addTasksSections = (slide: pptxgen.Slide, data: ProjectData, grid: any) =>
   const tasksY = grid.y + 1.2;
   const taskBoxHeight = 1.6;
   const titleHeight = 0.3;
+  const columnWidth = 3;
+  const spacing = 0.1;
   
+  // Tâches terminées (1/3 de la largeur)
   addTasksSection(slide, "TÂCHES TERMINÉES", 
     data.tasks.filter(t => t.status === "done"),
-    grid.x, tasksY, 4.5, taskBoxHeight, titleHeight);
-    
+    grid.x, tasksY, columnWidth, taskBoxHeight, titleHeight);
+  
+  // Tâches en cours (1/3 de la largeur)
+  addTasksSection(slide, "TÂCHES EN COURS",
+    data.tasks.filter(t => t.status === "in_progress"),
+    grid.x + columnWidth + spacing, tasksY, columnWidth, taskBoxHeight, titleHeight);
+  
+  // Tâches à venir (1/3 de la largeur)
   addTasksSection(slide, "TÂCHES À VENIR",
     data.tasks.filter(t => t.status === "todo"),
-    grid.x + 4.6, tasksY, 4.7, taskBoxHeight, titleHeight);
+    grid.x + (columnWidth + spacing) * 2, tasksY, columnWidth, taskBoxHeight, titleHeight);
 };
 
 const addRisksSection = (slide: pptxgen.Slide, data: ProjectData, grid: any) => {
@@ -228,3 +238,4 @@ const addBulletList = (
     });
   }
 };
+
