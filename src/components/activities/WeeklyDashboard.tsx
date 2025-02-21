@@ -4,48 +4,79 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useUser } from '@supabase/auth-helpers-react';
-import { format, startOfWeek, addDays } from "date-fns";
+import { format, startOfWeek, startOfMonth, startOfDay, endOfMonth, addDays } from "date-fns";
 import { fr } from "date-fns/locale";
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  Tooltip,
-  Legend,
-  ResponsiveContainer
-} from "recharts";
 import { BarChart as BarChartIcon, List } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { ActivityFilters } from './ActivityFilters';
+import { ActivityList } from './ActivityList';
+import { ActivityChart } from './ActivityChart';
 
 export const WeeklyDashboard = () => {
   const user = useUser();
   const today = new Date();
-  const weekStart = startOfWeek(today, { locale: fr });
   const [viewMode, setViewMode] = useState<'chart' | 'list'>('chart');
+  const [period, setPeriod] = useState('week');
+  const [projectId, setProjectId] = useState('all');
+  const [activityType, setActivityType] = useState('all');
+
+  const getPeriodDates = () => {
+    switch (period) {
+      case 'day':
+        return { start: startOfDay(today) };
+      case 'month':
+        return { start: startOfMonth(today) };
+      case 'week':
+      default:
+        return { start: startOfWeek(today, { locale: fr }) };
+    }
+  };
+
+  const { start: periodStart } = getPeriodDates();
 
   const { data: activities, isLoading, error } = useQuery({
-    queryKey: ['activities', 'weekly', weekStart.toISOString()],
+    queryKey: ['activities', period, projectId, activityType, periodStart.toISOString()],
     queryFn: async () => {
-      const { data, error } = await supabase
+      let query = supabase
         .from('activities')
         .select(`
           *,
           projects (title)
         `)
         .eq('user_id', user?.id)
-        .gte('start_time', weekStart.toISOString())
+        .gte('start_time', periodStart.toISOString())
         .order('start_time', { ascending: true });
 
+      if (projectId !== 'all') {
+        query = query.eq('project_id', projectId);
+      }
+
+      if (activityType !== 'all') {
+        query = query.eq('activity_type', activityType);
+      }
+
+      const { data, error } = await query;
       if (error) throw error;
       return data;
     },
     enabled: !!user,
   });
 
-  // Créer un tableau avec tous les jours de la semaine
-  const allDays = Array.from({ length: 7 }, (_, i) => {
-    const date = addDays(weekStart, i);
+  // Créer un tableau avec tous les jours de la période
+  const getDaysInPeriod = () => {
+    switch (period) {
+      case 'day':
+        return 1;
+      case 'month':
+        return endOfMonth(today).getDate();
+      case 'week':
+      default:
+        return 7;
+    }
+  };
+
+  const allDays = Array.from({ length: getDaysInPeriod() }, (_, i) => {
+    const date = addDays(periodStart, i);
     return {
       date,
       day: format(date, 'EEEE', { locale: fr }),
@@ -92,94 +123,11 @@ export const WeeklyDashboard = () => {
 
   const hasActivities = activities && activities.length > 0;
 
-  const renderChart = () => (
-    <div className="w-full aspect-[2/1]">
-      <ResponsiveContainer width="100%" height={300}>
-        <BarChart
-          data={chartData}
-          margin={{ top: 20, right: 30, left: 20, bottom: 25 }}
-        >
-          <XAxis 
-            dataKey="day" 
-            angle={-45}
-            textAnchor="end"
-            height={60}
-            tick={{ fill: '#666' }}
-          />
-          <YAxis 
-            tickFormatter={(value) => `${value}h`}
-            tick={{ fill: '#666' }}
-          />
-          <Tooltip 
-            formatter={(value) => [`${value}h`, 'Heures']}
-            contentStyle={{ 
-              backgroundColor: 'white',
-              border: '1px solid #ccc',
-              borderRadius: '4px'
-            }}
-          />
-          <Legend />
-          <Bar 
-            dataKey="total" 
-            name="Heures" 
-            fill="#8884d8"
-            radius={[4, 4, 0, 0]}
-          />
-        </BarChart>
-      </ResponsiveContainer>
-    </div>
-  );
-
-  const renderList = () => (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-      {dailyActivities.map(({ date, day, activities: dayActivities, total }) => (
-        <Card key={day} className={dayActivities.length === 0 ? 'opacity-50' : ''}>
-          <CardHeader>
-            <CardTitle className="capitalize flex justify-between items-center">
-              <span>{format(date, 'EEEE', { locale: fr })}</span>
-              {total > 0 && (
-                <span className="text-sm font-normal text-muted-foreground">
-                  {Math.round((total / 60) * 100) / 100}h
-                </span>
-              )}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {dayActivities.length === 0 ? (
-              <p className="text-center text-muted-foreground py-4">
-                Aucune activité
-              </p>
-            ) : (
-              <div className="space-y-2">
-                {dayActivities.map((activity: any) => (
-                  <div key={activity.id} className="flex justify-between items-start border-b py-2">
-                    <div>
-                      <p className="font-medium">{activity.projects?.title}</p>
-                      <p className="text-sm text-muted-foreground capitalize">
-                        {activity.activity_type}
-                      </p>
-                      <p className="text-sm text-muted-foreground">
-                        {format(new Date(activity.start_time), 'HH:mm')}
-                      </p>
-                    </div>
-                    <span className="text-sm font-medium">
-                      {activity.duration_minutes}min
-                    </span>
-                  </div>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      ))}
-    </div>
-  );
-
   return (
     <div className="space-y-6">
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle>Activités de la semaine</CardTitle>
+          <CardTitle>Activités</CardTitle>
           <div className="flex gap-2">
             <Button
               variant={viewMode === 'chart' ? 'default' : 'outline'}
@@ -200,18 +148,26 @@ export const WeeklyDashboard = () => {
           </div>
         </CardHeader>
         <CardContent>
+          <ActivityFilters
+            period={period}
+            setPeriod={setPeriod}
+            projectId={projectId}
+            setProjectId={setProjectId}
+            activityType={activityType}
+            setActivityType={setActivityType}
+          />
+          
           {!hasActivities ? (
             <p className="text-center text-muted-foreground py-8">
-              Aucune activité enregistrée cette semaine
+              Aucune activité enregistrée sur cette période
             </p>
           ) : viewMode === 'chart' ? (
-            renderChart()
+            <ActivityChart data={chartData} />
           ) : (
-            renderList()
+            <ActivityList dailyActivities={dailyActivities} />
           )}
         </CardContent>
       </Card>
     </div>
   );
 };
-
