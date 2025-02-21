@@ -22,10 +22,10 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({ onNewProject, 
 
   return (
     <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
-      <div className="border-b">
-        <div className="flex h-16 items-center px-4 container justify-between">
-          <h1 className="text-3xl font-bold">Tableau de bord</h1>
-          <div className="flex items-center gap-2">
+      <div className="border-b w-full">
+        <div className="flex h-16 items-center px-4 container">
+          <div className="flex items-center flex-1">
+            <h1 className="text-3xl font-bold mr-8">Tableau de bord</h1>
             <NavigationMenu>
               <NavigationMenuList className="gap-2">
                 <NavigationMenuItem>
@@ -48,7 +48,7 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({ onNewProject, 
             </NavigationMenu>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="flex items-center gap-2 ml-auto">
             <div onClick={() => setIsCartOpen(true)}>
               <CartButton />
             </div>
@@ -61,9 +61,10 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({ onNewProject, 
               Nouveau projet
             </Button>
           </div>
-          <ProjectCart isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} />
         </div>
       </div>
+      <ProjectCart isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} />
     </div>
   );
 };
+
