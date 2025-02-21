@@ -1,6 +1,6 @@
 
 import { useForm } from "react-hook-form";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import {
   Form,
@@ -32,19 +32,25 @@ type FormData = {
   project_id: string;
 };
 
-export function QuickActivityForm({ projectId, onSuccess }: { projectId: string; onSuccess?: () => void }) {
+export function QuickActivityForm({ onSuccess }: { onSuccess?: () => void }) {
   const session = useSession();
-  const form = useForm<FormData>({
-    defaultValues: {
-      activity_type: "meeting",
-      description: "",
-      duration_minutes: 30,
-      start_time: new Date().toISOString(),
-      project_id: projectId,
-    },
-  });
+  const form = useForm<FormData>();
 
   const queryClient = useQueryClient();
+
+  // Fetch accessible projects
+  const { data: projects } = useQuery({
+    queryKey: ["accessible-projects"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("projects")
+        .select("id, title")
+        .order("title");
+
+      if (error) throw error;
+      return data;
+    },
+  });
 
   const { mutate: createActivity, isLoading } = useMutation({
     mutationFn: async (data: FormData) => {
@@ -79,7 +85,36 @@ export function QuickActivityForm({ projectId, onSuccess }: { projectId: string;
       <form onSubmit={form.handleSubmit((data) => createActivity(data))} className="space-y-4">
         <FormField
           control={form.control}
+          name="project_id"
+          rules={{ required: "Veuillez sélectionner un projet" }}
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Projet</FormLabel>
+              <Select
+                onValueChange={field.onChange}
+                defaultValue={field.value}
+              >
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Sélectionnez un projet" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  {projects?.map((project) => (
+                    <SelectItem key={project.id} value={project.id}>
+                      {project.title}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
           name="activity_type"
+          rules={{ required: "Veuillez sélectionner un type d'activité" }}
           render={({ field }) => (
             <FormItem>
               <FormLabel>Type d'activité</FormLabel>
@@ -108,6 +143,7 @@ export function QuickActivityForm({ projectId, onSuccess }: { projectId: string;
         <FormField
           control={form.control}
           name="description"
+          rules={{ required: "Veuillez saisir une description" }}
           render={({ field }) => (
             <FormItem>
               <FormLabel>Description</FormLabel>
@@ -121,6 +157,7 @@ export function QuickActivityForm({ projectId, onSuccess }: { projectId: string;
         <FormField
           control={form.control}
           name="duration_minutes"
+          rules={{ required: "Veuillez saisir une durée" }}
           render={({ field }) => (
             <FormItem>
               <FormLabel>Durée (minutes)</FormLabel>
@@ -134,6 +171,7 @@ export function QuickActivityForm({ projectId, onSuccess }: { projectId: string;
         <FormField
           control={form.control}
           name="start_time"
+          rules={{ required: "Veuillez saisir une date et heure" }}
           render={({ field }) => (
             <FormItem>
               <FormLabel>Date et heure</FormLabel>
@@ -151,3 +189,4 @@ export function QuickActivityForm({ projectId, onSuccess }: { projectId: string;
     </Form>
   );
 }
+

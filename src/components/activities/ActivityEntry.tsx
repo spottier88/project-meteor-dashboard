@@ -6,8 +6,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { QuickActivityForm } from './QuickActivityForm';
 
 export const ActivityEntry = () => {
+  const [open, setOpen] = React.useState(false);
+
   return (
-    <Dialog>
+    <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button variant="default" size="sm">
           <Plus className="h-4 w-4 mr-2" />
@@ -18,7 +20,7 @@ export const ActivityEntry = () => {
         <DialogHeader>
           <DialogTitle>Saisie rapide d'activité</DialogTitle>
         </DialogHeader>
-        <QuickActivityForm />
+        <QuickActivityForm onSuccess={() => setOpen(false)} />
       </DialogContent>
     </Dialog>
   );
