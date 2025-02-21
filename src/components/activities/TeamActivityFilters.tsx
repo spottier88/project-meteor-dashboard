@@ -1,13 +1,9 @@
 
 import React from 'react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Label } from "@/components/ui/label";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Database } from "@/integrations/supabase/types";
-import { format } from "date-fns";
-import { fr } from "date-fns/locale";
-import { usePermissionsContext } from "@/contexts/PermissionsContext";
 import { useUser } from "@supabase/auth-helpers-react";
 
 type ActivityType = Database["public"]["Enums"]["activity_type"];
@@ -16,128 +12,108 @@ interface TeamActivityFiltersProps {
   period: string;
   setPeriod: (period: string) => void;
   projectId: string;
-  setProjectId: (projectId: string) => void;
+  setProjectId: (id: string) => void;
   activityType: 'all' | ActivityType;
   setActivityType: (type: 'all' | ActivityType) => void;
+  selectedUserId: string;
+  setSelectedUserId: (id: string) => void;
 }
 
-const activityTypeLabels: Record<ActivityType, string> = {
-  meeting: "Réunion",
-  development: "Développement",
-  testing: "Test",
-  documentation: "Documentation",
-  support: "Support",
-  other: "Autre"
-};
-
-export const TeamActivityFilters = ({ 
-  period, 
-  setPeriod, 
-  projectId, 
-  setProjectId, 
-  activityType, 
-  setActivityType 
+export const TeamActivityFilters = ({
+  period,
+  setPeriod,
+  projectId,
+  setProjectId,
+  activityType,
+  setActivityType,
+  selectedUserId,
+  setSelectedUserId,
 }: TeamActivityFiltersProps) => {
-  const { isAdmin, isManager } = usePermissionsContext();
   const user = useUser();
 
-  const { data: projects } = useQuery({
-    queryKey: ['team-activity-projects-for-filter'],
+  // Récupérer la liste des utilisateurs
+  const { data: users } = useQuery({
+    queryKey: ["team-users"],
     queryFn: async () => {
-      console.log("[TeamActivityFilters] Fetching projects with role context:", { isAdmin, isManager });
-      
-      const { data: projectsData, error } = await supabase
-        .from("projects")
-        .select(`
-          id,
-          title,
-          project_manager,
-          project_manager_id,
-          profiles!projects_project_manager_id_fkey (
-            id,
-            email
-          )
-        `)
-        .order('title');
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .order('first_name', { ascending: true });
 
-      if (error) {
-        console.error("[TeamActivityFilters] Error fetching projects:", error);
-        throw error;
-      }
-
-      // Filtrer les projets - uniquement pour admin, manager ou chef de projet
-      const filteredProjects = projectsData?.filter(project => {
-        if (isAdmin) return true;
-        if (isManager) return true;
-        return project.project_manager_id === user?.id;
-      });
-
-      console.log("[TeamActivityFilters] Filtered projects:", filteredProjects);
-      return filteredProjects || [];
+      if (error) throw error;
+      return data;
     },
-    enabled: !!user?.id,
   });
 
-  const activityTypes: ActivityType[] = [
-    "meeting",
-    "development",
-    "testing",
-    "documentation",
-    "support",
-    "other"
-  ];
+  // Récupérer les projets accessibles
+  const { data: projects } = useQuery({
+    queryKey: ["accessible-projects"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('projects')
+        .select('*')
+        .order('title', { ascending: true });
 
-  const currentMonth = format(new Date(), 'MMMM', { locale: fr });
+      if (error) throw error;
+      return data;
+    },
+  });
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-      <div className="space-y-2">
-        <Label htmlFor="period">Période</Label>
-        <Select value={period} onValueChange={setPeriod}>
-          <SelectTrigger id="period">
-            <SelectValue placeholder="Sélectionner une période" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="day">Jour</SelectItem>
-            <SelectItem value="week">Semaine</SelectItem>
-            <SelectItem value="month">{currentMonth}</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-      
-      <div className="space-y-2">
-        <Label htmlFor="project">Projet</Label>
-        <Select value={projectId} onValueChange={setProjectId}>
-          <SelectTrigger id="project">
-            <SelectValue placeholder="Tous les projets" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Tous les projets</SelectItem>
-            {projects?.map((project) => (
-              <SelectItem key={project.id} value={project.id}>
-                {project.title}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
+    <div className="flex flex-col md:flex-row gap-4">
+      <Select value={selectedUserId} onValueChange={setSelectedUserId}>
+        <SelectTrigger className="w-full md:w-[200px]">
+          <SelectValue placeholder="Sélectionner un utilisateur" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="all">Tous les utilisateurs</SelectItem>
+          {users?.map((user) => (
+            <SelectItem key={user.id} value={user.id}>
+              {user.first_name} {user.last_name}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
 
-      <div className="space-y-2">
-        <Label htmlFor="type">Type d'activité</Label>
-        <Select value={activityType} onValueChange={setActivityType as (value: string) => void}>
-          <SelectTrigger id="type">
-            <SelectValue placeholder="Tous les types" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Tous les types</SelectItem>
-            {activityTypes.map((type) => (
-              <SelectItem key={type} value={type}>
-                {activityTypeLabels[type]}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
+      <Select value={period} onValueChange={setPeriod}>
+        <SelectTrigger className="w-full md:w-[200px]">
+          <SelectValue placeholder="Sélectionner une période" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="day">Jour</SelectItem>
+          <SelectItem value="week">Semaine</SelectItem>
+          <SelectItem value="month">Mois</SelectItem>
+        </SelectContent>
+      </Select>
+
+      <Select value={projectId} onValueChange={setProjectId}>
+        <SelectTrigger className="w-full md:w-[200px]">
+          <SelectValue placeholder="Sélectionner un projet" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="all">Tous les projets</SelectItem>
+          {projects?.map((project) => (
+            <SelectItem key={project.id} value={project.id}>
+              {project.title}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+
+      <Select value={activityType} onValueChange={(value) => setActivityType(value as 'all' | ActivityType)}>
+        <SelectTrigger className="w-full md:w-[200px]">
+          <SelectValue placeholder="Type d'activité" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="all">Tous les types</SelectItem>
+          <SelectItem value="developpement">Développement</SelectItem>
+          <SelectItem value="reunion">Réunion</SelectItem>
+          <SelectItem value="analyse">Analyse</SelectItem>
+          <SelectItem value="documentation">Documentation</SelectItem>
+          <SelectItem value="support">Support</SelectItem>
+        </SelectContent>
+      </Select>
     </div>
   );
 };
+

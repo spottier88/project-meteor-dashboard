@@ -12,14 +12,31 @@ import {
 
 interface ChartData {
   day: string;
-  total: number;
+  [key: string]: string | number;
 }
 
 interface ActivityChartProps {
   data: ChartData[];
 }
 
+const ACTIVITY_COLORS = {
+  developpement: "#8884d8",
+  reunion: "#82ca9d",
+  analyse: "#ffc658",
+  documentation: "#ff7300",
+  support: "#0088fe",
+};
+
 export const ActivityChart = ({ data }: ActivityChartProps) => {
+  // Extraire tous les types d'activités uniques des données
+  const activityTypes = Array.from(
+    new Set(
+      data.flatMap(entry => 
+        Object.keys(entry).filter(key => key !== 'day' && typeof entry[key] === 'number')
+      )
+    )
+  );
+
   return (
     <div className="w-full aspect-[2/1]">
       <ResponsiveContainer width="100%" height={300}>
@@ -47,14 +64,19 @@ export const ActivityChart = ({ data }: ActivityChartProps) => {
             }}
           />
           <Legend />
-          <Bar 
-            dataKey="total" 
-            name="Heures" 
-            fill="#8884d8"
-            radius={[4, 4, 0, 0]}
-          />
+          {activityTypes.map((type) => (
+            <Bar
+              key={type}
+              dataKey={type}
+              name={type.charAt(0).toUpperCase() + type.slice(1)}
+              stackId="a"
+              fill={ACTIVITY_COLORS[type as keyof typeof ACTIVITY_COLORS] || "#8884d8"}
+              radius={[4, 4, 0, 0]}
+            />
+          ))}
         </BarChart>
       </ResponsiveContainer>
     </div>
   );
 };
+

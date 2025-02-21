@@ -1,12 +1,12 @@
 
 import React, { useState } from 'react';
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useUser } from '@supabase/auth-helpers-react';
 import { format, startOfWeek, startOfMonth, startOfDay, endOfMonth, addDays, addWeeks, addMonths, subWeeks, subMonths } from "date-fns";
 import { fr } from "date-fns/locale";
-import { BarChartIcon, List, ChevronLeft, ChevronRight } from "lucide-react";
+import { BarChartIcon, List, ChevronLeft, ChevronRight, FileSpreadsheet } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ActivityFilters } from './ActivityFilters';
 import { ActivityList } from './ActivityList';
@@ -16,18 +16,21 @@ import { ProjectTimeChart } from './ProjectTimeChart';
 import { TeamActivityFilters } from './TeamActivityFilters';
 import { Database } from "@/integrations/supabase/types";
 import { useLocation } from 'react-router-dom';
+import * as XLSX from 'xlsx';
 
 type ActivityType = Database["public"]["Enums"]["activity_type"];
 
 export const WeeklyDashboard = () => {
   const user = useUser();
   const location = useLocation();
+  const queryClient = useQueryClient();
   const isTeamView = location.pathname === '/team-activities';
   const [currentDate, setCurrentDate] = useState(new Date());
   const [viewMode, setViewMode] = useState<'chart' | 'list'>('chart');
   const [period, setPeriod] = useState('week');
   const [projectId, setProjectId] = useState('all');
   const [activityType, setActivityType] = useState<'all' | ActivityType>('all');
+  const [selectedUserId, setSelectedUserId] = useState<string>('all');
 
   const getPeriodDates = () => {
     switch (period) {
@@ -53,6 +56,7 @@ export const WeeklyDashboard = () => {
         setCurrentDate(prev => subMonths(prev, 1));
         break;
     }
+    queryClient.invalidateQueries({ queryKey: ['activities'] });
   };
 
   const handleNavigateForward = () => {
@@ -67,6 +71,7 @@ export const WeeklyDashboard = () => {
         setCurrentDate(prev => addMonths(prev, 1));
         break;
     }
+    queryClient.invalidateQueries({ queryKey: ['activities'] });
   };
 
   const { start: periodStart } = getPeriodDates();
@@ -85,27 +90,35 @@ export const WeeklyDashboard = () => {
   };
 
   const { data: activities, isLoading, error } = useQuery({
-    queryKey: ['activities', isTeamView, period, projectId, activityType, periodStart.toISOString()],
+    queryKey: ['activities', isTeamView, period, projectId, activityType, periodStart.toISOString(), selectedUserId],
     queryFn: async () => {
       console.log("[WeeklyDashboard] Fetching activities with params:", {
         isTeamView,
         period,
         projectId,
         activityType,
-        startDate: periodStart.toISOString()
+        startDate: periodStart.toISOString(),
+        selectedUserId
       });
 
       let query = supabase
         .from('activities')
         .select(`
           *,
-          projects (title)
+          projects (title),
+          profiles:user_id (
+            first_name,
+            last_name,
+            email
+          )
         `)
         .gte('start_time', periodStart.toISOString())
         .order('start_time', { ascending: true });
 
       if (!isTeamView) {
         query = query.eq('user_id', user?.id);
+      } else if (selectedUserId !== 'all') {
+        query = query.eq('user_id', selectedUserId);
       }
 
       if (projectId !== 'all') {
@@ -140,6 +153,36 @@ export const WeeklyDashboard = () => {
     }
   };
 
+  const handleExportToExcel = () => {
+    if (!activities) return;
+
+    const exportData = activities.map(activity => ({
+      'Date': format(new Date(activity.start_time), 'dd/MM/yyyy'),
+      'Utilisateur': activity.profiles ? `${activity.profiles.first_name} ${activity.profiles.last_name}` : 'N/A',
+      'Projet': activity.projects?.title || 'N/A',
+      'Type d\'activité': activity.activity_type,
+      'Durée (heures)': Math.round((activity.duration_minutes / 60) * 100) / 100,
+      'Description': activity.description || ''
+    }));
+
+    const ws = XLSX.utils.json_to_sheet(exportData);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Activités");
+
+    // Ajuster la largeur des colonnes
+    const colWidths = [
+      { wch: 12 }, // Date
+      { wch: 30 }, // Utilisateur
+      { wch: 30 }, // Projet
+      { wch: 15 }, // Type d'activité
+      { wch: 15 }, // Durée
+      { wch: 50 }, // Description
+    ];
+    ws['!cols'] = colWidths;
+
+    XLSX.writeFile(wb, `activites_${format(periodStart, 'yyyy-MM-dd')}.xlsx`);
+  };
+
   const allDays = Array.from({ length: getDaysInPeriod() }, (_, i) => {
     const date = addDays(periodStart, i);
     return {
@@ -147,6 +190,7 @@ export const WeeklyDashboard = () => {
       day: format(date, 'EEEE', { locale: fr }),
       total: 0,
       activities: [],
+      byType: {} as Record<ActivityType, number>,
     };
   });
 
@@ -158,14 +202,25 @@ export const WeeklyDashboard = () => {
     if (dayIndex !== -1) {
       allDays[dayIndex].total += activity.duration_minutes;
       allDays[dayIndex].activities.push(activity);
+      
+      // Accumuler les heures par type d'activité
+      const durationHours = activity.duration_minutes / 60;
+      allDays[dayIndex].byType[activity.activity_type] = 
+        (allDays[dayIndex].byType[activity.activity_type] || 0) + durationHours;
     }
     
     return acc;
   }, allDays) || allDays;
 
-  const chartData = dailyActivities.map(({ date, total }) => ({
+  // Transformer les données pour le graphique empilé
+  const chartData = dailyActivities.map(({ date, byType }) => ({
     day: format(date, 'EEE', { locale: fr }),
-    total: Math.round((total / 60) * 100) / 100,
+    ...(Object.fromEntries(
+      Object.entries(byType).map(([type, hours]) => [
+        type,
+        Math.round(hours * 100) / 100
+      ])
+    ))
   }));
 
   if (isLoading) {
@@ -195,7 +250,16 @@ export const WeeklyDashboard = () => {
           <CardTitle>Activités</CardTitle>
           <div className="flex gap-2">
             <Button
-              variant={viewMode === 'chart' ? 'default' : 'outline'}
+              variant="outline"
+              size="sm"
+              onClick={handleExportToExcel}
+              disabled={!hasActivities}
+            >
+              <FileSpreadsheet className="h-4 w-4 mr-2" />
+              Export Excel
+            </Button>
+            <Button
+              variant={viewMode === 'chart' ? "default" : "outline"}
               size="sm"
               onClick={() => setViewMode('chart')}
             >
@@ -203,7 +267,7 @@ export const WeeklyDashboard = () => {
               Graphique
             </Button>
             <Button
-              variant={viewMode === 'list' ? 'default' : 'outline'}
+              variant={viewMode === 'list' ? "default" : "outline"}
               size="sm"
               onClick={() => setViewMode('list')}
             >
@@ -222,6 +286,8 @@ export const WeeklyDashboard = () => {
                 setProjectId={setProjectId}
                 activityType={activityType}
                 setActivityType={setActivityType}
+                selectedUserId={isTeamView ? selectedUserId : undefined}
+                setSelectedUserId={isTeamView ? setSelectedUserId : undefined}
               />
             </div>
             <div className="flex items-center gap-2">
