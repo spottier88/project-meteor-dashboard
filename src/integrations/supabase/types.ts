@@ -9,6 +9,50 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      activities: {
+        Row: {
+          activity_type: Database["public"]["Enums"]["activity_type"]
+          created_at: string | null
+          description: string | null
+          duration_minutes: number
+          id: string
+          project_id: string
+          start_time: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          activity_type: Database["public"]["Enums"]["activity_type"]
+          created_at?: string | null
+          description?: string | null
+          duration_minutes: number
+          id?: string
+          project_id: string
+          start_time: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          activity_type?: Database["public"]["Enums"]["activity_type"]
+          created_at?: string | null
+          description?: string | null
+          duration_minutes?: number
+          id?: string
+          project_id?: string
+          start_time?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_project"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       directions: {
         Row: {
           created_at: string | null
@@ -926,6 +970,13 @@ export type Database = {
       }
     }
     Enums: {
+      activity_type:
+        | "meeting"
+        | "development"
+        | "testing"
+        | "documentation"
+        | "support"
+        | "other"
       monitoring_level: "none" | "dgs" | "pole" | "direction"
       notification_type: "system" | "user" | "feedback"
       progress_status: "better" | "stable" | "worse"
