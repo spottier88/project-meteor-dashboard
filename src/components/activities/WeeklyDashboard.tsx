@@ -66,8 +66,8 @@ export const WeeklyDashboard = () => {
   }, allDays) || allDays;
 
   // Préparer les données pour le graphique
-  const chartData = dailyActivities.map(({ day, total }) => ({
-    day: format(new Date(day), 'EEE', { locale: fr }),
+  const chartData = dailyActivities.map(({ date, total }) => ({
+    day: format(date, 'EEE', { locale: fr }),
     total: Math.round((total / 60) * 100) / 100, // Convertir en heures avec 2 décimales
   }));
 
@@ -141,11 +141,11 @@ export const WeeklyDashboard = () => {
       </Card>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {dailyActivities.map(({ day, activities: dayActivities, total }) => (
+        {dailyActivities.map(({ date, day, activities: dayActivities, total }) => (
           <Card key={day} className={dayActivities.length === 0 ? 'opacity-50' : ''}>
             <CardHeader>
               <CardTitle className="capitalize flex justify-between items-center">
-                <span>{format(new Date(day), 'EEEE', { locale: fr })}</span>
+                <span>{format(date, 'EEEE', { locale: fr })}</span>
                 {total > 0 && (
                   <span className="text-sm font-normal text-muted-foreground">
                     {Math.round((total / 60) * 100) / 100}h
