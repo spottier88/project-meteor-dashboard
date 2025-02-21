@@ -6,7 +6,12 @@ import { UserInfo } from "./UserInfo";
 import { Link } from "react-router-dom";
 import { usePermissionsContext } from '@/contexts/PermissionsContext';
 
-export const DashboardHeader = () => {
+interface DashboardHeaderProps {
+  onNewProject?: () => void;
+  onNewReview?: () => void;
+}
+
+export const DashboardHeader: React.FC<DashboardHeaderProps> = ({ onNewProject, onNewReview }) => {
   const { isAdmin, isManager, hasRole } = usePermissionsContext();
   const showTeamActivities = isAdmin || isManager || hasRole('chef_projet');
 
@@ -40,10 +45,21 @@ export const DashboardHeader = () => {
             )}
           </NavigationMenuList>
         </NavigationMenu>
-        <div className="ml-auto">
+        <div className="ml-auto flex items-center gap-2">
+          {onNewProject && (
+            <Button variant="outline" onClick={onNewProject}>
+              Nouveau projet
+            </Button>
+          )}
+          {onNewReview && (
+            <Button variant="outline" onClick={onNewReview}>
+              Nouvelle revue
+            </Button>
+          )}
           <UserInfo />
         </div>
       </div>
     </div>
   );
 };
+
