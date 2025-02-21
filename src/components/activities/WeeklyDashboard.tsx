@@ -6,11 +6,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useUser } from '@supabase/auth-helpers-react';
 import { format, startOfWeek, startOfMonth, startOfDay, endOfMonth, addDays } from "date-fns";
 import { fr } from "date-fns/locale";
-import { BarChart as BarChartIcon, List } from "lucide-react";
+import { BarChartIcon, List } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ActivityFilters } from './ActivityFilters';
 import { ActivityList } from './ActivityList';
 import { ActivityChart } from './ActivityChart';
+import { ActivityTypeChart } from './ActivityTypeChart';
+import { ProjectTimeChart } from './ProjectTimeChart';
 
 export const WeeklyDashboard = () => {
   const user = useUser();
@@ -102,7 +104,7 @@ export const WeeklyDashboard = () => {
   // Préparer les données pour le graphique
   const chartData = dailyActivities.map(({ date, total }) => ({
     day: format(date, 'EEE', { locale: fr }),
-    total: Math.round((total / 60) * 100) / 100, // Convertir en heures avec 2 décimales
+    total: Math.round((total / 60) * 100) / 100,
   }));
 
   if (isLoading) {
@@ -162,7 +164,13 @@ export const WeeklyDashboard = () => {
               Aucune activité enregistrée sur cette période
             </p>
           ) : viewMode === 'chart' ? (
-            <ActivityChart data={chartData} />
+            <div className="space-y-6">
+              <ActivityChart data={chartData} />
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <ActivityTypeChart activities={activities} />
+                <ProjectTimeChart activities={activities} />
+              </div>
+            </div>
           ) : (
             <ActivityList dailyActivities={dailyActivities} />
           )}
