@@ -7,6 +7,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { Database } from "@/integrations/supabase/types";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
+import { usePermissionsContext } from "@/contexts/PermissionsContext";
+import { useUser } from "@supabase/auth-helpers-react";
 
 type ActivityType = Database["public"]["Enums"]["activity_type"];
 
@@ -36,17 +38,44 @@ export const ActivityFilters = ({
   activityType, 
   setActivityType 
 }: ActivityFiltersProps) => {
+  const { isAdmin, isManager } = usePermissionsContext();
+  const user = useUser();
+
   const { data: projects } = useQuery({
-    queryKey: ['projects-for-filter'],
+    queryKey: ['accessible-projects-for-filter'],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('projects')
-        .select('id, title')
-        .order('title');
+      console.log("[ActivityFilters] Fetching accessible projects with role context:", { isAdmin, isManager });
       
-      if (error) throw error;
-      return data;
+      let query = supabase
+        .from("projects")
+        .select(`
+          id,
+          title,
+          project_manager,
+          profiles!projects_project_manager_fkey (
+            email
+          )
+        `)
+        .order('title');
+
+      const { data, error } = await query;
+
+      if (error) {
+        console.error("[ActivityFilters] Error fetching projects:", error);
+        throw error;
+      }
+
+      // Filtrer les projets en fonction des rôles
+      const filteredProjects = data?.filter(project => {
+        if (isAdmin) return true;
+        if (isManager) return true;
+        return project.project_manager === user?.email;
+      });
+
+      console.log("[ActivityFilters] Filtered projects:", filteredProjects);
+      return filteredProjects || [];
     },
+    enabled: !!user?.id,
   });
 
   const activityTypes: ActivityType[] = [
