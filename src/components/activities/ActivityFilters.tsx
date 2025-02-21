@@ -51,6 +51,7 @@ export const ActivityFilters = ({
         .select(`
           id,
           title,
+          project_manager,
           project_manager_id,
           project_members!project_members_project_id_fkey (
             user_id
