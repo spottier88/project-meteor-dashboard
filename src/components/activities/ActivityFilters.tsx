@@ -5,6 +5,8 @@ import { Label } from "@/components/ui/label";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Database } from "@/integrations/supabase/types";
+import { format } from "date-fns";
+import { fr } from "date-fns/locale";
 
 type ActivityType = Database["public"]["Enums"]["activity_type"];
 
@@ -16,6 +18,15 @@ interface ActivityFiltersProps {
   activityType: 'all' | ActivityType;
   setActivityType: (type: 'all' | ActivityType) => void;
 }
+
+const activityTypeLabels: Record<ActivityType, string> = {
+  meeting: "Réunion",
+  development: "Développement",
+  testing: "Test",
+  documentation: "Documentation",
+  support: "Support",
+  other: "Autre"
+};
 
 export const ActivityFilters = ({ 
   period, 
@@ -47,6 +58,8 @@ export const ActivityFilters = ({
     "other"
   ];
 
+  const currentMonth = format(new Date(), 'MMMM', { locale: fr });
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
       <div className="space-y-2">
@@ -58,7 +71,7 @@ export const ActivityFilters = ({
           <SelectContent>
             <SelectItem value="day">Jour</SelectItem>
             <SelectItem value="week">Semaine</SelectItem>
-            <SelectItem value="month">Mois</SelectItem>
+            <SelectItem value="month">{currentMonth}</SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -90,7 +103,7 @@ export const ActivityFilters = ({
             <SelectItem value="all">Tous les types</SelectItem>
             {activityTypes.map((type) => (
               <SelectItem key={type} value={type}>
-                {type.charAt(0).toUpperCase() + type.slice(1)}
+                {activityTypeLabels[type]}
               </SelectItem>
             ))}
           </SelectContent>
@@ -99,3 +112,4 @@ export const ActivityFilters = ({
     </div>
   );
 };
+
