@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -13,6 +12,7 @@ import { ActivityList } from './ActivityList';
 import { ActivityChart } from './ActivityChart';
 import { ActivityTypeChart } from './ActivityTypeChart';
 import { ProjectTimeChart } from './ProjectTimeChart';
+import { TeamActivityFilters } from './TeamActivityFilters';
 import { Database } from "@/integrations/supabase/types";
 
 type ActivityType = Database["public"]["Enums"]["activity_type"];
@@ -67,7 +67,6 @@ export const WeeklyDashboard = () => {
     enabled: !!user,
   });
 
-  // Créer un tableau avec tous les jours de la période
   const getDaysInPeriod = () => {
     switch (period) {
       case 'day':
@@ -90,7 +89,6 @@ export const WeeklyDashboard = () => {
     };
   });
 
-  // Grouper les activités par jour
   const dailyActivities = activities?.reduce((acc, activity) => {
     const activityDate = new Date(activity.start_time);
     const day = format(activityDate, 'EEEE', { locale: fr });
@@ -104,7 +102,6 @@ export const WeeklyDashboard = () => {
     return acc;
   }, allDays) || allDays;
 
-  // Préparer les données pour le graphique
   const chartData = dailyActivities.map(({ date, total }) => ({
     day: format(date, 'EEE', { locale: fr }),
     total: Math.round((total / 60) * 100) / 100,
@@ -153,7 +150,7 @@ export const WeeklyDashboard = () => {
           </div>
         </CardHeader>
         <CardContent>
-          <ActivityFilters
+          <TeamActivityFilters
             period={period}
             setPeriod={setPeriod}
             projectId={projectId}

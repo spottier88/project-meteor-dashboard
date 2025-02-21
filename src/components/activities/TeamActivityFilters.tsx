@@ -12,7 +12,7 @@ import { useUser } from "@supabase/auth-helpers-react";
 
 type ActivityType = Database["public"]["Enums"]["activity_type"];
 
-interface ActivityFiltersProps {
+interface TeamActivityFiltersProps {
   period: string;
   setPeriod: (period: string) => void;
   projectId: string;
@@ -30,31 +30,28 @@ const activityTypeLabels: Record<ActivityType, string> = {
   other: "Autre"
 };
 
-export const ActivityFilters = ({ 
+export const TeamActivityFilters = ({ 
   period, 
   setPeriod, 
   projectId, 
   setProjectId, 
   activityType, 
   setActivityType 
-}: ActivityFiltersProps) => {
+}: TeamActivityFiltersProps) => {
   const { isAdmin, isManager } = usePermissionsContext();
   const user = useUser();
 
   const { data: projects } = useQuery({
-    queryKey: ['my-activity-projects-for-filter'],
+    queryKey: ['team-activity-projects-for-filter'],
     queryFn: async () => {
-      console.log("[ActivityFilters] Fetching my accessible projects with role context:", { isAdmin, isManager });
+      console.log("[TeamActivityFilters] Fetching projects with role context:", { isAdmin, isManager });
       
-      const { data: projectsData, error } = await supabase
+      const { data, error } = await supabase
         .from("projects")
         .select(`
           id,
           title,
           project_manager,
-          project_members!project_members_project_id_fkey (
-            user_id
-          ),
           profiles!projects_project_manager_fkey (
             email
           )
@@ -62,20 +59,18 @@ export const ActivityFilters = ({
         .order('title');
 
       if (error) {
-        console.error("[ActivityFilters] Error fetching projects:", error);
+        console.error("[TeamActivityFilters] Error fetching projects:", error);
         throw error;
       }
 
-      // Filtrer les projets en fonction des rôles et de l'appartenance à l'équipe
-      const filteredProjects = projectsData?.filter(project => {
+      // Filtrer les projets en fonction des rôles - uniquement si manager, admin ou chef de projet
+      const filteredProjects = data?.filter(project => {
         if (isAdmin) return true;
         if (isManager) return true;
-        if (project.project_manager === user?.email) return true;
-        // Vérifier si l'utilisateur est membre de l'équipe
-        return project.project_members?.some(member => member.user_id === user?.id);
+        return project.project_manager === user?.email;
       });
 
-      console.log("[ActivityFilters] Filtered projects:", filteredProjects);
+      console.log("[TeamActivityFilters] Filtered projects:", filteredProjects);
       return filteredProjects || [];
     },
     enabled: !!user?.id,
