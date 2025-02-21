@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -14,11 +15,14 @@ import { ActivityTypeChart } from './ActivityTypeChart';
 import { ProjectTimeChart } from './ProjectTimeChart';
 import { TeamActivityFilters } from './TeamActivityFilters';
 import { Database } from "@/integrations/supabase/types";
+import { useLocation } from 'react-router-dom';
 
 type ActivityType = Database["public"]["Enums"]["activity_type"];
 
 export const WeeklyDashboard = () => {
   const user = useUser();
+  const location = useLocation();
+  const isTeamView = location.pathname === '/team-activities';
   const today = new Date();
   const [viewMode, setViewMode] = useState<'chart' | 'list'>('chart');
   const [period, setPeriod] = useState('week');
@@ -40,17 +44,29 @@ export const WeeklyDashboard = () => {
   const { start: periodStart } = getPeriodDates();
 
   const { data: activities, isLoading, error } = useQuery({
-    queryKey: ['activities', period, projectId, activityType, periodStart.toISOString()],
+    queryKey: ['activities', isTeamView, period, projectId, activityType, periodStart.toISOString()],
     queryFn: async () => {
+      console.log("[WeeklyDashboard] Fetching activities with params:", {
+        isTeamView,
+        period,
+        projectId,
+        activityType,
+        startDate: periodStart.toISOString()
+      });
+
       let query = supabase
         .from('activities')
         .select(`
           *,
           projects (title)
         `)
-        .eq('user_id', user?.id)
         .gte('start_time', periodStart.toISOString())
         .order('start_time', { ascending: true });
+
+      if (!isTeamView) {
+        // Pour la vue "Mes activités", on filtre par l'utilisateur courant
+        query = query.eq('user_id', user?.id);
+      }
 
       if (projectId !== 'all') {
         query = query.eq('project_id', projectId);
@@ -61,7 +77,12 @@ export const WeeklyDashboard = () => {
       }
 
       const { data, error } = await query;
-      if (error) throw error;
+      if (error) {
+        console.error("[WeeklyDashboard] Error fetching activities:", error);
+        throw error;
+      }
+
+      console.log("[WeeklyDashboard] Fetched activities:", data);
       return data;
     },
     enabled: !!user,
@@ -125,6 +146,8 @@ export const WeeklyDashboard = () => {
 
   const hasActivities = activities && activities.length > 0;
 
+  const Filters = isTeamView ? TeamActivityFilters : ActivityFilters;
+
   return (
     <div className="space-y-6">
       <Card>
@@ -150,7 +173,7 @@ export const WeeklyDashboard = () => {
           </div>
         </CardHeader>
         <CardContent>
-          <TeamActivityFilters
+          <Filters
             period={period}
             setPeriod={setPeriod}
             projectId={projectId}
@@ -179,3 +202,4 @@ export const WeeklyDashboard = () => {
     </div>
   );
 };
+
