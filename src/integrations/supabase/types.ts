@@ -60,6 +60,44 @@ export type Database = {
           },
         ]
       }
+      calendar_imports: {
+        Row: {
+          calendar_url: string
+          created_at: string | null
+          id: string
+          import_date: string | null
+          start_date: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          calendar_url: string
+          created_at?: string | null
+          id?: string
+          import_date?: string | null
+          start_date: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          calendar_url?: string
+          created_at?: string | null
+          id?: string
+          import_date?: string | null
+          start_date?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "calendar_imports_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       directions: {
         Row: {
           created_at: string | null

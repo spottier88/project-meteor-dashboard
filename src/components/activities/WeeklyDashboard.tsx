@@ -9,6 +9,7 @@ import { ActivityChart } from './ActivityChart';
 import { ActivityTypeChart } from './ActivityTypeChart';
 import { ProjectTimeChart } from './ProjectTimeChart';
 import { TeamActivityFilters } from './TeamActivityFilters';
+import { CalendarImport } from './CalendarImport';
 import { Database } from "@/integrations/supabase/types";
 import { useLocation } from 'react-router-dom';
 import { useActivityPeriod } from '@/hooks/useActivityPeriod';
@@ -78,6 +79,7 @@ export const WeeklyDashboard = () => {
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle>Activités</CardTitle>
           <div className="flex gap-2">
+            <CalendarImport />
             <Button
               variant="outline"
               size="sm"
