@@ -79,7 +79,7 @@ export const WeeklyDashboard = () => {
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle>Activités</CardTitle>
           <div className="flex gap-2">
-            <CalendarImport projectId={projectId !== 'all' ? projectId : ''} />
+            <CalendarImport />
             <Button
               variant="outline"
               size="sm"
