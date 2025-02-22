@@ -22,9 +22,10 @@ interface CalendarEvent {
   endTime: Date;
   duration: number;
   activityType?: ActivityType;
+  projectId?: string;
 }
 
-export const useCalendarImport = (projectId: string) => {
+export const useCalendarImport = () => {
   const user = useUser();
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -90,13 +91,12 @@ export const useCalendarImport = (projectId: string) => {
       selectedEvents: CalendarEvent[];
     }) => {
       if (!user) throw new Error('User not authenticated');
-      if (!projectId) throw new Error('Project ID is required');
 
-      console.log('Importing with project ID:', projectId);
+      console.log('Events to import:', selectedEvents);
 
-      // Vérifier que tous les événements ont un type d'activité
-      if (selectedEvents.some(event => !event.activityType)) {
-        throw new Error('Tous les événements doivent avoir un type d\'activité');
+      // Vérifier que tous les événements ont un type d'activité et un projet
+      if (selectedEvents.some(event => !event.activityType || !event.projectId)) {
+        throw new Error('Tous les événements doivent avoir un type d\'activité et un projet assigné');
       }
 
       // Enregistrer l'import
@@ -116,7 +116,7 @@ export const useCalendarImport = (projectId: string) => {
           start_time: event.startTime.toISOString(),
           duration_minutes: event.duration,
           activity_type: event.activityType as ActivityType,
-          project_id: projectId,
+          project_id: event.projectId,
         }))
       );
 

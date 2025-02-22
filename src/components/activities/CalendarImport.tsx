@@ -18,16 +18,12 @@ import { CalendarEventSelection } from './CalendarEventSelection';
 import { fr } from 'date-fns/locale';
 import { useToast } from '@/hooks/use-toast';
 
-interface CalendarImportProps {
-  projectId: string;
-}
-
 enum ImportStep {
   URL,
   EVENTS,
 }
 
-export const CalendarImport = ({ projectId }: CalendarImportProps) => {
+export const CalendarImport = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [step, setStep] = useState<ImportStep>(ImportStep.URL);
   const [calendarUrl, setCalendarUrl] = useState('');
@@ -40,19 +36,10 @@ export const CalendarImport = ({ projectId }: CalendarImportProps) => {
     isFetchingEvents,
     importCalendar,
     isImporting,
-  } = useCalendarImport(projectId);
+  } = useCalendarImport();
 
   const handleFetchEvents = () => {
-    if (!calendarUrl) return;
-    if (!projectId) {
-      toast({
-        title: 'Erreur',
-        description: "Veuillez sélectionner un projet avant d'importer des événements.",
-        variant: 'destructive',
-      });
-      return;
-    }
-    
+    if (!calendarUrl) return;    
     fetchEvents(
       { calendarUrl, startDate: importDate },
       {
@@ -64,15 +51,6 @@ export const CalendarImport = ({ projectId }: CalendarImportProps) => {
   };
 
   const handleImportEvents = (selectedEvents: any[]) => {
-    if (!projectId) {
-      toast({
-        title: 'Erreur',
-        description: "Veuillez sélectionner un projet avant d'importer des événements.",
-        variant: 'destructive',
-      });
-      return;
-    }
-
     importCalendar(
       { 
         calendarUrl, 
