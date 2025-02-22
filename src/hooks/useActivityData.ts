@@ -102,12 +102,16 @@ export const processActivityData = (activities: any[], periodStart: Date, getDay
     const dayIndex = allDays.findIndex(d => d.day === day);
     
     if (dayIndex !== -1) {
-      allDays[dayIndex].total += activity.duration_minutes;
+      // Ensure activity.duration_minutes is treated as a number
+      const duration = Number(activity.duration_minutes) || 0;
+      allDays[dayIndex].total += duration;
       allDays[dayIndex].activities.push(activity);
       
-      const durationHours = activity.duration_minutes / 60;
-      allDays[dayIndex].byType[activity.activity_type] = 
-        (allDays[dayIndex].byType[activity.activity_type] || 0) + durationHours;
+      // Convert minutes to hours for the chart
+      const durationHours = duration / 60;
+      const currentType = activity.activity_type as ActivityType;
+      allDays[dayIndex].byType[currentType] = 
+        (allDays[dayIndex].byType[currentType] || 0) + durationHours;
     }
     
     return acc;
