@@ -4,6 +4,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Database } from "@/integrations/supabase/types";
+import { useUser } from '@supabase/auth-helpers-react';
 
 type ActivityType = Database["public"]["Enums"]["activity_type"];
 
@@ -28,6 +29,8 @@ export const TeamActivityFilters = ({
   selectedUserId,
   setSelectedUserId,
 }: TeamActivityFiltersProps) => {
+  const user = useUser();
+
   // Récupérer la liste des utilisateurs
   const { data: users } = useQuery({
     queryKey: ["team-users"],
@@ -45,30 +48,28 @@ export const TeamActivityFilters = ({
     },
   });
 
-  // Récupérer les projets accessibles
-  const { data: projects } = useQuery({
-    queryKey: ["accessible-projects"],
+  // Récupérer les projets accessibles en utilisant la nouvelle fonction
+  const { data: projects, isLoading: isLoadingProjects } = useQuery({
+    queryKey: ["team-view-projects", user?.id],
     queryFn: async () => {
+      if (!user?.id) return [];
+      
+      console.log("[TeamActivityFilters] Fetching team view projects for user:", user.id);
+      
       const { data, error } = await supabase
-        .from('projects')
-        .select(`
-          id,
-          title,
-          project_manager_id,
-          profiles:project_manager_id (
-            first_name,
-            last_name,
-            email
-          )
-        `)
-        .order('title', { ascending: true });
+        .rpc('get_team_view_projects', {
+          p_user_id: user.id
+        });
 
       if (error) {
-        console.error("[TeamActivityFilters] Error fetching projects:", error);
+        console.error("[TeamActivityFilters] Error fetching team view projects:", error);
         throw error;
       }
+
+      console.log("[TeamActivityFilters] Fetched projects:", data);
       return data;
     },
+    enabled: !!user?.id,
   });
 
   return (
@@ -128,4 +129,3 @@ export const TeamActivityFilters = ({
     </div>
   );
 };
-

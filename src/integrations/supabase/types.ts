@@ -978,6 +978,20 @@ export type Database = {
           suivi_dgs: boolean
         }[]
       }
+      get_team_view_projects: {
+        Args: {
+          p_user_id: string
+        }
+        Returns: {
+          id: string
+          title: string
+          project_manager: string
+          project_manager_id: string
+          pole_id: string
+          direction_id: string
+          service_id: string
+        }[]
+      }
       get_users_last_login: {
         Args: Record<PropertyKey, never>
         Returns: {
