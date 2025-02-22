@@ -106,8 +106,6 @@ export const CalendarImport = ({ projectId }: CalendarImportProps) => {
         <Button
           variant="outline"
           size="sm"
-          disabled={!projectId}
-          title={!projectId ? "Veuillez sélectionner un projet" : undefined}
         >
           <Calendar className="h-4 w-4 mr-2" />
           Importer du calendrier
