@@ -1,10 +1,9 @@
-
 import React, { useState } from 'react';
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useUser } from '@supabase/auth-helpers-react';
-import { format, startOfWeek, startOfMonth, startOfDay, endOfMonth, addDays, addWeeks, addMonths, subWeeks, subMonths } from "date-fns";
+import { format, startOfWeek, startOfMonth, startOfDay, endOfMonth, endOfWeek, endOfDay, addDays, addWeeks, addMonths, subWeeks, subMonths } from "date-fns";
 import { fr } from "date-fns/locale";
 import { BarChartIcon, List, ChevronLeft, ChevronRight, FileSpreadsheet } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -27,22 +26,38 @@ export const WeeklyDashboard = () => {
   const queryClient = useQueryClient();
   const isTeamView = location.pathname === '/team-activities';
   const [currentDate, setCurrentDate] = useState(new Date());
-  const [viewMode, setViewMode] = useState<'chart' | 'list'>('chart');
+  const [viewMode, setViewMode<'chart' | 'list'>('chart');
   const [period, setPeriod] = useState('week');
   const [projectId, setProjectId] = useState('all');
   const [activityType, setActivityType] = useState<'all' | ActivityType>('all');
   const [selectedUserId, setSelectedUserId] = useState<string>('all');
 
   const getPeriodDates = () => {
-    switch (period) {
-      case 'day':
-        return { start: startOfDay(currentDate) };
-      case 'month':
-        return { start: startOfMonth(currentDate) };
-      case 'week':
-      default:
-        return { start: startOfWeek(currentDate, { locale: fr }) };
-    }
+    const start = (() => {
+      switch (period) {
+        case 'day':
+          return startOfDay(currentDate);
+        case 'month':
+          return startOfMonth(currentDate);
+        case 'week':
+        default:
+          return startOfWeek(currentDate, { locale: fr });
+      }
+    })();
+
+    const end = (() => {
+      switch (period) {
+        case 'day':
+          return endOfDay(currentDate);
+        case 'month':
+          return endOfMonth(currentDate);
+        case 'week':
+        default:
+          return endOfWeek(currentDate, { locale: fr });
+      }
+    })();
+
+    return { start, end };
   };
 
   const handleNavigateBack = () => {
@@ -75,7 +90,7 @@ export const WeeklyDashboard = () => {
     queryClient.invalidateQueries({ queryKey: ['activities'] });
   };
 
-  const { start: periodStart } = getPeriodDates();
+  const { start: periodStart, end: periodEnd } = getPeriodDates();
 
   const getPeriodLabel = () => {
     switch (period) {
@@ -99,6 +114,7 @@ export const WeeklyDashboard = () => {
         projectId,
         activityType,
         startDate: periodStart.toISOString(),
+        endDate: periodEnd.toISOString(),
         selectedUserId
       });
 
@@ -122,6 +138,7 @@ export const WeeklyDashboard = () => {
           )
         `)
         .gte('start_time', periodStart.toISOString())
+        .lt('start_time', periodEnd.toISOString())
         .order('start_time', { ascending: true });
 
       if (!isTeamView) {
