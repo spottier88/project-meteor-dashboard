@@ -71,6 +71,12 @@ export const CalendarImport = () => {
     setCalendarUrl('');
   };
 
+  const handleDateSelect = (date: Date | undefined) => {
+    if (date) {
+      setImportDate(date);
+    }
+  };
+
   return (
     <Sheet open={isOpen} onOpenChange={setIsOpen}>
       <SheetTrigger asChild>
@@ -104,7 +110,7 @@ export const CalendarImport = () => {
               <CalendarComponent
                 mode="single"
                 selected={importDate}
-                onSelect={(date) => date && setImportDate(date)}
+                onSelect={handleDateSelect}
                 locale={fr}
               />
             </div>
@@ -130,3 +136,4 @@ export const CalendarImport = () => {
     </Sheet>
   );
 };
+
