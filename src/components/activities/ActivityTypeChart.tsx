@@ -5,6 +5,7 @@ import { PieChart, Pie, ResponsiveContainer, Cell, Tooltip, Legend } from "recha
 
 interface ActivityTypeData {
   type: string;
+  displayType: string;
   total: number;
 }
 
@@ -15,7 +16,25 @@ interface ActivityTypeChartProps {
   }>;
 }
 
-const COLORS = ['#8884d8', '#82ca9d', '#ffc658', '#ff8042', '#a4de6c', '#d0ed57'];
+// Définition des couleurs uniques pour chaque type d'activité
+const ACTIVITY_COLORS = {
+  development: '#8884d8',
+  testing: '#82ca9d',
+  documentation: '#ffc658',
+  meeting: '#ff8042',
+  support: '#a4de6c',
+  training: '#d0ed57'
+};
+
+// Mapping des types d'activités en français
+const ACTIVITY_LABELS = {
+  development: 'Développement',
+  testing: 'Test',
+  documentation: 'Documentation',
+  meeting: 'Réunion',
+  support: 'Support',
+  training: 'Formation'
+};
 
 export const ActivityTypeChart = ({ activities }: ActivityTypeChartProps) => {
   const data = activities.reduce((acc: ActivityTypeData[], activity) => {
@@ -25,6 +44,7 @@ export const ActivityTypeChart = ({ activities }: ActivityTypeChartProps) => {
     } else {
       acc.push({
         type: activity.activity_type,
+        displayType: ACTIVITY_LABELS[activity.activity_type as keyof typeof ACTIVITY_LABELS] || activity.activity_type,
         total: activity.duration_minutes / 60
       });
     }
@@ -43,20 +63,31 @@ export const ActivityTypeChart = ({ activities }: ActivityTypeChartProps) => {
               <Pie
                 data={data}
                 dataKey="total"
-                nameKey="type"
+                nameKey="displayType"
                 cx="50%"
                 cy="50%"
                 outerRadius="80%"
-                label={(entry) => `${entry.type} (${Math.round(entry.total)}h)`}
+                label={(entry) => `${entry.displayType} (${Math.round(entry.total)}h)`}
               >
-                {data.map((entry, index) => (
-                  <Cell key={entry.type} fill={COLORS[index % COLORS.length]} />
+                {data.map((entry) => (
+                  <Cell 
+                    key={entry.type} 
+                    fill={ACTIVITY_COLORS[entry.type as keyof typeof ACTIVITY_COLORS] || '#999999'}
+                  />
                 ))}
               </Pie>
               <Tooltip 
-                formatter={(value: number) => `${Math.round(value * 10) / 10}h`}
+                formatter={(value: number, name: string) => [
+                  `${Math.round(value * 10) / 10}h`,
+                  name
+                ]}
               />
-              <Legend />
+              <Legend formatter={(value) => {
+                if (typeof value === 'string') {
+                  return ACTIVITY_LABELS[value as keyof typeof ACTIVITY_LABELS] || value;
+                }
+                return value;
+              }} />
             </PieChart>
           </ResponsiveContainer>
         </div>
@@ -64,3 +95,4 @@ export const ActivityTypeChart = ({ activities }: ActivityTypeChartProps) => {
     </Card>
   );
 };
+

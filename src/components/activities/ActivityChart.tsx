@@ -1,77 +1,71 @@
 
 import React from 'react';
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  Tooltip,
-  Legend,
-  ResponsiveContainer
-} from "recharts";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
-interface ChartData {
-  day: string;
-  [key: string]: string | number;
-}
-
-interface ActivityChartProps {
-  data: ChartData[];
-}
-
+// Définition des couleurs uniques pour chaque type d'activité
 const ACTIVITY_COLORS = {
-  developpement: "#8884d8",
-  reunion: "#82ca9d",
-  analyse: "#ffc658",
-  documentation: "#ff7300",
-  support: "#0088fe",
+  development: '#8884d8',
+  testing: '#82ca9d',
+  documentation: '#ffc658',
+  meeting: '#ff8042',
+  support: '#a4de6c',
+  training: '#d0ed57'
 };
 
+// Mapping des types d'activités en français
+const ACTIVITY_LABELS = {
+  development: 'Développement',
+  testing: 'Test',
+  documentation: 'Documentation',
+  meeting: 'Réunion',
+  support: 'Support',
+  training: 'Formation'
+};
+
+interface ActivityChartProps {
+  data: any[];
+}
+
 export const ActivityChart = ({ data }: ActivityChartProps) => {
-  // Extraire tous les types d'activités uniques des données
-  const activityTypes = Array.from(
-    new Set(
-      data.flatMap(entry => 
-        Object.keys(entry).filter(key => key !== 'day' && typeof entry[key] === 'number')
-      )
-    )
-  );
+  const activityTypes = [
+    'development',
+    'testing',
+    'documentation',
+    'meeting',
+    'support',
+    'training'
+  ];
 
   return (
-    <div className="w-full aspect-[2/1]">
-      <ResponsiveContainer width="100%" height={300}>
+    <div className="w-full h-[400px]">
+      <ResponsiveContainer width="100%" height="100%">
         <BarChart
           data={data}
-          margin={{ top: 20, right: 30, left: 20, bottom: 25 }}
+          margin={{
+            top: 20,
+            right: 30,
+            left: 20,
+            bottom: 5,
+          }}
         >
-          <XAxis 
-            dataKey="day" 
-            angle={-45}
-            textAnchor="end"
-            height={60}
-            tick={{ fill: '#666' }}
-          />
-          <YAxis 
-            tickFormatter={(value) => `${value}h`}
-            tick={{ fill: '#666' }}
-          />
+          <CartesianGrid strokeDasharray="3 3" />
+          <XAxis dataKey="day" />
+          <YAxis unit="h" />
           <Tooltip 
-            formatter={(value) => [`${value}h`, 'Heures']}
-            contentStyle={{ 
-              backgroundColor: 'white',
-              border: '1px solid #ccc',
-              borderRadius: '4px'
-            }}
+            formatter={(value: number, name: string) => [
+              `${Math.round(value * 10) / 10}h`,
+              ACTIVITY_LABELS[name as keyof typeof ACTIVITY_LABELS] || name
+            ]}
           />
-          <Legend />
+          <Legend 
+            formatter={(value) => ACTIVITY_LABELS[value as keyof typeof ACTIVITY_LABELS] || value}
+          />
           {activityTypes.map((type) => (
             <Bar
               key={type}
               dataKey={type}
-              name={type.charAt(0).toUpperCase() + type.slice(1)}
+              fill={ACTIVITY_COLORS[type as keyof typeof ACTIVITY_COLORS]}
               stackId="a"
-              fill={ACTIVITY_COLORS[type as keyof typeof ACTIVITY_COLORS] || "#8884d8"}
-              radius={[4, 4, 0, 0]}
             />
           ))}
         </BarChart>
