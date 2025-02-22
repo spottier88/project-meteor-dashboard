@@ -19,6 +19,8 @@ interface ActivityFiltersProps {
   setProjectId: (projectId: string) => void;
   activityType: 'all' | ActivityType;
   setActivityType: (type: 'all' | ActivityType) => void;
+  selectedUserId?: string;
+  setSelectedUserId?: (id: string) => void;
 }
 
 const activityTypeLabels: Record<ActivityType, string> = {
@@ -36,7 +38,9 @@ export const ActivityFilters = ({
   projectId, 
   setProjectId, 
   activityType, 
-  setActivityType 
+  setActivityType,
+  selectedUserId,
+  setSelectedUserId
 }: ActivityFiltersProps) => {
   const { isAdmin, isManager } = usePermissionsContext();
   const user = useUser();
@@ -146,3 +150,4 @@ export const ActivityFilters = ({
     </div>
   );
 };
+
