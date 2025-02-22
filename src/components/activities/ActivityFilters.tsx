@@ -105,7 +105,7 @@ export const ActivityFilters = ({
           <SelectContent>
             <SelectItem value="day">Jour</SelectItem>
             <SelectItem value="week">Semaine</SelectItem>
-            <SelectItem value="month">{currentMonth}</SelectItem>
+            <SelectItem value="month">Mois</SelectItem>
           </SelectContent>
         </Select>
       </div>
