@@ -30,13 +30,13 @@ export const TeamActivities = () => {
     <div className="container py-6 space-y-6">
       <div className="flex items-center justify-between">
         <Button
-          variant="outline"
-          className="gap-2"
-          onClick={() => navigate('/')}
-        >
-          <ArrowLeft className="h-4 w-4" />
-          Retour au dashboard
-        </Button>
+        variant="ghost"
+        className="mb-6"
+        onClick={() => navigate("/")}
+      >
+        <ArrowLeft className="h-4 w-4 mr-2" />
+        Retour aux projets
+      </Button>
       </div>
 
       <WeeklyDashboard />
