@@ -22,7 +22,7 @@ export const WeeklyDashboard = () => {
   const location = useLocation();
   const isTeamView = location.pathname === '/team-activities';
   const [viewMode, setViewMode] = useState<'chart' | 'list'>('chart');
-  const [projectId, setProjectId] = useState('all');
+  const [projectId, setProjectId] = useState<string>('all');
   const [activityType, setActivityType] = useState<'all' | ActivityType>('all');
   const [selectedUserId, setSelectedUserId] = useState<string>('all');
 
@@ -79,7 +79,7 @@ export const WeeklyDashboard = () => {
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle>Activités</CardTitle>
           <div className="flex gap-2">
-            <CalendarImport />
+            <CalendarImport projectId={projectId !== 'all' ? projectId : ''} />
             <Button
               variant="outline"
               size="sm"
