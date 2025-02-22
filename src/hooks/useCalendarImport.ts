@@ -12,11 +12,20 @@ interface CalendarImport {
   start_date: string;
 }
 
+interface CalendarEvent {
+  id: string;
+  title: string;
+  startTime: Date;
+  endTime: Date;
+  duration: number;
+}
+
 export const useCalendarImport = () => {
   const user = useUser();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [importDate, setImportDate] = useState<Date>(new Date());
+  const [events, setEvents] = useState<CalendarEvent[]>([]);
 
   const { data: imports, isLoading } = useQuery({
     queryKey: ['calendar-imports'],
@@ -37,24 +46,77 @@ export const useCalendarImport = () => {
     enabled: !!user,
   });
 
-  const importMutation = useMutation({
+  const fetchEventsMutation = useMutation({
     mutationFn: async ({ calendarUrl, startDate }: { calendarUrl: string; startDate: Date }) => {
+      // TODO: Implémenter l'appel à l'Edge Function pour récupérer les événements
+      // Ceci est un exemple de données simulées
+      const mockEvents: CalendarEvent[] = [
+        {
+          id: '1',
+          title: 'Réunion projet A',
+          startTime: new Date(),
+          endTime: new Date(Date.now() + 3600000),
+          duration: 60,
+        },
+        {
+          id: '2',
+          title: 'Point équipe',
+          startTime: new Date(Date.now() + 7200000),
+          endTime: new Date(Date.now() + 9000000),
+          duration: 30,
+        },
+      ];
+      setEvents(mockEvents);
+      return mockEvents;
+    },
+    onError: (error) => {
+      console.error('Error fetching calendar events:', error);
+      toast({
+        title: 'Erreur',
+        description: "Une erreur s'est produite lors de la récupération des événements.",
+        variant: 'destructive',
+      });
+    },
+  });
+
+  const importMutation = useMutation({
+    mutationFn: async ({ calendarUrl, startDate, selectedEvents }: { 
+      calendarUrl: string; 
+      startDate: Date;
+      selectedEvents: CalendarEvent[];
+    }) => {
       if (!user) throw new Error('User not authenticated');
 
-      const { error } = await supabase.from('calendar_imports').insert({
+      // Enregistrer l'import
+      const { error: importError } = await supabase.from('calendar_imports').insert({
         calendar_url: calendarUrl,
         start_date: startDate.toISOString(),
         user_id: user.id,
       });
 
-      if (error) throw error;
+      if (importError) throw importError;
+
+      // Créer les activités
+      const { error: activitiesError } = await supabase.from('activities').insert(
+        selectedEvents.map(event => ({
+          user_id: user.id,
+          description: event.title,
+          start_time: event.startTime.toISOString(),
+          duration_minutes: event.duration,
+          activity_type: 'meeting', // Par défaut pour les événements du calendrier
+        }))
+      );
+
+      if (activitiesError) throw activitiesError;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['calendar-imports'] });
+      queryClient.invalidateQueries({ queryKey: ['activities'] });
       toast({
         title: 'Succès',
-        description: 'Le calendrier a été importé avec succès.',
+        description: 'Les événements ont été importés avec succès.',
       });
+      setEvents([]); // Réinitialiser les événements après l'import
     },
     onError: (error) => {
       console.error('Error importing calendar:', error);
@@ -69,8 +131,11 @@ export const useCalendarImport = () => {
   return {
     imports,
     isLoading,
+    events,
     importDate,
     setImportDate,
+    fetchEvents: fetchEventsMutation.mutate,
+    isFetchingEvents: fetchEventsMutation.isLoading,
     importCalendar: importMutation.mutate,
     isImporting: importMutation.isLoading,
   };
