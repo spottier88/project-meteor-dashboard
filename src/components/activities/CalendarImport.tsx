@@ -42,6 +42,14 @@ export const CalendarImport = ({ projectId }: CalendarImportProps) => {
 
   const handleFetchEvents = () => {
     if (!calendarUrl) return;
+    if (!projectId) {
+      toast({
+        title: 'Erreur',
+        description: "Veuillez sélectionner un projet avant d'importer des événements.",
+        variant: 'destructive',
+      });
+      return;
+    }
     
     fetchEvents(
       { calendarUrl, startDate: importDate },
@@ -54,6 +62,15 @@ export const CalendarImport = ({ projectId }: CalendarImportProps) => {
   };
 
   const handleImportEvents = (selectedEvents: any[]) => {
+    if (!projectId) {
+      toast({
+        title: 'Erreur',
+        description: "Veuillez sélectionner un projet avant d'importer des événements.",
+        variant: 'destructive',
+      });
+      return;
+    }
+
     importCalendar(
       { 
         calendarUrl, 
@@ -84,7 +101,12 @@ export const CalendarImport = ({ projectId }: CalendarImportProps) => {
   return (
     <Sheet open={isOpen} onOpenChange={setIsOpen}>
       <SheetTrigger asChild>
-        <Button variant="outline" size="sm">
+        <Button
+          variant="outline"
+          size="sm"
+          disabled={!projectId}
+          title={!projectId ? "Veuillez sélectionner un projet" : undefined}
+        >
           <Calendar className="h-4 w-4 mr-2" />
           Importer du calendrier
         </Button>
@@ -140,4 +162,3 @@ export const CalendarImport = ({ projectId }: CalendarImportProps) => {
     </Sheet>
   );
 };
-

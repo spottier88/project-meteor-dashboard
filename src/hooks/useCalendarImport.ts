@@ -89,6 +89,9 @@ export const useCalendarImport = (projectId: string) => {
       selectedEvents: CalendarEvent[];
     }) => {
       if (!user) throw new Error('User not authenticated');
+      if (!projectId) throw new Error('Project ID is required');
+
+      console.log('Importing with project ID:', projectId);
 
       // Enregistrer l'import
       const { error: importError } = await supabase.from('calendar_imports').insert({
@@ -144,4 +147,3 @@ export const useCalendarImport = (projectId: string) => {
     isImporting: importMutation.isLoading,
   };
 };
-
