@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -26,7 +27,7 @@ export const WeeklyDashboard = () => {
   const queryClient = useQueryClient();
   const isTeamView = location.pathname === '/team-activities';
   const [currentDate, setCurrentDate] = useState(new Date());
-  const [viewMode, setViewMode<'chart' | 'list'>('chart');
+  const [viewMode, setViewMode] = useState<'chart' | 'list'>('chart');
   const [period, setPeriod] = useState('week');
   const [projectId, setProjectId] = useState('all');
   const [activityType, setActivityType] = useState<'all' | ActivityType>('all');
