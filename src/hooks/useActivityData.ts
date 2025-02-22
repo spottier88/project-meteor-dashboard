@@ -8,11 +8,19 @@ import { fr } from "date-fns/locale";
 
 type ActivityType = Database["public"]["Enums"]["activity_type"];
 
+interface Activity {
+  start_time: string;
+  duration_minutes: number;
+  activity_type: ActivityType;
+  description?: string;
+  id: string;
+}
+
 interface DayActivity {
   date: Date;
   day: string;
   total: number;
-  activities: any[];
+  activities: Activity[];
   byType: Record<ActivityType, number>;
 }
 
@@ -92,7 +100,7 @@ export const useActivityData = (
   return { activities, isLoading, error };
 };
 
-export const processActivityData = (activities: any[], periodStart: Date, getDaysInPeriod: () => number) => {
+export const processActivityData = (activities: Activity[] | null, periodStart: Date, getDaysInPeriod: () => number) => {
   const allDays: DayActivity[] = Array.from({ length: getDaysInPeriod() }, (_, i) => {
     const date = addDays(periodStart, i);
     return {
@@ -117,15 +125,15 @@ export const processActivityData = (activities: any[], periodStart: Date, getDay
       
       // Convert minutes to hours for the chart
       const durationHours = duration / 60;
-      const currentType = activity.activity_type as ActivityType;
+      const activityType = activity.activity_type;
       
-      // Initialize the byType object for the current activity type if not exists
-      if (!allDays[dayIndex].byType[currentType]) {
-        allDays[dayIndex].byType[currentType] = 0;
+      // Initialize the byType object with 0 if it doesn't exist
+      if (typeof allDays[dayIndex].byType[activityType] !== 'number') {
+        allDays[dayIndex].byType[activityType] = 0;
       }
       
-      // Now we can safely add the hours
-      allDays[dayIndex].byType[currentType] += durationHours;
+      allDays[dayIndex].byType[activityType] = 
+        allDays[dayIndex].byType[activityType] + durationHours;
     }
     
     return acc;
@@ -133,12 +141,12 @@ export const processActivityData = (activities: any[], periodStart: Date, getDay
 
   const chartData = dailyActivities.map(({ date, byType }) => ({
     day: format(date, 'EEE', { locale: fr }),
-    ...(Object.fromEntries(
+    ...Object.fromEntries(
       Object.entries(byType).map(([type, hours]) => [
         type,
         Math.round(hours * 100) / 100
       ])
-    ))
+    )
   }));
 
   return { dailyActivities, chartData };
