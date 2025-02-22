@@ -17,12 +17,16 @@ import { useCalendarImport } from '@/hooks/useCalendarImport';
 import { CalendarEventSelection } from './CalendarEventSelection';
 import { fr } from 'date-fns/locale';
 
+interface CalendarImportProps {
+  projectId: string;
+}
+
 enum ImportStep {
   URL,
   EVENTS,
 }
 
-export const CalendarImport = () => {
+export const CalendarImport = ({ projectId }: CalendarImportProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const [step, setStep] = useState<ImportStep>(ImportStep.URL);
   const [calendarUrl, setCalendarUrl] = useState('');
@@ -34,7 +38,7 @@ export const CalendarImport = () => {
     isFetchingEvents,
     importCalendar,
     isImporting,
-  } = useCalendarImport();
+  } = useCalendarImport(projectId);
 
   const handleFetchEvents = () => {
     if (!calendarUrl) return;
