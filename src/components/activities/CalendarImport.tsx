@@ -16,6 +16,7 @@ import { Calendar as CalendarComponent } from '@/components/ui/calendar';
 import { useCalendarImport } from '@/hooks/useCalendarImport';
 import { CalendarEventSelection } from './CalendarEventSelection';
 import { fr } from 'date-fns/locale';
+import { useToast } from '@/hooks/use-toast';
 
 interface CalendarImportProps {
   projectId: string;
@@ -30,6 +31,7 @@ export const CalendarImport = ({ projectId }: CalendarImportProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const [step, setStep] = useState<ImportStep>(ImportStep.URL);
   const [calendarUrl, setCalendarUrl] = useState('');
+  const { toast } = useToast();
   const {
     importDate,
     setImportDate,

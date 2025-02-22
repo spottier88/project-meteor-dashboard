@@ -21,6 +21,7 @@ interface CalendarEvent {
   startTime: Date;
   endTime: Date;
   duration: number;
+  activityType?: ActivityType;
 }
 
 export const useCalendarImport = (projectId: string) => {
@@ -93,6 +94,11 @@ export const useCalendarImport = (projectId: string) => {
 
       console.log('Importing with project ID:', projectId);
 
+      // Vérifier que tous les événements ont un type d'activité
+      if (selectedEvents.some(event => !event.activityType)) {
+        throw new Error('Tous les événements doivent avoir un type d\'activité');
+      }
+
       // Enregistrer l'import
       const { error: importError } = await supabase.from('calendar_imports').insert({
         calendar_url: calendarUrl,
@@ -109,7 +115,7 @@ export const useCalendarImport = (projectId: string) => {
           description: event.title,
           start_time: event.startTime.toISOString(),
           duration_minutes: event.duration,
-          activity_type: 'meeting' as ActivityType,
+          activity_type: event.activityType as ActivityType,
           project_id: projectId,
         }))
       );
