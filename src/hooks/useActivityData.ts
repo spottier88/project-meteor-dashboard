@@ -8,6 +8,14 @@ import { fr } from "date-fns/locale";
 
 type ActivityType = Database["public"]["Enums"]["activity_type"];
 
+interface DayActivity {
+  date: Date;
+  day: string;
+  total: number;
+  activities: any[];
+  byType: Record<ActivityType, number>;
+}
+
 export const useActivityData = (
   isTeamView: boolean,
   period: string,
@@ -85,7 +93,7 @@ export const useActivityData = (
 };
 
 export const processActivityData = (activities: any[], periodStart: Date, getDaysInPeriod: () => number) => {
-  const allDays = Array.from({ length: getDaysInPeriod() }, (_, i) => {
+  const allDays: DayActivity[] = Array.from({ length: getDaysInPeriod() }, (_, i) => {
     const date = addDays(periodStart, i);
     return {
       date,
@@ -110,8 +118,14 @@ export const processActivityData = (activities: any[], periodStart: Date, getDay
       // Convert minutes to hours for the chart
       const durationHours = duration / 60;
       const currentType = activity.activity_type as ActivityType;
-      allDays[dayIndex].byType[currentType] = 
-        (allDays[dayIndex].byType[currentType] || 0) + durationHours;
+      
+      // Initialize the byType object for the current activity type if not exists
+      if (!allDays[dayIndex].byType[currentType]) {
+        allDays[dayIndex].byType[currentType] = 0;
+      }
+      
+      // Now we can safely add the hours
+      allDays[dayIndex].byType[currentType] += durationHours;
     }
     
     return acc;
@@ -129,3 +143,4 @@ export const processActivityData = (activities: any[], periodStart: Date, getDay
 
   return { dailyActivities, chartData };
 };
+
