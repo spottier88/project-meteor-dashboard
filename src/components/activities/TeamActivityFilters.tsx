@@ -31,24 +31,31 @@ export const TeamActivityFilters = ({
 }: TeamActivityFiltersProps) => {
   const user = useUser();
 
-  // Récupérer la liste des utilisateurs
+  // Récupérer la liste des utilisateurs en utilisant la nouvelle fonction
   const { data: users } = useQuery({
-    queryKey: ["team-users"],
+    queryKey: ["team-view-users", user?.id],
     queryFn: async () => {
+      if (!user?.id) return [];
+      
+      console.log("[TeamActivityFilters] Fetching team view users for user:", user.id);
+      
       const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .order('first_name', { ascending: true });
+        .rpc('get_team_view_users', {
+          p_user_id: user.id
+        });
 
       if (error) {
-        console.error("[TeamActivityFilters] Error fetching users:", error);
+        console.error("[TeamActivityFilters] Error fetching team view users:", error);
         throw error;
       }
+
+      console.log("[TeamActivityFilters] Fetched users:", data);
       return data;
     },
+    enabled: !!user?.id,
   });
 
-  // Récupérer les projets accessibles en utilisant la nouvelle fonction
+  // Récupérer les projets accessibles
   const { data: projects, isLoading: isLoadingProjects } = useQuery({
     queryKey: ["team-view-projects", user?.id],
     queryFn: async () => {

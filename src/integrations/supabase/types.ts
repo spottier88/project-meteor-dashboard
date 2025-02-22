@@ -992,6 +992,17 @@ export type Database = {
           service_id: string
         }[]
       }
+      get_team_view_users: {
+        Args: {
+          p_user_id: string
+        }
+        Returns: {
+          id: string
+          email: string
+          first_name: string
+          last_name: string
+        }[]
+      }
       get_users_last_login: {
         Args: Record<PropertyKey, never>
         Returns: {
