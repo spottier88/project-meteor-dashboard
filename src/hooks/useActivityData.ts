@@ -14,6 +14,9 @@ interface Activity {
   activity_type: ActivityType;
   description?: string;
   id: string;
+  projects: {
+    title: string;
+  };
 }
 
 interface DayActivity {
@@ -151,4 +154,3 @@ export const processActivityData = (activities: Activity[] | null, periodStart: 
 
   return { dailyActivities, chartData };
 };
-
