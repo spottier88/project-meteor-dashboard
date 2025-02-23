@@ -165,7 +165,7 @@ const parseICSContent = (icsContent: string, startDate: Date): CalendarEvent[] =
       ) {
         // const localStart = toZonedTime(currentEvent.start, Intl.DateTimeFormat().resolvedOptions().timeZone);
         // const localEnd = toZonedTime(currentEvent.end, Intl.DateTimeFormat().resolvedOptions().timeZone);
-        const duration = Math.round((localEnd.getTime() - localStart.getTime()) / (1000 * 60));
+        const duration = Math.round((currentEvent.end.getTime() - currentEvent.start.getTime()) / (1000 * 60));
 
         events.push({
           id: currentEvent.uid || `event-${i}`,
