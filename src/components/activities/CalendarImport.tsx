@@ -34,6 +34,7 @@ export const CalendarImport = () => {
     isFetchingEvents,
     importCalendar,
     isImporting,
+    toggleEventSelection,
   } = useCalendarImport();
 
   const handleFetchEvents = () => {
@@ -131,6 +132,7 @@ export const CalendarImport = () => {
               onImport={handleImportEvents}
               onCancel={handleCancel}
               isLoading={isImporting}
+              onToggleSelection={toggleEventSelection}
             />
           </div>
         )}

@@ -25,6 +25,7 @@ interface CalendarEvent {
   duration: number;
   activityType?: ActivityType;
   projectId?: string;
+  selected?: boolean;
 }
 
 interface ICalEvent {
@@ -62,157 +63,141 @@ export const useCalendarImport = () => {
     enabled: !!user,
   });
 
- const windowsToIanaTimezones: { [key: string]: string } = {
-  "Greenwich Standard Time": "Etc/GMT",
-  "Romance Standard Time": "Europe/Paris",
-  "Pacific Standard Time": "America/Los_Angeles",
-  "Eastern Standard Time": "America/New_York",
-  // Ajoute d'autres fuseaux si besoin
-};
+  const windowsToIanaTimezones: { [key: string]: string } = {
+    "Greenwich Standard Time": "Etc/GMT",
+    "Romance Standard Time": "Europe/Paris",
+    "Pacific Standard Time": "America/Los_Angeles",
+    "Eastern Standard Time": "America/New_York",
+  };
 
-const parseDateTime = (dateStr: string, tzid?: string): Date | null => {
-  try {
-    console.log(`🔹 Lecture de la date: ${dateStr}`);
+  const parseDateTime = (dateStr: string, tzid?: string): Date | null => {
+    try {
+      console.log(`🔹 Lecture de la date: ${dateStr}, fuseau: ${tzid}`);
 
-    if (dateStr.includes(';VALUE=DATE:')) {
-      console.log(`⏳ Ignoré (événement sur la journée entière) : ${dateStr}`);
-      return null; // Ignorer les événements All Day
-    }
-
-    let finalDateStr = dateStr;
-    let finalTzid = tzid;
-
-    if (dateStr.includes('TZID=')) {
-      const parts = dateStr.split(':');
-      const tzParts = parts[0].split('TZID=');
-      finalTzid = tzParts[1];
-      finalDateStr = parts[1];
-
-      console.log(`🌍 Fuseau horaire Windows détecté: ${finalTzid}`);
-
-      // 🔄 Conversion du fuseau Windows en IANA
-      if (finalTzid in windowsToIanaTimezones) {
-        finalTzid = windowsToIanaTimezones[finalTzid];
-        console.log(`🔄 Converti en fuseau IANA: ${finalTzid}`);
-      } else {
-        console.warn(`⚠️ Fuseau inconnu: ${finalTzid} - Utilisation de UTC`);
-        finalTzid = "UTC"; // Par défaut si non reconnu
+      // Gestion des événements sur la journée entière
+      if (dateStr.includes(';VALUE=DATE:')) {
+        console.log(`⛔ Ignoré (événement sur la journée entière) : ${dateStr}`);
+        return null;
       }
-    } else if (dateStr.includes(':')) {
-      finalDateStr = dateStr.split(':')[1];
-    }
 
-    if (!finalDateStr) {
-      console.warn('❌ Problème de parsing: date vide.');
+      let finalDateStr = dateStr;
+      let userTz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+      let eventTz = tzid || "UTC";
+
+      if (dateStr.includes('TZID=')) {
+        const parts = dateStr.split(':');
+        const tzParts = parts[0].split('TZID=');
+        eventTz = tzParts[1];
+        finalDateStr = parts[1];
+
+        console.log(`🌍 Fuseau horaire Windows détecté: ${eventTz}`);
+
+        if (eventTz in windowsToIanaTimezones) {
+          eventTz = windowsToIanaTimezones[eventTz];
+          console.log(`🔄 Converti en fuseau IANA: ${eventTz}`);
+        }
+      } else if (dateStr.includes(':')) {
+        finalDateStr = dateStr.split(':')[1];
+      }
+
+      if (!finalDateStr) {
+        console.warn('❌ Problème de parsing: date vide.');
+        return null;
+      }
+
+      const year = finalDateStr.substr(0, 4);
+      const month = finalDateStr.substr(4, 2);
+      const day = finalDateStr.substr(6, 2);
+      const hour = finalDateStr.substr(9, 2) || '00';
+      const minute = finalDateStr.substr(11, 2) || '00';
+      const second = finalDateStr.substr(13, 2) || '00';
+
+      const isoString = `${year}-${month}-${day}T${hour}:${minute}:${second}`;
+      console.log(`📅 Date ISO: ${isoString}, fuseau source: ${eventTz}, fuseau cible: ${userTz}`);
+
+      const parsedDate = parseISO(isoString);
+      const zonedDate = toZonedTime(parsedDate, eventTz);
+
+      // On convertit dans le fuseau de l'utilisateur
+      const userDate = toZonedTime(zonedDate, userTz);
+      
+      console.log(`🎯 Date finale: ${format(userDate, 'yyyy-MM-dd HH:mm:ss')} (${userTz})`);
+      
+      return userDate;
+    } catch (error) {
+      console.error('❌ Erreur lors du parsing de la date:', error);
       return null;
     }
+  };
 
-    const year = finalDateStr.substr(0, 4);
-    const month = finalDateStr.substr(4, 2);
-    const day = finalDateStr.substr(6, 2);
-    const hour = finalDateStr.substr(9, 2) || '00';
-    const minute = finalDateStr.substr(11, 2) || '00';
-    const second = finalDateStr.substr(13, 2) || '00';
+  const parseICSContent = (icsContent: string, startDate: Date): CalendarEvent[] => {
+    const lines = icsContent.split('\n');
+    let events: CalendarEvent[] = [];
+    let currentEvent: Partial<ICalEvent> = {};
+    let isInEvent = false;
+    let currentTzid: string | undefined;
 
-    const isoString = `${year}-${month}-${day}T${hour}:${minute}:${second}`;
+    console.log('🔍 Début du parsing ICS');
+    console.log('📄 Nombre de lignes:', lines.length);
 
-    console.log(`📅 Date convertie: ${isoString} (TZID=${finalTzid})`);
+    for (let i = 0; i < lines.length; i++) {
+      let line = lines[i].trim();
+      
+      if (line === 'BEGIN:VEVENT') {
+        isInEvent = true;
+        currentEvent = {};
+        currentTzid = undefined;
+      } else if (line === 'END:VEVENT') {
+        isInEvent = false;
 
-    const parsedDate = parseISO(isoString);
+        if (
+          currentEvent.type === 'VEVENT' &&
+          currentEvent.start &&
+          currentEvent.end &&
+          currentEvent.start >= startDate &&
+          !currentEvent.isAllDay
+        ) {
+          const duration = Math.round((currentEvent.end.getTime() - currentEvent.start.getTime()) / (1000 * 60));
 
-    if (finalTzid) {
-      return toZonedTime(parsedDate, finalTzid);
-    }
+          events.push({
+            id: currentEvent.uid || `event-${i}`,
+            title: currentEvent.summary || 'Sans titre',
+            startTime: currentEvent.start,
+            endTime: currentEvent.end,
+            duration,
+            selected: true, // Par défaut tous les événements sont sélectionnés
+          });
 
-    return parsedDate;
-  } catch (error) {
-    console.error('❌ Erreur lors du parsing de la date:', error);
-    return null;
-  }
-};
-
-
-const parseICSContent = (icsContent: string, startDate: Date): CalendarEvent[] => {
-  const lines = icsContent.split('\n');
-  let events: CalendarEvent[] = [];
-  let currentEvent: Partial<ICalEvent> = {};
-  let isInEvent = false;
-  let currentTzid: string | undefined;
-
-  console.log('🔍 Début du parsing ICS');
-  console.log('📄 Nombre de lignes dans le fichier:', lines.length);
-
-  for (let i = 0; i < lines.length; i++) {
-    let line = lines[i].trim();
-    console.log(`📜 Ligne ${i}: ${line}`);
-
-    if (line === 'BEGIN:VEVENT') {
-      isInEvent = true;
-      currentEvent = {};
-      currentTzid = undefined;
-      console.log('✅ Début d’un nouvel événement');
-    } else if (line === 'END:VEVENT') {
-      isInEvent = false;
-      console.log(`🚀 Fin de l’événement: ${JSON.stringify(currentEvent, null, 2)}`);
-
-      // Vérification avant d'ajouter l'événement
-      if (
-        currentEvent.type === 'VEVENT' &&
-        currentEvent.start &&
-        currentEvent.end &&
-        currentEvent.start >= startDate &&
-        !currentEvent.isAllDay // ⛔ On exclut les événements All Day
-      ) {
-        // const localStart = toZonedTime(currentEvent.start, Intl.DateTimeFormat().resolvedOptions().timeZone);
-        // const localEnd = toZonedTime(currentEvent.end, Intl.DateTimeFormat().resolvedOptions().timeZone);
-        const duration = Math.round((currentEvent.end.getTime() - currentEvent.start.getTime()) / (1000 * 60));
-
-        events.push({
-          id: currentEvent.uid || `event-${i}`,
-          title: currentEvent.summary || 'Sans titre',
-          startTime: currentEvent.start,
-          endTime: currentEvent.end,
-          duration,
-        });
-
-        console.log(`✅ Événement ajouté: ${currentEvent.summary}`);
-      } else {
-        console.warn('🚫 Événement ignoré (All Day ou invalide) :', currentEvent);
-      }
-    } else if (isInEvent) {
-      if (line.startsWith('UID:')) {
-        currentEvent.uid = line.substring(4);
-        currentEvent.type = 'VEVENT';
-        console.log(`🆔 UID de l'événement: ${currentEvent.uid}`);
-      } else if (line.startsWith('SUMMARY:')) {
-        currentEvent.summary = line.substring(8);
-        console.log(`📌 Titre de l'événement: ${currentEvent.summary}`);
-      } else if (line.startsWith('DTSTART')) {
-        const parsedDate = parseDateTime(line, currentTzid);
-        if (parsedDate) {
-          currentEvent.start = parsedDate;
-          console.log(`🕒 Début de l'événement: ${parsedDate}`);
+          console.log(`✅ Événement ajouté: ${currentEvent.summary}`);
         } else {
-          currentEvent.isAllDay = true; // ⛔ Marque l'événement comme "All Day"
+          console.warn('🚫 Événement ignoré:', currentEvent);
         }
-      } else if (line.startsWith('DTEND')) {
-        const parsedDate = parseDateTime(line, currentTzid);
-        if (parsedDate) {
-          currentEvent.end = parsedDate;
-          console.log(`🕒 Fin de l'événement: ${parsedDate}`);
+      } else if (isInEvent) {
+        if (line.startsWith('UID:')) {
+          currentEvent.uid = line.substring(4);
+          currentEvent.type = 'VEVENT';
+        } else if (line.startsWith('SUMMARY:')) {
+          currentEvent.summary = line.substring(8);
+        } else if (line.startsWith('DTSTART')) {
+          const parsedDate = parseDateTime(line, currentTzid);
+          if (parsedDate) {
+            currentEvent.start = parsedDate;
+          } else {
+            currentEvent.isAllDay = true;
+          }
+        } else if (line.startsWith('DTEND')) {
+          const parsedDate = parseDateTime(line, currentTzid);
+          if (parsedDate) {
+            currentEvent.end = parsedDate;
+          }
+        } else if (line.startsWith('TZID:')) {
+          currentTzid = line.substring(5);
         }
-      } else if (line.startsWith('TZID:')) {
-        currentTzid = line.substring(5);
-        console.log(`🌍 TZID détecté: ${currentTzid}`);
       }
     }
-  }
 
-  console.log('✅ Événements parsés:', events);
-  return events;
-};
-
-
+    return events;
+  };
 
   const fetchEventsMutation = useMutation({
     mutationFn: async ({ calendarUrl, startDate }: { calendarUrl: string; startDate: Date }) => {
@@ -230,13 +215,10 @@ const parseICSContent = (icsContent: string, startDate: Date): CalendarEvent[] =
         throw new Error("Données du calendrier non trouvées");
       }
       
-      console.log('Réponse de la fonction Edge:', data);
-      console.log('Contenu ICS reçu:', data.icsData);
-      
       console.log('Parsing calendar data');
-      const events = parseICSContent(data.icsData, startDate);
-      setEvents(events);
-      return events;
+      const parsedEvents = parseICSContent(data.icsData, startDate);
+      setEvents(parsedEvents);
+      return parsedEvents;
     },
     onError: (error) => {
       console.error('Error fetching calendar events:', error);
@@ -260,9 +242,13 @@ const parseICSContent = (icsContent: string, startDate: Date): CalendarEvent[] =
     }) => {
       if (!user) throw new Error('User not authenticated');
 
-      const hasInvalidEvents = selectedEvents.some(event => !event.activityType || !event.projectId);
+      // Ne vérifier que les événements sélectionnés
+      const hasInvalidEvents = selectedEvents
+        .filter(event => event.selected)
+        .some(event => !event.activityType || !event.projectId);
+
       if (hasInvalidEvents) {
-        throw new Error('Tous les événements doivent avoir un type d\'activité et un projet assigné');
+        throw new Error('Tous les événements sélectionnés doivent avoir un type d\'activité et un projet assigné');
       }
 
       const { error: importError } = await supabase.from('calendar_imports').insert({
@@ -273,15 +259,18 @@ const parseICSContent = (icsContent: string, startDate: Date): CalendarEvent[] =
 
       if (importError) throw importError;
 
+      // N'insérer que les événements sélectionnés
       const { error: activitiesError } = await supabase.from('activities').insert(
-        selectedEvents.map(event => ({
-          user_id: user.id,
-          description: event.title,
-          start_time: event.startTime.toISOString(),
-          duration_minutes: event.duration,
-          activity_type: event.activityType,
-          project_id: event.projectId,
-        }))
+        selectedEvents
+          .filter(event => event.selected)
+          .map(event => ({
+            user_id: user.id,
+            description: event.title,
+            start_time: event.startTime.toISOString(),
+            duration_minutes: event.duration,
+            activity_type: event.activityType,
+            project_id: event.projectId,
+          }))
       );
 
       if (activitiesError) throw activitiesError;
@@ -305,6 +294,16 @@ const parseICSContent = (icsContent: string, startDate: Date): CalendarEvent[] =
     },
   });
 
+  const toggleEventSelection = (eventId: string) => {
+    setEvents(prevEvents =>
+      prevEvents.map(event =>
+        event.id === eventId
+          ? { ...event, selected: !event.selected }
+          : event
+      )
+    );
+  };
+
   return {
     imports,
     isLoading,
@@ -315,5 +314,6 @@ const parseICSContent = (icsContent: string, startDate: Date): CalendarEvent[] =
     isFetchingEvents: fetchEventsMutation.isLoading,
     importCalendar: importMutation.mutate,
     isImporting: importMutation.isLoading,
+    toggleEventSelection,
   };
 };

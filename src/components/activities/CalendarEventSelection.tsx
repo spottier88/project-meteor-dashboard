@@ -9,6 +9,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
   Select,
   SelectContent,
@@ -38,6 +39,7 @@ interface CalendarEvent {
   duration: number;
   activityType?: ActivityType;
   projectId?: string;
+  selected?: boolean;
 }
 
 interface Props {
@@ -45,11 +47,16 @@ interface Props {
   onImport: (events: CalendarEvent[]) => void;
   onCancel: () => void;
   isLoading: boolean;
+  onToggleSelection: (eventId: string) => void;
 }
 
-export const CalendarEventSelection = ({ events, onImport, onCancel, isLoading }: Props) => {
-  const [selectedEvents, setSelectedEvents] = useState<CalendarEvent[]>(events);
-
+export const CalendarEventSelection = ({ 
+  events, 
+  onImport, 
+  onCancel, 
+  isLoading,
+  onToggleSelection,
+}: Props) => {
   const { data: projects, isLoading: isLoadingProjects } = useQuery({
     queryKey: ['accessible-projects'],
     queryFn: async () => {
@@ -71,22 +78,25 @@ export const CalendarEventSelection = ({ events, onImport, onCancel, isLoading }
   ];
 
   const handleActivityTypeChange = (eventId: string, type: ActivityType) => {
-    setSelectedEvents(events =>
-      events.map(event =>
-        event.id === eventId ? { ...event, activityType: type } : event
-      )
-    );
+    const event = events.find(e => e.id === eventId);
+    if (event) {
+      event.activityType = type;
+    }
   };
 
   const handleProjectChange = (eventId: string, projectId: string) => {
-    setSelectedEvents(events =>
-      events.map(event =>
-        event.id === eventId ? { ...event, projectId } : event
-      )
-    );
+    const event = events.find(e => e.id === eventId);
+    if (event) {
+      event.projectId = projectId;
+    }
   };
 
-  const canImport = selectedEvents.every(event => event.activityType && event.projectId);
+  // Ne valider que les événements sélectionnés
+  const canImport = events
+    .filter(event => event.selected)
+    .every(event => event.activityType && event.projectId);
+
+  const selectedCount = events.filter(event => event.selected).length;
 
   if (isLoadingProjects) {
     return (
@@ -101,6 +111,9 @@ export const CalendarEventSelection = ({ events, onImport, onCancel, isLoading }
       <Table>
         <TableHeader>
           <TableRow>
+            <TableHead className="w-[50px]">
+              <span className="sr-only">Sélection</span>
+            </TableHead>
             <TableHead>Titre</TableHead>
             <TableHead>Date</TableHead>
             <TableHead>Durée</TableHead>
@@ -109,8 +122,14 @@ export const CalendarEventSelection = ({ events, onImport, onCancel, isLoading }
           </TableRow>
         </TableHeader>
         <TableBody>
-          {selectedEvents.map((event) => (
+          {events.map((event) => (
             <TableRow key={event.id}>
+              <TableCell>
+                <Checkbox
+                  checked={event.selected}
+                  onCheckedChange={() => onToggleSelection(event.id)}
+                />
+              </TableCell>
               <TableCell>{event.title}</TableCell>
               <TableCell>
                 {format(event.startTime, 'dd/MM/yyyy HH:mm', { locale: fr })}
@@ -120,6 +139,7 @@ export const CalendarEventSelection = ({ events, onImport, onCancel, isLoading }
                 <Select
                   value={event.projectId}
                   onValueChange={(value) => handleProjectChange(event.id, value)}
+                  disabled={!event.selected}
                 >
                   <SelectTrigger className="w-[200px]">
                     <SelectValue placeholder="Sélectionner un projet" />
@@ -137,6 +157,7 @@ export const CalendarEventSelection = ({ events, onImport, onCancel, isLoading }
                 <Select
                   value={event.activityType}
                   onValueChange={(value) => handleActivityTypeChange(event.id, value as ActivityType)}
+                  disabled={!event.selected}
                 >
                   <SelectTrigger className="w-[200px]">
                     <SelectValue placeholder="Sélectionner un type" />
@@ -155,18 +176,22 @@ export const CalendarEventSelection = ({ events, onImport, onCancel, isLoading }
         </TableBody>
       </Table>
 
-      <div className="flex justify-end gap-4">
-        <Button variant="outline" onClick={onCancel} disabled={isLoading}>
-          Annuler
-        </Button>
-        <Button 
-          onClick={() => onImport(selectedEvents)} 
-          disabled={!canImport || isLoading}
-        >
-          {isLoading ? 'Importation...' : 'Importer la sélection'}
-        </Button>
+      <div className="flex justify-between items-center">
+        <div className="text-sm text-muted-foreground">
+          {selectedCount} événement{selectedCount > 1 ? 's' : ''} sélectionné{selectedCount > 1 ? 's' : ''}
+        </div>
+        <div className="flex gap-4">
+          <Button variant="outline" onClick={onCancel} disabled={isLoading}>
+            Annuler
+          </Button>
+          <Button 
+            onClick={() => onImport(events)} 
+            disabled={!canImport || isLoading || selectedCount === 0}
+          >
+            {isLoading ? 'Importation...' : `Importer ${selectedCount} événement${selectedCount > 1 ? 's' : ''}`}
+          </Button>
+        </div>
       </div>
     </div>
   );
 };
-
