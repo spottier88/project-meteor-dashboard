@@ -64,9 +64,11 @@ export const useCalendarImport = () => {
 
   const parseDateTime = (dateStr: string, tzid?: string): Date | null => {
   try {
+    console.log(`🔹 Lecture de la date: ${dateStr}`);
+
     if (dateStr.includes(';VALUE=DATE:')) {
-      console.log(`⏳ Ignoré (événement sur la journée) : ${dateStr}`);
-      return null; // On ignore ces événements
+      console.log(`⏳ Ignoré (événement sur la journée entière) : ${dateStr}`);
+      return null; // Ignorer les événements All Day
     }
 
     let finalDateStr = dateStr;
@@ -77,11 +79,15 @@ export const useCalendarImport = () => {
       const tzParts = parts[0].split('TZID=');
       finalTzid = tzParts[1];
       finalDateStr = parts[1];
+      console.log(`🌍 Fuseau horaire détecté: ${finalTzid}`);
     } else if (dateStr.includes(':')) {
       finalDateStr = dateStr.split(':')[1];
     }
 
-    if (!finalDateStr) return null;
+    if (!finalDateStr) {
+      console.warn('❌ Problème de parsing: date vide.');
+      return null;
+    }
 
     const year = finalDateStr.substr(0, 4);
     const month = finalDateStr.substr(4, 2);
@@ -91,6 +97,8 @@ export const useCalendarImport = () => {
     const second = finalDateStr.substr(13, 2) || '00';
 
     const isoString = `${year}-${month}-${day}T${hour}:${minute}:${second}`;
+
+    console.log(`📅 Date convertie: ${isoString} (TZID=${finalTzid || 'UTC'})`);
 
     if (finalTzid) {
       return toZonedTime(parseISO(isoString), finalTzid);
@@ -115,13 +123,16 @@ const parseICSContent = (icsContent: string, startDate: Date): CalendarEvent[] =
 
   for (let i = 0; i < lines.length; i++) {
     let line = lines[i].trim();
+    console.log(`📜 Ligne ${i}: ${line}`);
 
     if (line === 'BEGIN:VEVENT') {
       isInEvent = true;
       currentEvent = {};
       currentTzid = undefined;
+      console.log('✅ Début d’un nouvel événement');
     } else if (line === 'END:VEVENT') {
       isInEvent = false;
+      console.log(`🚀 Fin de l’événement: ${JSON.stringify(currentEvent, null, 2)}`);
 
       // Vérification avant d'ajouter l'événement
       if (
@@ -142,6 +153,8 @@ const parseICSContent = (icsContent: string, startDate: Date): CalendarEvent[] =
           endTime: localEnd,
           duration,
         });
+
+        console.log(`✅ Événement ajouté: ${currentEvent.summary}`);
       } else {
         console.warn('🚫 Événement ignoré (All Day ou invalide) :', currentEvent);
       }
@@ -149,12 +162,15 @@ const parseICSContent = (icsContent: string, startDate: Date): CalendarEvent[] =
       if (line.startsWith('UID:')) {
         currentEvent.uid = line.substring(4);
         currentEvent.type = 'VEVENT';
+        console.log(`🆔 UID de l'événement: ${currentEvent.uid}`);
       } else if (line.startsWith('SUMMARY:')) {
         currentEvent.summary = line.substring(8);
+        console.log(`📌 Titre de l'événement: ${currentEvent.summary}`);
       } else if (line.startsWith('DTSTART')) {
         const parsedDate = parseDateTime(line, currentTzid);
         if (parsedDate) {
           currentEvent.start = parsedDate;
+          console.log(`🕒 Début de l'événement: ${parsedDate}`);
         } else {
           currentEvent.isAllDay = true; // ⛔ Marque l'événement comme "All Day"
         }
@@ -162,9 +178,11 @@ const parseICSContent = (icsContent: string, startDate: Date): CalendarEvent[] =
         const parsedDate = parseDateTime(line, currentTzid);
         if (parsedDate) {
           currentEvent.end = parsedDate;
+          console.log(`🕒 Fin de l'événement: ${parsedDate}`);
         }
       } else if (line.startsWith('TZID:')) {
         currentTzid = line.substring(5);
+        console.log(`🌍 TZID détecté: ${currentTzid}`);
       }
     }
   }
@@ -172,6 +190,7 @@ const parseICSContent = (icsContent: string, startDate: Date): CalendarEvent[] =
   console.log('✅ Événements parsés:', events);
   return events;
 };
+
 
 
   const fetchEventsMutation = useMutation({
