@@ -5,7 +5,6 @@ import { supabase } from '@/integrations/supabase/client';
 import { useUser } from '@supabase/auth-helpers-react';
 import { useToast } from '@/hooks/use-toast';
 import { Database } from '@/integrations/supabase/types';
-import * as ical from 'ical';
 
 type ActivityType = Database['public']['Enums']['activity_type'];
 
@@ -24,6 +23,14 @@ interface CalendarEvent {
   duration: number;
   activityType?: ActivityType;
   projectId?: string;
+}
+
+interface ICalEvent {
+  type: string;
+  uid?: string;
+  summary: string;
+  start: Date;
+  end: Date;
 }
 
 export const useCalendarImport = () => {
@@ -52,41 +59,64 @@ export const useCalendarImport = () => {
     enabled: !!user,
   });
 
+  const parseICSContent = (icsContent: string, startDate: Date): CalendarEvent[] => {
+    const lines = icsContent.split('\n');
+    let events: CalendarEvent[] = [];
+    let currentEvent: Partial<ICalEvent> = {};
+    let isInEvent = false;
+
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i].trim();
+
+      if (line === 'BEGIN:VEVENT') {
+        isInEvent = true;
+        currentEvent = {};
+      } else if (line === 'END:VEVENT') {
+        isInEvent = false;
+        if (currentEvent.type === 'VEVENT' && 
+            currentEvent.start && 
+            currentEvent.end && 
+            currentEvent.start >= startDate) {
+          const duration = Math.round(
+            (currentEvent.end.getTime() - currentEvent.start.getTime()) / (1000 * 60)
+          );
+          
+          events.push({
+            id: currentEvent.uid || `event-${i}`,
+            title: currentEvent.summary || 'Untitled Event',
+            startTime: currentEvent.start,
+            endTime: currentEvent.end,
+            duration,
+          });
+        }
+      } else if (isInEvent) {
+        if (line.startsWith('UID:')) {
+          currentEvent.uid = line.substring(4);
+          currentEvent.type = 'VEVENT';
+        } else if (line.startsWith('SUMMARY:')) {
+          currentEvent.summary = line.substring(8);
+        } else if (line.startsWith('DTSTART')) {
+          const dateStr = line.split(':')[1];
+          currentEvent.start = new Date(dateStr);
+        } else if (line.startsWith('DTEND')) {
+          const dateStr = line.split(':')[1];
+          currentEvent.end = new Date(dateStr);
+        }
+      }
+    }
+
+    return events;
+  };
+
   const fetchEventsMutation = useMutation({
     mutationFn: async ({ calendarUrl, startDate }: { calendarUrl: string; startDate: Date }) => {
-      // Récupérer le contenu du calendrier ICS
       const response = await fetch(calendarUrl);
       if (!response.ok) {
         throw new Error("Impossible de récupérer les données du calendrier");
       }
 
       const icsData = await response.text();
-      const calendar = ical.parseICS(icsData);
-      const events: CalendarEvent[] = [];
-      const compareDate = startDate;
-
-      // Parcourir les événements du calendrier
-      for (const key in calendar) {
-        const event = calendar[key];
-        if (event.type === 'VEVENT') {
-          const startTime = new Date(event.start);
-          
-          // Ne garder que les événements à partir de la date de début
-          if (startTime >= compareDate) {
-            const endTime = new Date(event.end);
-            const duration = Math.round((endTime.getTime() - startTime.getTime()) / (1000 * 60)); // Durée en minutes
-
-            events.push({
-              id: event.uid || key,
-              title: event.summary,
-              startTime,
-              endTime,
-              duration
-            });
-          }
-        }
-      }
-
+      const events = parseICSContent(icsData, startDate);
       setEvents(events);
       return events;
     },
@@ -112,13 +142,11 @@ export const useCalendarImport = () => {
     }) => {
       if (!user) throw new Error('User not authenticated');
 
-      // Vérifier que tous les événements ont un type d'activité et un projet
       const hasInvalidEvents = selectedEvents.some(event => !event.activityType || !event.projectId);
       if (hasInvalidEvents) {
         throw new Error('Tous les événements doivent avoir un type d\'activité et un projet assigné');
       }
 
-      // Enregistrer l'import
       const { error: importError } = await supabase.from('calendar_imports').insert({
         calendar_url: calendarUrl,
         start_date: startDate.toISOString(),
@@ -127,7 +155,6 @@ export const useCalendarImport = () => {
 
       if (importError) throw importError;
 
-      // Créer les activités
       const { error: activitiesError } = await supabase.from('activities').insert(
         selectedEvents.map(event => ({
           user_id: user.id,
@@ -148,7 +175,7 @@ export const useCalendarImport = () => {
         title: 'Succès',
         description: 'Les événements ont été importés avec succès.',
       });
-      setEvents([]); // Réinitialiser les événements après l'import
+      setEvents([]);
     },
     onError: (error) => {
       console.error('Error importing calendar:', error);
