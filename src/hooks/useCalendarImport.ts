@@ -5,6 +5,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { useUser } from '@supabase/auth-helpers-react';
 import { useToast } from '@/hooks/use-toast';
 import { Database } from '@/integrations/supabase/types';
+import { format, parseISO } from 'date-fns';
+import { zonedTimeToUtc, utcToZonedTime } from 'date-fns-tz';
 
 type ActivityType = Database['public']['Enums']['activity_type'];
 
@@ -31,6 +33,7 @@ interface ICalEvent {
   summary: string;
   start: Date;
   end: Date;
+  isAllDay?: boolean;
 }
 
 export const useCalendarImport = () => {
@@ -59,14 +62,58 @@ export const useCalendarImport = () => {
     enabled: !!user,
   });
 
+  const parseDateTime = (dateStr: string, tzid?: string): Date | null => {
+    try {
+      // Gestion des dates sans heure (événements sur la journée)
+      if (dateStr.includes(';VALUE=DATE:')) {
+        return null; // On retourne null pour ignorer les événements sur la journée
+      }
+
+      // Extraction de la date et du fuseau horaire
+      let finalDateStr = dateStr;
+      let finalTzid = tzid;
+
+      if (dateStr.includes('TZID=')) {
+        const parts = dateStr.split(':');
+        const tzParts = parts[0].split('TZID=');
+        finalTzid = tzParts[1];
+        finalDateStr = parts[1];
+      } else if (dateStr.includes(':')) {
+        finalDateStr = dateStr.split(':')[1];
+      }
+
+      // Formatage de la chaîne de date
+      const year = finalDateStr.substr(0, 4);
+      const month = finalDateStr.substr(4, 2);
+      const day = finalDateStr.substr(6, 2);
+      const hour = finalDateStr.substr(9, 2) || '00';
+      const minute = finalDateStr.substr(11, 2) || '00';
+      const second = finalDateStr.substr(13, 2) || '00';
+
+      const isoString = `${year}-${month}-${day}T${hour}:${minute}:${second}`;
+      
+      // Conversion en UTC si un fuseau horaire est spécifié
+      if (finalTzid) {
+        const zonedTime = zonedTimeToUtc(parseISO(isoString), finalTzid);
+        return new Date(zonedTime);
+      }
+
+      return new Date(isoString);
+    } catch (error) {
+      console.error('Error parsing date:', error);
+      return null;
+    }
+  };
+
   const parseICSContent = (icsContent: string, startDate: Date): CalendarEvent[] => {
     const lines = icsContent.split('\n');
     let events: CalendarEvent[] = [];
     let currentEvent: Partial<ICalEvent> = {};
     let isInEvent = false;
-    //log de verif sur l'import
+    let currentTzid: string | undefined;
+    
     console.log('Début du parsing ICS');
-    console.log('Nombre de lignes dans le fichier:', icsContent.split('\n').length);
+    console.log('Nombre de lignes dans le fichier:', lines.length);
     
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i].trim();
@@ -74,21 +121,28 @@ export const useCalendarImport = () => {
       if (line === 'BEGIN:VEVENT') {
         isInEvent = true;
         currentEvent = {};
+        currentTzid = undefined;
       } else if (line === 'END:VEVENT') {
         isInEvent = false;
         if (currentEvent.type === 'VEVENT' && 
             currentEvent.start && 
             currentEvent.end && 
-            currentEvent.start >= startDate) {
+            currentEvent.start >= startDate &&
+            !currentEvent.isAllDay) {
+          
+          // Conversion vers le fuseau horaire local de l'utilisateur
+          const localStart = utcToZonedTime(currentEvent.start, Intl.DateTimeFormat().resolvedOptions().timeZone);
+          const localEnd = utcToZonedTime(currentEvent.end, Intl.DateTimeFormat().resolvedOptions().timeZone);
+          
           const duration = Math.round(
-            (currentEvent.end.getTime() - currentEvent.start.getTime()) / (1000 * 60)
+            (localEnd.getTime() - localStart.getTime()) / (1000 * 60)
           );
           
           events.push({
             id: currentEvent.uid || `event-${i}`,
             title: currentEvent.summary || 'Untitled Event',
-            startTime: currentEvent.start,
-            endTime: currentEvent.end,
+            startTime: localStart,
+            endTime: localEnd,
             duration,
           });
         }
@@ -98,16 +152,22 @@ export const useCalendarImport = () => {
           currentEvent.type = 'VEVENT';
         } else if (line.startsWith('SUMMARY:')) {
           currentEvent.summary = line.substring(8);
-        } else if (line.startsWith('DTSTART')) {
-          const dateStr = line.split(':')[1];
-          currentEvent.start = new Date(dateStr);
-        } else if (line.startsWith('DTEND')) {
-          const dateStr = line.split(':')[1];
-          currentEvent.end = new Date(dateStr);
+        } else if (line.toLowerCase().includes('dtstart')) {
+          const parsedDate = parseDateTime(line, currentTzid);
+          if (parsedDate) {
+            currentEvent.start = parsedDate;
+          } else {
+            currentEvent.isAllDay = true;
+          }
+        } else if (line.toLowerCase().includes('dtend')) {
+          const parsedDate = parseDateTime(line, currentTzid);
+          if (parsedDate) {
+            currentEvent.end = parsedDate;
+          }
         }
       }
     }
-    // À la fin de parseICSContent :
+    
     console.log('Événements parsés:', events);
     return events;
   };
@@ -127,8 +187,7 @@ export const useCalendarImport = () => {
       if (!data.icsData) {
         throw new Error("Données du calendrier non trouvées");
       }
-
-      // Après l'appel à la fonction Edge :
+      
       console.log('Réponse de la fonction Edge:', data);
       console.log('Contenu ICS reçu:', data.icsData);
       
@@ -216,3 +275,4 @@ export const useCalendarImport = () => {
     isImporting: importMutation.isLoading,
   };
 };
+
