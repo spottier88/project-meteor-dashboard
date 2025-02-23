@@ -53,26 +53,23 @@ export const useCalendarImport = () => {
 
   const fetchEventsMutation = useMutation({
     mutationFn: async ({ calendarUrl, startDate }: { calendarUrl: string; startDate: Date }) => {
-      // TODO: Implémenter l'appel à l'Edge Function pour récupérer les événements
-      // Ceci est un exemple de données simulées
-      const mockEvents: CalendarEvent[] = [
-        {
-          id: '1',
-          title: 'Réunion projet A',
-          startTime: new Date(),
-          endTime: new Date(Date.now() + 3600000),
-          duration: 60,
-        },
-        {
-          id: '2',
-          title: 'Point équipe',
-          startTime: new Date(Date.now() + 7200000),
-          endTime: new Date(Date.now() + 9000000),
-          duration: 30,
-        },
-      ];
-      setEvents(mockEvents);
-      return mockEvents;
+      const { data, error } = await supabase.functions.invoke('fetch-calendar-events', {
+        body: { calendarUrl, startDate: startDate.toISOString() },
+      });
+
+      if (error) throw error;
+
+      // Transformer les données reçues en événements
+      const fetchedEvents = data.events.map((event: any) => ({
+        id: event.id,
+        title: event.title,
+        startTime: new Date(event.startTime),
+        endTime: new Date(event.endTime),
+        duration: event.duration,
+      }));
+
+      setEvents(fetchedEvents);
+      return fetchedEvents;
     },
     onError: (error) => {
       console.error('Error fetching calendar events:', error);
@@ -85,17 +82,20 @@ export const useCalendarImport = () => {
   });
 
   const importMutation = useMutation({
-    mutationFn: async ({ calendarUrl, startDate, selectedEvents }: { 
+    mutationFn: async ({ 
+      calendarUrl, 
+      startDate,
+      selectedEvents,
+    }: { 
       calendarUrl: string; 
       startDate: Date;
       selectedEvents: CalendarEvent[];
     }) => {
       if (!user) throw new Error('User not authenticated');
 
-      console.log('Events to import:', selectedEvents);
-
       // Vérifier que tous les événements ont un type d'activité et un projet
-      if (selectedEvents.some(event => !event.activityType || !event.projectId)) {
+      const hasInvalidEvents = selectedEvents.some(event => !event.activityType || !event.projectId);
+      if (hasInvalidEvents) {
         throw new Error('Tous les événements doivent avoir un type d\'activité et un projet assigné');
       }
 
@@ -115,7 +115,7 @@ export const useCalendarImport = () => {
           description: event.title,
           start_time: event.startTime.toISOString(),
           duration_minutes: event.duration,
-          activity_type: event.activityType as ActivityType,
+          activity_type: event.activityType,
           project_id: event.projectId,
         }))
       );
@@ -153,3 +153,4 @@ export const useCalendarImport = () => {
     isImporting: importMutation.isLoading,
   };
 };
+
