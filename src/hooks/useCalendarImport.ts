@@ -62,7 +62,15 @@ export const useCalendarImport = () => {
     enabled: !!user,
   });
 
-  const parseDateTime = (dateStr: string, tzid?: string): Date | null => {
+ const windowsToIanaTimezones: { [key: string]: string } = {
+  "Greenwich Standard Time": "Etc/GMT",
+  "Romance Standard Time": "Europe/Paris",
+  "Pacific Standard Time": "America/Los_Angeles",
+  "Eastern Standard Time": "America/New_York",
+  // Ajoute d'autres fuseaux si besoin
+};
+
+const parseDateTime = (dateStr: string, tzid?: string): Date | null => {
   try {
     console.log(`🔹 Lecture de la date: ${dateStr}`);
 
@@ -79,7 +87,17 @@ export const useCalendarImport = () => {
       const tzParts = parts[0].split('TZID=');
       finalTzid = tzParts[1];
       finalDateStr = parts[1];
-      console.log(`🌍 Fuseau horaire détecté: ${finalTzid}`);
+
+      console.log(`🌍 Fuseau horaire Windows détecté: ${finalTzid}`);
+
+      // 🔄 Conversion du fuseau Windows en IANA
+      if (finalTzid in windowsToIanaTimezones) {
+        finalTzid = windowsToIanaTimezones[finalTzid];
+        console.log(`🔄 Converti en fuseau IANA: ${finalTzid}`);
+      } else {
+        console.warn(`⚠️ Fuseau inconnu: ${finalTzid} - Utilisation de UTC`);
+        finalTzid = "UTC"; // Par défaut si non reconnu
+      }
     } else if (dateStr.includes(':')) {
       finalDateStr = dateStr.split(':')[1];
     }
@@ -98,18 +116,21 @@ export const useCalendarImport = () => {
 
     const isoString = `${year}-${month}-${day}T${hour}:${minute}:${second}`;
 
-    console.log(`📅 Date convertie: ${isoString} (TZID=${finalTzid || 'UTC'})`);
+    console.log(`📅 Date convertie: ${isoString} (TZID=${finalTzid})`);
+
+    const parsedDate = parseISO(isoString);
 
     if (finalTzid) {
-      return toZonedTime(parseISO(isoString), finalTzid);
+      return toZonedTime(parsedDate, finalTzid);
     }
 
-    return new Date(isoString);
+    return parsedDate;
   } catch (error) {
     console.error('❌ Erreur lors du parsing de la date:', error);
     return null;
   }
 };
+
 
 const parseICSContent = (icsContent: string, startDate: Date): CalendarEvent[] => {
   const lines = icsContent.split('\n');
