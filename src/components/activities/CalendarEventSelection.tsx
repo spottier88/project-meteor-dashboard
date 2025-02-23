@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React from 'react';
 import {
   Table,
   TableBody,
@@ -91,12 +91,9 @@ export const CalendarEventSelection = ({
     }
   };
 
-  // Ne valider que les événements sélectionnés
-  const canImport = events
-    .filter(event => event.selected)
-    .every(event => event.activityType && event.projectId);
-
-  const selectedCount = events.filter(event => event.selected).length;
+  const selectedEvents = events.filter(event => event.selected);
+  const canImport = selectedEvents.every(event => event.activityType && event.projectId);
+  const selectedCount = selectedEvents.length;
 
   if (isLoadingProjects) {
     return (
@@ -114,7 +111,7 @@ export const CalendarEventSelection = ({
             <TableHead className="w-[50px]">
               <span className="sr-only">Sélection</span>
             </TableHead>
-            <TableHead>Titre</TableHead>
+            <TableHead>Titre et description</TableHead>
             <TableHead>Date</TableHead>
             <TableHead>Durée</TableHead>
             <TableHead>Projet</TableHead>
@@ -130,7 +127,14 @@ export const CalendarEventSelection = ({
                   onCheckedChange={() => onToggleSelection(event.id)}
                 />
               </TableCell>
-              <TableCell>{event.title}</TableCell>
+              <TableCell>
+                <div className="space-y-1">
+                  <div className="font-medium">{event.title}</div>
+                  {event.description && (
+                    <div className="text-sm text-muted-foreground">{event.description}</div>
+                  )}
+                </div>
+              </TableCell>
               <TableCell>
                 {format(event.startTime, 'dd/MM/yyyy HH:mm', { locale: fr })}
               </TableCell>

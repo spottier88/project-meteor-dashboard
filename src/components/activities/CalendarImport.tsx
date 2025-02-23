@@ -88,7 +88,7 @@ export const CalendarImport = () => {
           Importer du calendrier
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-3xl">
+      <DialogContent className="max-w-5xl">
         <DialogHeader>
           <DialogTitle>Importer depuis le calendrier</DialogTitle>
           <DialogDescription>
