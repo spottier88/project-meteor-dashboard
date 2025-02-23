@@ -163,15 +163,15 @@ const parseICSContent = (icsContent: string, startDate: Date): CalendarEvent[] =
         currentEvent.start >= startDate &&
         !currentEvent.isAllDay // ⛔ On exclut les événements All Day
       ) {
-        const localStart = toZonedTime(currentEvent.start, Intl.DateTimeFormat().resolvedOptions().timeZone);
-        const localEnd = toZonedTime(currentEvent.end, Intl.DateTimeFormat().resolvedOptions().timeZone);
+        // const localStart = toZonedTime(currentEvent.start, Intl.DateTimeFormat().resolvedOptions().timeZone);
+        // const localEnd = toZonedTime(currentEvent.end, Intl.DateTimeFormat().resolvedOptions().timeZone);
         const duration = Math.round((localEnd.getTime() - localStart.getTime()) / (1000 * 60));
 
         events.push({
           id: currentEvent.uid || `event-${i}`,
           title: currentEvent.summary || 'Sans titre',
-          startTime: localStart,
-          endTime: localEnd,
+          startTime: currentEvent.start,
+          endTime: currentEvent.end,
           duration,
         });
 
