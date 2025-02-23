@@ -5,6 +5,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useUser } from '@supabase/auth-helpers-react';
 import { useToast } from '@/hooks/use-toast';
 import { Database } from '@/integrations/supabase/types';
+import * as ical from 'ical';
 
 type ActivityType = Database['public']['Enums']['activity_type'];
 
@@ -53,23 +54,41 @@ export const useCalendarImport = () => {
 
   const fetchEventsMutation = useMutation({
     mutationFn: async ({ calendarUrl, startDate }: { calendarUrl: string; startDate: Date }) => {
-      const { data, error } = await supabase.functions.invoke('fetch-calendar-events', {
-        body: { calendarUrl, startDate: startDate.toISOString() },
-      });
+      // Récupérer le contenu du calendrier ICS
+      const response = await fetch(calendarUrl);
+      if (!response.ok) {
+        throw new Error("Impossible de récupérer les données du calendrier");
+      }
 
-      if (error) throw error;
+      const icsData = await response.text();
+      const calendar = ical.parseICS(icsData);
+      const events: CalendarEvent[] = [];
+      const compareDate = startDate;
 
-      // Transformer les données reçues en événements
-      const fetchedEvents = data.events.map((event: any) => ({
-        id: event.id,
-        title: event.title,
-        startTime: new Date(event.startTime),
-        endTime: new Date(event.endTime),
-        duration: event.duration,
-      }));
+      // Parcourir les événements du calendrier
+      for (const key in calendar) {
+        const event = calendar[key];
+        if (event.type === 'VEVENT') {
+          const startTime = new Date(event.start);
+          
+          // Ne garder que les événements à partir de la date de début
+          if (startTime >= compareDate) {
+            const endTime = new Date(event.end);
+            const duration = Math.round((endTime.getTime() - startTime.getTime()) / (1000 * 60)); // Durée en minutes
 
-      setEvents(fetchedEvents);
-      return fetchedEvents;
+            events.push({
+              id: event.uid || key,
+              title: event.summary,
+              startTime,
+              endTime,
+              duration
+            });
+          }
+        }
+      }
+
+      setEvents(events);
+      return events;
     },
     onError: (error) => {
       console.error('Error fetching calendar events:', error);
@@ -153,4 +172,3 @@ export const useCalendarImport = () => {
     isImporting: importMutation.isLoading,
   };
 };
-
