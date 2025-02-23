@@ -6,7 +6,7 @@ import { useUser } from '@supabase/auth-helpers-react';
 import { useToast } from '@/hooks/use-toast';
 import { Database } from '@/integrations/supabase/types';
 import { format, parseISO } from 'date-fns';
-import { zonedTimeToUtc, utcToZonedTime } from 'date-fns-tz';
+import { toZonedTime } from 'date-fns-tz';
 
 type ActivityType = Database['public']['Enums']['activity_type'];
 
@@ -92,10 +92,10 @@ export const useCalendarImport = () => {
 
       const isoString = `${year}-${month}-${day}T${hour}:${minute}:${second}`;
       
-      // Conversion en UTC si un fuseau horaire est spécifié
+      // Conversion avec le fuseau horaire si spécifié
       if (finalTzid) {
-        const zonedTime = zonedTimeToUtc(parseISO(isoString), finalTzid);
-        return new Date(zonedTime);
+        const zonedTime = parseISO(isoString);
+        return toZonedTime(zonedTime, finalTzid);
       }
 
       return new Date(isoString);
@@ -131,8 +131,8 @@ export const useCalendarImport = () => {
             !currentEvent.isAllDay) {
           
           // Conversion vers le fuseau horaire local de l'utilisateur
-          const localStart = utcToZonedTime(currentEvent.start, Intl.DateTimeFormat().resolvedOptions().timeZone);
-          const localEnd = utcToZonedTime(currentEvent.end, Intl.DateTimeFormat().resolvedOptions().timeZone);
+          const localStart = toZonedTime(currentEvent.start, Intl.DateTimeFormat().resolvedOptions().timeZone);
+          const localEnd = toZonedTime(currentEvent.end, Intl.DateTimeFormat().resolvedOptions().timeZone);
           
           const duration = Math.round(
             (localEnd.getTime() - localStart.getTime()) / (1000 * 60)
@@ -275,4 +275,3 @@ export const useCalendarImport = () => {
     isImporting: importMutation.isLoading,
   };
 };
-
