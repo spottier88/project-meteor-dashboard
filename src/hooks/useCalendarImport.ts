@@ -64,7 +64,10 @@ export const useCalendarImport = () => {
     let events: CalendarEvent[] = [];
     let currentEvent: Partial<ICalEvent> = {};
     let isInEvent = false;
-
+    //log de verif sur l'import
+    console.log('Début du parsing ICS');
+    console.log('Nombre de lignes dans le fichier:', icsContent.split('\n').length);
+    
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i].trim();
 
@@ -104,7 +107,8 @@ export const useCalendarImport = () => {
         }
       }
     }
-
+    // À la fin de parseICSContent :
+    console.log('Événements parsés:', events);
     return events;
   };
 
@@ -124,6 +128,10 @@ export const useCalendarImport = () => {
         throw new Error("Données du calendrier non trouvées");
       }
 
+      // Après l'appel à la fonction Edge :
+      console.log('Réponse de la fonction Edge:', data);
+      console.log('Contenu ICS reçu:', data.icsData);
+      
       console.log('Parsing calendar data');
       const events = parseICSContent(data.icsData, startDate);
       setEvents(events);
