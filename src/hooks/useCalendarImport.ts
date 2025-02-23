@@ -110,13 +110,22 @@ export const useCalendarImport = () => {
 
   const fetchEventsMutation = useMutation({
     mutationFn: async ({ calendarUrl, startDate }: { calendarUrl: string; startDate: Date }) => {
-      const response = await fetch(calendarUrl);
-      if (!response.ok) {
-        throw new Error("Impossible de récupérer les données du calendrier");
+      console.log('Fetching calendar data using Edge function');
+      const { data, error } = await supabase.functions.invoke('fetch-ics-calendar', {
+        body: { calendarUrl }
+      });
+
+      if (error) {
+        console.error('Edge function error:', error);
+        throw error;
       }
 
-      const icsData = await response.text();
-      const events = parseICSContent(icsData, startDate);
+      if (!data.icsData) {
+        throw new Error("Données du calendrier non trouvées");
+      }
+
+      console.log('Parsing calendar data');
+      const events = parseICSContent(data.icsData, startDate);
       setEvents(events);
       return events;
     },
