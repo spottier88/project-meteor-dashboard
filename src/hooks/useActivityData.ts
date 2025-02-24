@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useUser } from '@supabase/auth-helpers-react';
 import { Database } from "@/integrations/supabase/types";
-import { addDays, format } from "date-fns";
+import { addDays, format, isSameDay } from "date-fns";
 import { fr } from "date-fns/locale";
 
 type ActivityType = Database["public"]["Enums"]["activity_type"];
@@ -117,8 +117,7 @@ export const processActivityData = (activities: Activity[] | null, periodStart: 
 
   const dailyActivities = activities?.reduce((acc, activity) => {
     const activityDate = new Date(activity.start_time);
-    const day = format(activityDate, 'EEEE', { locale: fr });
-    const dayIndex = allDays.findIndex(d => d.day === day);
+    const dayIndex = allDays.findIndex(d => isSameDay(d.date, activityDate));
     
     if (dayIndex !== -1) {
       // Ensure activity.duration_minutes is treated as a number
@@ -154,3 +153,4 @@ export const processActivityData = (activities: Activity[] | null, periodStart: 
 
   return { dailyActivities, chartData };
 };
+
