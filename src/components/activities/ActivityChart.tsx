@@ -2,24 +2,24 @@
 import React from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
-// Définition des couleurs uniques pour chaque type d'activité
 const ACTIVITY_COLORS = {
   development: '#8884d8',
   testing: '#82ca9d',
   documentation: '#ffc658',
   meeting: '#ff8042',
   support: '#a4de6c',
-  training: '#d0ed57'
+  training: '#d0ed57',
+  other: '#b19cd9'
 };
 
-// Mapping des types d'activités en français
 const ACTIVITY_LABELS = {
   development: 'Développement',
   testing: 'Test',
   documentation: 'Documentation',
   meeting: 'Réunion',
   support: 'Support',
-  training: 'Formation'
+  training: 'Formation',
+  other: 'Autre'
 };
 
 interface ActivityChartProps {
@@ -33,7 +33,8 @@ export const ActivityChart = ({ data }: ActivityChartProps) => {
     'documentation',
     'meeting',
     'support',
-    'training'
+    'training',
+    'other'
   ];
 
   return (
