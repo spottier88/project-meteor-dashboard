@@ -1,15 +1,16 @@
 
 import React, { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { BarChartIcon, List, ChevronLeft, ChevronRight, FileSpreadsheet } from "lucide-react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { ActivityFilters } from './ActivityFilters';
 import { ActivityList } from './ActivityList';
 import { ActivityChart } from './ActivityChart';
 import { ActivityTypeChart } from './ActivityTypeChart';
 import { ProjectTimeChart } from './ProjectTimeChart';
 import { TeamActivityFilters } from './TeamActivityFilters';
-import { CalendarImport } from './CalendarImport';
+import { TeamActivityHeader } from './TeamActivityHeader';
+import { IndividualActivityHeader } from './IndividualActivityHeader';
 import { Database } from "@/integrations/supabase/types";
 import { useLocation } from 'react-router-dom';
 import { useActivityPeriod } from '@/hooks/useActivityPeriod';
@@ -72,45 +73,23 @@ export const WeeklyDashboard = () => {
 
   const hasActivities = activities && activities.length > 0;
   const Filters = isTeamView ? TeamActivityFilters : ActivityFilters;
+  const ActivityHeader = isTeamView ? TeamActivityHeader : IndividualActivityHeader;
 
   return (
     <div className="space-y-6">
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle>Activités</CardTitle>
-          <div className="flex gap-2">
-            <CalendarImport />
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleExportToExcel}
-              disabled={!hasActivities}
-            >
-              <FileSpreadsheet className="h-4 w-4 mr-2" />
-              Export Excel
-            </Button>
-            <Button
-              variant={viewMode === 'chart' ? "default" : "outline"}
-              size="sm"
-              onClick={() => setViewMode('chart')}
-            >
-              <BarChartIcon className="h-4 w-4 mr-2" />
-              Graphique
-            </Button>
-            <Button
-              variant={viewMode === 'list' ? "default" : "outline"}
-              size="sm"
-              onClick={() => setViewMode('list')}
-            >
-              <List className="h-4 w-4 mr-2" />
-              Liste
-            </Button>
-          </div>
+        <CardHeader>
+          <ActivityHeader
+            hasActivities={hasActivities}
+            viewMode={viewMode}
+            setViewMode={setViewMode}
+            onExport={handleExportToExcel}
+          />
         </CardHeader>
         <CardContent>
           <div className="flex flex-col md:flex-row md:items-center gap-4 mb-6">
             <div className="flex-grow">
-              <Filters
+              <Filters 
                 period={period}
                 setPeriod={setPeriod}
                 projectId={projectId}

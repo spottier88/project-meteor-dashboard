@@ -71,13 +71,16 @@ export const useActivityPeriod = () => {
     switch (period) {
       case 'day':
         return format(currentDate, 'dd MMMM yyyy', { locale: fr });
-      case 'month':
-        return format(currentDate, 'MMMM yyyy', { locale: fr });
+      case 'month': {
+        const { start: periodStart, end: periodEnd } = getPeriodDates();
+        return `${format(periodStart, 'd')} - ${format(periodEnd, 'd MMMM yyyy', { locale: fr })}`;
+      }
       case 'week':
-      default:
+      default: {
         const { start: periodStart } = getPeriodDates();
         const weekEnd = addDays(periodStart, 6);
         return `${format(periodStart, 'dd')} - ${format(weekEnd, 'dd MMMM yyyy', { locale: fr })}`;
+      }
     }
   };
 
