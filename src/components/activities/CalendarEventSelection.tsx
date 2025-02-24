@@ -34,7 +34,7 @@ interface Project {
 interface CalendarEvent {
   id: string;
   title: string;
-  description?: string;  // Ajout de la propriété description comme optionnelle
+  description?: string;
   startTime: Date;
   endTime: Date;
   duration: number;
@@ -200,4 +200,3 @@ export const CalendarEventSelection = ({
     </div>
   );
 };
-
