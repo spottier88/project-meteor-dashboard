@@ -69,13 +69,13 @@ export const CalendarEventSelection = ({
     }
   });
 
-  const activityTypes: ActivityType[] = [
-    'meeting',
-    'development',
-    'testing',
-    'documentation',
-    'support',
-    'other',
+  const activityTypes: { type: ActivityType; label: string }[] = [
+    { type: 'meeting', label: 'Réunion' },
+    { type: 'development', label: 'Développement' },
+    { type: 'testing', label: 'Tests' },
+    { type: 'documentation', label: 'Documentation' },
+    { type: 'support', label: 'Support' },
+    { type: 'other', label: 'Autre' },
   ];
 
   const handleActivityTypeChange = (eventId: string, type: ActivityType) => {
@@ -92,8 +92,14 @@ export const CalendarEventSelection = ({
     }
   };
 
+  // Filtrer pour ne prendre que les événements sélectionnés
   const selectedEvents = events.filter(event => event.selected);
-  const canImport = selectedEvents.every(event => event.activityType && event.projectId);
+  
+  // Vérifier que tous les événements sélectionnés ont un type d'activité et un projet
+  const canImport = selectedEvents.length > 0 && selectedEvents.every(event => 
+    event.activityType && event.projectId
+  );
+
   const selectedCount = selectedEvents.length;
 
   if (isLoadingProjects) {
@@ -168,9 +174,9 @@ export const CalendarEventSelection = ({
                     <SelectValue placeholder="Sélectionner un type" />
                   </SelectTrigger>
                   <SelectContent>
-                    {activityTypes.map((type) => (
+                    {activityTypes.map(({ type, label }) => (
                       <SelectItem key={type} value={type}>
-                        {type.charAt(0).toUpperCase() + type.slice(1)}
+                        {label}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -200,3 +206,4 @@ export const CalendarEventSelection = ({
     </div>
   );
 };
+
