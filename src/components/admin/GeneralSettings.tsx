@@ -151,13 +151,14 @@ export const GeneralSettings = () => {
 
           <Button 
             type="submit"
-            disabled={mutation.status === 'pending'}
+            disabled={mutation.status === 'loading'}
             className="w-full sm:w-auto"
           >
-            {mutation.status === 'pending' ? "Sauvegarde en cours..." : "Sauvegarder"}
+            {mutation.status === 'loading' ? "Sauvegarde en cours..." : "Sauvegarder"}
           </Button>
         </form>
       </Form>
     </div>
   );
 };
+
