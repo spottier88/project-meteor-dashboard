@@ -29,6 +29,8 @@ export const CalendarImport = () => {
   const {
     importDate,
     setImportDate,
+    endDate,
+    setEndDate,
     events,
     fetchEvents,
     isFetchingEvents,
@@ -40,7 +42,7 @@ export const CalendarImport = () => {
   const handleFetchEvents = () => {
     if (!calendarUrl) return;    
     fetchEvents(
-      { calendarUrl, startDate: importDate },
+      { calendarUrl, startDate: importDate, endDate },
       {
         onSuccess: () => {
           setStep(ImportStep.EVENTS);
@@ -77,6 +79,12 @@ export const CalendarImport = () => {
     }
   };
 
+  const handleEndDateSelect = (date: Date | undefined) => {
+    if (date) {
+      setEndDate(date);
+    }
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
@@ -93,7 +101,7 @@ export const CalendarImport = () => {
           <DialogTitle>Importer depuis le calendrier</DialogTitle>
           <DialogDescription>
             Importez des événements depuis votre calendrier Outlook partagé.
-            Seuls les événements à partir de la date sélectionnée seront importés.
+            Sélectionnez une période d'importation pour les événements.
           </DialogDescription>
         </DialogHeader>
 
@@ -108,19 +116,31 @@ export const CalendarImport = () => {
                 onChange={(e) => setCalendarUrl(e.target.value)}
               />
             </div>
-            <div className="space-y-2">
-              <Label>Date de début d'import</Label>
-              <CalendarComponent
-                mode="single"
-                selected={importDate}
-                onSelect={handleDateSelect}
-                locale={fr}
-              />
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Date de début d'import</Label>
+                <CalendarComponent
+                  mode="single"
+                  selected={importDate}
+                  onSelect={handleDateSelect}
+                  locale={fr}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Date de fin d'import</Label>
+                <CalendarComponent
+                  mode="single"
+                  selected={endDate}
+                  onSelect={handleEndDateSelect}
+                  locale={fr}
+                  disabled={(date) => date < importDate}
+                />
+              </div>
             </div>
             <Button 
               className="w-full" 
               onClick={handleFetchEvents}
-              disabled={!calendarUrl || isFetchingEvents}
+              disabled={!calendarUrl || isFetchingEvents || !importDate || !endDate}
             >
               {isFetchingEvents ? 'Chargement...' : 'Charger les événements'}
             </Button>

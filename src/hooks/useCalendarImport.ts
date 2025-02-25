@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -42,6 +41,7 @@ export const useCalendarImport = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [importDate, setImportDate] = useState<Date>(new Date());
+  const [endDate, setEndDate] = useState<Date>(new Date());
   const [events, setEvents] = useState<CalendarEvent[]>([]);
 
   const { data: imports, isLoading } = useQuery({
@@ -130,7 +130,7 @@ export const useCalendarImport = () => {
     }
   };
 
-  const parseICSContent = (icsContent: string, startDate: Date): CalendarEvent[] => {
+  const parseICSContent = (icsContent: string, startDate: Date, endDate: Date): CalendarEvent[] => {
     const lines = icsContent.split('\n');
     let events: CalendarEvent[] = [];
     let currentEvent: Partial<ICalEvent> = {};
@@ -155,6 +155,7 @@ export const useCalendarImport = () => {
           currentEvent.start &&
           currentEvent.end &&
           currentEvent.start >= startDate &&
+          currentEvent.end <= endDate &&
           !currentEvent.isAllDay
         ) {
           const duration = Math.round((currentEvent.end.getTime() - currentEvent.start.getTime()) / (1000 * 60));
@@ -165,7 +166,7 @@ export const useCalendarImport = () => {
             startTime: currentEvent.start,
             endTime: currentEvent.end,
             duration,
-            selected: true, // Par défaut tous les événements sont sélectionnés
+            selected: true,
           });
 
           console.log(`✅ Événement ajouté: ${currentEvent.summary}`);
@@ -200,7 +201,15 @@ export const useCalendarImport = () => {
   };
 
   const fetchEventsMutation = useMutation({
-    mutationFn: async ({ calendarUrl, startDate }: { calendarUrl: string; startDate: Date }) => {
+    mutationFn: async ({ 
+      calendarUrl, 
+      startDate,
+      endDate,
+    }: { 
+      calendarUrl: string; 
+      startDate: Date;
+      endDate: Date;
+    }) => {
       console.log('Fetching calendar data using Edge function');
       const { data, error } = await supabase.functions.invoke('fetch-ics-calendar', {
         body: { calendarUrl }
@@ -216,7 +225,7 @@ export const useCalendarImport = () => {
       }
       
       console.log('Parsing calendar data');
-      const parsedEvents = parseICSContent(data.icsData, startDate);
+      const parsedEvents = parseICSContent(data.icsData, startDate, endDate);
       setEvents(parsedEvents);
       return parsedEvents;
     },
@@ -310,6 +319,8 @@ export const useCalendarImport = () => {
     events,
     importDate,
     setImportDate,
+    endDate,
+    setEndDate,
     fetchEvents: fetchEventsMutation.mutate,
     isFetchingEvents: fetchEventsMutation.isLoading,
     importCalendar: importMutation.mutate,
