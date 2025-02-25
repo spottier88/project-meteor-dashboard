@@ -60,6 +60,33 @@ export type Database = {
           },
         ]
       }
+      application_settings: {
+        Row: {
+          created_at: string | null
+          id: string
+          key: string
+          type: Database["public"]["Enums"]["setting_type"]
+          updated_at: string | null
+          value: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          key: string
+          type: Database["public"]["Enums"]["setting_type"]
+          updated_at?: string | null
+          value: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          key?: string
+          type?: Database["public"]["Enums"]["setting_type"]
+          updated_at?: string | null
+          value?: string
+        }
+        Relationships: []
+      }
       calendar_imports: {
         Row: {
           calendar_url: string
@@ -1079,6 +1106,7 @@ export type Database = {
       risk_probability: "low" | "medium" | "high"
       risk_severity: "low" | "medium" | "high"
       risk_status: "open" | "in_progress" | "resolved"
+      setting_type: "microsoft_graph"
       task_status: "todo" | "in_progress" | "done"
       user_hierarchy_level: "pole" | "direction" | "service"
       user_role: "admin" | "chef_projet" | "manager" | "membre"
