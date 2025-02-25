@@ -23,7 +23,7 @@ import { useEffect } from "react";
 import { useToast } from "./components/ui/use-toast";
 import { ActivityManagement } from "./components/activities/ActivityManagement";
 import { TeamActivities } from "./pages/TeamActivities";
-import { GeneralSettingsPage } from "./pages/GeneralSettingsPage";
+import { GeneralSettings } from "@/components/admin/GeneralSettings";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -96,86 +96,86 @@ function AppContent() {
               </ProtectedRoute>
             }
           />
-              <Route
-                path="/admin/users"
-                element={
-                  <ProtectedRoute>
-                    <UserManagement />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/admin/notifications"
-                element={
-                  <ProtectedRoute>
-                    <NotificationManagement />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/admin/users/:userId/assignments"
-                element={
-                  <ProtectedRoute>
-                    <ManagerAssignments />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/admin/organization"
-                element={
-                  <ProtectedRoute>
-                    <OrganizationManagement />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/tasks/:projectId"
-                element={
-                  <ProtectedRoute>
-                    <TaskManagement />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/projects/:projectId"
-                element={
-                  <ProtectedRoute>
-                    <ProjectSummary />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/projects/:projectId/team"
-                element={
-                  <ProtectedRoute>
-                    <ProjectTeamManagement />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/risks/:projectId"
-                element={
-                  <ProtectedRoute>
-                    <RiskManagement />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/reviews/:projectId"
-                element={
-                  <ProtectedRoute>
-                    <ReviewHistory />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/admin/settings"
-                element={
-                  <ProtectedRoute>
-                    <GeneralSettingsPage />
-                  </ProtectedRoute>
-                }
-              />
+          <Route
+            path="/admin/users"
+            element={
+              <ProtectedRoute>
+                <UserManagement />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/notifications"
+            element={
+              <ProtectedRoute>
+                <NotificationManagement />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/users/:userId/assignments"
+            element={
+              <ProtectedRoute>
+                <ManagerAssignments />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/organization"
+            element={
+              <ProtectedRoute>
+                <OrganizationManagement />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/tasks/:projectId"
+            element={
+              <ProtectedRoute>
+                <TaskManagement />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/projects/:projectId"
+            element={
+              <ProtectedRoute>
+                <ProjectSummary />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/projects/:projectId/team"
+            element={
+              <ProtectedRoute>
+                <ProjectTeamManagement />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/risks/:projectId"
+            element={
+              <ProtectedRoute>
+                <RiskManagement />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/reviews/:projectId"
+            element={
+              <ProtectedRoute>
+                <ReviewHistory />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/settings"
+            element={
+              <ProtectedRoute>
+                <GeneralSettings />
+              </ProtectedRoute>
+            }
+          />
         </Routes>
         <FeedbackButton />
       </Router>
