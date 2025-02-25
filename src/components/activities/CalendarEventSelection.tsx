@@ -79,23 +79,21 @@ export const CalendarEventSelection = ({
   ];
 
   const handleActivityTypeChange = (eventId: string, type: ActivityType) => {
-    const event = events.find(e => e.id === eventId);
-    if (event) {
-      event.activityType = type;
+    const eventIndex = events.findIndex(e => e.id === eventId);
+    if (eventIndex !== -1) {
+      events[eventIndex].activityType = type;
     }
   };
 
   const handleProjectChange = (eventId: string, projectId: string) => {
-    const event = events.find(e => e.id === eventId);
-    if (event) {
-      event.projectId = projectId;
+    const eventIndex = events.findIndex(e => e.id === eventId);
+    if (eventIndex !== -1) {
+      events[eventIndex].projectId = projectId;
     }
   };
 
-  // Filtrer pour ne prendre que les événements sélectionnés
   const selectedEvents = events.filter(event => event.selected);
   
-  // Vérifier que tous les événements sélectionnés ont un type d'activité et un projet
   const canImport = selectedEvents.length > 0 && selectedEvents.every(event => 
     event.activityType && event.projectId
   );
@@ -206,4 +204,3 @@ export const CalendarEventSelection = ({
     </div>
   );
 };
-
