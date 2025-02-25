@@ -23,6 +23,7 @@ import { useEffect } from "react";
 import { useToast } from "./components/ui/use-toast";
 import { ActivityManagement } from "./components/activities/ActivityManagement";
 import { TeamActivities } from "./pages/TeamActivities";
+import { GeneralSettingsPage } from "./pages/GeneralSettingsPage";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -164,6 +165,14 @@ function AppContent() {
                 element={
                   <ProtectedRoute>
                     <ReviewHistory />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/settings"
+                element={
+                  <ProtectedRoute>
+                    <GeneralSettingsPage />
                   </ProtectedRoute>
                 }
               />

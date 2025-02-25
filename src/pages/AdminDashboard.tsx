@@ -1,3 +1,4 @@
+
 import { Settings, Users, Building2, Bell } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -18,7 +19,7 @@ export const AdminDashboard = () => {
         </p>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Button
           variant="outline"
           className="h-32 flex flex-col items-center justify-center gap-2"
@@ -44,6 +45,15 @@ export const AdminDashboard = () => {
         >
           <Bell className="h-8 w-8" />
           <span>Gestion des notifications</span>
+        </Button>
+
+        <Button
+          variant="outline"
+          className="h-32 flex flex-col items-center justify-center gap-2"
+          onClick={() => navigate("/admin/settings")}
+        >
+          <Settings className="h-8 w-8" />
+          <span>Paramètres généraux</span>
         </Button>
       </div>
     </div>
