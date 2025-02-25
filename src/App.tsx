@@ -1,110 +1,187 @@
-import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
-import { QueryClientProvider } from "@tanstack/react-query";
-import { ThemeProvider } from "@/components/theme-provider";
-import { Toaster } from "sonner";
-import { queryClient } from "@/lib/react-query";
-import { Sidebar } from "@/components/ui/sidebar";
-import { ProtectedRoute } from "@/components/ProtectedRoute";
-import Dashboard from "@/pages/Dashboard";
-import Activities from "@/pages/Activities";
-import Monitoring from "@/pages/Monitoring";
-import Users from "@/pages/Users";
-import Organization from "@/pages/Organization";
-import Profile from "@/pages/Profile";
-import Notifications from "@/pages/Notifications";
-import Documentation from "@/pages/Documentation";
-import GeneralSettings from "@/pages/GeneralSettings";
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { Toaster } from "@/components/ui/toaster";
+import Index from "./pages/Index";
+import Login from "./pages/Login";
+import AuthCallback from "./pages/AuthCallback";
+import { TaskManagement } from "./pages/TaskManagement";
+import { ProjectSummary } from "./pages/ProjectSummary";
+import { RiskManagement } from "./pages/RiskManagement";
+import { UserManagement } from "./pages/UserManagement";
+import { AdminDashboard } from "./pages/AdminDashboard";
+import { OrganizationManagement } from "./pages/OrganizationManagement";
+import { NotificationManagement } from "./pages/NotificationManagement";
+import { SessionContextProvider, useSession } from "@supabase/auth-helpers-react";
+import { supabase } from "@/integrations/supabase/client";
+import { ProtectedRoute } from "./components/ProtectedRoute";
+import { ReviewHistory } from "./components/ReviewHistory";
+import { ManagerAssignments } from "./pages/ManagerAssignments";
+import { ProjectTeamManagement } from "./pages/ProjectTeamManagement";
+import { PermissionsProvider } from "@/contexts/PermissionsContext";
+import { FeedbackButton } from "@/components/feedback/FeedbackButton";
+import { useEffect } from "react";
+import { useToast } from "./components/ui/use-toast";
+import { ActivityManagement } from "./components/activities/ActivityManagement";
+import { TeamActivities } from "./pages/TeamActivities";
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 5 * 60 * 1000, // 5 minutes
+      retry: 1,
+    },
+  },
+});
+
+function AppContent() {
+  const session = useSession();
+  const { toast } = useToast();
+
+  useEffect(() => {
+    console.log("[AppContent] Session state:", {
+      isAuthenticated: !!session,
+      user: session?.user,
+      timestamp: new Date().toISOString(),
+    });
+  }, [session]);
+
+  if (!session) {
+    return (
+      <Router>
+        <Routes>
+          <Route path="/login" element={<Login />} />
+          <Route path="/auth/callback" element={<AuthCallback />} />
+          <Route path="*" element={<Login />} />
+        </Routes>
+      </Router>
+    );
+  }
+
+  return (
+    <PermissionsProvider>
+      <Router>
+        <Routes>
+          <Route path="/login" element={<Login />} />
+          <Route path="/auth/callback" element={<AuthCallback />} />
+          <Route
+            path="/"
+            element={
+              <ProtectedRoute>
+                <Index />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/activities"
+            element={
+              <ProtectedRoute>
+                <ActivityManagement />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/team-activities"
+            element={
+              <ProtectedRoute>
+                <TeamActivities />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin"
+            element={
+              <ProtectedRoute>
+                <AdminDashboard />
+              </ProtectedRoute>
+            }
+          />
+              <Route
+                path="/admin/users"
+                element={
+                  <ProtectedRoute>
+                    <UserManagement />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/notifications"
+                element={
+                  <ProtectedRoute>
+                    <NotificationManagement />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/users/:userId/assignments"
+                element={
+                  <ProtectedRoute>
+                    <ManagerAssignments />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/organization"
+                element={
+                  <ProtectedRoute>
+                    <OrganizationManagement />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/tasks/:projectId"
+                element={
+                  <ProtectedRoute>
+                    <TaskManagement />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/projects/:projectId"
+                element={
+                  <ProtectedRoute>
+                    <ProjectSummary />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/projects/:projectId/team"
+                element={
+                  <ProtectedRoute>
+                    <ProjectTeamManagement />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/risks/:projectId"
+                element={
+                  <ProtectedRoute>
+                    <RiskManagement />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/reviews/:projectId"
+                element={
+                  <ProtectedRoute>
+                    <ReviewHistory />
+                  </ProtectedRoute>
+                }
+              />
+        </Routes>
+        <FeedbackButton />
+      </Router>
+      <Toaster />
+    </PermissionsProvider>
+  );
+}
 
 function App() {
   return (
-    <Router>
-      <QueryClientProvider client={queryClient}>
-        <ThemeProvider defaultTheme="light" storageKey="vite-ui-theme">
-          <div className="relative flex min-h-screen">
-            <Sidebar />
-            <div className="flex-1 flex flex-col min-h-screen">
-              <main className="flex-1">
-                <Routes>
-                  <Route
-                    path="/"
-                    element={
-                      <ProtectedRoute>
-                        <Dashboard />
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route
-                    path="/activities"
-                    element={
-                      <ProtectedRoute>
-                        <Activities />
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route
-                    path="/monitoring"
-                    element={
-                      <ProtectedRoute>
-                        <Monitoring />
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route
-                    path="/users"
-                    element={
-                      <ProtectedRoute>
-                        <Users />
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route
-                    path="/organization"
-                    element={
-                      <ProtectedRoute>
-                        <Organization />
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route
-                    path="/settings"
-                    element={
-                      <ProtectedRoute>
-                        <GeneralSettings />
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route
-                    path="/profile"
-                    element={
-                      <ProtectedRoute>
-                        <Profile />
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route
-                    path="/notifications"
-                    element={
-                      <ProtectedRoute>
-                        <Notifications />
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route
-                    path="/docs"
-                    element={
-                      <ProtectedRoute>
-                        <Documentation />
-                      </ProtectedRoute>
-                    }
-                  />
-                </Routes>
-              </main>
-            </div>
-          </div>
-          <Toaster />
-        </ThemeProvider>
-      </QueryClientProvider>
-    </Router>
+    <QueryClientProvider client={queryClient}>
+      <SessionContextProvider supabaseClient={supabase}>
+        <AppContent />
+      </SessionContextProvider>
+    </QueryClientProvider>
   );
 }
 
