@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import {
   Table,
   TableBody,
@@ -58,6 +58,9 @@ export const CalendarEventSelection = ({
   isLoading,
   onToggleSelection,
 }: Props) => {
+  // Ajout d'un état local pour forcer le re-render
+  const [updateTrigger, setUpdateTrigger] = useState(0);
+
   const { data: projects, isLoading: isLoadingProjects } = useQuery({
     queryKey: ['accessible-projects'],
     queryFn: async () => {
@@ -82,6 +85,7 @@ export const CalendarEventSelection = ({
     const eventIndex = events.findIndex(e => e.id === eventId);
     if (eventIndex !== -1) {
       events[eventIndex].activityType = type;
+      setUpdateTrigger(prev => prev + 1); // Force le re-render
     }
   };
 
@@ -89,6 +93,7 @@ export const CalendarEventSelection = ({
     const eventIndex = events.findIndex(e => e.id === eventId);
     if (eventIndex !== -1) {
       events[eventIndex].projectId = projectId;
+      setUpdateTrigger(prev => prev + 1); // Force le re-render
     }
   };
 
