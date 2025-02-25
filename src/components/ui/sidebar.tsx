@@ -1,4 +1,5 @@
-import { useAuth } from "@supabase/auth-helpers-react";
+
+import { useSupabaseClient, useSession } from "@supabase/auth-helpers-react";
 import { useMemo } from "react";
 import {
   BarChart4,
@@ -13,7 +14,7 @@ import {
 } from "lucide-react";
 
 export function Sidebar() {
-  const { user } = useAuth();
+  const session = useSession();
 
   const navigationItems = useMemo(
     () => [
@@ -74,7 +75,7 @@ export function Sidebar() {
     <nav className="flex flex-col">
       <ul className="space-y-2">
         {navigationItems.map((item) => {
-          if (item.adminOnly && !user) return null;
+          if (item.adminOnly && !session) return null;
           return (
             <li key={item.title}>
               <a
