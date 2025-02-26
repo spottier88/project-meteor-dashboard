@@ -101,11 +101,17 @@ export const useMicrosoftAuth = () => {
     }
   }, [msalInstance]);
 
+  const getMSALInstance = useCallback(() => {
+    return msalInstance;
+  }, [msalInstance]);
+
   return {
     login,
     logout,
     isAuthenticated,
     error,
     isConfigured: !!msalInstance,
+    getMSALInstance,
   };
 };
+
