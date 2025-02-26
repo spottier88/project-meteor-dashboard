@@ -89,7 +89,7 @@ export type Database = {
       }
       calendar_imports: {
         Row: {
-          calendar_url: string
+          calendar_url: string | null
           created_at: string | null
           id: string
           import_date: string | null
@@ -98,7 +98,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
-          calendar_url: string
+          calendar_url?: string | null
           created_at?: string | null
           id?: string
           import_date?: string | null
@@ -107,7 +107,7 @@ export type Database = {
           user_id: string
         }
         Update: {
-          calendar_url?: string
+          calendar_url?: string | null
           created_at?: string | null
           id?: string
           import_date?: string | null

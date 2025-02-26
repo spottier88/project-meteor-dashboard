@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -11,7 +12,7 @@ type ActivityType = Database['public']['Enums']['activity_type'];
 
 interface CalendarImport {
   id: string;
-  calendar_url: string;
+  calendar_url?: string;
   import_date: string;
   start_date: string;
 }
