@@ -17,12 +17,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { Database } from '@/integrations/supabase/types';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Loader2 } from 'lucide-react';
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 type ActivityType = Database['public']['Enums']['activity_type'];
 
@@ -49,6 +52,7 @@ interface Props {
   onCancel: () => void;
   isLoading: boolean;
   onToggleSelection: (eventId: string) => void;
+  onToggleAllEvents?: (selected: boolean) => void;
 }
 
 export const CalendarEventSelection = ({ 
@@ -57,9 +61,12 @@ export const CalendarEventSelection = ({
   onCancel, 
   isLoading,
   onToggleSelection,
+  onToggleAllEvents,
 }: Props) => {
-  // Ajout d'un état local pour forcer le re-render
-  const [updateTrigger, setUpdateTrigger] = useState(0);
+  // État pour suivre les modifications des événements
+  const [modifiedEvents, setModifiedEvents] = useState<{ [key: string]: CalendarEvent }>(
+    Object.fromEntries(events.map(event => [event.id, event]))
+  );
 
   const { data: projects, isLoading: isLoadingProjects } = useQuery({
     queryKey: ['accessible-projects'],
@@ -81,29 +88,20 @@ export const CalendarEventSelection = ({
     { type: 'other', label: 'Autre' },
   ];
 
-  const handleActivityTypeChange = (eventId: string, type: ActivityType) => {
-    const eventIndex = events.findIndex(e => e.id === eventId);
-    if (eventIndex !== -1) {
-      events[eventIndex].activityType = type;
-      setUpdateTrigger(prev => prev + 1); // Force le re-render
-    }
+  const handleEventChange = (eventId: string, updates: Partial<CalendarEvent>) => {
+    setModifiedEvents(prev => ({
+      ...prev,
+      [eventId]: { ...prev[eventId], ...updates }
+    }));
   };
 
-  const handleProjectChange = (eventId: string, projectId: string) => {
-    const eventIndex = events.findIndex(e => e.id === eventId);
-    if (eventIndex !== -1) {
-      events[eventIndex].projectId = projectId;
-      setUpdateTrigger(prev => prev + 1); // Force le re-render
-    }
-  };
-
-  const selectedEvents = events.filter(event => event.selected);
+  const allEventsSelected = events.every(event => event.selected);
+  const selectedCount = events.filter(event => event.selected).length;
+  const selectedEvents = Object.values(modifiedEvents).filter(event => event.selected);
   
   const canImport = selectedEvents.length > 0 && selectedEvents.every(event => 
     event.activityType && event.projectId
   );
-
-  const selectedCount = selectedEvents.length;
 
   if (isLoadingProjects) {
     return (
@@ -115,80 +113,96 @@ export const CalendarEventSelection = ({
 
   return (
     <div className="space-y-6">
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead className="w-[50px]">
-              <span className="sr-only">Sélection</span>
-            </TableHead>
-            <TableHead>Titre et description</TableHead>
-            <TableHead>Date</TableHead>
-            <TableHead>Durée</TableHead>
-            <TableHead>Projet</TableHead>
-            <TableHead>Type d'activité</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {events.map((event) => (
-            <TableRow key={event.id}>
-              <TableCell>
+      <ScrollArea className="h-[600px]">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead className="w-[50px]">
                 <Checkbox
-                  checked={event.selected}
-                  onCheckedChange={() => onToggleSelection(event.id)}
+                  checked={allEventsSelected}
+                  onCheckedChange={(checked) => onToggleAllEvents?.(!!checked)}
                 />
-              </TableCell>
-              <TableCell>
-                <div className="space-y-1">
-                  <div className="font-medium">{event.title}</div>
-                  {event.description && (
-                    <div className="text-sm text-muted-foreground">{event.description}</div>
-                  )}
-                </div>
-              </TableCell>
-              <TableCell>
-                {format(event.startTime, 'dd/MM/yyyy HH:mm', { locale: fr })}
-              </TableCell>
-              <TableCell>{event.duration} min</TableCell>
-              <TableCell>
-                <Select
-                  value={event.projectId}
-                  onValueChange={(value) => handleProjectChange(event.id, value)}
-                  disabled={!event.selected}
-                >
-                  <SelectTrigger className="w-[200px]">
-                    <SelectValue placeholder="Sélectionner un projet" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {projects?.map((project) => (
-                      <SelectItem key={project.id} value={project.id}>
-                        {project.title}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </TableCell>
-              <TableCell>
-                <Select
-                  value={event.activityType}
-                  onValueChange={(value) => handleActivityTypeChange(event.id, value as ActivityType)}
-                  disabled={!event.selected}
-                >
-                  <SelectTrigger className="w-[200px]">
-                    <SelectValue placeholder="Sélectionner un type" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {activityTypes.map(({ type, label }) => (
-                      <SelectItem key={type} value={type}>
-                        {label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </TableCell>
+              </TableHead>
+              <TableHead>Titre et description</TableHead>
+              <TableHead>Date</TableHead>
+              <TableHead>Durée</TableHead>
+              <TableHead>Projet</TableHead>
+              <TableHead>Type d'activité</TableHead>
             </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+          </TableHeader>
+          <TableBody>
+            {events.map((event) => {
+              const modifiedEvent = modifiedEvents[event.id];
+              return (
+                <TableRow key={event.id}>
+                  <TableCell>
+                    <Checkbox
+                      checked={event.selected}
+                      onCheckedChange={() => onToggleSelection(event.id)}
+                    />
+                  </TableCell>
+                  <TableCell>
+                    <div className="space-y-2">
+                      <Input
+                        value={modifiedEvent.title}
+                        onChange={(e) => handleEventChange(event.id, { title: e.target.value })}
+                        disabled={!event.selected}
+                        placeholder="Titre de l'événement"
+                      />
+                      <Textarea
+                        value={modifiedEvent.description || ''}
+                        onChange={(e) => handleEventChange(event.id, { description: e.target.value })}
+                        disabled={!event.selected}
+                        placeholder="Description de l'événement"
+                      />
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    {format(event.startTime, 'dd/MM/yyyy HH:mm', { locale: fr })}
+                  </TableCell>
+                  <TableCell>{event.duration} min</TableCell>
+                  <TableCell>
+                    <Select
+                      value={modifiedEvent.projectId}
+                      onValueChange={(value) => handleEventChange(event.id, { projectId: value })}
+                      disabled={!event.selected}
+                    >
+                      <SelectTrigger className="w-[200px]">
+                        <SelectValue placeholder="Sélectionner un projet" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {projects?.map((project) => (
+                          <SelectItem key={project.id} value={project.id}>
+                            {project.title}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </TableCell>
+                  <TableCell>
+                    <Select
+                      value={modifiedEvent.activityType}
+                      onValueChange={(value) => handleEventChange(event.id, { activityType: value as ActivityType })}
+                      disabled={!event.selected}
+                    >
+                      <SelectTrigger className="w-[200px]">
+                        <SelectValue placeholder="Sélectionner un type" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {activityTypes.map(({ type, label }) => (
+                          <SelectItem key={type} value={type}>
+                            {label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </TableCell>
+                </TableRow>
+              );
+            })}
+          </TableBody>
+        </Table>
+      </ScrollArea>
 
       <div className="flex justify-between items-center">
         <div className="text-sm text-muted-foreground">
@@ -199,7 +213,7 @@ export const CalendarEventSelection = ({
             Annuler
           </Button>
           <Button 
-            onClick={() => onImport(events)} 
+            onClick={() => onImport(Object.values(modifiedEvents))} 
             disabled={!canImport || isLoading || selectedCount === 0}
           >
             {isLoading ? 'Importation...' : `Importer ${selectedCount} événement${selectedCount > 1 ? 's' : ''}`}

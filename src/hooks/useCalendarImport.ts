@@ -19,6 +19,7 @@ interface CalendarImport {
 interface CalendarEvent {
   id: string;
   title: string;
+  description?: string;
   startTime: Date;
   endTime: Date;
   duration: number;
@@ -105,10 +106,18 @@ export const useCalendarImport = () => {
         if (!data?.events) {
           throw new Error("Aucun événement trouvé");
         }
+
+        // Transformation des dates string en objets Date
+        const transformedEvents = data.events.map(event => ({
+          ...event,
+          startTime: new Date(event.startTime),
+          endTime: new Date(event.endTime),
+          selected: false // État initial de la sélection
+        }));
         
-        console.log('Événements récupérés:', data.events.length);
-        setEvents(data.events);
-        return data.events;
+        console.log('Événements récupérés:', transformedEvents.length);
+        setEvents(transformedEvents);
+        return transformedEvents;
       } catch (error) {
         console.error('Erreur lors de la récupération des événements:', error);
         throw error;
@@ -150,19 +159,21 @@ export const useCalendarImport = () => {
 
       if (importError) throw importError;
 
-      // N'insérer que les événements sélectionnés
-      const { error: activitiesError } = await supabase.from('activities').insert(
-        selectedEvents
-          .filter(event => event.selected)
-          .map(event => ({
-            user_id: user.id,
-            description: event.title,
-            start_time: event.startTime.toISOString(),
-            duration_minutes: event.duration,
-            activity_type: event.activityType,
-            project_id: event.projectId,
-          }))
-      );
+      // N'insérer que les événements sélectionnés et assurer que toutes les dates sont des objets Date
+      const activitiesToInsert = selectedEvents
+        .filter(event => event.selected)
+        .map(event => ({
+          user_id: user.id,
+          description: event.description || event.title, // Utiliser la description si disponible, sinon le titre
+          start_time: event.startTime instanceof Date ? event.startTime.toISOString() : new Date(event.startTime).toISOString(),
+          duration_minutes: event.duration,
+          activity_type: event.activityType,
+          project_id: event.projectId,
+        }));
+
+      const { error: activitiesError } = await supabase
+        .from('activities')
+        .insert(activitiesToInsert);
 
       if (activitiesError) throw activitiesError;
     },
@@ -195,6 +206,13 @@ export const useCalendarImport = () => {
     );
   };
 
+  // Nouvelle fonction pour sélectionner/désélectionner tous les événements
+  const toggleAllEvents = (selected: boolean) => {
+    setEvents(prevEvents =>
+      prevEvents.map(event => ({ ...event, selected }))
+    );
+  };
+
   return {
     imports,
     isLoading,
@@ -208,5 +226,7 @@ export const useCalendarImport = () => {
     importCalendar: importMutation.mutate,
     isImporting: importMutation.isLoading,
     toggleEventSelection,
+    toggleAllEvents,
   };
 };
+
