@@ -10,22 +10,24 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Calendar as CalendarComponent } from '@/components/ui/calendar';
 import { useCalendarImport } from '@/hooks/useCalendarImport';
 import { CalendarEventSelection } from './CalendarEventSelection';
 import { fr } from 'date-fns/locale';
+import { MicrosoftAuthButton } from './MicrosoftAuthButton';
+import { useMicrosoftAuth } from '@/hooks/useMicrosoftAuth';
 
 enum ImportStep {
-  URL,
+  AUTH,
   EVENTS,
 }
 
 export const CalendarImport = () => {
   const [isOpen, setIsOpen] = useState(false);
-  const [step, setStep] = useState<ImportStep>(ImportStep.URL);
-  const [calendarUrl, setCalendarUrl] = useState('');
+  const [step, setStep] = useState<ImportStep>(ImportStep.AUTH);
+  const { isAuthenticated } = useMicrosoftAuth();
+  
   const {
     importDate,
     setImportDate,
@@ -40,9 +42,12 @@ export const CalendarImport = () => {
   } = useCalendarImport();
 
   const handleFetchEvents = () => {
-    if (!calendarUrl) return;    
+    if (!isAuthenticated) return;    
     fetchEvents(
-      { calendarUrl, startDate: importDate, endDate },
+      { 
+        startDate: importDate, 
+        endDate 
+      },
       {
         onSuccess: () => {
           setStep(ImportStep.EVENTS);
@@ -51,26 +56,23 @@ export const CalendarImport = () => {
     );
   };
 
-  const handleImportEvents = (selectedEvents: any[]) => {
+  const handleImport = (selectedEvents: any[]) => {
     importCalendar(
       { 
-        calendarUrl, 
         startDate: importDate,
         selectedEvents,
       },
       {
         onSuccess: () => {
           setIsOpen(false);
-          setCalendarUrl('');
-          setStep(ImportStep.URL);
+          setStep(ImportStep.AUTH);
         },
       }
     );
   };
 
   const handleCancel = () => {
-    setStep(ImportStep.URL);
-    setCalendarUrl('');
+    setStep(ImportStep.AUTH);
   };
 
   const handleDateSelect = (date: Date | undefined) => {
@@ -100,56 +102,56 @@ export const CalendarImport = () => {
         <DialogHeader>
           <DialogTitle>Importer depuis le calendrier</DialogTitle>
           <DialogDescription>
-            Importez des événements depuis votre calendrier Outlook partagé.
-            Sélectionnez une période d'importation pour les événements.
+            Importez des événements depuis votre calendrier Microsoft.
+            Connectez-vous et sélectionnez une période d'importation pour les événements.
           </DialogDescription>
         </DialogHeader>
 
-        {step === ImportStep.URL ? (
+        {step === ImportStep.AUTH ? (
           <div className="space-y-6 py-6">
-            <div className="space-y-2">
-              <Label htmlFor="calendar-url">URL du calendrier partagé</Label>
-              <Input
-                id="calendar-url"
-                placeholder="https://outlook.office365.com/owa/calendar/..."
-                value={calendarUrl}
-                onChange={(e) => setCalendarUrl(e.target.value)}
-              />
+            <div className="space-y-4">
+              <MicrosoftAuthButton />
+
+              {isAuthenticated && (
+                <>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label>Date de début d'import</Label>
+                      <CalendarComponent
+                        mode="single"
+                        selected={importDate}
+                        onSelect={handleDateSelect}
+                        locale={fr}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Date de fin d'import</Label>
+                      <CalendarComponent
+                        mode="single"
+                        selected={endDate}
+                        onSelect={handleEndDateSelect}
+                        locale={fr}
+                        disabled={(date) => date < importDate}
+                      />
+                    </div>
+                  </div>
+                  
+                  <Button 
+                    className="w-full" 
+                    onClick={handleFetchEvents}
+                    disabled={isFetchingEvents || !importDate || !endDate}
+                  >
+                    {isFetchingEvents ? 'Chargement...' : 'Charger les événements'}
+                  </Button>
+                </>
+              )}
             </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>Date de début d'import</Label>
-                <CalendarComponent
-                  mode="single"
-                  selected={importDate}
-                  onSelect={handleDateSelect}
-                  locale={fr}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Date de fin d'import</Label>
-                <CalendarComponent
-                  mode="single"
-                  selected={endDate}
-                  onSelect={handleEndDateSelect}
-                  locale={fr}
-                  disabled={(date) => date < importDate}
-                />
-              </div>
-            </div>
-            <Button 
-              className="w-full" 
-              onClick={handleFetchEvents}
-              disabled={!calendarUrl || isFetchingEvents || !importDate || !endDate}
-            >
-              {isFetchingEvents ? 'Chargement...' : 'Charger les événements'}
-            </Button>
           </div>
         ) : (
           <div className="py-6">
             <CalendarEventSelection
               events={events}
-              onImport={handleImportEvents}
+              onImport={handleImport}
               onCancel={handleCancel}
               isLoading={isImporting}
               onToggleSelection={toggleEventSelection}
