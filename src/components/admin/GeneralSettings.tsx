@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
+import { PublicClientApplication } from "@azure/msal-browser";
 
 const settingsSchema = z.object({
   clientId: z.string().min(1, "L'ID client est requis"),
@@ -102,8 +103,53 @@ export const GeneralSettings = () => {
     },
   });
 
-  const onSubmit = (values: SettingsFormValues) => {
-    mutation.mutate(values);
+  const testConnection = async () => {
+    const formValues = form.getValues();
+    
+    if (!formValues.clientId || !formValues.tenantId) {
+      toast({
+        title: "Erreur",
+        description: "Veuillez d'abord sauvegarder les paramètres de connexion.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      const msalConfig = {
+        auth: {
+          clientId: formValues.clientId,
+          authority: `https://login.microsoftonline.com/${formValues.tenantId}`,
+          redirectUri: window.location.origin,
+        },
+        cache: {
+          cacheLocation: "sessionStorage",
+          storeAuthStateInCookie: false,
+        },
+      };
+
+      const msalInstance = new PublicClientApplication(msalConfig);
+      await msalInstance.initialize();
+
+      const response = await msalInstance.loginPopup({
+        scopes: ["Calendars.Read"],
+        prompt: "select_account",
+      });
+
+      if (response.account) {
+        toast({
+          title: "Connexion réussie",
+          description: "La connexion à Microsoft Graph a été établie avec succès.",
+        });
+      }
+    } catch (error) {
+      console.error("Erreur lors du test de connexion:", error);
+      toast({
+        title: "Erreur de connexion",
+        description: "Impossible de se connecter à Microsoft Graph. Vérifiez vos paramètres.",
+        variant: "destructive",
+      });
+    }
   };
 
   if (isLoading) {
@@ -120,7 +166,7 @@ export const GeneralSettings = () => {
       </div>
 
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+        <form onSubmit={form.handleSubmit(values => mutation.mutate(values))} className="space-y-4">
           <FormField
             control={form.control}
             name="clientId"
@@ -149,16 +195,25 @@ export const GeneralSettings = () => {
             )}
           />
 
-          <Button 
-            type="submit"
-            disabled={mutation.status === 'loading'}
-            className="w-full sm:w-auto"
-          >
-            {mutation.status === 'loading' ? "Sauvegarde en cours..." : "Sauvegarder"}
-          </Button>
+          <div className="flex gap-4">
+            <Button 
+              type="submit"
+              disabled={mutation.status === 'loading'}
+            >
+              {mutation.status === 'loading' ? "Sauvegarde en cours..." : "Sauvegarder"}
+            </Button>
+
+            <Button 
+              type="button" 
+              variant="secondary"
+              onClick={testConnection}
+              disabled={mutation.status === 'loading'}
+            >
+              Tester la connexion
+            </Button>
+          </div>
         </form>
       </Form>
     </div>
   );
 };
-
