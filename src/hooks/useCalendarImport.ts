@@ -5,8 +5,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useUser } from '@supabase/auth-helpers-react';
 import { useToast } from '@/hooks/use-toast';
 import { Database } from '@/integrations/supabase/types';
-import { format, parseISO } from 'date-fns';
-import { toZonedTime } from 'date-fns-tz';
+import { useMicrosoftAuth } from './useMicrosoftAuth';
 
 type ActivityType = Database['public']['Enums']['activity_type'];
 
@@ -28,15 +27,6 @@ interface CalendarEvent {
   selected?: boolean;
 }
 
-interface ICalEvent {
-  type: string;
-  uid?: string;
-  summary: string;
-  start: Date;
-  end: Date;
-  isAllDay?: boolean;
-}
-
 export const useCalendarImport = () => {
   const user = useUser();
   const { toast } = useToast();
@@ -44,6 +34,7 @@ export const useCalendarImport = () => {
   const [importDate, setImportDate] = useState<Date>(new Date());
   const [endDate, setEndDate] = useState<Date>(new Date());
   const [events, setEvents] = useState<CalendarEvent[]>([]);
+  const { isAuthenticated, getMSALInstance } = useMicrosoftAuth();
 
   const { data: imports, isLoading } = useQuery({
     queryKey: ['calendar-imports'],
@@ -64,143 +55,6 @@ export const useCalendarImport = () => {
     enabled: !!user,
   });
 
-  const windowsToIanaTimezones: { [key: string]: string } = {
-    "Greenwich Standard Time": "Etc/GMT",
-    "Romance Standard Time": "Europe/Paris",
-    "Pacific Standard Time": "America/Los_Angeles",
-    "Eastern Standard Time": "America/New_York",
-  };
-
-  const parseDateTime = (dateStr: string, tzid?: string): Date | null => {
-    try {
-      console.log(`🔹 Lecture de la date: ${dateStr}, fuseau: ${tzid}`);
-
-      // Gestion des événements sur la journée entière
-      if (dateStr.includes(';VALUE=DATE:')) {
-        console.log(`⛔ Ignoré (événement sur la journée entière) : ${dateStr}`);
-        return null;
-      }
-
-      let finalDateStr = dateStr;
-      let userTz = Intl.DateTimeFormat().resolvedOptions().timeZone;
-      let eventTz = tzid || "UTC";
-
-      if (dateStr.includes('TZID=')) {
-        const parts = dateStr.split(':');
-        const tzParts = parts[0].split('TZID=');
-        eventTz = tzParts[1];
-        finalDateStr = parts[1];
-
-        console.log(`🌍 Fuseau horaire Windows détecté: ${eventTz}`);
-
-        if (eventTz in windowsToIanaTimezones) {
-          eventTz = windowsToIanaTimezones[eventTz];
-          console.log(`🔄 Converti en fuseau IANA: ${eventTz}`);
-        }
-      } else if (dateStr.includes(':')) {
-        finalDateStr = dateStr.split(':')[1];
-      }
-
-      if (!finalDateStr) {
-        console.warn('❌ Problème de parsing: date vide.');
-        return null;
-      }
-
-      const year = finalDateStr.substr(0, 4);
-      const month = finalDateStr.substr(4, 2);
-      const day = finalDateStr.substr(6, 2);
-      const hour = finalDateStr.substr(9, 2) || '00';
-      const minute = finalDateStr.substr(11, 2) || '00';
-      const second = finalDateStr.substr(13, 2) || '00';
-
-      const isoString = `${year}-${month}-${day}T${hour}:${minute}:${second}`;
-      console.log(`📅 Date ISO: ${isoString}, fuseau source: ${eventTz}, fuseau cible: ${userTz}`);
-
-      const parsedDate = parseISO(isoString);
-      const zonedDate = toZonedTime(parsedDate, eventTz);
-
-      // On convertit dans le fuseau de l'utilisateur
-      const userDate = toZonedTime(zonedDate, userTz);
-      
-      console.log(`🎯 Date finale: ${format(userDate, 'yyyy-MM-dd HH:mm:ss')} (${userTz})`);
-      
-      return userDate;
-    } catch (error) {
-      console.error('❌ Erreur lors du parsing de la date:', error);
-      return null;
-    }
-  };
-
-  const parseICSContent = (icsContent: string, startDate: Date, endDate: Date): CalendarEvent[] => {
-    const lines = icsContent.split('\n');
-    let events: CalendarEvent[] = [];
-    let currentEvent: Partial<ICalEvent> = {};
-    let isInEvent = false;
-    let currentTzid: string | undefined;
-
-    console.log('🔍 Début du parsing ICS');
-    console.log('📄 Nombre de lignes:', lines.length);
-
-    for (let i = 0; i < lines.length; i++) {
-      let line = lines[i].trim();
-      
-      if (line === 'BEGIN:VEVENT') {
-        isInEvent = true;
-        currentEvent = {};
-        currentTzid = undefined;
-      } else if (line === 'END:VEVENT') {
-        isInEvent = false;
-
-        if (
-          currentEvent.type === 'VEVENT' &&
-          currentEvent.start &&
-          currentEvent.end &&
-          currentEvent.start >= startDate &&
-          currentEvent.end <= endDate &&
-          !currentEvent.isAllDay
-        ) {
-          const duration = Math.round((currentEvent.end.getTime() - currentEvent.start.getTime()) / (1000 * 60));
-
-          events.push({
-            id: currentEvent.uid || `event-${i}`,
-            title: currentEvent.summary || 'Sans titre',
-            startTime: currentEvent.start,
-            endTime: currentEvent.end,
-            duration,
-            selected: true,
-          });
-
-          console.log(`✅ Événement ajouté: ${currentEvent.summary}`);
-        } else {
-          console.warn('🚫 Événement ignoré:', currentEvent);
-        }
-      } else if (isInEvent) {
-        if (line.startsWith('UID:')) {
-          currentEvent.uid = line.substring(4);
-          currentEvent.type = 'VEVENT';
-        } else if (line.startsWith('SUMMARY:')) {
-          currentEvent.summary = line.substring(8);
-        } else if (line.startsWith('DTSTART')) {
-          const parsedDate = parseDateTime(line, currentTzid);
-          if (parsedDate) {
-            currentEvent.start = parsedDate;
-          } else {
-            currentEvent.isAllDay = true;
-          }
-        } else if (line.startsWith('DTEND')) {
-          const parsedDate = parseDateTime(line, currentTzid);
-          if (parsedDate) {
-            currentEvent.end = parsedDate;
-          }
-        } else if (line.startsWith('TZID:')) {
-          currentTzid = line.substring(5);
-        }
-      }
-    }
-
-    return events;
-  };
-
   const fetchEventsMutation = useMutation({
     mutationFn: async ({ 
       startDate,
@@ -209,24 +63,56 @@ export const useCalendarImport = () => {
       startDate: Date;
       endDate: Date;
     }) => {
-      console.log('Fetching calendar data using Edge function');
-      const { data, error } = await supabase.functions.invoke('fetch-ics-calendar', {
-        body: {}
-      });
+      if (!isAuthenticated) {
+        throw new Error("Vous devez d'abord vous connecter à Microsoft");
+      }
 
-      if (error) {
-        console.error('Edge function error:', error);
+      console.log('Récupération des événements du calendrier...');
+      
+      try {
+        // Obtenir un token d'accès via MSAL
+        const msalInstance = getMSALInstance();
+        if (!msalInstance) {
+          throw new Error("Instance MSAL non disponible");
+        }
+
+        const accounts = msalInstance.getAllAccounts();
+        if (accounts.length === 0) {
+          throw new Error("Aucun compte Microsoft connecté");
+        }
+
+        const accessTokenRequest = {
+          scopes: ["Calendars.Read"],
+          account: accounts[0]
+        };
+
+        const tokenResponse = await msalInstance.acquireTokenSilent(accessTokenRequest);
+        
+        // Appeler la fonction edge avec le token
+        const { data, error } = await supabase.functions.invoke('fetch-ms-calendar', {
+          body: {
+            accessToken: tokenResponse.accessToken,
+            startDate: startDate.toISOString(),
+            endDate: endDate.toISOString(),
+          }
+        });
+
+        if (error) {
+          console.error('Erreur fonction edge:', error);
+          throw error;
+        }
+
+        if (!data?.events) {
+          throw new Error("Aucun événement trouvé");
+        }
+        
+        console.log('Événements récupérés:', data.events.length);
+        setEvents(data.events);
+        return data.events;
+      } catch (error) {
+        console.error('Erreur lors de la récupération des événements:', error);
         throw error;
       }
-
-      if (!data.icsData) {
-        throw new Error("Données du calendrier non trouvées");
-      }
-      
-      console.log('Parsing calendar data');
-      const parsedEvents = parseICSContent(data.icsData, startDate, endDate);
-      setEvents(parsedEvents);
-      return parsedEvents;
     },
     onError: (error) => {
       console.error('Error fetching calendar events:', error);
