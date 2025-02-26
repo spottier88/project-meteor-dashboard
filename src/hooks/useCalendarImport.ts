@@ -202,17 +202,15 @@ export const useCalendarImport = () => {
 
   const fetchEventsMutation = useMutation({
     mutationFn: async ({ 
-      calendarUrl, 
       startDate,
       endDate,
     }: { 
-      calendarUrl: string; 
       startDate: Date;
       endDate: Date;
     }) => {
       console.log('Fetching calendar data using Edge function');
       const { data, error } = await supabase.functions.invoke('fetch-ics-calendar', {
-        body: { calendarUrl }
+        body: {}
       });
 
       if (error) {
@@ -241,11 +239,9 @@ export const useCalendarImport = () => {
 
   const importMutation = useMutation({
     mutationFn: async ({ 
-      calendarUrl, 
       startDate,
       selectedEvents,
     }: { 
-      calendarUrl: string; 
       startDate: Date;
       selectedEvents: CalendarEvent[];
     }) => {
@@ -261,7 +257,6 @@ export const useCalendarImport = () => {
       }
 
       const { error: importError } = await supabase.from('calendar_imports').insert({
-        calendar_url: calendarUrl,
         start_date: startDate.toISOString(),
         user_id: user.id,
       });
