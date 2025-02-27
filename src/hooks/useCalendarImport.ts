@@ -223,6 +223,17 @@ export const useCalendarImport = () => {
     );
   };
 
+  // Fonction pour mettre à jour les détails d'un événement (titre, description, etc.)
+  const updateEventDetails = (eventId: string, updates: Partial<CalendarEvent>) => {
+    setEvents(prevEvents =>
+      prevEvents.map(event =>
+        event.id === eventId
+          ? { ...event, ...updates }
+          : event
+      )
+    );
+  };
+
   return {
     imports,
     isLoading,
@@ -237,5 +248,6 @@ export const useCalendarImport = () => {
     isImporting: importMutation.isLoading,
     toggleEventSelection,
     toggleAllEvents,
+    updateEventDetails,
   };
 };

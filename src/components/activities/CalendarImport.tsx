@@ -40,6 +40,7 @@ export const CalendarImport = () => {
     isImporting,
     toggleEventSelection,
     toggleAllEvents,
+    updateEventDetails,
   } = useCalendarImport();
 
   // Effect to automatically fetch events when authenticated
@@ -164,6 +165,7 @@ export const CalendarImport = () => {
               isLoading={isImporting}
               onToggleSelection={toggleEventSelection}
               onToggleAllEvents={toggleAllEvents}
+              onEventChange={updateEventDetails}
             />
           </div>
         )}

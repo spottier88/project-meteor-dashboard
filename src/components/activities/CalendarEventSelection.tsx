@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
@@ -34,6 +34,7 @@ interface Props {
   isLoading: boolean;
   onToggleSelection: (eventId: string) => void;
   onToggleAllEvents?: (selected: boolean) => void;
+  onEventChange?: (eventId: string, updates: Partial<CalendarEvent>) => void;
 }
 
 export const CalendarEventSelection = ({ 
@@ -43,8 +44,20 @@ export const CalendarEventSelection = ({
   isLoading,
   onToggleSelection,
   onToggleAllEvents = () => {},
+  onEventChange,
 }: Props) => {
   const { modifiedEvents, selectedEvents, canImport, selectedCount, handleEventChange } = useEventSelection(events);
+
+  // Effet pour synchroniser les événements modifiés avec le parent quand ils changent
+  useEffect(() => {
+    if (onEventChange) {
+      Object.values(modifiedEvents).forEach(event => {
+        if (event.selected) {
+          onEventChange(event.id, event);
+        }
+      });
+    }
+  }, [modifiedEvents, onEventChange]);
 
   const { data: projects, isLoading: isLoadingProjects } = useQuery({
     queryKey: ['accessible-projects'],
@@ -65,6 +78,17 @@ export const CalendarEventSelection = ({
     );
   }
 
+  // Handler pour propager les changements d'événements vers le parent et le state local
+  const handleCombinedEventChange = (eventId: string, updates: Partial<CalendarEvent>) => {
+    // Mettre à jour l'état local via useEventSelection
+    handleEventChange(eventId, updates);
+    
+    // Propager les changements vers le parent si nécessaire
+    if (onEventChange) {
+      onEventChange(eventId, updates);
+    }
+  };
+
   return (
     <div className="space-y-6">
       <EventTable 
@@ -72,7 +96,7 @@ export const CalendarEventSelection = ({
         projects={projects}
         onToggleSelection={onToggleSelection}
         onToggleAllEvents={onToggleAllEvents}
-        onEventChange={handleEventChange}
+        onEventChange={handleCombinedEventChange}
       />
 
       <EventSelectionFooter 
