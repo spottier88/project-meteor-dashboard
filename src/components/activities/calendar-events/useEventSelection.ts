@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Database } from '@/integrations/supabase/types';
 
 type ActivityType = Database['public']['Enums']['activity_type'];
@@ -20,6 +20,29 @@ export const useEventSelection = (initialEvents: CalendarEvent[]) => {
   const [modifiedEvents, setModifiedEvents] = useState<{ [key: string]: CalendarEvent }>(
     Object.fromEntries(initialEvents.map(event => [event.id, event]))
   );
+
+  // Synchroniser avec les événements initiaux quand ils changent
+  useEffect(() => {
+    setModifiedEvents(
+      Object.fromEntries(
+        initialEvents.map(event => {
+          // Conserver l'état sélectionné et les modifications si l'événement existe déjà
+          const existingEvent = modifiedEvents[event.id];
+          if (existingEvent) {
+            return [event.id, { 
+              ...event, 
+              selected: existingEvent.selected,
+              activityType: existingEvent.activityType || event.activityType,
+              projectId: existingEvent.projectId || event.projectId,
+              title: existingEvent.title || event.title,
+              description: existingEvent.description || event.description
+            }];
+          }
+          return [event.id, event];
+        })
+      )
+    );
+  }, [initialEvents]);
 
   const handleEventChange = (eventId: string, updates: Partial<CalendarEvent>) => {
     setModifiedEvents(prev => ({
