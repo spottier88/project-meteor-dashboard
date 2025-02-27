@@ -99,8 +99,12 @@ export const CalendarEventSelection = ({
   const selectedCount = events.filter(event => event.selected).length;
   const selectedEvents = Object.values(modifiedEvents).filter(event => event.selected);
   
+  // Mise à jour de la validation pour vérifier également les titres non vides
   const canImport = selectedEvents.length > 0 && selectedEvents.every(event => 
-    event.activityType && event.projectId
+    event.activityType && 
+    event.projectId && 
+    event.title && 
+    event.title.trim() !== ''
   );
 
   if (isLoadingProjects) {

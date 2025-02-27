@@ -143,13 +143,18 @@ export const useCalendarImport = () => {
     }) => {
       if (!user) throw new Error('User not authenticated');
 
-      // Ne vérifier que les événements sélectionnés
+      // Ne vérifier que les événements sélectionnés et s'assurer qu'ils ont un titre non vide
       const hasInvalidEvents = selectedEvents
         .filter(event => event.selected)
-        .some(event => !event.activityType || !event.projectId);
+        .some(event => 
+          !event.activityType || 
+          !event.projectId || 
+          !event.title || 
+          event.title.trim() === ''
+        );
 
       if (hasInvalidEvents) {
-        throw new Error('Tous les événements sélectionnés doivent avoir un type d\'activité et un projet assigné');
+        throw new Error('Tous les événements sélectionnés doivent avoir un titre, un type d\'activité et un projet assigné');
       }
 
       const { error: importError } = await supabase.from('calendar_imports').insert({
@@ -206,7 +211,7 @@ export const useCalendarImport = () => {
     );
   };
 
-  // Nouvelle fonction pour sélectionner/désélectionner tous les événements
+  // Fonction pour sélectionner/désélectionner tous les événements
   const toggleAllEvents = (selected: boolean) => {
     setEvents(prevEvents =>
       prevEvents.map(event => ({ ...event, selected }))
@@ -229,4 +234,3 @@ export const useCalendarImport = () => {
     toggleAllEvents,
   };
 };
-
