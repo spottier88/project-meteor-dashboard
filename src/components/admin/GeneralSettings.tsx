@@ -157,7 +157,24 @@ export const GeneralSettings = () => {
   }
 
   return (
-    <div className="space-y-6">
+     <div className="container py-6 space-y-6">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            asChild
+          >
+            <Link to="/admin">
+              <ChevronLeft className="h-4 w-4" />
+              Retour à l'administration
+            </Link>
+          </Button>
+          <h1 className="text-2xl font-bold tracking-tight">Paramètres généraux</h1>
+        </div>
+      </div>
+                
+    <div className="border rounded-md p-6 bg-white">
       <div>
         <h3 className="text-lg font-medium">Paramètres Microsoft Graph</h3>
         <p className="text-sm text-muted-foreground">
@@ -215,5 +232,6 @@ export const GeneralSettings = () => {
         </form>
       </Form>
     </div>
+       </div>
   );
 };
