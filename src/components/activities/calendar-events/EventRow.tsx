@@ -13,7 +13,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { Input } from "@/components/ui/input";
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { Database } from '@/integrations/supabase/types';
@@ -62,9 +61,8 @@ export const EventRow: React.FC<EventRowProps> = ({
       </TableCell>
       <TableCell>
         <div className="space-y-2">
-          
           <Textarea
-            value={event.description || ''}
+            value={event.description || event.title || ''}
             onChange={(e) => onEventChange(event.id, { description: e.target.value })}
             disabled={!event.selected}
             placeholder="Description de l'événement"

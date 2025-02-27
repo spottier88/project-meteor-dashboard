@@ -58,8 +58,7 @@ export const useEventSelection = (initialEvents: CalendarEvent[]) => {
   const canImport = selectedEvents.length > 0 && selectedEvents.every(event => 
     event.activityType && 
     event.projectId && 
-    event.title && 
-    event.title.trim() !== ''
+    (event.description || event.title) // Vérifier que soit description soit title est présent
   );
 
   const selectedCount = selectedEvents.length;

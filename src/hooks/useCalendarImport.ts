@@ -157,14 +157,13 @@ export const useCalendarImport = () => {
       const invalidEvents = eventsToImport.filter(event => 
         !event.activityType || 
         !event.projectId || 
-        !event.title || 
-        event.title.trim() === ''
+        (!event.description && !event.title)
       );
 
       if (invalidEvents.length > 0) {
         throw new Error(
           `${invalidEvents.length} événement(s) manquent des informations nécessaires. ` +
-          'Tous les événements doivent avoir un titre, un type d\'activité et un projet.'
+          'Tous les événements doivent avoir une description, un type d\'activité et un projet.'
         );
       }
 
@@ -184,7 +183,6 @@ export const useCalendarImport = () => {
       const activitiesToInsert = eventsToImport.map(event => ({
         user_id: user.id,
         description: event.description || event.title, // Utiliser la description ou le titre
-        title: event.title,
         start_time: event.startTime instanceof Date ? event.startTime.toISOString() : new Date(event.startTime).toISOString(),
         duration_minutes: event.duration,
         activity_type: event.activityType,
