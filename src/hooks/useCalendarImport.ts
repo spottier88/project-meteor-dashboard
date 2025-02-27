@@ -69,6 +69,7 @@ export const useCalendarImport = () => {
       }
 
       console.log('Récupération des événements du calendrier...');
+      console.log('Période:', startDate.toISOString(), 'à', endDate.toISOString());
       
       try {
         // Obtenir un token d'accès via MSAL
@@ -100,7 +101,7 @@ export const useCalendarImport = () => {
 
         if (error) {
           console.error('Erreur fonction edge:', error);
-          throw error;
+          throw new Error(`Erreur lors de la récupération des événements: ${error.message}`);
         }
 
         if (!data?.events) {
@@ -118,18 +119,19 @@ export const useCalendarImport = () => {
         console.log('Événements récupérés:', transformedEvents.length);
         setEvents(transformedEvents);
         return transformedEvents;
-      } catch (error) {
+      } catch (error: any) {
         console.error('Erreur lors de la récupération des événements:', error);
         throw error;
       }
     },
-    onError: (error) => {
+    onError: (error: Error) => {
       console.error('Error fetching calendar events:', error);
       toast({
         title: 'Erreur',
-        description: "Une erreur s'est produite lors de la récupération des événements.",
+        description: error.message || "Une erreur s'est produite lors de la récupération des événements.",
         variant: 'destructive',
       });
+      setEvents([]);
     },
   });
 
@@ -143,49 +145,71 @@ export const useCalendarImport = () => {
     }) => {
       if (!user) throw new Error('User not authenticated');
 
-      // Ne vérifier que les événements sélectionnés et s'assurer qu'ils ont un titre non vide
-      const hasInvalidEvents = selectedEvents
-        .filter(event => event.selected)
-        .some(event => 
-          !event.activityType || 
-          !event.projectId || 
-          !event.title || 
-          event.title.trim() === ''
-        );
-
-      if (hasInvalidEvents) {
-        throw new Error('Tous les événements sélectionnés doivent avoir un titre, un type d\'activité et un projet assigné');
+      // Filtrer uniquement les événements sélectionnés
+      const eventsToImport = selectedEvents.filter(event => event.selected);
+      
+      // Vérifier si des événements sont sélectionnés
+      if (eventsToImport.length === 0) {
+        throw new Error('Aucun événement sélectionné pour l\'import');
       }
+
+      // Vérifier si tous les événements ont les informations requises
+      const invalidEvents = eventsToImport.filter(event => 
+        !event.activityType || 
+        !event.projectId || 
+        !event.title || 
+        event.title.trim() === ''
+      );
+
+      if (invalidEvents.length > 0) {
+        throw new Error(
+          `${invalidEvents.length} événement(s) manquent des informations nécessaires. ` +
+          'Tous les événements doivent avoir un titre, un type d\'activité et un projet.'
+        );
+      }
+
+      console.log('Import de', eventsToImport.length, 'événements');
 
       const { error: importError } = await supabase.from('calendar_imports').insert({
         start_date: startDate.toISOString(),
         user_id: user.id,
       });
 
-      if (importError) throw importError;
+      if (importError) {
+        console.error('Erreur d\'enregistrement de l\'import:', importError);
+        throw importError;
+      }
 
-      // N'insérer que les événements sélectionnés et assurer que toutes les dates sont des objets Date
-      const activitiesToInsert = selectedEvents
-        .filter(event => event.selected)
-        .map(event => ({
-          user_id: user.id,
-          description: event.description || event.title, // Utiliser la description si disponible, sinon le titre
-          start_time: event.startTime instanceof Date ? event.startTime.toISOString() : new Date(event.startTime).toISOString(),
-          duration_minutes: event.duration,
-          activity_type: event.activityType,
-          project_id: event.projectId,
-        }));
+      // Préparer les activités à insérer
+      const activitiesToInsert = eventsToImport.map(event => ({
+        user_id: user.id,
+        description: event.title, // Utiliser le titre comme description par défaut
+        title: event.title,
+        start_time: event.startTime instanceof Date ? event.startTime.toISOString() : new Date(event.startTime).toISOString(),
+        duration_minutes: event.duration,
+        activity_type: event.activityType,
+        project_id: event.projectId,
+      }));
+
+      console.log('Activités à insérer:', activitiesToInsert);
 
       const { error: activitiesError } = await supabase
         .from('activities')
         .insert(activitiesToInsert);
 
-      if (activitiesError) throw activitiesError;
+      if (activitiesError) {
+        console.error('Erreur d\'insertion des activités:', activitiesError);
+        throw activitiesError;
+      }
     },
     onSuccess: () => {
       // Déconnexion de Microsoft après import réussi
-      if (logout) {
-        logout();
+      try {
+        if (logout) {
+          logout();
+        }
+      } catch (error) {
+        console.error('Erreur lors de la déconnexion de Microsoft:', error);
       }
       
       queryClient.invalidateQueries({ queryKey: ['calendar-imports'] });
@@ -196,11 +220,11 @@ export const useCalendarImport = () => {
       });
       setEvents([]);
     },
-    onError: (error) => {
+    onError: (error: any) => {
       console.error('Error importing calendar:', error);
       toast({
         title: 'Erreur',
-        description: "Une erreur s'est produite lors de l'importation du calendrier.",
+        description: error.message || "Une erreur s'est produite lors de l'importation du calendrier.",
         variant: 'destructive',
       });
     },

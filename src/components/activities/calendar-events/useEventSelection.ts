@@ -23,11 +23,11 @@ export const useEventSelection = (initialEvents: CalendarEvent[]) => {
 
   // Synchroniser avec les événements initiaux quand ils changent
   useEffect(() => {
-    setModifiedEvents(
+    setModifiedEvents(prevModifiedEvents => 
       Object.fromEntries(
         initialEvents.map(event => {
           // Conserver l'état sélectionné et les modifications si l'événement existe déjà
-          const existingEvent = modifiedEvents[event.id];
+          const existingEvent = prevModifiedEvents[event.id];
           if (existingEvent) {
             return [event.id, { 
               ...event, 
@@ -63,7 +63,7 @@ export const useEventSelection = (initialEvents: CalendarEvent[]) => {
   const selectedCount = selectedEvents.length;
 
   return {
-    modifiedEvents,
+    modifiedEvents: Object.values(modifiedEvents),
     selectedEvents,
     canImport,
     selectedCount,

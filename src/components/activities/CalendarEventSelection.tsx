@@ -51,10 +51,8 @@ export const CalendarEventSelection = ({
   // Effet pour synchroniser les événements modifiés avec le parent quand ils changent
   useEffect(() => {
     if (onEventChange) {
-      Object.values(modifiedEvents).forEach(event => {
-        if (event.selected) {
-          onEventChange(event.id, event);
-        }
+      modifiedEvents.forEach(event => {
+        onEventChange(event.id, event);
       });
     }
   }, [modifiedEvents, onEventChange]);
@@ -92,7 +90,7 @@ export const CalendarEventSelection = ({
   return (
     <div className="space-y-6">
       <EventTable 
-        events={events}
+        events={modifiedEvents}
         projects={projects}
         onToggleSelection={onToggleSelection}
         onToggleAllEvents={onToggleAllEvents}
@@ -104,8 +102,8 @@ export const CalendarEventSelection = ({
         canImport={canImport}
         isLoading={isLoading}
         onCancel={onCancel}
-        onImport={() => onImport(Object.values(modifiedEvents))}
-        events={Object.values(modifiedEvents)}
+        onImport={() => onImport(selectedEvents)}
+        events={modifiedEvents}
       />
     </div>
   );

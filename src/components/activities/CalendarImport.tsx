@@ -17,6 +17,7 @@ import { CalendarEventSelection } from './CalendarEventSelection';
 import { fr } from 'date-fns/locale';
 import { MicrosoftAuthButton } from './MicrosoftAuthButton';
 import { useMicrosoftAuth } from '@/hooks/useMicrosoftAuth';
+import { useToast } from '@/hooks/use-toast';
 
 enum ImportStep {
   AUTH,
@@ -27,6 +28,7 @@ export const CalendarImport = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [step, setStep] = useState<ImportStep>(ImportStep.AUTH);
   const { isAuthenticated } = useMicrosoftAuth();
+  const { toast } = useToast();
   
   const {
     importDate,
@@ -43,39 +45,97 @@ export const CalendarImport = () => {
     updateEventDetails,
   } = useCalendarImport();
 
-  // Effect to automatically fetch events when authenticated
+  // Réinitialiser l'étape lors de la fermeture de la boîte de dialogue
+  useEffect(() => {
+    if (!isOpen) {
+      setStep(ImportStep.AUTH);
+    }
+  }, [isOpen]);
+
+  // Automatiquement charger les événements après authentification si les dates sont définies
   useEffect(() => {
     if (isAuthenticated && importDate && endDate && step === ImportStep.AUTH) {
       handleFetchEvents();
     }
-  }, [isAuthenticated]);
+  }, [isAuthenticated, importDate, endDate]);
+
+  // Validation des dates
+  const areDatesValid = importDate && endDate && importDate <= endDate;
 
   const handleFetchEvents = () => {
-    if (!isAuthenticated) return;    
+    if (!isAuthenticated) {
+      toast({
+        title: "Authentification requise",
+        description: "Vous devez vous connecter à Microsoft pour récupérer les événements.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    if (!areDatesValid) {
+      toast({
+        title: "Dates invalides",
+        description: "La date de début doit être antérieure ou égale à la date de fin.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     fetchEvents(
       { 
-        startDate: importDate, 
-        endDate 
+        startDate: importDate!, 
+        endDate: endDate!
       },
       {
         onSuccess: () => {
           setStep(ImportStep.EVENTS);
+          toast({
+            title: "Événements récupérés",
+            description: "Les événements ont été récupérés avec succès.",
+          });
         },
+        onError: (error) => {
+          toast({
+            title: "Erreur",
+            description: "Impossible de récupérer les événements: " + (error?.message || "Erreur inconnue"),
+            variant: "destructive",
+          });
+        }
       }
     );
   };
 
   const handleImport = (selectedEvents: any[]) => {
+    if (selectedEvents.length === 0) {
+      toast({
+        title: "Sélection vide",
+        description: "Veuillez sélectionner au moins un événement à importer.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     importCalendar(
       { 
-        startDate: importDate,
+        startDate: importDate!,
         selectedEvents,
       },
       {
         onSuccess: () => {
           setIsOpen(false);
           setStep(ImportStep.AUTH);
+          toast({
+            title: "Import réussi",
+            description: `${selectedEvents.length} événement(s) importé(s) avec succès.`,
+          });
         },
+        onError: (error) => {
+          toast({
+            title: "Erreur d'importation",
+            description: "Impossible d'importer les événements: " + (error?.message || "Erreur inconnue"),
+            variant: "destructive",
+          });
+        }
       }
     );
   };
@@ -140,7 +200,7 @@ export const CalendarImport = () => {
                         selected={endDate}
                         onSelect={handleEndDateSelect}
                         locale={fr}
-                        disabled={(date) => date < importDate}
+                        disabled={(date) => date < (importDate || new Date())}
                       />
                     </div>
                   </div>
@@ -148,7 +208,7 @@ export const CalendarImport = () => {
                   <Button 
                     className="w-full" 
                     onClick={handleFetchEvents}
-                    disabled={isFetchingEvents || !importDate || !endDate}
+                    disabled={isFetchingEvents || !areDatesValid}
                   >
                     {isFetchingEvents ? 'Chargement...' : 'Charger les événements'}
                   </Button>
