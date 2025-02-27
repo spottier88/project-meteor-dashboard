@@ -62,12 +62,7 @@ export const EventRow: React.FC<EventRowProps> = ({
       </TableCell>
       <TableCell>
         <div className="space-y-2">
-          <Input
-            value={event.title}
-            onChange={(e) => onEventChange(event.id, { title: e.target.value })}
-            disabled={!event.selected}
-            placeholder="Titre de l'événement"
-          />
+          
           <Textarea
             value={event.description || ''}
             onChange={(e) => onEventChange(event.id, { description: e.target.value })}
