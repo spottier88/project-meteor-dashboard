@@ -69,7 +69,7 @@ export const EventTable: React.FC<EventTableProps> = ({
                 onCheckedChange={(checked) => onToggleAllEvents(!!checked)}
               />
             </TableHead>
-            <TableHead>Titre et description</TableHead>
+            <TableHead>Description</TableHead>
             <TableHead>Date</TableHead>
             <TableHead>Durée</TableHead>
             <TableHead>Projet</TableHead>
