@@ -35,7 +35,7 @@ export const useCalendarImport = () => {
   const [importDate, setImportDate] = useState<Date>(new Date());
   const [endDate, setEndDate] = useState<Date>(new Date());
   const [events, setEvents] = useState<CalendarEvent[]>([]);
-  const { isAuthenticated, getMSALInstance } = useMicrosoftAuth();
+  const { isAuthenticated, getMSALInstance, logout } = useMicrosoftAuth();
 
   const { data: imports, isLoading } = useQuery({
     queryKey: ['calendar-imports'],
@@ -183,6 +183,11 @@ export const useCalendarImport = () => {
       if (activitiesError) throw activitiesError;
     },
     onSuccess: () => {
+      // Déconnexion de Microsoft après import réussi
+      if (logout) {
+        logout();
+      }
+      
       queryClient.invalidateQueries({ queryKey: ['calendar-imports'] });
       queryClient.invalidateQueries({ queryKey: ['activities'] });
       toast({

@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Calendar } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -41,6 +41,13 @@ export const CalendarImport = () => {
     toggleEventSelection,
     toggleAllEvents,
   } = useCalendarImport();
+
+  // Effect to automatically fetch events when authenticated
+  useEffect(() => {
+    if (isAuthenticated && importDate && endDate && step === ImportStep.AUTH) {
+      handleFetchEvents();
+    }
+  }, [isAuthenticated]);
 
   const handleFetchEvents = () => {
     if (!isAuthenticated) return;    
