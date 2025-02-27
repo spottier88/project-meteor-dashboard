@@ -52,13 +52,6 @@ export const CalendarImport = () => {
     }
   }, [isOpen]);
 
-  // Automatiquement charger les événements après authentification si les dates sont définies
-  useEffect(() => {
-    if (isAuthenticated && importDate && endDate && step === ImportStep.AUTH) {
-      handleFetchEvents();
-    }
-  }, [isAuthenticated, importDate, endDate]);
-
   // Validation des dates
   const areDatesValid = importDate && endDate && importDate <= endDate;
 

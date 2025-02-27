@@ -48,14 +48,45 @@ export const CalendarEventSelection = ({
 }: Props) => {
   const { modifiedEvents, selectedEvents, canImport, selectedCount, handleEventChange } = useEventSelection(events);
 
+  // Synchronisation des sélections entre les composants
+  const handleToggleSelection = (eventId: string) => {
+    // Mettre à jour l'état local via useEventSelection
+    handleEventChange(eventId, { selected: !modifiedEvents.find(e => e.id === eventId)?.selected });
+    
+    // Propager au parent
+    onToggleSelection(eventId);
+  };
+
+  // Synchronisation de tous les événements
+  const handleToggleAllEvents = (selected: boolean) => {
+    // Mettre à jour tous les événements dans l'état local
+    modifiedEvents.forEach(event => {
+      handleEventChange(event.id, { selected });
+    });
+    
+    // Propager au parent
+    if (onToggleAllEvents) {
+      onToggleAllEvents(selected);
+    }
+  };
+
   // Effet pour synchroniser les événements modifiés avec le parent quand ils changent
   useEffect(() => {
-    if (onEventChange) {
+    if (onEventChange && modifiedEvents.length > 0) {
       modifiedEvents.forEach(event => {
-        onEventChange(event.id, event);
+        const existingEvent = events.find(e => e.id === event.id);
+        if (existingEvent && (
+          existingEvent.title !== event.title ||
+          existingEvent.description !== event.description ||
+          existingEvent.activityType !== event.activityType ||
+          existingEvent.projectId !== event.projectId ||
+          existingEvent.selected !== event.selected
+        )) {
+          onEventChange(event.id, event);
+        }
       });
     }
-  }, [modifiedEvents, onEventChange]);
+  }, [modifiedEvents, onEventChange, events]);
 
   const { data: projects, isLoading: isLoadingProjects } = useQuery({
     queryKey: ['accessible-projects'],
@@ -92,8 +123,8 @@ export const CalendarEventSelection = ({
       <EventTable 
         events={modifiedEvents}
         projects={projects}
-        onToggleSelection={onToggleSelection}
-        onToggleAllEvents={onToggleAllEvents}
+        onToggleSelection={handleToggleSelection}
+        onToggleAllEvents={handleToggleAllEvents}
         onEventChange={handleCombinedEventChange}
       />
 
@@ -103,7 +134,7 @@ export const CalendarEventSelection = ({
         isLoading={isLoading}
         onCancel={onCancel}
         onImport={() => onImport(selectedEvents)}
-        events={modifiedEvents}
+        events={selectedEvents}
       />
     </div>
   );

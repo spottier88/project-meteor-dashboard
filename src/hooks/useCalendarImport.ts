@@ -183,7 +183,7 @@ export const useCalendarImport = () => {
       // Préparer les activités à insérer
       const activitiesToInsert = eventsToImport.map(event => ({
         user_id: user.id,
-        description: event.title, // Utiliser le titre comme description par défaut
+        description: event.description || event.title, // Utiliser la description ou le titre
         title: event.title,
         start_time: event.startTime instanceof Date ? event.startTime.toISOString() : new Date(event.startTime).toISOString(),
         duration_minutes: event.duration,
@@ -201,6 +201,8 @@ export const useCalendarImport = () => {
         console.error('Erreur d\'insertion des activités:', activitiesError);
         throw activitiesError;
       }
+
+      return eventsToImport.length;
     },
     onSuccess: () => {
       // Déconnexion de Microsoft après import réussi

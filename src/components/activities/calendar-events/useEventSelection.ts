@@ -18,30 +18,32 @@ interface CalendarEvent {
 
 export const useEventSelection = (initialEvents: CalendarEvent[]) => {
   const [modifiedEvents, setModifiedEvents] = useState<{ [key: string]: CalendarEvent }>(
-    Object.fromEntries(initialEvents.map(event => [event.id, event]))
+    Object.fromEntries(initialEvents.map(event => [event.id, { ...event, selected: false }]))
   );
 
   // Synchroniser avec les événements initiaux quand ils changent
   useEffect(() => {
-    setModifiedEvents(prevModifiedEvents => 
-      Object.fromEntries(
-        initialEvents.map(event => {
-          // Conserver l'état sélectionné et les modifications si l'événement existe déjà
-          const existingEvent = prevModifiedEvents[event.id];
-          if (existingEvent) {
-            return [event.id, { 
-              ...event, 
-              selected: existingEvent.selected,
-              activityType: existingEvent.activityType || event.activityType,
-              projectId: existingEvent.projectId || event.projectId,
-              title: existingEvent.title || event.title,
-              description: existingEvent.description || event.description
-            }];
-          }
-          return [event.id, event];
-        })
-      )
-    );
+    if (initialEvents.length > 0) {
+      setModifiedEvents(prevModifiedEvents => 
+        Object.fromEntries(
+          initialEvents.map(event => {
+            // Conserver l'état sélectionné et les modifications si l'événement existe déjà
+            const existingEvent = prevModifiedEvents[event.id];
+            if (existingEvent) {
+              return [event.id, { 
+                ...event, 
+                selected: existingEvent.selected,
+                activityType: existingEvent.activityType || event.activityType,
+                projectId: existingEvent.projectId || event.projectId,
+                title: existingEvent.title || event.title,
+                description: existingEvent.description || event.description
+              }];
+            }
+            return [event.id, { ...event, selected: false }];
+          })
+        )
+      );
+    }
   }, [initialEvents]);
 
   const handleEventChange = (eventId: string, updates: Partial<CalendarEvent>) => {
