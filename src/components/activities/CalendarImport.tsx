@@ -180,40 +180,36 @@ export const CalendarImport = () => {
           <div className="space-y-6 py-6">
             <div className="space-y-4">
               <MicrosoftAuthButton />
-
-              {isAuthenticated && (
-                <>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label>Date de début d'import</Label>
-                      <CalendarComponent
-                        mode="single"
-                        selected={importDate}
-                        onSelect={handleDateSelect}
-                        locale={fr}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Date de fin d'import</Label>
-                      <CalendarComponent
-                        mode="single"
-                        selected={endDate}
-                        onSelect={handleEndDateSelect}
-                        locale={fr}
-                        disabled={(date) => date < (importDate || new Date())}
-                      />
-                    </div>
-                  </div>
-                  
-                  <Button 
-                    className="w-full" 
-                    onClick={handleFetchEvents}
-                    disabled={isFetchingEvents || !areDatesValid}
-                  >
-                    {isFetchingEvents ? 'Chargement...' : 'Charger les événements'}
-                  </Button>
-                </>
-              )}
+              
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Date de début d'import</Label>
+                  <CalendarComponent
+                    mode="single"
+                    selected={importDate}
+                    onSelect={handleDateSelect}
+                    locale={fr}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Date de fin d'import</Label>
+                  <CalendarComponent
+                    mode="single"
+                    selected={endDate}
+                    onSelect={handleEndDateSelect}
+                    locale={fr}
+                    disabled={(date) => date < (importDate || new Date())}
+                  />
+                </div>
+              </div>
+              
+              <Button 
+                className="w-full" 
+                onClick={handleFetchEvents}
+                disabled={isFetchingEvents || !areDatesValid || !isAuthenticated}
+              >
+                {isFetchingEvents ? 'Chargement...' : 'Charger les événements'}
+              </Button>
             </div>
           </div>
         ) : (
