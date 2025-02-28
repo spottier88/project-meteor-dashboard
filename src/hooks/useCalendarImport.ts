@@ -35,7 +35,7 @@ export const useCalendarImport = () => {
   const [importDate, setImportDate] = useState<Date>(new Date());
   const [endDate, setEndDate] = useState<Date>(new Date());
   const [events, setEvents] = useState<CalendarEvent[]>([]);
-  const { isAuthenticated, getMSALInstance, logout } = useMicrosoftAuth();
+  const { isAuthenticated, getMSALInstance, logout, checkAuthStatus } = useMicrosoftAuth();
 
   const { data: imports, isLoading } = useQuery({
     queryKey: ['calendar-imports'],
@@ -64,8 +64,12 @@ export const useCalendarImport = () => {
       startDate: Date;
       endDate: Date;
     }) => {
-      if (!isAuthenticated) {
-        console.log('useCalendarImport: Not authenticated, cannot fetch events');
+      // Vérification en temps réel de l'état d'authentification
+      const currentAuthStatus = checkAuthStatus();
+      console.log('useCalendarImport: Vérification de l\'état d\'authentification en temps réel:', currentAuthStatus);
+      
+      if (!currentAuthStatus) {
+        console.log('useCalendarImport: Non authentifié, impossible de récupérer les événements');
         throw new Error("Vous devez d'abord vous connecter à Microsoft");
       }
 
