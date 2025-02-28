@@ -45,12 +45,19 @@ export const CalendarImport = () => {
     updateEventDetails,
   } = useCalendarImport();
 
-  // Réinitialiser l'étape lors de la fermeture de la boîte de dialogue
+  // Effet pour réinitialiser l'étape lors de la fermeture de la boîte de dialogue
   useEffect(() => {
     if (!isOpen) {
       setStep(ImportStep.AUTH);
     }
   }, [isOpen]);
+
+  // Effet pour surveiller l'état d'authentification
+  useEffect(() => {
+    console.log("Authentication state changed in CalendarImport:", isAuthenticated);
+    // Force a re-render when authentication state changes
+    // No need to change step since we just want the UI to update
+  }, [isAuthenticated]);
 
   // Validation des dates
   const areDatesValid = importDate && endDate && importDate <= endDate;
