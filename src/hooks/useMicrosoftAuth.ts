@@ -35,7 +35,7 @@ export const useMicrosoftAuth = () => {
     queryFn: fetchMicrosoftSettings,
   });
 
-  // Fonction pour vérifier l'état d'authentification actuel de manière déterministe
+  // Vérifier l'état d'authentification actuel
   const checkAuthStatus = useCallback(() => {
     if (!msalInstance) return false;
     
@@ -46,7 +46,7 @@ export const useMicrosoftAuth = () => {
     return authState;
   }, [msalInstance]);
 
-  // Effet initial pour configurer MSAL quand les paramètres sont chargés
+  // Effet initial pour configurer MSAL et vérifier l'authentification
   useEffect(() => {
     if (!settings?.clientId || !settings?.tenantId) return;
     
@@ -68,7 +68,7 @@ export const useMicrosoftAuth = () => {
       newMsalInstance.initialize().then(() => {
         setMsalInstance(newMsalInstance);
         
-        // Vérification immédiate de l'état d'authentification
+        // Vérification de l'état d'authentification après initialisation
         const accounts = newMsalInstance.getAllAccounts();
         const initialAuthState = accounts.length > 0;
         
@@ -96,7 +96,6 @@ export const useMicrosoftAuth = () => {
 
       if (response.account) {
         console.log("Login successful", response.account.username);
-        // Mettre à jour immédiatement l'état d'authentification
         setIsAuthenticated(true);
         setError(null);
         return response;
@@ -136,5 +135,6 @@ export const useMicrosoftAuth = () => {
     error,
     isConfigured: !!msalInstance,
     getMSALInstance,
+    checkAuthStatus,
   };
 };

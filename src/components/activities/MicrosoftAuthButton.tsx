@@ -18,10 +18,19 @@ export const MicrosoftAuthButton = ({ onAuthSuccess }: MicrosoftAuthButtonProps)
 
   const handleLogin = async () => {
     console.log("Handling login click");
-    const response = await login();
-    if (response && onAuthSuccess) {
-      console.log("Login successful, triggering onAuthSuccess callback");
-      onAuthSuccess();
+    try {
+      const response = await login();
+      console.log("Login response:", response ? "success" : "failed");
+      
+      if (response && onAuthSuccess) {
+        // Attendre un court instant pour que l'état se propage
+        setTimeout(() => {
+          console.log("Login successful, triggering onAuthSuccess callback");
+          onAuthSuccess();
+        }, 500);
+      }
+    } catch (err) {
+      console.error("Login error:", err);
     }
   };
 

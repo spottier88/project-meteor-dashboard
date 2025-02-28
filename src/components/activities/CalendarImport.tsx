@@ -26,7 +26,7 @@ enum ImportStep {
 export const CalendarImport = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [step, setStep] = useState<ImportStep>(ImportStep.AUTH);
-  const { isAuthenticated } = useMicrosoftAuth();
+  const { isAuthenticated, checkAuthStatus } = useMicrosoftAuth();
   const { toast } = useToast();
   
   const {
@@ -49,20 +49,25 @@ export const CalendarImport = () => {
     console.log("CalendarImport: step =", step, "isAuthenticated =", isAuthenticated);
   }, [step, isAuthenticated]);
 
-  // Effet pour réinitialiser l'étape lors de la fermeture de la boîte de dialogue
+  // Vérifier l'état d'authentification quand la boîte de dialogue s'ouvre
   useEffect(() => {
-    if (!isOpen) {
+    if (isOpen) {
+      // Vérifier si l'utilisateur est déjà authentifié
+      const authState = checkAuthStatus();
+      console.log("Dialog opened, checking auth state:", authState);
+      
+      if (authState) {
+        console.log("User is already authenticated, moving to DATE_SELECTION");
+        setStep(ImportStep.DATE_SELECTION);
+      } else {
+        console.log("User is not authenticated, starting at AUTH step");
+        setStep(ImportStep.AUTH);
+      }
+    } else {
       console.log("Dialog closed, resetting to AUTH step");
       setStep(ImportStep.AUTH);
     }
-  }, [isOpen]);
-
-  // Effet qui s'exécute uniquement lors du premier rendu pour initialiser l'état
-  useEffect(() => {
-    // Nous ne faisons plus de changement automatique d'étape ici
-    // pour éviter les problèmes de timing et de boucles infinies
-    console.log("CalendarImport initial render");
-  }, []);
+  }, [isOpen, checkAuthStatus]);
 
   // Gestion de la progression des étapes
   const handleAuthSuccess = () => {

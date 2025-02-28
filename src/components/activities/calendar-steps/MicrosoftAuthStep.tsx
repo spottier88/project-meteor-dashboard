@@ -15,6 +15,11 @@ export const MicrosoftAuthStep: React.FC<MicrosoftAuthStepProps> = ({
   // Effet pour journaliser l'état d'authentification
   useEffect(() => {
     console.log("MicrosoftAuthStep: isAuthenticated =", isAuthenticated);
+    
+    // Si déjà authentifié, on peut optionnellement passer automatiquement à l'étape suivante
+    if (isAuthenticated) {
+      console.log("Already authenticated in MicrosoftAuthStep");
+    }
   }, [isAuthenticated]);
 
   return (
