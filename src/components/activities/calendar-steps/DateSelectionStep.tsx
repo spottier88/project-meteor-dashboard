@@ -12,6 +12,7 @@ interface DateSelectionStepProps {
   importDate: Date | undefined;
   endDate: Date | undefined;
   isFetchingEvents: boolean;
+  isAuthenticated: boolean; // Ajout de la prop isAuthenticated
 }
 
 export const DateSelectionStep: React.FC<DateSelectionStepProps> = ({
@@ -19,10 +20,9 @@ export const DateSelectionStep: React.FC<DateSelectionStepProps> = ({
   onFetchEvents,
   importDate,
   endDate,
-  isFetchingEvents
+  isFetchingEvents,
+  isAuthenticated
 }) => {
-  const { isAuthenticated } = useMicrosoftAuth();
-  
   // Effet pour journaliser l'état d'authentification
   useEffect(() => {
     console.log("DateSelectionStep: isAuthenticated =", isAuthenticated);

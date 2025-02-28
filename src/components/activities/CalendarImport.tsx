@@ -26,7 +26,7 @@ enum ImportStep {
 export const CalendarImport = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [step, setStep] = useState<ImportStep>(ImportStep.AUTH);
-  const { isAuthenticated, checkAuthStatus } = useMicrosoftAuth();
+  const { isAuthenticated, checkAuthStatus, setIsAuthenticated } = useMicrosoftAuth();
   const { toast } = useToast();
   
   const {
@@ -58,21 +58,22 @@ export const CalendarImport = () => {
       
       if (authState) {
         console.log("User is already authenticated, moving to DATE_SELECTION");
+        setIsAuthenticated(true); // S'assurer que l'état isAuthenticated est synchronisé
         setStep(ImportStep.DATE_SELECTION);
       } else {
         console.log("User is not authenticated, starting at AUTH step");
+        setIsAuthenticated(false); // S'assurer que l'état isAuthenticated est synchronisé
         setStep(ImportStep.AUTH);
       }
     } else {
       console.log("Dialog closed, resetting to AUTH step");
       setStep(ImportStep.AUTH);
     }
-  }, [isOpen, checkAuthStatus]);
+  }, [isOpen, checkAuthStatus, setIsAuthenticated]);
 
   // Gestion de la progression des étapes
   const handleAuthSuccess = () => {
     console.log("Auth success callback triggered, moving to date selection");
-    // On devrait avoir l'alimentation de isAuthnticated si  Ok.
     setIsAuthenticated(true); // Mettre à jour l'état d'authentification
     setStep(ImportStep.DATE_SELECTION);
   };
@@ -85,14 +86,16 @@ export const CalendarImport = () => {
 
   const handleFetchEvents = () => {
     const authState = checkAuthStatus();
-    console.log("lien vers les évenemtents:", authState);
+    console.log("Lien vers les événements:", authState);
     
     if (!authState) {
+      setIsAuthenticated(false); // Synchroniser l'état en cas d'échec d'authentification
       toast({
         title: "Authentification requise",
         description: "Vous devez vous connecter à Microsoft pour récupérer les événements.",
         variant: "destructive",
       });
+      setStep(ImportStep.AUTH); // Retour à l'étape d'authentification
       return;
     }
     
@@ -122,6 +125,11 @@ export const CalendarImport = () => {
         },
         onError: (error) => {
           console.error("Error fetching events:", error);
+          // Vérifier si l'erreur est liée à l'authentification
+          if (error?.message?.includes("authenticated") || error?.message?.includes("token")) {
+            setIsAuthenticated(false); // Réinitialiser l'état d'authentification
+            setStep(ImportStep.AUTH); // Retour à l'étape d'authentification
+          }
           toast({
             title: "Erreur",
             description: "Impossible de récupérer les événements: " + (error?.message || "Erreur inconnue"),
@@ -191,6 +199,7 @@ export const CalendarImport = () => {
             importDate={importDate}
             endDate={endDate}
             isFetchingEvents={isFetchingEvents}
+            isAuthenticated={isAuthenticated} // Passez l'état d'authentification au composant
           />
         );
       
