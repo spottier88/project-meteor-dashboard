@@ -4,7 +4,11 @@ import { useMicrosoftAuth } from "@/hooks/useMicrosoftAuth";
 import { Check, X } from "lucide-react";
 import { useEffect } from "react";
 
-export const MicrosoftAuthButton = () => {
+interface MicrosoftAuthButtonProps {
+  onAuthSuccess?: () => void;
+}
+
+export const MicrosoftAuthButton = ({ onAuthSuccess }: MicrosoftAuthButtonProps) => {
   const { login, logout, isAuthenticated, error, isConfigured } = useMicrosoftAuth();
 
   // Log de débogage pour suivre l'état d'authentification
@@ -31,17 +35,21 @@ export const MicrosoftAuthButton = () => {
       </Button>
       
       {isAuthenticated && (
-        <div className="flex items-center gap-2 text-sm text-green-600">
-          <Check className="h-4 w-4" />
-          <span>Connecté à Microsoft Graph</span>
-        </div>
-          <Button 
-            variant="default" 
-            className="w-full" 
-            onClick={onAuthSuccess}
-          >
-            Continuer
-          </Button>
+        <>
+          <div className="flex items-center gap-2 text-sm text-green-600">
+            <Check className="h-4 w-4" />
+            <span>Connecté à Microsoft Graph</span>
+          </div>
+          {onAuthSuccess && (
+            <Button 
+              variant="default" 
+              className="w-full" 
+              onClick={onAuthSuccess}
+            >
+              Continuer
+            </Button>
+          )}
+        </>
       )}
       
       {error && (

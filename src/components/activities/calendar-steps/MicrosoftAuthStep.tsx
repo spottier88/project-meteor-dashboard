@@ -30,9 +30,7 @@ export const MicrosoftAuthStep: React.FC<MicrosoftAuthStepProps> = ({
       <p className="text-sm text-muted-foreground">
         Connectez-vous avec votre compte Microsoft pour accéder à votre calendrier.
       </p>
-      <MicrosoftAuthButton />
-      
-      
+      <MicrosoftAuthButton onAuthSuccess={onAuthSuccess} />
     </div>
   );
 };
