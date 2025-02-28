@@ -10,17 +10,16 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Label } from '@/components/ui/label';
-import { Calendar as CalendarComponent } from '@/components/ui/calendar';
 import { useCalendarImport } from '@/hooks/useCalendarImport';
 import { CalendarEventSelection } from './CalendarEventSelection';
-import { fr } from 'date-fns/locale';
-import { MicrosoftAuthButton } from './MicrosoftAuthButton';
 import { useMicrosoftAuth } from '@/hooks/useMicrosoftAuth';
 import { useToast } from '@/hooks/use-toast';
+import { MicrosoftAuthStep } from './calendar-steps/MicrosoftAuthStep';
+import { DateSelectionStep } from './calendar-steps/DateSelectionStep';
 
 enum ImportStep {
   AUTH,
+  DATE_SELECTION,
   EVENTS,
 }
 
@@ -28,7 +27,6 @@ export const CalendarImport = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [step, setStep] = useState<ImportStep>(ImportStep.AUTH);
   const { isAuthenticated } = useMicrosoftAuth();
-  const [authState, setAuthState] = useState(isAuthenticated);
   const { toast } = useToast();
   
   const {
@@ -55,21 +53,27 @@ export const CalendarImport = () => {
 
   // Effet pour surveiller l'état d'authentification
   useEffect(() => {
-    console.log("Authentication state changed in CalendarImport:", isAuthenticated);
-    setAuthState(isAuthenticated);
-  }, [isAuthenticated]);
+    console.log("Authentication state updated in CalendarImport:", isAuthenticated);
+    
+    // Si l'utilisateur se déconnecte, revenir à l'étape d'authentification
+    if (!isAuthenticated && step !== ImportStep.AUTH) {
+      setStep(ImportStep.AUTH);
+    }
+  }, [isAuthenticated, step]);
 
-  // Log pour débogage
-  useEffect(() => {
-    console.log("Current auth state in CalendarImport:", authState);
-    console.log("Button will be disabled:", isFetchingEvents || !areDatesValid || !authState);
-  }, [authState]);
+  // Gestion de la progression des étapes
+  const handleAuthSuccess = () => {
+    console.log("Auth success detected, moving to date selection");
+    setStep(ImportStep.DATE_SELECTION);
+  };
 
-  // Validation des dates
-  const areDatesValid = importDate && endDate && importDate <= endDate;
+  const handleDateSelection = (startDate: Date, endDate: Date) => {
+    setImportDate(startDate);
+    setEndDate(endDate);
+  };
 
   const handleFetchEvents = () => {
-    if (!authState) {
+    if (!isAuthenticated) {
       toast({
         title: "Authentification requise",
         description: "Vous devez vous connecter à Microsoft pour récupérer les événements.",
@@ -78,7 +82,7 @@ export const CalendarImport = () => {
       return;
     }
     
-    if (!areDatesValid) {
+    if (!importDate || !endDate || importDate > endDate) {
       toast({
         title: "Dates invalides",
         description: "La date de début doit être antérieure ou égale à la date de fin.",
@@ -89,8 +93,8 @@ export const CalendarImport = () => {
 
     fetchEvents(
       { 
-        startDate: importDate!, 
-        endDate: endDate!
+        startDate: importDate, 
+        endDate: endDate
       },
       {
         onSuccess: () => {
@@ -150,15 +154,38 @@ export const CalendarImport = () => {
     setStep(ImportStep.AUTH);
   };
 
-  const handleDateSelect = (date: Date | undefined) => {
-    if (date) {
-      setImportDate(date);
-    }
-  };
-
-  const handleEndDateSelect = (date: Date | undefined) => {
-    if (date) {
-      setEndDate(date);
+  // Rendu conditionnel basé sur l'étape actuelle
+  const renderCurrentStep = () => {
+    switch (step) {
+      case ImportStep.AUTH:
+        return <MicrosoftAuthStep onAuthSuccess={handleAuthSuccess} />;
+      
+      case ImportStep.DATE_SELECTION:
+        return (
+          <DateSelectionStep
+            onDateSelect={handleDateSelection}
+            onFetchEvents={handleFetchEvents}
+            importDate={importDate}
+            endDate={endDate}
+            isFetchingEvents={isFetchingEvents}
+          />
+        );
+      
+      case ImportStep.EVENTS:
+        return (
+          <CalendarEventSelection
+            events={events}
+            onImport={handleImport}
+            onCancel={handleCancel}
+            isLoading={isImporting}
+            onToggleSelection={toggleEventSelection}
+            onToggleAllEvents={toggleAllEvents}
+            onEventChange={updateEventDetails}
+          />
+        );
+      
+      default:
+        return <MicrosoftAuthStep onAuthSuccess={handleAuthSuccess} />;
     }
   };
 
@@ -178,59 +205,12 @@ export const CalendarImport = () => {
           <DialogTitle>Importer depuis le calendrier</DialogTitle>
           <DialogDescription>
             Importez des événements depuis votre calendrier Microsoft.
-            Connectez-vous et sélectionnez une période d'importation pour les événements.
           </DialogDescription>
         </DialogHeader>
 
-        {step === ImportStep.AUTH ? (
-          <div className="space-y-6 py-6">
-            <div className="space-y-4">
-              <MicrosoftAuthButton />
-              
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label>Date de début d'import</Label>
-                  <CalendarComponent
-                    mode="single"
-                    selected={importDate}
-                    onSelect={handleDateSelect}
-                    locale={fr}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>Date de fin d'import</Label>
-                  <CalendarComponent
-                    mode="single"
-                    selected={endDate}
-                    onSelect={handleEndDateSelect}
-                    locale={fr}
-                    disabled={(date) => date < (importDate || new Date())}
-                  />
-                </div>
-              </div>
-              
-              <Button 
-                className="w-full" 
-                onClick={handleFetchEvents}
-                disabled={isFetchingEvents || !areDatesValid || !authState}
-              >
-                {isFetchingEvents ? 'Chargement...' : 'Charger les événements'}
-              </Button>
-            </div>
-          </div>
-        ) : (
-          <div className="py-6">
-            <CalendarEventSelection
-              events={events}
-              onImport={handleImport}
-              onCancel={handleCancel}
-              isLoading={isImporting}
-              onToggleSelection={toggleEventSelection}
-              onToggleAllEvents={toggleAllEvents}
-              onEventChange={updateEventDetails}
-            />
-          </div>
-        )}
+        <div className="py-6">
+          {renderCurrentStep()}
+        </div>
       </DialogContent>
     </Dialog>
   );

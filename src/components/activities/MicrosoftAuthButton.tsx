@@ -2,9 +2,15 @@
 import { Button } from "@/components/ui/button";
 import { useMicrosoftAuth } from "@/hooks/useMicrosoftAuth";
 import { Check, X } from "lucide-react";
+import { useEffect } from "react";
 
 export const MicrosoftAuthButton = () => {
   const { login, logout, isAuthenticated, error, isConfigured } = useMicrosoftAuth();
+
+  // Log de débogage pour suivre l'état d'authentification
+  useEffect(() => {
+    console.log("MicrosoftAuthButton auth state:", isAuthenticated ? "authenticated" : "not authenticated");
+  }, [isAuthenticated]);
 
   if (!isConfigured) {
     return (
