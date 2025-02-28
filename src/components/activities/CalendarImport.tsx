@@ -72,6 +72,9 @@ export const CalendarImport = () => {
   // Gestion de la progression des étapes
   const handleAuthSuccess = () => {
     console.log("Auth success callback triggered, moving to date selection");
+    // On devrait avoir l'alimentation de isAuthnticated si  Ok.
+
+    
     setStep(ImportStep.DATE_SELECTION);
   };
 
