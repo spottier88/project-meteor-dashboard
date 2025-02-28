@@ -136,5 +136,6 @@ export const useMicrosoftAuth = () => {
     isConfigured: !!msalInstance,
     getMSALInstance,
     checkAuthStatus,
+    setIsAuthenticated,
   };
 };
