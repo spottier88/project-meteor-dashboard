@@ -35,6 +35,17 @@ export const useMicrosoftAuth = () => {
     queryFn: fetchMicrosoftSettings,
   });
 
+  // Fonction pour vérifier l'état d'authentification actuel
+  const checkAuthStatus = useCallback(() => {
+    if (!msalInstance) return false;
+    
+    const accounts = msalInstance.getAllAccounts();
+    const authState = accounts.length > 0;
+    
+    console.log("Current auth state check:", authState ? "authenticated" : "not authenticated");
+    return authState;
+  }, [msalInstance]);
+
   // Effet pour initialiser msalInstance quand les paramètres sont chargés
   useEffect(() => {
     if (settings?.clientId && settings?.tenantId) {
@@ -68,18 +79,15 @@ export const useMicrosoftAuth = () => {
     }
   }, [settings]);
 
-  // Effet pour vérifier l'état d'authentification à chaque changement de msalInstance
+  // Effet pour vérifier l'état d'authentification à chaque rendu
   useEffect(() => {
-    if (msalInstance) {
-      const accounts = msalInstance.getAllAccounts();
-      const newAuthState = accounts.length > 0;
-      
-      if (newAuthState !== isAuthenticated) {
-        console.log("Auth state changed to", newAuthState ? "authenticated" : "not authenticated");
-        setIsAuthenticated(newAuthState);
-      }
+    const currentAuthState = checkAuthStatus();
+    
+    if (currentAuthState !== isAuthenticated) {
+      console.log("Auth state changed to", currentAuthState ? "authenticated" : "not authenticated");
+      setIsAuthenticated(currentAuthState);
     }
-  }, [msalInstance, isAuthenticated]);
+  });
 
   const login = useCallback(async () => {
     if (!msalInstance) {
@@ -96,6 +104,7 @@ export const useMicrosoftAuth = () => {
 
       if (response.account) {
         console.log("Login successful", response.account.username);
+        // Mettre à jour immédiatement l'état d'authentification
         setIsAuthenticated(true);
         setError(null);
         return response;

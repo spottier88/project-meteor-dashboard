@@ -28,6 +28,7 @@ export const CalendarImport = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [step, setStep] = useState<ImportStep>(ImportStep.AUTH);
   const { isAuthenticated } = useMicrosoftAuth();
+  const [authState, setAuthState] = useState(isAuthenticated);
   const { toast } = useToast();
   
   const {
@@ -55,15 +56,20 @@ export const CalendarImport = () => {
   // Effet pour surveiller l'état d'authentification
   useEffect(() => {
     console.log("Authentication state changed in CalendarImport:", isAuthenticated);
-    // Force a re-render when authentication state changes
-    // No need to change step since we just want the UI to update
+    setAuthState(isAuthenticated);
   }, [isAuthenticated]);
+
+  // Log pour débogage
+  useEffect(() => {
+    console.log("Current auth state in CalendarImport:", authState);
+    console.log("Button will be disabled:", isFetchingEvents || !areDatesValid || !authState);
+  }, [authState]);
 
   // Validation des dates
   const areDatesValid = importDate && endDate && importDate <= endDate;
 
   const handleFetchEvents = () => {
-    if (!isAuthenticated) {
+    if (!authState) {
       toast({
         title: "Authentification requise",
         description: "Vous devez vous connecter à Microsoft pour récupérer les événements.",
@@ -206,7 +212,7 @@ export const CalendarImport = () => {
               <Button 
                 className="w-full" 
                 onClick={handleFetchEvents}
-                disabled={isFetchingEvents || !areDatesValid || !isAuthenticated}
+                disabled={isFetchingEvents || !areDatesValid || !authState}
               >
                 {isFetchingEvents ? 'Chargement...' : 'Charger les événements'}
               </Button>
