@@ -37,20 +37,26 @@ export const useMicrosoftAuth = () => {
 
   // Vérifier l'état d'authentification actuel
   const checkAuthStatus = useCallback(() => {
-    if (!msalInstance) return false;
+    if (!msalInstance) {
+      console.log("checkAuthStatus: No MSAL instance available");
+      return false;
+    }
     
     const accounts = msalInstance.getAllAccounts();
     const authState = accounts.length > 0;
     
-    console.log("Current auth state check:", authState ? "authenticated" : "not authenticated");
+    console.log("checkAuthStatus: Current auth state:", authState ? "authenticated" : "not authenticated", "accounts:", accounts.length);
     return authState;
   }, [msalInstance]);
 
   // Effet initial pour configurer MSAL et vérifier l'authentification
   useEffect(() => {
-    if (!settings?.clientId || !settings?.tenantId) return;
+    if (!settings?.clientId || !settings?.tenantId) {
+      console.log("useMicrosoftAuth: No settings available yet");
+      return;
+    }
     
-    console.log("Initializing MSAL with settings", settings);
+    console.log("useMicrosoftAuth: Initializing MSAL with settings", settings);
     const msalConfig = {
       auth: {
         clientId: settings.clientId,
@@ -66,42 +72,49 @@ export const useMicrosoftAuth = () => {
     try {
       const newMsalInstance = new PublicClientApplication(msalConfig);
       newMsalInstance.initialize().then(() => {
+        console.log("useMicrosoftAuth: MSAL initialized successfully");
         setMsalInstance(newMsalInstance);
         
         // Vérification de l'état d'authentification après initialisation
         const accounts = newMsalInstance.getAllAccounts();
         const initialAuthState = accounts.length > 0;
         
-        console.log("Initial auth state:", initialAuthState ? "authenticated" : "not authenticated");
+        console.log("useMicrosoftAuth: Initial auth state:", initialAuthState ? "authenticated" : "not authenticated", "accounts:", accounts.length);
         setIsAuthenticated(initialAuthState);
       });
     } catch (err) {
-      console.error("MSAL initialization error:", err);
+      console.error("useMicrosoftAuth: MSAL initialization error:", err);
       setError("Erreur d'initialisation Microsoft");
     }
   }, [settings]);
 
+  // Log whenever isAuthenticated changes
+  useEffect(() => {
+    console.log("useMicrosoftAuth: isAuthenticated state changed to:", isAuthenticated);
+  }, [isAuthenticated]);
+
   const login = useCallback(async () => {
     if (!msalInstance) {
+      console.log("login: No MSAL instance available");
       setError("Configuration Microsoft non disponible");
       return null;
     }
 
     try {
-      console.log("Attempting login with MSAL");
+      console.log("login: Attempting login with MSAL");
       const response: AuthenticationResult = await msalInstance.loginPopup({
         scopes: ["Calendars.Read"],
         prompt: "select_account",
       });
 
       if (response.account) {
-        console.log("Login successful", response.account.username);
+        console.log("login: Login successful for", response.account.username);
         setIsAuthenticated(true);
         setError(null);
         return response;
       }
     } catch (err) {
-      console.error("Erreur de connexion Microsoft:", err);
+      console.error("login: Erreur de connexion Microsoft:", err);
       setError("Échec de la connexion Microsoft");
       setIsAuthenticated(false);
     }
@@ -110,16 +123,19 @@ export const useMicrosoftAuth = () => {
   }, [msalInstance]);
 
   const logout = useCallback(async () => {
-    if (!msalInstance) return;
+    if (!msalInstance) {
+      console.log("logout: No MSAL instance available");
+      return;
+    }
 
     try {
-      console.log("Attempting logout with MSAL");
+      console.log("logout: Attempting logout with MSAL");
       await msalInstance.logoutPopup();
       setIsAuthenticated(false);
       setError(null);
-      console.log("Logout successful");
+      console.log("logout: Logout successful");
     } catch (err) {
-      console.error("Erreur de déconnexion Microsoft:", err);
+      console.error("logout: Erreur de déconnexion Microsoft:", err);
       setError("Échec de la déconnexion");
     }
   }, [msalInstance]);

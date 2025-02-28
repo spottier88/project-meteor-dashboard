@@ -18,7 +18,7 @@ export const MicrosoftAuthStep: React.FC<MicrosoftAuthStepProps> = ({
     
     // Si déjà authentifié, on peut optionnellement passer automatiquement à l'étape suivante
     if (isAuthenticated) {
-      console.log("Already authenticated in MicrosoftAuthStep");
+      console.log("MicrosoftAuthStep: Already authenticated, can proceed to next step");
     }
   }, [isAuthenticated]);
 

@@ -4,7 +4,6 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Calendar } from '@/components/ui/calendar';
 import { fr } from 'date-fns/locale';
-import { useMicrosoftAuth } from '@/hooks/useMicrosoftAuth';
 
 interface DateSelectionStepProps {
   onDateSelect: (startDate: Date, endDate: Date) => void;
@@ -12,7 +11,7 @@ interface DateSelectionStepProps {
   importDate: Date | undefined;
   endDate: Date | undefined;
   isFetchingEvents: boolean;
-  isAuthenticated: boolean; // Ajout de la prop isAuthenticated
+  isAuthenticated: boolean;
 }
 
 export const DateSelectionStep: React.FC<DateSelectionStepProps> = ({
@@ -34,12 +33,14 @@ export const DateSelectionStep: React.FC<DateSelectionStepProps> = ({
 
   const handleStartDateSelect = (date: Date | undefined) => {
     if (date) {
+      console.log("DateSelectionStep: Selected start date:", date);
       onDateSelect(date, endDate || date);
     }
   };
 
   const handleEndDateSelect = (date: Date | undefined) => {
     if (date) {
+      console.log("DateSelectionStep: Selected end date:", date);
       onDateSelect(importDate || date, date);
     }
   };
@@ -85,6 +86,13 @@ export const DateSelectionStep: React.FC<DateSelectionStepProps> = ({
       >
         {isFetchingEvents ? 'Chargement...' : 'Charger les événements'}
       </Button>
+      {!canFetchEvents && (
+        <div className="text-xs text-muted-foreground mt-1">
+          {!areDatesValid && "Veuillez sélectionner des dates valides. "}
+          {!isAuthenticated && "Authentification Microsoft requise. "}
+          {isFetchingEvents && "Chargement en cours..."}
+        </div>
+      )}
     </div>
   );
 };

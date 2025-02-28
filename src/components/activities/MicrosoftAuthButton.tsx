@@ -13,21 +13,21 @@ export const MicrosoftAuthButton = ({ onAuthSuccess }: MicrosoftAuthButtonProps)
 
   // Log de débogage pour suivre l'état d'authentification
   useEffect(() => {
-    console.log("MicrosoftAuthButton auth state:", isAuthenticated ? "authenticated" : "not authenticated");
+    console.log("MicrosoftAuthButton: Auth state changed to:", isAuthenticated ? "authenticated" : "not authenticated");
   }, [isAuthenticated]);
 
   const handleLogin = async () => {
-    console.log("Handling login click");
+    console.log("MicrosoftAuthButton: Handling login click");
     try {
       const response = await login();
-      console.log("Login response:", response ? "success" : "failed");
+      console.log("MicrosoftAuthButton: Login response:", response ? "success" : "failed");
       
       if (response && onAuthSuccess) {
-        console.log("Login successful, triggering onAuthSuccess callback");
+        console.log("MicrosoftAuthButton: Login successful, triggering onAuthSuccess callback");
         onAuthSuccess();
       }
     } catch (err) {
-      console.error("Login error:", err);
+      console.error("MicrosoftAuthButton: Login error:", err);
     }
   };
 
