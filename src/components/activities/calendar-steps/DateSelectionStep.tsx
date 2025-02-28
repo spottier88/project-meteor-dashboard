@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Calendar } from '@/components/ui/calendar';
@@ -22,6 +22,11 @@ export const DateSelectionStep: React.FC<DateSelectionStepProps> = ({
   isFetchingEvents
 }) => {
   const { isAuthenticated } = useMicrosoftAuth();
+  
+  // Effet pour journaliser l'état d'authentification
+  useEffect(() => {
+    console.log("DateSelectionStep: isAuthenticated =", isAuthenticated);
+  }, [isAuthenticated]);
   
   // État local pour la validation
   const areDatesValid = importDate && endDate && importDate <= endDate;

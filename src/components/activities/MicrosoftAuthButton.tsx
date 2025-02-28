@@ -16,6 +16,15 @@ export const MicrosoftAuthButton = ({ onAuthSuccess }: MicrosoftAuthButtonProps)
     console.log("MicrosoftAuthButton auth state:", isAuthenticated ? "authenticated" : "not authenticated");
   }, [isAuthenticated]);
 
+  const handleLogin = async () => {
+    console.log("Handling login click");
+    const response = await login();
+    if (response && onAuthSuccess) {
+      console.log("Login successful, triggering onAuthSuccess callback");
+      onAuthSuccess();
+    }
+  };
+
   if (!isConfigured) {
     return (
       <Button variant="outline" disabled className="w-full">
@@ -28,7 +37,7 @@ export const MicrosoftAuthButton = ({ onAuthSuccess }: MicrosoftAuthButtonProps)
     <div className="space-y-2">
       <Button
         variant={isAuthenticated ? "outline" : "default"}
-        onClick={isAuthenticated ? logout : login}
+        onClick={isAuthenticated ? logout : handleLogin}
         className="w-full"
       >
         {isAuthenticated ? "Se déconnecter de Microsoft" : "Se connecter à Microsoft"}

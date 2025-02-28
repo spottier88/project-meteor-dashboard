@@ -1,9 +1,7 @@
 
 import React, { useEffect } from 'react';
-import { Button } from '@/components/ui/button';
 import { MicrosoftAuthButton } from '../MicrosoftAuthButton';
 import { useMicrosoftAuth } from '@/hooks/useMicrosoftAuth';
-import { Check } from 'lucide-react';
 
 interface MicrosoftAuthStepProps {
   onAuthSuccess: () => void;
@@ -14,15 +12,9 @@ export const MicrosoftAuthStep: React.FC<MicrosoftAuthStepProps> = ({
 }) => {
   const { isAuthenticated } = useMicrosoftAuth();
 
-  // Déclencher le callback de succès lorsque l'authentification est réussie
+  // Effet pour journaliser l'état d'authentification
   useEffect(() => {
-    console.log("Auth step checking authentication state:", isAuthenticated);
-    
-    if (isAuthenticated) {
-      console.log("Auth step detected successful authentication, trigger is available");
-      // Nous n'appelons plus automatiquement onAuthSuccess pour éviter les problèmes
-      // de timing et de rendu. L'utilisateur utilisera le bouton "Continuer" à la place.
-    }
+    console.log("MicrosoftAuthStep: isAuthenticated =", isAuthenticated);
   }, [isAuthenticated]);
 
   return (

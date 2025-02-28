@@ -44,6 +44,11 @@ export const CalendarImport = () => {
     updateEventDetails,
   } = useCalendarImport();
 
+  // Effet pour journaliser l'état du composant
+  useEffect(() => {
+    console.log("CalendarImport: step =", step, "isAuthenticated =", isAuthenticated);
+  }, [step, isAuthenticated]);
+
   // Effet pour réinitialiser l'étape lors de la fermeture de la boîte de dialogue
   useEffect(() => {
     if (!isOpen) {
@@ -52,12 +57,11 @@ export const CalendarImport = () => {
     }
   }, [isOpen]);
 
-  // Effet qui s'exécute uniquement lors du PREMIER rendu pour gérer l'initialisation
+  // Effet qui s'exécute uniquement lors du premier rendu pour initialiser l'état
   useEffect(() => {
-    if (isAuthenticated) {
-      console.log("Initial render: User is already authenticated, moving to DATE_SELECTION step");
-      setStep(ImportStep.DATE_SELECTION);
-    }
+    // Nous ne faisons plus de changement automatique d'étape ici
+    // pour éviter les problèmes de timing et de boucles infinies
+    console.log("CalendarImport initial render");
   }, []);
 
   // Gestion de la progression des étapes
