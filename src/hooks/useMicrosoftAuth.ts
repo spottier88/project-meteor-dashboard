@@ -79,15 +79,14 @@ export const useMicrosoftAuth = () => {
     }
   }, [settings]);
 
-  // Effet pour vérifier l'état d'authentification à chaque rendu
+  // Effet pour vérifier l'état d'authentification à chaque changement de msalInstance
   useEffect(() => {
-    const currentAuthState = checkAuthStatus();
-    
-    if (currentAuthState !== isAuthenticated) {
-      console.log("Auth state changed to", currentAuthState ? "authenticated" : "not authenticated");
+    if (msalInstance) {
+      const currentAuthState = checkAuthStatus();
+      console.log("Effect: updating auth state to", currentAuthState ? "authenticated" : "not authenticated");
       setIsAuthenticated(currentAuthState);
     }
-  });
+  }, [msalInstance, checkAuthStatus]);
 
   const login = useCallback(async () => {
     if (!msalInstance) {

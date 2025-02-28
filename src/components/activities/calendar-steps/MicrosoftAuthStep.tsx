@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { MicrosoftAuthButton } from '../MicrosoftAuthButton';
 import { useMicrosoftAuth } from '@/hooks/useMicrosoftAuth';
 
@@ -13,9 +13,10 @@ export const MicrosoftAuthStep: React.FC<MicrosoftAuthStepProps> = ({
   const { isAuthenticated } = useMicrosoftAuth();
 
   // Déclencher le callback de succès lorsque l'authentification est réussie
-  React.useEffect(() => {
+  useEffect(() => {
+    console.log("Auth step checking authentication state:", isAuthenticated);
     if (isAuthenticated) {
-      console.log("Auth step detected successful authentication");
+      console.log("Auth step detected successful authentication, triggering callback");
       onAuthSuccess();
     }
   }, [isAuthenticated, onAuthSuccess]);

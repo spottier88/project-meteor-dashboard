@@ -47,27 +47,38 @@ export const CalendarImport = () => {
   // Effet pour réinitialiser l'étape lors de la fermeture de la boîte de dialogue
   useEffect(() => {
     if (!isOpen) {
+      console.log("Dialog closed, resetting to AUTH step");
       setStep(ImportStep.AUTH);
     }
   }, [isOpen]);
 
-  // Effet pour surveiller l'état d'authentification
+  // Effet pour surveiller l'état d'authentification et mettre à jour l'étape
   useEffect(() => {
-    console.log("Authentication state updated in CalendarImport:", isAuthenticated);
+    console.log("CalendarImport detected auth state change:", 
+      isAuthenticated ? "authenticated" : "not authenticated", 
+      "current step:", step);
+    
+    // Automatiquement passer à l'étape de sélection de date si déjà authentifié
+    if (isAuthenticated && step === ImportStep.AUTH) {
+      console.log("User is already authenticated, moving to DATE_SELECTION step");
+      setStep(ImportStep.DATE_SELECTION);
+    }
     
     // Si l'utilisateur se déconnecte, revenir à l'étape d'authentification
     if (!isAuthenticated && step !== ImportStep.AUTH) {
+      console.log("User logged out, resetting to AUTH step");
       setStep(ImportStep.AUTH);
     }
   }, [isAuthenticated, step]);
 
   // Gestion de la progression des étapes
   const handleAuthSuccess = () => {
-    console.log("Auth success detected, moving to date selection");
+    console.log("Auth success callback triggered, moving to date selection");
     setStep(ImportStep.DATE_SELECTION);
   };
 
   const handleDateSelection = (startDate: Date, endDate: Date) => {
+    console.log("Date selection updated:", startDate, endDate);
     setImportDate(startDate);
     setEndDate(endDate);
   };
@@ -91,6 +102,7 @@ export const CalendarImport = () => {
       return;
     }
 
+    console.log("Fetching events for dates:", importDate, endDate);
     fetchEvents(
       { 
         startDate: importDate, 
@@ -98,6 +110,7 @@ export const CalendarImport = () => {
       },
       {
         onSuccess: () => {
+          console.log("Events fetched successfully, moving to EVENTS step");
           setStep(ImportStep.EVENTS);
           toast({
             title: "Événements récupérés",
@@ -105,6 +118,7 @@ export const CalendarImport = () => {
           });
         },
         onError: (error) => {
+          console.error("Error fetching events:", error);
           toast({
             title: "Erreur",
             description: "Impossible de récupérer les événements: " + (error?.message || "Erreur inconnue"),
@@ -125,6 +139,7 @@ export const CalendarImport = () => {
       return;
     }
 
+    console.log("Importing selected events:", selectedEvents.length);
     importCalendar(
       { 
         startDate: importDate!,
@@ -140,6 +155,7 @@ export const CalendarImport = () => {
           });
         },
         onError: (error) => {
+          console.error("Error importing events:", error);
           toast({
             title: "Erreur d'importation",
             description: "Impossible d'importer les événements: " + (error?.message || "Erreur inconnue"),
@@ -151,11 +167,15 @@ export const CalendarImport = () => {
   };
 
   const handleCancel = () => {
+    console.log("User cancelled, returning to AUTH step");
     setStep(ImportStep.AUTH);
   };
 
   // Rendu conditionnel basé sur l'étape actuelle
   const renderCurrentStep = () => {
+    console.log("Rendering step:", step, 
+      "isAuthenticated:", isAuthenticated ? "yes" : "no");
+      
     switch (step) {
       case ImportStep.AUTH:
         return <MicrosoftAuthStep onAuthSuccess={handleAuthSuccess} />;
@@ -190,7 +210,10 @@ export const CalendarImport = () => {
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen}>
+    <Dialog open={isOpen} onOpenChange={(open) => {
+      console.log("Dialog open state changing to:", open);
+      setIsOpen(open);
+    }}>
       <DialogTrigger asChild>
         <Button
           variant="outline"

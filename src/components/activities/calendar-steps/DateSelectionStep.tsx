@@ -1,9 +1,10 @@
 
-import React, { useState } from 'react';
+import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Calendar } from '@/components/ui/calendar';
 import { fr } from 'date-fns/locale';
+import { useMicrosoftAuth } from '@/hooks/useMicrosoftAuth';
 
 interface DateSelectionStepProps {
   onDateSelect: (startDate: Date, endDate: Date) => void;
@@ -20,8 +21,10 @@ export const DateSelectionStep: React.FC<DateSelectionStepProps> = ({
   endDate,
   isFetchingEvents
 }) => {
+  const { isAuthenticated } = useMicrosoftAuth();
   // État local pour la validation
   const areDatesValid = importDate && endDate && importDate <= endDate;
+  const canFetchEvents = areDatesValid && isAuthenticated && !isFetchingEvents;
 
   const handleStartDateSelect = (date: Date | undefined) => {
     if (date) {
@@ -63,10 +66,16 @@ export const DateSelectionStep: React.FC<DateSelectionStepProps> = ({
         </div>
       </div>
       
+      {!isAuthenticated && (
+        <div className="text-sm text-amber-600 mb-2">
+          Vous devez vous connecter à Microsoft pour récupérer les événements.
+        </div>
+      )}
+      
       <Button 
         className="w-full" 
         onClick={onFetchEvents}
-        disabled={isFetchingEvents || !areDatesValid}
+        disabled={!canFetchEvents}
       >
         {isFetchingEvents ? 'Chargement...' : 'Charger les événements'}
       </Button>
