@@ -52,24 +52,13 @@ export const CalendarImport = () => {
     }
   }, [isOpen]);
 
-  // Effet pour surveiller l'état d'authentification et mettre à jour l'étape
+  // Effet qui s'exécute uniquement lors du PREMIER rendu pour gérer l'initialisation
   useEffect(() => {
-    console.log("CalendarImport detected auth state change:", 
-      isAuthenticated ? "authenticated" : "not authenticated", 
-      "current step:", step);
-    
-    // Automatiquement passer à l'étape de sélection de date si déjà authentifié
-    if (isAuthenticated && step === ImportStep.AUTH) {
-      console.log("User is already authenticated, moving to DATE_SELECTION step");
+    if (isAuthenticated) {
+      console.log("Initial render: User is already authenticated, moving to DATE_SELECTION step");
       setStep(ImportStep.DATE_SELECTION);
     }
-    
-    // Si l'utilisateur se déconnecte, revenir à l'étape d'authentification
-    if (!isAuthenticated && step !== ImportStep.AUTH) {
-      console.log("User logged out, resetting to AUTH step");
-      setStep(ImportStep.AUTH);
-    }
-  }, [isAuthenticated, step]);
+  }, []);
 
   // Gestion de la progression des étapes
   const handleAuthSuccess = () => {

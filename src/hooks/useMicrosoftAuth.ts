@@ -35,7 +35,7 @@ export const useMicrosoftAuth = () => {
     queryFn: fetchMicrosoftSettings,
   });
 
-  // Fonction pour vérifier l'état d'authentification actuel
+  // Fonction pour vérifier l'état d'authentification actuel de manière déterministe
   const checkAuthStatus = useCallback(() => {
     if (!msalInstance) return false;
     
@@ -46,47 +46,40 @@ export const useMicrosoftAuth = () => {
     return authState;
   }, [msalInstance]);
 
-  // Effet pour initialiser msalInstance quand les paramètres sont chargés
+  // Effet initial pour configurer MSAL quand les paramètres sont chargés
   useEffect(() => {
-    if (settings?.clientId && settings?.tenantId) {
-      console.log("Initializing MSAL with settings", settings);
-      const msalConfig = {
-        auth: {
-          clientId: settings.clientId,
-          authority: `https://login.microsoftonline.com/${settings.tenantId}`,
-          redirectUri: window.location.origin,
-        },
-        cache: {
-          cacheLocation: "sessionStorage",
-          storeAuthStateInCookie: false,
-        },
-      };
+    if (!settings?.clientId || !settings?.tenantId) return;
+    
+    console.log("Initializing MSAL with settings", settings);
+    const msalConfig = {
+      auth: {
+        clientId: settings.clientId,
+        authority: `https://login.microsoftonline.com/${settings.tenantId}`,
+        redirectUri: window.location.origin,
+      },
+      cache: {
+        cacheLocation: "sessionStorage",
+        storeAuthStateInCookie: false,
+      },
+    };
 
-      const msalInstance = new PublicClientApplication(msalConfig);
-      msalInstance.initialize().then(() => {
-        setMsalInstance(msalInstance);
+    try {
+      const newMsalInstance = new PublicClientApplication(msalConfig);
+      newMsalInstance.initialize().then(() => {
+        setMsalInstance(newMsalInstance);
         
-        // Vérifier si un compte est déjà connecté
-        const accounts = msalInstance.getAllAccounts();
-        if (accounts.length > 0) {
-          console.log("Found existing account", accounts[0].username);
-          setIsAuthenticated(true);
-        } else {
-          console.log("No existing account found");
-          setIsAuthenticated(false);
-        }
+        // Vérification immédiate de l'état d'authentification
+        const accounts = newMsalInstance.getAllAccounts();
+        const initialAuthState = accounts.length > 0;
+        
+        console.log("Initial auth state:", initialAuthState ? "authenticated" : "not authenticated");
+        setIsAuthenticated(initialAuthState);
       });
+    } catch (err) {
+      console.error("MSAL initialization error:", err);
+      setError("Erreur d'initialisation Microsoft");
     }
   }, [settings]);
-
-  // Effet pour vérifier l'état d'authentification à chaque changement de msalInstance
-  useEffect(() => {
-    if (msalInstance) {
-      const currentAuthState = checkAuthStatus();
-      console.log("Effect: updating auth state to", currentAuthState ? "authenticated" : "not authenticated");
-      setIsAuthenticated(currentAuthState);
-    }
-  }, [msalInstance, checkAuthStatus]);
 
   const login = useCallback(async () => {
     if (!msalInstance) {

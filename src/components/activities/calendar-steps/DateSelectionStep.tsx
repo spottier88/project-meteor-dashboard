@@ -22,6 +22,7 @@ export const DateSelectionStep: React.FC<DateSelectionStepProps> = ({
   isFetchingEvents
 }) => {
   const { isAuthenticated } = useMicrosoftAuth();
+  
   // État local pour la validation
   const areDatesValid = importDate && endDate && importDate <= endDate;
   const canFetchEvents = areDatesValid && isAuthenticated && !isFetchingEvents;

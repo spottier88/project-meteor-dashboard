@@ -15,9 +15,13 @@ export const MicrosoftAuthStep: React.FC<MicrosoftAuthStepProps> = ({
   // Déclencher le callback de succès lorsque l'authentification est réussie
   useEffect(() => {
     console.log("Auth step checking authentication state:", isAuthenticated);
+    
     if (isAuthenticated) {
       console.log("Auth step detected successful authentication, triggering callback");
-      onAuthSuccess();
+      // Utilisation de setTimeout pour éviter les problèmes de timing dans le cycle de rendu
+      setTimeout(() => {
+        onAuthSuccess();
+      }, 0);
     }
   }, [isAuthenticated, onAuthSuccess]);
 
