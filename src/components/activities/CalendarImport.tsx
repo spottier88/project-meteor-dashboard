@@ -84,7 +84,10 @@ export const CalendarImport = () => {
   };
 
   const handleFetchEvents = () => {
-    if (!isAuthenticated) {
+    const authState = checkAuthStatus();
+    console.log("lien vers les évenemtents:", authState);
+    
+    if (!authState) {
       toast({
         title: "Authentification requise",
         description: "Vous devez vous connecter à Microsoft pour récupérer les événements.",
