@@ -35,6 +35,13 @@ export const MicrosoftAuthButton = () => {
           <Check className="h-4 w-4" />
           <span>Connecté à Microsoft Graph</span>
         </div>
+          <Button 
+            variant="default" 
+            className="w-full" 
+            onClick={onAuthSuccess}
+          >
+            Continuer
+          </Button>
       )}
       
       {error && (
