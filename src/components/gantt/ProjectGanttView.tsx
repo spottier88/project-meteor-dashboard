@@ -1,3 +1,4 @@
+
 import React from 'react';
 import Timeline from 'react-gantt-timeline';
 import { GanttViewButtons } from './GanttViewButtons';
@@ -43,17 +44,44 @@ export const ProjectGanttView = ({ projects }: ProjectGanttViewProps) => {
       return [projectTask];
     }
 
-    const subTasks: GanttTask[] = (project.tasks || []).map((task) => ({
+    // Organiser les tâches par niveau hiérarchique
+    const parentTasks = (project.tasks || []).filter(task => !task.parent_task_id);
+    const childTasks = (project.tasks || []).filter(task => task.parent_task_id);
+    
+    // Grouper les sous-tâches par tâche parente
+    const childrenByParent: Record<string, any[]> = {};
+    childTasks.forEach(task => {
+      if (!childrenByParent[task.parent_task_id!]) {
+        childrenByParent[task.parent_task_id!] = [];
+      }
+      childrenByParent[task.parent_task_id!].push(task);
+    });
+
+    // Créer les tâches Gantt pour les tâches parentes
+    const parentGanttTasks = parentTasks.map(task => ({
       id: `${project.id}-${task.id}`,
       start: task.start_date ? new Date(task.start_date) : new Date(),
       end: task.due_date ? new Date(task.due_date) : new Date(),
       name: task.title,
       color: getColorForStatus(task.status),
-      type: 'task',
-      project_id: project.id
+      type: 'task' as const,
+      project_id: project.id,
+      parent_task_id: undefined
     }));
 
-    return [projectTask, ...subTasks];
+    // Créer les tâches Gantt pour les sous-tâches
+    const childGanttTasks = childTasks.map(task => ({
+      id: `${project.id}-${task.id}`,
+      start: task.start_date ? new Date(task.start_date) : new Date(),
+      end: task.due_date ? new Date(task.due_date) : new Date(),
+      name: `└ ${task.title}`,  // Préfixe pour indiquer que c'est une sous-tâche
+      color: getColorForStatus(task.status),
+      type: 'subtask' as const,
+      project_id: project.id,
+      parent_task_id: task.parent_task_id
+    }));
+
+    return [projectTask, ...parentGanttTasks, ...childGanttTasks];
   });
 
   const setViewMode = (newMode: 'week' | 'month' | 'year') => {

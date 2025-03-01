@@ -1,3 +1,4 @@
+
 import React from 'react';
 
 interface GanttLegendProps {
@@ -25,6 +26,10 @@ export const GanttLegend = ({ showTasks }: GanttLegendProps) => {
             <div className="flex items-center">
               <div className="w-4 h-4 rounded bg-[#E2E8F0] mr-2"></div>
               <span>Terminé</span>
+            </div>
+            <div className="flex items-center">
+              <div className="w-4 h-4 rounded-full border border-gray-300 mr-2"></div>
+              <span>└ Sous-tâche</span>
             </div>
           </>
         )}
