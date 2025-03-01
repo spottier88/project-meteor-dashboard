@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -9,6 +10,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { Separator } from "@/components/ui/separator";
 
 interface TaskFormProps {
   isOpen: boolean;
@@ -23,6 +25,7 @@ interface TaskFormProps {
     due_date?: string;
     start_date?: string;
     assignee?: string;
+    parent_task_id?: string;
   };
   readOnlyFields?: boolean;
 }
@@ -49,6 +52,7 @@ export const TaskForm = ({
   const [assignee, setAssignee] = useState(task?.assignee || "");
   const [assignmentMode, setAssignmentMode] = useState<"free" | "member">("free");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [parentTaskId, setParentTaskId] = useState<string | undefined>(task?.parent_task_id);
 
   const { data: projectMembers } = useQuery({
     queryKey: ["projectMembers", projectId],
@@ -74,6 +78,26 @@ export const TaskForm = ({
     enabled: !!projectId && isOpen,
   });
 
+  // Récupération des tâches du projet pour la sélection de la tâche parente
+  const { data: projectTasks } = useQuery({
+    queryKey: ["project-tasks-for-parent", projectId],
+    queryFn: async () => {
+      if (!projectId) return [];
+      
+      const { data, error } = await supabase
+        .from("tasks")
+        .select("id, title, parent_task_id")
+        .eq("project_id", projectId)
+        .is("parent_task_id", null); // Sélectionner uniquement les tâches qui ne sont pas déjà des sous-tâches
+      
+      if (error) throw error;
+      
+      // Si nous sommes en mode édition, filtrer la tâche actuelle de la liste
+      return task ? data.filter(t => t.id !== task.id) : data;
+    },
+    enabled: !!projectId && isOpen,
+  });
+
   // Reset form when task changes or when form is closed
   useEffect(() => {
     if (isOpen) {
@@ -84,6 +108,7 @@ export const TaskForm = ({
         setDueDate(task.due_date ? new Date(task.due_date) : undefined);
         setStartDate(task.start_date ? new Date(task.start_date) : undefined);
         setAssignee(task.assignee || "");
+        setParentTaskId(task.parent_task_id);
         setAssignmentMode(
           projectMembers?.some(m => m.profiles.email === task.assignee)
             ? "member"
@@ -103,6 +128,7 @@ export const TaskForm = ({
     setStartDate(undefined);
     setAssignee("");
     setAssignmentMode("free");
+    setParentTaskId(undefined);
   };
 
   const handleSubmit = async () => {
@@ -136,6 +162,7 @@ export const TaskForm = ({
         start_date: startDate?.toISOString().split('T')[0],
         assignee,
         project_id: projectId,
+        parent_task_id: parentTaskId || null,
       };
 
       if (task?.id) {
@@ -211,6 +238,36 @@ export const TaskForm = ({
               placeholder="Description de la tâche"
             />
           </div>
+          
+          {!readOnlyFields && projectTasks && projectTasks.length > 0 && (
+            <div className="grid gap-2">
+              <label htmlFor="parent-task" className="text-sm font-medium">
+                Tâche parente (optionnel)
+              </label>
+              <Select 
+                value={parentTaskId} 
+                onValueChange={setParentTaskId}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Sélectionner une tâche parente (optionnel)" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">Aucune (tâche de premier niveau)</SelectItem>
+                  {projectTasks.map((t) => (
+                    <SelectItem key={t.id} value={t.id}>
+                      {t.title}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">
+                Une tâche parent aura sa date d'échéance automatiquement ajustée en fonction des sous-tâches.
+              </p>
+            </div>
+          )}
+          
+          <Separator className="my-2" />
+          
           <div className="grid gap-2">
             <label htmlFor="status" className="text-sm font-medium">
               Statut

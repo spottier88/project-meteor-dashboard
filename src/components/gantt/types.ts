@@ -1,3 +1,4 @@
+
 import { ProjectStatus, ProgressStatus, ProjectLifecycleStatus } from '@/types/project';
 
 export interface GanttTask {
@@ -6,8 +7,9 @@ export interface GanttTask {
   end: Date;
   name: string;
   color: string;
-  type: 'project' | 'task';
+  type: 'project' | 'task' | 'subtask';
   project_id?: string;
+  parent_task_id?: string;
   status?: ProjectStatus;
   progress?: ProgressStatus;
   lifecycle_status?: ProjectLifecycleStatus;
@@ -30,6 +32,7 @@ export interface ProjectGanttViewProps {
       start_date?: string;
       due_date?: string;
       status: "todo" | "in_progress" | "done";
+      parent_task_id?: string;
     }>;
   }>;
 }

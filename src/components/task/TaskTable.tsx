@@ -1,10 +1,11 @@
+
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
 import { SortableHeader, SortDirection } from "@/components/ui/sortable-header";
 import { Button } from "@/components/ui/button";
-import { Pencil, Trash2 } from "lucide-react";
+import { ChevronDown, ChevronRight, Pencil, Trash2 } from "lucide-react";
 import { useTaskPermissions } from "@/hooks/use-task-permissions";
 
 interface Task {
@@ -16,6 +17,7 @@ interface Task {
   due_date?: string;
   start_date?: string;
   project_id: string;
+  parent_task_id?: string;
 }
 
 interface TaskTableProps {
@@ -39,6 +41,7 @@ const statusLabels = {
 export const TaskTable = ({ tasks, onEdit, onDelete }: TaskTableProps) => {
   const [sortKey, setSortKey] = useState<string | null>(null);
   const [sortDirection, setSortDirection] = useState<SortDirection>(null);
+  const [expandedTasks, setExpandedTasks] = useState<Record<string, boolean>>({});
   const { canEditTask, canDeleteTask } = useTaskPermissions(tasks[0]?.project_id || "");
 
   const handleSort = (key: string) => {
@@ -62,7 +65,30 @@ export const TaskTable = ({ tasks, onEdit, onDelete }: TaskTableProps) => {
     return dueDate < today;
   };
 
-  const sortedTasks = [...tasks].sort((a: any, b: any) => {
+  const toggleTaskExpanded = (taskId: string) => {
+    setExpandedTasks(prev => ({
+      ...prev,
+      [taskId]: !prev[taskId]
+    }));
+  };
+
+  // Séparer les tâches en tâches parentes et sous-tâches
+  const parentTasks = tasks.filter(task => !task.parent_task_id);
+  const childTasks = tasks.filter(task => task.parent_task_id);
+  
+  // Créer un index des sous-tâches par tâche parente
+  const childTasksByParent: Record<string, Task[]> = {};
+  childTasks.forEach(task => {
+    if (task.parent_task_id) {
+      if (!childTasksByParent[task.parent_task_id]) {
+        childTasksByParent[task.parent_task_id] = [];
+      }
+      childTasksByParent[task.parent_task_id].push(task);
+    }
+  });
+
+  // Trier les tâches parentes
+  const sortedParentTasks = [...parentTasks].sort((a: any, b: any) => {
     if (!sortKey || !sortDirection) return 0;
 
     const aValue = a[sortKey];
@@ -130,53 +156,130 @@ export const TaskTable = ({ tasks, onEdit, onDelete }: TaskTableProps) => {
         </TableRow>
       </TableHeader>
       <TableBody>
-        {sortedTasks.map((task) => (
-          <TableRow key={task.id}>
-            <TableCell className="font-medium">{task.title}</TableCell>
-            <TableCell>{task.description || "-"}</TableCell>
-            <TableCell>
-              <Badge className={cn(statusColors[task.status])}>
-                {statusLabels[task.status]}
-              </Badge>
-            </TableCell>
-            <TableCell>{task.assignee || "-"}</TableCell>
-            <TableCell>
-              {task.start_date
-                ? new Date(task.start_date).toLocaleDateString("fr-FR")
-                : "-"}
-            </TableCell>
-            <TableCell>
-              <span className={cn(
-                isTaskOverdue(task) ? "text-red-600 font-medium" : ""
-              )}>
-                {task.due_date
-                  ? new Date(task.due_date).toLocaleDateString("fr-FR")
-                  : "-"}
-              </span>
-            </TableCell>
-            {(canEditTask || canDeleteTask) && (
-              <TableCell className="text-right">
-                {canEditTask(task.assignee) && (
+        {sortedParentTasks.map((task) => (
+          <>
+            <TableRow key={task.id} className={task.id in childTasksByParent ? "border-b-0" : ""}>
+              <TableCell className="font-medium">
+                {task.id in childTasksByParent && (
                   <Button
                     variant="ghost"
                     size="icon"
-                    onClick={() => onEdit?.(task)}
+                    className="h-6 w-6 mr-1 p-0"
+                    onClick={() => toggleTaskExpanded(task.id)}
                   >
-                    <Pencil className="h-4 w-4" />
+                    {expandedTasks[task.id] ? (
+                      <ChevronDown className="h-4 w-4" />
+                    ) : (
+                      <ChevronRight className="h-4 w-4" />
+                    )}
                   </Button>
                 )}
-                {canDeleteTask && (
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => onDelete?.(task)}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
+                {task.title}
+                {task.id in childTasksByParent && (
+                  <Badge variant="outline" className="ml-2 text-xs">
+                    {childTasksByParent[task.id].length} sous-tâche(s)
+                  </Badge>
                 )}
               </TableCell>
+              <TableCell>{task.description || "-"}</TableCell>
+              <TableCell>
+                <Badge className={cn(statusColors[task.status])}>
+                  {statusLabels[task.status]}
+                </Badge>
+              </TableCell>
+              <TableCell>{task.assignee || "-"}</TableCell>
+              <TableCell>
+                {task.start_date
+                  ? new Date(task.start_date).toLocaleDateString("fr-FR")
+                  : "-"}
+              </TableCell>
+              <TableCell>
+                <span className={cn(
+                  isTaskOverdue(task) ? "text-red-600 font-medium" : ""
+                )}>
+                  {task.due_date
+                    ? new Date(task.due_date).toLocaleDateString("fr-FR")
+                    : "-"}
+                </span>
+              </TableCell>
+              {(canEditTask || canDeleteTask) && (
+                <TableCell className="text-right">
+                  {canEditTask(task.assignee) && (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => onEdit?.(task)}
+                    >
+                      <Pencil className="h-4 w-4" />
+                    </Button>
+                  )}
+                  {canDeleteTask && (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => onDelete?.(task)}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  )}
+                </TableCell>
+              )}
+            </TableRow>
+            
+            {/* Afficher les sous-tâches si la tâche parente est étendue */}
+            {task.id in childTasksByParent && expandedTasks[task.id] && (
+              childTasksByParent[task.id].map(childTask => (
+                <TableRow key={childTask.id} className="bg-muted/30">
+                  <TableCell className="font-medium pl-10">
+                    {childTask.title}
+                  </TableCell>
+                  <TableCell>{childTask.description || "-"}</TableCell>
+                  <TableCell>
+                    <Badge className={cn(statusColors[childTask.status])}>
+                      {statusLabels[childTask.status]}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>{childTask.assignee || "-"}</TableCell>
+                  <TableCell>
+                    {childTask.start_date
+                      ? new Date(childTask.start_date).toLocaleDateString("fr-FR")
+                      : "-"}
+                  </TableCell>
+                  <TableCell>
+                    <span className={cn(
+                      isTaskOverdue(childTask) ? "text-red-600 font-medium" : ""
+                    )}>
+                      {childTask.due_date
+                        ? new Date(childTask.due_date).toLocaleDateString("fr-FR")
+                        : "-"}
+                    </span>
+                  </TableCell>
+                  {(canEditTask || canDeleteTask) && (
+                    <TableCell className="text-right">
+                      {canEditTask(childTask.assignee) && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => onEdit?.(childTask)}
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                      )}
+                      {canDeleteTask && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => onDelete?.(childTask)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      )}
+                    </TableCell>
+                  )}
+                </TableRow>
+              ))
             )}
-          </TableRow>
+          </>
         ))}
       </TableBody>
     </Table>

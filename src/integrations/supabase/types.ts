@@ -801,6 +801,7 @@ export type Database = {
           description: string | null
           due_date: string | null
           id: string
+          parent_task_id: string | null
           project_id: string
           start_date: string | null
           status: Database["public"]["Enums"]["task_status"]
@@ -813,6 +814,7 @@ export type Database = {
           description?: string | null
           due_date?: string | null
           id?: string
+          parent_task_id?: string | null
           project_id: string
           start_date?: string | null
           status?: Database["public"]["Enums"]["task_status"]
@@ -825,6 +827,7 @@ export type Database = {
           description?: string | null
           due_date?: string | null
           id?: string
+          parent_task_id?: string | null
           project_id?: string
           start_date?: string | null
           status?: Database["public"]["Enums"]["task_status"]
@@ -832,6 +835,13 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "fk_parent_task"
+            columns: ["parent_task_id"]
+            isOneToOne: false
+            referencedRelation: "tasks"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "tasks_project_id_fkey"
             columns: ["project_id"]
