@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -83,17 +82,26 @@ export const TaskForm = ({
     queryFn: async () => {
       if (!projectId) return [];
       
+      console.log("Fetching parent tasks for project:", projectId);
       const { data, error } = await supabase
         .from("tasks")
         .select("id, title, parent_task_id")
         .eq("project_id", projectId)
         .is("parent_task_id", null);
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error fetching tasks:", error);
+        throw error;
+      }
       
+      console.log("Fetched tasks:", data.length, data);
       return task ? data.filter(t => t.id !== task.id) : data;
     },
     enabled: !!projectId && isOpen,
+    retry: 2,
+    retryDelay: 1000,
+    staleTime: 5 * 60 * 1000,
+    cacheTime: 10 * 60 * 1000
   });
 
   useEffect(() => {
@@ -150,6 +158,7 @@ export const TaskForm = ({
     setIsSubmitting(true);
 
     try {
+      console.log("Saving task with parent_task_id:", parentTaskId === "none" ? null : parentTaskId || null);
       const taskData = {
         title,
         description,
@@ -186,6 +195,7 @@ export const TaskForm = ({
       }
 
       queryClient.invalidateQueries({ queryKey: ["tasks", projectId] });
+      queryClient.invalidateQueries({ queryKey: ["project-tasks-for-parent", projectId] });
       
       onSubmit();
       onClose();
@@ -235,7 +245,7 @@ export const TaskForm = ({
             />
           </div>
           
-          {!readOnlyFields && projectTasks && projectTasks.length > 0 && (
+          {!readOnlyFields && (
             <div className="grid gap-2">
               <label htmlFor="parent-task" className="text-sm font-medium">
                 Tâche parente (optionnel)
@@ -250,11 +260,17 @@ export const TaskForm = ({
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="none">Aucune (tâche de premier niveau)</SelectItem>
-                  {projectTasks?.map((t) => (
-                    <SelectItem key={t.id} value={t.id}>
-                      {t.title}
+                  {Array.isArray(projectTasks) && projectTasks.length > 0 ? (
+                    projectTasks.map((t) => (
+                      <SelectItem key={t.id} value={t.id}>
+                        {t.title}
+                      </SelectItem>
+                    ))
+                  ) : (
+                    <SelectItem value="loading" disabled>
+                      {tasksLoading ? "Chargement des tâches..." : "Aucune tâche disponible"}
                     </SelectItem>
-                  ))}
+                  )}
                 </SelectContent>
               </Select>
               <p className="text-xs text-muted-foreground">
