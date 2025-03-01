@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -78,7 +77,6 @@ export const TaskForm = ({
     enabled: !!projectId && isOpen,
   });
 
-  // Récupération des tâches du projet pour la sélection de la tâche parente
   const { data: projectTasks } = useQuery({
     queryKey: ["project-tasks-for-parent", projectId],
     queryFn: async () => {
@@ -88,17 +86,15 @@ export const TaskForm = ({
         .from("tasks")
         .select("id, title, parent_task_id")
         .eq("project_id", projectId)
-        .is("parent_task_id", null); // Sélectionner uniquement les tâches qui ne sont pas déjà des sous-tâches
-      
+        .is("parent_task_id", null);
+
       if (error) throw error;
       
-      // Si nous sommes en mode édition, filtrer la tâche actuelle de la liste
       return task ? data.filter(t => t.id !== task.id) : data;
     },
     enabled: !!projectId && isOpen,
   });
 
-  // Reset form when task changes or when form is closed
   useEffect(() => {
     if (isOpen) {
       if (task) {
@@ -141,7 +137,6 @@ export const TaskForm = ({
       return;
     }
 
-    // Validation des dates
     if (startDate && dueDate && startDate > dueDate) {
       toast({
         title: "Erreur",
@@ -245,14 +240,14 @@ export const TaskForm = ({
                 Tâche parente (optionnel)
               </label>
               <Select 
-                value={parentTaskId} 
-                onValueChange={setParentTaskId}
+                value={parentTaskId || "none"} 
+                onValueChange={value => setParentTaskId(value === "none" ? undefined : value)}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Sélectionner une tâche parente (optionnel)" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Aucune (tâche de premier niveau)</SelectItem>
+                  <SelectItem value="none">Aucune (tâche de premier niveau)</SelectItem>
                   {projectTasks.map((t) => (
                     <SelectItem key={t.id} value={t.id}>
                       {t.title}
@@ -283,6 +278,7 @@ export const TaskForm = ({
               </SelectContent>
             </Select>
           </div>
+          
           {!readOnlyFields && (
             <>
               <div className="grid gap-2">
