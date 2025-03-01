@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -77,7 +78,7 @@ export const TaskForm = ({
     enabled: !!projectId && isOpen,
   });
 
-  const { data: projectTasks } = useQuery({
+  const { data: projectTasks, isLoading: tasksLoading } = useQuery({
     queryKey: ["project-tasks-for-parent", projectId],
     queryFn: async () => {
       if (!projectId) return [];
@@ -157,7 +158,7 @@ export const TaskForm = ({
         start_date: startDate?.toISOString().split('T')[0],
         assignee,
         project_id: projectId,
-        parent_task_id: parentTaskId || null,
+        parent_task_id: parentTaskId === "none" ? null : parentTaskId || null,
       };
 
       if (task?.id) {
@@ -242,13 +243,14 @@ export const TaskForm = ({
               <Select 
                 value={parentTaskId || "none"} 
                 onValueChange={value => setParentTaskId(value === "none" ? undefined : value)}
+                disabled={tasksLoading}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Sélectionner une tâche parente (optionnel)" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="none">Aucune (tâche de premier niveau)</SelectItem>
-                  {projectTasks.map((t) => (
+                  {projectTasks?.map((t) => (
                     <SelectItem key={t.id} value={t.id}>
                       {t.title}
                     </SelectItem>
