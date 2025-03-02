@@ -1,3 +1,4 @@
+
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -9,10 +10,11 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { Edit, Plus, Settings, Trash2, Users } from "lucide-react";
+import { Edit, Mail, Plus, Settings, Trash2, Users } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { UserForm } from "@/components/UserForm";
+import { InviteUserForm } from "@/components/admin/InviteUserForm";
 import { useToast } from "@/components/ui/use-toast";
 import { Input } from "@/components/ui/input";
 import {
@@ -54,6 +56,7 @@ export const UserManagement = () => {
   const queryClient = useQueryClient();
   const [selectedUser, setSelectedUser] = useState<UserWithRoles | null>(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
+  const [isInviteFormOpen, setIsInviteFormOpen] = useState(false);
   const [userToDelete, setUserToDelete] = useState<UserWithRoles | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
 
@@ -168,13 +171,19 @@ export const UserManagement = () => {
               Gérez les utilisateurs et leurs rôles
             </p>
           </div>
-          <Button onClick={() => {
-            setSelectedUser(null);
-            setIsFormOpen(true);
-          }}>
-            <Plus className="mr-2 h-4 w-4" />
-            Nouvel utilisateur
-          </Button>
+          <div className="flex space-x-2">
+            <Button onClick={() => setIsInviteFormOpen(true)} variant="outline">
+              <Mail className="mr-2 h-4 w-4" />
+              Inviter par email
+            </Button>
+            <Button onClick={() => {
+              setSelectedUser(null);
+              setIsFormOpen(true);
+            }}>
+              <Plus className="mr-2 h-4 w-4" />
+              Nouvel utilisateur
+            </Button>
+          </div>
         </div>
       </div>
 
@@ -252,6 +261,12 @@ export const UserManagement = () => {
         }}
         onSubmit={handleFormSubmit}
         user={selectedUser}
+      />
+
+      <InviteUserForm
+        isOpen={isInviteFormOpen}
+        onClose={() => setIsInviteFormOpen(false)}
+        onSuccess={handleFormSubmit}
       />
 
       <AlertDialog open={!!userToDelete} onOpenChange={() => setUserToDelete(null)}>
