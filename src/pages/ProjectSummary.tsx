@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 import { useState } from "react";
-import { TaskForm } from "@/components/TaskForm";
+import { TaskForm } from "@/components/task/TaskForm";
 import { ProjectSummaryContent } from "@/components/project/ProjectSummaryContent";
 import { useToast } from "@/components/ui/use-toast";
 import { useProjectPermissions } from "@/hooks/useProjectPermissions";
