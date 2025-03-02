@@ -16,6 +16,13 @@ export interface GanttTask {
   completion?: number;
 }
 
+export interface GanttLink {
+  id: string;
+  source: string;
+  target: string;
+  type?: 'finish_to_start' | 'start_to_start' | 'finish_to_finish' | 'start_to_finish';
+}
+
 export interface ProjectGanttViewProps {
   projects: Array<{
     id: string;

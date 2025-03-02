@@ -4,7 +4,7 @@ import Timeline from 'react-gantt-timeline';
 import { GanttViewButtons } from './GanttViewButtons';
 import { GanttExportButtons } from './GanttExportButtons';
 import { GanttLegend } from './GanttLegend';
-import { GanttTask, ProjectGanttViewProps } from './types';
+import { GanttTask, GanttLink, ProjectGanttViewProps } from './types';
 
 export const ProjectGanttView = ({ projects }: ProjectGanttViewProps) => {
   const [mode, setMode] = React.useState<'week' | 'month' | 'year'>('month');
@@ -29,60 +29,92 @@ export const ProjectGanttView = ({ projects }: ProjectGanttViewProps) => {
     }
   };
 
-  const tasks: GanttTask[] = projects.flatMap((project) => {
-    const projectTask: GanttTask = {
-      id: project.id,
-      start: project.start_date ? new Date(project.start_date) : new Date(),
-      end: project.end_date ? new Date(project.end_date) : new Date(),
-      name: project.title,
-      color: getColorForStatus(project.lifecycle_status, true),
-      type: 'project',
-      completion: project.completion
-    };
-
-    if (!showTasks) {
-      return [projectTask];
-    }
-
-    // Organiser les tâches par niveau hiérarchique
-    const parentTasks = (project.tasks || []).filter(task => !task.parent_task_id);
-    const childTasks = (project.tasks || []).filter(task => task.parent_task_id);
+  // Création des tâches et tri par date de début
+  const generateTasks = (): GanttTask[] => {
+    const allTasks: GanttTask[] = [];
     
-    // Grouper les sous-tâches par tâche parente
-    const childrenByParent: Record<string, any[]> = {};
-    childTasks.forEach(task => {
-      if (!childrenByParent[task.parent_task_id!]) {
-        childrenByParent[task.parent_task_id!] = [];
+    projects.forEach((project) => {
+      const projectTask: GanttTask = {
+        id: project.id,
+        start: project.start_date ? new Date(project.start_date) : new Date(),
+        end: project.end_date ? new Date(project.end_date) : new Date(),
+        name: project.title,
+        color: getColorForStatus(project.lifecycle_status, true),
+        type: 'project',
+        completion: project.completion
+      };
+      
+      allTasks.push(projectTask);
+
+      if (showTasks && project.tasks && project.tasks.length > 0) {
+        // Organiser les tâches par niveau hiérarchique
+        const parentTasks = project.tasks.filter(task => !task.parent_task_id);
+        const childTasks = project.tasks.filter(task => task.parent_task_id);
+        
+        // Créer les tâches Gantt pour les tâches parentes
+        parentTasks.forEach(task => {
+          allTasks.push({
+            id: `${project.id}-${task.id}`,
+            start: task.start_date ? new Date(task.start_date) : new Date(),
+            end: task.due_date ? new Date(task.due_date) : new Date(),
+            name: task.title,
+            color: getColorForStatus(task.status),
+            type: 'task',
+            project_id: project.id,
+            parent_task_id: undefined
+          });
+        });
+
+        // Créer les tâches Gantt pour les sous-tâches
+        childTasks.forEach(task => {
+          allTasks.push({
+            id: `${project.id}-${task.id}`,
+            start: task.start_date ? new Date(task.start_date) : new Date(),
+            end: task.due_date ? new Date(task.due_date) : new Date(),
+            name: `└ ${task.title}`,  // Préfixe pour indiquer que c'est une sous-tâche
+            color: getColorForStatus(task.status),
+            type: 'subtask',
+            project_id: project.id,
+            parent_task_id: task.parent_task_id
+          });
+        });
       }
-      childrenByParent[task.parent_task_id!].push(task);
     });
 
-    // Créer les tâches Gantt pour les tâches parentes
-    const parentGanttTasks = parentTasks.map(task => ({
-      id: `${project.id}-${task.id}`,
-      start: task.start_date ? new Date(task.start_date) : new Date(),
-      end: task.due_date ? new Date(task.due_date) : new Date(),
-      name: task.title,
-      color: getColorForStatus(task.status),
-      type: 'task' as const,
-      project_id: project.id,
-      parent_task_id: undefined
-    }));
+    // Trier par date de début
+    return allTasks.sort((a, b) => a.start.getTime() - b.start.getTime());
+  };
 
-    // Créer les tâches Gantt pour les sous-tâches
-    const childGanttTasks = childTasks.map(task => ({
-      id: `${project.id}-${task.id}`,
-      start: task.start_date ? new Date(task.start_date) : new Date(),
-      end: task.due_date ? new Date(task.due_date) : new Date(),
-      name: `└ ${task.title}`,  // Préfixe pour indiquer que c'est une sous-tâche
-      color: getColorForStatus(task.status),
-      type: 'subtask' as const,
-      project_id: project.id,
-      parent_task_id: task.parent_task_id
-    }));
+  // Création des liens entre tâches parentes et enfants
+  const generateLinks = (tasks: GanttTask[]): GanttLink[] => {
+    const links: GanttLink[] = [];
+    
+    if (!showTasks) return links;
+    
+    // Créer des liens entre les tâches parentes et leurs sous-tâches
+    tasks.forEach(task => {
+      if (task.type === 'subtask' && task.parent_task_id) {
+        const parentTaskId = `${task.project_id}-${task.parent_task_id}`;
+        
+        // Vérifier que la tâche parente existe dans notre liste
+        const parentExists = tasks.some(t => t.id === parentTaskId);
+        
+        if (parentExists) {
+          links.push({
+            id: `link-${task.id}-${parentTaskId}`,
+            source: parentTaskId,
+            target: task.id,
+            type: 'finish_to_start'
+          });
+        }
+      }
+    });
+    
+    return links;
+  };
 
-    return [projectTask, ...parentGanttTasks, ...childGanttTasks];
-  });
+  const tasks = generateTasks();
+  const links = generateLinks(tasks);
 
   const setViewMode = (newMode: 'week' | 'month' | 'year') => {
     setMode(newMode);
@@ -117,7 +149,7 @@ export const ProjectGanttView = ({ projects }: ProjectGanttViewProps) => {
         <div ref={ganttRef} className="h-[600px] w-full">
           <Timeline 
             data={tasks}
-            links={[]}
+            links={links}
             mode={mode}
             onSelectItem={(item) => console.log("Item clicked:", item)}
             itemHeight={50}
@@ -146,7 +178,14 @@ export const ProjectGanttView = ({ projects }: ProjectGanttViewProps) => {
                     backgroundColor: '#333333',
                     borderBottom: 'solid 1px silver',
                     color: 'white',
-                    textAlign: 'left'
+                    textAlign: 'left',
+                    padding: '0 10px'
+                  }
+                },
+                task: {
+                  style: {
+                    textAlign: 'left',
+                    padding: '0 10px'
                   }
                 },
                 verticalSeparator: {
@@ -173,7 +212,7 @@ export const ProjectGanttView = ({ projects }: ProjectGanttViewProps) => {
                 }
               },
               links: {
-                color: 'black',
+                color: '#787878',
                 selectedColor: '#ff00fa'
               },
               handleWidth: 0,
@@ -185,6 +224,7 @@ export const ProjectGanttView = ({ projects }: ProjectGanttViewProps) => {
               projectProgressColor: '#2196F3',
               projectDeadlineColor: '#f44336',
               projectTextColor: '#ffffff',
+              projectTextStyle: { fontWeight: 'bold' },  // Mettre en gras pour les projets
               taskTextColor: '#333333',
               taskSelectedColor: '#1a73e8',
               taskProgressColor: '#2196F3',
