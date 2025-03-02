@@ -1,8 +1,9 @@
+
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { TaskForm } from "./TaskForm";
+import { TaskForm } from "@/components/task/TaskForm";
 import { useToast } from "@/components/ui/use-toast";
 import { Plus } from "lucide-react";
 import { TaskTable } from "./task/TaskTable";

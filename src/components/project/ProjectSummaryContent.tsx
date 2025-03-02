@@ -1,3 +1,4 @@
+
 import { Button } from "@/components/ui/button";
 import { RiskList } from "@/components/RiskList";
 import { KanbanBoard } from "@/components/KanbanBoard";
@@ -7,7 +8,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useState } from "react";
 import { Plus } from "lucide-react";
-import { TaskForm } from "@/components/TaskForm";
+import { TaskForm } from "@/components/task/TaskForm";
 import { InnovationRadarChart } from "../innovation/InnovationRadarChart";
 import { Card, CardContent } from "@/components/ui/card";
 import { HelpCircle } from "lucide-react";
