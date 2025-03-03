@@ -27,9 +27,8 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({ onNewProject, 
           <div className="flex items-center flex-1">
             <h1 className="text-3xl font-bold mr-8">Tableau de bord</h1>
             
-            {/* isAdmin && (
+            {isAdmin && (
           
-        
             <NavigationMenu>
               <NavigationMenuList className="gap-2">
                 <NavigationMenuItem>
@@ -50,7 +49,7 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({ onNewProject, 
                 )}
               </NavigationMenuList>
             </NavigationMenu>
-            )*/}
+            )}
             
           </div>
 
