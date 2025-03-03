@@ -80,10 +80,13 @@ export const ProjectGanttView = ({ projects }: ProjectGanttViewProps) => {
         // Créer les tâches Gantt pour les tâches parentes
         parentTasks.forEach(task => {
           const taskId = `${project.id}-${task.id}`;
+          const taskStartDate = task.start_date ? new Date(task.start_date) : new Date(project.start_date || new Date());
+          const taskEndDate = task.due_date ? new Date(task.due_date) : new Date(project.end_date || new Date());
+          
           allTasks.push({
             id: taskId,
-            start: task.start_date ? new Date(task.start_date) : new Date(),
-            end: task.due_date ? new Date(task.due_date) : new Date(),
+            start: taskStartDate,
+            end: taskEndDate,
             name: `  └ ${task.title}`, // Indentation visuelle pour montrer la hiérarchie
             color: getColorForStatus(task.status),
             type: 'task',
@@ -102,10 +105,13 @@ export const ProjectGanttView = ({ projects }: ProjectGanttViewProps) => {
           
           childTasks.forEach(childTask => {
             const childTaskId = `${project.id}-${childTask.id}`;
+            const childStartDate = childTask.start_date ? new Date(childTask.start_date) : taskStartDate;
+            const childEndDate = childTask.due_date ? new Date(childTask.due_date) : taskEndDate;
+            
             allTasks.push({
               id: childTaskId,
-              start: childTask.start_date ? new Date(childTask.start_date) : new Date(),
-              end: childTask.due_date ? new Date(childTask.due_date) : new Date(),
+              start: childStartDate,
+              end: childEndDate,
               name: `    └ ${childTask.title}`, // Double indentation pour les sous-tâches
               color: getColorForStatus(childTask.status),
               type: 'subtask',
