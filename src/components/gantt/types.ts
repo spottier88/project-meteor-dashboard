@@ -7,13 +7,15 @@ export interface GanttTask {
   end: Date;
   name: string;
   color: string;
-  type: 'project' | 'task' | 'subtask';
+  type: 'project' | 'task' | 'subtask' | 'separator';
   project_id?: string;
+  parent_id?: string;
   parent_task_id?: string;
   status?: ProjectStatus;
   progress?: ProgressStatus;
   lifecycle_status?: ProjectLifecycleStatus;
   completion?: number;
+  isDisabled?: boolean;
 }
 
 export interface GanttLink {
