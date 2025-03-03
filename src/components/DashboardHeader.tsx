@@ -28,27 +28,26 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({ onNewProject, 
             <h1 className="text-3xl font-bold mr-8">Tableau de bord</h1>
             
             {isAdmin && (
-          
-            <NavigationMenu>
-              <NavigationMenuList className="gap-2">
-                <NavigationMenuItem>
-                  <Link to="/activities">
-                    <Button variant="ghost">
-                      Mes activités
-                    </Button>
-                  </Link>
-                </NavigationMenuItem>
-                {showTeamActivities && (
+              <NavigationMenu>
+                <NavigationMenuList className="gap-2">
                   <NavigationMenuItem>
-                    <Link to="/team-activities">
+                    <Link to="/activities">
                       <Button variant="ghost">
-                        Activités de l'équipe
+                        Mes activités
                       </Button>
                     </Link>
                   </NavigationMenuItem>
-                )}
-              </NavigationMenuList>
-            </NavigationMenu>
+                  {showTeamActivities && (
+                    <NavigationMenuItem>
+                      <Link to="/team-activities">
+                        <Button variant="ghost">
+                          Activités de l'équipe
+                        </Button>
+                      </Link>
+                    </NavigationMenuItem>
+                  )}
+                </NavigationMenuList>
+              </NavigationMenu>
             )}
             
           </div>
@@ -72,4 +71,3 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({ onNewProject, 
     </div>
   );
 };
-
