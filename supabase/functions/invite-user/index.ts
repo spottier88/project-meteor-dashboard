@@ -117,14 +117,28 @@ const handler = async (req: Request): Promise<Response> => {
       throw new Error("Erreur lors de la création de l'utilisateur");
     }
 
-    // Ajouter le rôle demandé
-    const { error: roleError } = await supabase.from("user_roles").insert({
-      user_id: authUser.user.id,
-      role,
-    });
+    // Vérifier si le rôle existe déjà pour cet utilisateur
+    const { data: existingRole, error: roleCheckError } = await supabase
+      .from("user_roles")
+      .select("id")
+      .eq("user_id", authUser.user.id)
+      .eq("role", role)
+      .maybeSingle();
 
-    if (roleError) {
-      throw roleError;
+    if (roleCheckError) {
+      throw roleCheckError;
+    }
+
+    // Ajouter le rôle demandé seulement s'il n'existe pas déjà
+    if (!existingRole) {
+      const { error: roleError } = await supabase.from("user_roles").insert({
+        user_id: authUser.user.id,
+        role,
+      });
+
+      if (roleError) {
+        throw roleError;
+      }
     }
 
     // Si un projectId est fourni, ajouter l'utilisateur au projet
