@@ -157,7 +157,7 @@ export const TeamManagement = ({
                     <TableCell>{member.profiles?.email || 'Email non disponible'}</TableCell>
                     <TableCell>
                       {isProjectManager && (
-                        <Badge className="bg-blue-500">
+                        <Badge variant="blue">
                           <ShieldCheck className="h-3 w-3 mr-1" />
                           Chef de projet
                         </Badge>

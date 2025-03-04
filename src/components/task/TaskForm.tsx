@@ -22,7 +22,7 @@ export const TaskForm = ({
   readOnlyFields = false
 }: TaskFormProps) => {
   // Récupérer les informations du projet pour le chef de projet
-  const { data: project } = useQuery({
+  const { data: project, isSuccess: projectLoaded } = useQuery({
     queryKey: ["project-for-task", projectId],
     queryFn: async () => {
       if (!projectId) return null;
@@ -41,9 +41,9 @@ export const TaskForm = ({
 
   // Fetch project members
   const { data: projectMembers } = useQuery({
-    queryKey: ["projectMembers", projectId],
+    queryKey: ["projectMembers", projectId, project?.project_manager],
     queryFn: async () => {
-      if (!projectId) return null;
+      if (!projectId) return [];
       
       const { data, error } = await supabase
         .from("project_members")
@@ -60,14 +60,17 @@ export const TaskForm = ({
 
       if (error) throw error;
       
+      let membersList = [...data];
+      
       // Vérifier si le chef de projet est déjà dans la liste des membres
       if (project?.project_manager) {
-        const projectManagerExists = data.some(member => 
+        const projectManagerExists = membersList.some(member => 
           member.profiles?.email === project.project_manager
         );
         
         // Si le chef de projet n'est pas dans la liste, le récupérer et l'ajouter
         if (!projectManagerExists) {
+          console.log("Adding project manager to members list");
           const { data: pmProfile, error: pmError } = await supabase
             .from("profiles")
             .select("id, email, first_name, last_name")
@@ -75,7 +78,7 @@ export const TaskForm = ({
             .maybeSingle();
             
           if (!pmError && pmProfile) {
-            data.push({
+            membersList.push({
               user_id: pmProfile.id,
               profiles: pmProfile
             });
@@ -83,9 +86,9 @@ export const TaskForm = ({
         }
       }
       
-      return data;
+      return membersList;
     },
-    enabled: !!projectId && isOpen && !!project,
+    enabled: !!projectId && isOpen && projectLoaded,
   });
 
   // Fetch parent task options - Exclure la tâche actuelle et ses sous-tâches
