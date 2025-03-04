@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Plus, Trash2, UserPlus } from "lucide-react";
+import { Plus, Trash2, UserPlus, ShieldCheck } from "lucide-react";
 import { useState } from "react";
 import { TeamMemberForm } from "@/components/project/TeamMemberForm";
 import { InviteMemberForm } from "@/components/project/InviteMemberForm";
@@ -16,6 +16,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
 
 export interface TeamManagementProps {
   projectId: string;
@@ -36,6 +37,21 @@ export const TeamManagement = ({
   const [isInviteFormOpen, setIsInviteFormOpen] = useState(false);
   const queryClient = useQueryClient();
   const { toast } = useToast();
+
+  // Récupérer les informations du projet pour connaître le chef de projet
+  const { data: project } = useQuery({
+    queryKey: ["project", projectId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("projects")
+        .select("project_manager")
+        .eq("id", projectId)
+        .maybeSingle();
+
+      if (error) throw error;
+      return data;
+    },
+  });
 
   const { data: members } = useQuery({
     queryKey: ["projectMembers", projectId],
@@ -83,7 +99,17 @@ export const TeamManagement = ({
     },
   });
 
-  const handleDelete = (memberId: string) => {
+  const handleDelete = (memberId: string, email?: string) => {
+    // Vérifier si le membre est le chef de projet
+    if (email && project?.project_manager === email) {
+      toast({
+        variant: "destructive",
+        title: "Action impossible",
+        description: "Vous ne pouvez pas retirer le chef de projet de l'équipe.",
+      });
+      return;
+    }
+
     if (window.confirm("Êtes-vous sûr de vouloir retirer ce membre de l'équipe ?")) {
       deleteMutation.mutate(memberId);
     }
@@ -114,34 +140,48 @@ export const TeamManagement = ({
               <TableRow>
                 <TableHead>Nom</TableHead>
                 <TableHead>Email</TableHead>
+                <TableHead>Rôle</TableHead>
                 {canManageTeam && <TableHead className="w-[100px]">Actions</TableHead>}
               </TableRow>
             </TableHeader>
             <TableBody>
-              {members?.map((member) => (
-                <TableRow key={member.id}>
-                  <TableCell>
-                    {member.profiles && (member.profiles.first_name || member.profiles.last_name) 
-                      ? `${member.profiles.first_name || ''} ${member.profiles.last_name || ''}`.trim()
-                      : member.profiles?.email || 'Utilisateur inconnu'}
-                  </TableCell>
-                  <TableCell>{member.profiles?.email || 'Email non disponible'}</TableCell>
-                  {canManageTeam && (
+              {members?.map((member) => {
+                const isProjectManager = member.profiles?.email === project?.project_manager;
+                return (
+                  <TableRow key={member.id}>
                     <TableCell>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleDelete(member.id)}
-                      >
-                        <Trash2 className="h-4 w-4 text-destructive" />
-                      </Button>
+                      {member.profiles && (member.profiles.first_name || member.profiles.last_name) 
+                        ? `${member.profiles.first_name || ''} ${member.profiles.last_name || ''}`.trim()
+                        : member.profiles?.email || 'Utilisateur inconnu'}
                     </TableCell>
-                  )}
-                </TableRow>
-              ))}
+                    <TableCell>{member.profiles?.email || 'Email non disponible'}</TableCell>
+                    <TableCell>
+                      {isProjectManager && (
+                        <Badge className="bg-blue-500">
+                          <ShieldCheck className="h-3 w-3 mr-1" />
+                          Chef de projet
+                        </Badge>
+                      )}
+                    </TableCell>
+                    {canManageTeam && (
+                      <TableCell>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleDelete(member.id, member.profiles?.email)}
+                          disabled={isProjectManager}
+                          title={isProjectManager ? "Le chef de projet ne peut pas être retiré de l'équipe" : "Retirer de l'équipe"}
+                        >
+                          <Trash2 className={`h-4 w-4 ${isProjectManager ? 'text-gray-400' : 'text-destructive'}`} />
+                        </Button>
+                      </TableCell>
+                    )}
+                  </TableRow>
+                );
+              })}
               {(!members || members.length === 0) && (
                 <TableRow>
-                  <TableCell colSpan={3} className="text-center text-muted-foreground">
+                  <TableCell colSpan={canManageTeam ? 4 : 3} className="text-center text-muted-foreground">
                     Aucun membre dans l'équipe
                   </TableCell>
                 </TableRow>
