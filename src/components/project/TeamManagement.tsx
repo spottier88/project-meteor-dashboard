@@ -1,10 +1,12 @@
+
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Plus, Trash2 } from "lucide-react";
+import { Plus, Trash2, UserPlus } from "lucide-react";
 import { useState } from "react";
 import { TeamMemberForm } from "@/components/project/TeamMemberForm";
+import { InviteMemberForm } from "@/components/project/InviteMemberForm";
 import { useToast } from "@/components/ui/use-toast";
 import {
   Table,
@@ -31,6 +33,7 @@ export const TeamManagement = ({
   canManageTeam,
 }: TeamManagementProps) => {
   const [isFormOpen, setIsFormOpen] = useState(false);
+  const [isInviteFormOpen, setIsInviteFormOpen] = useState(false);
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
@@ -91,10 +94,16 @@ export const TeamManagement = ({
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-bold">Équipe projet</h2>
         {canManageTeam && (
-          <Button onClick={() => setIsFormOpen(true)}>
-            <Plus className="h-4 w-4 mr-2" />
-            Ajouter un membre
-          </Button>
+          <div className="flex space-x-2">
+            <Button onClick={() => setIsFormOpen(true)}>
+              <Plus className="h-4 w-4 mr-2" />
+              Ajouter un membre
+            </Button>
+            <Button onClick={() => setIsInviteFormOpen(true)} variant="outline">
+              <UserPlus className="h-4 w-4 mr-2" />
+              Inviter un utilisateur
+            </Button>
+          </div>
         )}
       </div>
 
@@ -146,6 +155,14 @@ export const TeamManagement = ({
         isOpen={isFormOpen}
         onClose={() => setIsFormOpen(false)}
         projectId={projectId}
+      />
+
+      <InviteMemberForm
+        isOpen={isInviteFormOpen}
+        onClose={() => setIsInviteFormOpen(false)}
+        projectId={projectId}
+        isProjectManager={isProjectManager}
+        isAdmin={isAdmin}
       />
     </div>
   );
