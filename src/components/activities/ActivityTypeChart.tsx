@@ -2,6 +2,7 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PieChart, Pie, ResponsiveContainer, Cell, Tooltip, Legend } from "recharts";
+import { useActivityTypes } from '@/hooks/useActivityTypes';
 
 interface ActivityTypeData {
   type: string;
@@ -16,35 +17,23 @@ interface ActivityTypeChartProps {
   }>;
 }
 
-const ACTIVITY_COLORS = {
-  development: '#8884d8',
-  testing: '#82ca9d',
-  documentation: '#ffc658',
-  meeting: '#ff8042',
-  support: '#a4de6c',
-  training: '#d0ed57',
-  other: '#b19cd9'
-};
-
-const ACTIVITY_LABELS = {
-  development: 'Développement',
-  testing: 'Test',
-  documentation: 'Documentation',
-  meeting: 'Réunion',
-  support: 'Support',
-  training: 'Formation',
-  other: 'Autre'
-};
-
 export const ActivityTypeChart = ({ activities }: ActivityTypeChartProps) => {
+  const { data: activityTypes, isLoading } = useActivityTypes();
+  
+  if (isLoading) {
+    return <div className="flex justify-center items-center h-[300px]">Chargement des types d'activités...</div>;
+  }
+
   const data = activities.reduce((acc: ActivityTypeData[], activity) => {
     const existingType = acc.find(item => item.type === activity.activity_type);
+    const activityTypeInfo = activityTypes?.find(type => type.code === activity.activity_type);
+    
     if (existingType) {
       existingType.total += activity.duration_minutes / 60;
     } else {
       acc.push({
         type: activity.activity_type,
-        displayType: ACTIVITY_LABELS[activity.activity_type as keyof typeof ACTIVITY_LABELS] || activity.activity_type,
+        displayType: activityTypeInfo?.label || activity.activity_type,
         total: activity.duration_minutes / 60
       });
     }
@@ -69,12 +58,15 @@ export const ActivityTypeChart = ({ activities }: ActivityTypeChartProps) => {
                 outerRadius="80%"
                 label={(entry) => `${entry.displayType} (${Math.round(entry.total)}h)`}
               >
-                {data.map((entry) => (
-                  <Cell 
-                    key={entry.type} 
-                    fill={ACTIVITY_COLORS[entry.type as keyof typeof ACTIVITY_COLORS] || '#999999'}
-                  />
-                ))}
+                {data.map((entry) => {
+                  const activityTypeInfo = activityTypes?.find(type => type.code === entry.type);
+                  return (
+                    <Cell 
+                      key={entry.type} 
+                      fill={activityTypeInfo?.color || '#999999'}
+                    />
+                  );
+                })}
               </Pie>
               <Tooltip 
                 formatter={(value: number, name: string) => [
@@ -84,7 +76,8 @@ export const ActivityTypeChart = ({ activities }: ActivityTypeChartProps) => {
               />
               <Legend formatter={(value) => {
                 if (typeof value === 'string') {
-                  return ACTIVITY_LABELS[value as keyof typeof ACTIVITY_LABELS] || value;
+                  const activityType = activityTypes?.find(type => type.code === value);
+                  return activityType?.label || value;
                 }
                 return value;
               }} />
@@ -95,4 +88,3 @@ export const ActivityTypeChart = ({ activities }: ActivityTypeChartProps) => {
     </Card>
   );
 };
-

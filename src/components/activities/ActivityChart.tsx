@@ -1,41 +1,18 @@
 
 import React from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-
-const ACTIVITY_COLORS = {
-  development: '#8884d8',
-  testing: '#82ca9d',
-  documentation: '#ffc658',
-  meeting: '#ff8042',
-  support: '#a4de6c',
-  training: '#d0ed57',
-  other: '#b19cd9'
-};
-
-const ACTIVITY_LABELS = {
-  development: 'Développement',
-  testing: 'Test',
-  documentation: 'Documentation',
-  meeting: 'Réunion',
-  support: 'Support',
-  training: 'Formation',
-  other: 'Autre'
-};
+import { useActivityTypes } from '@/hooks/useActivityTypes';
 
 interface ActivityChartProps {
   data: any[];
 }
 
 export const ActivityChart = ({ data }: ActivityChartProps) => {
-  const activityTypes = [
-    'development',
-    'testing',
-    'documentation',
-    'meeting',
-    'support',
-    'training',
-    'other'
-  ];
+  const { data: activityTypes, isLoading } = useActivityTypes();
+
+  if (isLoading) {
+    return <div className="flex justify-center items-center h-[400px]">Chargement des types d'activités...</div>;
+  }
 
   return (
     <div className="w-full h-[400px]">
@@ -53,19 +30,26 @@ export const ActivityChart = ({ data }: ActivityChartProps) => {
           <XAxis dataKey="day" />
           <YAxis unit="h" />
           <Tooltip 
-            formatter={(value: number, name: string) => [
-              `${Math.round(value * 10) / 10}h`,
-              ACTIVITY_LABELS[name as keyof typeof ACTIVITY_LABELS] || name
-            ]}
+            formatter={(value: number, name: string) => {
+              // Trouve le label du type d'activité s'il existe
+              const activityType = activityTypes?.find(type => type.code === name);
+              return [
+                `${Math.round(value * 10) / 10}h`,
+                activityType ? activityType.label : name
+              ];
+            }}
           />
           <Legend 
-            formatter={(value) => ACTIVITY_LABELS[value as keyof typeof ACTIVITY_LABELS] || value}
+            formatter={(value) => {
+              const activityType = activityTypes?.find(type => type.code === value);
+              return activityType ? activityType.label : value;
+            }}
           />
-          {activityTypes.map((type) => (
+          {activityTypes?.map((type) => (
             <Bar
-              key={type}
-              dataKey={type}
-              fill={ACTIVITY_COLORS[type as keyof typeof ACTIVITY_COLORS]}
+              key={type.code}
+              dataKey={type.code}
+              fill={type.color}
               stackId="a"
             />
           ))}
@@ -74,4 +58,3 @@ export const ActivityChart = ({ data }: ActivityChartProps) => {
     </div>
   );
 };
-

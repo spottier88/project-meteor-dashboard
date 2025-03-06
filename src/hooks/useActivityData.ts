@@ -1,3 +1,4 @@
+
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useUser } from '@supabase/auth-helpers-react';
@@ -112,6 +113,7 @@ export const processActivityData = (activities: Activity[] | null, periodStart: 
     };
   });
 
+  // Regrouper les activités par jour
   const dailyActivities = activities?.reduce((acc, activity) => {
     const activityDate = new Date(activity.start_time);
     const dayIndex = allDays.findIndex(d => isSameDay(d.date, activityDate));
@@ -135,6 +137,7 @@ export const processActivityData = (activities: Activity[] | null, periodStart: 
     return acc;
   }, allDays) || allDays;
 
+  // Construire les données pour le graphique
   const chartData = dailyActivities.map(({ date, byType }) => ({
     day: format(date, 'EEE', { locale: fr }),
     ...Object.fromEntries(
