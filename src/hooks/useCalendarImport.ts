@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -140,20 +139,15 @@ export const useCalendarImport = () => {
 
       const eventsToImport = selectedEvents.filter(event => event.selected);
       
-      if (eventsToImport.length === 0) {
-        throw new Error('Aucun événement sélectionné pour l\'import');
-      }
-
       const invalidEvents = eventsToImport.filter(event => 
         !event.activityType || 
-        !event.projectId || 
-        (!event.description && !event.title)
+        !Object.values(ActivityTypeEnum).includes(event.activityType as ActivityTypeEnum)
       );
 
       if (invalidEvents.length > 0) {
         throw new Error(
-          `${invalidEvents.length} événement(s) manquent des informations nécessaires. ` +
-          'Tous les événements doivent avoir une description, un type d\'activité et un projet.'
+          `${invalidEvents.length} événement(s) ont des types d'activité invalides. ` +
+          'Les types autorisés sont: meeting, development, testing, documentation, support, other.'
         );
       }
 
@@ -169,7 +163,6 @@ export const useCalendarImport = () => {
         throw importError;
       }
 
-      // Cast activity_type to the expected enum type
       const activitiesToInsert = eventsToImport.map(event => ({
         user_id: user.id,
         description: event.description || event.title,
@@ -181,10 +174,9 @@ export const useCalendarImport = () => {
 
       console.log('Activités à insérer:', activitiesToInsert);
 
-      // Cast the entire array to any to bypass the strict type checking
       const { error: activitiesError } = await supabase
         .from('activities')
-        .insert(activitiesToInsert as any);
+        .insert(activitiesToInsert);
 
       if (activitiesError) {
         console.error('Erreur d\'insertion des activités:', activitiesError);

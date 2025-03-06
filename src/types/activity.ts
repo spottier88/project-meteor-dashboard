@@ -19,7 +19,8 @@ export interface CalendarEvent {
   startTime: Date;
   endTime: Date;
   duration: number;
-  activityType?: ActivityTypeEnum | string;
+  activityType?: ActivityTypeEnum;  // Suppression de l'union type avec string
   projectId?: string;
   selected?: boolean;
 }
+

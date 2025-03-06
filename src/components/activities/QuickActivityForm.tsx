@@ -1,4 +1,3 @@
-
 import { useForm } from "react-hook-form";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -30,14 +29,13 @@ type FormData = {
   project_id: string;
 };
 
-export function QuickActivityForm({ onSuccess }: { onSuccess?: () => void }) {
+const QuickActivityForm = ({ onSuccess }: { onSuccess?: () => void }) => {
   const session = useSession();
   const form = useForm<FormData>();
   const { data: activityTypes, isLoading: isLoadingTypes } = useActivityTypes();
 
   const queryClient = useQueryClient();
 
-  // Fetch accessible projects
   const { data: projects } = useQuery({
     queryKey: ["accessible-projects"],
     queryFn: async () => {
@@ -53,10 +51,8 @@ export function QuickActivityForm({ onSuccess }: { onSuccess?: () => void }) {
 
   const { mutate: createActivity, isLoading } = useMutation({
     mutationFn: async (data: FormData) => {
-      // Cast activity_type to any to bypass TypeScript's type checking
-      // This is safe because we know our activity_type codes are valid
       const { error } = await supabase.from("activities").insert({
-        activity_type: data.activity_type as any,
+        activity_type: data.activity_type as ActivityTypeEnum,
         description: data.description,
         duration_minutes: data.duration_minutes,
         start_time: data.start_time,
@@ -190,4 +186,6 @@ export function QuickActivityForm({ onSuccess }: { onSuccess?: () => void }) {
       </form>
     </Form>
   );
-}
+};
+
+export default QuickActivityForm;
