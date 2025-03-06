@@ -1,4 +1,3 @@
-
 import React from 'react';
 import {
   TableRow,
@@ -15,7 +14,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import { ActivityType, CalendarEvent } from '@/types/activity';
+import { ActivityType, CalendarEvent, ActivityTypeEnum } from '@/types/activity';
 
 interface Project {
   id: string;
@@ -80,7 +79,7 @@ export const EventRow: React.FC<EventRowProps> = ({
       <TableCell>
         <Select
           value={event.activityType as string}
-          onValueChange={(value) => onEventChange(event.id, { activityType: value })}
+          onValueChange={(value) => onEventChange(event.id, { activityType: value as ActivityTypeEnum })}
           disabled={!event.selected}
         >
           <SelectTrigger className="w-[200px]">

@@ -141,7 +141,7 @@ export const useCalendarImport = () => {
       
       const invalidEvents = eventsToImport.filter(event => 
         !event.activityType || 
-        !Object.values(ActivityTypeEnum).includes(event.activityType as ActivityTypeEnum)
+        !["meeting", "development", "testing", "documentation", "support", "other"].includes(event.activityType)
       );
 
       if (invalidEvents.length > 0) {

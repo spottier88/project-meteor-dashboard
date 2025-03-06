@@ -3,7 +3,7 @@ import React from 'react';
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { QuickActivityForm } from './QuickActivityForm';
+import QuickActivityForm from './QuickActivityForm';
 
 export const ActivityEntry = () => {
   const [open, setOpen] = React.useState(false);
@@ -25,4 +25,3 @@ export const ActivityEntry = () => {
     </Dialog>
   );
 };
-

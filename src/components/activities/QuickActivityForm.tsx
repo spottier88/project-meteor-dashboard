@@ -1,6 +1,8 @@
+
 import { useForm } from "react-hook-form";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { ActivityTypeEnum } from "@/types/activity";
 import {
   Form,
   FormControl,
