@@ -10,7 +10,7 @@ interface Activity {
   id: string;
   start_time: string;
   duration_minutes: number;
-  activity_type: string;
+  activity_type: string; // Changed from enum to string
   description?: string;
   projects: {
     title: string;

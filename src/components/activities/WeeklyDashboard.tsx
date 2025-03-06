@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -11,20 +10,17 @@ import { ProjectTimeChart } from './ProjectTimeChart';
 import { TeamActivityFilters } from './TeamActivityFilters';
 import { TeamActivityHeader } from './TeamActivityHeader';
 import { IndividualActivityHeader } from './IndividualActivityHeader';
-import { Database } from "@/integrations/supabase/types";
 import { useLocation } from 'react-router-dom';
 import { useActivityPeriod } from '@/hooks/useActivityPeriod';
 import { useActivityData, processActivityData } from '@/hooks/useActivityData';
 import { exportActivitiesToExcel } from '@/utils/activityExport';
-
-type ActivityType = Database["public"]["Enums"]["activity_type"];
 
 export const WeeklyDashboard = () => {
   const location = useLocation();
   const isTeamView = location.pathname === '/team-activities';
   const [viewMode, setViewMode] = useState<'chart' | 'list'>('chart');
   const [projectId, setProjectId] = useState<string>('all');
-  const [activityType, setActivityType] = useState<'all' | ActivityType>('all');
+  const [activityType, setActivityType] = useState<'all' | string>('all');
   const [selectedUserId, setSelectedUserId] = useState<string>('all');
 
   const {

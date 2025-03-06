@@ -1,36 +1,24 @@
-
 import React from 'react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Database } from "@/integrations/supabase/types";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { usePermissionsContext } from "@/contexts/PermissionsContext";
 import { useUser } from "@supabase/auth-helpers-react";
-
-type ActivityType = Database["public"]["Enums"]["activity_type"];
+import { useActivityTypes } from '@/hooks/useActivityTypes';
 
 interface ActivityFiltersProps {
   period: string;
   setPeriod: (period: string) => void;
   projectId: string;
   setProjectId: (projectId: string) => void;
-  activityType: 'all' | ActivityType;
-  setActivityType: (type: 'all' | ActivityType) => void;
+  activityType: 'all' | string;
+  setActivityType: (type: 'all' | string) => void;
   selectedUserId?: string;
   setSelectedUserId?: (id: string) => void;
 }
-
-const activityTypeLabels: Record<ActivityType, string> = {
-  meeting: "Réunion",
-  development: "Développement",
-  testing: "Test",
-  documentation: "Documentation",
-  support: "Support",
-  other: "Autre"
-};
 
 export const ActivityFilters = ({ 
   period, 
@@ -44,6 +32,7 @@ export const ActivityFilters = ({
 }: ActivityFiltersProps) => {
   const { isAdmin, isManager } = usePermissionsContext();
   const user = useUser();
+  const { data: activityTypes } = useActivityTypes();
 
   const { data: projects } = useQuery({
     queryKey: ['my-activity-projects-for-filter'],
@@ -72,12 +61,10 @@ export const ActivityFilters = ({
         throw error;
       }
 
-      // Filtrer les projets en fonction des rôles et de l'appartenance à l'équipe
       const filteredProjects = projectsData?.filter(project => {
         if (isAdmin) return true;
         if (isManager) return true;
         if (project.project_manager_id === user?.id) return true;
-        // Vérifier si l'utilisateur est membre de l'équipe
         return project.project_members?.some(member => member.user_id === user?.id);
       });
 
@@ -87,14 +74,13 @@ export const ActivityFilters = ({
     enabled: !!user?.id,
   });
 
-  const activityTypes: ActivityType[] = [
-    "meeting",
-    "development",
-    "testing",
-    "documentation",
-    "support",
-    "other"
-  ];
+  const activityTypeLabels: Record<string, string> = {};
+
+  if (activityTypes) {
+    activityTypes.forEach(type => {
+      activityTypeLabels[type.code] = type.label;
+    });
+  }
 
   const currentMonth = format(new Date(), 'MMMM', { locale: fr });
 
@@ -133,15 +119,15 @@ export const ActivityFilters = ({
 
       <div className="space-y-2">
         <Label htmlFor="type">Type d'activité</Label>
-        <Select value={activityType} onValueChange={setActivityType as (value: string) => void}>
+        <Select value={activityType} onValueChange={setActivityType}>
           <SelectTrigger id="type">
             <SelectValue placeholder="Tous les types" />
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">Tous les types</SelectItem>
-            {activityTypes.map((type) => (
-              <SelectItem key={type} value={type}>
-                {activityTypeLabels[type]}
+            {activityTypes?.map((type) => (
+              <SelectItem key={type.id} value={type.code}>
+                {type.label}
               </SelectItem>
             ))}
           </SelectContent>
@@ -150,4 +136,3 @@ export const ActivityFilters = ({
     </div>
   );
 };
-

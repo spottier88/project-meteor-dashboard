@@ -1,4 +1,3 @@
-
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useUser } from '@supabase/auth-helpers-react';
@@ -6,12 +5,10 @@ import { Database } from "@/integrations/supabase/types";
 import { addDays, format, isSameDay } from "date-fns";
 import { fr } from "date-fns/locale";
 
-type ActivityType = Database["public"]["Enums"]["activity_type"];
-
 interface Activity {
   start_time: string;
   duration_minutes: number;
-  activity_type: ActivityType;
+  activity_type: string;
   description?: string;
   id: string;
   projects: {
@@ -24,14 +21,14 @@ interface DayActivity {
   day: string;
   total: number;
   activities: Activity[];
-  byType: Record<ActivityType, number>;
+  byType: Record<string, number>;
 }
 
 export const useActivityData = (
   isTeamView: boolean,
   period: string,
   projectId: string,
-  activityType: 'all' | ActivityType,
+  activityType: 'all' | string,
   periodStart: Date,
   periodEnd: Date,
   selectedUserId: string
@@ -111,7 +108,7 @@ export const processActivityData = (activities: Activity[] | null, periodStart: 
       day: format(date, 'EEEE', { locale: fr }),
       total: 0,
       activities: [],
-      byType: {} as Record<ActivityType, number>,
+      byType: {} as Record<string, number>,
     };
   });
 
@@ -120,16 +117,13 @@ export const processActivityData = (activities: Activity[] | null, periodStart: 
     const dayIndex = allDays.findIndex(d => isSameDay(d.date, activityDate));
     
     if (dayIndex !== -1) {
-      // Ensure activity.duration_minutes is treated as a number
       const duration = Number(activity.duration_minutes) || 0;
       allDays[dayIndex].total += duration;
       allDays[dayIndex].activities.push(activity);
       
-      // Convert minutes to hours for the chart
       const durationHours = duration / 60;
       const activityType = activity.activity_type;
       
-      // Initialize the byType object with 0 if it doesn't exist
       if (typeof allDays[dayIndex].byType[activityType] !== 'number') {
         allDays[dayIndex].byType[activityType] = 0;
       }
@@ -153,4 +147,3 @@ export const processActivityData = (activities: Activity[] | null, periodStart: 
 
   return { dailyActivities, chartData };
 };
-

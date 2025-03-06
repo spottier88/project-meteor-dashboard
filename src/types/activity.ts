@@ -17,7 +17,7 @@ export interface CalendarEvent {
   startTime: Date;
   endTime: Date;
   duration: number;
-  activityType?: string;
+  activityType?: string; // Already string, keeping for consistency
   projectId?: string;
   selected?: boolean;
 }
