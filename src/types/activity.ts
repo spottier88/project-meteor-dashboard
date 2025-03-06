@@ -10,8 +10,6 @@ export interface ActivityType {
   updated_at?: string;
 }
 
-export type ActivityTypeEnum = "meeting" | "development" | "testing" | "documentation" | "support" | "other";
-
 export interface CalendarEvent {
   id: string;
   title: string;
@@ -19,8 +17,7 @@ export interface CalendarEvent {
   startTime: Date;
   endTime: Date;
   duration: number;
-  activityType?: ActivityTypeEnum;  // Suppression de l'union type avec string
+  activityType?: string;  // Modifié: maintenant une simple chaîne de caractères
   projectId?: string;
   selected?: boolean;
 }
-

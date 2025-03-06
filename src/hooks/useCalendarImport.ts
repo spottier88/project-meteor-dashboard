@@ -3,8 +3,9 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useUser } from '@supabase/auth-helpers-react';
 import { useToast } from '@/hooks/use-toast';
-import { CalendarEvent, ActivityTypeEnum } from '@/types/activity';
+import { CalendarEvent } from '@/types/activity';
 import { useMicrosoftAuth } from './useMicrosoftAuth';
+import { useActivityTypes } from './useActivityTypes';
 
 interface CalendarImport {
   id: string;
@@ -21,6 +22,7 @@ export const useCalendarImport = () => {
   const [endDate, setEndDate] = useState<Date>(new Date());
   const [events, setEvents] = useState<CalendarEvent[]>([]);
   const { isAuthenticated, getMSALInstance, logout, checkAuthStatus } = useMicrosoftAuth();
+  const { data: activityTypes } = useActivityTypes();
 
   const { data: imports, isLoading } = useQuery({
     queryKey: ['calendar-imports'],
@@ -139,15 +141,17 @@ export const useCalendarImport = () => {
 
       const eventsToImport = selectedEvents.filter(event => event.selected);
       
+      const validActivityTypeCodes = activityTypes ? activityTypes.map(type => type.code) : [];
+      
       const invalidEvents = eventsToImport.filter(event => 
         !event.activityType || 
-        !["meeting", "development", "testing", "documentation", "support", "other"].includes(event.activityType)
+        !validActivityTypeCodes.includes(event.activityType)
       );
 
       if (invalidEvents.length > 0) {
         throw new Error(
           `${invalidEvents.length} événement(s) ont des types d'activité invalides. ` +
-          'Les types autorisés sont: meeting, development, testing, documentation, support, other.'
+          `Les types autorisés sont: ${validActivityTypeCodes.join(', ')}.`
         );
       }
 
@@ -168,8 +172,8 @@ export const useCalendarImport = () => {
         description: event.description || event.title,
         start_time: event.startTime instanceof Date ? event.startTime.toISOString() : new Date(event.startTime).toISOString(),
         duration_minutes: event.duration,
-        activity_type: event.activityType as ActivityTypeEnum,
-        project_id: event.projectId as string,
+        activity_type: event.activityType,
+        project_id: event.projectId,
       }));
 
       console.log('Activités à insérer:', activitiesToInsert);

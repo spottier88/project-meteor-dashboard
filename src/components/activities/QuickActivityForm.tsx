@@ -1,8 +1,6 @@
-
 import { useForm } from "react-hook-form";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { ActivityTypeEnum } from "@/types/activity";
 import {
   Form,
   FormControl,
@@ -54,7 +52,7 @@ const QuickActivityForm = ({ onSuccess }: { onSuccess?: () => void }) => {
   const { mutate: createActivity, isLoading } = useMutation({
     mutationFn: async (data: FormData) => {
       const { error } = await supabase.from("activities").insert({
-        activity_type: data.activity_type as ActivityTypeEnum,
+        activity_type: data.activity_type,
         description: data.description,
         duration_minutes: data.duration_minutes,
         start_time: data.start_time,
