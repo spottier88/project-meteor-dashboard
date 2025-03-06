@@ -1,4 +1,3 @@
-
 import React, { useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Loader2 } from 'lucide-react';
@@ -7,23 +6,11 @@ import { EventTable } from './calendar-events/EventTable';
 import { EventSelectionFooter } from './calendar-events/EventSelectionFooter';
 import { useEventSelection } from './calendar-events/useEventSelection';
 import { useActivityTypes } from '@/hooks/useActivityTypes';
+import { CalendarEvent } from '@/types/activity';
 
 interface Project {
   id: string;
   title: string;
-}
-
-// Define the CalendarEvent interface with string for activityType
-interface CalendarEvent {
-  id: string;
-  title: string;
-  description?: string;
-  startTime: Date;
-  endTime: Date;
-  duration: number;
-  activityType?: string;  // Changed to string to accept any activity type code
-  projectId?: string;
-  selected?: boolean;
 }
 
 interface Props {
@@ -48,29 +35,20 @@ export const CalendarEventSelection = ({
   const { modifiedEvents, selectedEvents, canImport, selectedCount, handleEventChange } = useEventSelection(events);
   const { data: activityTypes, isLoading: isLoadingTypes } = useActivityTypes();
 
-  // Synchronisation des sélections entre les composants
   const handleToggleSelection = (eventId: string) => {
-    // Mettre à jour l'état local via useEventSelection
     handleEventChange(eventId, { selected: !modifiedEvents.find(e => e.id === eventId)?.selected });
-    
-    // Propager au parent
     onToggleSelection(eventId);
   };
 
-  // Synchronisation de tous les événements
   const handleToggleAllEvents = (selected: boolean) => {
-    // Mettre à jour tous les événements dans l'état local
     modifiedEvents.forEach(event => {
       handleEventChange(event.id, { selected });
     });
-    
-    // Propager au parent
     if (onToggleAllEvents) {
       onToggleAllEvents(selected);
     }
   };
 
-  // Effet pour synchroniser les événements modifiés avec le parent quand ils changent
   useEffect(() => {
     if (onEventChange && modifiedEvents.length > 0) {
       modifiedEvents.forEach(event => {
@@ -107,12 +85,8 @@ export const CalendarEventSelection = ({
     );
   }
 
-  // Handler pour propager les changements d'événements vers le parent et le state local
   const handleCombinedEventChange = (eventId: string, updates: Partial<CalendarEvent>) => {
-    // Mettre à jour l'état local via useEventSelection
     handleEventChange(eventId, updates);
-    
-    // Propager les changements vers le parent si nécessaire
     if (onEventChange) {
       onEventChange(eventId, updates);
     }

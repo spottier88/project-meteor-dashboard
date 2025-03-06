@@ -9,3 +9,15 @@ export interface ActivityType {
   created_at?: string;
   updated_at?: string;
 }
+
+export interface CalendarEvent {
+  id: string;
+  title: string;
+  description?: string;
+  startTime: Date;
+  endTime: Date;
+  duration: number;
+  activityType?: string;
+  projectId?: string;
+  selected?: boolean;
+}

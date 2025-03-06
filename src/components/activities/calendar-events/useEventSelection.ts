@@ -1,30 +1,16 @@
-
 import { useState, useEffect } from 'react';
-
-interface CalendarEvent {
-  id: string;
-  title: string;
-  description?: string;
-  startTime: Date;
-  endTime: Date;
-  duration: number;
-  activityType?: string;  // Changed to string
-  projectId?: string;
-  selected?: boolean;
-}
+import { CalendarEvent } from '@/types/activity';
 
 export const useEventSelection = (initialEvents: CalendarEvent[]) => {
   const [modifiedEvents, setModifiedEvents] = useState<{ [key: string]: CalendarEvent }>(
     Object.fromEntries(initialEvents.map(event => [event.id, { ...event, selected: false }]))
   );
 
-  // Synchroniser avec les événements initiaux quand ils changent
   useEffect(() => {
     if (initialEvents.length > 0) {
       setModifiedEvents(prevModifiedEvents => 
         Object.fromEntries(
           initialEvents.map(event => {
-            // Conserver l'état sélectionné et les modifications si l'événement existe déjà
             const existingEvent = prevModifiedEvents[event.id];
             if (existingEvent) {
               return [event.id, { 
@@ -55,7 +41,7 @@ export const useEventSelection = (initialEvents: CalendarEvent[]) => {
   const canImport = selectedEvents.length > 0 && selectedEvents.every(event => 
     event.activityType && 
     event.projectId && 
-    (event.description || event.title) // Vérifier que soit description soit title est présent
+    (event.description || event.title)
   );
 
   const selectedCount = selectedEvents.length;

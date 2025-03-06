@@ -1,4 +1,3 @@
-
 import React from 'react';
 import {
   TableRow,
@@ -15,23 +14,11 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import { ActivityType } from '@/types/activity';
+import { ActivityType, CalendarEvent } from '@/types/activity';
 
 interface Project {
   id: string;
   title: string;
-}
-
-interface CalendarEvent {
-  id: string;
-  title: string;
-  description?: string;
-  startTime: Date;
-  endTime: Date;
-  duration: number;
-  activityType?: string;  // Changed to string to match our dynamic types
-  projectId?: string;
-  selected?: boolean;
 }
 
 interface EventRowProps {
