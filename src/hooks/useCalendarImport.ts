@@ -3,28 +3,14 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useUser } from '@supabase/auth-helpers-react';
 import { useToast } from '@/hooks/use-toast';
-import { Database } from '@/integrations/supabase/types';
+import { CalendarEvent, ActivityTypeEnum } from '@/types/activity';
 import { useMicrosoftAuth } from './useMicrosoftAuth';
-
-type ActivityType = Database['public']['Enums']['activity_type'];
 
 interface CalendarImport {
   id: string;
   calendar_url?: string;
   import_date: string;
   start_date: string;
-}
-
-interface CalendarEvent {
-  id: string;
-  title: string;
-  description?: string;
-  startTime: Date;
-  endTime: Date;
-  duration: number;
-  activityType?: ActivityType;
-  projectId?: string;
-  selected?: boolean;
 }
 
 export const useCalendarImport = () => {

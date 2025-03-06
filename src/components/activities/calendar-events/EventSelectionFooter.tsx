@@ -1,21 +1,7 @@
 
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { Database } from '@/integrations/supabase/types';
-
-type ActivityType = Database['public']['Enums']['activity_type'];
-
-interface CalendarEvent {
-  id: string;
-  title: string;
-  description?: string;
-  startTime: Date;
-  endTime: Date;
-  duration: number;
-  activityType?: ActivityType;
-  projectId?: string;
-  selected?: boolean;
-}
+import { CalendarEvent } from '@/types/activity';
 
 interface EventSelectionFooterProps {
   selectedCount: number;

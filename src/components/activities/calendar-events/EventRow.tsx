@@ -1,3 +1,4 @@
+
 import React from 'react';
 import {
   TableRow,
@@ -78,7 +79,7 @@ export const EventRow: React.FC<EventRowProps> = ({
       </TableCell>
       <TableCell>
         <Select
-          value={event.activityType}
+          value={event.activityType as string}
           onValueChange={(value) => onEventChange(event.id, { activityType: value })}
           disabled={!event.selected}
         >

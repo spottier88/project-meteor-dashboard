@@ -11,23 +11,11 @@ import {
 import { Checkbox } from '@/components/ui/checkbox';
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { EventRow } from './EventRow';
-import { ActivityType } from '@/types/activity';
+import { ActivityType, CalendarEvent } from '@/types/activity';
 
 interface Project {
   id: string;
   title: string;
-}
-
-interface CalendarEvent {
-  id: string;
-  title: string;
-  description?: string;
-  startTime: Date;
-  endTime: Date;
-  duration: number;
-  activityType?: string;
-  projectId?: string;
-  selected?: boolean;
 }
 
 interface EventTableProps {
