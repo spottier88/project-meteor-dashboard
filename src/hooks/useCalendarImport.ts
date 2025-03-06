@@ -172,7 +172,7 @@ export const useCalendarImport = () => {
         description: event.description || event.title,
         start_time: event.startTime instanceof Date ? event.startTime.toISOString() : new Date(event.startTime).toISOString(),
         duration_minutes: event.duration,
-        activity_type: event.activityType as any,
+        activity_type: event.activityType,
         project_id: event.projectId,
       }));
 
@@ -180,7 +180,7 @@ export const useCalendarImport = () => {
 
       const { error: activitiesError } = await supabase
         .from('activities')
-        .insert(activitiesToInsert as any);
+        .insert(activitiesToInsert);
 
       if (activitiesError) {
         console.error('Erreur d\'insertion des activités:', activitiesError);

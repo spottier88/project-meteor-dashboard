@@ -11,7 +11,7 @@ export type Database = {
     Tables: {
       activities: {
         Row: {
-          activity_type: Database["public"]["Enums"]["activity_type"]
+          activity_type: string
           created_at: string | null
           description: string | null
           duration_minutes: number
@@ -22,7 +22,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
-          activity_type: Database["public"]["Enums"]["activity_type"]
+          activity_type: string
           created_at?: string | null
           description?: string | null
           duration_minutes: number
@@ -33,7 +33,7 @@ export type Database = {
           user_id: string
         }
         Update: {
-          activity_type?: Database["public"]["Enums"]["activity_type"]
+          activity_type?: string
           created_at?: string | null
           description?: string | null
           duration_minutes?: number
@@ -50,6 +50,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_activity_type"
+            columns: ["activity_type"]
+            isOneToOne: false
+            referencedRelation: "activity_types"
+            referencedColumns: ["code"]
           },
           {
             foreignKeyName: "fk_project"
