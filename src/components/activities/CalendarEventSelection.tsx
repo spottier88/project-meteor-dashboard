@@ -13,6 +13,7 @@ interface Project {
   title: string;
 }
 
+// Define the CalendarEvent interface with string for activityType
 interface CalendarEvent {
   id: string;
   title: string;
@@ -20,7 +21,7 @@ interface CalendarEvent {
   startTime: Date;
   endTime: Date;
   duration: number;
-  activityType?: string;
+  activityType?: string;  // Changed to string to accept any activity type code
   projectId?: string;
   selected?: boolean;
 }

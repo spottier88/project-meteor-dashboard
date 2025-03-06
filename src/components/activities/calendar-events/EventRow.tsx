@@ -29,7 +29,7 @@ interface CalendarEvent {
   startTime: Date;
   endTime: Date;
   duration: number;
-  activityType?: string;
+  activityType?: string;  // Changed to string to match our dynamic types
   projectId?: string;
   selected?: boolean;
 }

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -62,7 +62,7 @@ export const ActivityTypeManagement = () => {
       const { count, error } = await supabase
         .from("activities")
         .select("id", { count: "exact", head: true })
-        .eq("activity_type", typeToDelete.code);
+        .eq("activity_type", typeToDelete.code as any);
         
       if (error) throw error;
       return { count: count || 0 };

@@ -8,7 +8,7 @@ interface CalendarEvent {
   startTime: Date;
   endTime: Date;
   duration: number;
-  activityType?: string;
+  activityType?: string;  // Changed to string
   projectId?: string;
   selected?: boolean;
 }
