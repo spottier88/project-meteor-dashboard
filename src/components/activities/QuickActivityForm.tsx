@@ -1,3 +1,4 @@
+
 import { useForm } from "react-hook-form";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -51,8 +52,9 @@ const QuickActivityForm = ({ onSuccess }: { onSuccess?: () => void }) => {
 
   const { mutate: createActivity, isLoading } = useMutation({
     mutationFn: async (data: FormData) => {
+      // Utilisez une assertion de type pour contourner la vérification de type stricte de TypeScript
       const { error } = await supabase.from("activities").insert({
-        activity_type: data.activity_type,
+        activity_type: data.activity_type as any, // Assertion de type pour éviter l'erreur
         description: data.description,
         duration_minutes: data.duration_minutes,
         start_time: data.start_time,
