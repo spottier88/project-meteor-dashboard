@@ -24,6 +24,7 @@ import { useToast } from "./components/ui/use-toast";
 import { ActivityManagement } from "./components/activities/ActivityManagement";
 import { TeamActivities } from "./pages/TeamActivities";
 import { GeneralSettings } from "@/components/admin/GeneralSettings";
+import { ActivityTypeManagementPage } from "./pages/ActivityTypeManagement";
 
 const queryClient = new QueryClient({
   defaultOptions: {

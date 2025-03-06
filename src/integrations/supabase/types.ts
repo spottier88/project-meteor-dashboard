@@ -60,6 +60,39 @@ export type Database = {
           },
         ]
       }
+      activity_types: {
+        Row: {
+          code: string
+          color: string
+          created_at: string | null
+          display_order: number
+          id: string
+          is_active: boolean
+          label: string
+          updated_at: string | null
+        }
+        Insert: {
+          code: string
+          color?: string
+          created_at?: string | null
+          display_order?: number
+          id?: string
+          is_active?: boolean
+          label: string
+          updated_at?: string | null
+        }
+        Update: {
+          code?: string
+          color?: string
+          created_at?: string | null
+          display_order?: number
+          id?: string
+          is_active?: boolean
+          label?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       application_settings: {
         Row: {
           created_at: string | null
