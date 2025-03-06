@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -64,7 +63,6 @@ export const useCalendarImport = () => {
       startDate: Date;
       endDate: Date;
     }) => {
-      // Vérification en temps réel de l'état d'authentification
       const currentAuthStatus = checkAuthStatus();
       console.log('useCalendarImport: Vérification de l\'état d\'authentification en temps réel:', currentAuthStatus);
       
@@ -77,7 +75,6 @@ export const useCalendarImport = () => {
       console.log('useCalendarImport: Période:', startDate.toISOString(), 'à', endDate.toISOString());
       
       try {
-        // Obtenir un token d'accès via MSAL
         const msalInstance = getMSALInstance();
         if (!msalInstance) {
           console.log('useCalendarImport: MSAL instance not available');
@@ -99,7 +96,6 @@ export const useCalendarImport = () => {
         const tokenResponse = await msalInstance.acquireTokenSilent(accessTokenRequest);
         console.log('useCalendarImport: Token acquired successfully');
         
-        // Appeler la fonction edge avec le token
         console.log('useCalendarImport: Calling edge function to fetch calendar');
         const { data, error } = await supabase.functions.invoke('fetch-ms-calendar', {
           body: {
@@ -119,12 +115,11 @@ export const useCalendarImport = () => {
           throw new Error("Aucun événement trouvé");
         }
 
-        // Transformation des dates string en objets Date
         const transformedEvents = data.events.map(event => ({
           ...event,
           startTime: new Date(event.startTime),
           endTime: new Date(event.endTime),
-          selected: false // État initial de la sélection
+          selected: false
         }));
         
         console.log('useCalendarImport: Événements récupérés:', transformedEvents.length);
@@ -156,15 +151,12 @@ export const useCalendarImport = () => {
     }) => {
       if (!user) throw new Error('User not authenticated');
 
-      // Filtrer uniquement les événements sélectionnés
       const eventsToImport = selectedEvents.filter(event => event.selected);
       
-      // Vérifier si des événements sont sélectionnés
       if (eventsToImport.length === 0) {
         throw new Error('Aucun événement sélectionné pour l\'import');
       }
 
-      // Vérifier si tous les événements ont les informations requises
       const invalidEvents = eventsToImport.filter(event => 
         !event.activityType || 
         !event.projectId || 
@@ -190,10 +182,9 @@ export const useCalendarImport = () => {
         throw importError;
       }
 
-      // Préparer les activités à insérer
       const activitiesToInsert = eventsToImport.map(event => ({
         user_id: user.id,
-        description: event.description || event.title, // Utiliser la description ou le titre
+        description: event.description || event.title,
         start_time: event.startTime instanceof Date ? event.startTime.toISOString() : new Date(event.startTime).toISOString(),
         duration_minutes: event.duration,
         activity_type: event.activityType,
@@ -214,7 +205,6 @@ export const useCalendarImport = () => {
       return eventsToImport.length;
     },
     onSuccess: () => {
-      // Déconnexion de Microsoft après import réussi
       try {
         if (logout) {
           logout();
@@ -251,14 +241,12 @@ export const useCalendarImport = () => {
     );
   };
 
-  // Fonction pour sélectionner/désélectionner tous les événements
   const toggleAllEvents = (selected: boolean) => {
     setEvents(prevEvents =>
       prevEvents.map(event => ({ ...event, selected }))
     );
   };
 
-  // Fonction pour mettre à jour les détails d'un événement (titre, description, etc.)
   const updateEventDetails = (eventId: string, updates: Partial<CalendarEvent>) => {
     setEvents(prevEvents =>
       prevEvents.map(event =>

@@ -3,12 +3,10 @@ import React, { useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
-import { Database } from '@/integrations/supabase/types';
 import { EventTable } from './calendar-events/EventTable';
 import { EventSelectionFooter } from './calendar-events/EventSelectionFooter';
 import { useEventSelection } from './calendar-events/useEventSelection';
-
-type ActivityType = Database['public']['Enums']['activity_type'];
+import { useActivityTypes } from '@/hooks/useActivityTypes';
 
 interface Project {
   id: string;
@@ -22,7 +20,7 @@ interface CalendarEvent {
   startTime: Date;
   endTime: Date;
   duration: number;
-  activityType?: ActivityType;
+  activityType?: string;
   projectId?: string;
   selected?: boolean;
 }
@@ -47,6 +45,7 @@ export const CalendarEventSelection = ({
   onEventChange,
 }: Props) => {
   const { modifiedEvents, selectedEvents, canImport, selectedCount, handleEventChange } = useEventSelection(events);
+  const { data: activityTypes, isLoading: isLoadingTypes } = useActivityTypes();
 
   // Synchronisation des sélections entre les composants
   const handleToggleSelection = (eventId: string) => {
@@ -99,7 +98,7 @@ export const CalendarEventSelection = ({
     }
   });
 
-  if (isLoadingProjects) {
+  if (isLoadingProjects || isLoadingTypes) {
     return (
       <div className="flex justify-center p-4">
         <Loader2 className="h-6 w-6 animate-spin" />
@@ -123,6 +122,7 @@ export const CalendarEventSelection = ({
       <EventTable 
         events={modifiedEvents}
         projects={projects}
+        activityTypes={activityTypes || []}
         onToggleSelection={handleToggleSelection}
         onToggleAllEvents={handleToggleAllEvents}
         onEventChange={handleCombinedEventChange}

@@ -3,6 +3,8 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 interface Activity {
   id: string;
@@ -26,17 +28,33 @@ interface ActivityListProps {
   dailyActivities: DayActivities[];
 }
 
-const ACTIVITY_LABELS: { [key: string]: string } = {
-  development: 'Développement',
-  testing: 'Test',
-  documentation: 'Documentation',
-  meeting: 'Réunion',
-  support: 'Support',
-  training: 'Formation',
-  other: 'Autre'
-};
-
 export const ActivityList = ({ dailyActivities }: ActivityListProps) => {
+  // Récupérer tous les types d'activités
+  const { data: activityTypes } = useQuery({
+    queryKey: ["activity-types"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("activity_types")
+        .select("*");
+      
+      if (error) throw error;
+      
+      // Créer un mapping de code -> label pour un accès facile
+      const typeMap: Record<string, string> = {};
+      data.forEach(type => {
+        typeMap[type.code] = type.label;
+      });
+      
+      return typeMap;
+    },
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  });
+
+  // Fonction pour obtenir le label du type d'activité
+  const getActivityTypeLabel = (code: string) => {
+    return activityTypes?.[code] || code;
+  };
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
       {dailyActivities.map(({ date, day, activities: dayActivities, total }) => (
@@ -65,7 +83,7 @@ export const ActivityList = ({ dailyActivities }: ActivityListProps) => {
                     <div>
                       <p className="font-medium">{activity.projects?.title}</p>
                       <p className="text-sm text-muted-foreground capitalize">
-                        {ACTIVITY_LABELS[activity.activity_type] || activity.activity_type}
+                        {getActivityTypeLabel(activity.activity_type)}
                       </p>
                       <p className="text-sm text-muted-foreground">
                         {format(new Date(activity.start_time), 'HH:mm')}
@@ -84,4 +102,3 @@ export const ActivityList = ({ dailyActivities }: ActivityListProps) => {
     </div>
   );
 };
-

@@ -1,8 +1,5 @@
 
 import { useState, useEffect } from 'react';
-import { Database } from '@/integrations/supabase/types';
-
-type ActivityType = Database['public']['Enums']['activity_type'];
 
 interface CalendarEvent {
   id: string;
@@ -11,7 +8,7 @@ interface CalendarEvent {
   startTime: Date;
   endTime: Date;
   duration: number;
-  activityType?: ActivityType;
+  activityType?: string;
   projectId?: string;
   selected?: boolean;
 }

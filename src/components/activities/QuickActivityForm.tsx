@@ -20,12 +20,10 @@ import {
 } from "@/components/ui/select";
 import { toast } from "@/components/ui/use-toast";
 import { useSession } from "@supabase/auth-helpers-react";
-import { Database } from "@/integrations/supabase/types";
-
-type ActivityType = Database["public"]["Enums"]["activity_type"];
+import { useActivityTypes } from "@/hooks/useActivityTypes";
 
 type FormData = {
-  activity_type: ActivityType;
+  activity_type: string;
   description: string;
   duration_minutes: number;
   start_time: string;
@@ -35,6 +33,7 @@ type FormData = {
 export function QuickActivityForm({ onSuccess }: { onSuccess?: () => void }) {
   const session = useSession();
   const form = useForm<FormData>();
+  const { data: activityTypes, isLoading: isLoadingTypes } = useActivityTypes();
 
   const queryClient = useQueryClient();
 
@@ -128,12 +127,13 @@ export function QuickActivityForm({ onSuccess }: { onSuccess?: () => void }) {
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
-                  <SelectItem value="meeting">Réunion</SelectItem>
-                  <SelectItem value="development">Développement</SelectItem>
-                  <SelectItem value="testing">Tests</SelectItem>
-                  <SelectItem value="documentation">Documentation</SelectItem>
-                  <SelectItem value="support">Support</SelectItem>
-                  <SelectItem value="other">Autre</SelectItem>
+                  {isLoadingTypes ? (
+                    <SelectItem value="loading" disabled>Chargement...</SelectItem>
+                  ) : activityTypes?.map((type) => (
+                    <SelectItem key={type.id} value={type.code}>
+                      {type.label}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </FormItem>
@@ -189,4 +189,3 @@ export function QuickActivityForm({ onSuccess }: { onSuccess?: () => void }) {
     </Form>
   );
 }
-

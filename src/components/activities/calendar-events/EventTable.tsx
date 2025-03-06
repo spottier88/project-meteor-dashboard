@@ -10,10 +10,8 @@ import {
 } from "@/components/ui/table";
 import { Checkbox } from '@/components/ui/checkbox';
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Database } from '@/integrations/supabase/types';
 import { EventRow } from './EventRow';
-
-type ActivityType = Database['public']['Enums']['activity_type'];
+import { ActivityType } from '@/types/activity';
 
 interface Project {
   id: string;
@@ -27,7 +25,7 @@ interface CalendarEvent {
   startTime: Date;
   endTime: Date;
   duration: number;
-  activityType?: ActivityType;
+  activityType?: string;
   projectId?: string;
   selected?: boolean;
 }
@@ -35,6 +33,7 @@ interface CalendarEvent {
 interface EventTableProps {
   events: CalendarEvent[];
   projects?: Project[];
+  activityTypes: ActivityType[];
   onToggleSelection: (eventId: string) => void;
   onToggleAllEvents: (selected: boolean) => void;
   onEventChange: (eventId: string, updates: Partial<CalendarEvent>) => void;
@@ -43,19 +42,11 @@ interface EventTableProps {
 export const EventTable: React.FC<EventTableProps> = ({
   events,
   projects,
+  activityTypes,
   onToggleSelection,
   onToggleAllEvents,
   onEventChange,
 }) => {
-  const activityTypes: { type: ActivityType; label: string }[] = [
-    { type: 'meeting', label: 'Réunion' },
-    { type: 'development', label: 'Développement' },
-    { type: 'testing', label: 'Tests' },
-    { type: 'documentation', label: 'Documentation' },
-    { type: 'support', label: 'Support' },
-    { type: 'other', label: 'Autre' },
-  ];
-
   const allEventsSelected = events.every(event => event.selected);
 
   return (

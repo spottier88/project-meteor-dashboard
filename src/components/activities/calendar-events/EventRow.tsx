@@ -16,8 +16,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { Database } from '@/integrations/supabase/types';
-
-type ActivityType = Database['public']['Enums']['activity_type'];
+import { ActivityType } from '@/types/activity';
 
 interface Project {
   id: string;
@@ -31,7 +30,7 @@ interface CalendarEvent {
   startTime: Date;
   endTime: Date;
   duration: number;
-  activityType?: ActivityType;
+  activityType?: string;
   projectId?: string;
   selected?: boolean;
 }
@@ -39,7 +38,7 @@ interface CalendarEvent {
 interface EventRowProps {
   event: CalendarEvent;
   projects?: Project[];
-  activityTypes: { type: ActivityType; label: string }[];
+  activityTypes: ActivityType[];
   onToggleSelection: (eventId: string) => void;
   onEventChange: (eventId: string, updates: Partial<CalendarEvent>) => void;
 }
@@ -94,16 +93,16 @@ export const EventRow: React.FC<EventRowProps> = ({
       <TableCell>
         <Select
           value={event.activityType}
-          onValueChange={(value) => onEventChange(event.id, { activityType: value as ActivityType })}
+          onValueChange={(value) => onEventChange(event.id, { activityType: value })}
           disabled={!event.selected}
         >
           <SelectTrigger className="w-[200px]">
             <SelectValue placeholder="Sélectionner un type" />
           </SelectTrigger>
           <SelectContent>
-            {activityTypes.map(({ type, label }) => (
-              <SelectItem key={type} value={type}>
-                {label}
+            {activityTypes.map((type) => (
+              <SelectItem key={type.id} value={type.code}>
+                {type.label}
               </SelectItem>
             ))}
           </SelectContent>
