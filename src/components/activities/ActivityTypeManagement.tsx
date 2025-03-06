@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
@@ -55,7 +54,6 @@ export const ActivityTypeManagement = () => {
     },
   });
 
-  // Vérifier si un type d'activité est utilisé
   const { data: usageCheck, refetch: refetchUsage } = useQuery({
     queryKey: ["activity-type-usage", typeToDelete?.code],
     queryFn: async () => {
@@ -69,7 +67,7 @@ export const ActivityTypeManagement = () => {
       if (error) throw error;
       return { count: count || 0 };
     },
-    enabled: !!typeToDelete, // Ne s'active que lorsqu'un type à supprimer est sélectionné
+    enabled: !!typeToDelete,
   });
 
   const toggleActive = async (type: ActivityType) => {
@@ -110,12 +108,11 @@ export const ActivityTypeManagement = () => {
       } else if (direction === "down" && currentIndex < activityTypes.length - 1) {
         swapIndex = currentIndex + 1;
       } else {
-        return; // Aucun déplacement possible
+        return;
       }
 
       const otherType = activityTypes[swapIndex];
       
-      // Échanger les ordres d'affichage
       const { error: error1 } = await supabase
         .from("activity_types")
         .update({ display_order: otherType.display_order })
