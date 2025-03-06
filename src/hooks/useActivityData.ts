@@ -29,7 +29,7 @@ export const useActivityData = (
   isTeamView: boolean,
   period: string,
   projectId: string,
-  activityType: 'all' | string,
+  activityType: string,
   periodStart: Date,
   periodEnd: Date,
   selectedUserId: string

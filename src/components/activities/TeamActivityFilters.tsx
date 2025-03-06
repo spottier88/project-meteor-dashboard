@@ -3,18 +3,16 @@ import React from 'react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Database } from "@/integrations/supabase/types";
 import { useUser } from '@supabase/auth-helpers-react';
-
-type ActivityType = Database["public"]["Enums"]["activity_type"];
+import { useActivityTypes } from '@/hooks/useActivityTypes';
 
 interface TeamActivityFiltersProps {
   period: string;
   setPeriod: (period: string) => void;
   projectId: string;
   setProjectId: (id: string) => void;
-  activityType: 'all' | ActivityType;
-  setActivityType: (type: 'all' | ActivityType) => void;
+  activityType: string;
+  setActivityType: (type: string) => void;
   selectedUserId: string;
   setSelectedUserId: (id: string) => void;
 }
@@ -30,6 +28,7 @@ export const TeamActivityFilters = ({
   setSelectedUserId,
 }: TeamActivityFiltersProps) => {
   const user = useUser();
+  const { data: activityTypes } = useActivityTypes();
 
   // Récupérer la liste des utilisateurs en utilisant la nouvelle fonction
   const { data: users } = useQuery({
@@ -120,17 +119,17 @@ export const TeamActivityFilters = ({
         </SelectContent>
       </Select>
 
-      <Select value={activityType} onValueChange={(value) => setActivityType(value as 'all' | ActivityType)}>
+      <Select value={activityType} onValueChange={setActivityType}>
         <SelectTrigger className="w-full md:w-[200px]">
           <SelectValue placeholder="Type d'activité" />
         </SelectTrigger>
         <SelectContent>
           <SelectItem value="all">Tous les types</SelectItem>
-          <SelectItem value="developpement">Développement</SelectItem>
-          <SelectItem value="reunion">Réunion</SelectItem>
-          <SelectItem value="analyse">Analyse</SelectItem>
-          <SelectItem value="documentation">Documentation</SelectItem>
-          <SelectItem value="support">Support</SelectItem>
+          {activityTypes?.map((type) => (
+            <SelectItem key={type.id} value={type.code}>
+              {type.label}
+            </SelectItem>
+          ))}
         </SelectContent>
       </Select>
     </div>

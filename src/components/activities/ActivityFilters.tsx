@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
@@ -14,8 +15,8 @@ interface ActivityFiltersProps {
   setPeriod: (period: string) => void;
   projectId: string;
   setProjectId: (projectId: string) => void;
-  activityType: 'all' | string;
-  setActivityType: (type: 'all' | string) => void;
+  activityType: string;
+  setActivityType: (type: string) => void;
   selectedUserId?: string;
   setSelectedUserId?: (id: string) => void;
 }

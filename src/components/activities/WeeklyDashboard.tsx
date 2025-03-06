@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -20,7 +21,7 @@ export const WeeklyDashboard = () => {
   const isTeamView = location.pathname === '/team-activities';
   const [viewMode, setViewMode] = useState<'chart' | 'list'>('chart');
   const [projectId, setProjectId] = useState<string>('all');
-  const [activityType, setActivityType] = useState<'all' | string>('all');
+  const [activityType, setActivityType] = useState<string>('all');
   const [selectedUserId, setSelectedUserId] = useState<string>('all');
 
   const {
