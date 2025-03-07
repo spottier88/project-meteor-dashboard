@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { useUser } from "@supabase/auth-helpers-react";
@@ -24,12 +25,14 @@ import { Textarea } from "@/components/ui/textarea";
 import { NotificationType } from "@/types/notification";
 import { supabase } from "@/integrations/supabase/client";
 import { DatePickerField } from "@/components/form/DatePickerField";
+import { Checkbox } from "@/components/ui/checkbox";
 
 interface NotificationFormData {
   title: string;
   content: string;
   type: NotificationType;
   publication_date: Date;
+  required: boolean;
 }
 
 interface NotificationFormProps {
@@ -49,6 +52,7 @@ export function NotificationForm({ onSuccess, onCancel }: NotificationFormProps)
       content: "",
       type: "system",
       publication_date: new Date(),
+      required: false,
     },
   });
 
@@ -71,6 +75,7 @@ export function NotificationForm({ onSuccess, onCancel }: NotificationFormProps)
         publication_date: data.publication_date.toISOString(),
         created_by: user.id,
         published: false,
+        required: data.required,
       });
 
       if (error) throw error;
@@ -164,6 +169,27 @@ export function NotificationForm({ onSuccess, onCancel }: NotificationFormProps)
                 />
               </FormControl>
               <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="required"
+          render={({ field }) => (
+            <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+              <FormControl>
+                <Checkbox
+                  checked={field.value}
+                  onCheckedChange={field.onChange}
+                />
+              </FormControl>
+              <div className="space-y-1 leading-none">
+                <FormLabel>Notification obligatoire</FormLabel>
+                <p className="text-sm text-muted-foreground">
+                  Cette notification sera affichée en popup après la connexion jusqu'à ce qu'elle soit lue.
+                </p>
+              </div>
             </FormItem>
           )}
         />

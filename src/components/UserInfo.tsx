@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useSupabaseClient, useUser } from "@supabase/auth-helpers-react";
 import { Button } from "./ui/button";
@@ -8,6 +9,7 @@ import { useToast } from "./ui/use-toast";
 import { UserProfile, UserRoleData } from "@/types/user";
 import { ProfileForm } from "./profile/ProfileForm";
 import { UserNotificationsDropdown } from "./notifications/UserNotificationsDropdown";
+import { RequiredNotificationDialog } from "./notifications/RequiredNotificationDialog";
 
 export const UserInfo = () => {
   const user = useUser();
@@ -118,6 +120,9 @@ export const UserInfo = () => {
         onClose={() => setIsProfileFormOpen(false)}
         profile={profile}
       />
+      
+      {/* Composant pour afficher les notifications obligatoires en popup */}
+      <RequiredNotificationDialog />
     </>
   );
 };

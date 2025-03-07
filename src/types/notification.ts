@@ -10,6 +10,7 @@ export interface Notification {
   created_at: string;
   created_by?: string;
   published: boolean | null;
+  required?: boolean;
   profiles?: {
     email: string;
   } | null;

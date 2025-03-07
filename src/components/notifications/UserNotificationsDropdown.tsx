@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useUser } from "@supabase/auth-helpers-react";
 import { Bell, Check } from "lucide-react";
@@ -47,7 +48,8 @@ export const UserNotificationsDropdown = () => {
             content,
             type,
             publication_date,
-            created_at
+            created_at,
+            required
           )
         `)
         .eq("user_id", user.id)
@@ -94,6 +96,7 @@ export const UserNotificationsDropdown = () => {
       if (error) throw error;
 
       await queryClient.invalidateQueries({ queryKey: ["userNotifications"] });
+      await queryClient.invalidateQueries({ queryKey: ["requiredNotifications"] });
 
       toast({
         title: "Notification marquée comme lue",
@@ -155,7 +158,14 @@ export const UserNotificationsDropdown = () => {
                 >
                   <div className="w-full flex justify-between items-start gap-2">
                     <div className="flex-1">
-                      <div className="font-medium">{notification.title}</div>
+                      <div className="font-medium flex items-center gap-2">
+                        {notification.title}
+                        {notification.required && (
+                          <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                            Obligatoire
+                          </span>
+                        )}
+                      </div>
                       <div className="text-sm text-muted-foreground line-clamp-2">
                         {notification.content}
                       </div>
@@ -201,6 +211,17 @@ export const UserNotificationsDropdown = () => {
               Publié le {selectedNotification && formatNotificationDate(selectedNotification.publication_date)}
             </div>
           </div>
+          <Button 
+            onClick={() => {
+              if (selectedNotification) {
+                handleMarkAsRead(selectedNotification.id);
+                handleCloseDialog();
+              }
+            }}
+            className="mt-4"
+          >
+            Marquer comme lu
+          </Button>
           <DialogClose />
         </DialogContent>
       </Dialog>
