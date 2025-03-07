@@ -29,6 +29,7 @@ export function RequiredNotificationDialog() {
     queryFn: async () => {
       if (!user?.id) return [];
       
+      // Fetch user notifications that haven't been read yet
       const { data: userNotifications, error: userError } = await supabase
         .from("user_notifications")
         .select("notification_id, read_at")
@@ -39,6 +40,7 @@ export function RequiredNotificationDialog() {
       
       if (!userNotifications.length) return [];
       
+      // Use those notification IDs to fetch the actual required notifications
       const notificationIds = userNotifications.map(un => un.notification_id);
       
       const { data: notifications, error: notifError } = await supabase

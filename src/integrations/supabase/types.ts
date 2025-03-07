@@ -384,6 +384,7 @@ export type Database = {
           id: string
           publication_date: string
           published: boolean | null
+          required: boolean | null
           title: string
           type: Database["public"]["Enums"]["notification_type"]
         }
@@ -394,6 +395,7 @@ export type Database = {
           id?: string
           publication_date: string
           published?: boolean | null
+          required?: boolean | null
           title: string
           type: Database["public"]["Enums"]["notification_type"]
         }
@@ -404,6 +406,7 @@ export type Database = {
           id?: string
           publication_date?: string
           published?: boolean | null
+          required?: boolean | null
           title?: string
           type?: Database["public"]["Enums"]["notification_type"]
         }
