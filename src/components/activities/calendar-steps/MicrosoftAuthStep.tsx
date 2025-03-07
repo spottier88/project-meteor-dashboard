@@ -2,6 +2,7 @@
 import React, { useEffect } from 'react';
 import { MicrosoftAuthButton } from '../MicrosoftAuthButton';
 import { useMicrosoftAuth } from '@/hooks/useMicrosoftAuth';
+import { logger } from '@/utils/logger';
 
 interface MicrosoftAuthStepProps {
   onAuthSuccess: () => void;
@@ -14,11 +15,11 @@ export const MicrosoftAuthStep: React.FC<MicrosoftAuthStepProps> = ({
 
   // Effet pour journaliser l'état d'authentification
   useEffect(() => {
-    console.log("MicrosoftAuthStep: isAuthenticated =", isAuthenticated);
+    logger.debug(`isAuthenticated = ${isAuthenticated}`, "auth");
     
     // Si déjà authentifié, on peut optionnellement passer automatiquement à l'étape suivante
     if (isAuthenticated) {
-      console.log("MicrosoftAuthStep: Already authenticated, can proceed to next step");
+      logger.debug("Already authenticated, can proceed to next step", "auth");
     }
   }, [isAuthenticated]);
 

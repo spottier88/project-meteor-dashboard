@@ -16,6 +16,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
+import { logger } from "@/utils/logger";
 
 export function RequiredNotificationDialog() {
   const [open, setOpen] = useState(false);
@@ -63,6 +64,7 @@ export function RequiredNotificationDialog() {
   // Ouvrir le dialogue si des notifications obligatoires sont trouvées
   useEffect(() => {
     if (requiredNotifications && requiredNotifications.length > 0) {
+      logger.info(`Affichage de ${requiredNotifications.length} notification(s) obligatoire(s)`, "notifications");
       setOpen(true);
     }
   }, [requiredNotifications]);
@@ -72,6 +74,7 @@ export function RequiredNotificationDialog() {
       if (!user?.id || !requiredNotifications) return;
       
       const notification = requiredNotifications[currentNotificationIndex];
+      logger.debug(`Marquage de la notification ${notification.id} comme lue`, "notifications");
       
       const { error } = await supabase
         .from("user_notifications")
@@ -83,8 +86,10 @@ export function RequiredNotificationDialog() {
 
       // Passez à la notification suivante ou fermez si c'était la dernière
       if (currentNotificationIndex < requiredNotifications.length - 1) {
+        logger.debug("Passage à la notification suivante", "notifications");
         setCurrentNotificationIndex(prev => prev + 1);
       } else {
+        logger.debug("Toutes les notifications ont été lues", "notifications");
         setOpen(false);
         setCurrentNotificationIndex(0);
         await queryClient.invalidateQueries({ queryKey: ["requiredNotifications"] });
@@ -96,7 +101,7 @@ export function RequiredNotificationDialog() {
         description: "Vous avez bien pris connaissance de cette notification"
       });
     } catch (error) {
-      console.error("Erreur lors du marquage de la notification:", error);
+      logger.error(`Erreur lors du marquage de la notification: ${error}`, "notifications");
       toast({
         title: "Erreur",
         description: "Une erreur est survenue lors du marquage de la notification",

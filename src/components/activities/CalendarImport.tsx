@@ -16,6 +16,7 @@ import { useMicrosoftAuth } from '@/hooks/useMicrosoftAuth';
 import { useToast } from '@/hooks/use-toast';
 import { MicrosoftAuthStep } from './calendar-steps/MicrosoftAuthStep';
 import { DateSelectionStep } from './calendar-steps/DateSelectionStep';
+import { logger } from '@/utils/logger';
 
 enum ImportStep {
   AUTH,
@@ -46,7 +47,7 @@ export const CalendarImport = () => {
 
   // Effet pour journaliser l'état du composant
   useEffect(() => {
-    console.log("CalendarImport: step =", step, "isAuthenticated =", isAuthenticated);
+    logger.debug(`step = ${ImportStep[step]}, isAuthenticated = ${isAuthenticated ? "yes" : "no"}`, "calendar");
   }, [step, isAuthenticated]);
 
   // Vérifier l'état d'authentification quand la boîte de dialogue s'ouvre
@@ -54,43 +55,43 @@ export const CalendarImport = () => {
     if (isOpen) {
       // Vérifier si l'utilisateur est déjà authentifié
       const authState = checkAuthStatus();
-      console.log("CalendarImport: Dialog opened, checking auth state:", authState);
+      logger.debug(`Dialog opened, checking auth state: ${authState ? "authenticated" : "not authenticated"}`, "calendar");
       
       if (authState) {
-        console.log("CalendarImport: User is already authenticated, moving to DATE_SELECTION");
+        logger.debug("User is already authenticated, moving to DATE_SELECTION", "calendar");
         setIsAuthenticated(true); // S'assurer que l'état isAuthenticated est synchronisé
         setStep(ImportStep.DATE_SELECTION);
       } else {
-        console.log("CalendarImport: User is not authenticated, starting at AUTH step");
+        logger.debug("User is not authenticated, starting at AUTH step", "calendar");
         setIsAuthenticated(false); // S'assurer que l'état isAuthenticated est synchronisé
         setStep(ImportStep.AUTH);
       }
     } else {
-      console.log("CalendarImport: Dialog closed, resetting to AUTH step");
+      logger.debug("Dialog closed, resetting to AUTH step", "calendar");
       setStep(ImportStep.AUTH);
     }
   }, [isOpen, checkAuthStatus, setIsAuthenticated]);
 
   // Gestion de la progression des étapes
   const handleAuthSuccess = () => {
-    console.log("CalendarImport: Auth success callback triggered, moving to date selection");
+    logger.debug("Auth success callback triggered, moving to date selection", "calendar");
     setIsAuthenticated(true); // Mettre à jour l'état d'authentification
     setStep(ImportStep.DATE_SELECTION);
   };
 
   const handleDateSelection = (startDate: Date, endDate: Date) => {
-    console.log("CalendarImport: Date selection updated:", startDate, endDate);
+    logger.debug(`Date selection updated: ${startDate.toISOString()}, ${endDate.toISOString()}`, "calendar");
     setImportDate(startDate);
     setEndDate(endDate);
   };
 
   const handleFetchEvents = () => {
-    console.log("CalendarImport: Fetch events requested");
+    logger.debug("Fetch events requested", "calendar");
     const authState = checkAuthStatus();
-    console.log("CalendarImport: Current auth state for fetch events:", authState);
+    logger.debug(`Current auth state for fetch events: ${authState ? "authenticated" : "not authenticated"}`, "calendar");
     
     if (!authState) {
-      console.log("CalendarImport: Authentication required for fetch events");
+      logger.debug("Authentication required for fetch events", "calendar");
       setIsAuthenticated(false); // Synchroniser l'état en cas d'échec d'authentification
       toast({
         title: "Authentification requise",
@@ -102,7 +103,7 @@ export const CalendarImport = () => {
     }
     
     if (!importDate || !endDate || importDate > endDate) {
-      console.log("CalendarImport: Invalid dates for fetch events");
+      logger.debug("Invalid dates for fetch events", "calendar");
       toast({
         title: "Dates invalides",
         description: "La date de début doit être antérieure ou égale à la date de fin.",
@@ -111,7 +112,7 @@ export const CalendarImport = () => {
       return;
     }
 
-    console.log("CalendarImport: Fetching events for dates:", importDate, endDate);
+    logger.debug(`Fetching events for dates: ${importDate.toISOString()}, ${endDate.toISOString()}`, "calendar");
     fetchEvents(
       { 
         startDate: importDate, 
@@ -119,7 +120,7 @@ export const CalendarImport = () => {
       },
       {
         onSuccess: () => {
-          console.log("CalendarImport: Events fetched successfully, moving to EVENTS step");
+          logger.debug("Events fetched successfully, moving to EVENTS step", "calendar");
           setStep(ImportStep.EVENTS);
           toast({
             title: "Événements récupérés",
@@ -127,10 +128,10 @@ export const CalendarImport = () => {
           });
         },
         onError: (error) => {
-          console.error("CalendarImport: Error fetching events:", error);
+          logger.error(`Error fetching events: ${error}`, "calendar");
           // Vérifier si l'erreur est liée à l'authentification
           if (error?.message?.includes("authenticated") || error?.message?.includes("token")) {
-            console.log("CalendarImport: Auth error detected, resetting auth state");
+            logger.debug("Auth error detected, resetting auth state", "calendar");
             setIsAuthenticated(false); // Réinitialiser l'état d'authentification
             setStep(ImportStep.AUTH); // Retour à l'étape d'authentification
           }
@@ -154,7 +155,7 @@ export const CalendarImport = () => {
       return;
     }
 
-    console.log("CalendarImport: Importing selected events:", selectedEvents.length);
+    logger.debug(`Importing selected events: ${selectedEvents.length}`, "calendar");
     importCalendar(
       { 
         startDate: importDate!,
@@ -170,7 +171,7 @@ export const CalendarImport = () => {
           });
         },
         onError: (error) => {
-          console.error("CalendarImport: Error importing events:", error);
+          logger.error(`Error importing events: ${error}`, "calendar");
           toast({
             title: "Erreur d'importation",
             description: "Impossible d'importer les événements: " + (error?.message || "Erreur inconnue"),
@@ -182,14 +183,13 @@ export const CalendarImport = () => {
   };
 
   const handleCancel = () => {
-    console.log("CalendarImport: User cancelled, returning to AUTH step");
+    logger.debug("User cancelled, returning to AUTH step", "calendar");
     setStep(ImportStep.AUTH);
   };
 
   // Rendu conditionnel basé sur l'étape actuelle
   const renderCurrentStep = () => {
-    console.log("CalendarImport: Rendering step:", step, 
-      "isAuthenticated:", isAuthenticated ? "yes" : "no");
+    logger.debug(`Rendering step: ${ImportStep[step]}, isAuthenticated: ${isAuthenticated ? "yes" : "no"}`, "calendar");
       
     switch (step) {
       case ImportStep.AUTH:
@@ -227,7 +227,7 @@ export const CalendarImport = () => {
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => {
-      console.log("CalendarImport: Dialog open state changing to:", open);
+      logger.debug(`Dialog open state changing to: ${open}`, "calendar");
       setIsOpen(open);
     }}>
       <DialogTrigger asChild>

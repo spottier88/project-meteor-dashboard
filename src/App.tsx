@@ -1,4 +1,3 @@
-
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
@@ -26,6 +25,7 @@ import { ActivityManagement } from "./components/activities/ActivityManagement";
 import { TeamActivities } from "./pages/TeamActivities";
 import { GeneralSettings } from "@/components/admin/GeneralSettings";
 import { ActivityTypeManagementPage } from "./pages/ActivityTypeManagement";
+import { logger } from "./utils/logger";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -41,11 +41,11 @@ function AppContent() {
   const { toast } = useToast();
 
   useEffect(() => {
-    console.log("[AppContent] Session state:", {
+    logger.debug("Session state:", {
       isAuthenticated: !!session,
-      user: session?.user,
+      user: session?.user?.email,
       timestamp: new Date().toISOString(),
-    });
+    }, "auth");
   }, [session]);
 
   if (!session) {

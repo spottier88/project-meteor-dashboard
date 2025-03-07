@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { useMicrosoftAuth } from "@/hooks/useMicrosoftAuth";
 import { Check, X } from "lucide-react";
 import { useEffect } from "react";
+import { logger } from "@/utils/logger";
 
 interface MicrosoftAuthButtonProps {
   onAuthSuccess?: () => void;
@@ -13,21 +14,24 @@ export const MicrosoftAuthButton = ({ onAuthSuccess }: MicrosoftAuthButtonProps)
 
   // Log de débogage pour suivre l'état d'authentification
   useEffect(() => {
-    console.log("MicrosoftAuthButton: Auth state changed to:", isAuthenticated ? "authenticated" : "not authenticated");
+    logger.debug(
+      `Auth state changed to: ${isAuthenticated ? "authenticated" : "not authenticated"}`, 
+      "auth"
+    );
   }, [isAuthenticated]);
 
   const handleLogin = async () => {
-    console.log("MicrosoftAuthButton: Handling login click");
+    logger.debug("Handling login click", "auth");
     try {
       const response = await login();
-      console.log("MicrosoftAuthButton: Login response:", response ? "success" : "failed");
+      logger.debug(`Login response: ${response ? "success" : "failed"}`, "auth");
       
       if (response && onAuthSuccess) {
-        console.log("MicrosoftAuthButton: Login successful, triggering onAuthSuccess callback");
+        logger.debug("Login successful, triggering onAuthSuccess callback", "auth");
         onAuthSuccess();
       }
     } catch (err) {
-      console.error("MicrosoftAuthButton: Login error:", err);
+      logger.error(`Login error: ${err}`, "auth");
     }
   };
 
