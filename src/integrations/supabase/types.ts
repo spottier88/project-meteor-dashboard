@@ -1233,7 +1233,7 @@ export type Database = {
       risk_probability: "low" | "medium" | "high"
       risk_severity: "low" | "medium" | "high"
       risk_status: "open" | "in_progress" | "resolved"
-      setting_type: "microsoft_graph"
+      setting_type: "microsoft_graph" | "openai"
       task_status: "todo" | "in_progress" | "done"
       user_hierarchy_level: "pole" | "direction" | "service"
       user_role: "admin" | "chef_projet" | "manager" | "membre"

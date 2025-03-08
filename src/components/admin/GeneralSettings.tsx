@@ -35,14 +35,14 @@ const fetchSettings = async () => {
   const { data: msGraphSettings, error: msGraphError } = await supabase
     .from("application_settings")
     .select("*")
-    .eq("type", "microsoft_graph" as ApplicationSettingType);
+    .eq("type", "microsoft_graph");
 
   if (msGraphError) throw msGraphError;
 
   const { data: openaiSettings, error: openaiError } = await supabase
     .from("application_settings")
     .select("*")
-    .eq("type", "openai" as ApplicationSettingType);
+    .eq("type", "openai");
 
   if (openaiError) throw openaiError;
 
@@ -86,7 +86,7 @@ export const GeneralSettings = () => {
       const { error: deleteGraphError } = await supabase
         .from("application_settings")
         .delete()
-        .eq("type", "microsoft_graph" as ApplicationSettingType);
+        .eq("type", "microsoft_graph");
 
       if (deleteGraphError) throw deleteGraphError;
 
@@ -94,7 +94,7 @@ export const GeneralSettings = () => {
       const { error: deleteOpenAIError } = await supabase
         .from("application_settings")
         .delete()
-        .eq("type", "openai" as ApplicationSettingType);
+        .eq("type", "openai");
 
       if (deleteOpenAIError) throw deleteOpenAIError;
 
@@ -105,12 +105,12 @@ export const GeneralSettings = () => {
           {
             key: "client_id",
             value: values.clientId,
-            type: "microsoft_graph" as ApplicationSettingType,
+            type: "microsoft_graph",
           },
           {
             key: "tenant_id",
             value: values.tenantId,
-            type: "microsoft_graph" as ApplicationSettingType,
+            type: "microsoft_graph",
           },
         ]);
 
@@ -123,7 +123,7 @@ export const GeneralSettings = () => {
           {
             key: "api_key",
             value: values.openaiApiKey,
-            type: "openai" as ApplicationSettingType,
+            type: "openai",
           },
         ]);
 
