@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { ChevronLeft, Plus, Edit, Trash2, Copy, Check } from "lucide-react";
@@ -21,6 +20,7 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
+  FormDescription,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -156,7 +156,7 @@ export const AIPromptManagement = () => {
       setIsDialogOpen(false);
       setEditingTemplate(null);
     },
-    onError: (error) => {
+    onError: (error: Error) => {
       toast({
         title: "Erreur",
         description: `Une erreur est survenue: ${error.message}`,
@@ -182,7 +182,7 @@ export const AIPromptManagement = () => {
       });
       queryClient.invalidateQueries({ queryKey: ["promptTemplates"] });
     },
-    onError: (error) => {
+    onError: (error: Error) => {
       toast({
         title: "Erreur",
         description: `Une erreur est survenue: ${error.message}`,
@@ -226,7 +226,7 @@ export const AIPromptManagement = () => {
       });
       queryClient.invalidateQueries({ queryKey: ["promptTemplates"] });
     },
-    onError: (error) => {
+    onError: (error: Error) => {
       toast({
         title: "Erreur",
         description: `Une erreur est survenue: ${error.message}`,
@@ -254,7 +254,7 @@ export const AIPromptManagement = () => {
       });
       queryClient.invalidateQueries({ queryKey: ["promptTemplates"] });
     },
-    onError: (error) => {
+    onError: (error: Error) => {
       toast({
         title: "Erreur",
         description: `Une erreur est survenue: ${error.message}`,

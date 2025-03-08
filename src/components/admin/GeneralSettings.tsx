@@ -1,4 +1,3 @@
-
 import React from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -20,6 +19,8 @@ import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { PublicClientApplication } from "@azure/msal-browser";
 
+type ApplicationSettingType = "microsoft_graph" | "openai";
+
 const settingsSchema = z.object({
   clientId: z.string().min(1, "L'ID client est requis"),
   tenantId: z.string().min(1, "L'ID tenant est requis"),
@@ -32,14 +33,14 @@ const fetchSettings = async () => {
   const { data: msGraphSettings, error: msGraphError } = await supabase
     .from("application_settings")
     .select("*")
-    .eq("type", "microsoft_graph");
+    .eq("type", "microsoft_graph" as ApplicationSettingType);
 
   if (msGraphError) throw msGraphError;
 
   const { data: openaiSettings, error: openaiError } = await supabase
     .from("application_settings")
     .select("*")
-    .eq("type", "openai");
+    .eq("type", "openai" as ApplicationSettingType);
 
   if (openaiError) throw openaiError;
 
@@ -79,47 +80,44 @@ export const GeneralSettings = () => {
 
   const mutation = useMutation({
     mutationFn: async (values: SettingsFormValues) => {
-      // Supprimer les paramètres existants
       const { error: deleteGraphError } = await supabase
         .from("application_settings")
         .delete()
-        .eq("type", "microsoft_graph");
+        .eq("type", "microsoft_graph" as ApplicationSettingType);
 
       if (deleteGraphError) throw deleteGraphError;
 
       const { error: deleteOpenAIError } = await supabase
         .from("application_settings")
         .delete()
-        .eq("type", "openai");
+        .eq("type", "openai" as ApplicationSettingType);
 
       if (deleteOpenAIError) throw deleteOpenAIError;
 
-      // Insérer les nouveaux paramètres Microsoft Graph
       const { error: insertGraphError } = await supabase
         .from("application_settings")
         .insert([
           {
             key: "client_id",
             value: values.clientId,
-            type: "microsoft_graph",
+            type: "microsoft_graph" as ApplicationSettingType,
           },
           {
             key: "tenant_id",
             value: values.tenantId,
-            type: "microsoft_graph",
+            type: "microsoft_graph" as ApplicationSettingType,
           },
         ]);
 
       if (insertGraphError) throw insertGraphError;
 
-      // Insérer les nouveaux paramètres OpenAI
       const { error: insertOpenAIError } = await supabase
         .from("application_settings")
         .insert([
           {
             key: "api_key",
             value: values.openaiApiKey,
-            type: "openai",
+            type: "openai" as ApplicationSettingType,
           },
         ]);
 
@@ -204,7 +202,6 @@ export const GeneralSettings = () => {
     }
 
     try {
-      // Appel à l'Edge Function pour tester la connexion OpenAI
       const { data, error } = await supabase.functions.invoke("test-openai-connection", {
         body: { apiKey: formValues.openaiApiKey },
       });

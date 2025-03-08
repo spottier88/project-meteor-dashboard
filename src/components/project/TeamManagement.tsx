@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -38,7 +37,6 @@ export const TeamManagement = ({
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
-  // Récupérer les informations du projet pour connaître le chef de projet
   const { data: project } = useQuery({
     queryKey: ["project", projectId],
     queryFn: async () => {
@@ -100,7 +98,6 @@ export const TeamManagement = ({
   });
 
   const handleDelete = (memberId: string, email?: string) => {
-    // Vérifier si le membre est le chef de projet
     if (email && project?.project_manager === email) {
       toast({
         variant: "destructive",
@@ -157,7 +154,7 @@ export const TeamManagement = ({
                     <TableCell>{member.profiles?.email || 'Email non disponible'}</TableCell>
                     <TableCell>
                       {isProjectManager && (
-                        <Badge variant="blue">
+                        <Badge variant="outline" className="bg-blue-100 text-blue-800 border-blue-200">
                           <ShieldCheck className="h-3 w-3 mr-1" />
                           Chef de projet
                         </Badge>
