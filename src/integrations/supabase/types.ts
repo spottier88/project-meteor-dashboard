@@ -100,6 +100,39 @@ export type Database = {
         }
         Relationships: []
       }
+      ai_prompt_templates: {
+        Row: {
+          created_at: string | null
+          id: string
+          is_active: boolean
+          section: string
+          template: string
+          type: string
+          updated_at: string | null
+          version: number
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          is_active?: boolean
+          section: string
+          template: string
+          type: string
+          updated_at?: string | null
+          version?: number
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          is_active?: boolean
+          section?: string
+          template?: string
+          type?: string
+          updated_at?: string | null
+          version?: number
+        }
+        Relationships: []
+      }
       application_settings: {
         Row: {
           created_at: string | null
@@ -461,6 +494,47 @@ export type Database = {
           last_name?: string | null
         }
         Relationships: []
+      }
+      project_framework_notes: {
+        Row: {
+          content: Json
+          created_at: string | null
+          created_by: string | null
+          id: string
+          project_id: string
+          status: string
+          updated_at: string | null
+          version: number
+        }
+        Insert: {
+          content: Json
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          project_id: string
+          status?: string
+          updated_at?: string | null
+          version?: number
+        }
+        Update: {
+          content?: Json
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          project_id?: string
+          status?: string
+          updated_at?: string | null
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_framework_notes_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       project_innovation_scores: {
         Row: {
