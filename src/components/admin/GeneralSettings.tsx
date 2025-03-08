@@ -1,3 +1,4 @@
+
 import React from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -19,6 +20,7 @@ import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { PublicClientApplication } from "@azure/msal-browser";
 
+// Définir le type pour correspondre exactement à l'enum setting_type de la base de données
 type ApplicationSettingType = "microsoft_graph" | "openai";
 
 const settingsSchema = z.object({
@@ -80,6 +82,7 @@ export const GeneralSettings = () => {
 
   const mutation = useMutation({
     mutationFn: async (values: SettingsFormValues) => {
+      // Suppression des paramètres Microsoft Graph existants
       const { error: deleteGraphError } = await supabase
         .from("application_settings")
         .delete()
@@ -87,6 +90,7 @@ export const GeneralSettings = () => {
 
       if (deleteGraphError) throw deleteGraphError;
 
+      // Suppression des paramètres OpenAI existants
       const { error: deleteOpenAIError } = await supabase
         .from("application_settings")
         .delete()
@@ -94,6 +98,7 @@ export const GeneralSettings = () => {
 
       if (deleteOpenAIError) throw deleteOpenAIError;
 
+      // Insertion des nouveaux paramètres Microsoft Graph
       const { error: insertGraphError } = await supabase
         .from("application_settings")
         .insert([
@@ -111,6 +116,7 @@ export const GeneralSettings = () => {
 
       if (insertGraphError) throw insertGraphError;
 
+      // Insertion des nouveaux paramètres OpenAI
       const { error: insertOpenAIError } = await supabase
         .from("application_settings")
         .insert([
