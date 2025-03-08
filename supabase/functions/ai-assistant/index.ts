@@ -43,8 +43,12 @@ serve(async (req) => {
     const { 
       messages,
       conversationId,
+      projectId,
+      promptType = 'general',
+      promptSection = 'general',
       maxTokens = 1500,
-      temperature = 0.7
+      temperature = 0.7,
+      saveFrameworkNote = false
     } = await req.json();
 
     if (!Array.isArray(messages) || messages.length === 0) {
@@ -65,6 +69,69 @@ serve(async (req) => {
 
     const openaiApiKey = openaiSettings.value;
 
+    // Si c'est une demande de note de cadrage, récupérer le template de prompt actif
+    let finalMessages = [...messages];
+    
+    if (promptType === 'framework_note') {
+      const { data: promptTemplate, error: promptError } = await supabaseClient
+        .from("ai_prompt_templates")
+        .select("*")
+        .eq("type", promptType)
+        .eq("section", promptSection)
+        .eq("is_active", true)
+        .order("version", { ascending: false })
+        .limit(1)
+        .single();
+
+      if (promptError) {
+        console.error('Erreur lors de la récupération du template de prompt:', promptError);
+      } else if (promptTemplate) {
+        // Ajouter le template comme message système au début des messages
+        finalMessages = [
+          { role: 'system', content: promptTemplate.template },
+          ...messages
+        ];
+        
+        // Si un ID de projet est fourni, récupérer les informations du projet
+        if (projectId) {
+          const { data: project, error: projectError } = await supabaseClient
+            .from("projects")
+            .select(`
+              *,
+              project_innovation_scores (*)
+            `)
+            .eq("id", projectId)
+            .single();
+
+          if (!projectError && project) {
+            // Ajouter les informations du projet comme premier message utilisateur
+            const projectContext = `
+              Informations du projet:
+              - Titre: ${project.title}
+              - Description: ${project.description || 'Non définie'}
+              - Chef de projet: ${project.project_manager || 'Non défini'}
+              - Date de début: ${project.start_date || 'Non définie'}
+              - Date de fin: ${project.end_date || 'Non définie'}
+              - Priorité: ${project.priority || 'Non définie'}
+              ${project.project_innovation_scores ? `
+              - Scores d'innovation:
+                - Novateur: ${project.project_innovation_scores.novateur}/5
+                - Usager: ${project.project_innovation_scores.usager}/5
+                - Ouverture: ${project.project_innovation_scores.ouverture}/5
+                - Agilité: ${project.project_innovation_scores.agilite}/5
+                - Impact: ${project.project_innovation_scores.impact}/5
+              ` : ''}
+            `;
+            
+            finalMessages.splice(1, 0, { 
+              role: 'user', 
+              content: projectContext
+            });
+          }
+        }
+      }
+    }
+
     // Appel à l'API OpenAI
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
@@ -74,7 +141,7 @@ serve(async (req) => {
       },
       body: JSON.stringify({
         model: 'gpt-4o-mini',
-        messages,
+        messages: finalMessages,
         max_tokens: maxTokens,
         temperature: temperature,
       }),
@@ -113,6 +180,34 @@ serve(async (req) => {
 
       if (insertError) {
         console.error('Erreur lors de la sauvegarde du message:', insertError);
+      }
+    }
+
+    // Si c'est une note de cadrage et que saveFrameworkNote est vrai, sauvegarder la note
+    if (promptType === 'framework_note' && saveFrameworkNote && projectId) {
+      try {
+        // Structurer le contenu de la note (à adapter selon vos besoins)
+        const noteContent = {
+          content: assistantMessage.content,
+          generated_at: new Date().toISOString(),
+          prompt_section: promptSection
+        };
+
+        // Insérer la note de cadrage
+        const { error: frameworkNoteError } = await supabaseClient
+          .from("project_framework_notes")
+          .insert({
+            project_id: projectId,
+            content: noteContent,
+            created_by: user.id,
+            status: 'draft'
+          });
+
+        if (frameworkNoteError) {
+          console.error('Erreur lors de la sauvegarde de la note de cadrage:', frameworkNoteError);
+        }
+      } catch (error) {
+        console.error('Erreur lors du traitement de la note de cadrage:', error);
       }
     }
 
