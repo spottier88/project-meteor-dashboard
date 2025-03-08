@@ -7,6 +7,8 @@ import { TaskSummary } from "@/components/TaskSummary";
 import { RiskSummary } from "@/components/RiskSummary";
 import { LastReview } from "@/components/LastReview";
 import { FrameworkNoteSection } from "./FrameworkNoteSection";
+import { TaskList } from "@/components/TaskList";
+import { RiskList } from "@/components/RiskList";
 
 export const ProjectSummaryContent = ({ 
   project, 
@@ -45,13 +47,20 @@ export const ProjectSummaryContent = ({
           <TabsTrigger value="framework">Notes de cadrage</TabsTrigger>
         </TabsList>
         <TabsContent value="tasks" className="mt-6">
-          <TaskSummary 
+          <TaskList 
             projectId={project.id}
+            canEdit={canEdit}
+            isProjectManager={isProjectManager}
+            isAdmin={isAdmin}
           />
         </TabsContent>
         <TabsContent value="risks" className="mt-6">
-          <RiskSummary 
+          <RiskList 
             projectId={project.id}
+            projectTitle={project.title}
+            canEdit={canEdit}
+            isProjectManager={isProjectManager}
+            isAdmin={isAdmin}
           />
         </TabsContent>
         <TabsContent value="reviews" className="mt-6">
