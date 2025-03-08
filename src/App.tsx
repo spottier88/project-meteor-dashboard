@@ -26,6 +26,7 @@ import { ActivityManagement } from "./components/activities/ActivityManagement";
 import { TeamActivities } from "./pages/TeamActivities";
 import { GeneralSettings } from "@/components/admin/GeneralSettings";
 import { ActivityTypeManagementPage } from "./pages/ActivityTypeManagement";
+import { AIPromptManagement } from "./pages/AIPromptManagement";
 import { logger } from "./utils/logger";
 
 const queryClient = new QueryClient({
@@ -139,6 +140,22 @@ function AppContent() {
             }
           />
           <Route
+            path="/admin/settings"
+            element={
+              <ProtectedRoute>
+                <GeneralSettings />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/ai-prompts"
+            element={
+              <ProtectedRoute>
+                <AIPromptManagement />
+              </ProtectedRoute>
+            }
+          />
+          <Route
             path="/tasks/:projectId"
             element={
               <ProtectedRoute>
@@ -175,14 +192,6 @@ function AppContent() {
             element={
               <ProtectedRoute>
                 <ReviewHistory />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/admin/settings"
-            element={
-              <ProtectedRoute>
-                <GeneralSettings />
               </ProtectedRoute>
             }
           />
