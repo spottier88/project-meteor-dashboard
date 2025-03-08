@@ -2,7 +2,7 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ProjectHeader } from "@/components/ProjectHeader";
 import { ProjectSummaryHeader } from "./ProjectSummaryHeader";
-import { ProjectSummaryActions } from "./ProjectSummaryActions";
+import ProjectSummaryActions from "./ProjectSummaryActions";
 import { TaskSummary } from "@/components/TaskSummary";
 import { RiskSummary } from "@/components/RiskSummary";
 import { LastReview } from "@/components/LastReview";
@@ -23,15 +23,18 @@ export const ProjectSummaryContent = ({
         <ProjectHeader project={project} />
         <ProjectSummaryActions 
           project={project}
-          isProjectManager={isProjectManager}
-          isAdmin={isAdmin}
-          canEdit={canEdit}
+          risks={risks}
+          tasks={tasks}
         />
       </div>
 
       <ProjectSummaryHeader 
-        project={project} 
-        lastReview={lastReview} 
+        title={project.title}
+        description={project.description}
+        project_manager={project.project_manager}
+        id={project.id}
+        isProjectManager={isProjectManager}
+        isAdmin={isAdmin}
       />
 
       <Tabs defaultValue="tasks">
@@ -43,23 +46,23 @@ export const ProjectSummaryContent = ({
         </TabsList>
         <TabsContent value="tasks" className="mt-6">
           <TaskSummary 
-            tasks={tasks} 
+            taskList={tasks} 
             projectId={project.id} 
-            canAdd={canEdit}
+            canEdit={canEdit}
           />
         </TabsContent>
         <TabsContent value="risks" className="mt-6">
           <RiskSummary 
-            risks={risks} 
+            riskList={risks} 
             projectId={project.id} 
-            canAdd={canEdit}
+            canEdit={canEdit}
           />
         </TabsContent>
         <TabsContent value="reviews" className="mt-6">
           <LastReview 
-            projectId={project.id} 
-            lastReview={lastReview}
-            canAdd={canEdit}
+            review={lastReview}
+            projectId={project.id}
+            canEdit={canEdit}
           />
         </TabsContent>
         <TabsContent value="framework" className="mt-6">

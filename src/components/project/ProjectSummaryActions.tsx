@@ -1,10 +1,17 @@
+
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import { generateProjectPPTX } from "@/components/pptx/ProjectPPTX";
 
-const ProjectSummaryActions = ({ project, risks, tasks }) => {
+interface ProjectSummaryActionsProps {
+  project: any;
+  risks?: any[];
+  tasks?: any[];
+}
+
+const ProjectSummaryActions = ({ project, risks = [], tasks = [] }: ProjectSummaryActionsProps) => {
   const { toast } = useToast();
 
   const handleExportPPTX = async () => {

@@ -106,7 +106,9 @@ export const FrameworkNotesList = ({ projectId, onViewNote }: FrameworkNotesList
                       Note v{note.version} - {formatDate(note.created_at)}
                     </h3>
                     <p className="text-xs text-muted-foreground mt-1">
-                      {note.content.prompt_section ? `Section: ${note.content.prompt_section}` : "Section générale"}
+                      {typeof note.content === 'object' && note.content && 'prompt_section' in note.content 
+                        ? `Section: ${note.content.prompt_section}` 
+                        : "Section générale"}
                     </p>
                   </div>
                   <div className="flex gap-2">
