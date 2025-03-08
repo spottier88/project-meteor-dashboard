@@ -46,23 +46,17 @@ export const ProjectSummaryContent = ({
         </TabsList>
         <TabsContent value="tasks" className="mt-6">
           <TaskSummary 
-            taskList={tasks} 
-            projectId={project.id} 
-            canEdit={canEdit}
+            projectId={project.id}
           />
         </TabsContent>
         <TabsContent value="risks" className="mt-6">
           <RiskSummary 
-            riskList={risks} 
-            projectId={project.id} 
-            canEdit={canEdit}
+            projectId={project.id}
           />
         </TabsContent>
         <TabsContent value="reviews" className="mt-6">
           <LastReview 
             review={lastReview}
-            projectId={project.id}
-            canEdit={canEdit}
           />
         </TabsContent>
         <TabsContent value="framework" className="mt-6">
