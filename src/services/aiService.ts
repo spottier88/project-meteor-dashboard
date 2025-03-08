@@ -19,10 +19,18 @@ export const aiService = {
    * Crée une nouvelle conversation
    */
   async createConversation(title: string = 'Nouvelle conversation'): Promise<string | null> {
+    // Récupérer la session actuelle pour obtenir l'ID utilisateur
+    const { data: sessionData } = await supabase.auth.getSession();
+    if (!sessionData.session?.user) {
+      console.error('Utilisateur non authentifié lors de la création de conversation');
+      return null;
+    }
+
     const { data, error } = await supabase
       .from('ai_conversations')
       .insert({
-        title
+        title,
+        user_id: sessionData.session.user.id
       })
       .select()
       .single();
@@ -69,7 +77,7 @@ export const aiService = {
     }
 
     // Récupérer les messages
-    const { data: messages, error: messagesError } = await supabase
+    const { data: messagesData, error: messagesError } = await supabase
       .from('ai_messages')
       .select('*')
       .eq('conversation_id', conversationId)
@@ -80,9 +88,15 @@ export const aiService = {
       return { conversation, messages: [] };
     }
 
+    // Convertir les messages en type Message avec un rôle correctement typé
+    const messages: Message[] = messagesData.map(msg => ({
+      role: msg.role as 'user' | 'assistant' | 'system',
+      content: msg.content
+    }));
+
     return {
       conversation,
-      messages: messages.map(msg => ({ role: msg.role, content: msg.content }))
+      messages
     };
   },
 
@@ -111,7 +125,7 @@ export const aiService = {
         .from('ai_messages')
         .insert({
           conversation_id: finalConversationId,
-          role: 'user',
+          role: 'user' as const,
           content: message
         });
 
@@ -120,7 +134,7 @@ export const aiService = {
       }
 
       // Préparer les messages à envoyer à l'API
-      const messagesToSend = [
+      const messagesToSend: Message[] = [
         ...existingMessages,
         { role: 'user' as const, content: message }
       ];
