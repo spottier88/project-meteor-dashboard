@@ -1,5 +1,5 @@
 import { CardHeader } from "@/components/ui/card";
-import { ProjectActions } from "../ProjectActions";
+import { ProjectActions } from "./ProjectActions";
 import { StatusIcon } from "./StatusIcon";
 import { ProjectStatus } from "@/types/project";
 
