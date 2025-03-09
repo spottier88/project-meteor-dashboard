@@ -18,7 +18,16 @@ serve(async (req) => {
     // Récupérer le client Supabase
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
-      throw new Error('Autorisation requise');
+      return new Response(
+        JSON.stringify({ 
+          error: 'Autorisation requise',
+          details: 'Aucun header d\'autorisation fourni'
+        }),
+        { 
+          status: 401, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        }
+      );
     }
 
     const supabaseClient = createClient(
@@ -36,7 +45,32 @@ serve(async (req) => {
     // Récupérer l'utilisateur
     const { data: { user }, error: userError } = await supabaseClient.auth.getUser();
     if (userError || !user) {
-      throw new Error('Utilisateur non authentifié');
+      return new Response(
+        JSON.stringify({ 
+          error: 'Utilisateur non authentifié',
+          details: userError ? userError.message : 'Utilisateur introuvable'
+        }),
+        { 
+          status: 401, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        }
+      );
+    }
+
+    let requestBody;
+    try {
+      requestBody = await req.json();
+    } catch (jsonError) {
+      return new Response(
+        JSON.stringify({ 
+          error: 'Format de requête invalide',
+          details: 'Le corps de la requête n\'est pas un JSON valide'
+        }),
+        { 
+          status: 400, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        }
+      );
     }
 
     // Récupérer le corps de la requête
@@ -49,10 +83,19 @@ serve(async (req) => {
       maxTokens = 1500,
       temperature = 0.7,
       saveFrameworkNote = false
-    } = await req.json();
+    } = requestBody;
 
     if (!Array.isArray(messages) || messages.length === 0) {
-      throw new Error('Messages invalides');
+      return new Response(
+        JSON.stringify({ 
+          error: 'Messages invalides',
+          details: 'Les messages doivent être un tableau non vide'
+        }),
+        { 
+          status: 400, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        }
+      );
     }
 
     // Récupérer la clé API OpenAI depuis les paramètres de l'application
@@ -64,10 +107,32 @@ serve(async (req) => {
       .single();
 
     if (openaiError || !openaiSettings) {
-      throw new Error('Clé API OpenAI non trouvée');
+      console.error('Erreur lors de la récupération de la clé API OpenAI:', openaiError);
+      return new Response(
+        JSON.stringify({ 
+          error: 'Clé API OpenAI non trouvée',
+          details: openaiError ? openaiError.message : 'Paramètre d\'application manquant'
+        }),
+        { 
+          status: 500, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        }
+      );
     }
 
     const openaiApiKey = openaiSettings.value;
+    if (!openaiApiKey) {
+      return new Response(
+        JSON.stringify({ 
+          error: 'Clé API OpenAI invalide',
+          details: 'La clé API OpenAI est vide ou non définie'
+        }),
+        { 
+          status: 500, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        }
+      );
+    }
 
     // Si c'est une demande de note de cadrage, récupérer le template de prompt actif
     let finalMessages = [...messages];
@@ -133,105 +198,130 @@ serve(async (req) => {
     }
 
     // Appel à l'API OpenAI
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${openaiApiKey}`,
-      },
-      body: JSON.stringify({
-        model: 'gpt-4o-mini',
-        messages: finalMessages,
-        max_tokens: maxTokens,
-        temperature: temperature,
-      }),
-    });
-
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(`Erreur API OpenAI: ${error.error?.message || 'Erreur inconnue'}`);
-    }
-
-    const data = await response.json();
-    const assistantMessage = data.choices[0].message;
-
-    // Si un ID de conversation est fourni, sauvegarder le message dans la base de données
-    if (conversationId) {
-      // Vérifier que la conversation appartient à l'utilisateur
-      const { data: conversation, error: conversationError } = await supabaseClient
-        .from("ai_conversations")
-        .select("*")
-        .eq("id", conversationId)
-        .eq("user_id", user.id)
-        .single();
-
-      if (conversationError || !conversation) {
-        throw new Error('Conversation non trouvée ou accès non autorisé');
-      }
-
-      // Sauvegarder le message de l'assistant
-      const { error: insertError } = await supabaseClient
-        .from("ai_messages")
-        .insert({
-          conversation_id: conversationId,
-          role: assistantMessage.role,
-          content: assistantMessage.content,
-        });
-
-      if (insertError) {
-        console.error('Erreur lors de la sauvegarde du message:', insertError);
-      }
-    }
-
-    // Si c'est une note de cadrage et que saveFrameworkNote est vrai, sauvegarder la note
-    if (promptType === 'framework_note' && saveFrameworkNote && projectId) {
-      try {
-        // Structurer le contenu de la note (à adapter selon vos besoins)
-        const noteContent = {
-          content: assistantMessage.content,
-          generated_at: new Date().toISOString(),
-          prompt_section: promptSection
-        };
-
-        // Insérer la note de cadrage
-        const { error: frameworkNoteError } = await supabaseClient
-          .from("project_framework_notes")
-          .insert({
-            project_id: projectId,
-            content: noteContent,
-            created_by: user.id,
-            status: 'draft'
-          });
-
-        if (frameworkNoteError) {
-          console.error('Erreur lors de la sauvegarde de la note de cadrage:', frameworkNoteError);
-        }
-      } catch (error) {
-        console.error('Erreur lors du traitement de la note de cadrage:', error);
-      }
-    }
-
-    return new Response(
-      JSON.stringify({
-        message: assistantMessage,
-        usage: data.usage,
-      }),
-      {
+    try {
+      const openaiResponse = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
         headers: {
-          ...corsHeaders,
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${openaiApiKey}`,
         },
+        body: JSON.stringify({
+          model: 'gpt-4o-mini',
+          messages: finalMessages,
+          max_tokens: maxTokens,
+          temperature: temperature,
+        }),
+      });
+
+      if (!openaiResponse.ok) {
+        const errorJson = await openaiResponse.json().catch(() => null);
+        return new Response(
+          JSON.stringify({ 
+            error: `Erreur API OpenAI (${openaiResponse.status})`, 
+            details: errorJson ? errorJson.error?.message : 'Réponse non valide de l\'API OpenAI'
+          }),
+          { 
+            status: openaiResponse.status, 
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          }
+        );
       }
-    );
+
+      const data = await openaiResponse.json();
+      const assistantMessage = data.choices[0].message;
+
+      // Si un ID de conversation est fourni, sauvegarder le message dans la base de données
+      if (conversationId) {
+        // Vérifier que la conversation appartient à l'utilisateur
+        const { data: conversation, error: conversationError } = await supabaseClient
+          .from("ai_conversations")
+          .select("*")
+          .eq("id", conversationId)
+          .eq("user_id", user.id)
+          .single();
+
+        if (conversationError || !conversation) {
+          console.error('Erreur lors de la vérification de la conversation:', conversationError);
+          // On continue même si erreur pour le stockage de la conversation
+        } else {
+          // Sauvegarder le message de l'assistant
+          const { error: insertError } = await supabaseClient
+            .from("ai_messages")
+            .insert({
+              conversation_id: conversationId,
+              role: assistantMessage.role,
+              content: assistantMessage.content,
+            });
+
+          if (insertError) {
+            console.error('Erreur lors de la sauvegarde du message:', insertError);
+          }
+        }
+      }
+
+      // Si c'est une note de cadrage et que saveFrameworkNote est vrai, sauvegarder la note
+      if (promptType === 'framework_note' && saveFrameworkNote && projectId) {
+        try {
+          // Structurer le contenu de la note
+          const noteContent = {
+            content: assistantMessage.content,
+            generated_at: new Date().toISOString(),
+            prompt_section: promptSection
+          };
+
+          // Insérer la note de cadrage
+          const { error: frameworkNoteError } = await supabaseClient
+            .from("project_framework_notes")
+            .insert({
+              project_id: projectId,
+              content: noteContent,
+              created_by: user.id,
+              status: 'draft'
+            });
+
+          if (frameworkNoteError) {
+            console.error('Erreur lors de la sauvegarde de la note de cadrage:', frameworkNoteError);
+          }
+        } catch (error) {
+          console.error('Erreur lors du traitement de la note de cadrage:', error);
+        }
+      }
+
+      return new Response(
+        JSON.stringify({
+          message: assistantMessage,
+          usage: data.usage,
+        }),
+        {
+          headers: {
+            ...corsHeaders,
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+    } catch (openaiError) {
+      console.error('Erreur lors de l\'appel à l\'API OpenAI:', openaiError);
+      return new Response(
+        JSON.stringify({ 
+          error: 'Erreur lors de l\'appel à l\'API OpenAI', 
+          details: openaiError.message || 'Erreur inconnue'
+        }),
+        { 
+          status: 500, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        }
+      );
+    }
   } catch (error) {
     console.error('Erreur lors du traitement de la requête:', error);
     
     return new Response(
       JSON.stringify({
-        error: error.message || 'Une erreur est survenue lors du traitement de la requête',
+        error: 'Erreur serveur',
+        details: error.message || 'Une erreur est survenue lors du traitement de la requête',
       }),
       {
-        status: 400,
+        status: 500,
         headers: {
           ...corsHeaders,
           'Content-Type': 'application/json',
