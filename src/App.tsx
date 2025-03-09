@@ -1,4 +1,3 @@
-
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
@@ -22,12 +21,13 @@ import { PermissionsProvider } from "@/contexts/PermissionsContext";
 import { FeedbackButton } from "@/components/feedback/FeedbackButton";
 import { useEffect } from "react";
 import { useToast } from "./components/ui/use-toast";
-import { ActivityManagement } from "./components/activities/ActivityManagement";
+import { ActivityManagement } from "@/components/activities/ActivityManagement";
 import { TeamActivities } from "./pages/TeamActivities";
 import { GeneralSettings } from "@/components/admin/GeneralSettings";
 import { ActivityTypeManagementPage } from "./pages/ActivityTypeManagement";
 import { AIPromptManagement } from "./pages/AIPromptManagement";
 import { logger } from "./utils/logger";
+import { FrameworkNotes } from "./pages/FrameworkNotes";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -192,6 +192,14 @@ function AppContent() {
             element={
               <ProtectedRoute>
                 <ReviewHistory />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/framework-notes/:projectId"
+            element={
+              <ProtectedRoute>
+                <FrameworkNotes />
               </ProtectedRoute>
             }
           />
