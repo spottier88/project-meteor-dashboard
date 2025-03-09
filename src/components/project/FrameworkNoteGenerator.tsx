@@ -43,28 +43,27 @@ export const FrameworkNoteGenerator = ({ project }: FrameworkNoteGeneratorProps)
         throw new Error("Vous devez être connecté pour utiliser cette fonctionnalité");
       }
 
-      const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ai-assistant`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${sessionData.session.access_token}`
-        },
-        body: JSON.stringify({
+      // Utilisation de supabase.functions.invoke au lieu de fetch avec URL construite manuellement
+      const { data, error } = await supabase.functions.invoke("ai-assistant", {
+        body: {
           messages: [{ role: "user", content: prompt }],
           projectId: project.id,
           promptType: "framework_note",
           promptSection: activeTab,
           maxTokens: 2000,
           temperature: 0.7
-        })
+        }
       });
 
-      if (!res.ok) {
-        const errorData = await res.json();
-        throw new Error(errorData.error || "Erreur lors de la génération de la note de cadrage");
+      if (error) {
+        console.error("Erreur lors de l'appel à la fonction:", error);
+        throw new Error(error.message || "Erreur lors de la génération de la note de cadrage");
       }
 
-      const data = await res.json();
+      if (!data || !data.message || !data.message.content) {
+        throw new Error("Réponse invalide de l'assistant IA");
+      }
+
       setResponse(data.message.content);
     } catch (error) {
       console.error("Erreur:", error);
