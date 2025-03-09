@@ -52,26 +52,26 @@ export const useCalendarImport = () => {
       endDate: Date;
     }) => {
       const currentAuthStatus = checkAuthStatus();
-      console.log('useCalendarImport: Vérification de l\'état d\'authentification en temps réel:', currentAuthStatus);
+      //console.log('useCalendarImport: Vérification de l\'état d\'authentification en temps réel:', currentAuthStatus);
       
       if (!currentAuthStatus) {
         console.log('useCalendarImport: Non authentifié, impossible de récupérer les événements');
         throw new Error("Vous devez d'abord vous connecter à Microsoft");
       }
 
-      console.log('useCalendarImport: Récupération des événements du calendrier...');
-      console.log('useCalendarImport: Période:', startDate.toISOString(), 'à', endDate.toISOString());
+      //console.log('useCalendarImport: Récupération des événements du calendrier...');
+      //console.log('useCalendarImport: Période:', startDate.toISOString(), 'à', endDate.toISOString());
       
       try {
         const msalInstance = getMSALInstance();
         if (!msalInstance) {
-          console.log('useCalendarImport: MSAL instance not available');
+          //console.log('useCalendarImport: MSAL instance not available');
           throw new Error("Instance MSAL non disponible");
         }
 
         const accounts = msalInstance.getAllAccounts();
         if (accounts.length === 0) {
-          console.log('useCalendarImport: No Microsoft account connected');
+          //console.log('useCalendarImport: No Microsoft account connected');
           throw new Error("Aucun compte Microsoft connecté");
         }
 
@@ -80,11 +80,11 @@ export const useCalendarImport = () => {
           account: accounts[0]
         };
 
-        console.log('useCalendarImport: Acquiring token silently');
+        //console.log('useCalendarImport: Acquiring token silently');
         const tokenResponse = await msalInstance.acquireTokenSilent(accessTokenRequest);
-        console.log('useCalendarImport: Token acquired successfully');
+        //console.log('useCalendarImport: Token acquired successfully');
         
-        console.log('useCalendarImport: Calling edge function to fetch calendar');
+        //console.log('useCalendarImport: Calling edge function to fetch calendar');
         const { data, error } = await supabase.functions.invoke('fetch-ms-calendar', {
           body: {
             accessToken: tokenResponse.accessToken,
@@ -99,7 +99,7 @@ export const useCalendarImport = () => {
         }
 
         if (!data?.events) {
-          console.log('useCalendarImport: No events found');
+          //console.log('useCalendarImport: No events found');
           throw new Error("Aucun événement trouvé");
         }
 
@@ -110,7 +110,7 @@ export const useCalendarImport = () => {
           selected: false
         }));
         
-        console.log('useCalendarImport: Événements récupérés:', transformedEvents.length);
+        //console.log('useCalendarImport: Événements récupérés:', transformedEvents.length);
         setEvents(transformedEvents);
         return transformedEvents;
       } catch (error: any) {
