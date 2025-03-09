@@ -31,6 +31,9 @@ interface ProjectActionsProps {
   owner_id?: string;
   project_manager?: string;
   isMember?: boolean;
+  canEdit?: boolean;
+  canManageTeam?: boolean;
+  isAdmin?: boolean;
 }
 
 export const ProjectActions = ({
@@ -42,19 +45,22 @@ export const ProjectActions = ({
   owner_id,
   project_manager,
   isMember,
+  canEdit,
+  canManageTeam,
+  isAdmin,
 }: ProjectActionsProps) => {
   const navigate = useNavigate();
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const { isAdmin, isProjectManager, canEdit, canManageTeam } = useProjectPermissions(projectId);
-
-  // console.log('ProjectActions permissions:', {
-  //   projectId,
-  //   isAdmin,
-  //   isProjectManager,
-  //   canEdit,
-  //   canManageTeam,
-  //   isMember
-  // });
+  
+  // Utilisons les permissions passées en props plutôt que de les récupérer à nouveau
+  // Si elles ne sont pas fournies, utilisons useProjectPermissions comme fallback
+  const permissions = useProjectPermissions(projectId);
+  
+  // Priorité aux props reçues, sinon utiliser les permissions obtenues du hook
+  const _canEdit = canEdit ?? permissions.canEdit;
+  const _isMember = isMember ?? permissions.isMember;
+  const _canManageTeam = canManageTeam ?? permissions.canManageTeam;
+  const _isAdmin = isAdmin ?? permissions.isAdmin;
 
   const handleClick = (e: React.MouseEvent, action: () => void) => {
     e.stopPropagation();
@@ -63,7 +69,7 @@ export const ProjectActions = ({
 
   return (
     <>
-      {canEdit && (
+      {_canEdit && (
         <Button
           variant="ghost"
           size="icon"
@@ -86,7 +92,7 @@ export const ProjectActions = ({
         <History className="h-4 w-4" />
       </Button>
 
-      {(canEdit || isMember || canManageTeam || isAdmin) && (
+      {(_canEdit || _isMember || _canManageTeam || _isAdmin) && (
         <DropdownMenu>
           <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
             <Button variant="ghost" size="icon" className="h-8 w-8">
@@ -94,7 +100,7 @@ export const ProjectActions = ({
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            {(canEdit || isMember) && (
+            {(_canEdit || _isMember) && (
               <>
                 <DropdownMenuItem onClick={() => navigate(`/tasks/${projectId}`)}>
                   <ListTodo className="mr-2 h-4 w-4" />
@@ -110,16 +116,16 @@ export const ProjectActions = ({
                 </DropdownMenuItem>
               </>
             )}
-            {canManageTeam && (
+            {_canManageTeam && (
               <>
-                {(canEdit || isMember) && <DropdownMenuSeparator />}
+                {(_canEdit || _isMember) && <DropdownMenuSeparator />}
                 <DropdownMenuItem onClick={() => navigate(`/projects/${projectId}/team`)}>
                   <Users className="mr-2 h-4 w-4" />
                   Gérer l'équipe
                 </DropdownMenuItem>
               </>
             )}
-            {isAdmin && (
+            {_isAdmin && (
               <>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem 
