@@ -7,12 +7,13 @@ import { ArrowLeft } from "lucide-react";
 import { FrameworkNoteSection } from "@/components/project/FrameworkNoteSection";
 import { useToast } from "@/components/ui/use-toast";
 import { useProjectPermissions } from "@/hooks/useProjectPermissions";
+import { ProjectSummaryHeader } from "@/components/project/ProjectSummaryHeader";
 
 export const FrameworkNotes = () => {
   const { projectId } = useParams<{ projectId: string }>();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { canEdit } = useProjectPermissions(projectId || "");
+  const { canEdit, isProjectManager, isAdmin } = useProjectPermissions(projectId || "");
 
   const { data: project, isError: projectError } = useQuery({
     queryKey: ["project", projectId],
@@ -57,19 +58,26 @@ export const FrameworkNotes = () => {
   }
 
   return (
-    <div className="container mx-auto py-6 space-y-6">
-      <div className="flex items-center justify-between">
-        <Button
-          variant="ghost"
-          onClick={() => navigate(`/projects/${projectId}`)}
-        >
-          <ArrowLeft className="h-4 w-4 mr-2" />
-          Retour au projet
-        </Button>
-      </div>
+    <div className="container mx-auto py-8 px-4">
+      <Button
+        variant="ghost"
+        className="mb-6"
+        onClick={() => navigate("/")}
+      >
+        <ArrowLeft className="h-4 w-4 mr-2" />
+        Retour aux projets
+      </Button>
 
-      <div>
-        <h1 className="text-2xl font-bold mb-4">{project.title}</h1>
+      <ProjectSummaryHeader
+        title={project.title}
+        description={project.description}
+        project_manager={project.project_manager}
+        id={project.id}
+        isProjectManager={isProjectManager}
+        isAdmin={isAdmin}
+      />
+
+      <div className="mt-8">
         <FrameworkNoteSection
           project={project}
           canEdit={canEdit}

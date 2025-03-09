@@ -13,7 +13,7 @@ import {
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { DeleteProjectDialog } from "./DeleteProjectDialog";
-import { useProjectPermissions } from "@/hooks/use-project-permissions";
+import { useProjectPermissions } from "@/hooks/useProjectPermissions";
 import {
   DropdownMenu,
   DropdownMenuContent,
