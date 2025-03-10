@@ -9,6 +9,7 @@ import { Loader2, Save, AlertTriangle } from "lucide-react";
 import { Database } from "@/integrations/supabase/types";
 import { supabase } from "@/integrations/supabase/client";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { useQueryClient } from "@tanstack/react-query";
 
 type Project = Database["public"]["Tables"]["projects"]["Row"];
 type PromptSection = "objectifs" | "contexte" | "cibles" | "resultats_attendus" | "risques" | "enjeux" | "general";
@@ -25,6 +26,7 @@ export const FrameworkNoteGenerator = ({ project }: FrameworkNoteGeneratorProps)
   const [isSaving, setIsSaving] = useState(false);
   const [usedFallbackTemplate, setUsedFallbackTemplate] = useState(false);
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   const handleGenerate = async () => {
     if (!prompt.trim()) {
@@ -123,6 +125,9 @@ export const FrameworkNoteGenerator = ({ project }: FrameworkNoteGeneratorProps)
         });
 
       if (error) throw error;
+
+      // Invalider la requête pour forcer le rechargement des notes
+      queryClient.invalidateQueries({ queryKey: ["frameworkNotes", project.id] });
 
       toast({
         title: "Note de cadrage sauvegardée",

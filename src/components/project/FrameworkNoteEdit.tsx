@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQueryClient, useMutation } from "@tanstack/react-query";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -16,10 +16,17 @@ interface FrameworkNoteEditProps {
 }
 
 export const FrameworkNoteEdit = ({ note, isOpen, onClose, projectId }: FrameworkNoteEditProps) => {
-  const [content, setContent] = useState(note?.content?.content || "");
+  const [content, setContent] = useState("");
   const { toast } = useToast();
   const queryClient = useQueryClient();
   
+  // Mise à jour du contenu lorsque la note change ou quand la modal s'ouvre
+  useEffect(() => {
+    if (note && note.content && isOpen) {
+      setContent(note.content.content || "");
+    }
+  }, [note, isOpen]);
+
   const updateMutation = useMutation({
     mutationFn: async () => {
       // Créer une copie du contenu de la note et mettre à jour le contenu

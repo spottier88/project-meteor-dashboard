@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
@@ -49,6 +49,17 @@ const styles = StyleSheet.create({
   },
 });
 
+// Définir l'ordre des sections
+const sectionOrder = [
+  "general",
+  "contexte",
+  "objectifs", 
+  "enjeux",
+  "cibles", 
+  "resultats_attendus", 
+  "risques"
+];
+
 // Composant PDF
 const FrameworkNotePdfDocument = ({ notes, projectTitle }: { notes: any[], projectTitle: string }) => {
   // Regrouper les notes par section
@@ -91,13 +102,22 @@ const FrameworkNotePdfDocument = ({ notes, projectTitle }: { notes: any[], proje
     enjeux: "Enjeux",
   };
 
+  // Ordonner les sections selon l'ordre défini
+  const orderedSections = Object.keys(latestNotes)
+    .sort((a, b) => {
+      const indexA = sectionOrder.indexOf(a);
+      const indexB = sectionOrder.indexOf(b);
+      // Si une section n'est pas dans la liste, la mettre à la fin
+      return (indexA === -1 ? 999 : indexA) - (indexB === -1 ? 999 : indexB);
+    });
+
   return (
     <Document>
       <Page style={styles.page} size="A4">
         <Text style={styles.header}>Note de cadrage: {projectTitle}</Text>
         <Text style={styles.content}>Date: {formatDate(new Date())}</Text>
         
-        {Object.keys(latestNotes).map((section) => (
+        {orderedSections.map((section) => (
           <View key={section} style={styles.section}>
             <Text style={styles.subheader}>{sectionTranslations[section] || section}</Text>
             <Text style={styles.content}>{latestNotes[section].content.content}</Text>
@@ -115,7 +135,7 @@ export const FrameworkNotePdf = ({ isOpen, onClose, projectId }: FrameworkNotePd
   const { toast } = useToast();
 
   // Récupérer les notes de cadrage
-  const { data: notes, isLoading: notesLoading, error } = useQuery({
+  const { data: notes, isLoading: notesLoading, error, refetch } = useQuery({
     queryKey: ["frameworkNotesForPdf", projectId],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -145,6 +165,13 @@ export const FrameworkNotePdf = ({ isOpen, onClose, projectId }: FrameworkNotePd
     },
     enabled: isOpen && !!projectId,
   });
+
+  // Recharger les données lorsque la modal s'ouvre
+  useEffect(() => {
+    if (isOpen) {
+      refetch();
+    }
+  }, [isOpen, refetch]);
 
   if (!isOpen) return null;
 
