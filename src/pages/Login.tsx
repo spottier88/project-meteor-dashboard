@@ -6,6 +6,21 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/components/ui/use-toast";
 
+// Fonction pour nettoyer explicitement les cookies Supabase
+const clearSupabaseCookies = () => {
+  const cookies = document.cookie.split(";");
+  for (let i = 0; i < cookies.length; i++) {
+    const cookie = cookies[i];
+    const eqPos = cookie.indexOf("=");
+    const name = eqPos > -1 ? cookie.substring(0, eqPos).trim() : cookie.trim();
+    
+    // Supprimer tous les cookies liés à Supabase
+    if (name.startsWith("sb-")) {
+      document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/;`;
+    }
+  }
+};
+
 const Login = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -16,24 +31,11 @@ const Login = () => {
   const [isMagicLink, setIsMagicLink] = useState(true);
   const [isCheckingSession, setIsCheckingSession] = useState(true);
 
-  // Fonction pour nettoyer explicitement les cookies Supabase
-  const clearSupabaseCookies = () => {
-    const cookies = document.cookie.split(";");
-    for (let i = 0; i < cookies.length; i++) {
-      const cookie = cookies[i];
-      const eqPos = cookie.indexOf("=");
-      const name = eqPos > -1 ? cookie.substring(0, eqPos).trim() : cookie.trim();
-      
-      // Supprimer tous les cookies liés à Supabase
-      if (name.startsWith("sb-")) {
-        document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/;`;
-      }
-    }
-  };
-
   // Fonction pour déconnecter complètement l'utilisateur et nettoyer les données de session
   const handleLogout = async () => {
     try {
+      console.log("Déconnexion et nettoyage forcés");
+      
       // Déconnexion via Supabase
       await supabase.auth.signOut({ scope: 'local' });
       
@@ -45,12 +47,14 @@ const Login = () => {
       setPassword("");
       setLoading(false);
       setMessage("");
+      setIsCheckingSession(false);
       
       console.log("Déconnexion et nettoyage effectués avec succès");
     } catch (error) {
       console.error("Erreur lors de la déconnexion:", error);
       // En cas d'erreur, forcer quand même le nettoyage des cookies
       clearSupabaseCookies();
+      setIsCheckingSession(false);
     }
   };
 
@@ -58,6 +62,7 @@ const Login = () => {
   useEffect(() => {
     const checkSession = async () => {
       try {
+        console.log("Vérification de session au démarrage");
         setIsCheckingSession(true);
         
         // Récupérer la session actuelle
@@ -66,7 +71,6 @@ const Login = () => {
         if (sessionError) {
           console.error("Erreur lors de la vérification de session:", sessionError);
           await handleLogout();
-          setIsCheckingSession(false);
           return;
         }
 
@@ -96,11 +100,13 @@ const Login = () => {
       console.log("Événement d'authentification:", event);
       
       if (event === 'SIGNED_OUT') {
+        console.log("Événement SIGNED_OUT détecté, nettoyage et mise à jour de l'UI");
         await handleLogout();
         return;
       }
 
       if (event === 'SIGNED_IN' && session) {
+        console.log("Événement SIGNED_IN détecté, redirection vers /");
         navigate("/");
       }
     });

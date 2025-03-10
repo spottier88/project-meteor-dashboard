@@ -64,20 +64,25 @@ const AuthCallback = () => {
         console.error("Erreur dans le callback d'authentification:", err);
         setError(err instanceof Error ? err.message : "Une erreur est survenue lors de l'authentification");
         
-        // En cas d'erreur, nettoyer les cookies Supabase
-        await supabase.auth.signOut();
-        clearSupabaseCookies();
-        
-        toast({
-          variant: "destructive",
-          title: "Erreur d'authentification",
-          description: err instanceof Error ? err.message : "Une erreur est survenue lors de l'authentification",
-        });
+        // En cas d'erreur, nettoyer les cookies Supabase et se déconnecter
+        try {
+          await supabase.auth.signOut();
+          clearSupabaseCookies();
+          
+          toast({
+            variant: "destructive",
+            title: "Erreur d'authentification",
+            description: err instanceof Error ? err.message : "Une erreur est survenue lors de l'authentification",
+          });
+        } catch (logoutError) {
+          console.error("Erreur supplémentaire lors de la déconnexion:", logoutError);
+        }
 
         // En cas d'erreur, redirection vers la page de login après un court délai
         setTimeout(() => {
-          navigate("/login");
-        }, 3000);
+          // Utiliser window.location.href pour forcer un rechargement complet
+          window.location.href = "/login";
+        }, 2000);
       }
     };
 

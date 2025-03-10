@@ -11,6 +11,21 @@ import { ProfileForm } from "./profile/ProfileForm";
 import { UserNotificationsDropdown } from "./notifications/UserNotificationsDropdown";
 import { RequiredNotificationDialog } from "./notifications/RequiredNotificationDialog";
 
+// Fonction pour nettoyer les cookies Supabase
+const clearSupabaseCookies = () => {
+  const cookies = document.cookie.split(";");
+  for (let i = 0; i < cookies.length; i++) {
+    const cookie = cookies[i];
+    const eqPos = cookie.indexOf("=");
+    const name = eqPos > -1 ? cookie.substring(0, eqPos).trim() : cookie.trim();
+    
+    // Supprimer tous les cookies liés à Supabase
+    if (name.startsWith("sb-")) {
+      document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/;`;
+    }
+  }
+};
+
 export const UserInfo = () => {
   const user = useUser();
   const supabase = useSupabaseClient();
@@ -54,24 +69,24 @@ export const UserInfo = () => {
 
   const handleLogout = async () => {
     try {
-      const { error } = await supabase.auth.signOut();
-      if (error) throw error;
-
       // Invalider le cache avant la déconnexion
       queryClient.clear();
-
-      await new Promise(resolve => setTimeout(resolve, 100));
-
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        navigate("/login");
-        toast({
-          title: "Déconnexion réussie",
-          description: "Vous avez été déconnecté avec succès",
-        });
-      } else {
-        throw new Error("La session n'a pas été correctement terminée");
-      }
+      
+      // Déconnecter l'utilisateur via Supabase
+      await supabase.auth.signOut();
+      
+      // Nettoyer les cookies manuellement
+      clearSupabaseCookies();
+      
+      console.log("Déconnexion effectuée, redirection vers login");
+      
+      // Forcer la navigation vers login
+      window.location.href = "/login";
+      
+      toast({
+        title: "Déconnexion réussie",
+        description: "Vous avez été déconnecté avec succès",
+      });
     } catch (error) {
       console.error("Erreur lors de la déconnexion:", error);
       toast({
@@ -79,6 +94,9 @@ export const UserInfo = () => {
         description: "Une erreur est survenue lors de la déconnexion",
         variant: "destructive",
       });
+      
+      // En cas d'erreur, forcer quand même la redirection
+      window.location.href = "/login";
     }
   };
 
