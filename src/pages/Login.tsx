@@ -13,75 +13,109 @@ const Login = () => {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
   const [isMagicLink, setIsMagicLink] = useState(true);
+  const [isCheckingSession, setIsCheckingSession] = useState(true);
 
   useEffect(() => {
-    //console.log("[Login] Composant monté, vérification de la session...");
-    // Vérifier si l'utilisateur est déjà connecté
     const checkSession = async () => {
-      const { data: sessionData } = await supabase.auth.getSession();
-      //console.log("[Login] Session actuelle:", sessionData);
-      
-      if (sessionData.session) {
-        //console.log("[Login] Session trouvée, vérification du profil...");
-        const { data: profileData } = await supabase
-          .from('profiles')
-          .select()
-          .eq('id', sessionData.session.user.id)
-          .maybeSingle();
-
-        //console.log("[Login] Données du profil:", profileData);
-
-        if (!profileData) {
-          console.log("[Login] Profil non trouvé, déconnexion...");
-          toast({
-            title: "Erreur",
-            description: "Votre profil n'a pas été correctement créé. Veuillez contacter l'administrateur.",
-            variant: "destructive",
-          });
-          await supabase.auth.signOut();
-          return;
+      try {
+        setIsCheckingSession(true);
+        // Récupérer la session actuelle
+        const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+        
+        if (sessionError) {
+          throw sessionError;
         }
-        //console.log("[Login] Profil trouvé, redirection vers /...");
-        navigate("/");
+
+        if (sessionData.session) {
+          // Vérifier la validité du profil
+          const { data: profileData, error: profileError } = await supabase
+            .from('profiles')
+            .select()
+            .eq('id', sessionData.session.user.id)
+            .maybeSingle();
+
+          if (profileError) {
+            throw profileError;
+          }
+
+          if (!profileData) {
+            await handleInvalidProfile();
+            return;
+          }
+
+          navigate("/");
+        }
+      } catch (error) {
+        console.error("[Login] Erreur lors de la vérification de session:", error);
+        // En cas d'erreur, on nettoie la session
+        await handleCleanup();
+      } finally {
+        setIsCheckingSession(false);
       }
     };
+
     checkSession();
+  }, [navigate, toast]);
 
-    // Écouter les changements d'authentification
+  useEffect(() => {
     const { data: listener } = supabase.auth.onAuthStateChange(async (event, session) => {
-      //console.log("[Login] Événement auth détecté:", event, "Session:", session);
-      
+      if (event === 'SIGNED_OUT') {
+        await handleCleanup();
+        return;
+      }
+
       if (session) {
-        //console.log("[Login] Nouvelle session détectée, vérification du profil...");
-        // Vérifier l'existence du profil
-        const { data: profileData } = await supabase
-          .from('profiles')
-          .select()
-          .eq('id', session.user.id)
-          .maybeSingle();
+        try {
+          const { data: profileData, error: profileError } = await supabase
+            .from('profiles')
+            .select()
+            .eq('id', session.user.id)
+            .maybeSingle();
 
-        //console.log("[Login] Données du profil après changement d'auth:", profileData);
+          if (profileError) {
+            throw profileError;
+          }
 
-        if (!profileData) {
-          //console.log("[Login] Profil non trouvé après changement d'auth, déconnexion...");
-          toast({
-            title: "Erreur",
-            description: "Votre profil n'a pas été correctement créé. Veuillez contacter l'administrateur.",
-            variant: "destructive",
-          });
-          await supabase.auth.signOut();
-          return;
+          if (!profileData) {
+            await handleInvalidProfile();
+            return;
+          }
+
+          navigate("/");
+        } catch (error) {
+          console.error("[Login] Erreur lors de la vérification du profil:", error);
+          await handleCleanup();
         }
-        //console.log("[Login] Profil validé, redirection vers /...");
-        navigate("/");
       }
     });
 
     return () => {
-      //console.log("[Login] Nettoyage du composant, désabonnement des événements");
       listener.subscription.unsubscribe();
     };
   }, [navigate, toast]);
+
+  const handleCleanup = async () => {
+    try {
+      // Nettoyer la session Supabase
+      await supabase.auth.signOut();
+      // Réinitialiser les états
+      setEmail("");
+      setPassword("");
+      setLoading(false);
+      setMessage("");
+    } catch (error) {
+      console.error("[Login] Erreur lors du nettoyage:", error);
+    }
+  };
+
+  const handleInvalidProfile = async () => {
+    toast({
+      title: "Erreur",
+      description: "Votre profil n'a pas été correctement créé. Veuillez contacter l'administrateur.",
+      variant: "destructive",
+    });
+    await handleCleanup();
+  };
 
   // 🔹 Connexion avec Magic Link
   const handleMagicLink = async (e) => {
@@ -157,6 +191,18 @@ const Login = () => {
       setMessage("Compte créé ! Vérifiez votre email pour confirmer votre inscription.");
     }
   };
+
+  if (isCheckingSession) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="max-w-md w-full space-y-8 p-8 bg-white rounded-lg shadow">
+          <div className="text-center">
+            <h2 className="text-3xl font-bold text-gray-900">Vérification de la session...</h2>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50">
