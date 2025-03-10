@@ -1,6 +1,7 @@
-import React, { useState } from "react";
+
+import React, { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { ChevronLeft, Plus, Edit, Trash2, Copy, Check } from "lucide-react";
+import { ChevronLeft, Plus, Edit, Trash2, Copy, Check, AlertTriangle } from "lucide-react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -37,6 +38,7 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { logger } from "@/utils/logger";
 import { Badge } from "@/components/ui/badge";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 // Types
 type PromptTemplate = {
@@ -48,6 +50,78 @@ type PromptTemplate = {
   is_active: boolean;
   created_at: string;
   updated_at: string;
+};
+
+// Sections prédéfinies pour les notes de cadrage
+const FRAMEWORK_NOTE_SECTIONS = [
+  { value: "general", label: "Général" },
+  { value: "objectifs", label: "Objectifs" },
+  { value: "contexte", label: "Contexte" },
+  { value: "cibles", label: "Cibles" },
+  { value: "resultats_attendus", label: "Résultats attendus" },
+  { value: "risques", label: "Risques" },
+  { value: "enjeux", label: "Enjeux" }
+];
+
+// Templates par défaut pour chaque section
+const DEFAULT_TEMPLATES = {
+  framework_note: {
+    general: `Vous êtes un assistant spécialisé dans la rédaction de notes de cadrage de projets. Votre mission est de générer une note de cadrage complète et professionnelle en vous basant sur les informations fournies par l'utilisateur.
+    
+Veuillez produire une note de cadrage concise, structurée et professionnelle. Utilisez un ton formel et soyez précis dans votre formulation.`,
+    
+    objectifs: `Vous êtes un assistant spécialisé dans la définition d'objectifs pour des projets. 
+En vous basant sur les informations fournies, rédigez une section "Objectifs" claire et concise pour une note de cadrage de projet.
+
+Les objectifs doivent être SMART (Spécifiques, Mesurables, Atteignables, Réalistes, Temporellement définis).
+Incluez des objectifs principaux et secondaires si pertinent.`,
+    
+    contexte: `Vous êtes un assistant spécialisé dans l'analyse contextuelle de projets.
+En vous basant sur les informations fournies, rédigez une section "Contexte" claire et précise pour une note de cadrage de projet.
+
+Le contexte doit couvrir:
+- L'environnement dans lequel s'inscrit le projet
+- Les éléments historiques pertinents
+- Les contraintes externes connues
+- Les motivations principales du projet`,
+    
+    cibles: `Vous êtes un assistant spécialisé dans l'identification des cibles et bénéficiaires de projets.
+En vous basant sur les informations fournies, rédigez une section "Cibles" claire et détaillée pour une note de cadrage de projet.
+
+Identifiez et décrivez:
+- Les bénéficiaires directs du projet
+- Les parties prenantes impactées
+- Les utilisateurs finaux et leurs profils
+- Les attentes spécifiques de chaque groupe cible`,
+    
+    resultats_attendus: `Vous êtes un assistant spécialisé dans la définition des livrables et résultats de projets.
+En vous basant sur les informations fournies, rédigez une section "Résultats attendus" claire et détaillée pour une note de cadrage de projet.
+
+Précisez:
+- Les livrables tangibles du projet
+- Les résultats mesurables attendus
+- Les critères de succès du projet
+- Les indicateurs de performance clés`,
+    
+    risques: `Vous êtes un assistant spécialisé dans l'analyse de risques de projets.
+En vous basant sur les informations fournies, rédigez une section "Risques" exhaustive et pertinente pour une note de cadrage de projet.
+
+Pour chaque risque identifié, précisez:
+- La nature et la description du risque
+- La probabilité d'occurrence (faible, moyenne, élevée)
+- L'impact potentiel sur le projet
+- Les mesures de mitigation recommandées`,
+    
+    enjeux: `Vous êtes un assistant spécialisé dans l'analyse des enjeux stratégiques des projets.
+En vous basant sur les informations fournies, rédigez une section "Enjeux" pertinente pour une note de cadrage de projet.
+
+Couvrez les aspects suivants:
+- Les enjeux stratégiques pour l'organisation
+- Les enjeux organisationnels
+- Les enjeux technologiques si pertinent
+- Les enjeux humains et sociaux
+- Les opportunités associées au projet`
+  }
 };
 
 // Validation schema
@@ -67,6 +141,9 @@ export const AIPromptManagement = () => {
   const [editingTemplate, setEditingTemplate] = useState<PromptTemplate | null>(null);
   const [previewTemplate, setPreviewTemplate] = useState<PromptTemplate | null>(null);
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+  const [selectedType, setSelectedType] = useState<string>("");
+  const [missingSections, setMissingSections] = useState<string[]>([]);
+  const [isCreateDefaultsDialogOpen, setIsCreateDefaultsDialogOpen] = useState(false);
 
   // Fetch prompt templates
   const { data: templates, isLoading } = useQuery({
@@ -98,6 +175,23 @@ export const AIPromptManagement = () => {
       is_active: true,
     },
   });
+
+  // Watch the "type" field to determine if we should show predefined sections
+  const watchType = form.watch("type");
+  
+  // Détection des sections manquantes pour les notes de cadrage
+  useEffect(() => {
+    if (templates) {
+      const frameworkTemplates = templates.filter(t => t.type === "framework_note" && t.is_active);
+      const existingSections = new Set(frameworkTemplates.map(t => t.section));
+      
+      const missing = FRAMEWORK_NOTE_SECTIONS
+        .filter(section => !existingSections.has(section.value))
+        .map(section => section.value);
+      
+      setMissingSections(missing);
+    }
+  }, [templates]);
 
   // Create/Update mutation
   const mutation = useMutation({
@@ -155,6 +249,58 @@ export const AIPromptManagement = () => {
       queryClient.invalidateQueries({ queryKey: ["promptTemplates"] });
       setIsDialogOpen(false);
       setEditingTemplate(null);
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Erreur",
+        description: `Une erreur est survenue: ${error.message}`,
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Création des templates par défaut
+  const createDefaultTemplatesMutation = useMutation({
+    mutationFn: async () => {
+      // Pour chaque section manquante, créer un template par défaut
+      const templatesPromises = missingSections.map(async (section) => {
+        // Vérifier si un template par défaut existe pour cette section
+        if (DEFAULT_TEMPLATES.framework_note[section as keyof typeof DEFAULT_TEMPLATES.framework_note]) {
+          const defaultTemplate = DEFAULT_TEMPLATES.framework_note[section as keyof typeof DEFAULT_TEMPLATES.framework_note];
+          
+          // Insérer le template par défaut
+          return supabase
+            .from("ai_prompt_templates")
+            .insert([
+              {
+                type: "framework_note",
+                section: section,
+                template: defaultTemplate,
+                version: 1,
+                is_active: true,
+              },
+            ]);
+        }
+        return null;
+      });
+      
+      const results = await Promise.all(templatesPromises);
+      
+      // Vérifier s'il y a des erreurs
+      const errors = results.filter(r => r && r.error).map(r => r?.error);
+      if (errors.length > 0) {
+        throw new Error(`Erreurs lors de la création des templates par défaut: ${errors.join(', ')}`);
+      }
+      
+      return { count: results.filter(r => r !== null).length };
+    },
+    onSuccess: (result) => {
+      toast({
+        title: "Templates par défaut créés",
+        description: `${result.count} templates ont été créés avec succès.`,
+      });
+      queryClient.invalidateQueries({ queryKey: ["promptTemplates"] });
+      setIsCreateDefaultsDialogOpen(false);
     },
     onError: (error: Error) => {
       toast({
@@ -267,6 +413,7 @@ export const AIPromptManagement = () => {
   const handleOpenDialog = (template?: PromptTemplate) => {
     if (template) {
       setEditingTemplate(template);
+      setSelectedType(template.type);
       form.reset({
         type: template.type,
         section: template.section,
@@ -275,6 +422,7 @@ export const AIPromptManagement = () => {
       });
     } else {
       setEditingTemplate(null);
+      setSelectedType("");
       form.reset({
         type: "",
         section: "",
@@ -307,6 +455,36 @@ export const AIPromptManagement = () => {
     }, {});
   }, [templates]);
 
+  // Handle type change
+  const handleTypeChange = (value: string) => {
+    setSelectedType(value);
+    form.setValue("type", value);
+    
+    // Reset section si le type a changé
+    if (value !== watchType) {
+      form.setValue("section", "");
+    }
+  };
+
+  // Fonction pour créer un template à partir du modèle par défaut
+  const createTemplateFromDefault = (section: string) => {
+    if (DEFAULT_TEMPLATES.framework_note[section as keyof typeof DEFAULT_TEMPLATES.framework_note]) {
+      form.reset({
+        type: "framework_note",
+        section: section,
+        template: DEFAULT_TEMPLATES.framework_note[section as keyof typeof DEFAULT_TEMPLATES.framework_note],
+        is_active: true,
+      });
+      setSelectedType("framework_note");
+      setIsDialogOpen(true);
+    }
+  };
+
+  // Fonction pour vérifier si une section est manquante
+  const isSectionMissing = (section: string): boolean => {
+    return missingSections.includes(section);
+  };
+
   return (
     <div className="container py-6 space-y-6">
       <div className="flex items-center justify-between">
@@ -319,11 +497,36 @@ export const AIPromptManagement = () => {
           </Button>
           <h1 className="text-2xl font-bold tracking-tight">Gestion des templates IA</h1>
         </div>
-        <Button onClick={() => handleOpenDialog()}>
-          <Plus className="h-4 w-4 mr-2" />
-          Nouveau template
-        </Button>
+        <div className="flex gap-2">
+          {missingSections.length > 0 && (
+            <Button 
+              variant="outline" 
+              onClick={() => setIsCreateDefaultsDialogOpen(true)}
+              className="mr-2"
+            >
+              <AlertTriangle className="h-4 w-4 mr-2 text-amber-500" />
+              Créer {missingSections.length} template(s) manquant(s)
+            </Button>
+          )}
+          <Button onClick={() => handleOpenDialog()}>
+            <Plus className="h-4 w-4 mr-2" />
+            Nouveau template
+          </Button>
+        </div>
       </div>
+
+      {missingSections.length > 0 && (
+        <Alert variant="warning" className="bg-amber-50 border-amber-200 text-amber-800">
+          <AlertTriangle className="h-4 w-4" />
+          <AlertDescription>
+            Certaines sections de note de cadrage n'ont pas de template actif ({missingSections.map(s => {
+              const section = FRAMEWORK_NOTE_SECTIONS.find(fs => fs.value === s);
+              return section ? section.label : s;
+            }).join(', ')}). 
+            Les templates de secours seront utilisés pour ces sections.
+          </AlertDescription>
+        </Alert>
+      )}
 
       {isLoading ? (
         <div>Chargement des templates...</div>
@@ -336,10 +539,29 @@ export const AIPromptManagement = () => {
           ) : (
             Object.entries(groupedTemplates).map(([type, sections]) => (
               <div key={type} className="space-y-4">
-                <h2 className="text-xl font-semibold">{type}</h2>
+                <h2 className="text-xl font-semibold flex items-center gap-2">
+                  {type}
+                  {type === "framework_note" && (
+                    <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+                      Note de cadrage
+                    </Badge>
+                  )}
+                </h2>
                 {Object.entries(sections).map(([section, templatesList]) => (
                   <div key={`${type}-${section}`} className="border rounded-md p-4 bg-white">
-                    <h3 className="text-lg font-medium mb-3">{section}</h3>
+                    <h3 className="text-lg font-medium mb-3 flex items-center gap-2">
+                      {section}
+                      {type === "framework_note" && FRAMEWORK_NOTE_SECTIONS.find(s => s.value === section) && (
+                        <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+                          {FRAMEWORK_NOTE_SECTIONS.find(s => s.value === section)?.label}
+                        </Badge>
+                      )}
+                      {type === "framework_note" && !templatesList.some(t => t.is_active) && (
+                        <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200">
+                          Aucun template actif
+                        </Badge>
+                      )}
+                    </h3>
                     <div className="divide-y">
                       {templatesList.map((template) => (
                         <div key={template.id} className="py-3 flex items-center justify-between">
@@ -436,11 +658,20 @@ export const AIPromptManagement = () => {
                     <FormItem>
                       <FormLabel>Type</FormLabel>
                       <FormControl>
-                        <Input
-                          placeholder="Ex: framework_note"
-                          {...field}
+                        <Select
+                          value={field.value}
+                          onValueChange={handleTypeChange}
                           disabled={!!editingTemplate}
-                        />
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Sélectionnez un type" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="framework_note">Note de cadrage</SelectItem>
+                            <SelectItem value="general">Général</SelectItem>
+                            <SelectItem value="custom">Personnalisé</SelectItem>
+                          </SelectContent>
+                        </Select>
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -454,11 +685,30 @@ export const AIPromptManagement = () => {
                     <FormItem>
                       <FormLabel>Section</FormLabel>
                       <FormControl>
-                        <Input
-                          placeholder="Ex: context"
-                          {...field}
-                          disabled={!!editingTemplate}
-                        />
+                        {selectedType === "framework_note" ? (
+                          <Select
+                            value={field.value}
+                            onValueChange={field.onChange}
+                            disabled={!!editingTemplate}
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder="Sélectionnez une section" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {FRAMEWORK_NOTE_SECTIONS.map((section) => (
+                                <SelectItem key={section.value} value={section.value}>
+                                  {section.label} {isSectionMissing(section.value) && "⚠️"}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        ) : (
+                          <Input
+                            placeholder="Ex: context"
+                            {...field}
+                            disabled={!!editingTemplate}
+                          />
+                        )}
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -554,6 +804,55 @@ export const AIPromptManagement = () => {
               onClick={() => setIsPreviewOpen(false)}
             >
               Fermer
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog pour créer les templates par défaut */}
+      <Dialog open={isCreateDefaultsDialogOpen} onOpenChange={setIsCreateDefaultsDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Créer les templates manquants</DialogTitle>
+            <DialogDescription>
+              Cette action va créer {missingSections.length} template(s) par défaut pour les sections manquantes de note de cadrage.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-2">
+            <p className="text-sm">Sections manquantes :</p>
+            <ul className="text-sm list-disc pl-6 space-y-1">
+              {missingSections.map(section => {
+                const sectionLabel = FRAMEWORK_NOTE_SECTIONS.find(s => s.value === section)?.label || section;
+                return (
+                  <li key={section}>{sectionLabel}</li>
+                );
+              })}
+            </ul>
+          </div>
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setIsCreateDefaultsDialogOpen(false)}
+            >
+              Annuler
+            </Button>
+            <Button
+              onClick={() => createDefaultTemplatesMutation.mutate()}
+              disabled={createDefaultTemplatesMutation.isLoading}
+            >
+              {createDefaultTemplatesMutation.isLoading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Création en cours...
+                </>
+              ) : (
+                <>
+                  <Check className="mr-2 h-4 w-4" />
+                  Créer les templates
+                </>
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>

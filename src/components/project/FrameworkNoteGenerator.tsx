@@ -5,9 +5,10 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2, Save } from "lucide-react";
+import { Loader2, Save, AlertTriangle } from "lucide-react";
 import { Database } from "@/integrations/supabase/types";
 import { supabase } from "@/integrations/supabase/client";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 type Project = Database["public"]["Tables"]["projects"]["Row"];
 type PromptSection = "objectifs" | "contexte" | "cibles" | "resultats_attendus" | "risques" | "enjeux" | "general";
@@ -22,6 +23,7 @@ export const FrameworkNoteGenerator = ({ project }: FrameworkNoteGeneratorProps)
   const [response, setResponse] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [usedFallbackTemplate, setUsedFallbackTemplate] = useState(false);
   const { toast } = useToast();
 
   const handleGenerate = async () => {
@@ -36,6 +38,7 @@ export const FrameworkNoteGenerator = ({ project }: FrameworkNoteGeneratorProps)
 
     setIsLoading(true);
     setResponse("");
+    setUsedFallbackTemplate(false);
 
     try {
       const { data: sessionData } = await supabase.auth.getSession();
@@ -43,7 +46,7 @@ export const FrameworkNoteGenerator = ({ project }: FrameworkNoteGeneratorProps)
         throw new Error("Vous devez être connecté pour utiliser cette fonctionnalité");
       }
 
-      // Utilisation de supabase.functions.invoke au lieu de fetch avec URL construite manuellement
+      // Utilisation de supabase.functions.invoke pour appeler la fonction edge
       const { data, error } = await supabase.functions.invoke("ai-assistant", {
         body: {
           messages: [{ role: "user", content: prompt }],
@@ -62,6 +65,12 @@ export const FrameworkNoteGenerator = ({ project }: FrameworkNoteGeneratorProps)
 
       if (!data || !data.message || !data.message.content) {
         throw new Error("Réponse invalide de l'assistant IA");
+      }
+
+      // Vérifier si un template de secours a été utilisé
+      if (data.usedFallbackTemplate) {
+        setUsedFallbackTemplate(true);
+        console.log("Un template de secours a été utilisé pour générer cette note");
       }
 
       setResponse(data.message.content);
@@ -184,6 +193,16 @@ export const FrameworkNoteGenerator = ({ project }: FrameworkNoteGeneratorProps)
                 "Générer la note de cadrage"
               )}
             </Button>
+
+            {usedFallbackTemplate && (
+              <Alert variant="warning" className="bg-amber-50 border-amber-200 text-amber-800">
+                <AlertTriangle className="h-4 w-4 text-amber-600" />
+                <AlertDescription>
+                  Cette note a été générée avec un template de secours car aucun template personnalisé n'a été trouvé pour la section "{sectionLabels[activeTab]}". 
+                  Contactez un administrateur pour configurer un template spécifique.
+                </AlertDescription>
+              </Alert>
+            )}
 
             {response && (
               <div className="mt-4">

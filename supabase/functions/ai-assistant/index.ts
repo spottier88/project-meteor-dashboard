@@ -8,6 +8,67 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// Templates de secours par défaut pour les sections de note de cadrage
+const fallbackTemplates = {
+  framework_note: {
+    general: `Vous êtes un assistant spécialisé dans la rédaction de notes de cadrage de projets. Votre mission est de générer une note de cadrage complète et professionnelle en vous basant sur les informations fournies par l'utilisateur.
+    
+    Veuillez produire une note de cadrage concise, structurée et professionnelle. Utilisez un ton formel et soyez précis dans votre formulation.`,
+    
+    objectifs: `Vous êtes un assistant spécialisé dans la définition d'objectifs pour des projets. 
+    En vous basant sur les informations fournies, rédigez une section "Objectifs" claire et concise pour une note de cadrage de projet.
+    
+    Les objectifs doivent être SMART (Spécifiques, Mesurables, Atteignables, Réalistes, Temporellement définis).
+    Incluez des objectifs principaux et secondaires si pertinent.`,
+    
+    contexte: `Vous êtes un assistant spécialisé dans l'analyse contextuelle de projets.
+    En vous basant sur les informations fournies, rédigez une section "Contexte" claire et précise pour une note de cadrage de projet.
+    
+    Le contexte doit couvrir:
+    - L'environnement dans lequel s'inscrit le projet
+    - Les éléments historiques pertinents
+    - Les contraintes externes connues
+    - Les motivations principales du projet`,
+    
+    cibles: `Vous êtes un assistant spécialisé dans l'identification des cibles et bénéficiaires de projets.
+    En vous basant sur les informations fournies, rédigez une section "Cibles" claire et détaillée pour une note de cadrage de projet.
+    
+    Identifiez et décrivez:
+    - Les bénéficiaires directs du projet
+    - Les parties prenantes impactées
+    - Les utilisateurs finaux et leurs profils
+    - Les attentes spécifiques de chaque groupe cible`,
+    
+    resultats_attendus: `Vous êtes un assistant spécialisé dans la définition des livrables et résultats de projets.
+    En vous basant sur les informations fournies, rédigez une section "Résultats attendus" claire et détaillée pour une note de cadrage de projet.
+    
+    Précisez:
+    - Les livrables tangibles du projet
+    - Les résultats mesurables attendus
+    - Les critères de succès du projet
+    - Les indicateurs de performance clés`,
+    
+    risques: `Vous êtes un assistant spécialisé dans l'analyse de risques de projets.
+    En vous basant sur les informations fournies, rédigez une section "Risques" exhaustive et pertinente pour une note de cadrage de projet.
+    
+    Pour chaque risque identifié, précisez:
+    - La nature et la description du risque
+    - La probabilité d'occurrence (faible, moyenne, élevée)
+    - L'impact potentiel sur le projet
+    - Les mesures de mitigation recommandées`,
+    
+    enjeux: `Vous êtes un assistant spécialisé dans l'analyse des enjeux stratégiques des projets.
+    En vous basant sur les informations fournies, rédigez une section "Enjeux" pertinente pour une note de cadrage de projet.
+    
+    Couvrez les aspects suivants:
+    - Les enjeux stratégiques pour l'organisation
+    - Les enjeux organisationnels
+    - Les enjeux technologiques si pertinent
+    - Les enjeux humains et sociaux
+    - Les opportunités associées au projet`
+  }
+};
+
 serve(async (req) => {
   // Gestion des requêtes OPTIONS (CORS)
   if (req.method === 'OPTIONS') {
@@ -136,8 +197,10 @@ serve(async (req) => {
 
     // Si c'est une demande de note de cadrage, récupérer le template de prompt actif
     let finalMessages = [...messages];
+    let usedFallbackTemplate = false;
     
     if (promptType === 'framework_note') {
+      // Tentative de récupération du template depuis la base de données
       const { data: promptTemplate, error: promptError } = await supabaseClient
         .from("ai_prompt_templates")
         .select("*")
@@ -149,56 +212,104 @@ serve(async (req) => {
         .single();
 
       if (promptError) {
-        console.error('Erreur lors de la récupération du template de prompt:', promptError);
+        console.error(`Erreur lors de la récupération du template de prompt (type: ${promptType}, section: ${promptSection}):`, promptError);
+        
+        // Utilisation du template de secours
+        if (fallbackTemplates[promptType] && fallbackTemplates[promptType][promptSection]) {
+          console.log(`Utilisation du template de secours pour ${promptType}/${promptSection}`);
+          usedFallbackTemplate = true;
+          
+          // Ajouter le template de secours comme message système au début des messages
+          finalMessages = [
+            { role: 'system', content: fallbackTemplates[promptType][promptSection] },
+            ...messages
+          ];
+          
+          // Créer une notification pour les administrateurs
+          try {
+            await supabaseClient
+              .from("notifications")
+              .insert({
+                title: "Template de prompt manquant",
+                content: `Un template de prompt actif est manquant pour le type "${promptType}" et la section "${promptSection}". Un template de secours a été utilisé à la place.`,
+                type: "system",
+                publication_date: new Date().toISOString(),
+                published: true
+              });
+          } catch (notificationError) {
+            console.error("Erreur lors de la création de la notification:", notificationError);
+          }
+        } else {
+          console.error(`Aucun template de secours disponible pour ${promptType}/${promptSection}`);
+        }
       } else if (promptTemplate) {
         // Ajouter le template comme message système au début des messages
         finalMessages = [
           { role: 'system', content: promptTemplate.template },
           ...messages
         ];
+      }
         
-        // Si un ID de projet est fourni, récupérer les informations du projet
-        if (projectId) {
-          const { data: project, error: projectError } = await supabaseClient
-            .from("projects")
-            .select(`
-              *,
-              project_innovation_scores (*)
-            `)
-            .eq("id", projectId)
-            .single();
+      // Si un ID de projet est fourni, récupérer les informations du projet
+      if (projectId) {
+        const { data: project, error: projectError } = await supabaseClient
+          .from("projects")
+          .select(`
+            *,
+            project_innovation_scores (*)
+          `)
+          .eq("id", projectId)
+          .single();
 
-          if (!projectError && project) {
-            // Ajouter les informations du projet comme premier message utilisateur
-            const projectContext = `
-              Informations du projet:
-              - Titre: ${project.title}
-              - Description: ${project.description || 'Non définie'}
-              - Chef de projet: ${project.project_manager || 'Non défini'}
-              - Date de début: ${project.start_date || 'Non définie'}
-              - Date de fin: ${project.end_date || 'Non définie'}
-              - Priorité: ${project.priority || 'Non définie'}
-              ${project.project_innovation_scores ? `
-              - Scores d'innovation:
-                - Novateur: ${project.project_innovation_scores.novateur}/5
-                - Usager: ${project.project_innovation_scores.usager}/5
-                - Ouverture: ${project.project_innovation_scores.ouverture}/5
-                - Agilité: ${project.project_innovation_scores.agilite}/5
-                - Impact: ${project.project_innovation_scores.impact}/5
-              ` : ''}
-            `;
-            
-            finalMessages.splice(1, 0, { 
-              role: 'user', 
-              content: projectContext
-            });
-          }
+        if (!projectError && project) {
+          // Ajouter les informations du projet comme premier message utilisateur
+          const projectContext = `
+            Informations du projet:
+            - Titre: ${project.title}
+            - Description: ${project.description || 'Non définie'}
+            - Chef de projet: ${project.project_manager || 'Non défini'}
+            - Date de début: ${project.start_date || 'Non définie'}
+            - Date de fin: ${project.end_date || 'Non définie'}
+            - Priorité: ${project.priority || 'Non définie'}
+            ${project.project_innovation_scores ? `
+            - Scores d'innovation:
+              - Novateur: ${project.project_innovation_scores.novateur}/5
+              - Usager: ${project.project_innovation_scores.usager}/5
+              - Ouverture: ${project.project_innovation_scores.ouverture}/5
+              - Agilité: ${project.project_innovation_scores.agilite}/5
+              - Impact: ${project.project_innovation_scores.impact}/5
+            ` : ''}
+          `;
+          
+          finalMessages.splice(1, 0, { 
+            role: 'user', 
+            content: projectContext
+          });
         }
       }
     }
 
+    // Vérifier que nous avons un message système pour les notes de cadrage
+    if (promptType === 'framework_note' && !finalMessages.some(msg => msg.role === 'system')) {
+      console.log(`Aucun template trouvé pour ${promptType}/${promptSection}, utilisation du template de secours générique`);
+      
+      // Utiliser un template de secours générique si rien n'a été trouvé
+      finalMessages = [
+        { 
+          role: 'system', 
+          content: `Vous êtes un assistant spécialisé dans la rédaction de notes de cadrage de projets.
+          Veuillez générer une section "${promptSection}" concise, structurée et professionnelle en vous basant sur les informations fournies.`
+        },
+        ...finalMessages
+      ];
+      
+      usedFallbackTemplate = true;
+    }
+
     // Appel à l'API OpenAI
     try {
+      console.log(`Appel OpenAI pour ${promptType}/${promptSection} (template de secours: ${usedFallbackTemplate ? 'Oui' : 'Non'})`);
+      
       const openaiResponse = await fetch('https://api.openai.com/v1/chat/completions', {
         method: 'POST',
         headers: {
@@ -215,6 +326,7 @@ serve(async (req) => {
 
       if (!openaiResponse.ok) {
         const errorJson = await openaiResponse.json().catch(() => null);
+        console.error('Erreur API OpenAI:', errorJson);
         return new Response(
           JSON.stringify({ 
             error: `Erreur API OpenAI (${openaiResponse.status})`, 
@@ -291,6 +403,7 @@ serve(async (req) => {
         JSON.stringify({
           message: assistantMessage,
           usage: data.usage,
+          usedFallbackTemplate: usedFallbackTemplate
         }),
         {
           headers: {
