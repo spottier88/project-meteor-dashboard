@@ -66,6 +66,7 @@ const AuthCallback = () => {
         
         // En cas d'erreur, nettoyer les cookies Supabase et se déconnecter
         try {
+          console.log("Tentative de déconnexion suite à une erreur d'authentification");
           await supabase.auth.signOut();
           clearSupabaseCookies();
           
@@ -80,7 +81,7 @@ const AuthCallback = () => {
 
         // En cas d'erreur, redirection vers la page de login après un court délai
         setTimeout(() => {
-          // Utiliser window.location.href pour forcer un rechargement complet
+          console.log("Redirection vers /login depuis AuthCallback suite à une erreur");
           window.location.href = "/login";
         }, 2000);
       }

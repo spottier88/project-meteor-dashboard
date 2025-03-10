@@ -2,7 +2,7 @@
 import { Auth } from "@supabase/auth-ui-react";
 import { ThemeSupa } from "@supabase/auth-ui-shared";
 import { supabase } from "@/integrations/supabase/client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/components/ui/use-toast";
 
@@ -30,37 +30,25 @@ const Login = () => {
   const [message, setMessage] = useState("");
   const [isMagicLink, setIsMagicLink] = useState(true);
   const [isCheckingSession, setIsCheckingSession] = useState(true);
+  const initialCheckDone = useRef(false);
 
-  // Fonction pour déconnecter complètement l'utilisateur et nettoyer les données de session
-  const handleLogout = async () => {
+  // Fonction simplifiée pour déconnecter l'utilisateur sans boucle
+  const performLogout = async () => {
     try {
-      console.log("Déconnexion et nettoyage forcés");
-      
-      // Déconnexion via Supabase
+      console.log("Déconnexion simple effectuée");
       await supabase.auth.signOut({ scope: 'local' });
-      
-      // Nettoyage explicite des cookies Supabase
       clearSupabaseCookies();
-      
-      // Réinitialisation des états locaux
-      setEmail("");
-      setPassword("");
-      setLoading(false);
-      setMessage("");
-      setIsCheckingSession(false);
-      
-      console.log("Déconnexion et nettoyage effectués avec succès");
     } catch (error) {
-      console.error("Erreur lors de la déconnexion:", error);
-      // En cas d'erreur, forcer quand même le nettoyage des cookies
+      console.error("Erreur lors de la déconnexion simple:", error);
       clearSupabaseCookies();
-      setIsCheckingSession(false);
     }
   };
 
-  // Simplification de la vérification de session - une seule fois au chargement
+  // Vérification de session simplifiée - une seule fois au chargement
   useEffect(() => {
     const checkSession = async () => {
+      if (initialCheckDone.current) return;
+      
       try {
         console.log("Vérification de session au démarrage");
         setIsCheckingSession(true);
@@ -70,7 +58,8 @@ const Login = () => {
         
         if (sessionError) {
           console.error("Erreur lors de la vérification de session:", sessionError);
-          await handleLogout();
+          setIsCheckingSession(false);
+          initialCheckDone.current = true;
           return;
         }
 
@@ -80,14 +69,13 @@ const Login = () => {
           navigate("/");
         } else {
           console.log("Aucune session active détectée");
-          // S'assurer que tout est propre quand aucune session n'est détectée
-          await handleLogout();
+          setIsCheckingSession(false);
         }
       } catch (error) {
         console.error("Erreur inattendue lors de la vérification de session:", error);
-        await handleLogout();
       } finally {
         setIsCheckingSession(false);
+        initialCheckDone.current = true;
       }
     };
 
@@ -100,8 +88,19 @@ const Login = () => {
       console.log("Événement d'authentification:", event);
       
       if (event === 'SIGNED_OUT') {
-        console.log("Événement SIGNED_OUT détecté, nettoyage et mise à jour de l'UI");
-        await handleLogout();
+        console.log("Événement SIGNED_OUT détecté");
+        // Réinitialiser l'état local sans déclencher de nouvelle déconnexion
+        setEmail("");
+        setPassword("");
+        setLoading(false);
+        setMessage("");
+        setIsCheckingSession(false);
+        initialCheckDone.current = true;
+        
+        // Assurer que nous sommes sur la page de login
+        if (window.location.pathname !== '/login') {
+          window.location.href = '/login';
+        }
         return;
       }
 
@@ -184,7 +183,7 @@ const Login = () => {
 
   // Déconnexion manuelle et nettoyage complet
   const handleManualReset = async () => {
-    await handleLogout();
+    await performLogout();
     toast({
       title: "Session réinitialisée",
       description: "Toutes les données de session ont été supprimées",

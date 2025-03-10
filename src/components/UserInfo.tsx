@@ -69,33 +69,41 @@ export const UserInfo = () => {
 
   const handleLogout = async () => {
     try {
+      console.log("Début de la procédure de déconnexion");
+      
       // Invalider le cache avant la déconnexion
       queryClient.clear();
       
-      // Déconnecter l'utilisateur via Supabase
-      await supabase.auth.signOut();
+      // Déconnecter l'utilisateur via Supabase avec attente
+      const { error } = await supabase.auth.signOut();
+      if (error) throw error;
       
-      // Nettoyer les cookies manuellement
+      // Nettoyer les cookies manuellement pour s'assurer que tout est propre
       clearSupabaseCookies();
       
-      console.log("Déconnexion effectuée, redirection vers login");
+      console.log("Déconnexion effectuée avec succès, redirection vers login");
       
-      // Forcer la navigation vers login
-      window.location.href = "/login";
-      
+      // Notification utilisateur
       toast({
         title: "Déconnexion réussie",
         description: "Vous avez été déconnecté avec succès",
       });
+      
+      // Forcer la redirection directement vers login
+      window.location.href = "/login";
     } catch (error) {
       console.error("Erreur lors de la déconnexion:", error);
+      
+      // Tentative de nettoyage même en cas d'erreur
+      clearSupabaseCookies();
+      
       toast({
         title: "Erreur",
         description: "Une erreur est survenue lors de la déconnexion",
         variant: "destructive",
       });
       
-      // En cas d'erreur, forcer quand même la redirection
+      // Redirection forcée même en cas d'erreur
       window.location.href = "/login";
     }
   };
