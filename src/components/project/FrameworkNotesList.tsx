@@ -1,11 +1,11 @@
 
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
-import { Eye, FileText, Trash2 } from "lucide-react";
+import { Eye, FileText, Trash2, Edit } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { 
   AlertDialog,
@@ -22,13 +22,21 @@ import {
 interface FrameworkNotesListProps {
   projectId: string;
   onViewNote: (note: any) => void;
+  onEditNote?: (note: any) => void;
+  canEdit: boolean;
 }
 
-export const FrameworkNotesList = ({ projectId, onViewNote }: FrameworkNotesListProps) => {
+export const FrameworkNotesList = ({ 
+  projectId, 
+  onViewNote, 
+  onEditNote,
+  canEdit
+}: FrameworkNotesListProps) => {
   const { toast } = useToast();
   const [noteToDelete, setNoteToDelete] = useState<string | null>(null);
+  const queryClient = useQueryClient();
 
-  const { data: notes, isLoading, error, refetch } = useQuery({
+  const { data: notes, isLoading, error } = useQuery({
     queryKey: ["frameworkNotes", projectId],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -43,32 +51,38 @@ export const FrameworkNotesList = ({ projectId, onViewNote }: FrameworkNotesList
     enabled: !!projectId,
   });
 
-  const handleDeleteNote = async () => {
-    if (!noteToDelete) return;
-    
-    try {
+  const deleteMutation = useMutation({
+    mutationFn: async (noteId: string) => {
       const { error } = await supabase
         .from("project_framework_notes")
         .delete()
-        .eq("id", noteToDelete);
+        .eq("id", noteId);
       
       if (error) throw error;
-      
-      await refetch();
+      return noteId;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["frameworkNotes", projectId] });
       toast({
         title: "Note supprimée",
         description: "La note de cadrage a été supprimée avec succès"
       });
-    } catch (err) {
-      console.error("Erreur lors de la suppression de la note:", err);
+      setNoteToDelete(null);
+    },
+    onError: (error) => {
+      console.error("Erreur lors de la suppression de la note:", error);
       toast({
         variant: "destructive",
         title: "Erreur",
         description: "Impossible de supprimer la note de cadrage"
       });
-    } finally {
       setNoteToDelete(null);
     }
+  });
+
+  const handleDeleteNote = async () => {
+    if (!noteToDelete) return;
+    deleteMutation.mutate(noteToDelete);
   };
 
   // Formater la date
@@ -115,25 +129,39 @@ export const FrameworkNotesList = ({ projectId, onViewNote }: FrameworkNotesList
                     <Button variant="ghost" size="icon" onClick={() => onViewNote(note)}>
                       <Eye className="h-4 w-4" />
                     </Button>
-                    <AlertDialog open={noteToDelete === note.id} onOpenChange={(open) => !open && setNoteToDelete(null)}>
-                      <AlertDialogTrigger asChild>
-                        <Button variant="ghost" size="icon" onClick={() => setNoteToDelete(note.id)}>
-                          <Trash2 className="h-4 w-4 text-destructive" />
-                        </Button>
-                      </AlertDialogTrigger>
-                      <AlertDialogContent>
-                        <AlertDialogHeader>
-                          <AlertDialogTitle>Supprimer cette note ?</AlertDialogTitle>
-                          <AlertDialogDescription>
-                            Cette action est irréversible. La note de cadrage sera définitivement supprimée.
-                          </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                          <AlertDialogCancel>Annuler</AlertDialogCancel>
-                          <AlertDialogAction onClick={handleDeleteNote}>Supprimer</AlertDialogAction>
-                        </AlertDialogFooter>
-                      </AlertDialogContent>
-                    </AlertDialog>
+                    
+                    {canEdit && onEditNote && (
+                      <Button variant="ghost" size="icon" onClick={() => onEditNote(note)}>
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                    )}
+                    
+                    {canEdit && (
+                      <AlertDialog open={noteToDelete === note.id} onOpenChange={(open) => !open && setNoteToDelete(null)}>
+                        <AlertDialogTrigger asChild>
+                          <Button variant="ghost" size="icon" onClick={() => setNoteToDelete(note.id)}>
+                            <Trash2 className="h-4 w-4 text-destructive" />
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Supprimer cette note ?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              Cette action est irréversible. La note de cadrage sera définitivement supprimée.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Annuler</AlertDialogCancel>
+                            <AlertDialogAction 
+                              onClick={handleDeleteNote}
+                              disabled={deleteMutation.isPending}
+                            >
+                              {deleteMutation.isPending ? 'Suppression...' : 'Supprimer'}
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    )}
                   </div>
                 </div>
               </div>
