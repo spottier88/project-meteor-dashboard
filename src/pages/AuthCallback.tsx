@@ -1,7 +1,23 @@
+
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
+
+// Fonction pour nettoyer les cookies Supabase (dupliquée de Login.tsx)
+const clearSupabaseCookies = () => {
+  const cookies = document.cookie.split(";");
+  for (let i = 0; i < cookies.length; i++) {
+    const cookie = cookies[i];
+    const eqPos = cookie.indexOf("=");
+    const name = eqPos > -1 ? cookie.substring(0, eqPos).trim() : cookie.trim();
+    
+    // Supprimer tous les cookies liés à Supabase
+    if (name.startsWith("sb-")) {
+      document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/;`;
+    }
+  }
+};
 
 const AuthCallback = () => {
   const [error, setError] = useState<string | null>(null);
@@ -43,6 +59,9 @@ const AuthCallback = () => {
       } catch (err) {
         console.error("Auth callback error:", err);
         setError(err instanceof Error ? err.message : "Une erreur est survenue lors de l'authentification");
+        
+        // En cas d'erreur, nettoyer les cookies Supabase
+        clearSupabaseCookies();
         
         toast({
           variant: "destructive",

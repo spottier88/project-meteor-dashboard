@@ -1,3 +1,4 @@
+
 import { Auth } from "@supabase/auth-ui-react";
 import { ThemeSupa } from "@supabase/auth-ui-shared";
 import { supabase } from "@/integrations/supabase/client";
@@ -14,100 +15,47 @@ const Login = () => {
   const [message, setMessage] = useState("");
   const [isMagicLink, setIsMagicLink] = useState(true);
   const [isCheckingSession, setIsCheckingSession] = useState(true);
+  const [checkAttempts, setCheckAttempts] = useState(0);
+  const MAX_CHECK_ATTEMPTS = 3;
 
-  useEffect(() => {
-    const checkSession = async () => {
-      try {
-        setIsCheckingSession(true);
-        // Récupérer la session actuelle
-        const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
-        
-        if (sessionError) {
-          throw sessionError;
-        }
-
-        if (sessionData.session) {
-          // Vérifier la validité du profil
-          const { data: profileData, error: profileError } = await supabase
-            .from('profiles')
-            .select()
-            .eq('id', sessionData.session.user.id)
-            .maybeSingle();
-
-          if (profileError) {
-            throw profileError;
-          }
-
-          if (!profileData) {
-            await handleInvalidProfile();
-            return;
-          }
-
-          navigate("/");
-        }
-      } catch (error) {
-        console.error("[Login] Erreur lors de la vérification de session:", error);
-        // En cas d'erreur, on nettoie la session
-        await handleCleanup();
-      } finally {
-        setIsCheckingSession(false);
+  // Fonction pour nettoyer explicitement les cookies Supabase
+  const clearSupabaseCookies = () => {
+    const cookies = document.cookie.split(";");
+    for (let i = 0; i < cookies.length; i++) {
+      const cookie = cookies[i];
+      const eqPos = cookie.indexOf("=");
+      const name = eqPos > -1 ? cookie.substring(0, eqPos).trim() : cookie.trim();
+      
+      // Supprimer tous les cookies liés à Supabase
+      if (name.startsWith("sb-")) {
+        document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/;`;
       }
-    };
+    }
+  };
 
-    checkSession();
-  }, [navigate, toast]);
-
-  useEffect(() => {
-    const { data: listener } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (event === 'SIGNED_OUT') {
-        await handleCleanup();
-        return;
-      }
-
-      if (session) {
-        try {
-          const { data: profileData, error: profileError } = await supabase
-            .from('profiles')
-            .select()
-            .eq('id', session.user.id)
-            .maybeSingle();
-
-          if (profileError) {
-            throw profileError;
-          }
-
-          if (!profileData) {
-            await handleInvalidProfile();
-            return;
-          }
-
-          navigate("/");
-        } catch (error) {
-          console.error("[Login] Erreur lors de la vérification du profil:", error);
-          await handleCleanup();
-        }
-      }
-    });
-
-    return () => {
-      listener.subscription.unsubscribe();
-    };
-  }, [navigate, toast]);
-
+  // Fonction pour gérer le nettoyage complet de l'état
   const handleCleanup = async () => {
     try {
-      // Nettoyer la session Supabase
+      // 1. Déconnexion via Supabase
       await supabase.auth.signOut();
-      // Réinitialiser les états
+      
+      // 2. Nettoyage explicite des cookies Supabase
+      clearSupabaseCookies();
+      
+      // 3. Réinitialisation des états locaux
       setEmail("");
       setPassword("");
       setLoading(false);
       setMessage("");
+      setCheckAttempts(0);
     } catch (error) {
       console.error("[Login] Erreur lors du nettoyage:", error);
+      // En cas d'erreur, forcer quand même le nettoyage des cookies
+      clearSupabaseCookies();
     }
   };
 
+  // Gestion des profils invalides
   const handleInvalidProfile = async () => {
     toast({
       title: "Erreur",
@@ -116,6 +64,114 @@ const Login = () => {
     });
     await handleCleanup();
   };
+
+  // Vérification du profil utilisateur
+  const checkUserProfile = async (userId) => {
+    try {
+      const { data: profileData, error: profileError } = await supabase
+        .from('profiles')
+        .select()
+        .eq('id', userId)
+        .maybeSingle();
+
+      if (profileError) {
+        throw profileError;
+      }
+
+      return profileData;
+    } catch (error) {
+      console.error("[Login] Erreur lors de la vérification du profil:", error);
+      return null;
+    }
+  };
+
+  // Vérification de session avec gestion d'erreur améliorée
+  useEffect(() => {
+    const checkSession = async () => {
+      try {
+        setIsCheckingSession(true);
+        
+        // Incrémenter le compteur de tentatives
+        setCheckAttempts(prev => prev + 1);
+        
+        // Si trop de tentatives, nettoyer et abandonner
+        if (checkAttempts >= MAX_CHECK_ATTEMPTS) {
+          console.warn("[Login] Trop de tentatives de vérification de session, nettoyage forcé.");
+          await handleCleanup();
+          setIsCheckingSession(false);
+          return;
+        }
+
+        // Récupérer la session actuelle
+        const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+        
+        if (sessionError) {
+          // Erreur de session, nettoyer
+          console.error("[Login] Erreur de session:", sessionError);
+          await handleCleanup();
+          setIsCheckingSession(false);
+          return;
+        }
+
+        // Si session active
+        if (sessionData && sessionData.session) {
+          // Vérifier si l'utilisateur existe dans la base de données
+          const profileData = await checkUserProfile(sessionData.session.user.id);
+          
+          if (!profileData) {
+            await handleInvalidProfile();
+            setIsCheckingSession(false);
+            return;
+          }
+          
+          // Profil valide, rediriger vers la page d'accueil
+          navigate("/");
+        } else {
+          // Pas de session active, s'assurer que tout est propre
+          await handleCleanup();
+        }
+      } catch (error) {
+        console.error("[Login] Erreur inattendue lors de la vérification de session:", error);
+        await handleCleanup();
+      } finally {
+        setIsCheckingSession(false);
+      }
+    };
+
+    checkSession();
+  }, [navigate, checkAttempts, MAX_CHECK_ATTEMPTS]);
+
+  // Gestion des changements d'état d'authentification
+  useEffect(() => {
+    const { data: listener } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log("[Login] Événement d'authentification:", event);
+      
+      if (event === 'SIGNED_OUT') {
+        await handleCleanup();
+        return;
+      }
+
+      if (event === 'SIGNED_IN' && session) {
+        try {
+          const profileData = await checkUserProfile(session.user.id);
+          
+          if (!profileData) {
+            await handleInvalidProfile();
+            return;
+          }
+
+          navigate("/");
+        } catch (error) {
+          console.error("[Login] Erreur lors de la vérification du profil après connexion:", error);
+          await handleCleanup();
+        }
+      }
+    });
+
+    return () => {
+      listener.subscription.unsubscribe();
+    };
+  }, [navigate]);
 
   // 🔹 Connexion avec Magic Link
   const handleMagicLink = async (e) => {
@@ -143,7 +199,6 @@ const Login = () => {
   // 🔹 Connexion avec email/mot de passe
   const handleLogin = async (e) => {
     e.preventDefault();
-    //console.log("[Login] Tentative de connexion avec email/mot de passe...");
     setLoading(true);
     setMessage("");
 
@@ -152,23 +207,18 @@ const Login = () => {
       password,
     });
 
-   // console.log("[Login] Résultat de la connexion:", { data, error });
-
     setLoading(false);
 
     if (error) {
-      //console.log("[Login] Erreur de connexion:", error);
       setMessage("Erreur : " + error.message);
-    } else {
-      //console.log("[Login] Connexion réussie, attente de l'événement onAuthStateChange...");
-      // La vérification du profil est maintenant gérée dans onAuthStateChange
+      // En cas d'erreur de connexion, nettoyer les cookies potentiellement problématiques
+      clearSupabaseCookies();
     }
   };
 
   // 🔹 Inscription avec email/mot de passe
   const handleSignup = async (e) => {
     e.preventDefault();
-    //console.log("[Login] Tentative d'inscription...");
     setLoading(true);
     setMessage("");
 
@@ -180,12 +230,9 @@ const Login = () => {
       },
     });
 
-    //console.log("[Login] Résultat de l'inscription:", { data, error });
-
     setLoading(false);
 
     if (error) {
-      //console.log("[Login] Erreur d'inscription:", error);
       setMessage("Erreur : " + error.message);
     } else {
       setMessage("Compte créé ! Vérifiez votre email pour confirmer votre inscription.");
@@ -198,6 +245,9 @@ const Login = () => {
         <div className="max-w-md w-full space-y-8 p-8 bg-white rounded-lg shadow">
           <div className="text-center">
             <h2 className="text-3xl font-bold text-gray-900">Vérification de la session...</h2>
+            <p className="mt-4 text-sm text-gray-600">
+              Tentative {checkAttempts}/{MAX_CHECK_ATTEMPTS}
+            </p>
           </div>
         </div>
       </div>
@@ -300,6 +350,14 @@ const Login = () => {
             {loading ? "Inscription en cours..." : "Créer un compte"}
           </button>
         )}
+
+        {/* 🔹 Bouton de réinitialisation manuelle en cas de problème */}
+        <button 
+          onClick={handleCleanup}
+          className="w-full text-red-600 text-sm p-2 mt-6 rounded-md hover:underline"
+        >
+          Réinitialiser la session
+        </button>
 
         {/* 🔹 Affichage des messages (erreurs ou confirmation) */}
         {message && <p className="text-center text-sm text-gray-600 mt-4">{message}</p>}
