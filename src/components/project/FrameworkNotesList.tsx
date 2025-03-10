@@ -154,9 +154,9 @@ export const FrameworkNotesList = ({
                             <AlertDialogCancel>Annuler</AlertDialogCancel>
                             <AlertDialogAction 
                               onClick={handleDeleteNote}
-                              disabled={deleteMutation.isPending}
+                              disabled={deleteMutation.isLoading}
                             >
-                              {deleteMutation.isPending ? 'Suppression...' : 'Supprimer'}
+                              {deleteMutation.isLoading ? 'Suppression...' : 'Supprimer'}
                             </AlertDialogAction>
                           </AlertDialogFooter>
                         </AlertDialogContent>

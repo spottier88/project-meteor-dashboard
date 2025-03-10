@@ -92,9 +92,9 @@ export const FrameworkNoteEdit = ({ note, isOpen, onClose, projectId }: Framewor
           <Button variant="outline" onClick={onClose}>Annuler</Button>
           <Button 
             onClick={handleSave}
-            disabled={updateMutation.isPending}
+            disabled={updateMutation.isLoading}
           >
-            {updateMutation.isPending ? (
+            {updateMutation.isLoading ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 Enregistrement...
