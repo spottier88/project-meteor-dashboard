@@ -15,8 +15,6 @@ const Login = () => {
   const [message, setMessage] = useState("");
   const [isMagicLink, setIsMagicLink] = useState(true);
   const [isCheckingSession, setIsCheckingSession] = useState(true);
-  const [checkAttempts, setCheckAttempts] = useState(0);
-  const MAX_CHECK_ATTEMPTS = 3;
 
   // Fonction pour nettoyer explicitement les cookies Supabase
   const clearSupabaseCookies = () => {
@@ -33,143 +31,82 @@ const Login = () => {
     }
   };
 
-  // Fonction pour gérer le nettoyage complet de l'état
-  const handleCleanup = async () => {
+  // Fonction pour déconnecter complètement l'utilisateur et nettoyer les données de session
+  const handleLogout = async () => {
     try {
-      // 1. Déconnexion via Supabase
-      await supabase.auth.signOut();
+      // Déconnexion via Supabase
+      await supabase.auth.signOut({ scope: 'local' });
       
-      // 2. Nettoyage explicite des cookies Supabase
+      // Nettoyage explicite des cookies Supabase
       clearSupabaseCookies();
       
-      // 3. Réinitialisation des états locaux
+      // Réinitialisation des états locaux
       setEmail("");
       setPassword("");
       setLoading(false);
       setMessage("");
-      setCheckAttempts(0);
+      
+      console.log("Déconnexion et nettoyage effectués avec succès");
     } catch (error) {
-      console.error("[Login] Erreur lors du nettoyage:", error);
+      console.error("Erreur lors de la déconnexion:", error);
       // En cas d'erreur, forcer quand même le nettoyage des cookies
       clearSupabaseCookies();
     }
   };
 
-  // Gestion des profils invalides
-  const handleInvalidProfile = async () => {
-    toast({
-      title: "Erreur",
-      description: "Votre profil n'a pas été correctement créé. Veuillez contacter l'administrateur.",
-      variant: "destructive",
-    });
-    await handleCleanup();
-  };
-
-  // Vérification du profil utilisateur
-  const checkUserProfile = async (userId) => {
-    try {
-      const { data: profileData, error: profileError } = await supabase
-        .from('profiles')
-        .select()
-        .eq('id', userId)
-        .maybeSingle();
-
-      if (profileError) {
-        throw profileError;
-      }
-
-      return profileData;
-    } catch (error) {
-      console.error("[Login] Erreur lors de la vérification du profil:", error);
-      return null;
-    }
-  };
-
-  // Vérification de session avec gestion d'erreur améliorée
+  // Simplification de la vérification de session - une seule fois au chargement
   useEffect(() => {
     const checkSession = async () => {
       try {
         setIsCheckingSession(true);
         
-        // Incrémenter le compteur de tentatives
-        setCheckAttempts(prev => prev + 1);
-        
-        // Si trop de tentatives, nettoyer et abandonner
-        if (checkAttempts >= MAX_CHECK_ATTEMPTS) {
-          console.warn("[Login] Trop de tentatives de vérification de session, nettoyage forcé.");
-          await handleCleanup();
-          setIsCheckingSession(false);
-          return;
-        }
-
         // Récupérer la session actuelle
         const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
         
         if (sessionError) {
-          // Erreur de session, nettoyer
-          console.error("[Login] Erreur de session:", sessionError);
-          await handleCleanup();
+          console.error("Erreur lors de la vérification de session:", sessionError);
+          await handleLogout();
           setIsCheckingSession(false);
           return;
         }
 
-        // Si session active
-        if (sessionData && sessionData.session) {
-          // Vérifier si l'utilisateur existe dans la base de données
-          const profileData = await checkUserProfile(sessionData.session.user.id);
-          
-          if (!profileData) {
-            await handleInvalidProfile();
-            setIsCheckingSession(false);
-            return;
-          }
-          
-          // Profil valide, rediriger vers la page d'accueil
+        // Si session active et valide
+        if (sessionData?.session) {
+          console.log("Session active détectée, redirection vers la page principale");
           navigate("/");
         } else {
-          // Pas de session active, s'assurer que tout est propre
-          await handleCleanup();
+          console.log("Aucune session active détectée");
+          // S'assurer que tout est propre quand aucune session n'est détectée
+          await handleLogout();
         }
       } catch (error) {
-        console.error("[Login] Erreur inattendue lors de la vérification de session:", error);
-        await handleCleanup();
+        console.error("Erreur inattendue lors de la vérification de session:", error);
+        await handleLogout();
       } finally {
         setIsCheckingSession(false);
       }
     };
 
     checkSession();
-  }, [navigate, checkAttempts, MAX_CHECK_ATTEMPTS]);
+  }, [navigate]);
 
-  // Gestion des changements d'état d'authentification
+  // Gestionnaire d'état d'authentification simplifié
   useEffect(() => {
-    const { data: listener } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log("[Login] Événement d'authentification:", event);
+    const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log("Événement d'authentification:", event);
       
       if (event === 'SIGNED_OUT') {
-        await handleCleanup();
+        await handleLogout();
         return;
       }
 
       if (event === 'SIGNED_IN' && session) {
-        try {
-          const profileData = await checkUserProfile(session.user.id);
-          
-          if (!profileData) {
-            await handleInvalidProfile();
-            return;
-          }
-
-          navigate("/");
-        } catch (error) {
-          console.error("[Login] Erreur lors de la vérification du profil après connexion:", error);
-          await handleCleanup();
-        }
+        navigate("/");
       }
     });
 
     return () => {
-      listener.subscription.unsubscribe();
+      authListener.subscription.unsubscribe();
     };
   }, [navigate]);
 
@@ -239,15 +176,22 @@ const Login = () => {
     }
   };
 
+  // Déconnexion manuelle et nettoyage complet
+  const handleManualReset = async () => {
+    await handleLogout();
+    toast({
+      title: "Session réinitialisée",
+      description: "Toutes les données de session ont été supprimées",
+    });
+    setMessage("Session réinitialisée avec succès.");
+  };
+
   if (isCheckingSession) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="max-w-md w-full space-y-8 p-8 bg-white rounded-lg shadow">
           <div className="text-center">
             <h2 className="text-3xl font-bold text-gray-900">Vérification de la session...</h2>
-            <p className="mt-4 text-sm text-gray-600">
-              Tentative {checkAttempts}/{MAX_CHECK_ATTEMPTS}
-            </p>
           </div>
         </div>
       </div>
@@ -353,7 +297,7 @@ const Login = () => {
 
         {/* 🔹 Bouton de réinitialisation manuelle en cas de problème */}
         <button 
-          onClick={handleCleanup}
+          onClick={handleManualReset}
           className="w-full text-red-600 text-sm p-2 mt-6 rounded-md hover:underline"
         >
           Réinitialiser la session

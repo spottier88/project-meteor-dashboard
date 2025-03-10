@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
 
-// Fonction pour nettoyer les cookies Supabase (dupliquée de Login.tsx)
+// Fonction pour nettoyer les cookies Supabase
 const clearSupabaseCookies = () => {
   const cookies = document.cookie.split(";");
   for (let i = 0; i < cookies.length; i++) {
@@ -27,6 +27,8 @@ const AuthCallback = () => {
   useEffect(() => {
     const handleAuthCallback = async () => {
       try {
+        console.log("Traitement du callback d'authentification");
+        
         // Récupère les paramètres de l'URL
         const hashParams = new URLSearchParams(window.location.hash.substring(1));
         const queryParams = new URLSearchParams(window.location.search);
@@ -37,18 +39,20 @@ const AuthCallback = () => {
           throw new Error(errorDescription);
         }
 
-        // Récupère la session
-        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        // Récupère la session de manière plus directe
+        const { data, error: sessionError } = await supabase.auth.getSession();
         
         if (sessionError) {
           throw sessionError;
         }
 
-        if (!session) {
+        if (!data.session) {
+          console.log("Aucune session trouvée dans le callback");
           throw new Error("No session found");
         }
 
         // Authentification réussie
+        console.log("Authentification réussie via callback");
         toast({
           title: "Connexion réussie",
           description: "Vous allez être redirigé vers la page d'accueil",
@@ -57,10 +61,11 @@ const AuthCallback = () => {
         // Redirection vers la page principale
         navigate("/");
       } catch (err) {
-        console.error("Auth callback error:", err);
+        console.error("Erreur dans le callback d'authentification:", err);
         setError(err instanceof Error ? err.message : "Une erreur est survenue lors de l'authentification");
         
         // En cas d'erreur, nettoyer les cookies Supabase
+        await supabase.auth.signOut();
         clearSupabaseCookies();
         
         toast({
