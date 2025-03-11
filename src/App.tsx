@@ -12,7 +12,7 @@ import Index from "@/pages/Index";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import Admin from "@/pages/Admin";
 import Activities from "@/pages/Activities";
-import TeamActivities from "@/pages/TeamActivities";
+import { TeamActivities } from "@/pages/TeamActivities";
 import FrameworkNotes from "@/pages/FrameworkNotes";
 import { FrameworkNoteDetail } from "@/components/project/FrameworkNoteDetail";
 
