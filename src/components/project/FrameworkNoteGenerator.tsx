@@ -1,4 +1,3 @@
-
 import React, { useState, useCallback, useEffect } from 'react';
 import { useToast } from '@/components/ui/use-toast';
 import { Button } from '@/components/ui/button';
@@ -62,23 +61,9 @@ export const FrameworkNoteGenerator: React.FC<FrameworkNoteGeneratorProps> = ({ 
       const sectionLabel = sections.find(s => s.id === sectionToGenerate)?.label || sectionToGenerate;
       const sectionPrompt = customPrompt || `Génère la section "${sectionLabel}" pour une note de cadrage du projet "${project.title}". ${project.description ? `Description du projet: ${project.description}` : ''}`;
       
-      // Appel à l'API fonction Edge Supabase
-      const { data: sessionData } = await supabase.auth.getSession();
-      const authHeader = sessionData?.session?.access_token
-        ? `Bearer ${sessionData.session.access_token}`
-        : null;
-
-      if (!authHeader) {
-        throw new Error('Non authentifié');
-      }
-
-      const response = await fetch(`${process.env.SUPABASE_URL}/functions/v1/ai-assistant`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': authHeader,
-        },
-        body: JSON.stringify({
+      // Appel à la fonction Edge Supabase avec la méthode standard
+      const { data, error } = await supabase.functions.invoke('ai-assistant', {
+        body: {
           messages: [{ 
             role: 'user', 
             content: sectionPrompt 
@@ -86,16 +71,18 @@ export const FrameworkNoteGenerator: React.FC<FrameworkNoteGeneratorProps> = ({ 
           projectId: project.id,
           promptType: 'framework_note',
           promptSection: sectionToGenerate
-        }),
+        }
       });
 
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error('Erreur API:', errorText);
-        throw new Error(`Erreur lors de la génération: ${response.status}`);
+      if (error) {
+        console.error('Erreur lors de l\'appel à la fonction:', error);
+        throw new Error(`Erreur lors de la génération: ${error.message}`);
       }
 
-      const data = await response.json();
+      if (!data) {
+        throw new Error('Aucune donnée reçue de l\'API');
+      }
+
       const generatedText = data.message.content;
 
       setGeneratedContent(prev => ({
@@ -460,3 +447,4 @@ export const FrameworkNoteGenerator: React.FC<FrameworkNoteGeneratorProps> = ({ 
     </div>
   );
 };
+

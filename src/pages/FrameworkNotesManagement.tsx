@@ -5,8 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { PlusCircle, FileText, List, Grid, LinkIcon, FolderPlus } from "lucide-react";
-import { DashboardHeader } from "@/components/DashboardHeader";
+import { PlusCircle, FileText, List, Grid, LinkIcon, FolderPlus, ArrowLeft } from "lucide-react";
 import { StandaloneFrameworkNoteGenerator } from "@/components/project/StandaloneFrameworkNoteGenerator";
 import { StandaloneFrameworkNotesList } from "@/components/project/StandaloneFrameworkNotesList";
 import { StandaloneFrameworkNoteEdit } from "@/components/project/StandaloneFrameworkNoteEdit";
@@ -42,9 +41,16 @@ export const FrameworkNotesManagement = () => {
 
   return (
     <div className="container mx-auto py-6">
-      <DashboardHeader />
+      <Button
+        variant="ghost"
+        className="mb-6"
+        onClick={() => navigate("/")}
+      >
+        <ArrowLeft className="h-4 w-4 mr-2" />
+        Retour au tableau de bord
+      </Button>
       
-      <div className="mt-8 space-y-6">
+      <div className="mt-4 space-y-6">
         <div className="flex justify-between items-center">
           <h1 className="text-3xl font-bold">Gestion des notes de cadrage</h1>
         </div>
