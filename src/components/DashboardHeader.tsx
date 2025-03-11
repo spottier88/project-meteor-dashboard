@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { NavigationMenu, NavigationMenuItem, NavigationMenuLink, NavigationMenuList } from "@/components/ui/navigation-menu";
@@ -27,11 +26,7 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
   const [isCartOpen, setIsCartOpen] = useState(false);
 
   const handleFrameworkNoteClick = () => {
-    if (onNewFrameworkNote) {
-      onNewFrameworkNote();
-    } else {
-      navigate('/framework-notes');
-    }
+    navigate('/framework-notes');
   };
 
   return (
