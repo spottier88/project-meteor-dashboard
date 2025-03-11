@@ -8,7 +8,9 @@ import { Label } from '@/components/ui/label';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
-import { Loader2 } from 'lucide-react';
+import { Loader2, ChevronLeft, ChevronRight, Save, X, Check } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Progress } from '@/components/ui/progress';
 
 interface FrameworkNoteEditProps {
   note: any;
@@ -27,10 +29,21 @@ export const FrameworkNoteEdit: React.FC<FrameworkNoteEditProps> = ({
   const [isSaving, setIsSaving] = useState(false);
   const [activeTab, setActiveTab] = useState('objectifs');
   const [formData, setFormData] = useState<Record<string, string>>({});
+  const [completedSections, setCompletedSections] = useState<string[]>([]);
+  const [progress, setProgress] = useState(0);
 
   useEffect(() => {
     if (note && note.content) {
       setFormData(note.content);
+      
+      // Détermine les sections complétées
+      const completed: string[] = [];
+      Object.entries(note.content).forEach(([key, value]) => {
+        if (value && String(value).trim() !== '') {
+          completed.push(key);
+        }
+      });
+      setCompletedSections(completed);
     } else {
       setFormData({
         objectifs: '',
@@ -45,14 +58,31 @@ export const FrameworkNoteEdit: React.FC<FrameworkNoteEditProps> = ({
         communication: '',
         decision: ''
       });
+      setCompletedSections([]);
     }
   }, [note]);
+
+  useEffect(() => {
+    // Calculer le pourcentage de progression
+    const completedCount = completedSections.length;
+    const totalSections = sections.length;
+    const progressPercentage = totalSections > 0 ? (completedCount / totalSections) * 100 : 0;
+    setProgress(progressPercentage);
+  }, [completedSections]);
 
   const handleInputChange = (key: string, value: string) => {
     setFormData(prev => ({
       ...prev,
       [key]: value
     }));
+
+    // Mettre à jour les sections complétées
+    const isCompleted = value.trim() !== '';
+    if (isCompleted && !completedSections.includes(key)) {
+      setCompletedSections(prev => [...prev, key]);
+    } else if (!isCompleted && completedSections.includes(key)) {
+      setCompletedSections(prev => prev.filter(section => section !== key));
+    }
   };
 
   const handleSave = async () => {
@@ -117,6 +147,20 @@ export const FrameworkNoteEdit: React.FC<FrameworkNoteEditProps> = ({
     { id: 'decision', label: 'Points de décision' }
   ];
 
+  const currentSectionIndex = sections.findIndex(section => section.id === activeTab);
+
+  const handlePrevSection = () => {
+    if (currentSectionIndex > 0) {
+      setActiveTab(sections[currentSectionIndex - 1].id);
+    }
+  };
+
+  const handleNextSection = () => {
+    if (currentSectionIndex < sections.length - 1) {
+      setActiveTab(sections[currentSectionIndex + 1].id);
+    }
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-4xl h-[80vh] flex flex-col">
@@ -126,16 +170,31 @@ export const FrameworkNoteEdit: React.FC<FrameworkNoteEditProps> = ({
           </DialogTitle>
         </DialogHeader>
 
+        <div className="mt-2 mb-4">
+          <div className="flex justify-between items-center mb-2">
+            <span className="text-sm font-medium">Progression: {Math.round(progress)}%</span>
+            <span className="text-sm text-muted-foreground">
+              {completedSections.length}/{sections.length} sections
+            </span>
+          </div>
+          <Progress value={progress} className="h-2" />
+        </div>
+
         <div className="flex flex-grow overflow-hidden">
           <Tabs orientation="vertical" value={activeTab} onValueChange={setActiveTab} className="flex flex-grow h-full">
-            <TabsList className="h-full w-40 flex-shrink-0 flex flex-col items-stretch space-y-1 overflow-auto rounded-none border-r p-2">
+            <TabsList className="h-full w-48 flex-shrink-0 flex flex-col items-stretch space-y-1 overflow-auto rounded-none border-r p-2">
               {sections.map(section => (
                 <TabsTrigger 
                   key={section.id} 
                   value={section.id}
-                  className="justify-start text-left"
+                  className="justify-start text-left relative"
                 >
                   {section.label}
+                  {completedSections.includes(section.id) && (
+                    <Badge variant="secondary" className="ml-auto h-5 w-5 p-0 flex items-center justify-center">
+                      <Check className="h-3 w-3" />
+                    </Badge>
+                  )}
                 </TabsTrigger>
               ))}
             </TabsList>
@@ -149,14 +208,40 @@ export const FrameworkNoteEdit: React.FC<FrameworkNoteEditProps> = ({
                 >
                   <div className="space-y-4">
                     <div>
-                      <Label htmlFor={section.id}>{section.label}</Label>
+                      <Label htmlFor={section.id} className="text-lg font-medium">
+                        {section.label}
+                      </Label>
                       <Textarea
                         id={section.id}
                         value={formData[section.id] || ''}
                         onChange={(e) => handleInputChange(section.id, e.target.value)}
                         placeholder={`Saisir ${section.label.toLowerCase()}...`}
-                        className="min-h-[300px]"
+                        className="min-h-[300px] mt-2"
                       />
+                    </div>
+
+                    <div className="flex justify-between pt-4">
+                      <Button 
+                        type="button" 
+                        variant="outline" 
+                        onClick={handlePrevSection}
+                        disabled={currentSectionIndex === 0}
+                        className="flex items-center gap-1"
+                      >
+                        <ChevronLeft className="h-4 w-4" />
+                        Précédent
+                      </Button>
+                      
+                      <Button 
+                        type="button" 
+                        variant="outline" 
+                        onClick={handleNextSection}
+                        disabled={currentSectionIndex === sections.length - 1}
+                        className="flex items-center gap-1"
+                      >
+                        Suivant
+                        <ChevronRight className="h-4 w-4" />
+                      </Button>
                     </div>
                   </div>
                 </TabsContent>
@@ -166,9 +251,12 @@ export const FrameworkNoteEdit: React.FC<FrameworkNoteEditProps> = ({
         </div>
 
         <DialogFooter className="mt-4">
-          <Button variant="outline" onClick={onClose}>Annuler</Button>
-          <Button onClick={handleSave} disabled={isSaving}>
-            {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+          <Button variant="outline" onClick={onClose} className="gap-1">
+            <X className="h-4 w-4" />
+            Annuler
+          </Button>
+          <Button onClick={handleSave} disabled={isSaving} className="gap-1">
+            {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
             Enregistrer
           </Button>
         </DialogFooter>
