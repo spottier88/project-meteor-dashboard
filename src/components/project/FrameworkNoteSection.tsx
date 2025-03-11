@@ -1,133 +1,96 @@
 
 import { useState } from "react";
-import { Textarea } from "@/components/ui/textarea";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { FrameworkNoteGenerator } from "./FrameworkNoteGenerator";
+import { FrameworkNotesList } from "./FrameworkNotesList";
+import { FrameworkNoteDialog } from "./FrameworkNoteDialog";
+import { FrameworkNoteEdit } from "./FrameworkNoteEdit";
+import { FrameworkNotePdf } from "./FrameworkNotePdf";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Edit, Save, Trash, X } from "lucide-react";
-import { SECTION_LABELS, SectionType } from "@/types/framework-note";
-import { 
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
+import { FileDown } from "lucide-react";
+import { Database } from "@/integrations/supabase/types";
+
+type Project = Database["public"]["Tables"]["projects"]["Row"];
 
 interface FrameworkNoteSectionProps {
-  section: {
-    id: string;
-    section_type: SectionType;
-    content: string;
-  };
-  onUpdate: (content: string) => Promise<void>;
-  onDelete: () => Promise<void>;
+  project: Project;
+  canEdit: boolean;
 }
 
-export const FrameworkNoteSection = ({ section, onUpdate, onDelete }: FrameworkNoteSectionProps) => {
-  const [isEditing, setIsEditing] = useState(false);
-  const [content, setContent] = useState(section.content);
-  const [isSaving, setIsSaving] = useState(false);
-  
-  const handleSave = async () => {
-    if (!content.trim()) return;
-    
-    setIsSaving(true);
-    try {
-      await onUpdate(content);
-      setIsEditing(false);
-    } catch (error) {
-      console.error("Erreur lors de la mise à jour:", error);
-    } finally {
-      setIsSaving(false);
-    }
+export const FrameworkNoteSection = ({ project, canEdit }: FrameworkNoteSectionProps) => {
+  const [activeTab, setActiveTab] = useState("list");
+  const [selectedNote, setSelectedNote] = useState<any>(null);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isPdfDialogOpen, setIsPdfDialogOpen] = useState(false);
+
+  const handleViewNote = (note: any) => {
+    setSelectedNote(note);
+    setIsDialogOpen(true);
   };
-  
-  const handleCancel = () => {
-    setContent(section.content);
-    setIsEditing(false);
+
+  const handleEditNote = (note: any) => {
+    setSelectedNote(note);
+    setIsEditDialogOpen(true);
   };
 
   return (
-    <Card>
-      <CardHeader className="pb-2">
-        <CardTitle className="text-base">
-          {SECTION_LABELS[section.section_type]}
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        {isEditing ? (
-          <Textarea
-            value={content}
-            onChange={(e) => setContent(e.target.value)}
-            className="min-h-[120px]"
+    <div className="space-y-4">
+      <div className="flex justify-between items-center">
+        <h2 className="text-2xl font-bold">Notes de cadrage</h2>
+        
+        <Button 
+          variant="outline" 
+          size="sm"
+          onClick={() => setIsPdfDialogOpen(true)}
+        >
+          <FileDown className="mr-2 h-4 w-4" />
+          Exporter en PDF
+        </Button>
+      </div>
+      
+      <Tabs value={activeTab} onValueChange={setActiveTab}>
+        <TabsList className="mb-4">
+          <TabsTrigger value="list">Notes sauvegardées</TabsTrigger>
+          {canEdit && <TabsTrigger value="generator">Générer une note</TabsTrigger>}
+        </TabsList>
+        
+        <TabsContent value="list">
+          <FrameworkNotesList 
+            projectId={project.id} 
+            onViewNote={handleViewNote} 
+            onEditNote={handleEditNote}
+            canEdit={canEdit}
           />
-        ) : (
-          <div className="whitespace-pre-wrap text-sm">
-            {section.content}
-          </div>
+        </TabsContent>
+        
+        {canEdit && (
+          <TabsContent value="generator">
+            <FrameworkNoteGenerator project={project} />
+          </TabsContent>
         )}
-      </CardContent>
-      <CardFooter className="flex justify-between border-t pt-3">
-        {isEditing ? (
-          <>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleCancel}
-            >
-              <X className="h-4 w-4 mr-1" />
-              Annuler
-            </Button>
-            <Button
-              size="sm"
-              onClick={handleSave}
-              disabled={isSaving || !content.trim()}
-            >
-              <Save className="h-4 w-4 mr-1" />
-              Enregistrer
-            </Button>
-          </>
-        ) : (
-          <>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setIsEditing(true)}
-            >
-              <Edit className="h-4 w-4 mr-1" />
-              Modifier
-            </Button>
-            <AlertDialog>
-              <AlertDialogTrigger asChild>
-                <Button
-                  variant="destructive"
-                  size="sm"
-                >
-                  <Trash className="h-4 w-4 mr-1" />
-                  Supprimer
-                </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>Êtes-vous sûr?</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    Cette action ne peut pas être annulée. Cela supprimera définitivement 
-                    cette section de la note de cadrage.
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>Annuler</AlertDialogCancel>
-                  <AlertDialogAction onClick={onDelete}>Supprimer</AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
-          </>
-        )}
-      </CardFooter>
-    </Card>
+      </Tabs>
+      
+      <FrameworkNoteDialog 
+        note={selectedNote}
+        isOpen={isDialogOpen}
+        onClose={() => setIsDialogOpen(false)}
+      />
+
+      {canEdit && (
+        <FrameworkNoteEdit
+          note={selectedNote}
+          isOpen={isEditDialogOpen}
+          onClose={() => setIsEditDialogOpen(false)}
+          projectId={project.id}
+        />
+      )}
+
+      <FrameworkNotePdf
+        isOpen={isPdfDialogOpen}
+        onClose={() => setIsPdfDialogOpen(false)}
+        projectId={project.id}
+      />
+    </div>
   );
 };

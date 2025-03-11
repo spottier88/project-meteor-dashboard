@@ -9,11 +9,7 @@ import { WeeklyDashboard } from '@/components/activities/WeeklyDashboard';
 import { usePermissionsContext } from '@/contexts/PermissionsContext';
 import { useToast } from "@/components/ui/use-toast";
 
-interface TeamActivitiesProps {
-  children?: React.ReactNode;
-}
-
-export const TeamActivities: React.FC<TeamActivitiesProps> = () => {
+export const TeamActivities = () => {
   const { isAdmin, isManager, hasRole } = usePermissionsContext();
   const user = useUser();
   const navigate = useNavigate();
@@ -48,3 +44,4 @@ export const TeamActivities: React.FC<TeamActivitiesProps> = () => {
     </div>
   );
 };
+
