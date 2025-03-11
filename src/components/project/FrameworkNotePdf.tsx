@@ -58,22 +58,23 @@ const styles = StyleSheet.create({
   },
 });
 
+// Définir les labels des sections pour utilisation dans le PDF et ailleurs
+const sectionLabels: Record<string, string> = {
+  objectifs: "Objectifs",
+  contexte: "Contexte",
+  perimetre: "Périmètre",
+  parties_prenantes: "Parties prenantes",
+  risques: "Risques",
+  budget: "Budget",
+  planning: "Planning",
+  organisation: "Organisation",
+  livrables: "Livrables",
+  communication: "Communication",
+  decision: "Points de décision"
+};
+
 // Composant PDF pour la note de cadrage
 const NotePDF = ({ note, projectTitle }: { note: any, projectTitle: string }) => {
-  const sectionLabels: Record<string, string> = {
-    objectifs: "Objectifs",
-    contexte: "Contexte",
-    perimetre: "Périmètre",
-    parties_prenantes: "Parties prenantes",
-    risques: "Risques",
-    budget: "Budget",
-    planning: "Planning",
-    organisation: "Organisation",
-    livrables: "Livrables",
-    communication: "Communication",
-    decision: "Points de décision"
-  };
-
   const getSectionsWithContent = () => {
     const sections = [];
     for (const [key, value] of Object.entries(note.content)) {
