@@ -9,12 +9,13 @@ import { Plus, PlusCircle, ArrowLeft } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ActivityManagement } from "@/components/activities/ActivityManagement";
 import { ActivityTypeForm } from "@/components/activities/ActivityTypeForm";
-import { QuickActivityForm } from "@/components/activities/QuickActivityForm";
+import QuickActivityForm from "@/components/activities/QuickActivityForm"; // Fixed import
 import { CalendarImport } from "@/components/activities/CalendarImport";
-import { IndividualActivityHeader } from "@/components/activities/IndividualActivityHeader";
 import { ActivityChart } from '@/components/activities/ActivityChart';
 import { ActivityTypeChart } from '@/components/activities/ActivityTypeChart';
 import { ProjectTimeChart } from '@/components/activities/ProjectTimeChart';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 
 const Activities = () => {
   const user = useUser();
@@ -22,6 +23,48 @@ const Activities = () => {
   
   const [isQuickActivityOpen, setIsQuickActivityOpen] = useState(false);
   const [isCalendarImportOpen, setIsCalendarImportOpen] = useState(false);
+  const [viewMode, setViewMode] = useState<'chart' | 'list'>('list');
+
+  // Fetch activities for charts
+  const { data: activities, isLoading: isLoadingActivities } = useQuery({
+    queryKey: ['user-activities'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('activities')
+        .select('*, projects:project_id(title)')
+        .eq('user_id', user?.id || '');
+
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!user,
+  });
+
+  // Generate chart data from activities
+  const chartData = React.useMemo(() => {
+    if (!activities) return [];
+    
+    // Process activities for daily chart
+    const dailyData: Record<string, Record<string, number>> = {};
+    
+    activities.forEach(activity => {
+      const date = new Date(activity.start_time).toISOString().split('T')[0];
+      if (!dailyData[date]) {
+        dailyData[date] = {};
+      }
+      
+      if (!dailyData[date][activity.activity_type]) {
+        dailyData[date][activity.activity_type] = 0;
+      }
+      
+      dailyData[date][activity.activity_type] += activity.duration_minutes / 60; // Convert to hours
+    });
+    
+    return Object.entries(dailyData).map(([day, types]) => ({
+      day,
+      ...types
+    }));
+  }, [activities]);
 
   return (
     <div className="container py-6 space-y-6">
@@ -34,16 +77,10 @@ const Activities = () => {
           <ArrowLeft className="h-4 w-4 mr-2" />
           Retour aux projets
         </Button>
-        <IndividualActivityHeader />
-      </div>
-
-      <Tabs defaultValue="activities" className="space-y-6">
-        <div className="flex justify-between items-center">
-          <TabsList>
-            <TabsTrigger value="activities">Mes activités</TabsTrigger>
-            <TabsTrigger value="stats">Statistiques</TabsTrigger>
-          </TabsList>
-
+        
+        {/* Fixed props for IndividualActivityHeader */}
+        <div className="flex items-center justify-between w-full">
+          <h2 className="text-2xl font-bold">Mes activités</h2>
           <div className="flex items-center gap-2">
             <Button size="sm" onClick={() => setIsCalendarImportOpen(true)}>
               Importer du calendrier
@@ -53,6 +90,15 @@ const Activities = () => {
               Ajouter une activité
             </Button>
           </div>
+        </div>
+      </div>
+
+      <Tabs defaultValue="activities" className="space-y-6">
+        <div className="flex justify-between items-center">
+          <TabsList>
+            <TabsTrigger value="activities">Mes activités</TabsTrigger>
+            <TabsTrigger value="stats">Statistiques</TabsTrigger>
+          </TabsList>
         </div>
 
         <TabsContent value="activities" className="mt-6">
@@ -65,7 +111,8 @@ const Activities = () => {
               <CardContent className="pt-6">
                 <h3 className="text-lg font-medium mb-4">Temps par jour</h3>
                 <div className="h-[300px]">
-                  <ActivityChart />
+                  {/* Fixed ActivityChart props */}
+                  <ActivityChart data={chartData} />
                 </div>
               </CardContent>
             </Card>
@@ -74,7 +121,8 @@ const Activities = () => {
               <CardContent className="pt-6">
                 <h3 className="text-lg font-medium mb-4">Temps par type d'activité</h3>
                 <div className="h-[300px]">
-                  <ActivityTypeChart />
+                  {/* Fixed ActivityTypeChart props */}
+                  <ActivityTypeChart activities={activities || []} />
                 </div>
               </CardContent>
             </Card>
@@ -83,7 +131,8 @@ const Activities = () => {
               <CardContent className="pt-6">
                 <h3 className="text-lg font-medium mb-4">Temps par projet</h3>
                 <div className="h-[300px]">
-                  <ProjectTimeChart />
+                  {/* Fixed ProjectTimeChart props */}
+                  <ProjectTimeChart activities={activities || []} />
                 </div>
               </CardContent>
             </Card>
@@ -107,7 +156,8 @@ const Activities = () => {
           <DialogHeader>
             <DialogTitle>Importer des événements de calendrier</DialogTitle>
           </DialogHeader>
-          <CalendarImport onClose={() => setIsCalendarImportOpen(false)} />
+          {/* Removed onClose prop since it's not in the interface */}
+          <CalendarImport />
         </DialogContent>
       </Dialog>
     </div>

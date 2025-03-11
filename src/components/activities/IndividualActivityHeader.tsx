@@ -5,24 +5,23 @@ import { Button } from "@/components/ui/button";
 import { BarChartIcon, List, FileSpreadsheet } from "lucide-react";
 import { CalendarImport } from './CalendarImport';
 
-interface IndividualActivityHeaderProps {
-  hasActivities: boolean;
-  viewMode: 'chart' | 'list';
-  setViewMode: (mode: 'chart' | 'list') => void;
-  onExport: () => void;
+export interface IndividualActivityHeaderProps {
+  hasActivities?: boolean;
+  viewMode?: 'chart' | 'list';
+  setViewMode?: (mode: 'chart' | 'list') => void;
+  onExport?: () => void;
 }
 
 export const IndividualActivityHeader = ({
-  hasActivities,
-  viewMode,
-  setViewMode,
-  onExport
+  hasActivities = false,
+  viewMode = 'list',
+  setViewMode = () => {},
+  onExport = () => {}
 }: IndividualActivityHeaderProps) => {
   return (
     <div className="flex flex-row items-center justify-between space-y-0 pb-2">
       <CardTitle>Activités</CardTitle>
       <div className="flex gap-2">
-        <CalendarImport />
         <Button
           variant="outline"
           size="sm"

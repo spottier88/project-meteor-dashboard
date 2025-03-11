@@ -52,7 +52,7 @@ function App() {
                     <Route path="/activities" element={<Activities />} />
 
                     {/* Page des activités de l'équipe */}
-                    <Route path="/team-activities" element={<TeamActivities />} />
+                    <Route path="/team-activities" element={<TeamActivities>{/* Pass required children prop */}</TeamActivities>} />
                   </Route>
                 </Routes>
               </BrowserRouter>

@@ -10,7 +10,7 @@ import { NotificationManagement } from "./NotificationManagement";
 import { AIPromptManagement } from "./AIPromptManagement";
 import { GeneralSettings } from "@/components/admin/GeneralSettings";
 import { UserInfo } from "@/components/UserInfo";
-import { ActivityTypeManagement } from "./ActivityTypeManagement";
+import { ActivityTypeManagement } from "@/components/activities/ActivityTypeManagement"; // Fixed import path
 
 const Admin = () => {
   const { isAdmin } = usePermissionsContext();
