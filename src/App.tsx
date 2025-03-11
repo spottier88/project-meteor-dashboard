@@ -52,11 +52,7 @@ function App() {
                     <Route path="/activities" element={<Activities />} />
 
                     {/* Page des activités de l'équipe */}
-                    <Route path="/team-activities" element={
-                      <TeamActivities>
-                        {null}
-                      </TeamActivities>
-                    } />
+                    <Route path="/team-activities" element={<TeamActivities />} />
                   </Route>
                 </Routes>
               </BrowserRouter>
