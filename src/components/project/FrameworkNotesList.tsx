@@ -38,12 +38,7 @@ export const FrameworkNotesList: React.FC<FrameworkNotesListProps> = ({
           status,
           version,
           created_at,
-          created_by,
-          profiles:created_by (
-            first_name,
-            last_name,
-            email
-          )
+          created_by
         `)
         .eq('project_id', projectId)
         .order('created_at', { ascending: false });
@@ -113,9 +108,9 @@ export const FrameworkNotesList: React.FC<FrameworkNotesListProps> = ({
             </CardTitle>
             <CardDescription>
               Créée le {formatDate(new Date(note.created_at), 'dd/MM/yyyy')}
-              {note.profiles && (
+              {note.created_by && (
                 <div className="text-xs mt-1">
-                  Par {note.profiles.first_name || ''} {note.profiles.last_name || ''}
+                  Par {note.created_by}
                 </div>
               )}
             </CardDescription>
