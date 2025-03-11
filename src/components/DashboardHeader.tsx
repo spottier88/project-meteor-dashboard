@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { NavigationMenu, NavigationMenuItem, NavigationMenuLink, NavigationMenuList } from "@/components/ui/navigation-menu";
 import { Link } from "react-router-dom";
 import { usePermissionsContext } from '@/contexts/PermissionsContext';
-import { ShoppingCart, History, Plus, FileText } from 'lucide-react';
+import { ShoppingCart, History, Plus } from 'lucide-react';
 import { useProjectCart } from '@/hooks/use-project-cart';
 import { CartButton } from '@/components/cart/CartButton';
 import { ProjectCart } from '@/components/cart/ProjectCart';
@@ -12,21 +12,13 @@ import { ProjectCart } from '@/components/cart/ProjectCart';
 interface DashboardHeaderProps {
   onNewProject?: () => void;
   onNewReview?: () => void;
-  onNewFrameworkNote?: () => void;
 }
 
-export const DashboardHeader: React.FC<DashboardHeaderProps> = ({ 
-  onNewProject, 
-  onNewReview, 
-  onNewFrameworkNote 
-}) => {
+export const DashboardHeader: React.FC<DashboardHeaderProps> = ({ onNewProject, onNewReview }) => {
   const { isAdmin, isManager, hasRole } = usePermissionsContext();
   const showTeamActivities = isAdmin || isManager || hasRole('chef_projet');
   const { cartItems } = useProjectCart();
   const [isCartOpen, setIsCartOpen] = useState(false);
-  
-  // Détermine si l'utilisateur peut créer des notes de cadrage
-  const canCreateFrameworkNotes = isAdmin || hasRole('chef_projet');
 
   return (
     <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
@@ -68,14 +60,6 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
               <History className="h-4 w-4 mr-2" />
               Nouvelle revue
             </Button>
-            
-            {canCreateFrameworkNotes && (
-              <Button onClick={onNewFrameworkNote} variant="outline" size="sm">
-                <FileText className="h-4 w-4 mr-2" />
-                Nouvelle note de cadrage
-              </Button>
-            )}
-            
             <Button onClick={onNewProject} size="sm">
               <Plus className="h-4 w-4 mr-2" />
               Nouveau projet
