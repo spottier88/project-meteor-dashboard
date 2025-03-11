@@ -1,247 +1,224 @@
 
-import { useState } from "react";
-import { useToast } from "@/components/ui/use-toast";
-import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2, Save, AlertTriangle } from "lucide-react";
-import { Database } from "@/integrations/supabase/types";
-import { supabase } from "@/integrations/supabase/client";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { useQueryClient } from "@tanstack/react-query";
-
-type Project = Database["public"]["Tables"]["projects"]["Row"];
-type PromptSection = "objectifs" | "contexte" | "cibles" | "resultats_attendus" | "risques" | "enjeux" | "general";
+import React, { useState } from 'react';
+import { useToast } from '@/components/ui/use-toast';
+import { Button } from '@/components/ui/button';
+import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@/components/ui/card';
+import { Textarea } from '@/components/ui/textarea';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { supabase } from '@/integrations/supabase/client';
+import { Loader2, Bot, Copy, Check } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 interface FrameworkNoteGeneratorProps {
-  project: Project;
+  project: any;
 }
 
-export const FrameworkNoteGenerator = ({ project }: FrameworkNoteGeneratorProps) => {
-  const [activeTab, setActiveTab] = useState<PromptSection>("general");
-  const [prompt, setPrompt] = useState("");
-  const [response, setResponse] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
-  const [isSaving, setIsSaving] = useState(false);
-  const [usedFallbackTemplate, setUsedFallbackTemplate] = useState(false);
+export const FrameworkNoteGenerator: React.FC<FrameworkNoteGeneratorProps> = ({ project }) => {
   const { toast } = useToast();
-  const queryClient = useQueryClient();
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [activeTab, setActiveTab] = useState('all');
+  const [prompt, setPrompt] = useState(`Génère une note de cadrage pour un projet intitulé "${project.title}".`);
+  const [generatedContent, setGeneratedContent] = useState<Record<string, string>>({});
+  const [copied, setCopied] = useState<Record<string, boolean>>({});
 
-  const handleGenerate = async () => {
-    if (!prompt.trim()) {
-      toast({
-        variant: "destructive",
-        title: "Erreur",
-        description: "Veuillez saisir une demande pour générer une note de cadrage"
-      });
-      return;
-    }
+  const sections = [
+    { id: 'all', label: 'Tous' },
+    { id: 'objectifs', label: 'Objectifs' },
+    { id: 'contexte', label: 'Contexte' },
+    { id: 'perimetre', label: 'Périmètre' },
+    { id: 'parties_prenantes', label: 'Parties prenantes' },
+    { id: 'risques', label: 'Risques' },
+    { id: 'budget', label: 'Budget' },
+    { id: 'planning', label: 'Planning' },
+    { id: 'organisation', label: 'Organisation' },
+    { id: 'livrables', label: 'Livrables' },
+    { id: 'communication', label: 'Communication' },
+    { id: 'decision', label: 'Points de décision' },
+  ];
 
-    setIsLoading(true);
-    setResponse("");
-    setUsedFallbackTemplate(false);
-
+  const handleGenerateContent = async () => {
+    setIsGenerating(true);
+    
     try {
-      const { data: sessionData } = await supabase.auth.getSession();
-      if (!sessionData.session) {
-        throw new Error("Vous devez être connecté pour utiliser cette fonctionnalité");
-      }
+      // Simuler un appel à l'API pour générer du contenu (à remplacer par un vrai appel API)
+      const mockGeneratedContent = {
+        objectifs: "Ce projet vise à améliorer l'expérience utilisateur et la performance du système de gestion de projet existant. Les objectifs principaux sont :\n- Réduire de 30% le temps nécessaire pour créer et suivre des projets\n- Améliorer la visualisation des données de projet\n- Faciliter la collaboration entre les équipes",
+        contexte: "Le système actuel présente des limitations en termes d'ergonomie et de rapidité d'exécution. Les utilisateurs rapportent des difficultés à naviguer dans l'interface et à trouver les informations dont ils ont besoin rapidement.",
+        perimetre: "Le projet couvre la refonte de l'interface utilisateur, l'optimisation des requêtes de base de données, et l'ajout de nouvelles fonctionnalités de reporting. Il ne comprend pas la migration des données existantes ni la refonte complète de l'architecture.",
+        parties_prenantes: "- Équipe de développement\n- Chefs de projet\n- Utilisateurs finaux\n- Direction informatique\n- Sponsors du projet",
+        risques: "- Résistance au changement des utilisateurs\n- Complexité technique de l'intégration avec les systèmes existants\n- Dépassement des délais dû à des exigences changeantes",
+        budget: "Budget total estimé : 150 000€\n- Développement: 100 000€\n- Tests: 20 000€\n- Formation: 15 000€\n- Contingence: 15 000€",
+        planning: "- Phase d'analyse : 2 mois\n- Phase de développement : 4 mois\n- Phase de test : 1 mois\n- Déploiement : 2 semaines",
+        organisation: "- Chef de projet : [à déterminer]\n- Équipe de développement : 5 développeurs\n- Testeurs : 2 personnes\n- Expert métier : 1 personne",
+        livrables: "- Interface utilisateur refondue\n- Documentation technique\n- Guide utilisateur\n- Rapport de performance",
+        communication: "- Réunions hebdomadaires de suivi\n- Rapports mensuels à la direction\n- Démonstrations aux utilisateurs à la fin de chaque sprint",
+        decision: "- Validation des maquettes : J+30\n- Choix des technologies : J+15\n- Validation du plan de test : J+90"
+      };
 
-      // Utilisation de supabase.functions.invoke pour appeler la fonction edge
-      const { data, error } = await supabase.functions.invoke("ai-assistant", {
-        body: {
-          messages: [{ role: "user", content: prompt }],
-          projectId: project.id,
-          promptType: "framework_note",
-          promptSection: activeTab,
-          maxTokens: 2000,
-          temperature: 0.7
-        }
-      });
-
-      if (error) {
-        console.error("Erreur lors de l'appel à la fonction:", error);
-        throw new Error(error.message || "Erreur lors de la génération de la note de cadrage");
-      }
-
-      if (!data || !data.message || !data.message.content) {
-        throw new Error("Réponse invalide de l'assistant IA");
-      }
-
-      // Vérifier si un template de secours a été utilisé
-      if (data.usedFallbackTemplate) {
-        setUsedFallbackTemplate(true);
-        console.log("Un template de secours a été utilisé pour générer cette note");
-      }
-
-      setResponse(data.message.content);
-    } catch (error) {
-      console.error("Erreur:", error);
+      // Attendre un peu pour simuler le temps de génération
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      
+      setGeneratedContent(mockGeneratedContent);
+      
       toast({
-        variant: "destructive",
-        title: "Erreur",
-        description: error.message || "Erreur lors de la génération de la note de cadrage"
+        title: 'Génération terminée',
+        description: 'Le contenu a été généré avec succès',
+      });
+    } catch (error) {
+      console.error('Erreur lors de la génération:', error);
+      toast({
+        variant: 'destructive',
+        title: 'Erreur',
+        description: 'Impossible de générer le contenu',
       });
     } finally {
-      setIsLoading(false);
+      setIsGenerating(false);
     }
   };
 
-  const handleSave = async () => {
-    if (!response) {
-      toast({
-        variant: "destructive",
-        title: "Erreur",
-        description: "Aucune note de cadrage à sauvegarder"
-      });
-      return;
-    }
-
+  const handleSaveNote = async () => {
     setIsSaving(true);
-
     try {
-      const { data: sessionData } = await supabase.auth.getSession();
-      if (!sessionData.session) {
-        throw new Error("Vous devez être connecté pour utiliser cette fonctionnalité");
-      }
-
-      // Structure de la note
-      const noteContent = {
-        content: response,
-        generated_at: new Date().toISOString(),
-        prompt: prompt,
-        prompt_section: activeTab
-      };
-
-      // Sauvegarde en base de données
-      const { error } = await supabase
-        .from("project_framework_notes")
+      const { data, error } = await supabase
+        .from('project_framework_notes')
         .insert({
           project_id: project.id,
-          content: noteContent,
-          created_by: sessionData.session.user.id,
+          content: generatedContent,
+          version: 1,
           status: 'draft'
-        });
+        })
+        .select();
 
       if (error) throw error;
 
-      // Invalider la requête pour forcer le rechargement des notes
-      queryClient.invalidateQueries({ queryKey: ["frameworkNotes", project.id] });
-
       toast({
-        title: "Note de cadrage sauvegardée",
-        description: "La note de cadrage a été sauvegardée avec succès"
+        title: 'Note sauvegardée',
+        description: 'La note de cadrage a été enregistrée avec succès',
       });
+      
+      // Réinitialiser l'état
+      setGeneratedContent({});
+      setActiveTab('all');
     } catch (error) {
-      console.error("Erreur:", error);
+      console.error('Erreur lors de la sauvegarde:', error);
       toast({
-        variant: "destructive",
-        title: "Erreur",
-        description: error.message || "Erreur lors de la sauvegarde de la note de cadrage"
+        variant: 'destructive',
+        title: 'Erreur',
+        description: 'Impossible de sauvegarder la note de cadrage',
       });
     } finally {
       setIsSaving(false);
     }
   };
 
-  const sectionLabels: Record<PromptSection, string> = {
-    general: "Général",
-    objectifs: "Objectifs",
-    contexte: "Contexte",
-    cibles: "Cibles",
-    resultats_attendus: "Résultats attendus",
-    risques: "Risques",
-    enjeux: "Enjeux"
+  const handleCopyContent = (sectionId: string) => {
+    const textToCopy = generatedContent[sectionId] || '';
+    navigator.clipboard.writeText(textToCopy);
+    
+    setCopied(prev => ({ ...prev, [sectionId]: true }));
+    
+    setTimeout(() => {
+      setCopied(prev => ({ ...prev, [sectionId]: false }));
+    }, 2000);
+    
+    toast({
+      title: 'Copié',
+      description: 'Le contenu a été copié dans le presse-papier',
+    });
   };
 
+  const visibleSections = activeTab === 'all' 
+    ? sections.filter(s => s.id !== 'all') 
+    : sections.filter(s => s.id === activeTab);
+
   return (
-    <Card className="w-full">
-      <CardHeader>
-        <CardTitle>Génération de note de cadrage</CardTitle>
-        <CardDescription>
-          Utilisez l'IA pour générer une note de cadrage pour ce projet.
-          Sélectionnez la section sur laquelle vous souhaitez travailler.
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as PromptSection)}>
-          <TabsList className="mb-4">
-            {Object.entries(sectionLabels).map(([key, label]) => (
-              <TabsTrigger key={key} value={key}>{label}</TabsTrigger>
-            ))}
-          </TabsList>
-          
+    <div className="space-y-6">
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Bot className="h-5 w-5" />
+            Assistant IA
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
           <div className="space-y-4">
             <div>
-              <h3 className="text-sm font-medium mb-2">Votre demande</h3>
-              <Textarea 
-                placeholder={`Décrivez ce que vous souhaitez pour la section "${sectionLabels[activeTab]}" de la note de cadrage...`}
+              <Label htmlFor="prompt">Instructions pour la génération</Label>
+              <Textarea
+                id="prompt"
                 value={prompt}
                 onChange={(e) => setPrompt(e.target.value)}
-                rows={4}
-                className="w-full"
+                placeholder="Décrivez le projet pour aider l'IA à générer un contenu pertinent..."
+                className="h-24"
               />
             </div>
-
             <Button 
-              onClick={handleGenerate} 
-              disabled={isLoading || !prompt.trim()}
+              onClick={handleGenerateContent} 
+              disabled={isGenerating || !prompt.trim()}
               className="w-full"
             >
-              {isLoading ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Génération en cours...
-                </>
-              ) : (
-                "Générer la note de cadrage"
-              )}
+              {isGenerating && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Générer le contenu
             </Button>
-
-            {usedFallbackTemplate && (
-              <Alert variant="warning" className="bg-amber-50 border-amber-200 text-amber-800">
-                <AlertTriangle className="h-4 w-4 text-amber-600" />
-                <AlertDescription>
-                  Cette note a été générée avec un template de secours car aucun template personnalisé n'a été trouvé pour la section "{sectionLabels[activeTab]}". 
-                  Contactez un administrateur pour configurer un template spécifique.
-                </AlertDescription>
-              </Alert>
-            )}
-
-            {response && (
-              <div className="mt-4">
-                <h3 className="text-sm font-medium mb-2">Note de cadrage générée</h3>
-                <div className="border rounded-md p-4 bg-muted/30 whitespace-pre-wrap">
-                  {response}
-                </div>
-              </div>
-            )}
           </div>
-        </Tabs>
-      </CardContent>
-      {response && (
-        <CardFooter>
+        </CardContent>
+      </Card>
+
+      {Object.keys(generatedContent).length > 0 && (
+        <div className="space-y-4">
+          <Tabs value={activeTab} onValueChange={setActiveTab}>
+            <TabsList className="w-full flex flex-wrap">
+              {sections.map(section => (
+                <TabsTrigger key={section.id} value={section.id}>
+                  {section.label}
+                </TabsTrigger>
+              ))}
+            </TabsList>
+
+            {visibleSections.map(section => (
+              <Card key={section.id} className="mb-4">
+                <CardHeader>
+                  <CardTitle className="text-base flex justify-between">
+                    {section.label}
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      onClick={() => handleCopyContent(section.id)}
+                    >
+                      {copied[section.id] ? (
+                        <Check className="h-4 w-4" />
+                      ) : (
+                        <Copy className="h-4 w-4" />
+                      )}
+                    </Button>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <Textarea
+                    value={generatedContent[section.id] || ''}
+                    onChange={(e) => setGeneratedContent(prev => ({
+                      ...prev,
+                      [section.id]: e.target.value
+                    }))}
+                    className="min-h-[100px]"
+                  />
+                </CardContent>
+              </Card>
+            ))}
+          </Tabs>
+
           <Button 
-            variant="outline" 
-            onClick={handleSave}
-            disabled={isSaving || !response}
-            className="ml-auto"
+            onClick={handleSaveNote} 
+            disabled={isSaving || Object.keys(generatedContent).length === 0}
+            className="w-full"
           >
-            {isSaving ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Sauvegarde...
-              </>
-            ) : (
-              <>
-                <Save className="mr-2 h-4 w-4" />
-                Sauvegarder cette note
-              </>
-            )}
+            {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            Enregistrer comme nouvelle note
           </Button>
-        </CardFooter>
+        </div>
       )}
-    </Card>
+    </div>
   );
 };

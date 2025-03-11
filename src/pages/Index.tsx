@@ -359,6 +359,10 @@ const Index = () => {
     navigate(`/reviews/${projectId}`);
   };
 
+  const handleNewFrameworkNote = () => {
+    setIsProjectSelectionOpen(true);
+  };
+
   if (isPermissionsLoading) {
     return <LoadingSpinner />;
   }
@@ -380,6 +384,7 @@ const Index = () => {
       <DashboardHeader
         onNewProject={() => setIsProjectFormOpen(true)}
         onNewReview={handleNewReview}
+        onNewFrameworkNote={handleNewFrameworkNote}
       />
 
       <ProjectFilters
