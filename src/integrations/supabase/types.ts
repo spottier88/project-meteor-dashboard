@@ -622,8 +622,10 @@ export type Database = {
           created_at: string | null
           created_by: string | null
           id: string
-          project_id: string
+          project_id: string | null
+          standalone: boolean
           status: string
+          title: string | null
           updated_at: string | null
           version: number
         }
@@ -632,8 +634,10 @@ export type Database = {
           created_at?: string | null
           created_by?: string | null
           id?: string
-          project_id: string
+          project_id?: string | null
+          standalone?: boolean
           status?: string
+          title?: string | null
           updated_at?: string | null
           version?: number
         }
@@ -642,8 +646,10 @@ export type Database = {
           created_at?: string | null
           created_by?: string | null
           id?: string
-          project_id?: string
+          project_id?: string | null
+          standalone?: boolean
           status?: string
+          title?: string | null
           updated_at?: string | null
           version?: number
         }
