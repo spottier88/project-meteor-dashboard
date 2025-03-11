@@ -8,6 +8,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
 import { Loader2, FileDown } from 'lucide-react';
 import { Label } from '@/components/ui/label';
+import { Document, Page, Text, View, StyleSheet, PDFDownloadLink, Font } from '@react-pdf/renderer';
 
 interface FrameworkNotePdfProps {
   isOpen: boolean;
@@ -15,25 +16,136 @@ interface FrameworkNotePdfProps {
   projectId: string;
 }
 
+// Définir les styles pour le PDF
+const styles = StyleSheet.create({
+  page: {
+    padding: 30,
+    fontFamily: 'Helvetica',
+  },
+  section: {
+    margin: 10,
+    padding: 10,
+    flexGrow: 1,
+  },
+  title: {
+    fontSize: 18,
+    marginBottom: 10,
+    fontWeight: 'bold',
+  },
+  subtitle: {
+    fontSize: 14,
+    marginBottom: 5,
+    fontWeight: 'bold',
+  },
+  text: {
+    fontSize: 12,
+    lineHeight: 1.5,
+    marginBottom: 5,
+  },
+  header: {
+    fontSize: 24,
+    marginBottom: 20,
+    textAlign: 'center',
+    fontWeight: 'bold',
+  },
+  footer: {
+    position: 'absolute',
+    bottom: 30,
+    left: 30,
+    right: 30,
+    fontSize: 10,
+    textAlign: 'center',
+  },
+});
+
+// Composant PDF pour la note de cadrage
+const NotePDF = ({ note, projectTitle }: { note: any, projectTitle: string }) => {
+  const sectionLabels: Record<string, string> = {
+    objectifs: "Objectifs",
+    contexte: "Contexte",
+    perimetre: "Périmètre",
+    parties_prenantes: "Parties prenantes",
+    risques: "Risques",
+    budget: "Budget",
+    planning: "Planning",
+    organisation: "Organisation",
+    livrables: "Livrables",
+    communication: "Communication",
+    decision: "Points de décision"
+  };
+
+  const getSectionsWithContent = () => {
+    const sections = [];
+    for (const [key, value] of Object.entries(note.content)) {
+      if (value && sectionLabels[key]) {
+        sections.push({
+          key,
+          label: sectionLabels[key],
+          content: value
+        });
+      }
+    }
+    return sections;
+  };
+
+  const sectionsWithContent = getSectionsWithContent();
+
+  return (
+    <Document>
+      <Page size="A4" style={styles.page}>
+        <Text style={styles.header}>Note de cadrage: {projectTitle}</Text>
+        <Text style={styles.subtitle}>Version {note.version} - {new Date(note.created_at).toLocaleDateString()}</Text>
+        
+        {sectionsWithContent.map((section) => (
+          <View key={section.key} style={styles.section}>
+            <Text style={styles.title}>{section.label}</Text>
+            <Text style={styles.text}>{section.content}</Text>
+          </View>
+        ))}
+        
+        <Text style={styles.footer}>Document généré le {new Date().toLocaleDateString()}</Text>
+      </Page>
+    </Document>
+  );
+};
+
 export const FrameworkNotePdf: React.FC<FrameworkNotePdfProps> = ({ isOpen, onClose, projectId }) => {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(true);
   const [isExporting, setIsExporting] = useState(false);
   const [notes, setNotes] = useState<any[]>([]);
   const [selectedNoteId, setSelectedNoteId] = useState<string>('');
+  const [projectTitle, setProjectTitle] = useState<string>('');
+  const [selectedNote, setSelectedNote] = useState<any>(null);
 
   useEffect(() => {
     if (isOpen) {
       fetchNotes();
+      fetchProjectTitle();
     }
   }, [isOpen, projectId]);
+
+  const fetchProjectTitle = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('projects')
+        .select('title')
+        .eq('id', projectId)
+        .single();
+
+      if (error) throw error;
+      setProjectTitle(data?.title || 'Projet');
+    } catch (error) {
+      console.error('Erreur lors du chargement du titre du projet:', error);
+    }
+  };
 
   const fetchNotes = async () => {
     setIsLoading(true);
     try {
       const { data, error } = await supabase
         .from('project_framework_notes')
-        .select('id, version, created_at, status')
+        .select('id, version, created_at, status, content')
         .eq('project_id', projectId)
         .order('created_at', { ascending: false });
 
@@ -42,6 +154,7 @@ export const FrameworkNotePdf: React.FC<FrameworkNotePdfProps> = ({ isOpen, onCl
       setNotes(data || []);
       if (data && data.length > 0) {
         setSelectedNoteId(data[0].id);
+        setSelectedNote(data[0]);
       }
     } catch (error) {
       console.error('Erreur lors du chargement des notes:', error);
@@ -55,18 +168,24 @@ export const FrameworkNotePdf: React.FC<FrameworkNotePdfProps> = ({ isOpen, onCl
     }
   };
 
+  const handleNoteChange = (noteId: string) => {
+    setSelectedNoteId(noteId);
+    const note = notes.find(n => n.id === noteId);
+    if (note) {
+      setSelectedNote(note);
+    }
+  };
+
   const handleExportPdf = async () => {
     setIsExporting(true);
     try {
-      // Simuler un export PDF (à remplacer par un vrai export)
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      // Ceci sera remplacé par le vrai téléchargement via PDFDownloadLink
+      await new Promise(resolve => setTimeout(resolve, 500));
       
       toast({
-        title: 'Export réussi',
-        description: 'La note de cadrage a été exportée en PDF',
+        title: 'Exporter en PDF',
+        description: 'Utilisez le bouton "Télécharger" qui apparaît',
       });
-      
-      onClose();
     } catch (error) {
       console.error('Erreur lors de l\'export:', error);
       toast({
@@ -101,7 +220,7 @@ export const FrameworkNotePdf: React.FC<FrameworkNotePdfProps> = ({ isOpen, onCl
                 <Label htmlFor="note-select">Sélectionner une note</Label>
                 <Select 
                   value={selectedNoteId} 
-                  onValueChange={setSelectedNoteId}
+                  onValueChange={handleNoteChange}
                 >
                   <SelectTrigger id="note-select">
                     <SelectValue placeholder="Sélectionner une note" />
@@ -115,23 +234,55 @@ export const FrameworkNotePdf: React.FC<FrameworkNotePdfProps> = ({ isOpen, onCl
                   </SelectContent>
                 </Select>
               </div>
+
+              {selectedNote && (
+                <div className="border rounded-lg p-4 mt-4">
+                  <h3 className="font-semibold mb-2">Aperçu</h3>
+                  <ScrollArea className="h-[200px]">
+                    <div className="space-y-2">
+                      {Object.entries(selectedNote.content).map(([key, value]) => {
+                        if (value && sectionLabels[key]) {
+                          return (
+                            <div key={key} className="text-sm">
+                              <span className="font-medium">{sectionLabels[key]}:</span>
+                              <p className="truncate text-muted-foreground">{String(value).substring(0, 100)}...</p>
+                            </div>
+                          );
+                        }
+                        return null;
+                      })}
+                    </div>
+                  </ScrollArea>
+                </div>
+              )}
             </div>
           )}
         </div>
         
-        <DialogFooter>
+        <DialogFooter className="flex justify-between items-center">
           <Button variant="outline" onClick={onClose}>Annuler</Button>
-          <Button 
-            onClick={handleExportPdf}
-            disabled={isExporting || isLoading || notes.length === 0 || !selectedNoteId}
-          >
-            {isExporting ? (
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            ) : (
-              <FileDown className="mr-2 h-4 w-4" />
-            )}
-            Exporter
-          </Button>
+          
+          {selectedNote && (
+            <PDFDownloadLink 
+              document={<NotePDF note={selectedNote} projectTitle={projectTitle} />} 
+              fileName={`Note_Cadrage_${projectTitle.replace(/\s+/g, '_')}_v${selectedNote.version}.pdf`}
+              className="inline-block"
+            >
+              {({ blob, url, loading, error }) => (
+                <Button 
+                  disabled={loading}
+                  onClick={handleExportPdf}
+                >
+                  {loading || isExporting ? (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  ) : (
+                    <FileDown className="mr-2 h-4 w-4" />
+                  )}
+                  Télécharger
+                </Button>
+              )}
+            </PDFDownloadLink>
+          )}
         </DialogFooter>
       </DialogContent>
     </Dialog>

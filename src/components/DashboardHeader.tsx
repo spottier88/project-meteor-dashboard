@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { NavigationMenu, NavigationMenuItem, NavigationMenuLink, NavigationMenuList } from "@/components/ui/navigation-menu";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { usePermissionsContext } from '@/contexts/PermissionsContext';
 import { ShoppingCart, History, Plus, FileText } from 'lucide-react';
 import { useProjectCart } from '@/hooks/use-project-cart';
@@ -20,10 +20,19 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
   onNewReview,
   onNewFrameworkNote
 }) => {
+  const navigate = useNavigate();
   const { isAdmin, isManager, hasRole } = usePermissionsContext();
   const showTeamActivities = isAdmin || isManager || hasRole('chef_projet');
   const { cartItems } = useProjectCart();
   const [isCartOpen, setIsCartOpen] = useState(false);
+
+  const handleFrameworkNoteClick = () => {
+    if (onNewFrameworkNote) {
+      onNewFrameworkNote();
+    } else {
+      navigate('/framework-notes');
+    }
+  };
 
   return (
     <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
@@ -61,7 +70,7 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
             <div onClick={() => setIsCartOpen(true)}>
               <CartButton />
             </div>
-            <Button onClick={onNewFrameworkNote} variant="outline" size="sm">
+            <Button onClick={handleFrameworkNoteClick} variant="outline" size="sm">
               <FileText className="h-4 w-4 mr-2" />
               Note de cadrage
             </Button>
