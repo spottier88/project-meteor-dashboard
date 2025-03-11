@@ -1,18 +1,20 @@
+
 import React, { useState } from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
-import { SupabaseProvider } from "./providers/SupabaseProvider";
-import { PermissionsProvider } from "./contexts/PermissionsContext";
-import { ProjectCartProvider } from "./contexts/ProjectCartContext";
-import { Login } from "./pages/Login";
-import { AuthCallback } from "./pages/AuthCallback";
-import { Index } from "./pages/Index";
-import { ProtectedRoute } from "./components/ProtectedRoute";
-import { Admin } from "./pages/Admin";
-import { Activities } from "./pages/Activities";
-import { TeamActivities } from "./pages/TeamActivities";
-import { FrameworkNotes } from "./pages/FrameworkNotes";
+import { SupabaseProvider } from "@/providers/SupabaseProvider";
+import { PermissionsProvider } from "@/contexts/PermissionsContext";
+import { ProjectCartProvider } from "@/contexts/ProjectCartContext";
+import Login from "@/pages/Login";
+import AuthCallback from "@/pages/AuthCallback";
+import Index from "@/pages/Index";
+import { ProtectedRoute } from "@/components/ProtectedRoute";
+import Admin from "@/pages/Admin";
+import Activities from "@/pages/Activities";
+import TeamActivities from "@/pages/TeamActivities";
+import FrameworkNotes from "@/pages/FrameworkNotes";
+import { FrameworkNoteDetail } from "@/components/project/FrameworkNoteDetail";
 
 const queryClient = new QueryClient();
 
@@ -41,6 +43,7 @@ function App() {
                     
                     {/* Notes de cadrage */}
                     <Route path="/framework-notes" element={<FrameworkNotes />} />
+                    <Route path="/framework-notes/:id" element={<FrameworkNoteDetail />} />
                     
                     {/* Page d'administration */}
                     <Route path="/admin" element={<Admin />} />

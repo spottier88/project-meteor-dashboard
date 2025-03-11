@@ -75,7 +75,7 @@ export const useFrameworkNotes = () => {
         description: "La note de cadrage a été créée avec succès"
       });
     },
-    onError: (error) => {
+    onError: (error: any) => {
       toast({
         variant: "destructive",
         title: "Erreur",
@@ -104,7 +104,7 @@ export const useFrameworkNotes = () => {
         description: "La note de cadrage a été mise à jour avec succès"
       });
     },
-    onError: (error) => {
+    onError: (error: any) => {
       toast({
         variant: "destructive",
         title: "Erreur",
@@ -131,7 +131,7 @@ export const useFrameworkNotes = () => {
         description: "La note de cadrage a été supprimée avec succès"
       });
     },
-    onError: (error) => {
+    onError: (error: any) => {
       toast({
         variant: "destructive",
         title: "Erreur",
@@ -163,7 +163,7 @@ export const useFrameworkNotes = () => {
         description: "La section a été ajoutée avec succès"
       });
     },
-    onError: (error) => {
+    onError: (error: any) => {
       toast({
         variant: "destructive",
         title: "Erreur",
@@ -192,7 +192,7 @@ export const useFrameworkNotes = () => {
         description: "La section a été mise à jour avec succès"
       });
     },
-    onError: (error) => {
+    onError: (error: any) => {
       toast({
         variant: "destructive",
         title: "Erreur",
@@ -219,7 +219,7 @@ export const useFrameworkNotes = () => {
         description: "La section a été supprimée avec succès"
       });
     },
-    onError: (error) => {
+    onError: (error: any) => {
       toast({
         variant: "destructive",
         title: "Erreur",

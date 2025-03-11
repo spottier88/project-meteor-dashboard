@@ -48,7 +48,6 @@ const Index = () => {
   const [showMyProjectsOnly, setShowMyProjectsOnly] = useState(() => {
     return localStorage.getItem("showMyProjectsOnly") === "true";
   });
-  const [isFrameworkNoteFormOpen, setIsFrameworkNoteFormOpen] = useState(false);
 
   useEffect(() => {
     localStorage.setItem("projectViewMode", view);
@@ -163,6 +162,11 @@ const Index = () => {
       setSelectedProject(project);
       setIsProjectFormOpen(true);
     }
+  };
+
+  const handleNewProject = () => {
+    setSelectedProject(null);
+    setIsProjectFormOpen(true);
   };
 
   const handleProjectFormClose = () => {

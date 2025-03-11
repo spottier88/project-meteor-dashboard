@@ -1,201 +1,157 @@
 
-import React, { useState } from "react";
-import { useFrameworkNotes } from "@/hooks/useFrameworkNotes";
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { Plus, FilePlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
-import { FileText, Trash2, Eye, Edit, Plus } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useFrameworkNotes } from "@/hooks/useFrameworkNotes";
 import { useToast } from "@/components/ui/use-toast";
-import { FrameworkNoteCollection } from "@/types/framework-note";
+import { DashboardHeader } from "@/components/DashboardHeader";
+import { Badge } from "@/components/ui/badge";
 import { UserInfo } from "@/components/UserInfo";
-import { 
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
-import { Input } from "@/components/ui/input";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogHeader, 
-  DialogTitle, 
-  DialogFooter 
-} from "@/components/ui/dialog";
+import { usePermissionsContext } from "@/contexts/PermissionsContext";
+import { FrameworkNoteEdit } from "@/components/project/FrameworkNoteEdit";
+import { Separator } from "@/components/ui/separator";
 
-export const FrameworkNotes = () => {
+const FrameworkNotes = () => {
+  const { isAdmin, hasRole } = usePermissionsContext();
+  const navigate = useNavigate();
+  const { toast } = useToast();
+  const canCreateNotes = isAdmin || hasRole('chef_projet');
+  
+  // État pour gérer le formulaire de nouvelle note
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [selectedNoteId, setSelectedNoteId] = useState<string | null>(null);
+
+  // Récupérer les notes de cadrage
   const { 
     collections, 
     isLoadingCollections, 
-    createCollection,
-    deleteCollection
+    createCollection, 
+    deleteCollection,
+    getCollectionWithSections 
   } = useFrameworkNotes();
-  
-  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
-  const [newCollectionTitle, setNewCollectionTitle] = useState("");
-  const [newCollectionDescription, setNewCollectionDescription] = useState("");
-  const [collectionToDelete, setCollectionToDelete] = useState<string | null>(null);
-  
-  const handleCreateCollection = () => {
-    if (!newCollectionTitle.trim()) return;
-    
-    createCollection({
-      title: newCollectionTitle,
-      description: newCollectionDescription
-    }, {
-      onSuccess: () => {
-        setIsCreateDialogOpen(false);
-        setNewCollectionTitle("");
-        setNewCollectionDescription("");
-      }
-    });
-  };
-  
-  const handleDeleteCollection = () => {
-    if (!collectionToDelete) return;
-    
-    deleteCollection(collectionToDelete, {
-      onSuccess: () => {
-        setCollectionToDelete(null);
-      }
-    });
+
+  const handleNewNote = () => {
+    setIsCreateDialogOpen(true);
   };
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('fr-FR', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
+  const handleEditNote = (noteId: string) => {
+    setSelectedNoteId(noteId);
+    setIsEditMode(true);
+  };
+
+  const handleViewNote = (noteId: string) => {
+    navigate(`/framework-notes/${noteId}`);
+  };
+
+  const handleCloseEdit = () => {
+    setIsEditMode(false);
+    setSelectedNoteId(null);
+  };
+
+  const handleCreateNote = async () => {
+    if (!title.trim()) {
+      toast({
+        variant: "destructive",
+        title: "Titre requis",
+        description: "Veuillez saisir un titre pour la note de cadrage"
+      });
+      return;
+    }
+
+    try {
+      await createCollection({ title, description });
+      setIsCreateDialogOpen(false);
+      setTitle("");
+      setDescription("");
+    } catch (error) {
+      console.error("Erreur lors de la création:", error);
+      toast({
+        variant: "destructive",
+        title: "Erreur",
+        description: "Impossible de créer la note de cadrage"
+      });
+    }
   };
 
   return (
     <div className="container mx-auto py-6">
       <UserInfo />
       
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold">Notes de cadrage</h1>
-        <Button onClick={() => setIsCreateDialogOpen(true)}>
-          <Plus className="h-4 w-4 mr-2" />
-          Nouvelle note de cadrage
-        </Button>
-      </div>
+      <DashboardHeader 
+        onNewFrameworkNote={handleNewNote}
+      />
       
-      {isLoadingCollections ? (
-        <div className="flex justify-center items-center h-64">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {collections && collections.length > 0 ? (
-            collections.map((collection) => (
-              <Card key={collection.id} className="h-full flex flex-col">
+      <div className="mb-8">
+        <h1 className="text-2xl font-bold mb-2">Notes de cadrage</h1>
+        <p className="text-muted-foreground">
+          Créez et gérez les notes de cadrage pour vos projets.
+        </p>
+      </div>
+
+      <div className="grid gap-6">
+        {isLoadingCollections ? (
+          <div className="flex justify-center p-10">
+            <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-gray-900"></div>
+          </div>
+        ) : collections && collections.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {collections.map((collection) => (
+              <Card key={collection.id} className="flex flex-col">
                 <CardHeader>
-                  <CardTitle className="flex justify-between items-start">
-                    <span className="text-xl truncate">{collection.title}</span>
-                    <div className="flex gap-1">
-                      <Button variant="ghost" size="icon" asChild>
-                        <a href={`/framework-notes/${collection.id}`}>
-                          <Eye className="h-4 w-4" />
-                        </a>
-                      </Button>
-                      <Button variant="ghost" size="icon" asChild>
-                        <a href={`/framework-notes/${collection.id}/edit`}>
-                          <Edit className="h-4 w-4" />
-                        </a>
-                      </Button>
-                      <AlertDialog 
-                        open={collectionToDelete === collection.id} 
-                        onOpenChange={(open) => !open && setCollectionToDelete(null)}
-                      >
-                        <AlertDialogTrigger asChild>
-                          <Button 
-                            variant="ghost" 
-                            size="icon" 
-                            onClick={() => setCollectionToDelete(collection.id)}
-                          >
-                            <Trash2 className="h-4 w-4 text-destructive" />
-                          </Button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent>
-                          <AlertDialogHeader>
-                            <AlertDialogTitle>Supprimer cette note de cadrage ?</AlertDialogTitle>
-                            <AlertDialogDescription>
-                              Cette action est irréversible. La note de cadrage et toutes ses sections seront définitivement supprimées.
-                            </AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel>Annuler</AlertDialogCancel>
-                            <AlertDialogAction 
-                              onClick={handleDeleteCollection}
-                              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                            >
-                              Supprimer
-                            </AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
-                    </div>
-                  </CardTitle>
-                  <CardDescription className="flex justify-between">
-                    <span>Créée le {formatDate(collection.created_at)}</span>
-                    <span className={`px-2 py-1 rounded-full text-xs ${
-                      collection.status === 'draft' 
-                        ? 'bg-amber-100 text-amber-800' 
-                        : 'bg-green-100 text-green-800'
-                    }`}>
-                      {collection.status === 'draft' ? 'Brouillon' : 'Finalisée'}
-                    </span>
-                  </CardDescription>
+                  <div className="flex justify-between items-start">
+                    <CardTitle className="text-xl">{collection.title}</CardTitle>
+                    <Badge variant={collection.status === 'draft' ? 'outline' : 'default'}>
+                      {collection.status === 'draft' ? 'Brouillon' : 'Final'}
+                    </Badge>
+                  </div>
+                  {collection.description && (
+                    <CardDescription>{collection.description}</CardDescription>
+                  )}
                 </CardHeader>
                 <CardContent className="flex-grow">
-                  {collection.description ? (
-                    <p className="text-sm text-muted-foreground line-clamp-3">
-                      {collection.description}
-                    </p>
-                  ) : (
-                    <p className="text-sm text-muted-foreground italic">
-                      Aucune description
-                    </p>
-                  )}
+                  <p className="text-sm text-muted-foreground">
+                    Créé le {new Date(collection.created_at).toLocaleDateString('fr-FR')}
+                  </p>
                 </CardContent>
-                <CardFooter className="pt-2">
-                  <Button variant="outline" size="sm" className="w-full" asChild>
-                    <a href={`/framework-notes/${collection.id}`}>
-                      <FileText className="h-4 w-4 mr-2" />
-                      Voir la note de cadrage
-                    </a>
+                <CardFooter className="flex justify-between border-t pt-4">
+                  <Button variant="outline" onClick={() => handleViewNote(collection.id)}>
+                    Consulter
+                  </Button>
+                  <Button onClick={() => handleEditNote(collection.id)}>
+                    Modifier
                   </Button>
                 </CardFooter>
               </Card>
-            ))
-          ) : (
-            <div className="col-span-full">
-              <Card>
-                <CardContent className="flex flex-col items-center justify-center py-12">
-                  <FileText className="h-12 w-12 text-muted-foreground mb-4" />
-                  <p className="text-muted-foreground mb-4">Aucune note de cadrage trouvée</p>
-                  <Button onClick={() => setIsCreateDialogOpen(true)}>
-                    <Plus className="h-4 w-4 mr-2" />
-                    Créer une note de cadrage
-                  </Button>
-                </CardContent>
-              </Card>
-            </div>
-          )}
-        </div>
-      )}
+            ))}
+          </div>
+        ) : (
+          <div className="text-center p-10 border rounded-lg bg-muted/20">
+            <FilePlus className="h-10 w-10 mx-auto text-muted-foreground mb-4" />
+            <h3 className="text-lg font-medium mb-2">Aucune note de cadrage</h3>
+            <p className="text-muted-foreground mb-4">
+              Vous n'avez pas encore créé de note de cadrage.
+            </p>
+            {canCreateNotes && (
+              <Button onClick={handleNewNote}>
+                <Plus className="mr-2 h-4 w-4" />
+                Créer une note de cadrage
+              </Button>
+            )}
+          </div>
+        )}
+      </div>
 
-      {/* Dialog pour créer une nouvelle note de cadrage */}
+      {/* Dialogue de création de note */}
       <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
         <DialogContent>
           <DialogHeader>
@@ -206,32 +162,42 @@ export const FrameworkNotes = () => {
               <Label htmlFor="title">Titre</Label>
               <Input
                 id="title"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
                 placeholder="Titre de la note de cadrage"
-                value={newCollectionTitle}
-                onChange={(e) => setNewCollectionTitle(e.target.value)}
               />
             </div>
             <div className="space-y-2">
               <Label htmlFor="description">Description (optionnelle)</Label>
               <Textarea
                 id="description"
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
                 placeholder="Description de la note de cadrage"
-                value={newCollectionDescription}
-                onChange={(e) => setNewCollectionDescription(e.target.value)}
-                rows={4}
+                rows={3}
               />
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsCreateDialogOpen(false)}>
+            <Button
+              variant="outline"
+              onClick={() => setIsCreateDialogOpen(false)}
+            >
               Annuler
             </Button>
-            <Button onClick={handleCreateCollection}>
-              Créer
-            </Button>
+            <Button onClick={handleCreateNote}>Créer</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Mode d'édition */}
+      {isEditMode && selectedNoteId && (
+        <FrameworkNoteEdit 
+          noteId={selectedNoteId}
+          open={isEditMode}
+          onClose={handleCloseEdit}
+        />
+      )}
     </div>
   );
 };
