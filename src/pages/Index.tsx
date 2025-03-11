@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useUser } from "@supabase/auth-helpers-react";
@@ -49,6 +48,7 @@ const Index = () => {
   const [showMyProjectsOnly, setShowMyProjectsOnly] = useState(() => {
     return localStorage.getItem("showMyProjectsOnly") === "true";
   });
+  const [isFrameworkNoteFormOpen, setIsFrameworkNoteFormOpen] = useState(false);
 
   useEffect(() => {
     localStorage.setItem("projectViewMode", view);
@@ -359,6 +359,10 @@ const Index = () => {
     navigate(`/reviews/${projectId}`);
   };
 
+  const handleNewFrameworkNote = () => {
+    navigate("/framework-notes");
+  };
+
   if (isPermissionsLoading) {
     return <LoadingSpinner />;
   }
@@ -375,13 +379,15 @@ const Index = () => {
   }
 
   return (
-    <div className="container mx-auto py-8">
+    <div className="container mx-auto py-6">
       <UserInfo />
-      <DashboardHeader
-        onNewProject={() => setIsProjectFormOpen(true)}
+      
+      <DashboardHeader 
+        onNewProject={handleNewProject} 
         onNewReview={handleNewReview}
+        onNewFrameworkNote={handleNewFrameworkNote}
       />
-
+      
       <ProjectFilters
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
@@ -393,7 +399,7 @@ const Index = () => {
         onMyProjectsToggle={setShowMyProjectsOnly}
         filteredProjectIds={accessibleProjectIds}
       />
-
+      
       <ProjectList
         view={view}
         onViewChange={setView}
@@ -404,10 +410,10 @@ const Index = () => {
         onProjectDeleted={refetchProjects}
         onFilteredProjectsChange={handleFilteredProjectsChange}
       />
-
+      
       <ProjectModals
         isProjectFormOpen={isProjectFormOpen}
-        onProjectFormClose={handleProjectFormClose}
+        onProjectFormClose={() => setIsProjectFormOpen(false)}
         onProjectFormSubmit={handleProjectFormSubmit}
         selectedProject={selectedProject}
         isProjectSelectionOpen={isProjectSelectionOpen}
@@ -415,7 +421,7 @@ const Index = () => {
         onProjectSelect={handleProjectSelect}
         projects={projects || []}
         isReviewSheetOpen={isReviewSheetOpen}
-        onReviewClose={handleReviewClose}
+        onReviewClose={() => setIsReviewSheetOpen(false)}
         selectedProjectForReview={selectedProjectForReview}
         onReviewSubmitted={handleReviewSubmitted}
       />
