@@ -1,6 +1,7 @@
 
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { ProjectLifecycleStatus } from "@/types/project";
 
 export interface ProjectFormState {
   currentStep: number;
@@ -55,6 +56,8 @@ export interface ProjectFormState {
   setTimeline: (value: string) => void;
   deliverables: string;
   setDeliverables: (value: string) => void;
+  lifecycleStatus: ProjectLifecycleStatus;
+  setLifecycleStatus: (status: ProjectLifecycleStatus) => void;
 }
 
 export const useProjectFormState = (isOpen: boolean, project?: any): ProjectFormState => {
@@ -84,6 +87,7 @@ export const useProjectFormState = (isOpen: boolean, project?: any): ProjectForm
   const [objectives, setObjectives] = useState("");
   const [timeline, setTimeline] = useState("");
   const [deliverables, setDeliverables] = useState("");
+  const [lifecycleStatus, setLifecycleStatus] = useState<ProjectLifecycleStatus>("in_progress");
 
   // Reset state when form opens or project changes
   useEffect(() => {
@@ -109,6 +113,7 @@ export const useProjectFormState = (isOpen: boolean, project?: any): ProjectForm
         setInnovationTypes(project.innovation_types || []);
         setInnovationObjectives(project.innovation_objectives || []);
         setInnovationScopes(project.innovation_scopes || []);
+        setLifecycleStatus(project.lifecycle_status || "in_progress");
         
         // Fetch project framing data if exists
         const fetchFramingData = async () => {
@@ -157,6 +162,7 @@ export const useProjectFormState = (isOpen: boolean, project?: any): ProjectForm
         setObjectives("");
         setTimeline("");
         setDeliverables("");
+        setLifecycleStatus("in_progress");
       }
     }
   }, [isOpen, project]);
@@ -214,5 +220,7 @@ export const useProjectFormState = (isOpen: boolean, project?: any): ProjectForm
     setTimeline,
     deliverables,
     setDeliverables,
+    lifecycleStatus,
+    setLifecycleStatus,
   };
 };

@@ -70,6 +70,7 @@ export const useProjectFormSubmit = ({
         innovation_types: formState.innovationTypes,
         innovation_objectives: formState.innovationObjectives,
         innovation_scopes: formState.innovationScopes,
+        lifecycle_status: formState.lifecycleStatus,
       };
 
       // Soumettre les données du projet
