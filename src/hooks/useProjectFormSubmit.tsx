@@ -1,4 +1,3 @@
-
 import { useToast } from "@/components/ui/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
 import { useUser } from "@supabase/auth-helpers-react";
@@ -76,9 +75,34 @@ export const useProjectFormSubmit = ({
           agilite: formState.agilite,
           impact: formState.impact,
         },
+        framing: {
+          context: formState.context,
+          stakeholders: formState.stakeholders,
+          governance: formState.governance,
+          objectives: formState.objectives,
+          timeline: formState.timeline,
+          deliverables: formState.deliverables,
+        },
       };
 
       await onSubmit(projectData);
+
+      if (project?.id) {
+        const { error: framingError } = await supabase
+          .from("project_framing")
+          .upsert({
+            project_id: project.id,
+            context: projectData.framing.context,
+            stakeholders: projectData.framing.stakeholders,
+            governance: projectData.framing.governance,
+            objectives: projectData.framing.objectives,
+            timeline: projectData.framing.timeline,
+            deliverables: projectData.framing.deliverables,
+          });
+
+        if (framingError) throw framingError;
+      }
+
       await queryClient.invalidateQueries({ queryKey: ["projects"] });
       
       toast({

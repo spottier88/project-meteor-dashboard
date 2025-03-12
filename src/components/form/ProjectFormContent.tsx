@@ -2,6 +2,7 @@
 import { ProjectFormStep1 } from "./ProjectFormStep1";
 import { ProjectFormStep2 } from "./ProjectFormStep2";
 import { ProjectFormStep3 } from "./ProjectFormStep3";
+import { ProjectFormStep4 } from "./ProjectFormStep4";
 import { ProjectFormState } from "./useProjectFormState";
 import { UserProfile } from "@/types/user";
 
@@ -36,8 +37,12 @@ export const ProjectFormContent = ({
           {...formState}
           project={project}
         />
-      ) : (
+      ) : currentStep === 2 ? (
         <ProjectFormStep3
+          {...formState}
+        />
+      ) : (
+        <ProjectFormStep4
           {...formState}
         />
       )}

@@ -1,7 +1,5 @@
 import { useState, useEffect } from "react";
 import { useUser } from "@supabase/auth-helpers-react";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
 import { MonitoringLevel } from "@/types/monitoring";
 import { ProjectLifecycleStatus } from "@/types/project";
 
@@ -47,6 +45,18 @@ export interface ProjectFormState {
   lifecycleStatus: ProjectLifecycleStatus;
   setLifecycleStatus: (status: ProjectLifecycleStatus) => void;
   validateStep3: () => boolean;
+  context: string;
+  setContext: (value: string) => void;
+  stakeholders: string;
+  setStakeholders: (value: string) => void;
+  governance: string;
+  setGovernance: (value: string) => void;
+  objectives: string;
+  setObjectives: (value: string) => void;
+  timeline: string;
+  setTimeline: (value: string) => void;
+  deliverables: string;
+  setDeliverables: (value: string) => void;
 }
 
 export const useProjectFormState = (isOpen: boolean, project?: any) => {
@@ -70,6 +80,12 @@ export const useProjectFormState = (isOpen: boolean, project?: any) => {
   const [impact, setImpact] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [lifecycleStatus, setLifecycleStatus] = useState<ProjectLifecycleStatus>("study");
+  const [context, setContext] = useState("");
+  const [stakeholders, setStakeholders] = useState("");
+  const [governance, setGovernance] = useState("");
+  const [objectives, setObjectives] = useState("");
+  const [timeline, setTimeline] = useState("");
+  const [deliverables, setDeliverables] = useState("");
 
   const user = useUser();
 
@@ -120,8 +136,22 @@ export const useProjectFormState = (isOpen: boolean, project?: any) => {
             setAgilite(innovationScores.agilite);
             setImpact(innovationScores.impact);
           }
+
+          const { data: framingData } = await supabase
+            .from("project_framing")
+            .select("*")
+            .eq("project_id", project.id)
+            .maybeSingle();
+
+          if (framingData) {
+            setContext(framingData.context || "");
+            setStakeholders(framingData.stakeholders || "");
+            setGovernance(framingData.governance || "");
+            setObjectives(framingData.objectives || "");
+            setTimeline(framingData.timeline || "");
+            setDeliverables(framingData.deliverables || "");
+          }
         } else {
-          // Reset form for new project
           setTitle("");
           setDescription("");
           setStartDate(undefined);
@@ -143,6 +173,13 @@ export const useProjectFormState = (isOpen: boolean, project?: any) => {
             setProjectManager(user.email);
             setOwnerId(user.id);
           }
+
+          setContext("");
+          setStakeholders("");
+          setGovernance("");
+          setObjectives("");
+          setTimeline("");
+          setDeliverables("");
         }
         setCurrentStep(0);
       }
@@ -197,5 +234,17 @@ export const useProjectFormState = (isOpen: boolean, project?: any) => {
     lifecycleStatus,
     setLifecycleStatus,
     validateStep3,
+    context,
+    setContext,
+    stakeholders,
+    setStakeholders,
+    governance,
+    setGovernance,
+    objectives,
+    setObjectives,
+    timeline,
+    setTimeline,
+    deliverables,
+    setDeliverables,
   };
 };
