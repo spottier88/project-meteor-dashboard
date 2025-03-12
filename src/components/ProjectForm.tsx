@@ -62,7 +62,7 @@ export const ProjectForm = ({ isOpen, onClose, onSubmit, project }: ProjectFormP
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[750px] h-[80vh] flex flex-col">
+      <DialogContent className="sm:max-w-[850px] h-[85vh] flex flex-col">
         <ProjectFormHeader 
           currentStep={formState.currentStep}
           isEditing={!!project}

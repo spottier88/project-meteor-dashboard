@@ -76,19 +76,32 @@ export const useProjectFormSubmit = ({
       // Soumettre les données du projet
       await onSubmit(projectData);
       
-      // Après création/modification du projet, gérer les données de cadrage
-      if (project?.id) {
-        // Mise à jour du cadrage pour un projet existant
+      const projectId = project?.id || await getNewProjectId(formState.title);
+      
+      if (projectId) {
+        // Mise à jour du cadrage pour un projet existant ou nouveau
         await supabase
           .from('project_framing')
           .upsert({
-            project_id: project.id,
+            project_id: projectId,
             context: formState.context,
             stakeholders: formState.stakeholders,
             governance: formState.governance,
             objectives: formState.objectives,
             timeline: formState.timeline,
             deliverables: formState.deliverables,
+          }, { onConflict: 'project_id' });
+          
+        // Mise à jour des scores d'innovation
+        await supabase
+          .from('project_innovation_scores')
+          .upsert({
+            project_id: projectId,
+            novateur: formState.novateur,
+            usager: formState.usager,
+            ouverture: formState.ouverture,
+            agilite: formState.agilite,
+            impact: formState.impact,
           }, { onConflict: 'project_id' });
       }
 
@@ -112,6 +125,24 @@ export const useProjectFormSubmit = ({
       });
       formState.setIsSubmitting(false);
       setIsSubmitting(false);
+    }
+  };
+  
+  // Fonction pour récupérer l'ID du projet nouvellement créé
+  const getNewProjectId = async (title: string) => {
+    try {
+      const { data } = await supabase
+        .from('projects')
+        .select('id')
+        .eq('title', title)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .single();
+        
+      return data?.id;
+    } catch (error) {
+      console.error("Erreur lors de la récupération de l'ID du projet:", error);
+      return null;
     }
   };
 

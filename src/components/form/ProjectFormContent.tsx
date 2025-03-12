@@ -5,6 +5,7 @@ import { ProjectFormStep3 } from "./ProjectFormStep3";
 import { ProjectFormStep4 } from "./ProjectFormStep4";
 import { ProjectFormState } from "./useProjectFormState";
 import { UserProfile } from "@/types/user";
+import { MonitoringLevel } from "@/types/monitoring";
 
 interface ProjectFormContentProps {
   currentStep: number;
@@ -39,18 +40,18 @@ export const ProjectFormContent = ({
           setEndDate={formState.setEndDate}
           priority={formState.priority}
           setPriority={formState.setPriority}
-          lifecycleStatus="in_progress" // Valeur par défaut temporaire
-          setLifecycleStatus={() => {}} // Fonction vide temporaire
+          lifecycleStatus={formState.lifecycleStatus}
+          setLifecycleStatus={formState.setLifecycleStatus}
           isAdmin={isAdmin}
           isManager={isManager}
           projectManagers={projectManagers}
         />
       ) : currentStep === 1 ? (
         <ProjectFormStep2
-          monitoringLevel={formState.monitoringLevel}
-          setMonitoringLevel={formState.setMonitoringLevel}
-          monitoringEntityId={null} // Valeur par défaut
-          setMonitoringEntityId={() => {}} // Fonction vide temporaire
+          monitoringLevel={formState.monitoringLevel as MonitoringLevel}
+          setMonitoringLevel={(value: MonitoringLevel) => formState.setMonitoringLevel(value)}
+          monitoringEntityId={null}
+          setMonitoringEntityId={() => {}}
           poleId={formState.poleId}
           setPoleId={formState.setPoleId}
           directionId={formState.directionId}
@@ -61,16 +62,16 @@ export const ProjectFormContent = ({
         />
       ) : currentStep === 2 ? (
         <ProjectFormStep3
-          novateur={0} // Valeur par défaut
-          setNovateur={() => {}} // Fonction vide
-          usager={0} // Valeur par défaut
-          setUsager={() => {}} // Fonction vide
-          ouverture={0} // Valeur par défaut
-          setOuverture={() => {}} // Fonction vide
-          agilite={0} // Valeur par défaut
-          setAgilite={() => {}} // Fonction vide
-          impact={0} // Valeur par défaut
-          setImpact={() => {}} // Fonction vide
+          novateur={formState.novateur || 0}
+          setNovateur={(value) => formState.setNovateur?.(value) || 0}
+          usager={formState.usager || 0}
+          setUsager={(value) => formState.setUsager?.(value) || 0}
+          ouverture={formState.ouverture || 0}
+          setOuverture={(value) => formState.setOuverture?.(value) || 0}
+          agilite={formState.agilite || 0}
+          setAgilite={(value) => formState.setAgilite?.(value) || 0}
+          impact={formState.impact || 0}
+          setImpact={(value) => formState.setImpact?.(value) || 0}
         />
       ) : (
         <ProjectFormStep4

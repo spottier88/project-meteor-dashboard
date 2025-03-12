@@ -1,3 +1,4 @@
+
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -5,6 +6,12 @@ import { DatePickerField } from "./DatePickerField";
 import { UserProfile } from "@/types/user";
 import { Label } from "@/components/ui/label";
 import { ProjectLifecycleStatus, lifecycleStatusLabels } from "@/types/project";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "@/components/ui/command";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Button } from "@/components/ui/button";
+import { Check, ChevronsUpDown } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { useState } from "react";
 
 interface ProjectFormStep1Props {
   title: string;
@@ -46,6 +53,7 @@ export const ProjectFormStep1 = ({
   projectManagers,
 }: ProjectFormStep1Props) => {
   const canEditProjectManager = isAdmin || isManager;
+  const [open, setOpen] = useState(false);
 
   return (
     <div className="space-y-4">
@@ -87,21 +95,52 @@ export const ProjectFormStep1 = ({
 
       <div className="grid gap-2">
         <Label htmlFor="project-manager">Chef de projet *</Label>
-        {canEditProjectManager && projectManagers ? (
-          <Select value={projectManager} onValueChange={setProjectManager}>
-            <SelectTrigger>
-              <SelectValue placeholder="Sélectionner un chef de projet" />
-            </SelectTrigger>
-            <SelectContent>
-              {projectManagers.map((manager) => (
-                <SelectItem key={manager.id} value={manager.email || ""}>
-                  {manager.first_name && manager.last_name
-                    ? `${manager.first_name} ${manager.last_name} (${manager.email})`
-                    : manager.email}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+        {canEditProjectManager && projectManagers && projectManagers.length > 0 ? (
+          <Popover open={open} onOpenChange={setOpen}>
+            <PopoverTrigger asChild>
+              <Button
+                variant="outline"
+                role="combobox"
+                aria-expanded={open}
+                className="w-full justify-between"
+              >
+                {projectManager
+                  ? projectManagers.find((manager) => manager.email === projectManager)
+                    ? `${projectManagers.find((manager) => manager.email === projectManager)?.first_name || ''} ${projectManagers.find((manager) => manager.email === projectManager)?.last_name || ''} (${projectManager})`
+                    : projectManager
+                  : "Sélectionner un chef de projet"}
+                <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-full p-0" align="start">
+              <Command>
+                <CommandInput placeholder="Rechercher un chef de projet..." />
+                <CommandEmpty>Aucun chef de projet trouvé.</CommandEmpty>
+                <CommandGroup className="max-h-60 overflow-y-auto">
+                  {projectManagers.map((manager) => (
+                    <CommandItem
+                      key={manager.id}
+                      onSelect={() => {
+                        setProjectManager(manager.email || "");
+                        setOpen(false);
+                      }}
+                      className="cursor-pointer"
+                    >
+                      <Check
+                        className={cn(
+                          "mr-2 h-4 w-4",
+                          projectManager === manager.email ? "opacity-100" : "opacity-0"
+                        )}
+                      />
+                      {manager.first_name && manager.last_name
+                        ? `${manager.first_name} ${manager.last_name} (${manager.email})`
+                        : manager.email}
+                    </CommandItem>
+                  ))}
+                </CommandGroup>
+              </Command>
+            </PopoverContent>
+          </Popover>
         ) : (
           <Input
             id="project-manager"

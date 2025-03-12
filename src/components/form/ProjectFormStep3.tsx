@@ -1,3 +1,4 @@
+
 import { Slider } from "@/components/ui/slider";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
@@ -72,12 +73,13 @@ export const ProjectFormStep3 = ({
                   </Tooltip>
                 </TooltipProvider>
               </div>
+              <p className="text-sm text-muted-foreground">{description}</p>
               <Slider
                 id={key}
                 min={0}
                 max={4}
                 step={1}
-                value={[innovationData[key as keyof typeof innovationData]]}
+                defaultValue={[innovationData[key as keyof typeof innovationData]]}
                 onValueChange={(value) => {
                   switch (key) {
                     case "novateur":

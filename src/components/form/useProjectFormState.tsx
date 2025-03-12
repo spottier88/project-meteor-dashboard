@@ -2,6 +2,8 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { ProjectLifecycleStatus } from "@/types/project";
+import { useUser } from "@supabase/auth-helpers-react";
+import { MonitoringLevel } from "@/types/monitoring";
 
 export interface ProjectFormState {
   currentStep: number;
@@ -18,8 +20,8 @@ export interface ProjectFormState {
   setEndDate: (date: Date | undefined) => void;
   priority: "high" | "medium" | "low";
   setPriority: (priority: "high" | "medium" | "low") => void;
-  monitoringLevel: "standard" | "strategic" | "high_attention" | "none";
-  setMonitoringLevel: (level: "standard" | "strategic" | "high_attention" | "none") => void;
+  monitoringLevel: MonitoringLevel;
+  setMonitoringLevel: (level: MonitoringLevel) => void;
   directionId: string;
   setDirectionId: (id: string) => void;
   poleId: string;
@@ -58,9 +60,21 @@ export interface ProjectFormState {
   setDeliverables: (value: string) => void;
   lifecycleStatus: ProjectLifecycleStatus;
   setLifecycleStatus: (status: ProjectLifecycleStatus) => void;
+  // Ajout des nouveaux états pour les scores d'innovation
+  novateur: number;
+  setNovateur: (value: number) => void;
+  usager: number;
+  setUsager: (value: number) => void;
+  ouverture: number;
+  setOuverture: (value: number) => void;
+  agilite: number;
+  setAgilite: (value: number) => void;
+  impact: number;
+  setImpact: (value: number) => void;
 }
 
 export const useProjectFormState = (isOpen: boolean, project?: any): ProjectFormState => {
+  const user = useUser();
   const [currentStep, setCurrentStep] = useState(0);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -68,7 +82,7 @@ export const useProjectFormState = (isOpen: boolean, project?: any): ProjectForm
   const [startDate, setStartDate] = useState<Date | undefined>(undefined);
   const [endDate, setEndDate] = useState<Date | undefined>(undefined);
   const [priority, setPriority] = useState<"high" | "medium" | "low">("medium");
-  const [monitoringLevel, setMonitoringLevel] = useState<"standard" | "strategic" | "high_attention" | "none">("standard");
+  const [monitoringLevel, setMonitoringLevel] = useState<MonitoringLevel>("standard");
   const [directionId, setDirectionId] = useState("");
   const [poleId, setPoleId] = useState("");
   const [serviceId, setServiceId] = useState("");
@@ -88,11 +102,39 @@ export const useProjectFormState = (isOpen: boolean, project?: any): ProjectForm
   const [timeline, setTimeline] = useState("");
   const [deliverables, setDeliverables] = useState("");
   const [lifecycleStatus, setLifecycleStatus] = useState<ProjectLifecycleStatus>("in_progress");
+  // Nouveaux états pour les scores d'innovation
+  const [novateur, setNovateur] = useState(0);
+  const [usager, setUsager] = useState(0);
+  const [ouverture, setOuverture] = useState(0);
+  const [agilite, setAgilite] = useState(0);
+  const [impact, setImpact] = useState(0);
 
   // Reset state when form opens or project changes
   useEffect(() => {
     if (isOpen) {
       setCurrentStep(0);
+      
+      // Si nous avons un utilisateur connecté et que c'est un nouveau projet,
+      // définir l'utilisateur comme chef de projet par défaut
+      if (user && !project) {
+        const fetchUserEmail = async () => {
+          try {
+            const { data: userProfile } = await supabase
+              .from('profiles')
+              .select('email')
+              .eq('id', user.id)
+              .single();
+            
+            if (userProfile?.email) {
+              setProjectManager(userProfile.email);
+            }
+          } catch (error) {
+            console.error("Erreur lors de la récupération de l'email de l'utilisateur:", error);
+          }
+        };
+
+        fetchUserEmail();
+      }
       
       if (project) {
         setTitle(project.title || "");
@@ -114,6 +156,25 @@ export const useProjectFormState = (isOpen: boolean, project?: any): ProjectForm
         setInnovationObjectives(project.innovation_objectives || []);
         setInnovationScopes(project.innovation_scopes || []);
         setLifecycleStatus(project.lifecycle_status || "in_progress");
+
+        // Récupérer les scores d'innovation
+        const fetchInnovationScores = async () => {
+          if (project.id) {
+            const { data, error } = await supabase
+              .from('project_innovation_scores')
+              .select('*')
+              .eq('project_id', project.id)
+              .maybeSingle();
+              
+            if (!error && data) {
+              setNovateur(data.novateur || 0);
+              setUsager(data.usager || 0);
+              setOuverture(data.ouverture || 0);
+              setAgilite(data.agilite || 0);
+              setImpact(data.impact || 0);
+            }
+          }
+        };
         
         // Fetch project framing data if exists
         const fetchFramingData = async () => {
@@ -136,11 +197,12 @@ export const useProjectFormState = (isOpen: boolean, project?: any): ProjectForm
         };
         
         fetchFramingData();
+        fetchInnovationScores();
       } else {
         // Reset to default values for new project
         setTitle("");
         setDescription("");
-        setProjectManager("");
+        // projectManager est défini ailleurs pour les nouveaux projets
         setStartDate(undefined);
         setEndDate(undefined);
         setPriority("medium");
@@ -163,9 +225,14 @@ export const useProjectFormState = (isOpen: boolean, project?: any): ProjectForm
         setTimeline("");
         setDeliverables("");
         setLifecycleStatus("in_progress");
+        setNovateur(0);
+        setUsager(0);
+        setOuverture(0);
+        setAgilite(0);
+        setImpact(0);
       }
     }
-  }, [isOpen, project]);
+  }, [isOpen, project, user]);
 
   return {
     currentStep,
@@ -222,5 +289,15 @@ export const useProjectFormState = (isOpen: boolean, project?: any): ProjectForm
     setDeliverables,
     lifecycleStatus,
     setLifecycleStatus,
+    novateur,
+    setNovateur,
+    usager,
+    setUsager,
+    ouverture,
+    setOuverture,
+    agilite,
+    setAgilite,
+    impact,
+    setImpact,
   };
 };
