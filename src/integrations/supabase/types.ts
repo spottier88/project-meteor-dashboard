@@ -283,71 +283,6 @@ export type Database = {
           },
         ]
       }
-      framework_note_collections: {
-        Row: {
-          created_at: string
-          created_by: string
-          description: string | null
-          id: string
-          status: string
-          title: string
-          updated_at: string
-        }
-        Insert: {
-          created_at?: string
-          created_by: string
-          description?: string | null
-          id?: string
-          status?: string
-          title: string
-          updated_at?: string
-        }
-        Update: {
-          created_at?: string
-          created_by?: string
-          description?: string | null
-          id?: string
-          status?: string
-          title?: string
-          updated_at?: string
-        }
-        Relationships: []
-      }
-      framework_note_sections: {
-        Row: {
-          collection_id: string
-          content: string
-          created_at: string
-          id: string
-          section_type: string
-          updated_at: string
-        }
-        Insert: {
-          collection_id: string
-          content: string
-          created_at?: string
-          id?: string
-          section_type: string
-          updated_at?: string
-        }
-        Update: {
-          collection_id?: string
-          content?: string
-          created_at?: string
-          id?: string
-          section_type?: string
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "framework_note_sections_collection_id_fkey"
-            columns: ["collection_id"]
-            isOneToOne: false
-            referencedRelation: "framework_note_collections"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       hierarchy_paths: {
         Row: {
           created_at: string | null
@@ -615,53 +550,6 @@ export type Database = {
           last_name?: string | null
         }
         Relationships: []
-      }
-      project_framework_notes: {
-        Row: {
-          content: Json
-          created_at: string | null
-          created_by: string | null
-          id: string
-          project_id: string | null
-          standalone: boolean
-          status: string
-          title: string | null
-          updated_at: string | null
-          version: number
-        }
-        Insert: {
-          content: Json
-          created_at?: string | null
-          created_by?: string | null
-          id?: string
-          project_id?: string | null
-          standalone?: boolean
-          status?: string
-          title?: string | null
-          updated_at?: string | null
-          version?: number
-        }
-        Update: {
-          content?: Json
-          created_at?: string | null
-          created_by?: string | null
-          id?: string
-          project_id?: string | null
-          standalone?: boolean
-          status?: string
-          title?: string | null
-          updated_at?: string | null
-          version?: number
-        }
-        Relationships: [
-          {
-            foreignKeyName: "project_framework_notes_project_id_fkey"
-            columns: ["project_id"]
-            isOneToOne: false
-            referencedRelation: "projects"
-            referencedColumns: ["id"]
-          },
-        ]
       }
       project_innovation_scores: {
         Row: {

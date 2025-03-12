@@ -1,18 +1,18 @@
+
 import React from "react";
 import { useSession, useSupabaseClient } from "@supabase/auth-helpers-react";
-import { useRouter } from "next/navigation";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import { usePermissionsContext } from "@/contexts/PermissionsContext";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Settings } from "lucide-react";
 
 export const DashboardHeader = () => {
   const session = useSession();
   const supabase = useSupabaseClient();
-  const router = useRouter();
+  const navigate = useNavigate();
   const { toast } = useToast();
   const { isAdmin } = usePermissionsContext();
 
@@ -22,7 +22,7 @@ export const DashboardHeader = () => {
       title: "Déconnexion réussie",
       description: "Vous avez été déconnecté avec succès.",
     });
-    router.push("/login");
+    navigate("/login");
   };
   
   return (

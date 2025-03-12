@@ -1,3 +1,4 @@
+
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
@@ -27,8 +28,6 @@ import { GeneralSettings } from "@/components/admin/GeneralSettings";
 import { ActivityTypeManagementPage } from "./pages/ActivityTypeManagement";
 import { AIPromptManagement } from "./pages/AIPromptManagement";
 import { logger } from "./utils/logger";
-import { FrameworkNotes } from "./pages/FrameworkNotes";
-import { FrameworkNotesManagement } from "./pages/FrameworkNotesManagement";
 
 export const AppRoutes = () => {
   const session = useSession();
@@ -184,22 +183,6 @@ export const AppRoutes = () => {
             element={
               <ProtectedRoute>
                 <ReviewHistory />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/framework-notes/:projectId"
-            element={
-              <ProtectedRoute>
-                <FrameworkNotes />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/framework-notes"
-            element={
-              <ProtectedRoute>
-                <FrameworkNotesManagement />
               </ProtectedRoute>
             }
           />
