@@ -1,7 +1,8 @@
-import { useToast } from "@/components/ui/use-toast";
-import { useQueryClient } from "@tanstack/react-query";
-import { useUser } from "@supabase/auth-helpers-react";
-import { ProjectFormState } from "../components/form/useProjectFormState";
+
+import { useState } from "react";
+import { ProjectFormState } from "@/components/form/useProjectFormState";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "@/components/ui/use-toast";
 
 interface UseProjectFormSubmitProps {
   project?: any;
@@ -20,106 +21,101 @@ export const useProjectFormSubmit = ({
   onSubmit,
   onClose,
 }: UseProjectFormSubmitProps) => {
-  const { toast } = useToast();
-  const user = useUser();
-  const queryClient = useQueryClient();
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async () => {
-    if (!formState.validateStep3()) {
+    const isEditing = !!project;
+
+    // Vérifier les autorisations
+    if (isEditing && !canEdit) {
       toast({
-        title: "Erreur",
-        description: "Veuillez remplir tous les champs obligatoires",
+        title: "Accès refusé",
+        description: "Vous n'avez pas l'autorisation de modifier ce projet.",
         variant: "destructive",
       });
       return;
     }
 
-    if (project?.id && !canEdit) {
+    if (!isEditing && !canCreate) {
       toast({
-        title: "Erreur",
-        description: "Vous n'avez pas les droits nécessaires pour modifier ce projet",
+        title: "Accès refusé",
+        description: "Vous n'avez pas l'autorisation de créer un projet.",
         variant: "destructive",
       });
       return;
     }
 
-    if (!project?.id && !canCreate) {
-      toast({
-        title: "Erreur",
-        description: "Vous n'avez pas les droits nécessaires pour créer un projet",
-        variant: "destructive",
-      });
-      return;
-    }
-
+    // Mise à jour de l'état isSubmitting
     formState.setIsSubmitting(true);
+    setIsSubmitting(true);
+
     try {
+      // Préparation des données du projet
       const projectData = {
         title: formState.title,
         description: formState.description,
-        projectManager: formState.projectManager,
-        startDate: formState.startDate,
-        endDate: formState.endDate,
+        project_manager: formState.projectManager,
+        start_date: formState.startDate,
+        end_date: formState.endDate,
         priority: formState.priority,
-        monitoringLevel: formState.monitoringLevel,
-        monitoringEntityId: formState.monitoringEntityId || null,
-        owner_id: user?.id || null,
-        poleId: formState.poleId === "none" ? null : formState.poleId,
-        directionId: formState.directionId === "none" ? null : formState.directionId,
-        serviceId: formState.serviceId === "none" ? null : formState.serviceId,
-        lifecycleStatus: formState.lifecycleStatus,
-        innovation: {
-          novateur: formState.novateur,
-          usager: formState.usager,
-          ouverture: formState.ouverture,
-          agilite: formState.agilite,
-          impact: formState.impact,
-        },
-        framing: {
-          context: formState.context,
-          stakeholders: formState.stakeholders,
-          governance: formState.governance,
-          objectives: formState.objectives,
-          timeline: formState.timeline,
-          deliverables: formState.deliverables,
-        },
+        monitoring_level: formState.monitoringLevel,
+        direction_id: formState.directionId,
+        pole_id: formState.poleId,
+        service_id: formState.serviceId,
+        confidentiality: formState.confidentiality,
+        budget_impact: formState.budgetImpact,
+        reputation_impact: formState.reputationImpact,
+        regulatory_impact: formState.regulatoryImpact,
+        innovation_level: formState.innovationLevel,
+        innovation_types: formState.innovationTypes,
+        innovation_objectives: formState.innovationObjectives,
+        innovation_scopes: formState.innovationScopes,
       };
 
+      // Soumettre les données du projet
       await onSubmit(projectData);
-
+      
+      // Après création/modification du projet, gérer les données de cadrage
       if (project?.id) {
-        const { error: framingError } = await supabase
-          .from("project_framing")
+        // Mise à jour du cadrage pour un projet existant
+        await supabase
+          .from('project_framing')
           .upsert({
             project_id: project.id,
-            context: projectData.framing.context,
-            stakeholders: projectData.framing.stakeholders,
-            governance: projectData.framing.governance,
-            objectives: projectData.framing.objectives,
-            timeline: projectData.framing.timeline,
-            deliverables: projectData.framing.deliverables,
-          });
-
-        if (framingError) throw framingError;
+            context: formState.context,
+            stakeholders: formState.stakeholders,
+            governance: formState.governance,
+            objectives: formState.objectives,
+            timeline: formState.timeline,
+            deliverables: formState.deliverables,
+          }, { onConflict: 'project_id' });
       }
 
-      await queryClient.invalidateQueries({ queryKey: ["projects"] });
-      
+      // Réinitialisation de l'état et fermeture du formulaire
       toast({
-        title: "Succès",
-        description: project ? "Projet mis à jour" : "Projet créé",
+        title: isEditing ? "Projet mis à jour" : "Projet créé",
+        description: isEditing
+          ? "Le projet a été mis à jour avec succès."
+          : "Le projet a été créé avec succès.",
       });
+      
+      formState.setIsSubmitting(false);
+      setIsSubmitting(false);
       onClose();
-    } catch (error: any) {
+    } catch (error) {
+      console.error("Erreur lors de la soumission :", error);
       toast({
         title: "Erreur",
-        description: error.message || "Une erreur est survenue lors de l'enregistrement",
+        description: "Une erreur s'est produite lors de l'enregistrement du projet.",
         variant: "destructive",
       });
-    } finally {
       formState.setIsSubmitting(false);
+      setIsSubmitting(false);
     }
   };
 
-  return { handleSubmit };
+  return {
+    handleSubmit,
+    isSubmitting,
+  };
 };

@@ -551,6 +551,53 @@ export type Database = {
         }
         Relationships: []
       }
+      project_framing: {
+        Row: {
+          context: string | null
+          created_at: string | null
+          deliverables: string | null
+          governance: string | null
+          id: string
+          objectives: string | null
+          project_id: string | null
+          stakeholders: string | null
+          timeline: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          context?: string | null
+          created_at?: string | null
+          deliverables?: string | null
+          governance?: string | null
+          id?: string
+          objectives?: string | null
+          project_id?: string | null
+          stakeholders?: string | null
+          timeline?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          context?: string | null
+          created_at?: string | null
+          deliverables?: string | null
+          governance?: string | null
+          id?: string
+          objectives?: string | null
+          project_id?: string | null
+          stakeholders?: string | null
+          timeline?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_framing_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       project_innovation_scores: {
         Row: {
           agilite: number
