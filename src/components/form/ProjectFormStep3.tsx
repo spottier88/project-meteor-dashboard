@@ -52,6 +52,27 @@ export const ProjectFormStep3 = ({
     impact,
   };
 
+  // Fonction d'aide pour gérer les changements de valeur du slider
+  const handleSliderChange = (value: number[], key: string) => {
+    switch (key) {
+      case "novateur":
+        setNovateur(value[0]);
+        break;
+      case "usager":
+        setUsager(value[0]);
+        break;
+      case "ouverture":
+        setOuverture(value[0]);
+        break;
+      case "agilite":
+        setAgilite(value[0]);
+        break;
+      case "impact":
+        setImpact(value[0]);
+        break;
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -79,26 +100,8 @@ export const ProjectFormStep3 = ({
                 min={0}
                 max={4}
                 step={1}
-                defaultValue={[innovationData[key as keyof typeof innovationData]]}
-                onValueChange={(value) => {
-                  switch (key) {
-                    case "novateur":
-                      setNovateur(value[0]);
-                      break;
-                    case "usager":
-                      setUsager(value[0]);
-                      break;
-                    case "ouverture":
-                      setOuverture(value[0]);
-                      break;
-                    case "agilite":
-                      setAgilite(value[0]);
-                      break;
-                    case "impact":
-                      setImpact(value[0]);
-                      break;
-                  }
-                }}
+                value={[innovationData[key as keyof typeof innovationData]]}
+                onValueChange={(value) => handleSliderChange(value, key)}
               />
               <div className="flex justify-between text-xs text-muted-foreground">
                 <span>0</span>

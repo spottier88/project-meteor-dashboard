@@ -115,11 +115,17 @@ export const ProjectFormActions = ({
           return;
         }
 
+        // Assurez-vous que monitoringLevel est compatible avec les valeurs acceptées par la base de données
+        const monitoringLevelValue = formData.monitoringLevel === "standard" || 
+                                    formData.monitoringLevel === "strategic" || 
+                                    formData.monitoringLevel === "high_attention" 
+                                    ? "dgs" : formData.monitoringLevel;
+
         const { error: monitoringError } = await supabase
           .from("project_monitoring")
           .upsert({
             project_id: project.id,
-            monitoring_level: formData.monitoringLevel,
+            monitoring_level: monitoringLevelValue,
             monitoring_entity_id: formData.monitoringEntityId,
           }, {
             onConflict: 'project_id'
@@ -154,11 +160,17 @@ export const ProjectFormActions = ({
           return;
         }
 
+        // Assurez-vous que monitoringLevel est compatible avec les valeurs acceptées par la base de données
+        const monitoringLevelValue = formData.monitoringLevel === "standard" || 
+                                    formData.monitoringLevel === "strategic" || 
+                                    formData.monitoringLevel === "high_attention" 
+                                    ? "dgs" : formData.monitoringLevel;
+
         const { error: monitoringError } = await supabase
           .from("project_monitoring")
           .insert({
             project_id: newProject.id,
-            monitoring_level: formData.monitoringLevel,
+            monitoring_level: monitoringLevelValue,
             monitoring_entity_id: formData.monitoringEntityId,
           });
 

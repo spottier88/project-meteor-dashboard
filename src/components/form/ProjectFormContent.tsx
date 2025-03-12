@@ -62,16 +62,16 @@ export const ProjectFormContent = ({
         />
       ) : currentStep === 2 ? (
         <ProjectFormStep3
-          novateur={formState.novateur || 0}
-          setNovateur={(value) => formState.setNovateur?.(value) || 0}
-          usager={formState.usager || 0}
-          setUsager={(value) => formState.setUsager?.(value) || 0}
-          ouverture={formState.ouverture || 0}
-          setOuverture={(value) => formState.setOuverture?.(value) || 0}
-          agilite={formState.agilite || 0}
-          setAgilite={(value) => formState.setAgilite?.(value) || 0}
-          impact={formState.impact || 0}
-          setImpact={(value) => formState.setImpact?.(value) || 0}
+          novateur={formState.novateur}
+          setNovateur={formState.setNovateur}
+          usager={formState.usager}
+          setUsager={formState.setUsager}
+          ouverture={formState.ouverture}
+          setOuverture={formState.setOuverture}
+          agilite={formState.agilite}
+          setAgilite={formState.setAgilite}
+          impact={formState.impact}
+          setImpact={formState.setImpact}
         />
       ) : (
         <ProjectFormStep4
