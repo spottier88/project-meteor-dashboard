@@ -3,6 +3,7 @@ import { ProjectFormState } from "@/components/form/useProjectFormState";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/components/ui/use-toast";
 import { logger } from "@/utils/logger";
+import { useUser } from "@supabase/auth-helpers-react";
 
 interface UseProjectFormSubmitProps {
   project?: any;
@@ -22,6 +23,7 @@ export const useProjectFormSubmit = ({
   onClose,
 }: UseProjectFormSubmitProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const user = useUser();
 
   const handleSubmit = async () => {
     const isEditing = !!project;
@@ -57,10 +59,10 @@ export const useProjectFormSubmit = ({
         title: formState.title,
         description: formState.description,
         project_manager: formState.projectManager,
-        start_date: formState.startDate,
-        end_date: formState.endDate,
+        start_date: formState.startDate?.toISOString().split('T')[0],
+        end_date: formState.endDate?.toISOString().split('T')[0],
         priority: formState.priority,
-        owner_id: formState.owner_id,
+        owner_id: user?.id,
         pole_id: formState.poleId === "none" ? null : formState.poleId,
         direction_id: formState.directionId === "none" ? null : formState.directionId,
         service_id: formState.serviceId === "none" ? null : formState.serviceId,
