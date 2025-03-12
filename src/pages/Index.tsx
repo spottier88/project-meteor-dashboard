@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useUser } from "@supabase/auth-helpers-react";
@@ -257,16 +258,11 @@ const Index = () => {
         }
 
         console.log("[ProjectForm] Updating monitoring for project:", selectedProject.id);
-        const monitoringLevelValue = projectData.monitoringLevel === "standard" || 
-                                  projectData.monitoringLevel === "strategic" || 
-                                  projectData.monitoringLevel === "high_attention" 
-                                  ? "dgs" : projectData.monitoringLevel;
-        
         const { data: monitoringData, error: monitoringError } = await supabase
           .from("project_monitoring")
           .upsert({
             project_id: selectedProject.id,
-            monitoring_level: monitoringLevelValue,
+            monitoring_level: projectData.monitoringLevel,
             monitoring_entity_id: projectData.monitoringEntityId,
           }, {
             onConflict: 'project_id'
@@ -314,16 +310,11 @@ const Index = () => {
         }
 
         console.log("[ProjectForm] Creating monitoring for new project:", newProject.id);
-        const monitoringLevelValue = projectData.monitoringLevel === "standard" || 
-                                  projectData.monitoringLevel === "strategic" || 
-                                  projectData.monitoringLevel === "high_attention" 
-                                  ? "dgs" : projectData.monitoringLevel;
-        
         const { data: monitoringData, error: monitoringError } = await supabase
           .from("project_monitoring")
           .insert({
             project_id: newProject.id,
-            monitoring_level: monitoringLevelValue,
+            monitoring_level: projectData.monitoringLevel,
             monitoring_entity_id: projectData.monitoringEntityId,
           })
           .select();

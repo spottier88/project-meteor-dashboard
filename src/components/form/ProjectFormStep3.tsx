@@ -1,4 +1,3 @@
-
 import { Slider } from "@/components/ui/slider";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
@@ -52,27 +51,6 @@ export const ProjectFormStep3 = ({
     impact,
   };
 
-  // Fonction d'aide pour gérer les changements de valeur du slider
-  const handleSliderChange = (value: number[], key: string) => {
-    switch (key) {
-      case "novateur":
-        setNovateur(value[0]);
-        break;
-      case "usager":
-        setUsager(value[0]);
-        break;
-      case "ouverture":
-        setOuverture(value[0]);
-        break;
-      case "agilite":
-        setAgilite(value[0]);
-        break;
-      case "impact":
-        setImpact(value[0]);
-        break;
-    }
-  };
-
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -94,14 +72,31 @@ export const ProjectFormStep3 = ({
                   </Tooltip>
                 </TooltipProvider>
               </div>
-              <p className="text-sm text-muted-foreground">{description}</p>
               <Slider
                 id={key}
                 min={0}
                 max={4}
                 step={1}
                 value={[innovationData[key as keyof typeof innovationData]]}
-                onValueChange={(value) => handleSliderChange(value, key)}
+                onValueChange={(value) => {
+                  switch (key) {
+                    case "novateur":
+                      setNovateur(value[0]);
+                      break;
+                    case "usager":
+                      setUsager(value[0]);
+                      break;
+                    case "ouverture":
+                      setOuverture(value[0]);
+                      break;
+                    case "agilite":
+                      setAgilite(value[0]);
+                      break;
+                    case "impact":
+                      setImpact(value[0]);
+                      break;
+                  }
+                }}
               />
               <div className="flex justify-between text-xs text-muted-foreground">
                 <span>0</span>

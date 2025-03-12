@@ -33,29 +33,29 @@ export const ProjectFormStep4 = ({
 }: ProjectFormStep4Props) => {
   return (
     <div className="space-y-6">
-      <div className="grid gap-2">
+      <div className="space-y-2">
         <Label htmlFor="context">Contexte du projet</Label>
         <Textarea
           id="context"
           value={context}
           onChange={(e) => setContext(e.target.value)}
-          placeholder="Expliquez le contexte général du projet, les enjeux et la raison d'être"
+          placeholder="Décrivez le contexte, les enjeux et la raison d'être du projet"
           className="min-h-[100px]"
         />
       </div>
-      
-      <div className="grid gap-2">
+
+      <div className="space-y-2">
         <Label htmlFor="stakeholders">Parties prenantes</Label>
         <Textarea
           id="stakeholders"
           value={stakeholders}
           onChange={(e) => setStakeholders(e.target.value)}
-          placeholder="Listez les acteurs concernés par le projet (internes et externes)"
+          placeholder="Listez les acteurs concernés par le projet"
           className="min-h-[100px]"
         />
       </div>
-      
-      <div className="grid gap-2">
+
+      <div className="space-y-2">
         <Label htmlFor="governance">Gouvernance</Label>
         <Textarea
           id="governance"
@@ -65,30 +65,30 @@ export const ProjectFormStep4 = ({
           className="min-h-[100px]"
         />
       </div>
-      
-      <div className="grid gap-2">
+
+      <div className="space-y-2">
         <Label htmlFor="objectives">Objectifs</Label>
         <Textarea
           id="objectives"
           value={objectives}
           onChange={(e) => setObjectives(e.target.value)}
-          placeholder="Présentez les objectifs SMART du projet"
+          placeholder="Définissez les objectifs SMART du projet"
           className="min-h-[100px]"
         />
       </div>
-      
-      <div className="grid gap-2">
+
+      <div className="space-y-2">
         <Label htmlFor="timeline">Planning prévisionnel</Label>
         <Textarea
           id="timeline"
           value={timeline}
           onChange={(e) => setTimeline(e.target.value)}
-          placeholder="Décrivez les principales échéances et jalons du projet"
+          placeholder="Décrivez les principales échéances et jalons"
           className="min-h-[100px]"
         />
       </div>
-      
-      <div className="grid gap-2">
+
+      <div className="space-y-2">
         <Label htmlFor="deliverables">Livrables attendus</Label>
         <Textarea
           id="deliverables"
