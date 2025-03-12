@@ -1,4 +1,5 @@
 
+import React, { useState, useEffect } from 'react';
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -6,12 +7,13 @@ import { DatePickerField } from "./DatePickerField";
 import { UserProfile } from "@/types/user";
 import { Label } from "@/components/ui/label";
 import { ProjectLifecycleStatus, lifecycleStatusLabels } from "@/types/project";
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "@/components/ui/command";
+import { CommandInput, CommandEmpty, CommandGroup, CommandItem, Command } from "@/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
-import { Check, ChevronsUpDown } from "lucide-react";
+import { Check, ChevronsUpDown, Search } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useState } from "react";
+import { useUser } from "@supabase/auth-helpers-react";
+import { supabase } from "@/integrations/supabase/client";
 
 interface ProjectFormStep1Props {
   title: string;
@@ -54,6 +56,43 @@ export const ProjectFormStep1 = ({
 }: ProjectFormStep1Props) => {
   const canEditProjectManager = isAdmin || isManager;
   const [open, setOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filteredManagers, setFilteredManagers] = useState<UserProfile[]>([]);
+  const user = useUser();
+  
+  useEffect(() => {
+    // Pré-remplir avec l'email de l'utilisateur actuel si c'est un chef de projet
+    // et que le champ est vide (nouveau projet)
+    if (user?.email && !projectManager) {
+      setProjectManager(user.email);
+    }
+  }, [user, projectManager, setProjectManager]);
+
+  useEffect(() => {
+    if (!projectManagers) return;
+    
+    // Filtrer les chefs de projet en fonction du terme de recherche
+    const filtered = projectManagers.filter(manager => {
+      const fullName = `${manager.first_name || ''} ${manager.last_name || ''}`.toLowerCase();
+      const email = (manager.email || '').toLowerCase();
+      const term = searchTerm.toLowerCase();
+      
+      return fullName.includes(term) || email.includes(term);
+    });
+    
+    setFilteredManagers(filtered);
+  }, [searchTerm, projectManagers]);
+
+  const getSelectedManagerLabel = () => {
+    if (!projectManager) return "Sélectionner un chef de projet";
+    
+    const selectedManager = projectManagers?.find(m => m.email === projectManager);
+    if (selectedManager && selectedManager.first_name && selectedManager.last_name) {
+      return `${selectedManager.first_name} ${selectedManager.last_name} (${selectedManager.email})`;
+    }
+    
+    return projectManager;
+  };
 
   return (
     <div className="space-y-4">
@@ -104,20 +143,24 @@ export const ProjectFormStep1 = ({
                 aria-expanded={open}
                 className="w-full justify-between"
               >
-                {projectManager
-                  ? projectManagers.find((manager) => manager.email === projectManager)
-                    ? `${projectManagers.find((manager) => manager.email === projectManager)?.first_name || ''} ${projectManagers.find((manager) => manager.email === projectManager)?.last_name || ''} (${projectManager})`
-                    : projectManager
-                  : "Sélectionner un chef de projet"}
+                {getSelectedManagerLabel()}
                 <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
               </Button>
             </PopoverTrigger>
             <PopoverContent className="w-full p-0" align="start">
               <Command>
-                <CommandInput placeholder="Rechercher un chef de projet..." />
+                <div className="flex items-center border-b px-3">
+                  <Search className="mr-2 h-4 w-4 shrink-0 opacity-50" />
+                  <CommandInput 
+                    placeholder="Rechercher un chef de projet..." 
+                    value={searchTerm}
+                    onValueChange={setSearchTerm}
+                    className="h-9 w-full"
+                  />
+                </div>
                 <CommandEmpty>Aucun chef de projet trouvé.</CommandEmpty>
                 <CommandGroup className="max-h-60 overflow-y-auto">
-                  {projectManagers.map((manager) => (
+                  {filteredManagers.map((manager) => (
                     <CommandItem
                       key={manager.id}
                       onSelect={() => {
