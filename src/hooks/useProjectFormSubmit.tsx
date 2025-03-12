@@ -1,8 +1,8 @@
-
 import { useState } from "react";
 import { ProjectFormState } from "@/components/form/useProjectFormState";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/components/ui/use-toast";
+import { logger } from "@/utils/logger";
 
 interface UseProjectFormSubmitProps {
   project?: any;
@@ -27,6 +27,8 @@ export const useProjectFormSubmit = ({
     const isEditing = !!project;
 
     // Vérifier les autorisations
+    logger.debug("Vérification des autorisations", "project-form", { isEditing, canEdit, canCreate });
+
     if (isEditing && !canEdit) {
       toast({
         title: "Accès refusé",
@@ -51,39 +53,53 @@ export const useProjectFormSubmit = ({
 
     try {
       // Préparation des données du projet
-      const projectData = {
+      const projectPayload = {
         title: formState.title,
         description: formState.description,
         project_manager: formState.projectManager,
         start_date: formState.startDate,
         end_date: formState.endDate,
         priority: formState.priority,
-        monitoring_level: formState.monitoringLevel,
-        direction_id: formState.directionId,
-        pole_id: formState.poleId,
-        service_id: formState.serviceId,
-        confidentiality: formState.confidentiality,
-        budget_impact: formState.budgetImpact,
-        reputation_impact: formState.reputationImpact,
-        regulatory_impact: formState.regulatoryImpact,
-        innovation_level: formState.innovationLevel,
-        innovation_types: formState.innovationTypes,
-        innovation_objectives: formState.innovationObjectives,
-        innovation_scopes: formState.innovationScopes,
+        owner_id: formState.owner_id,
+        pole_id: formState.poleId === "none" ? null : formState.poleId,
+        direction_id: formState.directionId === "none" ? null : formState.directionId,
+        service_id: formState.serviceId === "none" ? null : formState.serviceId,
         lifecycle_status: formState.lifecycleStatus,
       };
 
-      // Soumettre les données du projet
-      await onSubmit(projectData);
+      logger.info("Payload du projet à envoyer", "project-form", {
+        projectPayload,
+        isEditing,
+        projectId: project?.id
+      });
+
+      const { data: userRoles, error: rolesError } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', user?.id);
       
-      const projectId = project?.id || await getNewProjectId(formState.title);
-      
-      if (projectId) {
+      logger.debug("Rôles de l'utilisateur", "project-form", { userRoles, error: rolesError });
+
+      if (isEditing) {
+        logger.info("Mise à jour du projet", "project-form", { projectId: project.id });
+        const { data: updatedProject, error: projectError } = await supabase
+          .from("projects")
+          .update(projectPayload)
+          .eq("id", project.id)
+          .select();
+
+        logger.debug("Résultat de la mise à jour", "project-form", { updatedProject, error: projectError });
+
+        if (projectError) {
+          logger.error("Erreur lors de la mise à jour du projet", "project-form", projectError);
+          throw projectError;
+        }
+
         // Mise à jour du cadrage pour un projet existant ou nouveau
         await supabase
           .from('project_framing')
           .upsert({
-            project_id: projectId,
+            project_id: project.id,
             context: formState.context,
             stakeholders: formState.stakeholders,
             governance: formState.governance,
@@ -96,16 +112,64 @@ export const useProjectFormSubmit = ({
         await supabase
           .from('project_innovation_scores')
           .upsert({
-            project_id: projectId,
+            project_id: project.id,
             novateur: formState.novateur,
             usager: formState.usager,
             ouverture: formState.ouverture,
             agilite: formState.agilite,
             impact: formState.impact,
           }, { onConflict: 'project_id' });
+
+      } else {
+        logger.info("Création d'un nouveau projet", "project-form");
+        const { data: newProject, error: projectError } = await supabase
+          .from("projects")
+          .insert(projectPayload)
+          .select()
+          .single();
+
+        logger.debug("Résultat de la création", "project-form", { newProject, error: projectError });
+
+        if (projectError) {
+          logger.error("Erreur lors de la création du projet", "project-form", {
+            error: projectError,
+            payload: projectPayload
+          });
+          throw projectError;
+        }
+
+        const projectId = newProject?.id || await getNewProjectId(formState.title);
+      
+        if (projectId) {
+          // Mise à jour du cadrage pour un projet existant ou nouveau
+          await supabase
+            .from('project_framing')
+            .upsert({
+              project_id: projectId,
+              context: formState.context,
+              stakeholders: formState.stakeholders,
+              governance: formState.governance,
+              objectives: formState.objectives,
+              timeline: formState.timeline,
+              deliverables: formState.deliverables,
+            }, { onConflict: 'project_id' });
+            
+          // Mise à jour des scores d'innovation
+          await supabase
+            .from('project_innovation_scores')
+            .upsert({
+              project_id: projectId,
+              novateur: formState.novateur,
+              usager: formState.usager,
+              ouverture: formState.ouverture,
+              agilite: formState.agilite,
+              impact: formState.impact,
+            }, { onConflict: 'project_id' });
+        }
       }
 
-      // Réinitialisation de l'état et fermeture du formulaire
+      logger.info("Opération sur le projet terminée avec succès", "project-form");
+      
       toast({
         title: isEditing ? "Projet mis à jour" : "Projet créé",
         description: isEditing
@@ -117,6 +181,7 @@ export const useProjectFormSubmit = ({
       setIsSubmitting(false);
       onClose();
     } catch (error) {
+      logger.error("Échec de l'opération sur le projet", "project-form", { error });
       console.error("Erreur lors de la soumission :", error);
       toast({
         title: "Erreur",
