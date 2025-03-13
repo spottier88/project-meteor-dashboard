@@ -94,6 +94,39 @@ export const useProjectFormState = (isOpen: boolean, project?: any) => {
   useEffect(() => {
     const initializeForm = async () => {
       if (isOpen) {
+        // Réinitialisation de tous les champs d'abord - garantit que les valeurs sont toujours dans un état connu
+        setCurrentStep(0);
+        setTitle("");
+        setDescription("");
+        setStartDate(undefined);
+        setEndDate(undefined);
+        setPriority("medium");
+        setMonitoringLevel("none");
+        setMonitoringEntityId(null);
+        setPoleId("none");
+        setDirectionId("none");
+        setServiceId("none");
+        setNovateur(0);
+        setUsager(0);
+        setOuverture(0);
+        setAgilite(0);
+        setImpact(0);
+        setLifecycleStatus("study");
+        
+        // Réinitialisation spécifique des champs de cadrage (étape 4)
+        setContext("");
+        setStakeholders("");
+        setGovernance("");
+        setObjectives("");
+        setTimeline("");
+        setDeliverables("");
+
+        if (user?.email) {
+          setProjectManager(user.email);
+          setOwnerId(user.id);
+        }
+
+        // Si nous avons un projet existant, charger ses données
         if (project) {
           setTitle(project.title || "");
           setDescription(project.description || "");
@@ -123,67 +156,56 @@ export const useProjectFormState = (isOpen: boolean, project?: any) => {
             }
           } catch (error) {
             console.error("Error in monitoring data fetch:", error);
+            setMonitoringLevel("none");
+            setMonitoringEntityId(null);
           }
 
-          const { data: innovationScores } = await supabase
-            .from("project_innovation_scores")
-            .select("*")
-            .eq("project_id", project.id)
-            .maybeSingle();
+          try {
+            const { data: innovationScores, error: innovationError } = await supabase
+              .from("project_innovation_scores")
+              .select("*")
+              .eq("project_id", project.id)
+              .maybeSingle();
 
-          if (innovationScores) {
-            setNovateur(innovationScores.novateur);
-            setUsager(innovationScores.usager);
-            setOuverture(innovationScores.ouverture);
-            setAgilite(innovationScores.agilite);
-            setImpact(innovationScores.impact);
+            if (!innovationError && innovationScores) {
+              setNovateur(innovationScores.novateur);
+              setUsager(innovationScores.usager);
+              setOuverture(innovationScores.ouverture);
+              setAgilite(innovationScores.agilite);
+              setImpact(innovationScores.impact);
+            }
+          } catch (error) {
+            console.error("Error in innovation scores fetch:", error);
           }
 
-          const { data: framingData } = await supabase
-            .from("project_framing")
-            .select("*")
-            .eq("project_id", project.id)
-            .maybeSingle();
+          try {
+            const { data: framingData, error: framingError } = await supabase
+              .from("project_framing")
+              .select("*")
+              .eq("project_id", project.id)
+              .maybeSingle();
 
-          if (framingData) {
-            setContext(framingData.context || "");
-            setStakeholders(framingData.stakeholders || "");
-            setGovernance(framingData.governance || "");
-            setObjectives(framingData.objectives || "");
-            setTimeline(framingData.timeline || "");
-            setDeliverables(framingData.deliverables || "");
+            if (!framingError && framingData) {
+              // Utiliser les valeurs de la base ou des chaînes vides si null/undefined
+              setContext(framingData.context || "");
+              setStakeholders(framingData.stakeholders || "");
+              setGovernance(framingData.governance || "");
+              setObjectives(framingData.objectives || "");
+              setTimeline(framingData.timeline || "");
+              setDeliverables(framingData.deliverables || "");
+            } 
+            // Si pas de données de cadrage, les champs sont déjà initialisés à ""
+          } catch (error) {
+            console.error("Error in framing data fetch:", error);
+            // En cas d'erreur, s'assurer que les champs sont réinitialisés
+            setContext("");
+            setStakeholders("");
+            setGovernance("");
+            setObjectives("");
+            setTimeline("");
+            setDeliverables("");
           }
-        } else {
-          setTitle("");
-          setDescription("");
-          setStartDate(undefined);
-          setEndDate(undefined);
-          setPriority("medium");
-          setMonitoringLevel("none");
-          setMonitoringEntityId(null);
-          setPoleId("none");
-          setDirectionId("none");
-          setServiceId("none");
-          setNovateur(0);
-          setUsager(0);
-          setOuverture(0);
-          setAgilite(0);
-          setImpact(0);
-          setLifecycleStatus("study");
-          
-          if (user?.email) {
-            setProjectManager(user.email);
-            setOwnerId(user.id);
-          }
-
-          setContext("");
-          setStakeholders("");
-          setGovernance("");
-          setObjectives("");
-          setTimeline("");
-          setDeliverables("");
         }
-        setCurrentStep(0);
       }
     };
 
