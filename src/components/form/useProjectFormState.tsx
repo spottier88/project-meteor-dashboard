@@ -1,7 +1,9 @@
+
 import { useState, useEffect } from "react";
 import { useUser } from "@supabase/auth-helpers-react";
 import { MonitoringLevel } from "@/types/monitoring";
 import { ProjectLifecycleStatus } from "@/types/project";
+import { supabase } from "@/integrations/supabase/client";
 
 export interface ProjectFormState {
   currentStep: number;

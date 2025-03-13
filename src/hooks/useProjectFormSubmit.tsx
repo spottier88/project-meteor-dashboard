@@ -1,7 +1,9 @@
+
 import { useToast } from "@/components/ui/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
 import { useUser } from "@supabase/auth-helpers-react";
 import { ProjectFormState } from "../components/form/useProjectFormState";
+import { supabase } from "@/integrations/supabase/client";
 
 interface UseProjectFormSubmitProps {
   project?: any;
