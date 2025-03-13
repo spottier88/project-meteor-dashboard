@@ -24,7 +24,7 @@ export const ProjectFormContent = ({
   project,
 }: ProjectFormContentProps) => {
   return (
-    <div className="flex-1 overflow-y-auto pr-2">
+    <div className="flex-1 overflow-y-auto pr-2 px-1 my-4">
       {currentStep === 0 ? (
         <ProjectFormStep1
           {...formState}
