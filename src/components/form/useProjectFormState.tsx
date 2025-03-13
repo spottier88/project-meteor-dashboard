@@ -114,6 +114,7 @@ export const useProjectFormState = (isOpen: boolean, project?: any) => {
         setLifecycleStatus("study");
         
         // Réinitialisation spécifique des champs de cadrage (étape 4)
+        // Toujours initialiser ces champs à des valeurs vides connues
         setContext("");
         setStakeholders("");
         setGovernance("");
@@ -193,7 +194,7 @@ export const useProjectFormState = (isOpen: boolean, project?: any) => {
               setObjectives(framingData.objectives || "");
               setTimeline(framingData.timeline || "");
               setDeliverables(framingData.deliverables || "");
-            } 
+            }
             // Si pas de données de cadrage, les champs sont déjà initialisés à ""
           } catch (error) {
             console.error("Error in framing data fetch:", error);

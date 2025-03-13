@@ -87,22 +87,57 @@ export const useProjectFormSubmit = ({
         },
       };
 
+      // Soumettre les données du projet
       await onSubmit(projectData);
 
+      // Pour les données de cadrage, vérifier si un enregistrement existe déjà
       if (project?.id) {
-        const { error: framingError } = await supabase
+        // Vérifier d'abord si un enregistrement de cadrage existe pour ce projet
+        const { data: existingFraming, error: checkError } = await supabase
           .from("project_framing")
-          .upsert({
-            project_id: project.id,
-            context: projectData.framing.context,
-            stakeholders: projectData.framing.stakeholders,
-            governance: projectData.framing.governance,
-            objectives: projectData.framing.objectives,
-            timeline: projectData.framing.timeline,
-            deliverables: projectData.framing.deliverables,
-          });
+          .select("id")
+          .eq("project_id", project.id)
+          .maybeSingle();
 
-        if (framingError) throw framingError;
+        if (checkError) {
+          console.error("Erreur lors de la vérification des données de cadrage:", checkError);
+          throw checkError;
+        }
+
+        // Préparer les données de cadrage
+        const framingData = {
+          project_id: project.id,
+          context: projectData.framing.context,
+          stakeholders: projectData.framing.stakeholders,
+          governance: projectData.framing.governance,
+          objectives: projectData.framing.objectives,
+          timeline: projectData.framing.timeline,
+          deliverables: projectData.framing.deliverables,
+        };
+
+        // Si un enregistrement existe, le mettre à jour, sinon en créer un nouveau
+        if (existingFraming) {
+          // Mise à jour de l'enregistrement existant
+          const { error: updateError } = await supabase
+            .from("project_framing")
+            .update(framingData)
+            .eq("id", existingFraming.id);
+
+          if (updateError) {
+            console.error("Erreur lors de la mise à jour des données de cadrage:", updateError);
+            throw updateError;
+          }
+        } else {
+          // Création d'un nouvel enregistrement
+          const { error: insertError } = await supabase
+            .from("project_framing")
+            .insert(framingData);
+
+          if (insertError) {
+            console.error("Erreur lors de l'insertion des données de cadrage:", insertError);
+            throw insertError;
+          }
+        }
       }
 
       await queryClient.invalidateQueries({ queryKey: ["projects"] });
