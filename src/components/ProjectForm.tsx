@@ -15,7 +15,7 @@ import { useProjectPermissions } from "@/hooks/useProjectPermissions";
 interface ProjectFormProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (projectData: any) => Promise<void>;  // Modifié ici pour retourner Promise<void>
+  onSubmit: (projectData: any) => Promise<void>;
   project?: any;
 }
 
@@ -48,6 +48,8 @@ export const ProjectForm = ({ isOpen, onClose, onSubmit, project }: ProjectFormP
     } else if (formState.currentStep === 1 && validation.validateStep2()) {
       formState.setCurrentStep(2);
     } else if (formState.currentStep === 2 && validation.validateStep3()) {
+      formState.setCurrentStep(3);
+    } else if (formState.currentStep === 3) {
       handleSubmit();
     }
   };
@@ -85,9 +87,11 @@ export const ProjectForm = ({ isOpen, onClose, onSubmit, project }: ProjectFormP
                 ? validation.validateStep1(formState.title, formState.projectManager)
                 : formState.currentStep === 1 
                 ? validation.validateStep2()
-                : validation.validateStep3()
+                : formState.currentStep === 2 
+                ? validation.validateStep3()
+                : true
             }
-            isLastStep={formState.currentStep === 2}
+            isLastStep={formState.currentStep === 3}
             isSubmitting={formState.isSubmitting}
             onClose={onClose}
           />
