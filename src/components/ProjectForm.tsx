@@ -15,7 +15,7 @@ import { useProjectPermissions } from "@/hooks/useProjectPermissions";
 interface ProjectFormProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (projectData: any) => Promise<void>;
+  onSubmit: (projectData: any) => Promise<any>; // Modifié pour permettre un retour
   project?: any;
 }
 

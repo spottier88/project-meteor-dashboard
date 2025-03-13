@@ -1,3 +1,4 @@
+
 import { ProjectForm } from "@/components/ProjectForm";
 import { ProjectSelectionSheet } from "@/components/ProjectSelectionSheet";
 import { ReviewSheet } from "@/components/ReviewSheet";
@@ -6,7 +7,7 @@ import { Project } from "@/types/project";
 interface ProjectModalsProps {
   isProjectFormOpen: boolean;
   onProjectFormClose: () => void;
-  onProjectFormSubmit: (projectData: any) => Promise<void>;
+  onProjectFormSubmit: (projectData: any) => Promise<any>; // Modifié pour accepter un retour quelconque
   selectedProject: Project | null;
   isProjectSelectionOpen: boolean;
   onProjectSelectionClose: () => void;
