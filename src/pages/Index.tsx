@@ -191,6 +191,14 @@ const Index = () => {
       agilite: number;
       impact: number;
     };
+    framing: {
+      context: string;
+      stakeholders: string;
+      governance: string;
+      objectives: string;
+      timeline: string;
+      deliverables: string;
+    };
   }) => {
     try {
       console.log("[ProjectForm] Starting project operation with detailed logs");
@@ -223,6 +231,8 @@ const Index = () => {
         console.error("[ProjectForm] Error fetching roles:", rolesError);
       }
 
+      let projectId;
+
       if (selectedProject?.id) {
         console.log("[ProjectForm] Updating project:", selectedProject.id);
         const { data: updatedProject, error: projectError } = await supabase
@@ -237,6 +247,8 @@ const Index = () => {
           console.error("[ProjectForm] Project update error:", projectError);
           throw projectError;
         }
+
+        projectId = selectedProject.id;
 
         console.log("[ProjectForm] Updating innovation scores for project:", selectedProject.id);
         const { data: innovationData, error: innovationError } = await supabase
@@ -292,6 +304,8 @@ const Index = () => {
           throw projectError;
         }
 
+        projectId = newProject.id;
+
         console.log("[ProjectForm] Creating innovation scores for new project:", newProject.id);
         const { data: innovationData, error: innovationError } = await supabase
           .from("project_innovation_scores")
@@ -328,8 +342,71 @@ const Index = () => {
         }
       }
 
+      // Gestion des données de cadrage (framing)
+      if (projectId) {
+        console.log("[ProjectForm] Checking existing framing data for project:", projectId);
+        
+        const { data: existingFraming, error: checkFramingError } = await supabase
+          .from("project_framing")
+          .select("id")
+          .eq("project_id", projectId)
+          .maybeSingle();
+          
+        console.log("[ProjectForm] Existing framing check result:", { existingFraming, error: checkFramingError });
+        
+        if (checkFramingError) {
+          console.error("[ProjectForm] Error checking existing framing:", checkFramingError);
+          throw checkFramingError;
+        }
+
+        const framingData = {
+          project_id: projectId,
+          context: projectData.framing.context,
+          stakeholders: projectData.framing.stakeholders,
+          governance: projectData.framing.governance,
+          objectives: projectData.framing.objectives,
+          timeline: projectData.framing.timeline,
+          deliverables: projectData.framing.deliverables,
+        };
+
+        if (existingFraming) {
+          // Mise à jour de l'enregistrement existant
+          console.log("[ProjectForm] Updating existing framing data for project:", projectId);
+          const { data: updatedFraming, error: updateFramingError } = await supabase
+            .from("project_framing")
+            .update(framingData)
+            .eq("id", existingFraming.id)
+            .select();
+
+          console.log("[ProjectForm] Framing update result:", { updatedFraming, error: updateFramingError });
+          
+          if (updateFramingError) {
+            console.error("[ProjectForm] Error updating framing data:", updateFramingError);
+            throw updateFramingError;
+          }
+        } else {
+          // Création d'un nouvel enregistrement
+          console.log("[ProjectForm] Creating new framing data for project:", projectId);
+          const { data: newFraming, error: insertFramingError } = await supabase
+            .from("project_framing")
+            .insert(framingData)
+            .select();
+
+          console.log("[ProjectForm] Framing creation result:", { newFraming, error: insertFramingError });
+          
+          if (insertFramingError) {
+            console.error("[ProjectForm] Error inserting framing data:", insertFramingError);
+            throw insertFramingError;
+          }
+        }
+      } else {
+        console.error("[ProjectForm] No project ID available to save framing data");
+      }
+
       console.log("[ProjectForm] Project operation completed successfully");
-      await refetchProjects();
+      
+      // Retourner l'ID du projet pour permettre l'utilisation dans le composant appelant
+      return { id: projectId };
     } catch (error) {
       console.error("[ProjectForm] Operation failed:", error);
       throw error;
