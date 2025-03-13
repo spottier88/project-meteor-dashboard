@@ -173,7 +173,7 @@ export const TaskForm = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[500px] flex flex-col max-h-[80vh]">
+      <DialogContent className="sm:max-w-[600px] flex flex-col max-h-[80vh]">
         <DialogHeader>
           <DialogTitle>
             {task ? "Modifier la tâche" : "Nouvelle tâche"}
