@@ -10,7 +10,7 @@ interface UseProjectFormSubmitProps {
   canEdit: boolean;
   canCreate: boolean;
   formState: ProjectFormState;
-  onSubmit: (projectData: any) => Promise<void>;
+  onSubmit: (projectData: any) => Promise<any>; // Modifié pour permettre un retour
   onClose: () => void;
 }
 
@@ -87,16 +87,19 @@ export const useProjectFormSubmit = ({
         },
       };
 
-      // Soumettre les données du projet
-      await onSubmit(projectData);
-
-      // Pour les données de cadrage, vérifier si un enregistrement existe déjà
-      if (project?.id) {
+      // Soumettre les données du projet et récupérer le résultat
+      const result = await onSubmit(projectData);
+      
+      // Déterminer l'ID du projet (existant ou nouvellement créé)
+      const projectId = project?.id || (result?.id || result?.data?.id);
+      
+      // Ne procéder avec les données de cadrage que si nous avons un ID de projet
+      if (projectId) {
         // Vérifier d'abord si un enregistrement de cadrage existe pour ce projet
         const { data: existingFraming, error: checkError } = await supabase
           .from("project_framing")
           .select("id")
-          .eq("project_id", project.id)
+          .eq("project_id", projectId)
           .maybeSingle();
 
         if (checkError) {
@@ -106,7 +109,7 @@ export const useProjectFormSubmit = ({
 
         // Préparer les données de cadrage
         const framingData = {
-          project_id: project.id,
+          project_id: projectId,
           context: projectData.framing.context,
           stakeholders: projectData.framing.stakeholders,
           governance: projectData.framing.governance,
@@ -138,6 +141,8 @@ export const useProjectFormSubmit = ({
             throw insertError;
           }
         }
+      } else {
+        console.error("Impossible de déterminer l'ID du projet après création/mise à jour");
       }
 
       await queryClient.invalidateQueries({ queryKey: ["projects"] });
