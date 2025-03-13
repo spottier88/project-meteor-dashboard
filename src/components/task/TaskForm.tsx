@@ -173,13 +173,13 @@ export const TaskForm = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent className="sm:max-w-[500px] flex flex-col max-h-[80vh]">
         <DialogHeader>
           <DialogTitle>
             {task ? "Modifier la tâche" : "Nouvelle tâche"}
           </DialogTitle>
         </DialogHeader>
-        <div className="grid gap-4 py-4">
+        <div className="grid gap-4 py-4 overflow-y-auto flex-1">
           <div className="grid gap-2">
             <label htmlFor="title" className="text-sm font-medium">
               Titre *
