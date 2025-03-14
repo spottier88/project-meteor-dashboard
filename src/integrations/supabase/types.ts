@@ -1219,6 +1219,18 @@ export type Database = {
         }
         Returns: boolean
       }
+      get_accessible_project_managers: {
+        Args: {
+          p_user_id: string
+        }
+        Returns: {
+          id: string
+          email: string
+          first_name: string
+          last_name: string
+          created_at: string
+        }[]
+      }
       get_accessible_projects: {
         Args: {
           p_user_id: string
