@@ -1,3 +1,4 @@
+
 import { Button } from "@/components/ui/button";
 import { 
   Pencil, 
@@ -50,6 +51,17 @@ export const ProjectActions = ({
     action();
   };
 
+  // Nouvelle fonction pour la navigation vers l'historique avec état
+  const navigateToHistory = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    navigate(`/reviews/${projectId}`, { 
+      state: { 
+        refresh: true, 
+        timestamp: Date.now() 
+      }
+    });
+  };
+
   return (
     <>
       {canEdit && (
@@ -66,9 +78,7 @@ export const ProjectActions = ({
       <Button
         variant="ghost"
         size="icon"
-        onClick={(e) =>
-          handleClick(e, () => onViewHistory(projectId, projectTitle))
-        }
+        onClick={navigateToHistory}
         className="h-8 w-8"
         title="Historique des revues projets"
       >

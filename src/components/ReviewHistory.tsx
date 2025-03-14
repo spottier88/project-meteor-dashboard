@@ -1,7 +1,7 @@
 
 import { useQuery } from "@tanstack/react-query";
-import { useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Sun, Cloud, CloudLightning, ArrowLeft, Trash2 } from "lucide-react";
@@ -34,6 +34,11 @@ export const ReviewHistory = () => {
   const { projectId } = useParams();
   const [selectedReview, setSelectedReview] = useState<{ id: string; date: string } | null>(null);
   const { canCreateReview } = useReviewAccess(projectId || "");
+  const location = useLocation();
+  
+  // Récupérer l'état de navigation pour forcer le rafraîchissement
+  const refreshFlag = location.state?.refresh;
+  const refreshTimestamp = location.state?.timestamp;
 
   const { data: project } = useQuery({
     queryKey: ["project", projectId],
@@ -50,7 +55,7 @@ export const ReviewHistory = () => {
   });
 
   const { data: reviews, isLoading, refetch } = useQuery({
-    queryKey: ["reviews", projectId],
+    queryKey: ["reviews", projectId, refreshTimestamp], // Ajouter le timestamp à la queryKey
     queryFn: async () => {
       const { data, error } = await supabase
         .from("reviews")
@@ -66,7 +71,15 @@ export const ReviewHistory = () => {
       if (error) throw error;
       return data;
     },
+    staleTime: 0, // Ne jamais considérer les données comme "fraîches"
   });
+
+  // Effet pour déclencher un refetch si le flag de rafraîchissement est présent
+  useEffect(() => {
+    if (refreshFlag) {
+      refetch();
+    }
+  }, [refreshFlag, refetch]);
 
   const handleDeleteClick = (reviewId: string, date: string) => {
     setSelectedReview({ id: reviewId, date });

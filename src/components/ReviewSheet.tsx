@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Form } from "@/components/ui/form";
@@ -16,6 +17,10 @@ interface ReviewSheetProps {
   isOpen: boolean;
   onClose: () => void;
   onReviewSubmitted: () => void;
+  existingReview?: {
+    id: string;
+    created_at: string;
+  };
 }
 
 export const ReviewSheet = ({
@@ -24,6 +29,7 @@ export const ReviewSheet = ({
   isOpen,
   onClose,
   onReviewSubmitted,
+  existingReview,
 }: ReviewSheetProps) => {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -106,10 +112,11 @@ export const ReviewSheet = ({
 
       if (projectError) throw projectError;
 
-      // Invalider toutes les requêtes liées aux projets
+      // Invalider toutes les requêtes liées aux projets et aux revues
       await queryClient.invalidateQueries({ queryKey: ["projects"] });
       await queryClient.invalidateQueries({ queryKey: ["reviews", projectId] });
       await queryClient.invalidateQueries({ queryKey: ["lastReview", projectId] });
+      await queryClient.invalidateQueries({ queryKey: ["projects", projectId, "latest-review"] });
 
       toast({
         title: "Revue enregistrée",
