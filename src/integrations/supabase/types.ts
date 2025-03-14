@@ -1212,6 +1212,13 @@ export type Database = {
           can_access: boolean
         }[]
       }
+      can_view_project_members: {
+        Args: {
+          p_user_id: string
+          p_project_id: string
+        }
+        Returns: boolean
+      }
       get_accessible_projects: {
         Args: {
           p_user_id: string
