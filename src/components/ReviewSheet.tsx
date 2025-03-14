@@ -108,7 +108,9 @@ export const ReviewSheet = ({
 
       // Invalider toutes les requêtes liées aux projets
       await queryClient.invalidateQueries({ queryKey: ["projects"] });
-      
+      await queryClient.invalidateQueries({ queryKey: ["reviews", projectId] });
+      await queryClient.invalidateQueries({ queryKey: ["lastReview", projectId] });
+
       toast({
         title: "Revue enregistrée",
         description: "La revue du projet a été enregistrée avec succès.",
