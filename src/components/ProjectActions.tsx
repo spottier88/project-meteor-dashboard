@@ -7,7 +7,8 @@ import {
   ShieldAlert, 
   Trash2, 
   Users, 
-  MoreVertical 
+  MoreVertical,
+  FileText 
 } from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
@@ -102,6 +103,10 @@ export const ProjectActions = ({
                 <DropdownMenuItem onClick={() => navigate(`/risks/${projectId}`)}>
                   <ShieldAlert className="mr-2 h-4 w-4" />
                   Gérer les risques
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => navigate(`/framing/${projectId}`)}>
+                  <FileText className="mr-2 h-4 w-4" />
+                  Cadrage du projet
                 </DropdownMenuItem>
               </>
             )}

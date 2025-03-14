@@ -119,6 +119,10 @@ export const ProjectActions = ({
                   <ShieldAlert className="mr-2 h-4 w-4" />
                   Gérer les risques
                 </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => navigate(`/framing/${projectId}`)}>
+                  <FileText className="mr-2 h-4 w-4" />
+                  Cadrage du projet
+                </DropdownMenuItem>
               </>
             )}
             {_canManageTeam && (
