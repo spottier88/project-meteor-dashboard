@@ -1,7 +1,7 @@
 
 import { ProjectForm } from "@/components/ProjectForm";
 import { ProjectSelectionSheet } from "@/components/ProjectSelectionSheet";
-import { ReviewSheet } from "@/components/ReviewSheet";
+import { ReviewSheet } from "@/components/review/ReviewSheet";
 import { Project } from "@/types/project";
 
 interface ProjectModalsProps {
@@ -17,6 +17,10 @@ interface ProjectModalsProps {
   onReviewClose: () => void;
   selectedProjectForReview: { id: string; title: string; } | null;
   onReviewSubmitted: () => void;
+  existingReview?: {
+    id: string;
+    created_at: string;
+  };
 }
 
 export const ProjectModals = ({
@@ -32,6 +36,7 @@ export const ProjectModals = ({
   onReviewClose,
   selectedProjectForReview,
   onReviewSubmitted,
+  existingReview,
 }: ProjectModalsProps) => {
   return (
     <>
@@ -56,6 +61,7 @@ export const ProjectModals = ({
           isOpen={isReviewSheetOpen}
           onClose={onReviewClose}
           onReviewSubmitted={onReviewSubmitted}
+          existingReview={existingReview}
         />
       )}
     </>

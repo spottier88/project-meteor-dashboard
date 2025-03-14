@@ -1,11 +1,15 @@
+
 import { useQuery } from "@tanstack/react-query";
+import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Sun, Cloud, CloudLightning, ArrowLeft } from "lucide-react";
+import { Sun, Cloud, CloudLightning, ArrowLeft, Trash2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { ProjectHeader } from "./ProjectHeader";
+import { DeleteReviewDialog } from "./review/DeleteReviewDialog";
+import { useReviewAccess } from "@/hooks/use-review-access";
 
 const statusIcons = {
   sunny: { icon: Sun, color: "text-warning", label: "Ensoleillé" },
@@ -28,6 +32,8 @@ const progressLabels = {
 export const ReviewHistory = () => {
   const navigate = useNavigate();
   const { projectId } = useParams();
+  const [selectedReview, setSelectedReview] = useState<{ id: string; date: string } | null>(null);
+  const { canCreateReview } = useReviewAccess(projectId || "");
 
   const { data: project } = useQuery({
     queryKey: ["project", projectId],
@@ -43,7 +49,7 @@ export const ReviewHistory = () => {
     },
   });
 
-  const { data: reviews, isLoading } = useQuery({
+  const { data: reviews, isLoading, refetch } = useQuery({
     queryKey: ["reviews", projectId],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -61,6 +67,18 @@ export const ReviewHistory = () => {
       return data;
     },
   });
+
+  const handleDeleteClick = (reviewId: string, date: string) => {
+    setSelectedReview({ id: reviewId, date });
+  };
+
+  const handleCloseDialog = () => {
+    setSelectedReview(null);
+  };
+
+  const handleReviewDeleted = async () => {
+    await refetch();
+  };
 
   return (
     <div className="container mx-auto py-8 space-y-6 animate-fade-in">
@@ -108,9 +126,21 @@ export const ReviewHistory = () => {
                         })}
                       </CardTitle>
                     </div>
-                    <span className={cn("text-sm font-medium", progressColors[review.progress])}>
-                      {progressLabels[review.progress]}
-                    </span>
+                    <div className="flex items-center gap-2">
+                      <span className={cn("text-sm font-medium", progressColors[review.progress])}>
+                        {progressLabels[review.progress]}
+                      </span>
+                      {canCreateReview && (
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          className="h-8 ml-2"
+                          onClick={() => handleDeleteClick(review.id, review.created_at)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      )}
+                    </div>
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-4">
@@ -135,6 +165,17 @@ export const ReviewHistory = () => {
             );
           })}
         </div>
+      )}
+
+      {selectedReview && projectId && (
+        <DeleteReviewDialog
+          isOpen={!!selectedReview}
+          onClose={handleCloseDialog}
+          reviewId={selectedReview.id}
+          projectId={projectId}
+          reviewDate={selectedReview.date}
+          onReviewDeleted={handleReviewDeleted}
+        />
       )}
     </div>
   );

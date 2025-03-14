@@ -1,14 +1,17 @@
+
 import { useState } from "react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Form } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
 import { useForm } from "react-hook-form";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ReviewForm } from "@/components/review/types";
 import { ReviewFormFields } from "@/components/review/ReviewFormFields";
 import { ReviewActionFields } from "@/components/review/ReviewActionFields";
+import { Trash2 } from "lucide-react";
+import { DeleteReviewDialog } from "./DeleteReviewDialog";
 
 interface ReviewSheetProps {
   projectId: string;
@@ -16,6 +19,10 @@ interface ReviewSheetProps {
   isOpen: boolean;
   onClose: () => void;
   onReviewSubmitted: () => void;
+  existingReview?: {
+    id: string;
+    created_at: string;
+  };
 }
 
 export const ReviewSheet = ({
@@ -24,10 +31,12 @@ export const ReviewSheet = ({
   isOpen,
   onClose,
   onReviewSubmitted,
+  existingReview,
 }: ReviewSheetProps) => {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const queryClient = useQueryClient();
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
   // Récupération de la dernière revue pour initialiser l'avancement
   const { data: lastReview } = useQuery({
@@ -128,28 +137,65 @@ export const ReviewSheet = ({
     }
   };
 
+  const handleDeleteClick = () => {
+    setIsDeleteDialogOpen(true);
+  };
+
+  const handleDeleteClose = () => {
+    setIsDeleteDialogOpen(false);
+  };
+
+  const handleReviewDeleted = () => {
+    onReviewSubmitted();
+    onClose();
+  };
+
   return (
-    <Sheet open={isOpen} onOpenChange={onClose}>
-      <SheetContent className="w-full sm:max-w-xl overflow-y-auto">
-        <SheetHeader>
-          <SheetTitle>Nouvelle Revue - {projectTitle}</SheetTitle>
-        </SheetHeader>
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 mt-6">
-            <ReviewFormFields form={form} />
-            <ReviewActionFields form={form} />
-            
-            <div className="flex justify-end space-x-2">
-              <Button type="button" variant="outline" onClick={onClose}>
-                Annuler
+    <>
+      <Sheet open={isOpen} onOpenChange={onClose}>
+        <SheetContent className="w-full sm:max-w-xl overflow-y-auto">
+          <SheetHeader className="flex justify-between items-center pr-8">
+            <SheetTitle>Nouvelle Revue - {projectTitle}</SheetTitle>
+            {existingReview && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleDeleteClick}
+                className="h-8"
+              >
+                <Trash2 className="h-4 w-4 mr-2" />
+                Supprimer
               </Button>
-              <Button type="submit" disabled={isSubmitting}>
-                {isSubmitting ? "Enregistrement..." : "Enregistrer"}
-              </Button>
-            </div>
-          </form>
-        </Form>
-      </SheetContent>
-    </Sheet>
+            )}
+          </SheetHeader>
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 mt-6">
+              <ReviewFormFields form={form} />
+              <ReviewActionFields form={form} />
+              
+              <div className="flex justify-end space-x-2">
+                <Button type="button" variant="outline" onClick={onClose}>
+                  Annuler
+                </Button>
+                <Button type="submit" disabled={isSubmitting}>
+                  {isSubmitting ? "Enregistrement..." : "Enregistrer"}
+                </Button>
+              </div>
+            </form>
+          </Form>
+        </SheetContent>
+      </Sheet>
+
+      {existingReview && isDeleteDialogOpen && (
+        <DeleteReviewDialog
+          isOpen={isDeleteDialogOpen}
+          onClose={handleDeleteClose}
+          reviewId={existingReview.id}
+          projectId={projectId}
+          reviewDate={existingReview.created_at}
+          onReviewDeleted={handleReviewDeleted}
+        />
+      )}
+    </>
   );
 };
