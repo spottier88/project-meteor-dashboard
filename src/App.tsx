@@ -27,6 +27,7 @@ import { TeamActivities } from "./pages/TeamActivities";
 import { GeneralSettings } from "@/components/admin/GeneralSettings";
 import { ActivityTypeManagementPage } from "./pages/ActivityTypeManagement";
 import { AIPromptManagement } from "./pages/AIPromptManagement";
+import { ProjectFraming } from "./pages/ProjectFraming";
 import { logger } from "./utils/logger";
 
 const queryClient = new QueryClient({
@@ -192,6 +193,14 @@ function AppContent() {
             element={
               <ProtectedRoute>
                 <ReviewHistory />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/framing/:projectId"
+            element={
+              <ProtectedRoute>
+                <ProjectFraming />
               </ProtectedRoute>
             }
           />
