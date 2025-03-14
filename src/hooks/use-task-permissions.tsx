@@ -1,12 +1,13 @@
+
 import { usePermissionsContext } from "@/contexts/PermissionsContext";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
 export const useTaskPermissions = (projectId: string) => {
-  const { isAdmin, userProfile } = usePermissionsContext();
+  const { isAdmin, isManager, userProfile } = usePermissionsContext();
   
   const { data: projectAccess } = useQuery({
-    queryKey: ["projectAccess", projectId, userProfile?.id],
+    queryKey: ["projectAccess", projectId, userProfile?.id, isAdmin, isManager],
     queryFn: async () => {
       if (!userProfile?.id || !projectId) return {
         canEdit: false,
@@ -28,6 +29,7 @@ export const useTaskPermissions = (projectId: string) => {
         };
       }
 
+      // Vérifier l'accès via la fonction can_manager_access_project
       const { data: canAccess } = await supabase
         .rpc('can_manager_access_project', {
           p_user_id: userProfile.id,
@@ -35,20 +37,22 @@ export const useTaskPermissions = (projectId: string) => {
         });
 
       return {
-        canEdit: !!canAccess,
+        canEdit: !!canAccess || isManager,  // Manager a des droits d'édition
         isProjectManager,
       };
     },
     enabled: !!userProfile?.id && !!projectId,
   });
 
-  const canManage = isAdmin || projectAccess?.canEdit || false;
+  // Managers peuvent créer/modifier/supprimer des tâches
+  const canManage = isAdmin || isManager || projectAccess?.canEdit || false;
   
   return {
     canCreateTask: canManage,
     canEditTask: (assignee?: string) => canManage || assignee === userProfile?.email,
     canDeleteTask: canManage,
     isAdmin,
+    isManager,
     isProjectManager: projectAccess?.isProjectManager || false,
     isMember: false,
     userEmail: userProfile?.email,

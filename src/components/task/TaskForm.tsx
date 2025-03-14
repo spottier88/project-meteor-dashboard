@@ -12,6 +12,7 @@ import { useTaskForm } from "./useTaskForm";
 import { ParentTaskSelector } from "./ParentTaskSelector";
 import { AssigneeSelector } from "./AssigneeSelector";
 import { TaskFormProps } from "./TaskFormTypes";
+import { usePermissionsContext } from "@/contexts/PermissionsContext";
 
 export const TaskForm = ({ 
   isOpen, 
@@ -21,6 +22,8 @@ export const TaskForm = ({
   task,
   readOnlyFields = false
 }: TaskFormProps) => {
+  const { isAdmin, isManager } = usePermissionsContext();
+  
   // Récupérer les informations du projet pour le chef de projet
   const { data: project, isSuccess: projectLoaded } = useQuery({
     queryKey: ["project-for-task", projectId],
@@ -41,7 +44,7 @@ export const TaskForm = ({
 
   // Fetch project members
   const { data: projectMembers } = useQuery({
-    queryKey: ["projectMembers", projectId, project?.project_manager],
+    queryKey: ["projectMembers", projectId, project?.project_manager, isAdmin, isManager],
     queryFn: async () => {
       if (!projectId) return [];
       

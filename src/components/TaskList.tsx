@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input";
 import { ViewToggle, ViewMode } from "@/components/ViewToggle";
 import { KanbanBoard } from "@/components/KanbanBoard";
 import { useTaskPermissions } from "@/hooks/use-task-permissions";
+import { usePermissionsContext } from "@/contexts/PermissionsContext";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -36,6 +37,7 @@ export const TaskList = ({
   isAdmin,
 }: TaskListProps) => {
   const { toast } = useToast();
+  const { isManager } = usePermissionsContext();
   const [isTaskFormOpen, setIsTaskFormOpen] = useState(false);
   const [selectedTask, setSelectedTask] = useState<any>(null);
   const [taskToDelete, setTaskToDelete] = useState<any>(null);
@@ -55,6 +57,8 @@ export const TaskList = ({
         .order("created_at", { ascending: false });
 
       if (error) throw error;
+      
+      console.log(`Récupération de ${data?.length || 0} tâches pour le projet ${projectId}`);
       return data;
     },
   });

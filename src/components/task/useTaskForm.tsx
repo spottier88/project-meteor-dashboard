@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
+import { usePermissionsContext } from "@/contexts/PermissionsContext";
 
 interface TaskData {
   title: string;
@@ -49,6 +50,8 @@ export const useTaskForm = ({
 }: UseTaskFormParams) => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { isAdmin, isManager } = usePermissionsContext();
+  
   const [title, setTitle] = useState(task?.title || "");
   const [description, setDescription] = useState(task?.description || "");
   const [status, setStatus] = useState<"todo" | "in_progress" | "done">(task?.status || "todo");
@@ -72,15 +75,31 @@ export const useTaskForm = ({
       setStartDate(task.start_date ? new Date(task.start_date) : undefined);
       setAssignee(task.assignee || "");
       setParentTaskId(task.parent_task_id);
-      setAssignmentMode(
-        projectMembers?.some(m => m.profiles.email === task.assignee)
-          ? "member"
-          : "free"
-      );
+      
+      // Détermine si l'assigné est un membre du projet ou une saisie libre
+      const isMember = projectMembers?.some(m => m.profiles.email === task.assignee);
+      setAssignmentMode(isMember ? "member" : "free");
+      
+      console.log(`Initialisation du formulaire pour la tâche ${task.id}, assignee: ${task.assignee}, mode: ${isMember ? "member" : "free"}`);
     } else {
       resetForm();
+      
+      // Pour les nouvelles tâches, utiliser "member" par défaut si des membres sont disponibles
+      if (projectMembers && projectMembers.length > 0) {
+        setAssignmentMode("member");
+      }
     }
   }, [task, projectMembers]);
+
+  // Log des membres disponibles pour debug
+  useEffect(() => {
+    if (projectMembers) {
+      console.log(`useTaskForm: ${projectMembers.length} membres disponibles pour le projet ${projectId}`);
+      if (isAdmin || isManager) {
+        console.log('Utilisateur est admin ou manager, tous les membres devraient être visibles');
+      }
+    }
+  }, [projectMembers, projectId, isAdmin, isManager]);
 
   const resetForm = () => {
     setTitle("");

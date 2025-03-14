@@ -2,6 +2,7 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useEffect } from "react";
 
 interface AssigneeSelectorProps {
   assignee: string;
@@ -26,6 +27,21 @@ export const AssigneeSelector = ({
   setAssignmentMode,
   projectMembers
 }: AssigneeSelectorProps) => {
+  // Définir automatiquement le mode "member" si des membres sont disponibles
+  useEffect(() => {
+    if (projectMembers && projectMembers.length > 0 && !assignee) {
+      setAssignmentMode("member");
+    }
+  }, [projectMembers, assignee, setAssignmentMode]);
+
+  // Afficher un message de debug dans la console
+  useEffect(() => {
+    if (projectMembers) {
+      console.log(`AssigneeSelector: ${projectMembers.length} membres disponibles`, 
+        projectMembers.map(m => `${m.profiles.first_name} ${m.profiles.last_name} (${m.profiles.email})`));
+    }
+  }, [projectMembers]);
+
   return (
     <div className="grid gap-2">
       <label className="text-sm font-medium">
