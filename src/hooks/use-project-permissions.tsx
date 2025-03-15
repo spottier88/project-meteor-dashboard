@@ -1,3 +1,4 @@
+
 import { usePermissionsContext } from "@/contexts/PermissionsContext";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -11,6 +12,7 @@ export const useProjectPermissions = (projectId: string) => {
       if (!userProfile?.id || !projectId) return {
         canEdit: false,
         isProjectManager: false,
+        isMember: false
       };
 
       const { data: project } = await supabase
@@ -25,6 +27,7 @@ export const useProjectPermissions = (projectId: string) => {
         return {
           canEdit: true,
           isProjectManager,
+          isMember: true
         };
       }
 
@@ -34,21 +37,46 @@ export const useProjectPermissions = (projectId: string) => {
           p_project_id: projectId
         });
 
+      const { data: isMember } = await supabase
+        .from("project_members")
+        .select("user_id")
+        .eq("project_id", projectId)
+        .eq("user_id", userProfile.id)
+        .maybeSingle();
+
       return {
         canEdit: !!canAccess,
         isProjectManager,
+        isMember: !!isMember
       };
     },
     enabled: !!userProfile?.id && !!projectId,
     staleTime: 300000, // 5 minutes
   });
 
+  const { data: userRoles } = useQuery({
+    queryKey: ["userRoles", userProfile?.id],
+    queryFn: async () => {
+      if (!userProfile?.id) return [];
+      const { data } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", userProfile.id);
+      return data || [];
+    },
+    enabled: !!userProfile?.id,
+  });
+
+  const isProjectManager = userRoles?.some(ur => ur.role === 'chef_projet') || false;
+
   return {
     canManageRisks: isAdmin || projectAccess?.canEdit || false,
     canEdit: projectAccess?.canEdit || false,
+    canCreate: isAdmin || isProjectManager,
     canManageTeam: isAdmin || projectAccess?.isProjectManager || false,
     isAdmin,
     isProjectManager: projectAccess?.isProjectManager || false,
+    isMember: projectAccess?.isMember || false,
     userEmail: userProfile?.email,
   };
 };

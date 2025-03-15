@@ -4,16 +4,16 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { ProjectSummaryHeader } from "@/components/project/ProjectSummaryHeader";
 import { FramingDetails } from "@/components/framing/FramingDetails";
-import { useProjectPermissions } from "@/hooks/useProjectPermissions";
+import { useProjectPermissions } from "@/hooks/use-project-permissions";
 
 export const ProjectFraming = () => {
   const { projectId } = useParams<{ projectId: string }>();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { isProjectManager, isAdmin } = useProjectPermissions(projectId || "");
+  const { isProjectManager, isAdmin, canEdit } = useProjectPermissions(projectId || "");
 
   const { data: project } = useQuery({
     queryKey: ["project", projectId],

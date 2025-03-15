@@ -1,14 +1,29 @@
 
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from "@/components/ui/button";
+import { Pencil } from "lucide-react";
+import { FramingSectionEditor } from "./FramingSectionEditor";
+import { useProjectPermissions } from "@/hooks/use-project-permissions";
 
 interface FramingDetailsProps {
   projectId: string;
 }
 
+type SectionKey = "context" | "stakeholders" | "governance" | "objectives" | "timeline" | "deliverables";
+
+interface Section {
+  title: string;
+  key: SectionKey;
+}
+
 export const FramingDetails = ({ projectId }: FramingDetailsProps) => {
+  const { canEdit } = useProjectPermissions(projectId);
+  const [editingSection, setEditingSection] = useState<SectionKey | null>(null);
+
   const { data: framing, isLoading } = useQuery({
     queryKey: ["project-framing", projectId],
     queryFn: async () => {
@@ -45,7 +60,16 @@ export const FramingDetails = ({ projectId }: FramingDetailsProps) => {
     );
   }
 
-  if (!framing) {
+  const sections: Section[] = [
+    { title: "Contexte", key: "context" },
+    { title: "Parties prenantes", key: "stakeholders" },
+    { title: "Gouvernance", key: "governance" },
+    { title: "Objectifs", key: "objectives" },
+    { title: "Calendrier", key: "timeline" },
+    { title: "Livrables", key: "deliverables" },
+  ];
+
+  if (!framing && !canEdit) {
     return (
       <Card className="w-full">
         <CardContent className="p-6">
@@ -57,28 +81,38 @@ export const FramingDetails = ({ projectId }: FramingDetailsProps) => {
     );
   }
 
-  const sections = [
-    { title: "Contexte", content: framing.context },
-    { title: "Parties prenantes", content: framing.stakeholders },
-    { title: "Gouvernance", content: framing.governance },
-    { title: "Objectifs", content: framing.objectives },
-    { title: "Calendrier", content: framing.timeline },
-    { title: "Livrables", content: framing.deliverables },
-  ];
-
   return (
     <div className="space-y-6">
-      {sections.map((section, index) => (
-        <Card key={index} className="w-full">
-          <CardHeader>
+      {sections.map((section) => (
+        <Card key={section.key} className="w-full">
+          <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle className="text-xl">{section.title}</CardTitle>
+            {canEdit && editingSection !== section.key && (
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setEditingSection(section.key)}
+              >
+                <Pencil className="h-4 w-4" />
+              </Button>
+            )}
           </CardHeader>
           <CardContent>
-            {section.content ? (
-              <div className="whitespace-pre-wrap">{section.content}</div>
+            {editingSection === section.key ? (
+              <FramingSectionEditor
+                projectId={projectId}
+                sectionTitle={section.title}
+                sectionKey={section.key}
+                content={framing?.[section.key] || ""}
+                onCancel={() => setEditingSection(null)}
+              />
+            ) : framing?.[section.key] ? (
+              <div className="whitespace-pre-wrap">{framing[section.key]}</div>
             ) : (
               <p className="text-muted-foreground italic">
-                Aucune information définie
+                {canEdit 
+                  ? "Cliquez sur le bouton d'édition pour définir cette section"
+                  : "Aucune information définie"}
               </p>
             )}
           </CardContent>
