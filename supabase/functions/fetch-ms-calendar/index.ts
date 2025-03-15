@@ -13,6 +13,14 @@ interface RequestBody {
   endDate: string;
 }
 
+// Fonction pour extraire le code projet de la description
+function extractProjectCode(description: string): string | null {
+  // Rechercher un pattern #P-XXXX# dans la description
+  const projectCodeRegex = /#(P-[A-Za-z0-9]{4})#/;
+  const match = description.match(projectCodeRegex);
+  return match ? match[1] : null;
+}
+
 serve(async (req) => {
   // Gestion du CORS
   if (req.method === 'OPTIONS') {
@@ -34,7 +42,7 @@ serve(async (req) => {
 
     // Appel à Microsoft Graph
     const response = await fetch(
-      `https://graph.microsoft.com/v1.0/me/calendarView?startDateTime=${start}&endDateTime=${end}&$select=subject,start,end`,
+      `https://graph.microsoft.com/v1.0/me/calendarView?startDateTime=${start}&endDateTime=${end}&$select=subject,start,end,body`,
       {
         headers: {
           'Authorization': `Bearer ${accessToken}`,
@@ -50,14 +58,24 @@ serve(async (req) => {
     const data = await response.json();
 
     // Conversion des événements au format attendu par le frontend
-    const events = data.value.map((event: any) => ({
-      id: event.id,
-      title: event.subject,
-      startTime: new Date(event.start.dateTime + 'Z'),
-      endTime: new Date(event.end.dateTime + 'Z'),
-      duration: Math.round((new Date(event.end.dateTime + 'Z').getTime() - new Date(event.start.dateTime + 'Z').getTime()) / (1000 * 60)),
-      selected: true
-    }));
+    const events = data.value.map((event: any) => {
+      // Extraire le contenu du corps de l'événement
+      const description = event.body?.content || '';
+      
+      // Extraire le code projet s'il existe
+      const projectCode = extractProjectCode(description);
+      
+      return {
+        id: event.id,
+        title: event.subject,
+        description: description,
+        startTime: new Date(event.start.dateTime + 'Z'),
+        endTime: new Date(event.end.dateTime + 'Z'),
+        duration: Math.round((new Date(event.end.dateTime + 'Z').getTime() - new Date(event.start.dateTime + 'Z').getTime()) / (1000 * 60)),
+        selected: true,
+        projectCode: projectCode, // Ajouter le code projet extrait
+      };
+    });
 
     console.log(`✅ ${events.length} événements récupérés`);
 

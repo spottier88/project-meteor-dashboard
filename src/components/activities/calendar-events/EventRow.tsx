@@ -16,6 +16,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { ActivityType, CalendarEvent } from '@/types/activity';
+import { Badge } from '@/components/ui/badge';
+import { InfoCircle } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface Project {
   id: string;
@@ -53,6 +56,21 @@ export const EventRow: React.FC<EventRowProps> = ({
             disabled={!event.selected}
             placeholder="Description de l'événement"
           />
+          {event.projectCode && (
+            <div className="flex items-center mt-1">
+              <Badge variant="outline" className="mr-2">Code Projet: {event.projectCode}</Badge>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <InfoCircle className="h-4 w-4 text-muted-foreground" />
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Code projet détecté dans la description</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </div>
+          )}
         </div>
       </TableCell>
       <TableCell>
@@ -65,7 +83,7 @@ export const EventRow: React.FC<EventRowProps> = ({
           onValueChange={(value) => onEventChange(event.id, { projectId: value })}
           disabled={!event.selected}
         >
-          <SelectTrigger className="w-[200px]">
+          <SelectTrigger className={`w-[200px] ${event.projectCode ? 'border-green-500' : ''}`}>
             <SelectValue placeholder="Sélectionner un projet" />
           </SelectTrigger>
           <SelectContent>

@@ -4,10 +4,8 @@ export interface ActivityType {
   code: string;
   label: string;
   color: string;
-  display_order: number;
   is_active: boolean;
-  created_at?: string;
-  updated_at?: string;
+  display_order: number;
 }
 
 export interface CalendarEvent {
@@ -17,7 +15,25 @@ export interface CalendarEvent {
   startTime: Date;
   endTime: Date;
   duration: number;
-  activityType?: string; // Already string, keeping for consistency
+  selected: boolean;
   projectId?: string;
-  selected?: boolean;
+  activityType?: string;
+  projectCode?: string; // Code projet extrait de la description
+}
+
+export interface Activity {
+  id: string;
+  user_id: string;
+  project_id: string;
+  activity_type: string;
+  description?: string;
+  start_time: string;
+  duration_minutes: number;
+  created_at: string;
+}
+
+export interface ActivityWithDetails extends Activity {
+  project_title: string;
+  activity_type_label: string;
+  activity_type_color: string;
 }
