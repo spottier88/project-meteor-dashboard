@@ -17,7 +17,7 @@ import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { ActivityType, CalendarEvent } from '@/types/activity';
 import { Badge } from '@/components/ui/badge';
-import { InfoCircle } from 'lucide-react';
+import { Info } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface Project {
@@ -62,7 +62,7 @@ export const EventRow: React.FC<EventRowProps> = ({
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <InfoCircle className="h-4 w-4 text-muted-foreground" />
+                    <Info className="h-4 w-4 text-muted-foreground" />
                   </TooltipTrigger>
                   <TooltipContent>
                     <p>Code projet détecté dans la description</p>
