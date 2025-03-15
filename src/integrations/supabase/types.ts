@@ -551,6 +551,32 @@ export type Database = {
         }
         Relationships: []
       }
+      project_codes: {
+        Row: {
+          code: string
+          created_at: string | null
+          project_id: string
+        }
+        Insert: {
+          code: string
+          created_at?: string | null
+          project_id: string
+        }
+        Update: {
+          code?: string
+          created_at?: string | null
+          project_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_codes_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: true
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       project_framing: {
         Row: {
           context: string | null
@@ -592,7 +618,7 @@ export type Database = {
           {
             foreignKeyName: "project_framing_project_id_fkey"
             columns: ["project_id"]
-            isOneToOne: false
+            isOneToOne: true
             referencedRelation: "projects"
             referencedColumns: ["id"]
           },
@@ -1218,6 +1244,12 @@ export type Database = {
           p_project_id: string
         }
         Returns: boolean
+      }
+      generate_project_code: {
+        Args: {
+          project_uuid: string
+        }
+        Returns: string
       }
       get_accessible_project_managers: {
         Args: {
