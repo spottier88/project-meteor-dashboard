@@ -7,6 +7,9 @@ import { SortableHeader, SortDirection } from "@/components/ui/sortable-header";
 import { Button } from "@/components/ui/button";
 import { ChevronDown, ChevronRight, Pencil, Trash2 } from "lucide-react";
 import { useTaskPermissions } from "@/hooks/use-task-permissions";
+import { formatUserName } from "@/utils/formatUserName";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 interface Task {
   id: string;
@@ -43,6 +46,58 @@ export const TaskTable = ({ tasks, onEdit, onDelete }: TaskTableProps) => {
   const [sortDirection, setSortDirection] = useState<SortDirection>(null);
   const [expandedTasks, setExpandedTasks] = useState<Record<string, boolean>>({});
   const { canEditTask, canDeleteTask } = useTaskPermissions(tasks[0]?.project_id || "");
+
+  // Récupérer les profils des membres du projet
+  const { data: projectMembers } = useQuery({
+    queryKey: ["projectMembers", tasks[0]?.project_id],
+    queryFn: async () => {
+      if (!tasks[0]?.project_id) return [];
+      
+      const { data, error } = await supabase
+        .from("project_members")
+        .select(`
+          user_id,
+          profiles:user_id (
+            id,
+            email,
+            first_name,
+            last_name
+          )
+        `)
+        .eq("project_id", tasks[0].project_id);
+
+      if (error) throw error;
+      
+      // Récupérer aussi le chef de projet
+      const { data: project } = await supabase
+        .from("projects")
+        .select("project_manager")
+        .eq("id", tasks[0].project_id)
+        .maybeSingle();
+      
+      if (project?.project_manager) {
+        const { data: pmProfile } = await supabase
+          .from("profiles")
+          .select("id, email, first_name, last_name")
+          .eq("email", project.project_manager)
+          .maybeSingle();
+          
+        if (pmProfile) {
+          // Vérifier que le chef de projet n'est pas déjà dans la liste
+          const isAlreadyInList = data?.some(m => m.profiles?.email === pmProfile.email);
+          if (!isAlreadyInList) {
+            data?.push({
+              user_id: pmProfile.id,
+              profiles: pmProfile
+            });
+          }
+        }
+      }
+      
+      return data || [];
+    },
+    enabled: !!tasks[0]?.project_id,
+  });
 
   const handleSort = (key: string) => {
     if (sortKey === key) {
@@ -86,6 +141,9 @@ export const TaskTable = ({ tasks, onEdit, onDelete }: TaskTableProps) => {
       childTasksByParent[task.parent_task_id].push(task);
     }
   });
+
+  // Extraire les profils pour les passer à formatUserName
+  const profiles = projectMembers?.map(member => member.profiles) || [];
 
   // Trier les tâches parentes
   const sortedParentTasks = [...parentTasks].sort((a: any, b: any) => {
@@ -187,7 +245,7 @@ export const TaskTable = ({ tasks, onEdit, onDelete }: TaskTableProps) => {
                   {statusLabels[task.status]}
                 </Badge>
               </TableCell>
-              <TableCell>{task.assignee || "-"}</TableCell>
+              <TableCell>{formatUserName(task.assignee, profiles)}</TableCell>
               <TableCell>
                 {task.start_date
                   ? new Date(task.start_date).toLocaleDateString("fr-FR")
@@ -239,7 +297,7 @@ export const TaskTable = ({ tasks, onEdit, onDelete }: TaskTableProps) => {
                       {statusLabels[childTask.status]}
                     </Badge>
                   </TableCell>
-                  <TableCell>{childTask.assignee || "-"}</TableCell>
+                  <TableCell>{formatUserName(childTask.assignee, profiles)}</TableCell>
                   <TableCell>
                     {childTask.start_date
                       ? new Date(childTask.start_date).toLocaleDateString("fr-FR")

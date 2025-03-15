@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -8,6 +9,7 @@ import { Pencil, Trash2, ChevronDown, ChevronRight } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { cn } from "@/lib/utils";
 import { useTaskPermissions } from "@/hooks/use-task-permissions";
+import { formatUserName } from "@/utils/formatUserName";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -45,6 +47,61 @@ export const KanbanBoard = ({ projectId, readOnly = false, onEditTask }: KanbanB
   const [expandedTasks, setExpandedTasks] = useState<Record<string, boolean>>({});
 
   const { canEditTask, canDeleteTask } = useTaskPermissions(projectId);
+
+  // Récupérer les profils des membres du projet pour formater les noms
+  const { data: projectMembers } = useQuery({
+    queryKey: ["projectMembers", projectId],
+    queryFn: async () => {
+      if (!projectId) return [];
+      
+      const { data, error } = await supabase
+        .from("project_members")
+        .select(`
+          user_id,
+          profiles:user_id (
+            id,
+            email,
+            first_name,
+            last_name
+          )
+        `)
+        .eq("project_id", projectId);
+
+      if (error) throw error;
+      
+      // Récupérer aussi le chef de projet
+      const { data: project } = await supabase
+        .from("projects")
+        .select("project_manager")
+        .eq("id", projectId)
+        .maybeSingle();
+      
+      if (project?.project_manager) {
+        const { data: pmProfile } = await supabase
+          .from("profiles")
+          .select("id, email, first_name, last_name")
+          .eq("email", project.project_manager)
+          .maybeSingle();
+          
+        if (pmProfile) {
+          // Vérifier que le chef de projet n'est pas déjà dans la liste
+          const isAlreadyInList = data?.some(m => m.profiles?.email === pmProfile.email);
+          if (!isAlreadyInList) {
+            data?.push({
+              user_id: pmProfile.id,
+              profiles: pmProfile
+            });
+          }
+        }
+      }
+      
+      return data || [];
+    },
+    enabled: !!projectId,
+  });
+
+  // Extraire les profils pour les passer à formatUserName
+  const profiles = projectMembers?.map(member => member.profiles) || [];
 
   const { data: taskData, refetch } = useQuery({
     queryKey: ["tasks", projectId],
@@ -199,7 +256,7 @@ export const KanbanBoard = ({ projectId, readOnly = false, onEditTask }: KanbanB
                       )}
                       {task.assignee && (
                         <p className="text-sm text-muted-foreground">
-                          Assigné à : {task.assignee}
+                          Assigné à : {formatUserName(task.assignee, profiles)}
                         </p>
                       )}
                       {task.start_date && (
@@ -256,7 +313,7 @@ export const KanbanBoard = ({ projectId, readOnly = false, onEditTask }: KanbanB
                               )}
                               {childTask.assignee && (
                                 <p className="text-sm text-muted-foreground">
-                                  Assigné à : {childTask.assignee}
+                                  Assigné à : {formatUserName(childTask.assignee, profiles)}
                                 </p>
                               )}
                               {childTask.start_date && (

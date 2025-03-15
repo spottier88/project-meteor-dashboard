@@ -1,8 +1,12 @@
+
 import { Button } from "@/components/ui/button";
 import { TableCell, TableRow } from "@/components/ui/table";
 import { Pencil, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTaskPermissions } from "@/hooks/use-task-permissions";
+import { formatUserName } from "@/utils/formatUserName";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 interface TaskCardProps {
   task: {
@@ -34,6 +38,59 @@ const statusLabels = {
 export const TaskCard = ({ task, onEdit, onDelete, showActions = true }: TaskCardProps) => {
   const { canEditTask, canDeleteTask } = useTaskPermissions(task.project_id);
 
+  // Récupérer les profils pour formater l'affichage du nom
+  const { data: projectMembers } = useQuery({
+    queryKey: ["projectMembers", task.project_id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("project_members")
+        .select(`
+          user_id,
+          profiles:user_id (
+            id,
+            email,
+            first_name,
+            last_name
+          )
+        `)
+        .eq("project_id", task.project_id);
+
+      if (error) throw error;
+      
+      // Récupérer aussi le chef de projet
+      const { data: project } = await supabase
+        .from("projects")
+        .select("project_manager")
+        .eq("id", task.project_id)
+        .maybeSingle();
+      
+      if (project?.project_manager) {
+        const { data: pmProfile } = await supabase
+          .from("profiles")
+          .select("id, email, first_name, last_name")
+          .eq("email", project.project_manager)
+          .maybeSingle();
+          
+        if (pmProfile) {
+          // Vérifier que le chef de projet n'est pas déjà dans la liste
+          const isAlreadyInList = data?.some(m => m.profiles?.email === pmProfile.email);
+          if (!isAlreadyInList) {
+            data?.push({
+              user_id: pmProfile.id,
+              profiles: pmProfile
+            });
+          }
+        }
+      }
+      
+      return data || [];
+    },
+    enabled: !!task.project_id,
+  });
+
+  // Extraire les profils pour les passer à formatUserName
+  const profiles = projectMembers?.map(member => member.profiles) || [];
+
   const isTaskOverdue = () => {
     if (!task.due_date || task.status === "done") return false;
     const today = new Date();
@@ -51,7 +108,7 @@ export const TaskCard = ({ task, onEdit, onDelete, showActions = true }: TaskCar
           {statusLabels[task.status]}
         </span>
       </TableCell>
-      <TableCell>{task.assignee || "-"}</TableCell>
+      <TableCell>{formatUserName(task.assignee, profiles)}</TableCell>
       <TableCell>
         <span className={cn(
           isTaskOverdue() ? "text-red-600 font-medium" : ""
