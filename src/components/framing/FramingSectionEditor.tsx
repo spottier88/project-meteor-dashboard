@@ -28,15 +28,29 @@ export const FramingSectionEditor = ({
 
   const { mutate, isLoading } = useMutation({
     mutationFn: async () => {
+      // 1. Récupérer d'abord les données existantes
+      const { data: existingData, error: fetchError } = await supabase
+        .from("project_framing")
+        .select("*")
+        .eq("project_id", projectId)
+        .maybeSingle();
+        
+      if (fetchError) throw fetchError;
+      
+      // 2. Préparer les données à mettre à jour
+      const updatedData = {
+        project_id: projectId,
+        ...(existingData || {}), // Utiliser les données existantes comme base
+        [sectionKey]: value, // Remplacer seulement la section éditée
+      };
+      
+      // 3. Faire l'upsert avec toutes les données
       const { data, error } = await supabase
         .from("project_framing")
-        .upsert({
-          project_id: projectId,
-          [sectionKey]: value,
-        }, {
+        .upsert(updatedData, {
           onConflict: "project_id",
         });
-
+        
       if (error) throw error;
       return data;
     },
