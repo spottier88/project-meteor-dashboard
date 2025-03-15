@@ -51,10 +51,10 @@ export const EventRow: React.FC<EventRowProps> = ({
       <TableCell>
         <div className="space-y-2">
           <Textarea
-            value={event.description || event.title || ''}
-            onChange={(e) => onEventChange(event.id, { description: e.target.value })}
+            value={event.title || ''}
+            onChange={(e) => onEventChange(event.id, { title: e.target.value })}
             disabled={!event.selected}
-            placeholder="Description de l'événement"
+            placeholder="Titre de l'événement"
           />
           {event.projectCode && (
             <div className="flex items-center mt-1">
