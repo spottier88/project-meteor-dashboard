@@ -38,3 +38,14 @@ export interface ActivityWithDetails extends Activity {
   activity_type_label: string;
   activity_type_color: string;
 }
+
+// Interface pour la saisie en masse d'activités
+export interface BulkActivityEntry {
+  id: string; // ID temporaire pour gérer les lignes dans l'UI
+  project_id: string;
+  activity_type: string;
+  description: string;
+  duration_minutes: number;
+  start_time: string;
+  isValid?: boolean;
+}

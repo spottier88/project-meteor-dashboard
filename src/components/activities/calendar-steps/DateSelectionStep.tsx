@@ -4,6 +4,8 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Calendar } from '@/components/ui/calendar';
 import { fr } from 'date-fns/locale';
+import { Card, CardContent } from '@/components/ui/card';
+import { Info } from 'lucide-react';
 
 interface DateSelectionStepProps {
   onDateSelect: (startDate: Date, endDate: Date) => void;
