@@ -145,8 +145,15 @@ export const useCalendarImport = () => {
           };
         });
         
-        setEvents(transformedEvents);
-        return transformedEvents;
+        // Trier les événements par date de début (du plus ancien au plus récent)
+        const sortedEvents = transformedEvents.sort((a, b) => 
+          a.startTime.getTime() - b.startTime.getTime()
+        );
+        
+        console.log('Événements triés par date de début');
+        
+        setEvents(sortedEvents);
+        return sortedEvents;
       } catch (error: any) {
         console.error('useCalendarImport: Erreur lors de la récupération des événements:', error);
         throw error;
