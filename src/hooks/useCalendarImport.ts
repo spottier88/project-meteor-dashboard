@@ -132,11 +132,14 @@ export const useCalendarImport = () => {
             }
           }
 
+          // Présélectionner automatiquement les événements avec un code projet
+          const shouldBeSelected = event.projectCode !== null && event.projectCode !== undefined;
+
           return {
             ...event,
             startTime: new Date(event.startTime),
             endTime: new Date(event.endTime),
-            selected: false,
+            selected: shouldBeSelected, // Présélection automatique si code projet détecté
             projectId: projectId,
             activityType: activityType
           };
