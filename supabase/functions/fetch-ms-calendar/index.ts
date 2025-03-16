@@ -29,6 +29,53 @@ function extractActivityTypeCode(description: string): string | null {
   return match ? match[1] : null;
 }
 
+// Nouvelle fonction pour récupérer tous les événements avec pagination
+async function fetchAllEvents(accessToken: string, startDate: string, endDate: string) {
+  const events = [];
+  let nextLink = null;
+  
+  // URL initiale pour la première page de résultats
+  let url = `https://graph.microsoft.com/v1.0/me/calendarView?startDateTime=${startDate}&endDateTime=${endDate}&$select=subject,start,end,body`;
+  
+  console.log(`🔍 Début de la récupération des événements du ${startDate} au ${endDate}`);
+  
+  do {
+    // Utiliser l'URL de base pour la première requête ou nextLink pour les pages suivantes
+    const response = await fetch(url, {
+      headers: {
+        'Authorization': `Bearer ${accessToken}`,
+        'Accept': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error(`❌ Erreur Microsoft Graph (${response.status}): ${errorText}`);
+      throw new Error(`Erreur Microsoft Graph: ${response.statusText} (${response.status})`);
+    }
+
+    const data = await response.json();
+    
+    // Ajouter les événements de cette page au tableau final
+    if (data.value && Array.isArray(data.value)) {
+      console.log(`✅ Récupération de ${data.value.length} événements supplémentaires`);
+      events.push(...data.value);
+    }
+    
+    // Vérifier s'il y a une page suivante
+    nextLink = data['@odata.nextLink'];
+    
+    // Si oui, utiliser cette URL pour la prochaine itération
+    if (nextLink) {
+      url = nextLink;
+      console.log(`🔄 Chargement de la page suivante...`);
+    }
+  } while (nextLink);
+  
+  console.log(`🎉 Récupération terminée: ${events.length} événements au total`);
+  return events;
+}
+
 serve(async (req) => {
   // Gestion du CORS
   if (req.method === 'OPTIONS') {
@@ -48,25 +95,11 @@ serve(async (req) => {
     const start = new Date(startDate).toISOString();
     const end = new Date(endDate).toISOString();
 
-    // Appel à Microsoft Graph
-    const response = await fetch(
-      `https://graph.microsoft.com/v1.0/me/calendarView?startDateTime=${start}&endDateTime=${end}&$select=subject,start,end,body`,
-      {
-        headers: {
-          'Authorization': `Bearer ${accessToken}`,
-          'Accept': 'application/json',
-        },
-      }
-    );
-
-    if (!response.ok) {
-      throw new Error(`Erreur Microsoft Graph: ${response.statusText}`);
-    }
-
-    const data = await response.json();
+    // Récupérer tous les événements avec pagination
+    const allEvents = await fetchAllEvents(accessToken, start, end);
 
     // Conversion des événements au format attendu par le frontend
-    const events = data.value.map((event: any) => {
+    const events = allEvents.map((event: any) => {
       // Extraire le contenu du corps de l'événement
       const description = event.body?.content || '';
       
@@ -89,7 +122,7 @@ serve(async (req) => {
       };
     });
 
-    console.log(`✅ ${events.length} événements récupérés`);
+    console.log(`✅ ${events.length} événements récupérés au total`);
 
     return new Response(
       JSON.stringify({ events }),
