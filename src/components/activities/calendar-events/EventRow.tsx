@@ -71,6 +71,21 @@ export const EventRow: React.FC<EventRowProps> = ({
               </TooltipProvider>
             </div>
           )}
+          {event.activityTypeCode && (
+            <div className="flex items-center mt-1">
+              <Badge variant="outline" className="mr-2 bg-sky-50">Code Activité: {event.activityTypeCode}</Badge>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Info className="h-4 w-4 text-muted-foreground" />
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Code type d'activité détecté dans la description</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </div>
+          )}
         </div>
       </TableCell>
       <TableCell>
@@ -101,7 +116,7 @@ export const EventRow: React.FC<EventRowProps> = ({
           onValueChange={(value) => onEventChange(event.id, { activityType: value })}
           disabled={!event.selected}
         >
-          <SelectTrigger className="w-[200px]">
+          <SelectTrigger className={`w-[200px] ${event.activityTypeCode ? 'border-blue-500' : ''}`}>
             <SelectValue placeholder="Sélectionner un type" />
           </SelectTrigger>
           <SelectContent>

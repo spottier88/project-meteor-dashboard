@@ -21,6 +21,14 @@ function extractProjectCode(description: string): string | null {
   return match ? match[1] : null;
 }
 
+// Fonction pour extraire le code du type d'activité de la description
+function extractActivityTypeCode(description: string): string | null {
+  // Rechercher un pattern #A-XXX# dans la description
+  const activityTypeCodeRegex = /#(A-[A-Za-z0-9_]+)#/;
+  const match = description.match(activityTypeCodeRegex);
+  return match ? match[1] : null;
+}
+
 serve(async (req) => {
   // Gestion du CORS
   if (req.method === 'OPTIONS') {
@@ -65,6 +73,9 @@ serve(async (req) => {
       // Extraire le code projet s'il existe
       const projectCode = extractProjectCode(description);
       
+      // Extraire le code du type d'activité s'il existe
+      const activityTypeCode = extractActivityTypeCode(description);
+      
       return {
         id: event.id,
         title: event.subject,
@@ -73,7 +84,8 @@ serve(async (req) => {
         endTime: new Date(event.end.dateTime + 'Z'),
         duration: Math.round((new Date(event.end.dateTime + 'Z').getTime() - new Date(event.start.dateTime + 'Z').getTime()) / (1000 * 60)),
         selected: true,
-        projectCode: projectCode, // Ajouter le code projet extrait
+        projectCode: projectCode,
+        activityTypeCode: activityTypeCode,
       };
     });
 

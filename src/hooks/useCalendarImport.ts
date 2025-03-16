@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -111,11 +112,23 @@ export const useCalendarImport = () => {
 
         const transformedEvents = data.events.map(event => {
           let projectId = null;
+          let activityType = null;
+          
+          // Traitement du code projet
           if (event.projectCode && projectCodes) {
             const matchingCode = projectCodes.find(pc => pc.code === event.projectCode);
             if (matchingCode) {
               projectId = matchingCode.project_id;
               console.log(`Code projet trouvé: ${event.projectCode} => ${projectId}`);
+            }
+          }
+          
+          // Traitement du code type d'activité
+          if (event.activityTypeCode && activityTypes) {
+            const matchingActivityType = activityTypes.find(at => `A-${at.code}` === event.activityTypeCode);
+            if (matchingActivityType) {
+              activityType = matchingActivityType.code;
+              console.log(`Code type d'activité trouvé: ${event.activityTypeCode} => ${activityType}`);
             }
           }
 
@@ -124,7 +137,8 @@ export const useCalendarImport = () => {
             startTime: new Date(event.startTime),
             endTime: new Date(event.endTime),
             selected: false,
-            projectId: projectId
+            projectId: projectId,
+            activityType: activityType
           };
         });
         

@@ -19,6 +19,7 @@ export interface CalendarEvent {
   projectId?: string;
   activityType?: string;
   projectCode?: string; // Code projet extrait de la description
+  activityTypeCode?: string; // Code type d'activité extrait de la description
 }
 
 export interface Activity {
