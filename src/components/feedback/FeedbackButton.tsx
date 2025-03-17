@@ -26,9 +26,9 @@ export function FeedbackButton() {
       </div>
 
       <Sheet open={isOpen} onOpenChange={setIsOpen}>
-        <SheetContent>
+        <SheetContent className="overflow-y-auto">
           <SheetHeader>
-            <SheetTitle>Soumettre un retour</SheetTitle>
+            <SheetTitle>Soumettre une demande</SheetTitle>
           </SheetHeader>
           <div className="mt-8">
             <FeedbackForm
