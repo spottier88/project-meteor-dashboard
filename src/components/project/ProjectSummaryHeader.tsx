@@ -115,7 +115,9 @@ export const ProjectSummaryHeader = ({
 
   const copyCodeToClipboard = () => {
     if (projectCode?.code) {
-      navigator.clipboard.writeText(projectCode.code);
+      const formattedCode = `#${projectCode.code}#`;
+      navigator.clipboard.writeText(formattedCode);
+      // navigator.clipboard.writeText(projectCode.code);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     }
