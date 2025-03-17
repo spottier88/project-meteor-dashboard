@@ -6,6 +6,7 @@ import { Calendar } from '@/components/ui/calendar';
 import { fr } from 'date-fns/locale';
 import { Card, CardContent } from '@/components/ui/card';
 import { Info } from 'lucide-react';
+import { ActivityTypeCodesDialog } from './ActivityTypeCodesDialog';
 
 interface DateSelectionStepProps {
   onDateSelect: (startDate: Date, endDate: Date) => void;
@@ -85,7 +86,7 @@ export const DateSelectionStep: React.FC<DateSelectionStepProps> = ({
                       <span className="font-medium">Codes projets</span> : Sur la page de détail de chaque projet, vous pouvez voir et copier le code du projet.
                     </li>
                     <li>
-                      <span className="font-medium">Codes types d'activités</span> : Dans la section "Types d'activités", vous pouvez consulter la liste des codes disponibles.
+                      <span className="font-medium">Codes types d'activités</span> : <ActivityTypeCodesDialog />
                     </li>
                   </ul>
                 </div>
