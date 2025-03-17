@@ -9,8 +9,9 @@ import { Button } from '@/components/ui/button';
 import { BulkActivityEntry } from '@/types/activity';
 import { BulkActivityTable } from './BulkActivityTable';
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerTrigger, DrawerFooter } from '@/components/ui/drawer';
-import { TableIcon, Plus, Loader2, Save } from 'lucide-react';
+import { TableIcon, Plus, Loader2, Save, AlertTriangle } from 'lucide-react';
 import { useActivityTypes } from '@/hooks/useActivityTypes';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 export const BulkActivityEntryDrawer = () => {
   const [open, setOpen] = useState(false);
@@ -18,7 +19,7 @@ export const BulkActivityEntryDrawer = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const session = useSession();
   const queryClient = useQueryClient();
-  const { data: activityTypes } = useActivityTypes();
+  const { data: activityTypes, isLoading: isLoadingTypes } = useActivityTypes(true, true);
 
   // Récupérer la liste des projets
   const { data: projects } = useQuery({
@@ -153,6 +154,8 @@ export const BulkActivityEntryDrawer = () => {
     }
   };
 
+  const noActivityTypesAvailable = !isLoadingTypes && (!activityTypes || activityTypes.length === 0);
+
   return (
     <Drawer open={open} onOpenChange={setOpen}>
       <DrawerTrigger asChild>
@@ -166,6 +169,15 @@ export const BulkActivityEntryDrawer = () => {
           <DrawerTitle>Saisie en masse d'activités</DrawerTitle>
         </DrawerHeader>
         <div className="flex-1 overflow-y-auto px-4">
+          {noActivityTypesAvailable && (
+            <Alert variant="warning" className="mb-4">
+              <AlertTriangle className="h-4 w-4" />
+              <AlertDescription>
+                Vous n'avez accès à aucun type d'activité. Veuillez contacter un administrateur.
+              </AlertDescription>
+            </Alert>
+          )}
+          
           <BulkActivityTable
             entries={entries}
             projects={projects || []}
@@ -178,6 +190,7 @@ export const BulkActivityEntryDrawer = () => {
             variant="outline" 
             className="mt-4 w-full"
             onClick={addEntry}
+            disabled={noActivityTypesAvailable}
           >
             <Plus className="h-4 w-4 mr-2" />
             Ajouter une ligne
@@ -186,7 +199,7 @@ export const BulkActivityEntryDrawer = () => {
         <DrawerFooter>
           <Button
             onClick={handleSubmit}
-            disabled={isSubmitting || entries.length === 0}
+            disabled={isSubmitting || entries.length === 0 || noActivityTypesAvailable}
             className="w-full"
           >
             {isSubmitting ? (

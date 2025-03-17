@@ -21,6 +21,8 @@ import {
 import { toast } from "@/components/ui/use-toast";
 import { useSession } from "@supabase/auth-helpers-react";
 import { useActivityTypes } from "@/hooks/useActivityTypes";
+import { AlertTriangle } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 type FormData = {
   activity_type: string;
@@ -33,7 +35,7 @@ type FormData = {
 const QuickActivityForm = ({ onSuccess }: { onSuccess?: () => void }) => {
   const session = useSession();
   const form = useForm<FormData>();
-  const { data: activityTypes, isLoading: isLoadingTypes } = useActivityTypes();
+  const { data: activityTypes, isLoading: isLoadingTypes } = useActivityTypes(true, true);
 
   const queryClient = useQueryClient();
 
@@ -78,9 +80,20 @@ const QuickActivityForm = ({ onSuccess }: { onSuccess?: () => void }) => {
     },
   });
 
+  const noActivityTypesAvailable = !isLoadingTypes && (!activityTypes || activityTypes.length === 0);
+
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit((data) => createActivity(data))} className="space-y-4">
+        {noActivityTypesAvailable && (
+          <Alert variant="warning" className="mb-4">
+            <AlertTriangle className="h-4 w-4" />
+            <AlertDescription>
+              Vous n'avez accès à aucun type d'activité. Veuillez contacter un administrateur.
+            </AlertDescription>
+          </Alert>
+        )}
+
         <FormField
           control={form.control}
           name="project_id"
@@ -119,6 +132,7 @@ const QuickActivityForm = ({ onSuccess }: { onSuccess?: () => void }) => {
               <Select
                 onValueChange={field.onChange}
                 defaultValue={field.value}
+                disabled={noActivityTypesAvailable}
               >
                 <FormControl>
                   <SelectTrigger>
@@ -181,7 +195,7 @@ const QuickActivityForm = ({ onSuccess }: { onSuccess?: () => void }) => {
           )}
         />
 
-        <Button type="submit" disabled={isLoading}>
+        <Button type="submit" disabled={isLoading || noActivityTypesAvailable}>
           {isLoading ? "Enregistrement..." : "Ajouter l'activité"}
         </Button>
       </form>

@@ -2,8 +2,23 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { ActivityType } from "@/types/activity";
+import { useUserActivityTypePermissions } from "./useUserActivityTypePermissions";
+import { useSession } from "@supabase/auth-helpers-react";
 
-export const useActivityTypes = (activeOnly: boolean = true) => {
+export const useActivityTypes = (activeOnly: boolean = true, respectPermissions: boolean = true) => {
+  const session = useSession();
+  const { permittedTypes, isLoading: isLoadingPermissions } = useUserActivityTypePermissions();
+  const isAdmin = session?.user?.id ? session.user.app_metadata?.claims_admin : false;
+
+  // Si on respecte les permissions et que l'utilisateur n'est pas admin, on utilise les types autorisés
+  if (respectPermissions && !isAdmin && permittedTypes) {
+    return {
+      data: permittedTypes,
+      isLoading: isLoadingPermissions,
+    };
+  }
+
+  // Sinon, on récupère tous les types d'activités (comportement original)
   return useQuery({
     queryKey: ["activity-types", activeOnly],
     queryFn: async () => {

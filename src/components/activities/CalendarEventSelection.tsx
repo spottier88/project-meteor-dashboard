@@ -1,13 +1,14 @@
 
 import React, { useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Loader2 } from 'lucide-react';
+import { Loader2, AlertTriangle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { EventTable } from './calendar-events/EventTable';
 import { EventSelectionFooter } from './calendar-events/EventSelectionFooter';
 import { useEventSelection } from './calendar-events/useEventSelection';
 import { useActivityTypes } from '@/hooks/useActivityTypes';
 import { CalendarEvent } from '@/types/activity';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 interface Project {
   id: string;
@@ -34,7 +35,7 @@ export const CalendarEventSelection = ({
   onEventChange,
 }: Props) => {
   const { modifiedEvents, selectedEvents, canImport, selectedCount, handleEventChange } = useEventSelection(events);
-  const { data: activityTypes, isLoading: isLoadingTypes } = useActivityTypes();
+  const { data: activityTypes, isLoading: isLoadingTypes } = useActivityTypes(true, true);
 
   const handleToggleSelection = (eventId: string) => {
     handleEventChange(eventId, { selected: !modifiedEvents.find(e => e.id === eventId)?.selected });
@@ -86,6 +87,8 @@ export const CalendarEventSelection = ({
     );
   }
 
+  const noActivityTypesAvailable = !isLoadingTypes && (!activityTypes || activityTypes.length === 0);
+
   const handleCombinedEventChange = (eventId: string, updates: Partial<CalendarEvent>) => {
     handleEventChange(eventId, updates);
     if (onEventChange) {
@@ -95,6 +98,15 @@ export const CalendarEventSelection = ({
 
   return (
     <div className="space-y-6">
+      {noActivityTypesAvailable && (
+        <Alert variant="warning" className="mb-4">
+          <AlertTriangle className="h-4 w-4" />
+          <AlertDescription>
+            Vous n'avez accès à aucun type d'activité. Veuillez contacter un administrateur.
+          </AlertDescription>
+        </Alert>
+      )}
+
       <EventTable 
         events={modifiedEvents}
         projects={projects}
@@ -106,7 +118,7 @@ export const CalendarEventSelection = ({
 
       <EventSelectionFooter 
         selectedCount={selectedCount}
-        canImport={canImport}
+        canImport={canImport && !noActivityTypesAvailable}
         isLoading={isLoading}
         onCancel={onCancel}
         onImport={() => onImport(selectedEvents)}

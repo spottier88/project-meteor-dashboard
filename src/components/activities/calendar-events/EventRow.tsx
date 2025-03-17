@@ -120,11 +120,15 @@ export const EventRow: React.FC<EventRowProps> = ({
             <SelectValue placeholder="Sélectionner un type" />
           </SelectTrigger>
           <SelectContent>
-            {activityTypes.map((type) => (
-              <SelectItem key={type.id} value={type.code}>
-                {type.label}
-              </SelectItem>
-            ))}
+            {activityTypes.length === 0 ? (
+              <SelectItem value="" disabled>Aucun type disponible</SelectItem>
+            ) : (
+              activityTypes.map((type) => (
+                <SelectItem key={type.id} value={type.code}>
+                  {type.label}
+                </SelectItem>
+              ))
+            )}
           </SelectContent>
         </Select>
       </TableCell>
