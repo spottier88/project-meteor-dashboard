@@ -1388,7 +1388,7 @@ export type Database = {
       setting_type: "microsoft_graph" | "openai"
       task_status: "todo" | "in_progress" | "done"
       user_hierarchy_level: "pole" | "direction" | "service"
-      user_role: "admin" | "chef_projet" | "manager" | "membre"
+      user_role: "admin" | "chef_projet" | "manager" | "membre" | "time_tracker"
     }
     CompositeTypes: {
       [_ in never]: never

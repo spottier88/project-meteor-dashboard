@@ -6,9 +6,24 @@ import { ActivityEntry } from './ActivityEntry';
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
+import { usePermissionsContext } from '@/contexts/PermissionsContext';
+import { useToast } from "@/components/ui/use-toast";
 
 export const ActivityManagement = () => {
   const navigate = useNavigate();
+  const { isAdmin, isTimeTracker } = usePermissionsContext();
+  const { toast } = useToast();
+
+  // Vérifier si l'utilisateur peut accéder à cette page
+  if (!isAdmin && !isTimeTracker) {
+    toast({
+      title: "Accès refusé",
+      description: "Vous n'avez pas les droits nécessaires pour accéder à cette page",
+      variant: "destructive",
+    });
+    navigate('/');
+    return null;
+  }
 
   return (
     <div className="container mx-auto py-8">

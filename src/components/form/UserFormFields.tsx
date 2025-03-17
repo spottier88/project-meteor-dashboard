@@ -1,3 +1,4 @@
+
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -131,6 +132,16 @@ export const UserFormFields = ({
             />
             <Label htmlFor="membre" className="font-normal">
               Membre
+            </Label>
+          </div>
+          <div className="flex items-center space-x-2">
+            <Checkbox
+              id="time_tracker"
+              checked={roles.includes("time_tracker")}
+              onCheckedChange={() => handleRoleToggle("time_tracker")}
+            />
+            <Label htmlFor="time_tracker" className="font-normal">
+              Suivi des activités
             </Label>
           </div>
         </div>

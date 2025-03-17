@@ -144,6 +144,7 @@ export const InviteUserForm = ({ isOpen, onClose, onSuccess }: InviteUserFormPro
                   <SelectItem value="chef_projet">Chef de projet</SelectItem>
                   <SelectItem value="manager">Manager</SelectItem>
                   <SelectItem value="membre">Membre</SelectItem>
+                  <SelectItem value="time_tracker">Suivi des activités</SelectItem>
                 </SelectContent>
               </Select>
             </div>

@@ -21,12 +21,10 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
   
 }) => {
   const navigate = useNavigate();
-  const { isAdmin, isManager, hasRole } = usePermissionsContext();
+  const { isAdmin, isManager, hasRole, isTimeTracker } = usePermissionsContext();
   const showTeamActivities = isAdmin || isManager || hasRole('chef_projet');
   const { cartItems } = useProjectCart();
   const [isCartOpen, setIsCartOpen] = useState(false);
-
-
 
   return (
     <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
@@ -35,7 +33,7 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
           <div className="flex items-center flex-1">
             <h1 className="text-3xl font-bold mr-8">Tableau de bord</h1>
             
-            {isAdmin && (
+            {(isTimeTracker || isAdmin) && (
               <NavigationMenu>
                 <NavigationMenuList className="gap-2">
                   <NavigationMenuItem>

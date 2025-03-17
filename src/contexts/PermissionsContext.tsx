@@ -12,6 +12,7 @@ interface PermissionsState {
   isManager: boolean;
   isProjectManager: boolean;
   isMember: boolean;
+  isTimeTracker: boolean; // Ajout de la propriété pour le nouveau rôle
   highestRole: UserRole | null;
   hasRole: (role: UserRole) => boolean;
   isLoading: boolean;
@@ -20,7 +21,7 @@ interface PermissionsState {
 
 const PermissionsContext = createContext<PermissionsState | undefined>(undefined);
 
-const roleHierarchy: UserRole[] = ['admin', 'manager', 'chef_projet', 'membre'];
+const roleHierarchy: UserRole[] = ['admin', 'manager', 'chef_projet', 'membre', 'time_tracker'];
 
 export function PermissionsProvider({ children }: { children: React.ReactNode }) {
   const user = useUser();
@@ -90,6 +91,7 @@ export function PermissionsProvider({ children }: { children: React.ReactNode })
   const isManager = hasRole('manager');
   const isProjectManager = hasRole('chef_projet');
   const isMember = hasRole('membre');
+  const isTimeTracker = hasRole('time_tracker'); // Vérification du nouveau rôle
   const isLoading = isLoadingRoles || isLoadingProfile;
   const isError = isRolesError || isProfileError;
 
@@ -103,11 +105,12 @@ export function PermissionsProvider({ children }: { children: React.ReactNode })
       isManager,
       isProjectManager,
       isMember,
+      isTimeTracker, // Ajout du nouveau rôle dans les logs
       isLoading,
       isError,
       sessionStatus: !!session
     });
-  }, [user?.id, userProfile, userRoles, highestRole, isAdmin, isManager, isProjectManager, isMember, isLoading, isError, session]);
+  }, [user?.id, userProfile, userRoles, highestRole, isAdmin, isManager, isProjectManager, isMember, isTimeTracker, isLoading, isError, session]);
 
   if (!session) {
     return null;
@@ -130,6 +133,7 @@ export function PermissionsProvider({ children }: { children: React.ReactNode })
       isManager,
       isProjectManager,
       isMember,
+      isTimeTracker, // Ajout du nouveau rôle au contexte
       highestRole,
       hasRole,
       isLoading,
