@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
@@ -17,10 +18,12 @@ import {
   ArrowDown, 
   Trash2, 
   Plus,
-  AlertTriangle
+  AlertTriangle,
+  Users
 } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { ActivityTypeForm } from "./ActivityTypeForm";
+import { ActivityTypePermissionsDialog } from "./ActivityTypePermissionsDialog";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -40,6 +43,8 @@ export const ActivityTypeManagement = () => {
   const [selectedType, setSelectedType] = useState<ActivityType | undefined>(undefined);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [typeToDelete, setTypeToDelete] = useState<ActivityType | null>(null);
+  const [isPermissionsDialogOpen, setIsPermissionsDialogOpen] = useState(false);
+  const [typeForPermissions, setTypeForPermissions] = useState<ActivityType | null>(null);
 
   const { data: activityTypes, isLoading, error } = useQuery({
     queryKey: ["activity-types-management"],
@@ -193,6 +198,16 @@ export const ActivityTypeManagement = () => {
     }
   };
 
+  const openPermissionsDialog = (type: ActivityType) => {
+    setTypeForPermissions(type);
+    setIsPermissionsDialogOpen(true);
+  };
+
+  const closePermissionsDialog = () => {
+    setIsPermissionsDialogOpen(false);
+    setTypeForPermissions(null);
+  };
+
   if (isLoading) {
     return <div>Chargement des types d'activités...</div>;
   }
@@ -270,13 +285,23 @@ export const ActivityTypeManagement = () => {
                         variant="ghost"
                         size="icon"
                         onClick={() => openEditForm(type)}
+                        title="Modifier"
                       >
                         <Edit className="h-4 w-4" />
                       </Button>
                       <Button
                         variant="ghost"
                         size="icon"
+                        onClick={() => openPermissionsDialog(type)}
+                        title="Gérer les permissions"
+                      >
+                        <Users className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
                         onClick={() => confirmDelete(type)}
+                        title="Supprimer"
                       >
                         <Trash2 className="h-4 w-4 text-destructive" />
                       </Button>
@@ -301,6 +326,15 @@ export const ActivityTypeManagement = () => {
         onSubmit={handleFormSubmit}
         activityType={selectedType}
       />
+
+      {typeForPermissions && (
+        <ActivityTypePermissionsDialog
+          isOpen={isPermissionsDialogOpen}
+          onClose={closePermissionsDialog}
+          activityTypeCode={typeForPermissions.code}
+          activityTypeLabel={typeForPermissions.label}
+        />
+      )}
 
       <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <AlertDialogContent>

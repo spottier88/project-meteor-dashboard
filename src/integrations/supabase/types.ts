@@ -67,6 +67,38 @@ export type Database = {
           },
         ]
       }
+      activity_type_permissions: {
+        Row: {
+          activity_type_code: string
+          created_at: string | null
+          entity_id: string
+          entity_type: string
+          id: string
+        }
+        Insert: {
+          activity_type_code: string
+          created_at?: string | null
+          entity_id: string
+          entity_type: string
+          id?: string
+        }
+        Update: {
+          activity_type_code?: string
+          created_at?: string | null
+          entity_id?: string
+          entity_type?: string
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "activity_type_permissions_activity_type_code_fkey"
+            columns: ["activity_type_code"]
+            isOneToOne: false
+            referencedRelation: "activity_types"
+            referencedColumns: ["code"]
+          },
+        ]
+      }
       activity_types: {
         Row: {
           code: string
@@ -1237,6 +1269,13 @@ export type Database = {
           project_id: string
           can_access: boolean
         }[]
+      }
+      can_use_activity_type: {
+        Args: {
+          p_user_id: string
+          p_activity_type_code: string
+        }
+        Returns: boolean
       }
       can_view_project_members: {
         Args: {

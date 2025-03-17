@@ -49,3 +49,18 @@ export interface BulkActivityEntry {
   start_time: string;
   isValid?: boolean;
 }
+
+// Nouvelles interfaces pour les permissions des types d'activités
+export interface ActivityTypePermission {
+  id: string;
+  activity_type_code: string;
+  entity_type: 'pole' | 'direction' | 'service';
+  entity_id: string;
+  created_at: string;
+}
+
+export interface HierarchyEntity {
+  id: string;
+  name: string;
+  selected?: boolean;
+}
