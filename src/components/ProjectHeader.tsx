@@ -39,7 +39,8 @@ export const ProjectHeader = ({ project }: ProjectHeaderProps) => {
 
   const copyCodeToClipboard = () => {
     if (projectCode?.code) {
-      navigator.clipboard.writeText(projectCode.code);
+      const formattedCode = `#${projectCode.code}#`;
+      navigator.clipboard.writeText(formattedCode);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     }
