@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Calendar } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -45,25 +44,22 @@ export const CalendarImport = () => {
     updateEventDetails,
   } = useCalendarImport();
 
-  // Effet pour journaliser l'état du composant
   useEffect(() => {
     logger.debug(`step = ${ImportStep[step]}, isAuthenticated = ${isAuthenticated ? "yes" : "no"}`, "calendar");
   }, [step, isAuthenticated]);
 
-  // Vérifier l'état d'authentification quand la boîte de dialogue s'ouvre
   useEffect(() => {
     if (isOpen) {
-      // Vérifier si l'utilisateur est déjà authentifié
       const authState = checkAuthStatus();
       logger.debug(`Dialog opened, checking auth state: ${authState ? "authenticated" : "not authenticated"}`, "calendar");
       
       if (authState) {
         logger.debug("User is already authenticated, moving to DATE_SELECTION", "calendar");
-        setIsAuthenticated(true); // S'assurer que l'état isAuthenticated est synchronisé
+        setIsAuthenticated(true);
         setStep(ImportStep.DATE_SELECTION);
       } else {
         logger.debug("User is not authenticated, starting at AUTH step", "calendar");
-        setIsAuthenticated(false); // S'assurer que l'état isAuthenticated est synchronisé
+        setIsAuthenticated(false);
         setStep(ImportStep.AUTH);
       }
     } else {
@@ -72,10 +68,9 @@ export const CalendarImport = () => {
     }
   }, [isOpen, checkAuthStatus, setIsAuthenticated]);
 
-  // Gestion de la progression des étapes
   const handleAuthSuccess = () => {
     logger.debug("Auth success callback triggered, moving to date selection", "calendar");
-    setIsAuthenticated(true); // Mettre à jour l'état d'authentification
+    setIsAuthenticated(true);
     setStep(ImportStep.DATE_SELECTION);
   };
 
@@ -92,13 +87,13 @@ export const CalendarImport = () => {
     
     if (!authState) {
       logger.debug("Authentication required for fetch events", "calendar");
-      setIsAuthenticated(false); // Synchroniser l'état en cas d'échec d'authentification
+      setIsAuthenticated(false);
       toast({
         title: "Authentification requise",
         description: "Vous devez vous connecter à Microsoft pour récupérer les événements.",
         variant: "destructive",
       });
-      setStep(ImportStep.AUTH); // Retour à l'étape d'authentification
+      setStep(ImportStep.AUTH);
       return;
     }
     
@@ -129,11 +124,10 @@ export const CalendarImport = () => {
         },
         onError: (error) => {
           logger.error(`Error fetching events: ${error}`, "calendar");
-          // Vérifier si l'erreur est liée à l'authentification
           if (error?.message?.includes("authenticated") || error?.message?.includes("token")) {
             logger.debug("Auth error detected, resetting auth state", "calendar");
-            setIsAuthenticated(false); // Réinitialiser l'état d'authentification
-            setStep(ImportStep.AUTH); // Retour à l'étape d'authentification
+            setIsAuthenticated(false);
+            setStep(ImportStep.AUTH);
           }
           toast({
             title: "Erreur",
@@ -187,7 +181,6 @@ export const CalendarImport = () => {
     setStep(ImportStep.AUTH);
   };
 
-  // Rendu conditionnel basé sur l'étape actuelle
   const renderCurrentStep = () => {
     logger.debug(`Rendering step: ${ImportStep[step]}, isAuthenticated: ${isAuthenticated ? "yes" : "no"}`, "calendar");
       
@@ -239,7 +232,7 @@ export const CalendarImport = () => {
           Importer du calendrier
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-5xl">
+      <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Importer depuis le calendrier</DialogTitle>
           <DialogDescription>

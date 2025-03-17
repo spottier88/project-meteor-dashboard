@@ -38,7 +38,7 @@ export const EventTable: React.FC<EventTableProps> = ({
   const allEventsSelected = events.every(event => event.selected);
 
   return (
-    <ScrollArea className="h-[600px]">
+    <ScrollArea className="h-[500px]">
       <Table>
         <TableHeader>
           <TableRow>
