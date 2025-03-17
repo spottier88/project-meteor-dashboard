@@ -64,8 +64,8 @@ export const useUserActivityTypePermissions = () => {
   });
 
   return {
-    permittedTypes,
+    permittedTypes: permittedTypes || [],
     isLoading: isLoading || isLoadingAllTypes,
-    isAdmin: session ? !!session.user : false,
+    isAdmin: session?.user ? !!session.user.app_metadata?.claims_admin : false,
   };
 };
