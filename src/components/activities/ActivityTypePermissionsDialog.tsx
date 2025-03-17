@@ -93,30 +93,32 @@ export function ActivityTypePermissionsDialog({
         },
       };
 
-      // Si la sélection en cascade est activée, sélectionner/désélectionner les entités enfants
+      // Si la sélection en cascade est activée, sélectionner les entités enfants
       if (cascadeSelection) {
         if (type === 'poles') {
           const poleSelected = !prev.poles[id];
-          
-          // Sélectionner/désélectionner toutes les directions de ce pôle
-          const directionsForPole = directionsByPole?.[id] || [];
-          directionsForPole.forEach(direction => {
-            newState.directions[direction.id] = poleSelected;
-            
-            // Sélectionner/désélectionner tous les services de cette direction
-            const servicesForDirection = servicesByDirection?.[direction.id] || [];
-            servicesForDirection.forEach(service => {
-              newState.services[service.id] = poleSelected;
+          if (poleSelected) {
+            // Sélectionner toutes les directions de ce pôle
+            const directionsForPole = directionsByPole?.[id] || [];
+            directionsForPole.forEach(direction => {
+              newState.directions[direction.id] = true;
+              
+              // Sélectionner tous les services de cette direction
+              const servicesForDirection = servicesByDirection?.[direction.id] || [];
+              servicesForDirection.forEach(service => {
+                newState.services[service.id] = true;
+              });
             });
-          });
+          }
         } else if (type === 'directions') {
           const directionSelected = !prev.directions[id];
-          
-          // Sélectionner/désélectionner tous les services de cette direction
-          const servicesForDirection = servicesByDirection?.[id] || [];
-          servicesForDirection.forEach(service => {
-            newState.services[service.id] = directionSelected;
-          });
+          if (directionSelected) {
+            // Sélectionner tous les services de cette direction
+            const servicesForDirection = servicesByDirection?.[id] || [];
+            servicesForDirection.forEach(service => {
+              newState.services[service.id] = true;
+            });
+          }
         }
       }
 
@@ -178,13 +180,13 @@ export function ActivityTypePermissionsDialog({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[600px] max-h-[80vh] flex flex-col">
-        <DialogHeader>
+      <DialogContent className="sm:max-w-[600px] flex flex-col h-[80vh] max-h-[800px]">
+        <DialogHeader className="flex-shrink-0">
           <DialogTitle>Permissions pour le type d'activité: {activityTypeLabel}</DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-4 flex-1 flex flex-col overflow-hidden">
-          <div className="flex items-center justify-between">
+        <div className="flex flex-col flex-grow overflow-hidden space-y-4">
+          <div className="flex items-center justify-between flex-shrink-0">
             <div className="relative flex-1">
               <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
               <Input
@@ -206,20 +208,20 @@ export function ActivityTypePermissionsDialog({
             </div>
           </div>
 
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col overflow-hidden">
-            <TabsList className="grid grid-cols-3 mb-4">
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-grow flex flex-col min-h-0">
+            <TabsList className="grid grid-cols-3 mb-4 flex-shrink-0">
               <TabsTrigger value="poles">Pôles</TabsTrigger>
               <TabsTrigger value="directions">Directions</TabsTrigger>
               <TabsTrigger value="services">Services</TabsTrigger>
             </TabsList>
             
-            <div className="flex-1 overflow-hidden min-h-[300px]">
+            <div className="flex-grow overflow-hidden">
               <TabsContent value="poles" className="mt-0 h-full">
                 {isLoading ? (
                   <div>Chargement des pôles...</div>
                 ) : (
-                  <ScrollArea className="h-full pr-4">
-                    <div className="space-y-3">
+                  <ScrollArea className="h-[calc(100%-10px)] overflow-auto">
+                    <div className="space-y-3 pr-4">
                       {filterEntities(poles)?.map(pole => (
                         <div key={pole.id} className="flex items-center space-x-2">
                           <Checkbox
@@ -246,8 +248,8 @@ export function ActivityTypePermissionsDialog({
                 {isLoading ? (
                   <div>Chargement des directions...</div>
                 ) : (
-                  <ScrollArea className="h-full pr-4">
-                    <div className="space-y-3">
+                  <ScrollArea className="h-[calc(100%-10px)] overflow-auto">
+                    <div className="space-y-3 pr-4">
                       {filterEntities(directions)?.map(direction => (
                         <div key={direction.id} className="flex items-center space-x-2">
                           <Checkbox
@@ -274,8 +276,8 @@ export function ActivityTypePermissionsDialog({
                 {isLoading ? (
                   <div>Chargement des services...</div>
                 ) : (
-                  <ScrollArea className="h-full pr-4">
-                    <div className="space-y-3">
+                  <ScrollArea className="h-[calc(100%-10px)] overflow-auto">
+                    <div className="space-y-3 pr-4">
                       {filterEntities(services)?.map(service => (
                         <div key={service.id} className="flex items-center space-x-2">
                           <Checkbox
@@ -301,7 +303,7 @@ export function ActivityTypePermissionsDialog({
           </Tabs>
         </div>
 
-        <DialogFooter className="mt-6">
+        <DialogFooter className="mt-6 flex-shrink-0">
           <Button variant="outline" onClick={onClose} disabled={isUpdating}>
             Annuler
           </Button>
