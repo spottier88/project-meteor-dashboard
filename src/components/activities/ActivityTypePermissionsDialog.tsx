@@ -26,6 +26,7 @@ export function ActivityTypePermissionsDialog({
 }: ActivityTypePermissionsDialogProps) {
   const [activeTab, setActiveTab] = useState<string>("poles");
   const [search, setSearch] = useState<string>("");
+  const [cascadeSelection, setCascadeSelection] = useState<boolean>(false);
   const [selectedEntities, setSelectedEntities] = useState<{
     poles: Record<string, boolean>;
     directions: Record<string, boolean>;
@@ -83,13 +84,44 @@ export function ActivityTypePermissionsDialog({
   };
 
   const toggleEntity = (type: 'poles' | 'directions' | 'services', id: string) => {
-    setSelectedEntities(prev => ({
-      ...prev,
-      [type]: {
-        ...prev[type],
-        [id]: !prev[type][id],
-      },
-    }));
+    setSelectedEntities(prev => {
+      const newState = {
+        ...prev,
+        [type]: {
+          ...prev[type],
+          [id]: !prev[type][id],
+        },
+      };
+
+      // Si la sélection en cascade est activée, sélectionner/désélectionner les entités enfants
+      if (cascadeSelection) {
+        if (type === 'poles') {
+          const poleSelected = !prev.poles[id];
+          
+          // Sélectionner/désélectionner toutes les directions de ce pôle
+          const directionsForPole = directionsByPole?.[id] || [];
+          directionsForPole.forEach(direction => {
+            newState.directions[direction.id] = poleSelected;
+            
+            // Sélectionner/désélectionner tous les services de cette direction
+            const servicesForDirection = servicesByDirection?.[direction.id] || [];
+            servicesForDirection.forEach(service => {
+              newState.services[service.id] = poleSelected;
+            });
+          });
+        } else if (type === 'directions') {
+          const directionSelected = !prev.directions[id];
+          
+          // Sélectionner/désélectionner tous les services de cette direction
+          const servicesForDirection = servicesByDirection?.[id] || [];
+          servicesForDirection.forEach(service => {
+            newState.services[service.id] = directionSelected;
+          });
+        }
+      }
+
+      return newState;
+    });
   };
 
   const handleSave = () => {
@@ -151,105 +183,125 @@ export function ActivityTypePermissionsDialog({
           <DialogTitle>Permissions pour le type d'activité: {activityTypeLabel}</DialogTitle>
         </DialogHeader>
 
-        <div className="relative mb-4">
-          <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Rechercher..."
-            className="pl-8"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
+        <div className="space-y-4 flex-1 flex flex-col overflow-hidden">
+          <div className="flex items-center justify-between">
+            <div className="relative flex-1">
+              <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Rechercher..."
+                className="pl-8"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+              />
+            </div>
+            <div className="flex items-center space-x-2 ml-4">
+              <Checkbox
+                id="cascade-selection"
+                checked={cascadeSelection}
+                onCheckedChange={(checked) => setCascadeSelection(checked === true)}
+              />
+              <Label htmlFor="cascade-selection" className="text-sm cursor-pointer">
+                Sélection en cascade
+              </Label>
+            </div>
+          </div>
+
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col overflow-hidden">
+            <TabsList className="grid grid-cols-3 mb-4">
+              <TabsTrigger value="poles">Pôles</TabsTrigger>
+              <TabsTrigger value="directions">Directions</TabsTrigger>
+              <TabsTrigger value="services">Services</TabsTrigger>
+            </TabsList>
+            
+            <div className="flex-1 overflow-hidden min-h-[300px]">
+              <TabsContent value="poles" className="mt-0 h-full">
+                {isLoading ? (
+                  <div>Chargement des pôles...</div>
+                ) : (
+                  <ScrollArea className="h-full pr-4">
+                    <div className="space-y-3">
+                      {filterEntities(poles)?.map(pole => (
+                        <div key={pole.id} className="flex items-center space-x-2">
+                          <Checkbox
+                            id={`pole-${pole.id}`}
+                            checked={!!selectedEntities.poles[pole.id]}
+                            onCheckedChange={() => toggleEntity('poles', pole.id)}
+                          />
+                          <Label htmlFor={`pole-${pole.id}`} className="cursor-pointer">
+                            {pole.name}
+                          </Label>
+                        </div>
+                      ))}
+                      {filterEntities(poles)?.length === 0 && (
+                        <div className="text-center text-muted-foreground">
+                          Aucun pôle trouvé
+                        </div>
+                      )}
+                    </div>
+                  </ScrollArea>
+                )}
+              </TabsContent>
+              
+              <TabsContent value="directions" className="mt-0 h-full">
+                {isLoading ? (
+                  <div>Chargement des directions...</div>
+                ) : (
+                  <ScrollArea className="h-full pr-4">
+                    <div className="space-y-3">
+                      {filterEntities(directions)?.map(direction => (
+                        <div key={direction.id} className="flex items-center space-x-2">
+                          <Checkbox
+                            id={`direction-${direction.id}`}
+                            checked={!!selectedEntities.directions[direction.id]}
+                            onCheckedChange={() => toggleEntity('directions', direction.id)}
+                          />
+                          <Label htmlFor={`direction-${direction.id}`} className="cursor-pointer">
+                            {direction.name}
+                          </Label>
+                        </div>
+                      ))}
+                      {filterEntities(directions)?.length === 0 && (
+                        <div className="text-center text-muted-foreground">
+                          Aucune direction trouvée
+                        </div>
+                      )}
+                    </div>
+                  </ScrollArea>
+                )}
+              </TabsContent>
+              
+              <TabsContent value="services" className="mt-0 h-full">
+                {isLoading ? (
+                  <div>Chargement des services...</div>
+                ) : (
+                  <ScrollArea className="h-full pr-4">
+                    <div className="space-y-3">
+                      {filterEntities(services)?.map(service => (
+                        <div key={service.id} className="flex items-center space-x-2">
+                          <Checkbox
+                            id={`service-${service.id}`}
+                            checked={!!selectedEntities.services[service.id]}
+                            onCheckedChange={() => toggleEntity('services', service.id)}
+                          />
+                          <Label htmlFor={`service-${service.id}`} className="cursor-pointer">
+                            {service.name}
+                          </Label>
+                        </div>
+                      ))}
+                      {filterEntities(services)?.length === 0 && (
+                        <div className="text-center text-muted-foreground">
+                          Aucun service trouvé
+                        </div>
+                      )}
+                    </div>
+                  </ScrollArea>
+                )}
+              </TabsContent>
+            </div>
+          </Tabs>
         </div>
 
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col">
-          <TabsList className="grid grid-cols-3 mb-4">
-            <TabsTrigger value="poles">Pôles</TabsTrigger>
-            <TabsTrigger value="directions">Directions</TabsTrigger>
-            <TabsTrigger value="services">Services</TabsTrigger>
-          </TabsList>
-          
-          <ScrollArea className="flex-1 pr-4">
-            <TabsContent value="poles" className="mt-0">
-              {isLoading ? (
-                <div>Chargement des pôles...</div>
-              ) : (
-                <div className="space-y-3">
-                  {filterEntities(poles)?.map(pole => (
-                    <div key={pole.id} className="flex items-center space-x-2">
-                      <Checkbox
-                        id={`pole-${pole.id}`}
-                        checked={!!selectedEntities.poles[pole.id]}
-                        onCheckedChange={() => toggleEntity('poles', pole.id)}
-                      />
-                      <Label htmlFor={`pole-${pole.id}`} className="cursor-pointer">
-                        {pole.name}
-                      </Label>
-                    </div>
-                  ))}
-                  {filterEntities(poles)?.length === 0 && (
-                    <div className="text-center text-muted-foreground">
-                      Aucun pôle trouvé
-                    </div>
-                  )}
-                </div>
-              )}
-            </TabsContent>
-            
-            <TabsContent value="directions" className="mt-0">
-              {isLoading ? (
-                <div>Chargement des directions...</div>
-              ) : (
-                <div className="space-y-3">
-                  {filterEntities(directions)?.map(direction => (
-                    <div key={direction.id} className="flex items-center space-x-2">
-                      <Checkbox
-                        id={`direction-${direction.id}`}
-                        checked={!!selectedEntities.directions[direction.id]}
-                        onCheckedChange={() => toggleEntity('directions', direction.id)}
-                      />
-                      <Label htmlFor={`direction-${direction.id}`} className="cursor-pointer">
-                        {direction.name}
-                      </Label>
-                    </div>
-                  ))}
-                  {filterEntities(directions)?.length === 0 && (
-                    <div className="text-center text-muted-foreground">
-                      Aucune direction trouvée
-                    </div>
-                  )}
-                </div>
-              )}
-            </TabsContent>
-            
-            <TabsContent value="services" className="mt-0">
-              {isLoading ? (
-                <div>Chargement des services...</div>
-              ) : (
-                <div className="space-y-3">
-                  {filterEntities(services)?.map(service => (
-                    <div key={service.id} className="flex items-center space-x-2">
-                      <Checkbox
-                        id={`service-${service.id}`}
-                        checked={!!selectedEntities.services[service.id]}
-                        onCheckedChange={() => toggleEntity('services', service.id)}
-                      />
-                      <Label htmlFor={`service-${service.id}`} className="cursor-pointer">
-                        {service.name}
-                      </Label>
-                    </div>
-                  ))}
-                  {filterEntities(services)?.length === 0 && (
-                    <div className="text-center text-muted-foreground">
-                      Aucun service trouvé
-                    </div>
-                  )}
-                </div>
-              )}
-            </TabsContent>
-          </ScrollArea>
-        </Tabs>
-
-        <DialogFooter>
+        <DialogFooter className="mt-6">
           <Button variant="outline" onClick={onClose} disabled={isUpdating}>
             Annuler
           </Button>
