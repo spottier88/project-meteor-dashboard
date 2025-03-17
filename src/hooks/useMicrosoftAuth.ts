@@ -56,7 +56,7 @@ export const useMicrosoftAuth = () => {
       return;
     }
     
-    console.log("useMicrosoftAuth: Initializing MSAL with settings", settings);
+    // console.log("useMicrosoftAuth: Initializing MSAL with settings", settings);
     const msalConfig = {
       auth: {
         clientId: settings.clientId,
