@@ -1,3 +1,4 @@
+
 import { Button } from "@/components/ui/button";
 import { ShoppingCart, Plus } from "lucide-react";
 import { useProjectCart } from "@/hooks/use-project-cart";
@@ -5,9 +6,13 @@ import { useToast } from "@/components/ui/use-toast";
 
 interface AddFilteredToCartButtonProps {
   projectIds: string[];
+  className?: string; // Add className to the interface
 }
 
-export const AddFilteredToCartButton = ({ projectIds }: AddFilteredToCartButtonProps) => {
+export const AddFilteredToCartButton = ({ 
+  projectIds, 
+  className 
+}: AddFilteredToCartButtonProps) => {
   const { cartItems, addMultipleToCart } = useProjectCart();
   const { toast } = useToast();
 
@@ -33,7 +38,7 @@ export const AddFilteredToCartButton = ({ projectIds }: AddFilteredToCartButtonP
       variant="outline"
       size="sm"
       onClick={handleAddAllToCart}
-      className="flex items-center gap-2"
+      className={className}
       disabled={projectIds.length === 0}
     >
       <Plus className="h-4 w-4" />
