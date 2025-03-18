@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { CalendarEvent } from '@/types/activity';
 
@@ -38,9 +39,10 @@ export const useEventSelection = (initialEvents: CalendarEvent[]) => {
 
   const selectedEvents = Object.values(modifiedEvents).filter(event => event.selected);
   
+  // Mise à jour: un événement est valide s'il a un type d'activité et un titre/description
+  // Le projectId n'est plus obligatoire
   const canImport = selectedEvents.length > 0 && selectedEvents.every(event => 
     event.activityType && 
-    event.projectId && 
     (event.description || event.title)
   );
 

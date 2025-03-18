@@ -51,7 +51,7 @@ export const EventTable: React.FC<EventTableProps> = ({
             <TableHead>Description</TableHead>
             <TableHead>Date</TableHead>
             <TableHead>Durée</TableHead>
-            <TableHead>Projet</TableHead>
+            <TableHead>Projet (optionnel)</TableHead>
             <TableHead>Type d'activité</TableHead>
           </TableRow>
         </TableHeader>

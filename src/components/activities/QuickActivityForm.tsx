@@ -29,7 +29,7 @@ type FormData = {
   description: string;
   duration_minutes: number;
   start_time: string;
-  project_id: string;
+  project_id?: string; // Rendu optionnel
 };
 
 const QuickActivityForm = ({ onSuccess }: { onSuccess?: () => void }) => {
@@ -59,7 +59,7 @@ const QuickActivityForm = ({ onSuccess }: { onSuccess?: () => void }) => {
         description: data.description,
         duration_minutes: data.duration_minutes,
         start_time: data.start_time,
-        project_id: data.project_id,
+        project_id: data.project_id || null, // Peut être null maintenant
         user_id: session?.user?.id,
       });
 
@@ -97,20 +97,20 @@ const QuickActivityForm = ({ onSuccess }: { onSuccess?: () => void }) => {
         <FormField
           control={form.control}
           name="project_id"
-          rules={{ required: "Veuillez sélectionner un projet" }}
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Projet</FormLabel>
+              <FormLabel>Projet (optionnel)</FormLabel>
               <Select
                 onValueChange={field.onChange}
                 defaultValue={field.value}
               >
                 <FormControl>
                   <SelectTrigger>
-                    <SelectValue placeholder="Sélectionnez un projet" />
+                    <SelectValue placeholder="Sélectionnez un projet (optionnel)" />
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
+                  <SelectItem value="">Aucun projet</SelectItem>
                   {projects?.map((project) => (
                     <SelectItem key={project.id} value={project.id}>
                       {project.title}

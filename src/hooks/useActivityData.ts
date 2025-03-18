@@ -12,9 +12,9 @@ interface Activity {
   activity_type: string;
   description?: string;
   id: string;
-  projects: {
+  projects?: {
     title: string;
-  };
+  } | null;
 }
 
 interface DayActivity {
@@ -53,7 +53,7 @@ export const useActivityData = (
         .from('activities')
         .select(`
           *,
-          projects!inner (
+          projects (
             title,
             project_manager_id,
             profiles!projects_project_manager_id_fkey (

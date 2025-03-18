@@ -10,11 +10,11 @@ interface Activity {
   id: string;
   start_time: string;
   duration_minutes: number;
-  activity_type: string; // Changed from enum to string
+  activity_type: string;
   description?: string;
-  projects: {
+  projects?: {
     title: string;
-  };
+  } | null;
 }
 
 interface DayActivities {
@@ -81,7 +81,7 @@ export const ActivityList = ({ dailyActivities }: ActivityListProps) => {
                 {dayActivities.map((activity: Activity) => (
                   <div key={activity.id} className="flex justify-between items-start border-b py-2">
                     <div>
-                      <p className="font-medium">{activity.projects?.title}</p>
+                      <p className="font-medium">{activity.projects?.title || "Sans projet"}</p>
                       <p className="text-sm text-muted-foreground capitalize">
                         {getActivityTypeLabel(activity.activity_type)}
                       </p>

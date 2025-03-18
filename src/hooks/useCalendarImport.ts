@@ -132,14 +132,16 @@ export const useCalendarImport = () => {
             }
           }
 
-          // Présélectionner automatiquement les événements avec un code projet
-          const shouldBeSelected = event.projectCode !== null && event.projectCode !== undefined;
+          // Présélectionner automatiquement les événements avec un code projet ou un code type d'activité
+          const shouldBeSelected = 
+            (event.projectCode !== null && event.projectCode !== undefined) || 
+            (event.activityTypeCode !== null && event.activityTypeCode !== undefined);
 
           return {
             ...event,
             startTime: new Date(event.startTime),
             endTime: new Date(event.endTime),
-            selected: shouldBeSelected, // Présélection automatique si code projet détecté
+            selected: shouldBeSelected,
             projectId: projectId,
             activityType: activityType
           };
@@ -214,7 +216,7 @@ export const useCalendarImport = () => {
         start_time: event.startTime instanceof Date ? event.startTime.toISOString() : new Date(event.startTime).toISOString(),
         duration_minutes: event.duration,
         activity_type: event.activityType,
-        project_id: event.projectId,
+        project_id: event.projectId || null, // Peut être null maintenant
       }));
 
       console.log('Activités à insérer:', activitiesToInsert);

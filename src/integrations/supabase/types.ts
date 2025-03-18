@@ -16,7 +16,7 @@ export type Database = {
           description: string | null
           duration_minutes: number
           id: string
-          project_id: string
+          project_id: string | null
           start_time: string
           updated_at: string | null
           user_id: string
@@ -27,7 +27,7 @@ export type Database = {
           description?: string | null
           duration_minutes: number
           id?: string
-          project_id: string
+          project_id?: string | null
           start_time: string
           updated_at?: string | null
           user_id: string
@@ -38,7 +38,7 @@ export type Database = {
           description?: string | null
           duration_minutes?: number
           id?: string
-          project_id?: string
+          project_id?: string | null
           start_time?: string
           updated_at?: string | null
           user_id?: string

@@ -39,7 +39,7 @@ export const BulkActivityEntryDrawer = () => {
   const createNewEntry = () => {
     return {
       id: uuidv4(),
-      project_id: '',
+      project_id: '', // Optionnel maintenant
       activity_type: '',
       description: '',
       duration_minutes: 60,
@@ -92,6 +92,7 @@ export const BulkActivityEntryDrawer = () => {
         .from('activities')
         .insert(activities.map(activity => ({
           ...activity,
+          project_id: activity.project_id || null, // Peut être null maintenant
           user_id: session?.user?.id
         })))
         .select();
@@ -131,7 +132,7 @@ export const BulkActivityEntryDrawer = () => {
 
     // Vérification des données obligatoires
     const allValid = entries.every(entry => 
-      entry.project_id && entry.activity_type && entry.description && 
+      entry.activity_type && entry.description && 
       entry.duration_minutes > 0 && entry.start_time
     );
 

@@ -25,7 +25,7 @@ export interface CalendarEvent {
 export interface Activity {
   id: string;
   user_id: string;
-  project_id: string;
+  project_id?: string; // Maintenant optionnel
   activity_type: string;
   description?: string;
   start_time: string;
@@ -34,7 +34,7 @@ export interface Activity {
 }
 
 export interface ActivityWithDetails extends Activity {
-  project_title: string;
+  project_title?: string; // Maintenant optionnel
   activity_type_label: string;
   activity_type_color: string;
 }
@@ -42,7 +42,7 @@ export interface ActivityWithDetails extends Activity {
 // Interface pour la saisie en masse d'activités
 export interface BulkActivityEntry {
   id: string; // ID temporaire pour gérer les lignes dans l'UI
-  project_id: string;
+  project_id?: string; // Maintenant optionnel
   activity_type: string;
   description: string;
   duration_minutes: number;

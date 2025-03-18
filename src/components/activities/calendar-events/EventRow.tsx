@@ -94,14 +94,15 @@ export const EventRow: React.FC<EventRowProps> = ({
       <TableCell>{event.duration} min</TableCell>
       <TableCell>
         <Select
-          value={event.projectId}
-          onValueChange={(value) => onEventChange(event.id, { projectId: value })}
+          value={event.projectId || ''}
+          onValueChange={(value) => onEventChange(event.id, { projectId: value || undefined })}
           disabled={!event.selected}
         >
           <SelectTrigger className={`w-[200px] ${event.projectCode ? 'border-green-500' : ''}`}>
-            <SelectValue placeholder="Sélectionner un projet" />
+            <SelectValue placeholder="Sélectionner un projet (optionnel)" />
           </SelectTrigger>
           <SelectContent>
+            <SelectItem value="">Aucun projet</SelectItem>
             {projects?.map((project) => (
               <SelectItem key={project.id} value={project.id}>
                 {project.title}
@@ -112,7 +113,7 @@ export const EventRow: React.FC<EventRowProps> = ({
       </TableCell>
       <TableCell>
         <Select
-          value={event.activityType}
+          value={event.activityType || ''}
           onValueChange={(value) => onEventChange(event.id, { activityType: value })}
           disabled={!event.selected}
         >
