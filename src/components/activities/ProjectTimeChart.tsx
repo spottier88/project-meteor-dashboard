@@ -11,20 +11,23 @@ interface ProjectTimeData {
 interface ProjectTimeChartProps {
   activities: Array<{
     duration_minutes: number;
-    projects: {
+    projects?: {
       title: string;
-    };
+    } | null;
   }>;
 }
 
 export const ProjectTimeChart = ({ activities }: ProjectTimeChartProps) => {
   const data = activities.reduce((acc: ProjectTimeData[], activity) => {
-    const existingProject = acc.find(item => item.project === activity.projects.title);
+    // Définir le nom du projet (ou "Sans projet" si aucun projet n'est associé)
+    const projectName = activity.projects?.title || "Sans projet";
+    
+    const existingProject = acc.find(item => item.project === projectName);
     if (existingProject) {
       existingProject.total += activity.duration_minutes / 60;
     } else {
       acc.push({
-        project: activity.projects.title,
+        project: projectName,
         total: activity.duration_minutes / 60
       });
     }

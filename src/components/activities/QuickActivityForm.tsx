@@ -54,12 +54,15 @@ const QuickActivityForm = ({ onSuccess }: { onSuccess?: () => void }) => {
 
   const { mutate: createActivity, isLoading } = useMutation({
     mutationFn: async (data: FormData) => {
+      // Traiter la valeur spéciale "aucun" comme null pour project_id
+      const projectId = data.project_id === "aucun" ? null : data.project_id;
+      
       const { error } = await supabase.from("activities").insert({
         activity_type: data.activity_type,
         description: data.description,
         duration_minutes: data.duration_minutes,
         start_time: data.start_time,
-        project_id: data.project_id || null, // Peut être null maintenant
+        project_id: projectId, // Utilisez la valeur traitée
         user_id: session?.user?.id,
       });
 

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -88,13 +87,15 @@ export const BulkActivityEntryDrawer = () => {
   // Mutation pour créer les activités
   const createActivitiesMutation = useMutation({
     mutationFn: async (activities: Omit<BulkActivityEntry, 'id' | 'isValid'>[]) => {
+      const formattedActivities = activities.map(activity => ({
+        ...activity,
+        project_id: activity.project_id === 'aucun' || !activity.project_id ? null : activity.project_id,
+        user_id: session?.user?.id
+      }));
+
       const { data, error } = await supabase
         .from('activities')
-        .insert(activities.map(activity => ({
-          ...activity,
-          project_id: activity.project_id || null, // Peut être null maintenant
-          user_id: session?.user?.id
-        })))
+        .insert(formattedActivities)
         .select();
 
       if (error) throw error;
