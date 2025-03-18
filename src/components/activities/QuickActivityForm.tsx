@@ -110,7 +110,7 @@ const QuickActivityForm = ({ onSuccess }: { onSuccess?: () => void }) => {
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
-                  <SelectItem value="">Aucun projet</SelectItem>
+                  <SelectItem value="aucun">Aucun projet</SelectItem>
                   {projects?.map((project) => (
                     <SelectItem key={project.id} value={project.id}>
                       {project.title}

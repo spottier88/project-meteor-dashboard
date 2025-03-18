@@ -56,13 +56,14 @@ export const BulkActivityTable: React.FC<BulkActivityTableProps> = ({
             <TableRow key={entry.id}>
               <TableCell>
                 <Select
-                  value={entry.project_id}
-                  onValueChange={(value) => updateEntry(entry.id, 'project_id', value)}
+                  value={entry.project_id || 'aucun'}
+                  onValueChange={(value) => updateEntry(entry.id, 'project_id', value === 'aucun' ? '' : value)}
                 >
                   <SelectTrigger className="w-full">
                     <SelectValue placeholder="Sélectionner un projet" />
                   </SelectTrigger>
                   <SelectContent>
+                    <SelectItem value="aucun">Aucun projet</SelectItem>
                     {projects.map((project) => (
                       <SelectItem key={project.id} value={project.id}>
                         {project.title}
