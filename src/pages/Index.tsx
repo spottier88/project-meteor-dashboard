@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useUser } from "@supabase/auth-helpers-react";
@@ -49,6 +48,16 @@ const Index = () => {
   const [showMyProjectsOnly, setShowMyProjectsOnly] = useState(() => {
     return localStorage.getItem("showMyProjectsOnly") === "true";
   });
+  
+  const [poleId, setPoleId] = useState<string>(() => {
+    return localStorage.getItem("projectPoleId") || "all";
+  });
+  const [directionId, setDirectionId] = useState<string>(() => {
+    return localStorage.getItem("projectDirectionId") || "all";
+  });
+  const [serviceId, setServiceId] = useState<string>(() => {
+    return localStorage.getItem("projectServiceId") || "all";
+  });
 
   useEffect(() => {
     localStorage.setItem("projectViewMode", view);
@@ -69,6 +78,18 @@ const Index = () => {
   useEffect(() => {
     localStorage.setItem("showMyProjectsOnly", showMyProjectsOnly.toString());
   }, [showMyProjectsOnly]);
+  
+  useEffect(() => {
+    localStorage.setItem("projectPoleId", poleId);
+  }, [poleId]);
+  
+  useEffect(() => {
+    localStorage.setItem("projectDirectionId", directionId);
+  }, [directionId]);
+  
+  useEffect(() => {
+    localStorage.setItem("projectServiceId", serviceId);
+  }, [serviceId]);
 
   const { data: projects, refetch: refetchProjects } = useQuery({
     queryKey: ["projects"],
@@ -144,6 +165,30 @@ const Index = () => {
     if (showMyProjectsOnly && userProfile) {
       if (project.project_manager !== userProfile.email) {
         return false;
+      }
+    }
+    
+    if (poleId !== "all") {
+      if (poleId === "none") {
+        if (project.pole_id !== null) return false;
+      } else {
+        if (project.pole_id !== poleId) return false;
+      }
+    }
+    
+    if (directionId !== "all") {
+      if (directionId === "none") {
+        if (project.direction_id !== null) return false;
+      } else {
+        if (project.direction_id !== directionId) return false;
+      }
+    }
+    
+    if (serviceId !== "all") {
+      if (serviceId === "none") {
+        if (project.service_id !== null) return false;
+      } else {
+        if (project.service_id !== serviceId) return false;
       }
     }
 
@@ -342,7 +387,6 @@ const Index = () => {
         }
       }
 
-      // Gestion des données de cadrage (framing)
       if (projectId) {
         console.log("[ProjectForm] Checking existing framing data for project:", projectId);
         
@@ -370,7 +414,6 @@ const Index = () => {
         };
 
         if (existingFraming) {
-          // Mise à jour de l'enregistrement existant
           console.log("[ProjectForm] Updating existing framing data for project:", projectId);
           const { data: updatedFraming, error: updateFramingError } = await supabase
             .from("project_framing")
@@ -385,7 +428,6 @@ const Index = () => {
             throw updateFramingError;
           }
         } else {
-          // Création d'un nouvel enregistrement
           console.log("[ProjectForm] Creating new framing data for project:", projectId);
           const { data: newFraming, error: insertFramingError } = await supabase
             .from("project_framing")
@@ -405,7 +447,6 @@ const Index = () => {
 
       console.log("[ProjectForm] Project operation completed successfully");
       
-      // Retourner l'ID du projet pour permettre l'utilisation dans le composant appelant
       return { id: projectId };
     } catch (error) {
       console.error("[ProjectForm] Operation failed:", error);
@@ -474,6 +515,12 @@ const Index = () => {
         showMyProjectsOnly={showMyProjectsOnly}
         onMyProjectsToggle={setShowMyProjectsOnly}
         filteredProjectIds={accessibleProjectIds}
+        poleId={poleId}
+        onPoleChange={setPoleId}
+        directionId={directionId}
+        onDirectionChange={setDirectionId}
+        serviceId={serviceId}
+        onServiceChange={setServiceId}
       />
 
       <ProjectList

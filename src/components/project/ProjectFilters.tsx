@@ -1,3 +1,4 @@
+
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -5,6 +6,7 @@ import { MonitoringFilter } from "@/components/monitoring/MonitoringFilter";
 import { LifecycleStatusFilter } from "@/components/project/LifecycleStatusFilter";
 import { MyProjectsToggle } from "@/components/MyProjectsToggle";
 import { AddFilteredToCartButton } from "@/components/cart/AddFilteredToCartButton";
+import { OrganizationFilters } from "@/components/project/OrganizationFilters";
 import { MonitoringLevel } from "@/types/monitoring";
 import { ProjectLifecycleStatus } from "@/types/project";
 import { RotateCcw } from "lucide-react";
@@ -19,6 +21,12 @@ interface ProjectFiltersProps {
   showMyProjectsOnly: boolean;
   onMyProjectsToggle: (checked: boolean) => void;
   filteredProjectIds: string[];
+  poleId: string;
+  onPoleChange: (value: string) => void;
+  directionId: string;
+  onDirectionChange: (value: string) => void;
+  serviceId: string;
+  onServiceChange: (value: string) => void;
 }
 
 export const ProjectFilters = ({
@@ -31,6 +39,12 @@ export const ProjectFilters = ({
   showMyProjectsOnly,
   onMyProjectsToggle,
   filteredProjectIds,
+  poleId,
+  onPoleChange,
+  directionId,
+  onDirectionChange,
+  serviceId,
+  onServiceChange,
 }: ProjectFiltersProps) => {
 
   const handleResetFilters = () => {
@@ -38,6 +52,9 @@ export const ProjectFilters = ({
     onLifecycleStatusChange('all');
     onMonitoringLevelChange('all');
     onMyProjectsToggle(false);
+    onPoleChange('all');
+    onDirectionChange('all');
+    onServiceChange('all');
   };
 
   return (
@@ -83,6 +100,21 @@ export const ProjectFilters = ({
             onToggle={onMyProjectsToggle}
           />
         </div>
+      </div>
+
+      {/* Filtres organisationnels */}
+      <div className="pt-4 border-t border-gray-200">
+        <Label className="text-sm font-medium mb-2 block">
+          Filtres organisationnels
+        </Label>
+        <OrganizationFilters
+          poleId={poleId}
+          setPoleId={onPoleChange}
+          directionId={directionId}
+          setDirectionId={onDirectionChange}
+          serviceId={serviceId}
+          setServiceId={onServiceChange}
+        />
       </div>
 
       {/* Reset and Cart Buttons */}
