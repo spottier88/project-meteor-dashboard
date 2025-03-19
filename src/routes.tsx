@@ -29,6 +29,7 @@ import { ActivityTypeManagementPage } from "./pages/ActivityTypeManagement";
 import { AIPromptManagement } from "./pages/AIPromptManagement";
 import { logger } from "./utils/logger";
 import { ProjectFraming } from "./pages/ProjectFraming";
+import { MyTasks } from "./pages/MyTasks";
 
 export const AppRoutes = () => {
   const session = useSession();
@@ -80,6 +81,14 @@ export const AppRoutes = () => {
             element={
               <ProtectedRoute>
                 <TeamActivities />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/my-tasks"
+            element={
+              <ProtectedRoute>
+                <MyTasks />
               </ProtectedRoute>
             }
           />

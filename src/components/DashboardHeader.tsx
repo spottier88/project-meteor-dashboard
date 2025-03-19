@@ -8,6 +8,7 @@ import { ShoppingCart, History, Plus, FileText } from 'lucide-react';
 import { useProjectCart } from '@/hooks/use-project-cart';
 import { CartButton } from '@/components/cart/CartButton';
 import { ProjectCart } from '@/components/cart/ProjectCart';
+import { TasksIndicator } from '@/components/task/TasksIndicator';
 
 interface DashboardHeaderProps {
   onNewProject?: () => void;
@@ -52,6 +53,13 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
                       </Link>
                     </NavigationMenuItem>
                   )}
+                  <NavigationMenuItem>
+                    <Link to="/my-tasks">
+                      <Button variant="ghost">
+                        Mes tâches
+                      </Button>
+                    </Link>
+                  </NavigationMenuItem>
                 </NavigationMenuList>
               </NavigationMenu>
             )}
@@ -59,6 +67,8 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
           </div>
 
           <div className="flex items-center gap-2 ml-auto">
+            <TasksIndicator />
+          
             <div onClick={() => setIsCartOpen(true)}>
               <CartButton />
             </div>
