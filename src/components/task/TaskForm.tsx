@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { DatePickerField } from "../form/DatePickerField";
+import { DatePicker } from "@/components/form/DatePicker";
 import { Separator } from "@/components/ui/separator";
 import { supabase } from "@/integrations/supabase/client";
 import { useTaskForm } from "./useTaskForm";
@@ -244,15 +244,16 @@ export const TaskForm = ({
                 setAssignmentMode={setAssignmentMode}
                 projectMembers={projectMembers}
               />
-              <DatePickerField
+              <DatePicker
                 label="Date de début"
-                value={startDate}
-                onChange={setStartDate}
+                date={startDate}
+                onDateChange={setStartDate}
               />
-              <DatePickerField
+              <DatePicker
                 label="Date d'échéance"
-                value={dueDate}
-                onChange={setDueDate}
+                date={dueDate}
+                onDateChange={setDueDate}
+                minDate={startDate}
               />
             </>
           )}
