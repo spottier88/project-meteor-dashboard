@@ -1,7 +1,7 @@
 
 import pptxgen from "pptxgenjs";
 import { ProjectData } from "./types";
-import { weatherIcons, progressIcons, weatherTypes, progressTypes, weatherColors, progressColors } from "./constants";
+import { weatherIcons, progressIcons } from "./constants";
 import { pptxStyles, pptxColors } from "./PPTXStyles";
 import { lifecycleStatusLabels } from "@/types/project";
 
@@ -30,28 +30,17 @@ const addSummaryTable = (slide: pptxgen.Slide, projectsData: ProjectData[]) => {
     ],
     ...projectsData.map((data, idx) => [
       { text: data.project.title, options: { fill: { color: idx % 2 === 0 ? "F5F5F5" : "FFFFFF" }, fontSize: 11 } },
-      { text: "", options: { fill: { color: idx % 2 === 0 ? "F5F5F5" : "FFFFFF" }, fontSize: 11, align: "center" as pptxgen.HAlign } },
-      { text: "", options: { fill: { color: idx % 2 === 0 ? "F5F5F5" : "FFFFFF" }, fontSize: 11, align: "center" as pptxgen.HAlign } },
+      { text: weatherIcons[data.lastReview?.weather || "cloudy"], options: { fill: { color: idx % 2 === 0 ? "F5F5F5" : "FFFFFF" }, fontSize: 11, align: "center" as pptxgen.HAlign } },
+      { text: progressIcons[data.lastReview?.progress || "stable"], options: { fill: { color: idx % 2 === 0 ? "F5F5F5" : "FFFFFF" }, fontSize: 11, align: "center" as pptxgen.HAlign } },
       { text: data.lastReview?.comment || "-", options: { fill: { color: idx % 2 === 0 ? "F5F5F5" : "FFFFFF" }, fontSize: 11 } }
     ])
   ];
 
-  const table = slide.addTable(tableRows, {
+  slide.addTable(tableRows, {
     x: 0.5,
     y: 1.0,
     w: 9,
     colW: [3, 1, 1, 4],
-  });
-
-  // Ajouter les formes météo et progression dans les cellules appropriées
-  projectsData.forEach((data, idx) => {
-    const rowY = 1.0 + 0.5 + (idx * 0.5); // Position Y approximative (1.0 est le début du tableau + hauteur de l'en-tête + hauteur de chaque ligne)
-    
-    // Ajouter l'icône météo
-    addWeatherShape(slide, data.lastReview?.weather || "cloudy", 3.0, rowY, 0.4, 0.4);
-    
-    // Ajouter l'icône progression
-    addProgressShape(slide, data.lastReview?.progress || "stable", 4.0, rowY, 0.4, 0.4);
   });
 };
 
@@ -105,159 +94,28 @@ const addProjectGrid = (slide: pptxgen.Slide, data: ProjectData) => {
 
 const addSituationSection = (slide: pptxgen.Slide, data: ProjectData, grid: any) => {
   addSection(slide, "SITUATION", grid.x, grid.y, 1.5, 1);
-  
-  // Remplacer l'emoji par une forme PowerPoint native
-  addWeatherShape(slide, data.lastReview?.weather || "cloudy", grid.x + 0.55, grid.y + 0.5, 0.6, 0.6);
+  slide.addText(weatherIcons[data.lastReview?.weather || "cloudy"], {
+    x: grid.x,
+    y: grid.y + 0.3,
+    w: 1.5,
+    h: 0.7,
+    fontSize: 24,
+    align: "center",
+    valign: "middle"
+  });
 };
 
 const addEvolutionSection = (slide: pptxgen.Slide, data: ProjectData, grid: any) => {
   addSection(slide, "EVOLUTION", grid.x + 1.6, grid.y, 1.5, 1);
-  
-  // Remplacer l'emoji par une forme PowerPoint native
-  addProgressShape(slide, data.lastReview?.progress || "stable", grid.x + 2.15, grid.y + 0.5, 0.6, 0.6);
-};
-
-// Fonction pour ajouter une forme météo
-const addWeatherShape = (slide: pptxgen.Slide, weather: string, x: number, y: number, w: number, h: number) => {
-  switch(weather) {
-    case weatherTypes.sunny:
-      // Soleil (cercle jaune)
-      slide.addShape('ellipse', { 
-        x, y, w, h, 
-        fill: { color: weatherColors.sunny },
-        line: { color: weatherColors.sunny, width: 1 } 
-      });
-      
-      // Ajouter des rayons autour (8 petits rectangles)
-      const rayLength = 0.13 * w;
-      const centerX = x + w/2;
-      const centerY = y + h/2;
-      const rayPositions = [
-        { x: centerX, y: y - rayLength, w: 0.06 * w, h: rayLength, angle: 0 },
-        { x: centerX + w/3, y: y - rayLength/2, w: 0.06 * w, h: rayLength, angle: 45 },
-        { x: x + w, y: centerY, w: rayLength, h: 0.06 * h, angle: 0 },
-        { x: x + w - rayLength/2, y: centerY + h/3, w: rayLength, h: 0.06 * h, angle: 45 },
-        { x: centerX, y: y + h, w: 0.06 * w, h: rayLength, angle: 0 },
-        { x: centerX - w/3, y: y + h - rayLength/2, w: 0.06 * w, h: rayLength, angle: 45 },
-        { x: x - rayLength, y: centerY, w: rayLength, h: 0.06 * h, angle: 0 },
-        { x: x - rayLength/2, y: centerY - h/3, w: rayLength, h: 0.06 * h, angle: 45 }
-      ];
-      
-      rayPositions.forEach(pos => {
-        slide.addShape('rect', {
-          x: pos.x,
-          y: pos.y,
-          w: pos.w,
-          h: pos.h,
-          fill: { color: weatherColors.sunny },
-          rotate: pos.angle
-        });
-      });
-      break;
-      
-    case weatherTypes.cloudy:
-      // Nuage (forme arrondie grise)
-      slide.addShape('roundRect', { 
-        x, y: y + 0.1 * h, w, h: 0.8 * h, 
-        roundness: 0.3,
-        fill: { color: weatherColors.cloudy },
-        line: { color: weatherColors.cloudy, width: 1 }
-      });
-      
-      // Deuxième forme arrondie pour l'effet nuage
-      slide.addShape('roundRect', { 
-        x: x + 0.2 * w, y, w: 0.7 * w, h: 0.7 * h, 
-        roundness: 0.3,
-        fill: { color: weatherColors.cloudy },
-        line: { color: weatherColors.cloudy, width: 1 }
-      });
-      break;
-      
-    case weatherTypes.stormy:
-      // Nuage d'orage (forme arrondie gris foncé)
-      slide.addShape('roundRect', { 
-        x, y: y + 0.1 * h, w, h: 0.6 * h, 
-        roundness: 0.3,
-        fill: { color: weatherColors.stormy },
-        line: { color: weatherColors.stormy, width: 1 }
-      });
-      
-      // Deuxième forme arrondie pour l'effet nuage
-      slide.addShape('roundRect', { 
-        x: x + 0.2 * w, y, w: 0.7 * w, h: 0.5 * h, 
-        roundness: 0.3,
-        fill: { color: weatherColors.stormy },
-        line: { color: weatherColors.stormy, width: 1 }
-      });
-      
-      // Éclair (triangle jaune)
-      slide.addShape('triangle', {
-        x: x + 0.4 * w,
-        y: y + 0.4 * h,
-        w: 0.3 * w,
-        h: 0.5 * h,
-        fill: { color: weatherColors.sunny },
-        flipV: true
-      });
-      break;
-      
-    default:
-      // Par défaut, un cercle gris
-      slide.addShape('ellipse', { 
-        x, y, w, h, 
-        fill: { color: 'CCCCCC' } 
-      });
-  }
-};
-
-// Fonction pour ajouter une forme de progression
-const addProgressShape = (slide: pptxgen.Slide, progress: string, x: number, y: number, w: number, h: number) => {
-  switch(progress) {
-    case progressTypes.better:
-      // Flèche vers le haut (vert)
-      slide.addShape('triangle', { 
-        x, y, w, h, 
-        fill: { color: progressColors.better }
-      });
-      break;
-      
-    case progressTypes.stable:
-      // Flèche horizontale (orange)
-      slide.addShape('rect', { 
-        x: x + 0.1 * w, y: y + 0.4 * h, w: 0.8 * w, h: 0.2 * h, 
-        fill: { color: progressColors.stable }
-      });
-      
-      // Triangle pour la pointe de la flèche
-      slide.addShape('triangle', { 
-        x: x + 0.6 * w, y: y + 0.25 * h, w: 0.3 * w, h: 0.5 * h, 
-        fill: { color: progressColors.stable },
-        rotate: 90 // Pointe vers la droite
-      });
-      break;
-      
-    case progressTypes.worse:
-      // Flèche vers le bas (rouge)
-      slide.addShape('triangle', { 
-        x, y, w, h, 
-        fill: { color: progressColors.worse },
-        flipV: true
-      });
-      break;
-      
-    default:
-      // Par défaut, une flèche horizontale
-      slide.addShape('rect', { 
-        x: x + 0.1 * w, y: y + 0.4 * h, w: 0.8 * w, h: 0.2 * h, 
-        fill: { color: progressColors.stable }
-      });
-      
-      slide.addShape('triangle', { 
-        x: x + 0.6 * w, y: y + 0.25 * h, w: 0.3 * w, h: 0.5 * h, 
-        fill: { color: progressColors.stable },
-        rotate: 90 // Pointe vers la droite
-      });
-  }
+  slide.addText(progressIcons[data.lastReview?.progress || "stable"], {
+    x: grid.x + 1.6,
+    y: grid.y + 0.3,
+    w: 1.5,
+    h: 0.7,
+    fontSize: 24,
+    align: "center",
+    valign: "middle"
+  });
 };
 
 const addGeneralSituationSection = (slide: pptxgen.Slide, data: ProjectData, grid: any) => {
@@ -380,3 +238,4 @@ const addBulletList = (
     });
   }
 };
+
