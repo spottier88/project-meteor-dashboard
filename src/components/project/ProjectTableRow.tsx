@@ -10,6 +10,7 @@ import { useUser } from "@supabase/auth-helpers-react";
 import { LifecycleStatusBadge } from "./LifecycleStatusBadge";
 import { ProjectLifecycleStatus } from "@/types/project";
 import { AddToCartButton } from "../cart/AddToCartButton";
+import { MonitoringBadge } from "../monitoring/MonitoringBadge";
 
 interface Project {
   id: string;
@@ -151,7 +152,9 @@ export const ProjectTableRow = ({
           ? new Date(latestReview.created_at).toLocaleDateString()
           : "-"}
       </TableCell>
-      <TableCell>{project.suivi_dgs ? "DGS" : "-"}</TableCell>
+      <TableCell>
+        <MonitoringBadge projectId={project.id} />
+      </TableCell>
       <TableCell>
         <div className="flex justify-end items-center gap-1" onClick={(e) => e.stopPropagation()}>
           <AddToCartButton projectId={project.id} projectTitle={project.title} />
