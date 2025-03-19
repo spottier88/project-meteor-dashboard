@@ -1,4 +1,3 @@
-
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -75,6 +74,8 @@ export const TaskManagement = () => {
         id={project.id}
         isProjectManager={isProjectManager}
         isAdmin={isAdmin}
+        start_date={project.start_date}
+        end_date={project.end_date}
       />
 
       <div className="mt-8">

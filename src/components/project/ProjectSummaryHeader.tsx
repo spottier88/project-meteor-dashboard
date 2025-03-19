@@ -1,4 +1,3 @@
-
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ProjectStatus, ProgressStatus } from "@/types/project";
 import { statusIcons } from "@/lib/project-status";
@@ -16,6 +15,8 @@ interface ProjectSummaryHeaderProps {
   id: string;
   isProjectManager: boolean;
   isAdmin: boolean;
+  start_date?: string;
+  end_date?: string;
 }
 
 const progressLabels = {
@@ -31,6 +32,8 @@ export const ProjectSummaryHeader = ({
   id,
   isProjectManager,
   isAdmin,
+  start_date,
+  end_date,
 }: ProjectSummaryHeaderProps) => {
   const [copied, setCopied] = useState(false);
 
@@ -117,10 +120,25 @@ export const ProjectSummaryHeader = ({
     if (projectCode?.code) {
       const formattedCode = `#${projectCode.code}#`;
       navigator.clipboard.writeText(formattedCode);
-      // navigator.clipboard.writeText(projectCode.code);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     }
+  };
+
+  const formatDate = (dateStr?: string) => {
+    if (!dateStr) return "-";
+    return new Date(dateStr).toLocaleDateString("fr-FR");
+  };
+
+  const getProjectPeriod = () => {
+    if (start_date && end_date) {
+      return `${formatDate(start_date)} - ${formatDate(end_date)}`;
+    } else if (start_date) {
+      return `Depuis le ${formatDate(start_date)}`;
+    } else if (end_date) {
+      return `Jusqu'au ${formatDate(end_date)}`;
+    }
+    return "-";
   };
 
   return (
@@ -164,7 +182,7 @@ export const ProjectSummaryHeader = ({
         {getStatusIcon()}
       </CardHeader>
       <CardContent>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
           <div>
             <span className="text-sm text-muted-foreground">Chef de projet</span>
             <p className="font-medium">{getProjectManagerDisplay()}</p>
@@ -178,6 +196,10 @@ export const ProjectSummaryHeader = ({
             <p className="font-medium">
               {latestReview?.progress ? progressLabels[latestReview.progress] : "-"}
             </p>
+          </div>
+          <div>
+            <span className="text-sm text-muted-foreground">Période</span>
+            <p className="font-medium">{getProjectPeriod()}</p>
           </div>
           <div>
             <span className="text-sm text-muted-foreground">Dernière revue</span>
