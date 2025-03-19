@@ -30,6 +30,7 @@ const Login = () => {
   const [message, setMessage] = useState("");
   const [isMagicLink, setIsMagicLink] = useState(true);
   const [isCheckingSession, setIsCheckingSession] = useState(true);
+  const [isPasswordReset, setIsPasswordReset] = useState(false);
   const initialCheckDone = useRef(false);
 
   // Fonction simplifiée pour déconnecter l'utilisateur sans boucle
@@ -181,6 +182,25 @@ const Login = () => {
     }
   };
 
+  // 🔹 Demande de réinitialisation de mot de passe
+  const handlePasswordReset = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setMessage("");
+
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/auth/callback?reset=true`,
+    });
+
+    setLoading(false);
+
+    if (error) {
+      setMessage("Erreur : " + error.message);
+    } else {
+      setMessage("Si un compte existe avec cet email, vous recevrez un lien pour réinitialiser votre mot de passe.");
+    }
+  };
+
   // Déconnexion manuelle et nettoyage complet
   const handleManualReset = async () => {
     await performLogout();
@@ -209,22 +229,73 @@ const Login = () => {
         <div className="text-center">
           <h2 className="text-3xl font-bold text-gray-900">Connexion à Meteor</h2>
           <p className="mt-2 text-sm text-gray-600">
-            {isMagicLink
-              ? "Entrez votre email pour recevoir un lien de connexion"
-              : "Connectez-vous avec votre email et mot de passe"}
+            {isPasswordReset 
+              ? "Réinitialisation de mot de passe"
+              : isMagicLink
+                ? "Entrez votre email pour recevoir un lien de connexion"
+                : "Connectez-vous avec votre email et mot de passe"}
           </p>
         </div>
 
-        {/* 🔹 Bouton pour changer de mode (Magic Link <-> Email/MDP) */}
-        <button
-          onClick={() => setIsMagicLink(!isMagicLink)}
-          className="w-full text-blue-600 font-medium p-2 rounded-md hover:underline"
-        >
-          {isMagicLink ? "Se connecter avec un mot de passe" : "Utiliser un Magic Link"}
-        </button>
+        {/* 🔹 Boutons pour changer de mode */}
+        {!isPasswordReset && (
+          <button
+            onClick={() => setIsMagicLink(!isMagicLink)}
+            className="w-full text-blue-600 font-medium p-2 rounded-md hover:underline"
+          >
+            {isMagicLink ? "Se connecter avec un mot de passe" : "Utiliser un Magic Link"}
+          </button>
+        )}
+
+        {/* 🔹 Lien pour la réinitialisation de mot de passe */}
+        {!isMagicLink && !isPasswordReset && (
+          <button
+            onClick={() => setIsPasswordReset(true)}
+            className="w-full text-blue-600 text-sm p-1 hover:underline"
+          >
+            Mot de passe oublié ?
+          </button>
+        )}
+
+        {/* 🔹 Lien pour revenir à la connexion depuis la réinitialisation */}
+        {isPasswordReset && (
+          <button
+            onClick={() => setIsPasswordReset(false)}
+            className="w-full text-blue-600 font-medium p-2 rounded-md hover:underline"
+          >
+            Retour à la connexion
+          </button>
+        )}
+
+        {/* 🔹 Formulaire de réinitialisation de mot de passe */}
+        {isPasswordReset && (
+          <form onSubmit={handlePasswordReset} className="space-y-4">
+            <div>
+              <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+                Email
+              </label>
+              <input
+                type="email"
+                id="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                className="mt-1 p-2 w-full border rounded-md"
+                placeholder="Votre adresse email"
+              />
+            </div>
+            <button
+              type="submit"
+              className="w-full bg-blue-600 text-white p-2 rounded-md hover:bg-blue-700"
+              disabled={loading}
+            >
+              {loading ? "Envoi en cours..." : "Réinitialiser mon mot de passe"}
+            </button>
+          </form>
+        )}
 
         {/* 🔹 Formulaire Magic Link */}
-        {isMagicLink ? (
+        {isMagicLink && !isPasswordReset && (
           <form onSubmit={handleMagicLink} className="space-y-4">
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-gray-700">
@@ -248,8 +319,10 @@ const Login = () => {
               {loading ? "Envoi en cours..." : "Recevoir le lien de connexion"}
             </button>
           </form>
-        ) : (
-          // 🔹 Formulaire Email / Mot de passe
+        )}
+
+        {/* 🔹 Formulaire Email / Mot de passe */}
+        {!isMagicLink && !isPasswordReset && (
           <form onSubmit={handleLogin} className="space-y-4">
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-gray-700">
@@ -290,7 +363,7 @@ const Login = () => {
         )}
 
         {/* 🔹 Bouton d'inscription (email + mot de passe) */}
-        {!isMagicLink && (
+        {!isMagicLink && !isPasswordReset && (
           <button
             onClick={handleSignup}
             className="w-full bg-gray-200 text-gray-700 p-2 rounded-md hover:bg-gray-300"

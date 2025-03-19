@@ -21,6 +21,10 @@ const clearSupabaseCookies = () => {
 
 const AuthCallback = () => {
   const [error, setError] = useState<string | null>(null);
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [isResetMode, setIsResetMode] = useState(false);
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -32,6 +36,16 @@ const AuthCallback = () => {
         // Récupère les paramètres de l'URL
         const hashParams = new URLSearchParams(window.location.hash.substring(1));
         const queryParams = new URLSearchParams(window.location.search);
+        
+        // Vérifier le mode réinitialisation
+        const isReset = queryParams.get('reset') === 'true' || 
+                        hashParams.get('type') === 'recovery';
+        
+        if (isReset) {
+          console.log("Mode réinitialisation de mot de passe détecté");
+          setIsResetMode(true);
+          return; // Ne pas poursuivre le traitement normal
+        }
         
         // Vérifie s'il y a une erreur dans les paramètres
         const errorDescription = hashParams.get('error_description') || queryParams.get('error_description');
@@ -90,6 +104,116 @@ const AuthCallback = () => {
     handleAuthCallback();
   }, [navigate, toast]);
 
+  // Gestionnaire pour définir un nouveau mot de passe
+  const handlePasswordUpdate = async (e) => {
+    e.preventDefault();
+    
+    if (newPassword !== confirmPassword) {
+      toast({
+        variant: "destructive",
+        title: "Erreur",
+        description: "Les mots de passe ne correspondent pas",
+      });
+      return;
+    }
+    
+    if (newPassword.length < 6) {
+      toast({
+        variant: "destructive",
+        title: "Erreur",
+        description: "Le mot de passe doit contenir au moins 6 caractères",
+      });
+      return;
+    }
+    
+    setLoading(true);
+    
+    try {
+      const { error } = await supabase.auth.updateUser({ 
+        password: newPassword 
+      });
+      
+      if (error) throw error;
+      
+      toast({
+        title: "Mot de passe mis à jour",
+        description: "Votre mot de passe a été modifié avec succès",
+      });
+      
+      // Laisser un peu de temps pour voir le message de succès
+      setTimeout(() => {
+        navigate("/");
+      }, 1500);
+      
+    } catch (err) {
+      console.error("Erreur lors de la mise à jour du mot de passe:", err);
+      toast({
+        variant: "destructive",
+        title: "Erreur",
+        description: err instanceof Error ? err.message : "Une erreur est survenue lors de la mise à jour du mot de passe",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Affichage du formulaire de réinitialisation de mot de passe
+  if (isResetMode) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="max-w-md w-full space-y-8 p-8 bg-white rounded-lg shadow">
+          <div className="text-center">
+            <h2 className="text-2xl font-bold text-gray-900">Définir un nouveau mot de passe</h2>
+            <p className="mt-2 text-sm text-gray-600">
+              Veuillez créer un nouveau mot de passe sécurisé
+            </p>
+          </div>
+          
+          <form onSubmit={handlePasswordUpdate} className="space-y-4">
+            <div>
+              <label htmlFor="newPassword" className="block text-sm font-medium text-gray-700">
+                Nouveau mot de passe
+              </label>
+              <input
+                type="password"
+                id="newPassword"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                required
+                className="mt-1 p-2 w-full border rounded-md"
+                placeholder="Votre nouveau mot de passe"
+              />
+            </div>
+            
+            <div>
+              <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700">
+                Confirmer le mot de passe
+              </label>
+              <input
+                type="password"
+                id="confirmPassword"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                required
+                className="mt-1 p-2 w-full border rounded-md"
+                placeholder="Confirmez votre mot de passe"
+              />
+            </div>
+            
+            <button
+              type="submit"
+              className="w-full bg-blue-600 text-white p-2 rounded-md hover:bg-blue-700"
+              disabled={loading}
+            >
+              {loading ? "Mise à jour en cours..." : "Mettre à jour mon mot de passe"}
+            </button>
+          </form>
+        </div>
+      </div>
+    );
+  }
+
+  // Affichage en cas d'erreur
   if (error) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
@@ -104,6 +228,7 @@ const AuthCallback = () => {
     );
   }
 
+  // Affichage par défaut (chargement)
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50">
       <div className="max-w-md w-full space-y-8 p-8 bg-white rounded-lg shadow">
