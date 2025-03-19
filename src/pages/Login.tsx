@@ -83,10 +83,18 @@ const Login = () => {
     checkSession();
   }, [navigate]);
 
-  // Gestionnaire d'état d'authentification simplifié
+  // Gestionnaire d'état d'authentification modifié pour gérer PASSWORD_RECOVERY
   useEffect(() => {
     const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
       console.log("Événement d'authentification:", event);
+      
+      // Gérer l'événement PASSWORD_RECOVERY
+      if (event === 'PASSWORD_RECOVERY') {
+        console.log("Événement PASSWORD_RECOVERY détecté, redirection vers le formulaire de réinitialisation");
+        // Rediriger vers la page de callback avec le paramètre reset=true
+        window.location.href = '/auth/callback?reset=true';
+        return;
+      }
       
       if (event === 'SIGNED_OUT') {
         console.log("Événement SIGNED_OUT détecté");

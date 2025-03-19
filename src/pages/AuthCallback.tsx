@@ -37,9 +37,14 @@ const AuthCallback = () => {
         const hashParams = new URLSearchParams(window.location.hash.substring(1));
         const queryParams = new URLSearchParams(window.location.search);
         
-        // Vérifier le mode réinitialisation
+        // Vérifier le mode réinitialisation - amélioration de la détection
         const isReset = queryParams.get('reset') === 'true' || 
-                        hashParams.get('type') === 'recovery';
+                        hashParams.get('type') === 'recovery' ||
+                        // Ajout d'une vérification pour détecter le token de récupération
+                        hashParams.get('access_token') !== null && (
+                          hashParams.get('type') === 'recovery' || 
+                          hashParams.has('refresh_token')
+                        );
         
         if (isReset) {
           console.log("Mode réinitialisation de mot de passe détecté");
