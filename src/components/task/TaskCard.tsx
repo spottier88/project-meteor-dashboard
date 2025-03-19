@@ -17,6 +17,10 @@ interface TaskCardProps {
     assignee?: string;
     due_date?: string;
     project_id: string;
+    projects?: {
+      id: string;
+      title: string;
+    };
   };
   onEdit: (task: any) => void;
   onDelete: (task: any) => void;
@@ -101,14 +105,16 @@ export const TaskCard = ({ task, onEdit, onDelete, showActions = true }: TaskCar
 
   return (
     <TableRow>
-      <TableCell className="font-medium">{task.title}</TableCell>
+      <TableCell className="font-medium">
+        {task.projects?.title || "-"}
+      </TableCell>
+      <TableCell>{task.title}</TableCell>
       <TableCell className="max-w-md">{task.description || "-"}</TableCell>
       <TableCell>
         <span className={statusColors[task.status]}>
           {statusLabels[task.status]}
         </span>
       </TableCell>
-      <TableCell>{formatUserName(task.assignee, profiles)}</TableCell>
       <TableCell>
         <span className={cn(
           isTaskOverdue() ? "text-red-600 font-medium" : ""

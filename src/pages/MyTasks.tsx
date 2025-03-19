@@ -9,15 +9,34 @@ import { TaskCard } from "@/components/task/TaskCard";
 import { Badge } from "@/components/ui/badge";
 import { useQueryClient } from "@tanstack/react-query";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { TaskForm } from "@/components/task/TaskForm";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/components/ui/use-toast";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 export const MyTasks = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const { toast } = useToast();
   const [showOverdueOnly, setShowOverdueOnly] = useState(
     new URLSearchParams(location.search).get("filter") === "overdue"
   );
   const [selectedProject, setSelectedProject] = useState<string>("all");
+  
+  // États pour gérer le formulaire d'édition et la suppression
+  const [isTaskFormOpen, setIsTaskFormOpen] = useState(false);
+  const [selectedTask, setSelectedTask] = useState<any>(null);
+  const [taskToDelete, setTaskToDelete] = useState<any>(null);
   
   const { data: tasks, isLoading, refetch } = useMyTasks(showOverdueOnly);
   
@@ -55,6 +74,37 @@ export const MyTasks = () => {
   const handleRefresh = () => {
     queryClient.invalidateQueries({ queryKey: ["myTasks"] });
     refetch();
+  };
+
+  // Fonction pour supprimer une tâche
+  const handleDeleteTask = async () => {
+    if (!taskToDelete) return;
+
+    try {
+      const { error } = await supabase
+        .from("tasks")
+        .delete()
+        .eq("id", taskToDelete.id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Succès",
+        description: "La tâche a été supprimée",
+      });
+
+      queryClient.invalidateQueries({ queryKey: ["myTasks"] });
+      refetch();
+    } catch (error) {
+      console.error("Error:", error);
+      toast({
+        title: "Erreur",
+        description: "Une erreur est survenue lors de la suppression",
+        variant: "destructive",
+      });
+    } finally {
+      setTaskToDelete(null);
+    }
   };
 
   return (
@@ -146,13 +196,51 @@ export const MyTasks = () => {
               <TaskCard
                 key={task.id}
                 task={task}
-                onEdit={() => navigate(`/tasks/${task.project_id}`)}
-                onDelete={() => refetch()}
+                onEdit={() => {
+                  setSelectedTask(task);
+                  setIsTaskFormOpen(true);
+                }}
+                onDelete={() => setTaskToDelete(task)}
               />
             ))}
           </TableBody>
         </Table>
       )}
+
+      {/* Formulaire d'édition de tâche */}
+      {selectedTask && (
+        <TaskForm
+          isOpen={isTaskFormOpen}
+          onClose={() => {
+            setIsTaskFormOpen(false);
+            setSelectedTask(null);
+          }}
+          onSubmit={() => {
+            queryClient.invalidateQueries({ queryKey: ["myTasks"] });
+            refetch();
+          }}
+          projectId={selectedTask.project_id}
+          task={selectedTask}
+        />
+      )}
+
+      {/* Dialog de confirmation pour la suppression */}
+      <AlertDialog open={!!taskToDelete} onOpenChange={() => setTaskToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Êtes-vous sûr ?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Cette action ne peut pas être annulée. La tâche sera définitivement supprimée.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Annuler</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteTask}>
+              Supprimer
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
