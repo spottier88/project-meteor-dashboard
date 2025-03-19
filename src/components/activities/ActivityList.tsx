@@ -5,6 +5,9 @@ import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { Button } from "@/components/ui/button";
+import { Trash2 } from "lucide-react";
+import { useUser } from '@supabase/auth-helpers-react';
 
 interface Activity {
   id: string;
@@ -12,6 +15,7 @@ interface Activity {
   duration_minutes: number;
   activity_type: string;
   description?: string;
+  user_id?: string;
   projects?: {
     title: string;
   } | null;
@@ -26,9 +30,13 @@ interface DayActivities {
 
 interface ActivityListProps {
   dailyActivities: DayActivities[];
+  onDelete?: (activity: Activity) => void;
+  showDeleteButton?: boolean;
 }
 
-export const ActivityList = ({ dailyActivities }: ActivityListProps) => {
+export const ActivityList = ({ dailyActivities, onDelete, showDeleteButton = false }: ActivityListProps) => {
+  const user = useUser();
+  
   // Récupérer tous les types d'activités
   const { data: activityTypes } = useQuery({
     queryKey: ["activity-types"],
@@ -89,9 +97,22 @@ export const ActivityList = ({ dailyActivities }: ActivityListProps) => {
                         {format(new Date(activity.start_time), 'HH:mm')}
                       </p>
                     </div>
-                    <span className="text-sm font-medium">
-                      {activity.duration_minutes}min
-                    </span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-medium">
+                        {activity.duration_minutes}min
+                      </span>
+                      
+                      {showDeleteButton && user && activity.user_id === user.id && onDelete && (
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          className="h-8 w-8 ml-2"
+                          onClick={() => onDelete(activity)}
+                        >
+                          <Trash2 className="h-4 w-4 text-muted-foreground hover:text-destructive" />
+                        </Button>
+                      )}
+                    </div>
                   </div>
                 ))}
               </div>

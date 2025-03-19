@@ -16,7 +16,12 @@ import { useActivityPeriod } from '@/hooks/useActivityPeriod';
 import { useActivityData, processActivityData } from '@/hooks/useActivityData';
 import { exportActivitiesToExcel } from '@/utils/activityExport';
 
-export const WeeklyDashboard = () => {
+interface WeeklyDashboardProps {
+  onDeleteActivity?: (activity: any) => void;
+  showDeleteButton?: boolean;
+}
+
+export const WeeklyDashboard = ({ onDeleteActivity, showDeleteButton = false }: WeeklyDashboardProps) => {
   const location = useLocation();
   const isTeamView = location.pathname === '/team-activities';
   const [viewMode, setViewMode] = useState<'chart' | 'list'>('chart');
@@ -129,7 +134,11 @@ export const WeeklyDashboard = () => {
               </div>
             </div>
           ) : (
-            <ActivityList dailyActivities={dailyActivities} />
+            <ActivityList 
+              dailyActivities={dailyActivities} 
+              onDelete={!isTeamView && onDeleteActivity ? onDeleteActivity : undefined}
+              showDeleteButton={!isTeamView && showDeleteButton}
+            />
           )}
         </CardContent>
       </Card>
