@@ -3,7 +3,7 @@ import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
-import { Send, Trash2 } from "lucide-react";
+import { Send, Trash2, MessageSquare } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { Button } from "@/components/ui/button";
 import {
@@ -23,6 +23,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { Notification } from "@/types/notification";
 import { PublishNotificationForm } from "./PublishNotificationForm";
+import { FeedbackResponseForm } from "./FeedbackResponseForm";
 
 interface NotificationListProps {
   onDelete: () => void;
@@ -33,6 +34,7 @@ export function NotificationList({ onDelete }: NotificationListProps) {
   const queryClient = useQueryClient();
   const [selectedNotification, setSelectedNotification] = useState<string | null>(null);
   const [selectedContent, setSelectedContent] = useState<Notification | null>(null);
+  const [feedbackToRespond, setFeedbackToRespond] = useState<Notification | null>(null);
 
   const { data: notifications, isLoading } = useQuery({
     queryKey: ["notifications"],
@@ -139,6 +141,18 @@ export function NotificationList({ onDelete }: NotificationListProps) {
                     <Send className="h-4 w-4" />
                   </Button>
                 )}
+                {notification.type === "feedback" && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setFeedbackToRespond(notification);
+                    }}
+                  >
+                    <MessageSquare className="h-4 w-4" />
+                  </Button>
+                )}
                 <Button
                   variant="ghost"
                   size="sm"
@@ -215,6 +229,33 @@ export function NotificationList({ onDelete }: NotificationListProps) {
                   </li>
                 </ul>
               </div>
+            </div>
+          )}
+        </SheetContent>
+      </Sheet>
+
+      <Sheet 
+        open={!!feedbackToRespond} 
+        onOpenChange={() => setFeedbackToRespond(null)}
+      >
+        <SheetContent>
+          <SheetHeader>
+            <SheetTitle>Répondre au feedback</SheetTitle>
+          </SheetHeader>
+          {feedbackToRespond && (
+            <div className="mt-8">
+              <FeedbackResponseForm
+                feedback={feedbackToRespond}
+                onSuccess={() => {
+                  setFeedbackToRespond(null);
+                  queryClient.invalidateQueries({ queryKey: ["notifications"] });
+                  toast({
+                    title: "Réponse envoyée",
+                    description: "Votre réponse a été envoyée avec succès",
+                  });
+                }}
+                onCancel={() => setFeedbackToRespond(null)}
+              />
             </div>
           )}
         </SheetContent>
