@@ -1,3 +1,4 @@
+
 import pptxgen from "pptxgenjs";
 import { ProjectData } from "./types";
 import { weatherIcons, progressIcons, weatherTypes, progressTypes, weatherColors, progressColors } from "./constants";
@@ -158,7 +159,7 @@ const addWeatherShape = (slide: pptxgen.Slide, weather: string, x: number, y: nu
       // Nuage (forme arrondie grise)
       slide.addShape('roundRect', { 
         x, y: y + 0.1 * h, w, h: 0.8 * h, 
-        r: 0.3,
+        roundness: 0.3,
         fill: { color: weatherColors.cloudy },
         line: { color: weatherColors.cloudy, width: 1 }
       });
@@ -166,7 +167,7 @@ const addWeatherShape = (slide: pptxgen.Slide, weather: string, x: number, y: nu
       // Deuxième forme arrondie pour l'effet nuage
       slide.addShape('roundRect', { 
         x: x + 0.2 * w, y, w: 0.7 * w, h: 0.7 * h, 
-        r: 0.3,
+        roundness: 0.3,
         fill: { color: weatherColors.cloudy },
         line: { color: weatherColors.cloudy, width: 1 }
       });
@@ -176,7 +177,7 @@ const addWeatherShape = (slide: pptxgen.Slide, weather: string, x: number, y: nu
       // Nuage d'orage (forme arrondie gris foncé)
       slide.addShape('roundRect', { 
         x, y: y + 0.1 * h, w, h: 0.6 * h, 
-        r: 0.3,
+        roundness: 0.3,
         fill: { color: weatherColors.stormy },
         line: { color: weatherColors.stormy, width: 1 }
       });
@@ -184,26 +185,19 @@ const addWeatherShape = (slide: pptxgen.Slide, weather: string, x: number, y: nu
       // Deuxième forme arrondie pour l'effet nuage
       slide.addShape('roundRect', { 
         x: x + 0.2 * w, y, w: 0.7 * w, h: 0.5 * h, 
-        r: 0.3,
+        roundness: 0.3,
         fill: { color: weatherColors.stormy },
         line: { color: weatherColors.stormy, width: 1 }
       });
       
       // Éclair (triangle jaune)
-      const points = [
-        { x: x + 0.4 * w, y: y + 0.4 * h },  // Sommet haut
-        { x: x + 0.6 * w, y: y + 0.6 * h },  // Milieu droit
-        { x: x + 0.45 * w, y: y + 0.6 * h }, // Milieu centre
-        { x: x + 0.65 * w, y: y + h },       // Bas
-        { x: x + 0.35 * w, y: y + 0.7 * h }, // Milieu gauche
-        { x: x + 0.5 * w, y: y + 0.7 * h },  // Milieu droit bas
-        { x: x + 0.4 * w, y: y + 0.4 * h }   // Retour au sommet
-      ];
-      
-      slide.addShape('custGeom', {
-        x, y, w, h,
+      slide.addShape('triangle', {
+        x: x + 0.4 * w,
+        y: y + 0.4 * h,
+        w: 0.3 * w,
+        h: 0.5 * h,
         fill: { color: weatherColors.sunny },
-        points: points.map(p => ({ x: (p.x - x) / w, y: (p.y - y) / h }))
+        flipV: true
       });
       break;
       
@@ -223,8 +217,7 @@ const addProgressShape = (slide: pptxgen.Slide, progress: string, x: number, y: 
       // Flèche vers le haut (vert)
       slide.addShape('triangle', { 
         x, y, w, h, 
-        fill: { color: progressColors.better },
-        rotate: 0 // Pointe vers le haut
+        fill: { color: progressColors.better }
       });
       break;
       
@@ -248,7 +241,7 @@ const addProgressShape = (slide: pptxgen.Slide, progress: string, x: number, y: 
       slide.addShape('triangle', { 
         x, y, w, h, 
         fill: { color: progressColors.worse },
-        rotate: 180 // Pointe vers le bas
+        flipV: true
       });
       break;
       
