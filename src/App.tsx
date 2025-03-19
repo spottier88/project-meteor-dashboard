@@ -29,6 +29,7 @@ import { ActivityTypeManagementPage } from "./pages/ActivityTypeManagement";
 import { AIPromptManagement } from "./pages/AIPromptManagement";
 import { ProjectFraming } from "./pages/ProjectFraming";
 import { logger } from "./utils/logger";
+import { MyTasks } from "./pages/MyTasks";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -89,6 +90,14 @@ function AppContent() {
             element={
               <ProtectedRoute>
                 <TeamActivities />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/my-tasks"
+            element={
+              <ProtectedRoute>
+                <MyTasks />
               </ProtectedRoute>
             }
           />

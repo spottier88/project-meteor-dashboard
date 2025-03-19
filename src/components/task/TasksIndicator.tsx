@@ -2,7 +2,7 @@
 import { useNavigate } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import { useMyTasks } from "@/hooks/use-my-tasks";
-import { Bell } from "lucide-react";
+import { ListChecks } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export const TasksIndicator = () => {
@@ -20,7 +20,7 @@ export const TasksIndicator = () => {
       className="relative"
       onClick={() => navigate("/my-tasks?filter=overdue")}
     >
-      <Bell className="h-5 w-5" />
+      <ListChecks className="h-5 w-5" />
       <Badge 
         variant="destructive" 
         className="absolute -top-1 -right-1 px-1.5 min-w-[20px] h-5 flex items-center justify-center rounded-full text-xs"
