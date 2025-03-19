@@ -1,7 +1,8 @@
+
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { DatePickerField } from "./DatePickerField";
+import { DatePicker } from "./DatePicker";
 import { UserProfile } from "@/types/user";
 import { MonitoringLevel } from "@/types/monitoring";
 import { Label } from "@/components/ui/label";
@@ -110,15 +111,15 @@ export const BasicProjectFields = ({
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2">
-        <DatePickerField
+        <DatePicker
           label="Date de début"
-          value={startDate}
-          onChange={setStartDate}
+          date={startDate}
+          onDateChange={setStartDate}
         />
-        <DatePickerField
+        <DatePicker
           label="Date de fin"
-          value={endDate}
-          onChange={setEndDate}
+          date={endDate}
+          onDateChange={setEndDate}
           minDate={startDate}
         />
       </div>
