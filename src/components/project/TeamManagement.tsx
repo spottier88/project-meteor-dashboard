@@ -95,6 +95,11 @@ export const TeamManagement = ({
 
   const deleteMutation = useMutation({
     mutationFn: async (memberId: string) => {
+      // Vérification préalable que l'ID est valide
+      if (!memberId) {
+        throw new Error("ID du membre non défini");
+      }
+      
       const { error } = await supabase
         .from("project_members")
         .delete()
@@ -121,6 +126,11 @@ export const TeamManagement = ({
 
   const updateRoleMutation = useMutation({
     mutationFn: async ({ memberId, role }: { memberId: string, role: string }) => {
+      // Vérification préalable que l'ID est valide
+      if (!memberId) {
+        throw new Error("ID du membre non défini");
+      }
+      
       console.log(`Updating member ${memberId} in project ${projectId} to role ${role}`);
       
       // Vérifier d'abord si l'enregistrement existe
@@ -175,6 +185,16 @@ export const TeamManagement = ({
   });
 
   const handleDelete = (memberId: string, email?: string) => {
+    // Vérification que l'ID est valide
+    if (!memberId || memberId === 'undefined') {
+      toast({
+        variant: "destructive",
+        title: "Erreur",
+        description: "Impossible de supprimer ce membre : identifiant invalide.",
+      });
+      return;
+    }
+
     if (email && project?.project_manager === email) {
       toast({
         variant: "destructive",
@@ -190,6 +210,13 @@ export const TeamManagement = ({
   };
 
   const handlePromoteToSecondaryManager = (memberId: string, roles: string[]) => {
+    // Pour les admins, on supprime la vérification des rôles
+    if (isAdmin) {
+      updateRoleMutation.mutate({ memberId, role: 'secondary_manager' });
+      return;
+    }
+    
+    // Pour les non-admins, on garde la vérification existante
     if (!roles.includes('chef_projet')) {
       toast({
         variant: "destructive",
@@ -279,7 +306,7 @@ export const TeamManagement = ({
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
-                            {!isProjectManager && !isSecondaryManager && userRoles.includes('chef_projet') && (
+                            {!isProjectManager && !isSecondaryManager && (
                               <DropdownMenuItem onClick={() => handlePromoteToSecondaryManager(member.id, userRoles)}>
                                 Promouvoir chef de projet secondaire
                               </DropdownMenuItem>
