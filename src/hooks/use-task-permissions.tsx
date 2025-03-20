@@ -4,10 +4,10 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
 export const useTaskPermissions = (projectId: string) => {
-  const { isAdmin, isManager, userProfile } = usePermissionsContext();
+  const { isAdmin, userProfile } = usePermissionsContext();
   
   const { data: projectAccess } = useQuery({
-    queryKey: ["projectAccess", projectId, userProfile?.id, isAdmin, isManager],
+    queryKey: ["projectAccess", projectId, userProfile?.id],
     queryFn: async () => {
       if (!userProfile?.id || !projectId) return {
         canEdit: false,
@@ -49,7 +49,7 @@ export const useTaskPermissions = (projectId: string) => {
         });
 
       return {
-        canEdit: !!canAccess || isManager || isSecondaryProjectManager,  // Manager ou chef de projet secondaire a des droits d'édition
+        canEdit: !!canAccess || isSecondaryProjectManager,  // Uniquement si l'utilisateur a des droits d'accès spécifiques à ce projet
         isProjectManager,
         isSecondaryProjectManager,
       };
@@ -57,15 +57,15 @@ export const useTaskPermissions = (projectId: string) => {
     enabled: !!userProfile?.id && !!projectId,
   });
 
-  // Managers et chefs de projet secondaires peuvent créer/modifier/supprimer des tâches
-  const canManage = isAdmin || isManager || projectAccess?.canEdit || projectAccess?.isSecondaryProjectManager || false;
+  // Un utilisateur peut gérer les tâches seulement s'il est admin, s'il a des droits d'édition spécifiques
+  // sur ce projet ou s'il est chef de projet secondaire
+  const canManage = isAdmin || projectAccess?.canEdit || projectAccess?.isSecondaryProjectManager || false;
   
   return {
     canCreateTask: canManage,
     canEditTask: (assignee?: string) => canManage || assignee === userProfile?.email,
     canDeleteTask: canManage,
     isAdmin,
-    isManager,
     isProjectManager: projectAccess?.isProjectManager || false,
     isSecondaryProjectManager: projectAccess?.isSecondaryProjectManager || false,
     isMember: false,
