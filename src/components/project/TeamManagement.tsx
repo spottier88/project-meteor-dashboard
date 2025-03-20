@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -80,7 +79,6 @@ export const TeamManagement = ({
 
       if (error) throw error;
       
-      // Transformer les données pour faciliter l'accès aux rôles des utilisateurs
       return data.map(member => ({
         ...member,
         profiles: {
@@ -159,7 +157,6 @@ export const TeamManagement = ({
   };
 
   const handlePromoteToSecondaryManager = (memberId: string, roles: string[]) => {
-    // Vérifier si l'utilisateur a le rôle chef_projet au niveau application
     if (!roles.includes('chef_projet')) {
       toast({
         variant: "destructive",
@@ -226,7 +223,7 @@ export const TeamManagement = ({
                         </Badge>
                       )}
                       {isSecondaryManager && (
-                        <Badge variant="green" className="flex items-center">
+                        <Badge variant="secondary" className="flex items-center">
                           <CrownIcon className="h-3 w-3 mr-1" />
                           Chef de projet secondaire
                         </Badge>
