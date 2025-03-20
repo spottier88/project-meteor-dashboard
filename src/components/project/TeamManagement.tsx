@@ -66,6 +66,7 @@ export const TeamManagement = ({
         .select(`
           id,
           role,
+          project_id,
           profiles (
             id,
             email,
@@ -120,11 +121,32 @@ export const TeamManagement = ({
 
   const updateRoleMutation = useMutation({
     mutationFn: async ({ memberId, role }: { memberId: string, role: string }) => {
-      console.log(`Updating member ${memberId} to role ${role}`);
+      console.log(`Updating member ${memberId} in project ${projectId} to role ${role}`);
+      
+      // Vérifier d'abord si l'enregistrement existe
+      const { data: checkData, error: checkError } = await supabase
+        .from("project_members")
+        .select("*")
+        .eq("id", memberId)
+        .eq("project_id", projectId)
+        .single();
+      
+      console.log("Check result:", checkData, checkError);
+      
+      if (checkError) {
+        console.error("Error checking member existence:", checkError);
+        throw checkError;
+      }
+      
+      if (!checkData) {
+        throw new Error(`No project member found with ID ${memberId} in project ${projectId}`);
+      }
+      
       const { data, error } = await supabase
         .from("project_members")
         .update({ role })
         .eq("id", memberId)
+        .eq("project_id", projectId)
         .select();
 
       if (error) {
