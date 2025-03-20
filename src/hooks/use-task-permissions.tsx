@@ -13,6 +13,7 @@ export const useTaskPermissions = (projectId: string) => {
         canEdit: false,
         isProjectManager: false,
         isSecondaryProjectManager: false,
+        isMember: false,
       };
 
       const { data: project } = await supabase
@@ -28,6 +29,7 @@ export const useTaskPermissions = (projectId: string) => {
           canEdit: true,
           isProjectManager,
           isSecondaryProjectManager: false,
+          isMember: true
         };
       }
 
@@ -47,11 +49,20 @@ export const useTaskPermissions = (projectId: string) => {
           p_user_id: userProfile.id,
           p_project_id: projectId
         });
+      
+      // Vérifier si l'utilisateur est membre du projet
+      const { data: isMember } = await supabase
+        .from("project_members")
+        .select("user_id")
+        .eq("project_id", projectId)
+        .eq("user_id", userProfile.id)
+        .maybeSingle();
 
       return {
-        canEdit: !!canAccess || isSecondaryProjectManager,  // Uniquement si l'utilisateur a des droits d'accès spécifiques à ce projet
+        canEdit: !!canAccess || isSecondaryProjectManager,
         isProjectManager,
         isSecondaryProjectManager,
+        isMember: !!isMember
       };
     },
     enabled: !!userProfile?.id && !!projectId,
@@ -68,7 +79,7 @@ export const useTaskPermissions = (projectId: string) => {
     isAdmin,
     isProjectManager: projectAccess?.isProjectManager || false,
     isSecondaryProjectManager: projectAccess?.isSecondaryProjectManager || false,
-    isMember: false,
+    isMember: projectAccess?.isMember || false,
     userEmail: userProfile?.email,
   };
 };
