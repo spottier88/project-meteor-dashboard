@@ -13,7 +13,7 @@ import {
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { DeleteProjectDialog } from "./DeleteProjectDialog";
-import { useProjectPermissions } from "@/hooks/useProjectPermissions";
+import { useProjectPermissions } from "@/hooks/use-project-permissions";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -34,6 +34,7 @@ interface ProjectActionsProps {
   canEdit?: boolean;
   canManageTeam?: boolean;
   isAdmin?: boolean;
+  isSecondaryProjectManager?: boolean;
 }
 
 export const ProjectActions = ({
@@ -48,6 +49,7 @@ export const ProjectActions = ({
   canEdit,
   canManageTeam,
   isAdmin,
+  isSecondaryProjectManager,
 }: ProjectActionsProps) => {
   const navigate = useNavigate();
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
@@ -61,6 +63,7 @@ export const ProjectActions = ({
   const _isMember = isMember ?? permissions.isMember;
   const _canManageTeam = canManageTeam ?? permissions.canManageTeam;
   const _isAdmin = isAdmin ?? permissions.isAdmin;
+  const _isSecondaryProjectManager = isSecondaryProjectManager ?? permissions.isSecondaryProjectManager;
 
   const handleClick = (e: React.MouseEvent, action: () => void) => {
     e.stopPropagation();
@@ -80,7 +83,7 @@ export const ProjectActions = ({
 
   return (
     <>
-      {_canEdit && (
+      {_canEdit && !_isSecondaryProjectManager && (
         <Button
           variant="ghost"
           size="icon"

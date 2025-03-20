@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -27,7 +28,7 @@ export const RiskList = ({
   const { toast } = useToast();
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [selectedRisk, setSelectedRisk] = useState<any>(null);
-  const { canCreateRisk } = useRiskAccess(projectId);
+  const { canCreateRisk, canEditRisk, canDeleteRisk } = useRiskAccess(projectId);
 
   const { data: risks, isLoading, isError, refetch } = useQuery({
     queryKey: ["risks", projectId],
@@ -44,11 +45,15 @@ export const RiskList = ({
   });
 
   const handleEdit = (risk: any) => {
-    setSelectedRisk(risk);
-    setIsFormOpen(true);
+    if (canEditRisk) {
+      setSelectedRisk(risk);
+      setIsFormOpen(true);
+    }
   };
 
   const handleDelete = async (risk: any) => {
+    if (!canDeleteRisk) return;
+    
     try {
       const { error } = await supabase
         .from("risks")

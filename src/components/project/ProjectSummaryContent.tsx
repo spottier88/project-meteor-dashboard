@@ -31,6 +31,7 @@ export interface ProjectSummaryContentProps {
   isProjectManager: boolean;
   isAdmin: boolean;
   canEdit: boolean;
+  isSecondaryProjectManager?: boolean;
 }
 
 export const ProjectSummaryContent = ({
@@ -41,6 +42,7 @@ export const ProjectSummaryContent = ({
   isProjectManager,
   isAdmin,
   canEdit,
+  isSecondaryProjectManager = false,
 }: ProjectSummaryContentProps) => {
   const [isTaskFormOpen, setIsTaskFormOpen] = useState(false);
   const [selectedTask, setSelectedTask] = useState<any>(null);
@@ -81,6 +83,8 @@ export const ProjectSummaryContent = ({
         id={project.id}
         isProjectManager={isProjectManager}
         isAdmin={isAdmin}
+        start_date={project.start_date}
+        end_date={project.end_date}
       />
 
       <div className="grid gap-6 md:grid-cols-2">

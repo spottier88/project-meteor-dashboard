@@ -12,6 +12,7 @@ export const useProjectPermissions = (projectId: string) => {
       if (!userProfile?.id || !projectId) return {
         canEdit: false,
         isProjectManager: false,
+        isSecondaryProjectManager: false,
         isMember: false
       };
 
@@ -27,10 +28,22 @@ export const useProjectPermissions = (projectId: string) => {
         return {
           canEdit: true,
           isProjectManager,
+          isSecondaryProjectManager: false,
           isMember: true
         };
       }
 
+      // Vérifier si l'utilisateur est un chef de projet secondaire
+      const { data: projectMember } = await supabase
+        .from("project_members")
+        .select("role")
+        .eq("project_id", projectId)
+        .eq("user_id", userProfile.id)
+        .maybeSingle();
+
+      const isSecondaryProjectManager = projectMember?.role === 'secondary_manager';
+
+      // Vérifier l'accès en tant que manager
       const { data: canAccess } = await supabase
         .rpc('can_manager_access_project', {
           p_user_id: userProfile.id,
@@ -45,8 +58,9 @@ export const useProjectPermissions = (projectId: string) => {
         .maybeSingle();
 
       return {
-        canEdit: !!canAccess,
+        canEdit: !!canAccess || isSecondaryProjectManager,
         isProjectManager,
+        isSecondaryProjectManager,
         isMember: !!isMember
       };
     },
@@ -70,12 +84,13 @@ export const useProjectPermissions = (projectId: string) => {
   const isProjectManager = userRoles?.some(ur => ur.role === 'chef_projet') || false;
 
   return {
-    canManageRisks: isAdmin || projectAccess?.canEdit || false,
+    canManageRisks: isAdmin || projectAccess?.canEdit || projectAccess?.isSecondaryProjectManager || false,
     canEdit: projectAccess?.canEdit || false,
     canCreate: isAdmin || isProjectManager,
-    canManageTeam: isAdmin || projectAccess?.isProjectManager || false,
+    canManageTeam: isAdmin || projectAccess?.isProjectManager || projectAccess?.isSecondaryProjectManager || false,
     isAdmin,
     isProjectManager: projectAccess?.isProjectManager || false,
+    isSecondaryProjectManager: projectAccess?.isSecondaryProjectManager || false,
     isMember: projectAccess?.isMember || false,
     userEmail: userProfile?.email,
   };

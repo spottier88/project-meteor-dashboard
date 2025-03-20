@@ -56,6 +56,7 @@ export const useRiskAccess = (projectId: string) => {
     enabled: !!userProfile?.id && !!projectId,
   });
 
+  // Les chefs de projet secondaires peuvent aussi gérer les risques
   const canManage = isAdmin || projectAccess?.canEdit || projectAccess?.isSecondaryProjectManager || false;
   
   return {
