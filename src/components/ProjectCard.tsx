@@ -1,4 +1,3 @@
-
 import { Card, CardContent } from "@/components/ui/card";
 import { TaskSummary } from "./TaskSummary";
 import { useNavigate } from "react-router-dom";
@@ -49,7 +48,7 @@ export const ProjectCard = ({
   onReview,
 }: ProjectCardProps) => {
   const navigate = useNavigate();
-  const { canEdit, isMember, isProjectManager, isAdmin, canManageTeam } = useProjectPermissions(id);
+  const { canEdit, isMember, isProjectManager, isAdmin, canManageTeam, isSecondaryProjectManager } = useProjectPermissions(id);
 
   const { data: organization } = useQuery({
     queryKey: ["organization", pole_id, direction_id, service_id],
@@ -173,8 +172,12 @@ export const ProjectCard = ({
                   Manager
                 </span>
               )}
-              {isMember && (
-                <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
+              {isMember && !isProjectManager && !canEdit && (
+                <span className={`text-xs px-2 py-1 rounded ${
+                  isSecondaryProjectManager 
+                    ? "bg-purple-200 text-purple-800" 
+                    : "bg-blue-100 text-blue-800"
+                }`}>
                   Membre du projet
                 </span>
               )}

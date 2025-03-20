@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { TableRow, TableCell } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
@@ -47,7 +46,7 @@ export const TeamMemberRow = ({
           </Badge>
         )}
         {isSecondaryManager && (
-          <Badge variant="secondary" className="flex items-center">
+          <Badge variant="secondary" className="flex items-center bg-purple-200 text-purple-800 border-purple-200">
             <CrownIcon className="h-3 w-3 mr-1" />
             Chef de projet secondaire
           </Badge>
