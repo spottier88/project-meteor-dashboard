@@ -1,8 +1,9 @@
+
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Plus, Trash2, UserPlus, ShieldCheck } from "lucide-react";
+import { Plus, Trash2, UserPlus, ShieldCheck, CrownIcon } from "lucide-react";
 import { useState } from "react";
 import { TeamMemberForm } from "@/components/project/TeamMemberForm";
 import { InviteMemberForm } from "@/components/project/InviteMemberForm";
@@ -16,6 +17,12 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 export interface TeamManagementProps {
   projectId: string;
@@ -58,17 +65,31 @@ export const TeamManagement = ({
         .from("project_members")
         .select(`
           id,
+          role,
           profiles (
             id,
             email,
             first_name,
-            last_name
+            last_name,
+            user_roles (
+              role
+            )
           )
         `)
         .eq("project_id", projectId);
 
       if (error) throw error;
-      return data;
+      
+      // Transformer les données pour faciliter l'accès aux rôles des utilisateurs
+      return data.map(member => ({
+        ...member,
+        profiles: {
+          ...member.profiles,
+          roles: Array.isArray(member.profiles.user_roles) 
+            ? member.profiles.user_roles.map((ur: any) => ur.role) 
+            : []
+        }
+      }));
     },
   });
 
@@ -97,6 +118,31 @@ export const TeamManagement = ({
     },
   });
 
+  const updateRoleMutation = useMutation({
+    mutationFn: async ({ memberId, role }: { memberId: string, role: string }) => {
+      const { error } = await supabase
+        .from("project_members")
+        .update({ role })
+        .eq("id", memberId);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["projectMembers", projectId] });
+      toast({
+        title: "Rôle mis à jour",
+        description: "Le rôle du membre a été mis à jour avec succès.",
+      });
+    },
+    onError: () => {
+      toast({
+        variant: "destructive",
+        title: "Erreur",
+        description: "Une erreur est survenue lors de la mise à jour du rôle.",
+      });
+    },
+  });
+
   const handleDelete = (memberId: string, email?: string) => {
     if (email && project?.project_manager === email) {
       toast({
@@ -110,6 +156,24 @@ export const TeamManagement = ({
     if (window.confirm("Êtes-vous sûr de vouloir retirer ce membre de l'équipe ?")) {
       deleteMutation.mutate(memberId);
     }
+  };
+
+  const handlePromoteToSecondaryManager = (memberId: string, roles: string[]) => {
+    // Vérifier si l'utilisateur a le rôle chef_projet au niveau application
+    if (!roles.includes('chef_projet')) {
+      toast({
+        variant: "destructive",
+        title: "Action impossible",
+        description: "Seuls les utilisateurs ayant le rôle 'Chef de projet' peuvent être promus.",
+      });
+      return;
+    }
+
+    updateRoleMutation.mutate({ memberId, role: 'secondary_manager' });
+  };
+
+  const handleDemoteToMember = (memberId: string) => {
+    updateRoleMutation.mutate({ memberId, role: 'member' });
   };
 
   return (
@@ -144,6 +208,8 @@ export const TeamManagement = ({
             <TableBody>
               {members?.map((member) => {
                 const isProjectManager = member.profiles?.email === project?.project_manager;
+                const isSecondaryManager = member.role === 'secondary_manager';
+                const userRoles = member.profiles?.roles || [];
                 return (
                   <TableRow key={member.id}>
                     <TableCell>
@@ -159,18 +225,43 @@ export const TeamManagement = ({
                           Chef de projet
                         </Badge>
                       )}
+                      {isSecondaryManager && (
+                        <Badge variant="green" className="flex items-center">
+                          <CrownIcon className="h-3 w-3 mr-1" />
+                          Chef de projet secondaire
+                        </Badge>
+                      )}
                     </TableCell>
                     {canManageTeam && (
                       <TableCell>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleDelete(member.id, member.profiles?.email)}
-                          disabled={isProjectManager}
-                          title={isProjectManager ? "Le chef de projet ne peut pas être retiré de l'équipe" : "Retirer de l'équipe"}
-                        >
-                          <Trash2 className={`h-4 w-4 ${isProjectManager ? 'text-gray-400' : 'text-destructive'}`} />
-                        </Button>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="sm">
+                              Actions
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            {!isProjectManager && !isSecondaryManager && userRoles.includes('chef_projet') && (
+                              <DropdownMenuItem onClick={() => handlePromoteToSecondaryManager(member.id, userRoles)}>
+                                Promouvoir chef de projet secondaire
+                              </DropdownMenuItem>
+                            )}
+                            {!isProjectManager && isSecondaryManager && (
+                              <DropdownMenuItem onClick={() => handleDemoteToMember(member.id)}>
+                                Rétrograder au rôle de membre
+                              </DropdownMenuItem>
+                            )}
+                            {!isProjectManager && (
+                              <DropdownMenuItem 
+                                onClick={() => handleDelete(member.id, member.profiles?.email)}
+                                className="text-destructive"
+                              >
+                                <Trash2 className="h-4 w-4 mr-2" />
+                                Retirer de l'équipe
+                              </DropdownMenuItem>
+                            )}
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                       </TableCell>
                     )}
                   </TableRow>

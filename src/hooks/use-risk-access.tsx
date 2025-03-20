@@ -1,3 +1,4 @@
+
 import { usePermissionsContext } from "@/contexts/PermissionsContext";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -11,6 +12,7 @@ export const useRiskAccess = (projectId: string) => {
       if (!userProfile?.id || !projectId) return {
         canEdit: false,
         isProjectManager: false,
+        isSecondaryProjectManager: false,
       };
 
       const { data: project } = await supabase
@@ -25,8 +27,19 @@ export const useRiskAccess = (projectId: string) => {
         return {
           canEdit: true,
           isProjectManager,
+          isSecondaryProjectManager: false,
         };
       }
+
+      // Vérifier si l'utilisateur est un chef de projet secondaire
+      const { data: projectMember } = await supabase
+        .from("project_members")
+        .select("role")
+        .eq("project_id", projectId)
+        .eq("user_id", userProfile.id)
+        .maybeSingle();
+
+      const isSecondaryProjectManager = projectMember?.role === 'secondary_manager';
 
       const { data: canAccess } = await supabase
         .rpc('can_manager_access_project', {
@@ -37,12 +50,13 @@ export const useRiskAccess = (projectId: string) => {
       return {
         canEdit: !!canAccess,
         isProjectManager,
+        isSecondaryProjectManager,
       };
     },
     enabled: !!userProfile?.id && !!projectId,
   });
 
-  const canManage = isAdmin || projectAccess?.canEdit || false;
+  const canManage = isAdmin || projectAccess?.canEdit || projectAccess?.isSecondaryProjectManager || false;
   
   return {
     canCreateRisk: canManage,

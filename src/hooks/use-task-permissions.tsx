@@ -12,6 +12,7 @@ export const useTaskPermissions = (projectId: string) => {
       if (!userProfile?.id || !projectId) return {
         canEdit: false,
         isProjectManager: false,
+        isSecondaryProjectManager: false,
       };
 
       const { data: project } = await supabase
@@ -26,8 +27,19 @@ export const useTaskPermissions = (projectId: string) => {
         return {
           canEdit: true,
           isProjectManager,
+          isSecondaryProjectManager: false,
         };
       }
+
+      // Vérifier si l'utilisateur est un chef de projet secondaire
+      const { data: projectMember } = await supabase
+        .from("project_members")
+        .select("role")
+        .eq("project_id", projectId)
+        .eq("user_id", userProfile.id)
+        .maybeSingle();
+
+      const isSecondaryProjectManager = projectMember?.role === 'secondary_manager';
 
       // Vérifier l'accès via la fonction can_manager_access_project
       const { data: canAccess } = await supabase
@@ -37,15 +49,16 @@ export const useTaskPermissions = (projectId: string) => {
         });
 
       return {
-        canEdit: !!canAccess || isManager,  // Manager a des droits d'édition
+        canEdit: !!canAccess || isManager || isSecondaryProjectManager,  // Manager ou chef de projet secondaire a des droits d'édition
         isProjectManager,
+        isSecondaryProjectManager,
       };
     },
     enabled: !!userProfile?.id && !!projectId,
   });
 
-  // Managers peuvent créer/modifier/supprimer des tâches
-  const canManage = isAdmin || isManager || projectAccess?.canEdit || false;
+  // Managers et chefs de projet secondaires peuvent créer/modifier/supprimer des tâches
+  const canManage = isAdmin || isManager || projectAccess?.canEdit || projectAccess?.isSecondaryProjectManager || false;
   
   return {
     canCreateTask: canManage,
@@ -54,6 +67,7 @@ export const useTaskPermissions = (projectId: string) => {
     isAdmin,
     isManager,
     isProjectManager: projectAccess?.isProjectManager || false,
+    isSecondaryProjectManager: projectAccess?.isSecondaryProjectManager || false,
     isMember: false,
     userEmail: userProfile?.email,
   };
