@@ -1,8 +1,9 @@
+
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Plus, Trash2, UserPlus, ShieldCheck, CrownIcon } from "lucide-react";
+import { Plus, Trash2, UserPlus, ShieldCheck, CrownIcon, User } from "lucide-react";
 import { useState } from "react";
 import { TeamMemberForm } from "@/components/project/TeamMemberForm";
 import { InviteMemberForm } from "@/components/project/InviteMemberForm";
@@ -107,7 +108,8 @@ export const TeamManagement = ({
         description: "Le membre a été retiré de l'équipe avec succès.",
       });
     },
-    onError: () => {
+    onError: (error) => {
+      console.error("Error deleting member:", error);
       toast({
         variant: "destructive",
         title: "Erreur",
@@ -118,12 +120,20 @@ export const TeamManagement = ({
 
   const updateRoleMutation = useMutation({
     mutationFn: async ({ memberId, role }: { memberId: string, role: string }) => {
-      const { error } = await supabase
+      console.log(`Updating member ${memberId} to role ${role}`);
+      const { data, error } = await supabase
         .from("project_members")
         .update({ role })
-        .eq("id", memberId);
+        .eq("id", memberId)
+        .select();
 
-      if (error) throw error;
+      if (error) {
+        console.error("Supabase error:", error);
+        throw error;
+      }
+      
+      console.log("Update response:", data);
+      return data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["projectMembers", projectId] });
@@ -132,7 +142,8 @@ export const TeamManagement = ({
         description: "Le rôle du membre a été mis à jour avec succès.",
       });
     },
-    onError: () => {
+    onError: (error) => {
+      console.error("Error updating role:", error);
       toast({
         variant: "destructive",
         title: "Erreur",
@@ -207,6 +218,8 @@ export const TeamManagement = ({
                 const isProjectManager = member.profiles?.email === project?.project_manager;
                 const isSecondaryManager = member.role === 'secondary_manager';
                 const userRoles = member.profiles?.roles || [];
+                const isRegularMember = !isProjectManager && !isSecondaryManager;
+                
                 return (
                   <TableRow key={member.id}>
                     <TableCell>
@@ -226,6 +239,12 @@ export const TeamManagement = ({
                         <Badge variant="secondary" className="flex items-center">
                           <CrownIcon className="h-3 w-3 mr-1" />
                           Chef de projet secondaire
+                        </Badge>
+                      )}
+                      {isRegularMember && (
+                        <Badge variant="outline" className="flex items-center">
+                          <User className="h-3 w-3 mr-1" />
+                          Membre
                         </Badge>
                       )}
                     </TableCell>
