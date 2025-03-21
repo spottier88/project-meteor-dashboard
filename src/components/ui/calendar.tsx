@@ -59,10 +59,10 @@ function Calendar({
           <Select
             value={props.displayMonth.getMonth().toString()}
             onValueChange={(value) => {
-              const newMonth = Number(value);
+              const newMonth = parseInt(value, 10);
               const newDate = new Date(props.displayMonth);
               newDate.setMonth(newMonth);
-              props.onMonthChange(newDate);
+              props.onMonthSelect && props.onMonthSelect(newDate);
             }}
           >
             <SelectTrigger className="h-7 w-[90px] text-xs font-medium">
@@ -80,10 +80,10 @@ function Calendar({
           <Select
             value={props.displayMonth.getFullYear().toString()}
             onValueChange={(value) => {
-              const newYear = Number(value);
+              const newYear = parseInt(value, 10);
               const newDate = new Date(props.displayMonth);
               newDate.setFullYear(newYear);
-              props.onMonthChange(newDate);
+              props.onMonthSelect && props.onMonthSelect(newDate);
             }}
           >
             <SelectTrigger className="h-7 w-[70px] text-xs font-medium">
@@ -100,7 +100,11 @@ function Calendar({
         </div>
 
         <button
-          onClick={() => props.toMonth(new Date(props.displayMonth.getFullYear(), props.displayMonth.getMonth() - 1, 1))}
+          onClick={() => {
+            const newDate = new Date(props.displayMonth);
+            newDate.setMonth(newDate.getMonth() - 1);
+            props.onMonthSelect && props.onMonthSelect(newDate);
+          }}
           className={cn(
             buttonVariants({ variant: "outline" }),
             "h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100 absolute left-1"
@@ -110,7 +114,11 @@ function Calendar({
           <ChevronLeft className="h-4 w-4" />
         </button>
         <button
-          onClick={() => props.toMonth(new Date(props.displayMonth.getFullYear(), props.displayMonth.getMonth() + 1, 1))}
+          onClick={() => {
+            const newDate = new Date(props.displayMonth);
+            newDate.setMonth(newDate.getMonth() + 1);
+            props.onMonthSelect && props.onMonthSelect(newDate);
+          }}
           className={cn(
             buttonVariants({ variant: "outline" }),
             "h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100 absolute right-1"
@@ -174,4 +182,3 @@ function Calendar({
 Calendar.displayName = "Calendar";
 
 export { Calendar };
-
