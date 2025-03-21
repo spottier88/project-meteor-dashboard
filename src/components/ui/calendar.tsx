@@ -1,7 +1,7 @@
 
 import * as React from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { DayPicker, DayClickEventHandler, ControlProps, Caption } from "react-day-picker";
+import { DayPicker, DayClickEventHandler } from "react-day-picker";
 
 import { cn } from "@/lib/utils";
 import { buttonVariants } from "@/components/ui/button";
@@ -34,7 +34,13 @@ function Calendar({
   };
 
   // Composant personnalisé pour l'en-tête du calendrier avec sélection de mois/année
-  const CustomCaption = (props: React.ComponentProps<typeof Caption>) => {
+  const CustomCaption = ({ 
+    displayMonth, 
+    onMonthChange 
+  }: { 
+    displayMonth: Date; 
+    onMonthChange?: (date: Date) => void 
+  }) => {
     // Création de la liste des mois
     const months = Array.from({ length: 12 }, (_, i) => {
       return {
@@ -44,7 +50,7 @@ function Calendar({
     });
 
     // Création de la liste des années (10 ans avant et après l'année affichée)
-    const currentYear = props.displayMonth.getFullYear();
+    const currentYear = displayMonth.getFullYear();
     const years = Array.from({ length: 20 }, (_, i) => {
       const year = currentYear - 10 + i;
       return {
@@ -57,12 +63,12 @@ function Calendar({
       <div className="flex justify-center space-x-1 pt-1 relative items-center">
         <div className="flex items-center space-x-1">
           <Select
-            value={props.displayMonth.getMonth().toString()}
+            value={displayMonth.getMonth().toString()}
             onValueChange={(value) => {
               const newMonth = parseInt(value, 10);
-              const newDate = new Date(props.displayMonth);
+              const newDate = new Date(displayMonth);
               newDate.setMonth(newMonth);
-              props.onMonthChange?.(newDate);
+              onMonthChange?.(newDate);
             }}
           >
             <SelectTrigger className="h-7 w-[90px] text-xs font-medium">
@@ -78,12 +84,12 @@ function Calendar({
           </Select>
 
           <Select
-            value={props.displayMonth.getFullYear().toString()}
+            value={displayMonth.getFullYear().toString()}
             onValueChange={(value) => {
               const newYear = parseInt(value, 10);
-              const newDate = new Date(props.displayMonth);
+              const newDate = new Date(displayMonth);
               newDate.setFullYear(newYear);
-              props.onMonthChange?.(newDate);
+              onMonthChange?.(newDate);
             }}
           >
             <SelectTrigger className="h-7 w-[70px] text-xs font-medium">
@@ -101,9 +107,9 @@ function Calendar({
 
         <button
           onClick={() => {
-            const newDate = new Date(props.displayMonth);
+            const newDate = new Date(displayMonth);
             newDate.setMonth(newDate.getMonth() - 1);
-            props.onMonthChange?.(newDate);
+            onMonthChange?.(newDate);
           }}
           className={cn(
             buttonVariants({ variant: "outline" }),
@@ -115,9 +121,9 @@ function Calendar({
         </button>
         <button
           onClick={() => {
-            const newDate = new Date(props.displayMonth);
+            const newDate = new Date(displayMonth);
             newDate.setMonth(newDate.getMonth() + 1);
-            props.onMonthChange?.(newDate);
+            onMonthChange?.(newDate);
           }}
           className={cn(
             buttonVariants({ variant: "outline" }),
@@ -175,6 +181,7 @@ function Calendar({
         IconRight: () => null,
         Caption: CustomCaption
       }}
+      locale={fr}
       {...props}
     />
   );
