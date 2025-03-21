@@ -23,6 +23,17 @@ import { useSession } from "@supabase/auth-helpers-react";
 import { useActivityTypes } from "@/hooks/useActivityTypes";
 import { AlertTriangle } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { useState, useEffect } from "react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 type FormData = {
   activity_type: string;
@@ -36,6 +47,28 @@ const QuickActivityForm = ({ onSuccess }: { onSuccess?: () => void }) => {
   const session = useSession();
   const form = useForm<FormData>();
   const { data: activityTypes, isLoading: isLoadingTypes } = useActivityTypes(true, true);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [showUnsavedChangesAlert, setShowUnsavedChangesAlert] = useState(false);
+  
+  // Fonction pour demander confirmation avant fermeture
+  const requestClose = () => {
+    if (hasUnsavedChanges) {
+      setShowUnsavedChangesAlert(true);
+    } else {
+      onSuccess?.();
+    }
+  };
+
+  // Fonctions pour gérer la confirmation ou l'annulation
+  const handleConfirmClose = () => {
+    setShowUnsavedChangesAlert(false);
+    setHasUnsavedChanges(false);
+    onSuccess?.();
+  };
+
+  const handleCancelClose = () => {
+    setShowUnsavedChangesAlert(false);
+  };
 
   const queryClient = useQueryClient();
 
@@ -71,6 +104,7 @@ const QuickActivityForm = ({ onSuccess }: { onSuccess?: () => void }) => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["activities"] });
       toast({ title: "Activité ajoutée avec succès" });
+      setHasUnsavedChanges(false);
       onSuccess?.();
       form.reset();
     },
@@ -83,126 +117,193 @@ const QuickActivityForm = ({ onSuccess }: { onSuccess?: () => void }) => {
     },
   });
 
+  // Surveiller les changements dans le formulaire
+  useEffect(() => {
+    const subscription = form.watch(() => {
+      if (!isLoading) {
+        setHasUnsavedChanges(true);
+      }
+    });
+    return () => subscription.unsubscribe();
+  }, [form, isLoading]);
+
   const noActivityTypesAvailable = !isLoadingTypes && (!activityTypes || activityTypes.length === 0);
 
   return (
-    <Form {...form}>
-      <form onSubmit={form.handleSubmit((data) => createActivity(data))} className="space-y-4">
-        {noActivityTypesAvailable && (
-          <Alert variant="warning" className="mb-4">
-            <AlertTriangle className="h-4 w-4" />
-            <AlertDescription>
-              Vous n'avez accès à aucun type d'activité. Veuillez contacter un administrateur.
-            </AlertDescription>
-          </Alert>
-        )}
+    <>
+      <Form {...form}>
+        <form 
+          onSubmit={form.handleSubmit((data) => {
+            createActivity(data);
+          })} 
+          className="space-y-4"
+        >
+          {noActivityTypesAvailable && (
+            <Alert variant="warning" className="mb-4">
+              <AlertTriangle className="h-4 w-4" />
+              <AlertDescription>
+                Vous n'avez accès à aucun type d'activité. Veuillez contacter un administrateur.
+              </AlertDescription>
+            </Alert>
+          )}
 
-        <FormField
-          control={form.control}
-          name="project_id"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Projet (optionnel)</FormLabel>
-              <Select
-                onValueChange={field.onChange}
-                defaultValue={field.value}
-              >
+          <FormField
+            control={form.control}
+            name="project_id"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Projet (optionnel)</FormLabel>
+                <Select
+                  onValueChange={(value) => {
+                    field.onChange(value);
+                    setHasUnsavedChanges(true);
+                  }}
+                  defaultValue={field.value}
+                >
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Sélectionnez un projet (optionnel)" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    <SelectItem value="aucun">Aucun projet</SelectItem>
+                    {projects?.map((project) => (
+                      <SelectItem key={project.id} value={project.id}>
+                        {project.title}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="activity_type"
+            rules={{ required: "Veuillez sélectionner un type d'activité" }}
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Type d'activité</FormLabel>
+                <Select
+                  onValueChange={(value) => {
+                    field.onChange(value);
+                    setHasUnsavedChanges(true);
+                  }}
+                  defaultValue={field.value}
+                  disabled={noActivityTypesAvailable}
+                >
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Sélectionnez un type" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    {isLoadingTypes ? (
+                      <SelectItem value="loading" disabled>Chargement...</SelectItem>
+                    ) : activityTypes?.map((type) => (
+                      <SelectItem key={type.id} value={type.code}>
+                        {type.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="description"
+            rules={{ required: "Veuillez saisir une description" }}
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Description</FormLabel>
                 <FormControl>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Sélectionnez un projet (optionnel)" />
-                  </SelectTrigger>
+                  <Input {...field} onChange={(e) => {
+                    field.onChange(e);
+                    setHasUnsavedChanges(true);
+                  }} />
                 </FormControl>
-                <SelectContent>
-                  <SelectItem value="aucun">Aucun projet</SelectItem>
-                  {projects?.map((project) => (
-                    <SelectItem key={project.id} value={project.id}>
-                      {project.title}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </FormItem>
-          )}
-        />
+              </FormItem>
+            )}
+          />
 
-        <FormField
-          control={form.control}
-          name="activity_type"
-          rules={{ required: "Veuillez sélectionner un type d'activité" }}
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Type d'activité</FormLabel>
-              <Select
-                onValueChange={field.onChange}
-                defaultValue={field.value}
-                disabled={noActivityTypesAvailable}
-              >
+          <FormField
+            control={form.control}
+            name="duration_minutes"
+            rules={{ required: "Veuillez saisir une durée" }}
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Durée (minutes)</FormLabel>
                 <FormControl>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Sélectionnez un type" />
-                  </SelectTrigger>
+                  <Input 
+                    {...field} 
+                    type="number" 
+                    min="1" 
+                    onChange={(e) => {
+                      field.onChange(e);
+                      setHasUnsavedChanges(true);
+                    }}
+                  />
                 </FormControl>
-                <SelectContent>
-                  {isLoadingTypes ? (
-                    <SelectItem value="loading" disabled>Chargement...</SelectItem>
-                  ) : activityTypes?.map((type) => (
-                    <SelectItem key={type.id} value={type.code}>
-                      {type.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </FormItem>
-          )}
-        />
+              </FormItem>
+            )}
+          />
 
-        <FormField
-          control={form.control}
-          name="description"
-          rules={{ required: "Veuillez saisir une description" }}
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Description</FormLabel>
-              <FormControl>
-                <Input {...field} />
-              </FormControl>
-            </FormItem>
-          )}
-        />
+          <FormField
+            control={form.control}
+            name="start_time"
+            rules={{ required: "Veuillez saisir une date et heure" }}
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Date et heure</FormLabel>
+                <FormControl>
+                  <Input 
+                    {...field} 
+                    type="datetime-local" 
+                    onChange={(e) => {
+                      field.onChange(e);
+                      setHasUnsavedChanges(true);
+                    }}
+                  />
+                </FormControl>
+              </FormItem>
+            )}
+          />
 
-        <FormField
-          control={form.control}
-          name="duration_minutes"
-          rules={{ required: "Veuillez saisir une durée" }}
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Durée (minutes)</FormLabel>
-              <FormControl>
-                <Input {...field} type="number" min="1" />
-              </FormControl>
-            </FormItem>
-          )}
-        />
+          <div className="flex justify-between">
+            <Button 
+              type="button" 
+              variant="outline" 
+              onClick={requestClose}
+            >
+              Annuler
+            </Button>
+            <Button type="submit" disabled={isLoading || noActivityTypesAvailable}>
+              {isLoading ? "Enregistrement..." : "Ajouter l'activité"}
+            </Button>
+          </div>
+        </form>
+      </Form>
 
-        <FormField
-          control={form.control}
-          name="start_time"
-          rules={{ required: "Veuillez saisir une date et heure" }}
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Date et heure</FormLabel>
-              <FormControl>
-                <Input {...field} type="datetime-local" />
-              </FormControl>
-            </FormItem>
-          )}
-        />
-
-        <Button type="submit" disabled={isLoading || noActivityTypesAvailable}>
-          {isLoading ? "Enregistrement..." : "Ajouter l'activité"}
-        </Button>
-      </form>
-    </Form>
+      <AlertDialog open={showUnsavedChangesAlert} onOpenChange={setShowUnsavedChangesAlert}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Modifications non enregistrées</AlertDialogTitle>
+            <AlertDialogDescription>
+              Vous avez des modifications non enregistrées. Êtes-vous sûr de vouloir quitter sans enregistrer ?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={handleCancelClose}>Annuler</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmClose} className="bg-red-600 hover:bg-red-700">
+              Quitter sans enregistrer
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 };
 

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -11,11 +12,24 @@ import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerTrigger, Drawer
 import { TableIcon, Plus, Loader2, Save, AlertTriangle } from 'lucide-react';
 import { useActivityTypes } from '@/hooks/useActivityTypes';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 export const BulkActivityEntryDrawer = () => {
   const [open, setOpen] = useState(false);
   const [entries, setEntries] = useState<BulkActivityEntry[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [initialEntries, setInitialEntries] = useState<BulkActivityEntry[]>([]);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [showUnsavedChangesAlert, setShowUnsavedChangesAlert] = useState(false);
   const session = useSession();
   const queryClient = useQueryClient();
   const { data: activityTypes, isLoading: isLoadingTypes } = useActivityTypes(true, true);
@@ -50,9 +64,39 @@ export const BulkActivityEntryDrawer = () => {
   // Initialiser avec une ligne vide à l'ouverture du drawer
   useEffect(() => {
     if (open) {
-      setEntries([createNewEntry()]);
+      const newEntries = [createNewEntry()];
+      setEntries(newEntries);
+      setInitialEntries(JSON.parse(JSON.stringify(newEntries)));
+      setHasUnsavedChanges(false);
     }
   }, [open]);
+
+  // Détecter les changements
+  useEffect(() => {
+    if (entries.length === 0 && initialEntries.length === 0) return;
+    
+    // Si le nombre d'entrées a changé, il y a des modifications
+    if (entries.length !== initialEntries.length) {
+      setHasUnsavedChanges(true);
+      return;
+    }
+    
+    // Vérifier si des entrées ont été modifiées
+    const hasChanges = entries.some((entry, index) => {
+      if (index >= initialEntries.length) return true;
+      
+      const initialEntry = initialEntries[index];
+      return (
+        entry.project_id !== initialEntry.project_id ||
+        entry.activity_type !== initialEntry.activity_type ||
+        entry.description !== initialEntry.description ||
+        entry.duration_minutes !== initialEntry.duration_minutes ||
+        entry.start_time !== initialEntry.start_time
+      );
+    });
+    
+    setHasUnsavedChanges(hasChanges);
+  }, [entries, initialEntries]);
 
   // Mettre à jour une entrée
   const updateEntry = (id: string, field: string, value: any) => {
@@ -107,6 +151,7 @@ export const BulkActivityEntryDrawer = () => {
         title: 'Activités créées avec succès',
         description: `${entries.length} activité(s) ont été ajoutées.`
       });
+      setHasUnsavedChanges(false);
       setOpen(false);
       setEntries([]);
     },
@@ -156,68 +201,116 @@ export const BulkActivityEntryDrawer = () => {
     }
   };
 
+  // Gérer la demande de fermeture
+  const handleOpenChange = (newOpenState: boolean) => {
+    if (open && !newOpenState && hasUnsavedChanges && !isSubmitting) {
+      setShowUnsavedChangesAlert(true);
+      return;
+    }
+    setOpen(newOpenState);
+  };
+
+  // Fonctions pour gérer la confirmation ou l'annulation
+  const handleConfirmClose = () => {
+    setShowUnsavedChangesAlert(false);
+    setHasUnsavedChanges(false);
+    setOpen(false);
+  };
+
+  const handleCancelClose = () => {
+    setShowUnsavedChangesAlert(false);
+  };
+
   const noActivityTypesAvailable = !isLoadingTypes && (!activityTypes || activityTypes.length === 0);
 
   return (
-    <Drawer open={open} onOpenChange={setOpen}>
-      <DrawerTrigger asChild>
-        <Button variant="outline" size="sm">
-          <TableIcon className="h-4 w-4 mr-2" />
-          Saisie en masse
-        </Button>
-      </DrawerTrigger>
-      <DrawerContent className="h-[85vh] max-h-[85vh]">
-        <DrawerHeader>
-          <DrawerTitle>Saisie en masse d'activités</DrawerTitle>
-        </DrawerHeader>
-        <div className="flex-1 overflow-y-auto px-4">
-          {noActivityTypesAvailable && (
-            <Alert variant="warning" className="mb-4">
-              <AlertTriangle className="h-4 w-4" />
-              <AlertDescription>
-                Vous n'avez accès à aucun type d'activité. Veuillez contacter un administrateur.
-              </AlertDescription>
-            </Alert>
-          )}
-          
-          <BulkActivityTable
-            entries={entries}
-            projects={projects || []}
-            activityTypes={activityTypes || []}
-            updateEntry={updateEntry}
-            removeEntry={removeEntry}
-            duplicateEntry={duplicateEntry}
-          />
-          <Button 
-            variant="outline" 
-            className="mt-4 w-full"
-            onClick={addEntry}
-            disabled={noActivityTypesAvailable}
-          >
-            <Plus className="h-4 w-4 mr-2" />
-            Ajouter une ligne
+    <>
+      <Drawer open={open} onOpenChange={handleOpenChange}>
+        <DrawerTrigger asChild>
+          <Button variant="outline" size="sm">
+            <TableIcon className="h-4 w-4 mr-2" />
+            Saisie en masse
           </Button>
-        </div>
-        <DrawerFooter>
-          <Button
-            onClick={handleSubmit}
-            disabled={isSubmitting || entries.length === 0 || noActivityTypesAvailable}
-            className="w-full"
-          >
-            {isSubmitting ? (
-              <>
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                Enregistrement...
-              </>
-            ) : (
-              <>
-                <Save className="h-4 w-4 mr-2" />
-                Enregistrer {entries.length} activité(s)
-              </>
+        </DrawerTrigger>
+        <DrawerContent className="h-[85vh] max-h-[85vh]">
+          <DrawerHeader>
+            <DrawerTitle>Saisie en masse d'activités</DrawerTitle>
+          </DrawerHeader>
+          <div className="flex-1 overflow-y-auto px-4">
+            {noActivityTypesAvailable && (
+              <Alert variant="warning" className="mb-4">
+                <AlertTriangle className="h-4 w-4" />
+                <AlertDescription>
+                  Vous n'avez accès à aucun type d'activité. Veuillez contacter un administrateur.
+                </AlertDescription>
+              </Alert>
             )}
-          </Button>
-        </DrawerFooter>
-      </DrawerContent>
-    </Drawer>
+            
+            <BulkActivityTable
+              entries={entries}
+              projects={projects || []}
+              activityTypes={activityTypes || []}
+              updateEntry={updateEntry}
+              removeEntry={removeEntry}
+              duplicateEntry={duplicateEntry}
+            />
+            <Button 
+              variant="outline" 
+              className="mt-4 w-full"
+              onClick={addEntry}
+              disabled={noActivityTypesAvailable}
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Ajouter une ligne
+            </Button>
+          </div>
+          <DrawerFooter>
+            <div className="flex gap-2 w-full">
+              <Button
+                variant="outline"
+                onClick={() => handleOpenChange(false)}
+                className="flex-1"
+              >
+                Annuler
+              </Button>
+              <Button
+                onClick={handleSubmit}
+                disabled={isSubmitting || entries.length === 0 || noActivityTypesAvailable}
+                className="flex-1"
+              >
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Enregistrement...
+                  </>
+                ) : (
+                  <>
+                    <Save className="h-4 w-4 mr-2" />
+                    Enregistrer {entries.length} activité(s)
+                  </>
+                )}
+              </Button>
+            </div>
+          </DrawerFooter>
+        </DrawerContent>
+      </Drawer>
+
+      <AlertDialog open={showUnsavedChangesAlert} onOpenChange={setShowUnsavedChangesAlert}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Modifications non enregistrées</AlertDialogTitle>
+            <AlertDialogDescription>
+              Vous avez des modifications non enregistrées. Êtes-vous sûr de vouloir quitter sans enregistrer ?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={handleCancelClose}>Annuler</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmClose} className="bg-red-600 hover:bg-red-700">
+              Quitter sans enregistrer
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 };

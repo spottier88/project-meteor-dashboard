@@ -12,10 +12,22 @@ export const ActivityEntry = () => {
   const location = useLocation();
   const isPersonalActivityPage = location.pathname === '/activities';
 
+  // Fonction de fermeture contrôlée
+  const handleOpenChange = (open: boolean) => {
+    // Si on essaie de fermer, le QuickActivityForm va s'occuper de la logique
+    // de vérification des modifications non sauvegardées
+    if (!open) {
+      // Ne pas fermer directement, le formulaire va gérer ça
+      return;
+    }
+    // Si on ouvre, pas de problème
+    setOpen(open);
+  };
+
   return (
     <div className="flex gap-2">
       {isPersonalActivityPage && <BulkActivityEntryDrawer />}
-      <Dialog open={open} onOpenChange={setOpen}>
+      <Dialog open={open} onOpenChange={handleOpenChange}>
         <DialogTrigger asChild>
           <Button variant="default" size="sm">
             <Plus className="h-4 w-4 mr-2" />
