@@ -179,7 +179,12 @@ function Calendar({
       components={{
         IconLeft: () => null, // Nous n'utilisons pas ces icônes car nous avons notre propre navigation
         IconRight: () => null,
-        Caption: CustomCaption
+        Caption: ({ displayMonth, onMonthChange }) => (
+          <CustomCaption 
+            displayMonth={displayMonth} 
+            onMonthChange={onMonthChange} 
+          />
+        )
       }}
       locale={fr}
       {...props}
