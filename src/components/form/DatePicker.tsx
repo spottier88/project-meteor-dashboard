@@ -47,6 +47,7 @@ export function DatePicker({
             mode="single"
             selected={date}
             onSelect={onDateChange}
+            onDateSelect={onDateChange}
             disabled={minDate ? (date) => date < minDate : undefined}
             initialFocus
             locale={fr}

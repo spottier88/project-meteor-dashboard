@@ -1,4 +1,3 @@
-
 import React, { useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -109,6 +108,7 @@ export const DateSelectionStep: React.FC<DateSelectionStepProps> = ({
             mode="single"
             selected={importDate}
             onSelect={handleStartDateSelect}
+            onDateSelect={handleStartDateSelect}
             locale={fr}
           />
         </div>
@@ -118,6 +118,7 @@ export const DateSelectionStep: React.FC<DateSelectionStepProps> = ({
             mode="single"
             selected={endDate}
             onSelect={handleEndDateSelect}
+            onDateSelect={handleEndDateSelect}
             locale={fr}
             disabled={(date) => date < (importDate || new Date())}
           />
