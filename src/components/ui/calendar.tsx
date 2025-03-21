@@ -1,9 +1,18 @@
+
 import * as React from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { DayPicker, DayClickEventHandler } from "react-day-picker";
+import { DayPicker, DayClickEventHandler, CaptionProps } from "react-day-picker";
 
 import { cn } from "@/lib/utils";
 import { buttonVariants } from "@/components/ui/button";
+import { 
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue 
+} from "@/components/ui/select";
+import { fr } from "date-fns/locale";
 
 export type CalendarProps = React.ComponentProps<typeof DayPicker> & {
   onDateSelect?: (date: Date | undefined) => void; // Ajout pour expliciter la gestion des clics
@@ -24,16 +33,105 @@ function Calendar({
     onDateSelect?.(day);
   };
 
+  // Composant personnalisé pour l'en-tête du calendrier avec sélection de mois/année
+  const CustomCaption = (captionProps: CaptionProps) => {
+    const months = fr.localize?.months 
+      ? Array.from({ length: 12 }, (_, i) => {
+          return {
+            value: i.toString(),
+            label: fr.localize?.month(i, { width: 'wide' }) || `Mois ${i+1}`
+          };
+        })
+      : [];
+
+    const years = Array.from({ length: 20 }, (_, i) => {
+      const year = captionProps.displayMonth.getFullYear() - 10 + i;
+      return {
+        value: year.toString(),
+        label: year.toString()
+      };
+    });
+
+    return (
+      <div className="flex justify-center space-x-1 pt-1 relative items-center">
+        <div className="flex items-center space-x-1">
+          <Select
+            value={captionProps.displayMonth.getMonth().toString()}
+            onValueChange={(value) => {
+              const newMonth = Number(value);
+              const newDate = new Date(captionProps.displayMonth);
+              newDate.setMonth(newMonth);
+              captionProps.onMonthChange(newDate);
+            }}
+          >
+            <SelectTrigger className="h-7 w-[90px] text-xs font-medium">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent position="popper" className="max-h-56 overflow-y-auto">
+              {months.map((month) => (
+                <SelectItem key={month.value} value={month.value} className="text-xs">
+                  {month.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          <Select
+            value={captionProps.displayMonth.getFullYear().toString()}
+            onValueChange={(value) => {
+              const newYear = Number(value);
+              const newDate = new Date(captionProps.displayMonth);
+              newDate.setFullYear(newYear);
+              captionProps.onMonthChange(newDate);
+            }}
+          >
+            <SelectTrigger className="h-7 w-[70px] text-xs font-medium">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent position="popper" className="max-h-56 overflow-y-auto">
+              {years.map((year) => (
+                <SelectItem key={year.value} value={year.value} className="text-xs">
+                  {year.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <button
+          onClick={() => captionProps.onMonthChange(captionProps.previousMonth)}
+          className={cn(
+            buttonVariants({ variant: "outline" }),
+            "h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100 absolute left-1"
+          )}
+          aria-label="Mois précédent"
+        >
+          <ChevronLeft className="h-4 w-4" />
+        </button>
+        <button
+          onClick={() => captionProps.onMonthChange(captionProps.nextMonth)}
+          className={cn(
+            buttonVariants({ variant: "outline" }),
+            "h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100 absolute right-1"
+          )}
+          aria-label="Mois suivant"
+        >
+          <ChevronRight className="h-4 w-4" />
+        </button>
+      </div>
+    );
+  };
+
   return (
     <DayPicker
       showOutsideDays={showOutsideDays}
       onDayClick={handleDayClick} // Ajout explicite du gestionnaire de clic
-      className={cn("p-3", className)}
+      className={cn("p-3 pointer-events-auto", className)}
       classNames={{
         months: "flex flex-col sm:flex-row space-y-4 sm:space-x-4 sm:space-y-0",
         month: "space-y-4",
         caption: "flex justify-center pt-1 relative items-center",
-        caption_label: "text-sm font-medium",
+        caption_label: "text-sm font-medium hidden", // Masquer le libellé par défaut
         nav: "space-x-1 flex items-center",
         nav_button: cn(
           buttonVariants({ variant: "outline" }),
@@ -64,8 +162,9 @@ function Calendar({
         ...classNames,
       }}
       components={{
-        IconLeft: ({ ..._props }) => <ChevronLeft className="h-4 w-4" />,
-        IconRight: ({ ..._props }) => <ChevronRight className="h-4 w-4" />,
+        IconLeft: () => null, // Nous n'utilisons pas ces icônes car nous avons notre propre navigation
+        IconRight: () => null,
+        Caption: CustomCaption
       }}
       {...props}
     />
