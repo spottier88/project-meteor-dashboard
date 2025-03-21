@@ -62,7 +62,7 @@ function Calendar({
               const newMonth = parseInt(value, 10);
               const newDate = new Date(props.displayMonth);
               newDate.setMonth(newMonth);
-              props.goToMonth(newDate);
+              props.onSelect(newDate);
             }}
           >
             <SelectTrigger className="h-7 w-[90px] text-xs font-medium">
@@ -83,7 +83,7 @@ function Calendar({
               const newYear = parseInt(value, 10);
               const newDate = new Date(props.displayMonth);
               newDate.setFullYear(newYear);
-              props.goToMonth(newDate);
+              props.onSelect(newDate);
             }}
           >
             <SelectTrigger className="h-7 w-[70px] text-xs font-medium">
@@ -103,7 +103,7 @@ function Calendar({
           onClick={() => {
             const newDate = new Date(props.displayMonth);
             newDate.setMonth(newDate.getMonth() - 1);
-            props.goToMonth(newDate);
+            props.onSelect(newDate);
           }}
           className={cn(
             buttonVariants({ variant: "outline" }),
@@ -117,7 +117,7 @@ function Calendar({
           onClick={() => {
             const newDate = new Date(props.displayMonth);
             newDate.setMonth(newDate.getMonth() + 1);
-            props.goToMonth(newDate);
+            props.onSelect(newDate);
           }}
           className={cn(
             buttonVariants({ variant: "outline" }),
