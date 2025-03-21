@@ -65,6 +65,18 @@ export const useTaskForm = ({
   const [assignmentMode, setAssignmentMode] = useState<"free" | "member">("free");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [parentTaskId, setParentTaskId] = useState<string | undefined>(task?.parent_task_id);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+
+  // Fonction pour suivre les modifications
+  const trackChanges = () => {
+    if (isSubmitting) return; // Ne pas suivre les changements pendant la soumission
+    setHasUnsavedChanges(true);
+  };
+
+  // Réinitialiser l'état des modifications non enregistrées
+  const resetHasUnsavedChanges = () => {
+    setHasUnsavedChanges(false);
+  };
 
   useEffect(() => {
     if (task) {
@@ -89,7 +101,41 @@ export const useTaskForm = ({
         setAssignmentMode("member");
       }
     }
+    
+    // Réinitialiser l'état des modifications non enregistrées après chargement
+    resetHasUnsavedChanges();
   }, [task, projectMembers]);
+
+  // Ajouter des effets pour suivre les modifications
+  useEffect(() => {
+    if (task) {
+      const originalTitle = task.title || "";
+      const originalDescription = task.description || "";
+      const originalStatus = task.status || "todo";
+      const originalDueDate = task.due_date ? new Date(task.due_date).toISOString() : undefined;
+      const originalStartDate = task.start_date ? new Date(task.start_date).toISOString() : undefined;
+      const originalAssignee = task.assignee || "";
+      const originalParentTaskId = task.parent_task_id;
+      
+      const currentStartDate = startDate?.toISOString();
+      const currentDueDate = dueDate?.toISOString();
+      
+      // Vérifier s'il y a des modifications par rapport aux valeurs d'origine
+      const hasChanges = 
+        title !== originalTitle || 
+        description !== originalDescription ||
+        status !== originalStatus ||
+        (currentDueDate !== originalDueDate) ||
+        (currentStartDate !== originalStartDate) ||
+        assignee !== originalAssignee ||
+        parentTaskId !== originalParentTaskId;
+      
+      setHasUnsavedChanges(hasChanges);
+    } else if (title || description || assignee || dueDate || startDate || status !== "todo" || parentTaskId) {
+      // Pour les nouvelles tâches, vérifier s'il y a des saisies
+      setHasUnsavedChanges(true);
+    }
+  }, [title, description, status, dueDate, startDate, assignee, parentTaskId, task]);
 
   // Log des membres disponibles pour debug
   useEffect(() => {
@@ -110,6 +156,7 @@ export const useTaskForm = ({
     setAssignee("");
     setAssignmentMode("free");
     setParentTaskId(undefined);
+    resetHasUnsavedChanges();
   };
 
   const handleSubmit = async () => {
@@ -177,6 +224,9 @@ export const useTaskForm = ({
       queryClient.invalidateQueries({ queryKey: ["tasks", projectId] });
       queryClient.invalidateQueries({ queryKey: ["project-tasks-for-parent", projectId] });
       
+      // Réinitialiser l'état des modifications non enregistrées
+      resetHasUnsavedChanges();
+      
       onSubmit();
       onClose();
     } catch (error) {
@@ -209,6 +259,8 @@ export const useTaskForm = ({
     isSubmitting,
     parentTaskId,
     setParentTaskId,
+    hasUnsavedChanges,
+    resetHasUnsavedChanges,
     handleSubmit,
   };
 };
