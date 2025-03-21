@@ -1,7 +1,7 @@
 
 import * as React from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { DayPicker, DayClickEventHandler, CaptionProps } from "react-day-picker";
+import { DayPicker, DayClickEventHandler, ControlProps, Caption } from "react-day-picker";
 
 import { cn } from "@/lib/utils";
 import { buttonVariants } from "@/components/ui/button";
@@ -34,7 +34,7 @@ function Calendar({
   };
 
   // Composant personnalisé pour l'en-tête du calendrier avec sélection de mois/année
-  const CustomCaption = (props: CaptionProps) => {
+  const CustomCaption = (props: React.ComponentProps<typeof Caption>) => {
     // Création de la liste des mois
     const months = Array.from({ length: 12 }, (_, i) => {
       return {
@@ -62,7 +62,7 @@ function Calendar({
               const newMonth = parseInt(value, 10);
               const newDate = new Date(props.displayMonth);
               newDate.setMonth(newMonth);
-              props.onSelect(newDate);
+              props.onMonthChange?.(newDate);
             }}
           >
             <SelectTrigger className="h-7 w-[90px] text-xs font-medium">
@@ -83,7 +83,7 @@ function Calendar({
               const newYear = parseInt(value, 10);
               const newDate = new Date(props.displayMonth);
               newDate.setFullYear(newYear);
-              props.onSelect(newDate);
+              props.onMonthChange?.(newDate);
             }}
           >
             <SelectTrigger className="h-7 w-[70px] text-xs font-medium">
@@ -103,7 +103,7 @@ function Calendar({
           onClick={() => {
             const newDate = new Date(props.displayMonth);
             newDate.setMonth(newDate.getMonth() - 1);
-            props.onSelect(newDate);
+            props.onMonthChange?.(newDate);
           }}
           className={cn(
             buttonVariants({ variant: "outline" }),
@@ -117,7 +117,7 @@ function Calendar({
           onClick={() => {
             const newDate = new Date(props.displayMonth);
             newDate.setMonth(newDate.getMonth() + 1);
-            props.onSelect(newDate);
+            props.onMonthChange?.(newDate);
           }}
           className={cn(
             buttonVariants({ variant: "outline" }),
