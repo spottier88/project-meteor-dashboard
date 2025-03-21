@@ -34,18 +34,19 @@ function Calendar({
   };
 
   // Composant personnalisé pour l'en-tête du calendrier avec sélection de mois/année
-  const CustomCaption = (captionProps: CaptionProps) => {
-    const months = fr.localize?.months 
-      ? Array.from({ length: 12 }, (_, i) => {
-          return {
-            value: i.toString(),
-            label: fr.localize?.month(i, { width: 'wide' }) || `Mois ${i+1}`
-          };
-        })
-      : [];
+  const CustomCaption = (props: CaptionProps) => {
+    // Création de la liste des mois
+    const months = Array.from({ length: 12 }, (_, i) => {
+      return {
+        value: i.toString(),
+        label: fr.localize?.month(i, { width: 'wide' }) || `Mois ${i+1}`
+      };
+    });
 
+    // Création de la liste des années (10 ans avant et après l'année affichée)
+    const currentYear = props.displayMonth.getFullYear();
     const years = Array.from({ length: 20 }, (_, i) => {
-      const year = captionProps.displayMonth.getFullYear() - 10 + i;
+      const year = currentYear - 10 + i;
       return {
         value: year.toString(),
         label: year.toString()
@@ -56,12 +57,12 @@ function Calendar({
       <div className="flex justify-center space-x-1 pt-1 relative items-center">
         <div className="flex items-center space-x-1">
           <Select
-            value={captionProps.displayMonth.getMonth().toString()}
+            value={props.displayMonth.getMonth().toString()}
             onValueChange={(value) => {
               const newMonth = Number(value);
-              const newDate = new Date(captionProps.displayMonth);
+              const newDate = new Date(props.displayMonth);
               newDate.setMonth(newMonth);
-              captionProps.onMonthChange(newDate);
+              props.onMonthChange(newDate);
             }}
           >
             <SelectTrigger className="h-7 w-[90px] text-xs font-medium">
@@ -77,12 +78,12 @@ function Calendar({
           </Select>
 
           <Select
-            value={captionProps.displayMonth.getFullYear().toString()}
+            value={props.displayMonth.getFullYear().toString()}
             onValueChange={(value) => {
               const newYear = Number(value);
-              const newDate = new Date(captionProps.displayMonth);
+              const newDate = new Date(props.displayMonth);
               newDate.setFullYear(newYear);
-              captionProps.onMonthChange(newDate);
+              props.onMonthChange(newDate);
             }}
           >
             <SelectTrigger className="h-7 w-[70px] text-xs font-medium">
@@ -99,7 +100,7 @@ function Calendar({
         </div>
 
         <button
-          onClick={() => captionProps.onMonthChange(captionProps.previousMonth)}
+          onClick={() => props.toMonth(new Date(props.displayMonth.getFullYear(), props.displayMonth.getMonth() - 1, 1))}
           className={cn(
             buttonVariants({ variant: "outline" }),
             "h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100 absolute left-1"
@@ -109,7 +110,7 @@ function Calendar({
           <ChevronLeft className="h-4 w-4" />
         </button>
         <button
-          onClick={() => captionProps.onMonthChange(captionProps.nextMonth)}
+          onClick={() => props.toMonth(new Date(props.displayMonth.getFullYear(), props.displayMonth.getMonth() + 1, 1))}
           className={cn(
             buttonVariants({ variant: "outline" }),
             "h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100 absolute right-1"
@@ -173,3 +174,4 @@ function Calendar({
 Calendar.displayName = "Calendar";
 
 export { Calendar };
+
