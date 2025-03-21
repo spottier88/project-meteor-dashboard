@@ -7,13 +7,16 @@ import { ProjectSummaryHeader } from "@/components/project/ProjectSummaryHeader"
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useState } from "react";
-import { Plus } from "lucide-react";
+import { Plus, Users } from "lucide-react";
 import { TaskForm } from "@/components/task/TaskForm";
 import { InnovationRadarChart } from "../innovation/InnovationRadarChart";
 import { Card, CardContent } from "@/components/ui/card";
 import { HelpCircle } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { usePermissionsContext } from "@/contexts/PermissionsContext";
+import { TeamMembersTable } from "@/components/project/TeamMembersTable";
+import { useTeamManagement } from "@/hooks/use-team-management";
+import { useNavigate } from "react-router-dom";
 
 const criteriaDescriptions = {
   novateur: "Évalue le caractère innovant du projet : utilisation de nouvelles technologies, approches inédites, solutions créatives. Un score élevé indique une forte innovation technologique ou méthodologique.",
@@ -47,8 +50,17 @@ export const ProjectSummaryContent = ({
   const [isTaskFormOpen, setIsTaskFormOpen] = useState(false);
   const [selectedTask, setSelectedTask] = useState<any>(null);
   const { userProfile, userRoles } = usePermissionsContext();
+  const navigate = useNavigate();
 
   const isManager = userRoles?.includes("manager");
+  
+  // Hook pour récupérer les membres du projet
+  const {
+    members,
+    handleDelete,
+    handlePromoteToSecondaryManager,
+    handleDemoteToMember
+  } = useTeamManagement(project.id);
 
   const { data: innovationScores } = useQuery({
     queryKey: ["innovationScores", project.id],
@@ -73,6 +85,9 @@ export const ProjectSummaryContent = ({
     setIsTaskFormOpen(false);
     setSelectedTask(null);
   };
+
+  // Déterminer si l'utilisateur peut gérer l'équipe
+  const canManageTeam = isAdmin || isProjectManager || isSecondaryProjectManager;
 
   return (
     <div className="grid gap-6">
@@ -174,6 +189,35 @@ export const ProjectSummaryContent = ({
           isProjectManager={isProjectManager}
           isAdmin={isAdmin}
         />
+      </div>
+
+      {/* Nouvelle section d'équipe projet */}
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <h2 className="text-2xl font-bold">Équipe projet</h2>
+          {canManageTeam && (
+            <Button 
+              onClick={() => navigate(`/projects/${project.id}/team`)}
+              variant="outline"
+              size="sm"
+            >
+              <Users className="h-4 w-4 mr-2" />
+              Gérer l'équipe
+            </Button>
+          )}
+        </div>
+        <Card>
+          <CardContent className="p-6">
+            <TeamMembersTable
+              members={members}
+              project={project}
+              canManageTeam={false} // Toujours en lecture seule dans cette vue
+              onDeleteMember={() => {}} // Fonctions vides car en lecture seule
+              onPromoteMember={() => {}}
+              onDemoteMember={() => {}}
+            />
+          </CardContent>
+        </Card>
       </div>
 
       <TaskForm
