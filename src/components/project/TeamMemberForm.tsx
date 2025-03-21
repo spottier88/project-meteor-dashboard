@@ -7,7 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
 import { Form, FormControl, FormField, FormItem, FormLabel } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Search } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -35,6 +35,17 @@ export const TeamMemberForm = ({ isOpen, onClose, projectId }: TeamMemberFormPro
   const [searchQuery, setSearchQuery] = useState("");
   const [showResults, setShowResults] = useState(false);
 
+  // Réinitialiser le formulaire et la recherche à chaque ouverture du dialog
+  useEffect(() => {
+    if (isOpen) {
+      form.reset();
+      setSearchQuery("");
+      setShowResults(false);
+      // Force le rechargement des données des membres disponibles
+      queryClient.invalidateQueries({ queryKey: ["availableMembers", projectId] });
+    }
+  }, [isOpen, form, queryClient, projectId]);
+
   const { data: availableUsers } = useQuery({
     queryKey: ["availableMembers", projectId],
     queryFn: async () => {
@@ -57,11 +68,12 @@ export const TeamMemberForm = ({ isOpen, onClose, projectId }: TeamMemberFormPro
           user_roles!inner(role)
         `)
         .eq('user_roles.role', 'membre')
-        .not('id', 'in', `(${existingUserIds.join(",")})`)
+        .not('id', 'in', `(${existingUserIds.join(",") || '00000000-0000-0000-0000-000000000000'})`)
         .order('first_name');
 
       return users || [];
     },
+    enabled: isOpen, // N'exécute la requête que lorsque le dialogue est ouvert
   });
 
   const addMemberMutation = useMutation({
