@@ -172,12 +172,13 @@ export const ProjectCard = ({
                   Manager
                 </span>
               )}
-              {isMember && !isProjectManager && !canEdit && (
-                <span className={`text-xs px-2 py-1 rounded ${
-                  isSecondaryProjectManager 
-                    ? "bg-purple-200 text-purple-800" 
-                    : "bg-blue-100 text-blue-800"
-                }`}>
+              {isSecondaryProjectManager && (
+                <span className="text-xs bg-purple-200 text-purple-800 px-2 py-1 rounded">
+                  Chef de projet secondaire
+                </span>
+              )}
+              {isMember && !isProjectManager && !isSecondaryProjectManager && !canEdit && (
+                <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
                   Membre du projet
                 </span>
               )}
