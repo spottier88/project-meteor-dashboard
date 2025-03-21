@@ -29,6 +29,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { UserProfile, UserRole, UserRoleData } from "@/types/user";
+import { SortableHeader, SortDirection } from "@/components/ui/sortable-header";
 
 interface UserWithRoles extends UserProfile {
   roles: UserRole[];
@@ -59,6 +60,8 @@ export const UserManagement = () => {
   const [isInviteFormOpen, setIsInviteFormOpen] = useState(false);
   const [userToDelete, setUserToDelete] = useState<UserWithRoles | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
+  const [sortKey, setSortKey] = useState<string | null>(null);
+  const [sortDirection, setSortDirection] = useState<SortDirection>(null);
 
   const { data: lastLogins } = useQuery({
     queryKey: ["lastLogins"],
@@ -136,6 +139,20 @@ export const UserManagement = () => {
     queryClient.invalidateQueries({ queryKey: ["users"] });
   };
 
+  const handleSort = (key: string) => {
+    if (sortKey === key) {
+      // Toggle direction if already sorting by this key
+      setSortDirection(sortDirection === "asc" ? "desc" : sortDirection === "desc" ? null : "asc");
+      if (sortDirection === "desc") {
+        setSortKey(null);
+      }
+    } else {
+      // Start with ascending sort for new key
+      setSortKey(key);
+      setSortDirection("asc");
+    }
+  };
+
   if (isLoading) {
     return <div>Chargement...</div>;
   }
@@ -148,12 +165,55 @@ export const UserManagement = () => {
     });
   };
 
-  const filteredUsers = users?.filter(user => {
+  // Filter and sort users
+  let filteredUsers = users?.filter(user => {
     const searchLower = searchTerm.toLowerCase();
     const firstName = user.first_name?.toLowerCase() || "";
     const lastName = user.last_name?.toLowerCase() || "";
-    return firstName.includes(searchLower) || lastName.includes(searchLower);
-  });
+    const email = user.email?.toLowerCase() || "";
+    return firstName.includes(searchLower) || lastName.includes(searchLower) || email.includes(searchLower);
+  }) || [];
+
+  // Sort users if sort key is set
+  if (sortKey && sortDirection) {
+    filteredUsers = [...filteredUsers].sort((a, b) => {
+      let valueA: any;
+      let valueB: any;
+
+      switch (sortKey) {
+        case "email":
+          valueA = a.email || "";
+          valueB = b.email || "";
+          break;
+        case "first_name":
+          valueA = a.first_name || "";
+          valueB = b.first_name || "";
+          break;
+        case "last_name":
+          valueA = a.last_name || "";
+          valueB = b.last_name || "";
+          break;
+        case "roles":
+          valueA = a.roles.join(",");
+          valueB = b.roles.join(",");
+          break;
+        case "lastLogin":
+          valueA = a.lastLogin ? a.lastLogin.getTime() : 0;
+          valueB = b.lastLogin ? b.lastLogin.getTime() : 0;
+          break;
+        default:
+          valueA = a[sortKey as keyof typeof a] || "";
+          valueB = b[sortKey as keyof typeof b] || "";
+      }
+
+      // Apply sort direction
+      if (sortDirection === "asc") {
+        return valueA > valueB ? 1 : valueA < valueB ? -1 : 0;
+      } else {
+        return valueA < valueB ? 1 : valueA > valueB ? -1 : 0;
+      }
+    });
+  }
 
   return (
     <div className="container mx-auto py-8 px-4">
@@ -189,7 +249,7 @@ export const UserManagement = () => {
 
       <div className="mb-4">
         <Input
-          placeholder="Rechercher par nom ou prénom..."
+          placeholder="Rechercher par nom, prénom ou email..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           className="max-w-sm"
@@ -199,22 +259,52 @@ export const UserManagement = () => {
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>Email</TableHead>
-            <TableHead>Prénom</TableHead>
-            <TableHead>Nom</TableHead>
-            <TableHead>Rôles</TableHead>
-            <TableHead>Dernière connexion</TableHead>
+            <SortableHeader
+              label="Email"
+              sortKey="email"
+              currentSort={sortKey}
+              currentDirection={sortDirection}
+              onSort={handleSort}
+            />
+            <SortableHeader
+              label="Prénom"
+              sortKey="first_name"
+              currentSort={sortKey}
+              currentDirection={sortDirection}
+              onSort={handleSort}
+            />
+            <SortableHeader
+              label="Nom"
+              sortKey="last_name"
+              currentSort={sortKey}
+              currentDirection={sortDirection}
+              onSort={handleSort}
+            />
+            <SortableHeader
+              label="Rôles"
+              sortKey="roles"
+              currentSort={sortKey}
+              currentDirection={sortDirection}
+              onSort={handleSort}
+            />
+            <SortableHeader
+              label="Dernière connexion"
+              sortKey="lastLogin"
+              currentSort={sortKey}
+              currentDirection={sortDirection}
+              onSort={handleSort}
+            />
             <TableHead className="text-right">Actions</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
-          {filteredUsers?.map((user) => (
+          {filteredUsers.map((user) => (
             <TableRow key={user.id}>
               <TableCell>{user.email}</TableCell>
               <TableCell>{user.first_name || "-"}</TableCell>
               <TableCell>{user.last_name || "-"}</TableCell>
               <TableCell>
-                <div className="flex gap-2">
+                <div className="flex gap-2 flex-wrap">
                   {[...new Set(user.roles)].map((role) => (
                     <Badge key={role} variant="secondary">
                       {getRoleLabel(role)}
