@@ -10,7 +10,7 @@ interface UseProjectFormSubmitProps {
   canEdit: boolean;
   canCreate: boolean;
   formState: ProjectFormState;
-  onSubmit: (projectData: any) => Promise<any>; // Modifié pour permettre un retour
+  onSubmit: (projectData: any) => Promise<any>;
   onClose: () => void;
 }
 
@@ -91,6 +91,9 @@ export const useProjectFormSubmit = ({
       const result = await onSubmit(projectData);
       
       await queryClient.invalidateQueries({ queryKey: ["projects"] });
+      
+      // Réinitialiser l'indicateur de modifications non enregistrées
+      formState.resetHasUnsavedChanges();
       
       toast({
         title: "Succès",

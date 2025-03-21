@@ -9,13 +9,14 @@ import { useProjectFormState } from "./form/useProjectFormState";
 import { useProjectFormValidation } from "./form/useProjectFormValidation";
 import { useProjectFormSubmit } from "@/hooks/useProjectFormSubmit";
 import { getProjectManagers } from "@/utils/projectManagers";
-import { usePermissionsContext } from "@/contexts/PermissionsContext";
+import { useState } from "react";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "./ui/alert-dialog";
 import { useProjectPermissions } from "@/hooks/useProjectPermissions";
 
 interface ProjectFormProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (projectData: any) => Promise<any>; // Modifié pour permettre un retour
+  onSubmit: (projectData: any) => Promise<any>;
   project?: any;
 }
 
@@ -24,6 +25,7 @@ export const ProjectForm = ({ isOpen, onClose, onSubmit, project }: ProjectFormP
   const formState = useProjectFormState(isOpen, project);
   const validation = useProjectFormValidation();
   const { canEdit, canCreate } = useProjectPermissions(project?.id || "");
+  const [showUnsavedChangesAlert, setShowUnsavedChangesAlert] = useState(false);
 
   const { data: projectManagers } = useQuery({
     queryKey: ["projectManagers", user?.id, validation.userRoles],
@@ -39,7 +41,10 @@ export const ProjectForm = ({ isOpen, onClose, onSubmit, project }: ProjectFormP
     canCreate,
     formState,
     onSubmit,
-    onClose,
+    onClose: () => {
+      formState.resetHasUnsavedChanges();
+      onClose();
+    },
   });
 
   const handleNext = () => {
@@ -60,43 +65,80 @@ export const ProjectForm = ({ isOpen, onClose, onSubmit, project }: ProjectFormP
     }
   };
 
+  const handleCloseRequest = () => {
+    if (formState.hasUnsavedChanges && !formState.isSubmitting) {
+      setShowUnsavedChangesAlert(true);
+    } else {
+      onClose();
+    }
+  };
+
+  const handleConfirmClose = () => {
+    setShowUnsavedChangesAlert(false);
+    formState.resetHasUnsavedChanges();
+    onClose();
+  };
+
+  const handleCancelClose = () => {
+    setShowUnsavedChangesAlert(false);
+  };
+
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[700px] md:max-w-[800px] h-[80vh] flex flex-col p-6">
-        <ProjectFormHeader 
-          currentStep={formState.currentStep}
-          isEditing={!!project}
-        />
-        
-        <ProjectFormContent
-          currentStep={formState.currentStep}
-          formState={formState}
-          isAdmin={validation.isAdmin}
-          isManager={validation.isManager}
-          projectManagers={projectManagers}
-          project={project}
-        />
-        
-        <DialogFooter className="mt-6">
-          <ProjectFormNavigation
+    <>
+      <Dialog open={isOpen} onOpenChange={handleCloseRequest}>
+        <DialogContent className="sm:max-w-[700px] md:max-w-[800px] h-[80vh] flex flex-col p-6">
+          <ProjectFormHeader 
             currentStep={formState.currentStep}
-            onPrevious={handlePrevious}
-            onNext={handleNext}
-            canGoNext={
-              formState.currentStep === 0 
-                ? validation.validateStep1(formState.title, formState.projectManager)
-                : formState.currentStep === 1 
-                ? validation.validateStep2()
-                : formState.currentStep === 2 
-                ? validation.validateStep3()
-                : true
-            }
-            isLastStep={formState.currentStep === 3}
-            isSubmitting={formState.isSubmitting}
-            onClose={onClose}
+            isEditing={!!project}
           />
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+          
+          <ProjectFormContent
+            currentStep={formState.currentStep}
+            formState={formState}
+            isAdmin={validation.isAdmin}
+            isManager={validation.isManager}
+            projectManagers={projectManagers}
+            project={project}
+          />
+          
+          <DialogFooter className="mt-6">
+            <ProjectFormNavigation
+              currentStep={formState.currentStep}
+              onPrevious={handlePrevious}
+              onNext={handleNext}
+              canGoNext={
+                formState.currentStep === 0 
+                  ? validation.validateStep1(formState.title, formState.projectManager)
+                  : formState.currentStep === 1 
+                  ? validation.validateStep2()
+                  : formState.currentStep === 2 
+                  ? validation.validateStep3()
+                  : true
+              }
+              isLastStep={formState.currentStep === 3}
+              isSubmitting={formState.isSubmitting}
+              onClose={handleCloseRequest}
+            />
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <AlertDialog open={showUnsavedChangesAlert} onOpenChange={setShowUnsavedChangesAlert}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Modifications non enregistrées</AlertDialogTitle>
+            <AlertDialogDescription>
+              Vous avez des modifications non enregistrées. Êtes-vous sûr de vouloir quitter sans enregistrer ?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={handleCancelClose}>Annuler</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmClose} className="bg-red-600 hover:bg-red-700">
+              Quitter sans enregistrer
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 };

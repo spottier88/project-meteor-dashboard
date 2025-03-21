@@ -7,7 +7,7 @@ import { Project } from "@/types/project";
 interface ProjectModalsProps {
   isProjectFormOpen: boolean;
   onProjectFormClose: () => void;
-  onProjectFormSubmit: (projectData: any) => Promise<any>; // Modifié pour accepter un retour quelconque
+  onProjectFormSubmit: (projectData: any) => Promise<any>;
   selectedProject: Project | null;
   isProjectSelectionOpen: boolean;
   onProjectSelectionClose: () => void;

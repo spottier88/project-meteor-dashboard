@@ -59,6 +59,9 @@ export interface ProjectFormState {
   setTimeline: (value: string) => void;
   deliverables: string;
   setDeliverables: (value: string) => void;
+  hasUnsavedChanges: boolean;
+  setHasUnsavedChanges: (value: boolean) => void;
+  resetHasUnsavedChanges: () => void;
 }
 
 export const useProjectFormState = (isOpen: boolean, project?: any) => {
@@ -88,12 +91,16 @@ export const useProjectFormState = (isOpen: boolean, project?: any) => {
   const [objectives, setObjectives] = useState("");
   const [timeline, setTimeline] = useState("");
   const [deliverables, setDeliverables] = useState("");
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
 
   const user = useUser();
 
   useEffect(() => {
     const initializeForm = async () => {
       if (isOpen) {
+        // Réinitialisation de l'état des modifications non enregistrées
+        setHasUnsavedChanges(false);
+        
         // Réinitialisation de tous les champs d'abord - garantit que les valeurs sont toujours dans un état connu
         setCurrentStep(0);
         setTitle("");
@@ -213,6 +220,22 @@ export const useProjectFormState = (isOpen: boolean, project?: any) => {
     initializeForm();
   }, [isOpen, project, user?.email, user?.id]);
 
+  // Effet pour suivre les modifications des champs
+  useEffect(() => {
+    if (isOpen && !isSubmitting) {
+      setHasUnsavedChanges(true);
+    }
+  }, [
+    title, description, projectManager, startDate, endDate, priority, 
+    monitoringLevel, monitoringEntityId, poleId, directionId, serviceId, 
+    novateur, usager, ouverture, agilite, impact, lifecycleStatus,
+    context, stakeholders, governance, objectives, timeline, deliverables
+  ]);
+
+  const resetHasUnsavedChanges = () => {
+    setHasUnsavedChanges(false);
+  };
+
   const validateStep3 = () => {
     return true;
   };
@@ -271,5 +294,8 @@ export const useProjectFormState = (isOpen: boolean, project?: any) => {
     setTimeline,
     deliverables,
     setDeliverables,
+    hasUnsavedChanges,
+    setHasUnsavedChanges,
+    resetHasUnsavedChanges,
   };
 };
