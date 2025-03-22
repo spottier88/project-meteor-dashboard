@@ -35,10 +35,10 @@ export const ProjectCardHeader = ({
       "flex flex-row items-center justify-between space-y-0 pb-2 pt-4",
     )}>
       <div className="flex items-center space-x-2">
-        <StatusIcon status={status} className="h-6 w-6" />
-        <h2 className="text-xl font-semibold truncate max-w-[200px] sm:max-w-xs">{title}</h2>
+        <StatusIcon status={status} className="h-6 w-6 shrink-0" />
+        <h2 className="text-xl font-semibold truncate max-w-[240px] md:max-w-xs">{title}</h2>
       </div>
-      <div className="flex items-center space-x-2">
+      <div className="flex items-center space-x-2 shrink-0">
         {additionalActions}
         <ProjectActions
           projectId={id}
