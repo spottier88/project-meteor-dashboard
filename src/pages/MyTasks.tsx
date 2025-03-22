@@ -4,7 +4,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useMyTasks } from "@/hooks/use-my-tasks";
 import { Table, TableBody, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { ArrowLeft, RotateCcw } from "lucide-react";
+import { ArrowLeft, RotateCcw, Eye, EyeOff } from "lucide-react";
 import { TaskCard } from "@/components/task/TaskCard";
 import { Badge } from "@/components/ui/badge";
 import { useQueryClient } from "@tanstack/react-query";
@@ -12,6 +12,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { TaskForm } from "@/components/task/TaskForm";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -32,6 +34,7 @@ export const MyTasks = () => {
     new URLSearchParams(location.search).get("filter") === "overdue"
   );
   const [selectedProject, setSelectedProject] = useState<string>("all");
+  const [showCompletedTasks, setShowCompletedTasks] = useState(false);
   
   // États pour gérer le formulaire d'édition et la suppression
   const [isTaskFormOpen, setIsTaskFormOpen] = useState(false);
@@ -64,11 +67,11 @@ export const MyTasks = () => {
       };
     }) : [];
 
-  // Filtrer les tâches par projet si un projet est sélectionné
+  // Filtrer les tâches par projet et par statut (terminé ou non)
   const filteredTasks = tasks ? 
-    selectedProject === "all" 
-      ? tasks 
-      : tasks.filter(task => task.project_id === selectedProject)
+    tasks
+      .filter(task => selectedProject === "all" || task.project_id === selectedProject)
+      .filter(task => showCompletedTasks || task.status !== "done")
     : [];
 
   const handleRefresh = () => {
@@ -124,10 +127,32 @@ export const MyTasks = () => {
           <p className="text-muted-foreground mb-4">
             {filteredTasks.length} tâche(s) 
             {showOverdueOnly ? " en retard" : ""}
+            {!showCompletedTasks ? " (tâches terminées masquées)" : ""}
           </p>
         </div>
         
         <div className="flex flex-col sm:flex-row gap-4 w-full md:w-auto">
+          <div className="flex items-center space-x-2">
+            <Switch 
+              id="completed-tasks-toggle"
+              checked={showCompletedTasks}
+              onCheckedChange={setShowCompletedTasks}
+            />
+            <Label htmlFor="completed-tasks-toggle" className="flex items-center gap-2">
+              {showCompletedTasks ? (
+                <>
+                  <Eye className="h-4 w-4" />
+                  <span>Masquer les tâches terminées</span>
+                </>
+              ) : (
+                <>
+                  <EyeOff className="h-4 w-4" />
+                  <span>Afficher les tâches terminées</span>
+                </>
+              )}
+            </Label>
+          </div>
+          
           <Select
             value={showOverdueOnly ? "overdue" : "all"}
             onValueChange={(value) => setShowOverdueOnly(value === "overdue")}
