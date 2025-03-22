@@ -9,6 +9,7 @@ import { AddToCartButton } from "./cart/AddToCartButton";
 import { ProjectStatus, ProgressStatus, ProjectLifecycleStatus } from "@/types/project";
 import { LifecycleStatusBadge } from "./project/LifecycleStatusBadge";
 import { useProjectPermissions } from "@/hooks/useProjectPermissions";
+import { cn } from "@/lib/utils";
 
 interface ProjectCardProps {
   title: string;
@@ -141,8 +142,29 @@ export const ProjectCard = ({
     return project_manager;
   };
 
+  const getStatusColorClass = (status: ProjectLifecycleStatus): string => {
+    switch (status) {
+      case "study":
+        return "bg-gray-500";
+      case "validated":
+        return "bg-blue-500";
+      case "in_progress":
+        return "bg-green-500";
+      case "completed":
+        return "bg-purple-500";
+      case "suspended":
+        return "bg-orange-500";
+      case "abandoned":
+        return "bg-red-500";
+      default:
+        return "bg-gray-300";
+    }
+  };
+
   return (
-    <Card className="w-full transition-all duration-300 hover:shadow-lg animate-fade-in">
+    <Card className="w-full transition-all duration-300 hover:shadow-lg animate-fade-in overflow-hidden flex flex-col relative">
+      <div className={cn("h-2 w-full", getStatusColorClass(lifecycle_status))} />
+      
       <ProjectCardHeader
         title={title}
         status={latestReview?.weather || null}

@@ -1,3 +1,4 @@
+
 import { Badge } from "@/components/ui/badge";
 import { ProjectLifecycleStatus, lifecycleStatusLabels } from "@/types/project";
 import { cn } from "@/lib/utils";
@@ -25,7 +26,7 @@ export const LifecycleStatusBadge = ({ status }: LifecycleStatusBadgeProps) => {
   };
 
   return (
-    <Badge className={cn(getStatusColor(status))}>
+    <Badge className={cn(getStatusColor(status), "text-white font-medium")}>
       {lifecycleStatusLabels[status]}
     </Badge>
   );

@@ -1,7 +1,9 @@
+
 import { CardHeader } from "@/components/ui/card";
 import { ProjectActions } from "./ProjectActions";
 import { StatusIcon } from "./StatusIcon";
 import { ProjectStatus } from "@/types/project";
+import { cn } from "@/lib/utils";
 
 interface ProjectCardHeaderProps {
   title: string;
@@ -29,10 +31,12 @@ export const ProjectCardHeader = ({
   additionalActions,
 }: ProjectCardHeaderProps) => {
   return (
-    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+    <CardHeader className={cn(
+      "flex flex-row items-center justify-between space-y-0 pb-2 pt-4",
+    )}>
       <div className="flex items-center space-x-2">
-        <StatusIcon status={status} />
-        <h2 className="text-xl font-semibold">{title}</h2>
+        <StatusIcon status={status} className="h-6 w-6" />
+        <h2 className="text-xl font-semibold truncate max-w-[200px] sm:max-w-xs">{title}</h2>
       </div>
       <div className="flex items-center space-x-2">
         {additionalActions}
