@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useSupabaseClient, useUser } from "@supabase/auth-helpers-react";
 import { Button } from "./ui/button";
@@ -10,8 +9,8 @@ import { UserProfile, UserRoleData } from "@/types/user";
 import { ProfileForm } from "./profile/ProfileForm";
 import { UserNotificationsDropdown } from "./notifications/UserNotificationsDropdown";
 import { RequiredNotificationDialog } from "./notifications/RequiredNotificationDialog";
+import { HelpButton } from "@/components/help/HelpButton";
 
-// Fonction pour nettoyer les cookies Supabase
 const clearSupabaseCookies = () => {
   const cookies = document.cookie.split(";");
   for (let i = 0; i < cookies.length; i++) {
@@ -19,7 +18,6 @@ const clearSupabaseCookies = () => {
     const eqPos = cookie.indexOf("=");
     const name = eqPos > -1 ? cookie.substring(0, eqPos).trim() : cookie.trim();
     
-    // Supprimer tous les cookies liés à Supabase
     if (name.startsWith("sb-")) {
       document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/;`;
     }
@@ -71,30 +69,24 @@ export const UserInfo = () => {
     try {
       console.log("Début de la procédure de déconnexion");
       
-      // Invalider le cache avant la déconnexion
       queryClient.clear();
       
-      // Déconnecter l'utilisateur via Supabase avec attente
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
       
-      // Nettoyer les cookies manuellement pour s'assurer que tout est propre
       clearSupabaseCookies();
       
       console.log("Déconnexion effectuée avec succès, redirection vers login");
       
-      // Notification utilisateur
       toast({
         title: "Déconnexion réussie",
         description: "Vous avez été déconnecté avec succès",
       });
       
-      // Forcer la redirection directement vers login
       window.location.href = "/login";
     } catch (error) {
       console.error("Erreur lors de la déconnexion:", error);
       
-      // Tentative de nettoyage même en cas d'erreur
       clearSupabaseCookies();
       
       toast({
@@ -103,7 +95,6 @@ export const UserInfo = () => {
         variant: "destructive",
       });
       
-      // Redirection forcée même en cas d'erreur
       window.location.href = "/login";
     }
   };
@@ -128,6 +119,7 @@ export const UserInfo = () => {
         </div>
         <div className="flex items-center gap-2">
           <UserNotificationsDropdown />
+          <HelpButton />
           {isAdmin && (
             <Button variant="ghost" size="sm" onClick={() => navigate("/admin")}>
               <Settings className="h-4 w-4 mr-2" />
@@ -147,7 +139,6 @@ export const UserInfo = () => {
         profile={profile}
       />
       
-      {/* Composant pour afficher les notifications obligatoires en popup */}
       <RequiredNotificationDialog />
     </>
   );

@@ -4,7 +4,6 @@ import { ProjectActions } from "./ProjectActions";
 import { StatusIcon } from "./StatusIcon";
 import { ProjectStatus } from "@/types/project";
 import { cn } from "@/lib/utils";
-import { HelpButton } from "@/components/help/HelpButton";
 
 interface ProjectCardHeaderProps {
   title: string;
@@ -40,7 +39,6 @@ export const ProjectCardHeader = ({
         <h2 className="text-xl font-semibold truncate max-w-[240px] md:max-w-xs">{title}</h2>
       </div>
       <div className="flex items-center space-x-2 shrink-0">
-        <HelpButton />
         {additionalActions}
         <ProjectActions
           projectId={id}
