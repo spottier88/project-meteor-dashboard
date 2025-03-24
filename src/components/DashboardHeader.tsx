@@ -9,6 +9,7 @@ import { useProjectCart } from '@/hooks/use-project-cart';
 import { CartButton } from '@/components/cart/CartButton';
 import { ProjectCart } from '@/components/cart/ProjectCart';
 import { TasksIndicator } from '@/components/task/TasksIndicator';
+import { HelpButton } from '@/components/help/HelpButton';
 
 interface DashboardHeaderProps {
   onNewProject?: () => void;
@@ -67,6 +68,7 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
           </div>
 
           <div className="flex items-center gap-2 ml-auto">
+            <HelpButton />
             <TasksIndicator />
           
             <div onClick={() => setIsCartOpen(true)}>

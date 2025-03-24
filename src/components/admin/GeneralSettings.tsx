@@ -1,10 +1,9 @@
-
 import React from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Settings, ChevronLeft } from "lucide-react";
+import { Settings, ChevronLeft, HelpCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
@@ -19,14 +18,15 @@ import {
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { PublicClientApplication } from "@azure/msal-browser";
+import { Separator } from "@/components/ui/separator";
 
-// Définir le type pour correspondre exactement à l'enum setting_type de la base de données
-type ApplicationSettingType = "microsoft_graph" | "openai";
+type ApplicationSettingType = "microsoft_graph" | "openai" | "documentation";
 
 const settingsSchema = z.object({
   clientId: z.string().min(1, "L'ID client est requis"),
   tenantId: z.string().min(1, "L'ID tenant est requis"),
   openaiApiKey: z.string().min(1, "La clé API OpenAI est requise"),
+  documentationUrl: z.string().min(1, "L'URL de la documentation est requise"),
 });
 
 type SettingsFormValues = z.infer<typeof settingsSchema>;
@@ -45,6 +45,13 @@ const fetchSettings = async () => {
     .eq("type", "openai");
 
   if (openaiError) throw openaiError;
+  
+  const { data: documentationSettings, error: documentationError } = await supabase
+    .from("application_settings")
+    .select("*")
+    .eq("type", "documentation");
+
+  if (documentationError) throw documentationError;
 
   const msGraphFormattedSettings = msGraphSettings.reduce((acc: { [key: string]: string }, setting) => {
     acc[setting.key === "client_id" ? "clientId" : "tenantId"] = setting.value;
@@ -57,8 +64,15 @@ const fetchSettings = async () => {
     }
     return acc;
   }, {});
+  
+  const documentationFormattedSettings = documentationSettings.reduce((acc: { [key: string]: string }, setting) => {
+    if (setting.key === "documentation_url") {
+      acc["documentationUrl"] = setting.value;
+    }
+    return acc;
+  }, {});
 
-  return { ...msGraphFormattedSettings, ...openaiFormattedSettings };
+  return { ...msGraphFormattedSettings, ...openaiFormattedSettings, ...documentationFormattedSettings };
 };
 
 export const GeneralSettings = () => {
@@ -76,6 +90,7 @@ export const GeneralSettings = () => {
       clientId: settings?.clientId || "",
       tenantId: settings?.tenantId || "",
       openaiApiKey: settings?.openaiApiKey || "",
+      documentationUrl: settings?.documentationUrl || "",
     },
     values: settings,
   });
@@ -97,6 +112,14 @@ export const GeneralSettings = () => {
         .eq("type", "openai");
 
       if (deleteOpenAIError) throw deleteOpenAIError;
+      
+      // Suppression des paramètres Documentation existants
+      const { error: deleteDocError } = await supabase
+        .from("application_settings")
+        .delete()
+        .eq("type", "documentation");
+
+      if (deleteDocError) throw deleteDocError;
 
       // Insertion des nouveaux paramètres Microsoft Graph
       const { error: insertGraphError } = await supabase
@@ -128,6 +151,19 @@ export const GeneralSettings = () => {
         ]);
 
       if (insertOpenAIError) throw insertOpenAIError;
+      
+      // Insertion des nouveaux paramètres Documentation
+      const { error: insertDocError } = await supabase
+        .from("application_settings")
+        .insert([
+          {
+            key: "documentation_url",
+            value: values.documentationUrl,
+            type: "documentation",
+          },
+        ]);
+
+      if (insertDocError) throw insertDocError;
     },
     onSuccess: () => {
       toast({
@@ -232,6 +268,21 @@ export const GeneralSettings = () => {
     }
   };
 
+  const testDocumentation = () => {
+    const docUrl = form.getValues().documentationUrl;
+    
+    if (!docUrl) {
+      toast({
+        title: "Erreur",
+        description: "Veuillez d'abord entrer une URL de documentation.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    window.open(docUrl, '_blank', 'noopener,noreferrer');
+  };
+
   if (isLoading) {
     return <div>Chargement des paramètres...</div>;
   }
@@ -305,7 +356,9 @@ export const GeneralSettings = () => {
               </div>
             </div>
 
-            <div className="border-t pt-6 mt-6">
+            <Separator className="my-6" />
+
+            <div className="pt-4">
               <div className="mb-6">
                 <h3 className="text-lg font-medium">Paramètres OpenAI</h3>
                 <p className="text-sm text-muted-foreground">
@@ -338,8 +391,44 @@ export const GeneralSettings = () => {
                 </Button>
               </div>
             </div>
+            
+            <Separator className="my-6" />
+            
+            <div className="pt-4">
+              <div className="mb-6">
+                <h3 className="text-lg font-medium">Documentation</h3>
+                <p className="text-sm text-muted-foreground">
+                  Configurez l'URL de la documentation utilisateur.
+                </p>
+              </div>
 
-            <div className="flex gap-4 pt-4">
+              <FormField
+                control={form.control}
+                name="documentationUrl"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>URL de la documentation</FormLabel>
+                    <FormControl>
+                      <Input placeholder="https://docs.example.com" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <div className="flex gap-4 mt-4">
+                <Button 
+                  type="button" 
+                  variant="secondary"
+                  onClick={testDocumentation}
+                  disabled={mutation.status === 'loading'}
+                >
+                  Tester l'accès à la documentation
+                </Button>
+              </div>
+            </div>
+
+            <div className="flex gap-4 pt-6">
               <Button 
                 type="submit"
                 disabled={mutation.status === 'loading'}
