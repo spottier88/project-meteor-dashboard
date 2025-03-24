@@ -1,4 +1,12 @@
 
+/**
+ * @component TeamManagement
+ * @description Gestion de l'équipe d'un projet.
+ * Affiche la liste des membres, permet d'ajouter des membres existants,
+ * d'inviter de nouveaux utilisateurs et de gérer les rôles des membres.
+ * Les actions disponibles dépendent des permissions de l'utilisateur connecté.
+ */
+
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Plus, UserPlus } from "lucide-react";

@@ -1,4 +1,12 @@
 
+/**
+ * @component TeamMembersTable
+ * @description Tableau des membres de l'équipe d'un projet.
+ * Affiche la liste des membres avec leur nom, email et rôle.
+ * Permet de gérer les membres (suppression, promotion, rétrogradation)
+ * si l'utilisateur en a les droits.
+ */
+
 import {
   Table,
   TableBody,

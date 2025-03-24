@@ -1,3 +1,12 @@
+
+/**
+ * @component UserInfo
+ * @description Affiche les informations de l'utilisateur connecté et gère la déconnexion.
+ * Permet d'accéder au profil utilisateur, aux notifications système et à la documentation.
+ * Affiche les badges d'administrateur et de chef de projet selon les rôles de l'utilisateur.
+ * Gère également la logique de nettoyage des cookies lors de la déconnexion.
+ */
+
 import { useState } from "react";
 import { useSupabaseClient, useUser } from "@supabase/auth-helpers-react";
 import { Button } from "./ui/button";

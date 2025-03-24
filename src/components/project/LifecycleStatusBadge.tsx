@@ -1,4 +1,11 @@
 
+/**
+ * @component LifecycleStatusBadge
+ * @description Badge visuel affichant le statut du cycle de vie d'un projet.
+ * Les statuts peuvent être: étude, validé, en cours, terminé, suspendu ou abandonné.
+ * Chaque statut a sa propre couleur pour une identification visuelle rapide.
+ */
+
 import { Badge } from "@/components/ui/badge";
 import { ProjectLifecycleStatus, lifecycleStatusLabels } from "@/types/project";
 import { cn } from "@/lib/utils";

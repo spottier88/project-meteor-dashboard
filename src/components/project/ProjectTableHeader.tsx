@@ -1,3 +1,11 @@
+/**
+ * @component ProjectTableHeader
+ * @description En-tête de tableau pour la vue tabulaire des projets.
+ * Gère les colonnes triables avec indication visuelle du tri actuel.
+ * Permet de trier les projets par différents critères comme le titre,
+ * le chef de projet, le statut, etc.
+ */
+
 import { TableHeader, TableRow, TableHead } from "@/components/ui/table";
 import { SortableHeader, SortDirection } from "@/components/ui/sortable-header";
 

@@ -1,4 +1,11 @@
 
+/**
+ * @component StatusIcon
+ * @description Affiche une icône représentant le statut météorologique d'un projet.
+ * Les statuts peuvent être: ensoleillé (sunny), nuageux (cloudy), orageux (stormy),
+ * ou en attente (hourglass si null). Chaque statut a sa propre couleur et icône.
+ */
+
 import { Sun, Cloud, CloudLightning, Hourglass } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ProjectStatus } from "@/types/project";

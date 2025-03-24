@@ -1,4 +1,11 @@
 
+/**
+ * @component DeleteReviewDialog
+ * @description Boîte de dialogue de confirmation pour la suppression d'une revue de projet.
+ * Demande confirmation avant de supprimer définitivement une revue et ses actions associées.
+ * Gère l'appel à l'API de suppression et les notifications de succès ou d'erreur.
+ */
+
 import { useState } from "react";
 import {
   AlertDialog,

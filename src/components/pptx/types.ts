@@ -1,3 +1,10 @@
+/**
+ * @file types.ts
+ * @description Définit les types TypeScript pour la génération de présentations PPTX.
+ * Contient les interfaces pour la structure des données de projet, revues, risques
+ * et tâches nécessaires à la génération des diapositives de présentation.
+ */
+
 import { ProjectStatus, ProgressStatus, ProjectLifecycleStatus } from "@/types/project";
 
 export interface ProjectData {

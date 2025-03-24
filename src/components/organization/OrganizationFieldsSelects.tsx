@@ -1,3 +1,11 @@
+/**
+ * @component OrganizationFieldsSelects
+ * @description Groupe de sélecteurs pour les entités organisationnelles.
+ * Permet de sélectionner un pôle, puis une direction de ce pôle, puis un 
+ * service de cette direction. Gère les dépendances entre les sélections
+ * (réinitialisation des valeurs enfants quand un parent change).
+ */
+
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 

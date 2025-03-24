@@ -1,3 +1,10 @@
+/**
+ * @component ProjectList
+ * @description Composant principal pour l'affichage des listes de projets.
+ * Gère la bascule entre les vues grille et tableau, et transmet les projets
+ * et les actions (édition, revue, historique) aux composants enfants.
+ */
+
 import { ViewMode } from "@/components/ViewToggle";
 import { ProjectGrid } from "@/components/ProjectGrid";
 import { ProjectTable } from "@/components/ProjectTable";

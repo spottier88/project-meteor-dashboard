@@ -1,4 +1,11 @@
 
+/**
+ * @component ProjectModals
+ * @description Gestionnaire central pour tous les modales liés aux projets.
+ * Regroupe les modales de formulaire de projet, de sélection de projet et
+ * de revue de projet. Permet une gestion unifiée des états d'ouverture/fermeture.
+ */
+
 import { ProjectForm } from "@/components/ProjectForm";
 import { ProjectSelectionSheet } from "@/components/ProjectSelectionSheet";
 import { ReviewSheet } from "@/components/review/ReviewSheet";

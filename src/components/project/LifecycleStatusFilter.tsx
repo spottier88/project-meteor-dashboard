@@ -1,3 +1,10 @@
+/**
+ * @component LifecycleStatusFilter
+ * @description Filtre pour sélectionner les projets par statut de cycle de vie.
+ * Permet de filtrer les projets par statut: tous, étude, validé, en cours, terminé,
+ * suspendu ou abandonné. Utilisé dans les vues de liste ou tableau des projets.
+ */
+
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { ProjectLifecycleStatus, lifecycleStatusLabels } from "@/types/project";

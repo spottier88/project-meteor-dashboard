@@ -1,3 +1,10 @@
+/**
+ * @component HierarchyPathAssignmentForm
+ * @description Formulaire pour assigner un manager à un chemin hiérarchique.
+ * Permet de sélectionner un chemin hiérarchique (combinaison pôle/direction/service)
+ * et d'y affecter un manager, donnant ainsi des droits sur tous les projets associés.
+ */
+
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";

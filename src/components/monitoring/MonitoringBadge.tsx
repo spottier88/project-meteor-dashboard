@@ -1,3 +1,10 @@
+/**
+ * @component MonitoringBadge
+ * @description Badge indiquant le niveau de suivi d'un projet.
+ * Affiche visuellement si un projet est suivi au niveau DGS, Pôle ou Direction.
+ * Inclut une icône appropriée et le nom de l'entité de suivi si disponible.
+ */
+
 import { Shield, Flag } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useQuery } from "@tanstack/react-query";
@@ -59,10 +66,6 @@ export const MonitoringBadge = ({ projectId, className }: MonitoringBadgeProps) 
     return null;
   }
 
-
-  // contenu texte du badge
-  // Suivi Pôle {monitoring.entityName ? `(${monitoring.entityName})` : ""}
-  
   const getBadgeContent = () => {
     switch (monitoring.monitoring_level) {
       case "dgs":

@@ -1,3 +1,11 @@
+/**
+ * @component ServiceForm
+ * @description Formulaire de création/modification d'un service.
+ * Permet de saisir ou modifier le nom d'un service, de le rattacher
+ * à une direction et de l'enregistrer dans la base de données.
+ * Utilisé dans l'interface d'administration.
+ */
+
 import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -36,7 +44,6 @@ export const ServiceForm = ({ isOpen, onClose, onSubmit, service }: ServiceFormP
     },
   });
 
-  // Reset form when opening/closing or when service changes
   useEffect(() => {
     if (isOpen) {
       setName(service?.name || "");

@@ -1,3 +1,10 @@
+/**
+ * @hook useProjectFormValidation
+ * @description Hook personnalisé gérant la validation du formulaire de projet.
+ * Récupère les rôles de l'utilisateur connecté et fournit des fonctions de validation
+ * pour chaque étape du formulaire multi-étapes de création/édition de projet.
+ */
+
 import { useQuery } from "@tanstack/react-query";
 import { useUser } from "@supabase/auth-helpers-react";
 import { supabase } from "@/integrations/supabase/client";

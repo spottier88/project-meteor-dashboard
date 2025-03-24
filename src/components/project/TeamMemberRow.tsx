@@ -1,4 +1,12 @@
 
+/**
+ * @component TeamMemberRow
+ * @description Ligne du tableau pour un membre d'équipe projet.
+ * Affiche les informations d'un membre (nom, email, rôle) et les actions
+ * possibles selon le niveau de permission (promotion, rétrogradation, suppression).
+ * Utilise des badges visuels pour indiquer les rôles des membres.
+ */
+
 import { Button } from "@/components/ui/button";
 import { TableRow, TableCell } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";

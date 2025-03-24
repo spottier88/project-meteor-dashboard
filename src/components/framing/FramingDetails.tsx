@@ -1,4 +1,12 @@
 
+/**
+ * @component FramingDetails
+ * @description Affichage du document de cadrage d'un projet.
+ * Présente les différentes sections du cadrage (contexte, parties prenantes,
+ * gouvernance, objectifs, calendrier, livrables) et permet leur édition
+ * si l'utilisateur en a les droits.
+ */
+
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";

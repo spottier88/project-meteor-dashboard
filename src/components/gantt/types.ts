@@ -1,4 +1,11 @@
 
+/**
+ * @file types.ts
+ * @description Définit les interfaces TypeScript pour le diagramme de Gantt.
+ * Contient les définitions pour les tâches, les liens entre tâches et les propriétés
+ * nécessaires pour représenter les projets et leurs tâches sous forme de diagramme.
+ */
+
 import { ProjectStatus, ProgressStatus, ProjectLifecycleStatus } from '@/types/project';
 
 export interface GanttTask {

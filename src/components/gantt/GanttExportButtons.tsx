@@ -1,3 +1,10 @@
+/**
+ * @component GanttExportButtons
+ * @description Boutons d'exportation pour le diagramme de Gantt.
+ * Permet d'exporter le diagramme au format Excel ou image (PNG).
+ * Gère la conversion des données et la génération des fichiers.
+ */
+
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { FileSpreadsheet, Image } from 'lucide-react';

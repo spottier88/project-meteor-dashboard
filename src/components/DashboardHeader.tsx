@@ -1,4 +1,12 @@
 
+/**
+ * @component DashboardHeader
+ * @description En-tête principal du tableau de bord de l'application.
+ * Affiche le titre de la page, la navigation principale, les boutons d'action
+ * (création de projet, de revue) et les indicateurs (tâches, panier de projets).
+ * S'adapte en fonction des permissions de l'utilisateur connecté.
+ */
+
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { NavigationMenu, NavigationMenuItem, NavigationMenuLink, NavigationMenuList } from "@/components/ui/navigation-menu";

@@ -1,4 +1,11 @@
 
+/**
+ * @component ProjectSummaryActions
+ * @description Actions disponibles sur la vue de résumé d'un projet.
+ * Permet d'exporter les informations du projet au format PPTX en combinant
+ * les données du projet, des revues, des risques et des tâches.
+ */
+
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";

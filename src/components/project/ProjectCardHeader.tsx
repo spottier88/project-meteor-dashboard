@@ -1,4 +1,11 @@
 
+/**
+ * @component ProjectCardHeader
+ * @description En-tête des cartes de projet affichées sur le tableau de bord.
+ * Affiche le titre du projet, son statut et les actions possibles.
+ * Gère l'affichage des boutons d'action en fonction des permissions de l'utilisateur.
+ */
+
 import { CardHeader } from "@/components/ui/card";
 import { ProjectActions } from "./ProjectActions";
 import { StatusIcon } from "./StatusIcon";

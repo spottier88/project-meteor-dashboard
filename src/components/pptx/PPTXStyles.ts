@@ -1,3 +1,10 @@
+/**
+ * @file PPTXStyles.ts
+ * @description Définit les styles visuels pour la génération de présentations PPTX.
+ * Contient les définitions de styles pour les titres, sous-titres, textes, couleurs,
+ * et dispositions des diapositives pour maintenir une apparence cohérente.
+ */
+
 export const pptxStyles = {
   title: {
     fontSize: 24,

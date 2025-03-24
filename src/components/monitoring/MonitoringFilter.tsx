@@ -1,3 +1,11 @@
+/**
+ * @component MonitoringFilter
+ * @description Composant de filtre pour le niveau de suivi des projets.
+ * Permet de filtrer les projets par niveau de suivi: tous, non suivis, 
+ * suivi DGS, suivi Pôle, ou suivi Direction. Utilisé dans les vues de liste
+ * ou tableau des projets.
+ */
+
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { MonitoringLevel } from "@/types/monitoring";
 

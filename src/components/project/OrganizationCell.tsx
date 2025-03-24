@@ -1,3 +1,10 @@
+/**
+ * @component OrganizationCell
+ * @description Cellule affichant l'organisation (pôle, direction, service) d'un projet.
+ * Récupère les données d'organisation depuis la base de données et les affiche
+ * de manière formatée. Utilisé principalement dans les vues tabulaires des projets.
+ */
+
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 

@@ -1,4 +1,11 @@
 
+/**
+ * @component GanttLegend
+ * @description Légende explicative pour le diagramme de Gantt.
+ * Affiche les codes couleur utilisés pour représenter les différents types
+ * d'éléments (projets, tâches à faire, en cours, terminées, etc.) dans le diagramme.
+ */
+
 import React from 'react';
 
 interface GanttLegendProps {

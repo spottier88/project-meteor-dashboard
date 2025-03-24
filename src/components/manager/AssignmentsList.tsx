@@ -1,3 +1,10 @@
+/**
+ * @component AssignmentsList
+ * @description Liste des affectations d'un manager à différentes entités.
+ * Affiche les entités (pôles, directions, services) auxquelles un manager
+ * est affecté et permet de supprimer ces affectations.
+ */
+
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";

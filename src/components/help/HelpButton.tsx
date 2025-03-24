@@ -1,4 +1,12 @@
 
+/**
+ * @component HelpButton
+ * @description Bouton d'aide accessible depuis plusieurs endroits de l'application.
+ * Récupère l'URL de la documentation depuis les paramètres de l'application et
+ * ouvre cette documentation dans un nouvel onglet lors du clic.
+ * Affiche un tooltip explicatif au survol.
+ */
+
 import React, { useState } from "react";
 import { HelpCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";

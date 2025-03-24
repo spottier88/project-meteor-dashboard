@@ -1,3 +1,11 @@
+/**
+ * @component DirectionForm
+ * @description Formulaire de création/modification d'une direction.
+ * Permet de saisir ou modifier le nom d'une direction, de la rattacher
+ * à un pôle et de l'enregistrer dans la base de données.
+ * Utilisé dans l'interface d'administration.
+ */
+
 import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -34,7 +42,6 @@ export const DirectionForm = ({ isOpen, onClose, onSubmit, direction }: Directio
     },
   });
 
-  // Reset form when opening/closing or when direction changes
   useEffect(() => {
     if (isOpen) {
       setName(direction?.name || "");

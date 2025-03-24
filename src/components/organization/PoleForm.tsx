@@ -1,3 +1,10 @@
+/**
+ * @component PoleForm
+ * @description Formulaire de création/modification d'un pôle.
+ * Permet de saisir ou modifier le nom d'un pôle et de l'enregistrer
+ * dans la base de données. Utilisé dans l'interface d'administration.
+ */
+
 import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -21,7 +28,6 @@ export const PoleForm = ({ isOpen, onClose, onSubmit, pole }: PoleFormProps) => 
   const [name, setName] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Reset form when opening/closing or when pole changes
   useEffect(() => {
     if (isOpen) {
       setName(pole?.name || "");

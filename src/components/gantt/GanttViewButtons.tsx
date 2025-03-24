@@ -1,3 +1,10 @@
+/**
+ * @component GanttViewButtons
+ * @description Boutons de contrôle pour modifier la vue du diagramme de Gantt.
+ * Permet de basculer entre les vues semaine, mois et année, ainsi que d'afficher
+ * ou masquer les tâches des projets dans le diagramme.
+ */
+
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Calendar, Eye, EyeOff } from 'lucide-react';

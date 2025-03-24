@@ -1,4 +1,11 @@
 
+/**
+ * @component FeedbackResponseForm
+ * @description Formulaire de réponse à un feedback utilisateur.
+ * Permet aux administrateurs de répondre aux feedbacks soumis par les utilisateurs.
+ * Crée une notification ciblée pour l'utilisateur ayant soumis le feedback initial.
+ */
+
 import { useState } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import { useQueryClient } from "@tanstack/react-query";

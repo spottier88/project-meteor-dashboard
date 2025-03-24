@@ -1,4 +1,12 @@
 
+/**
+ * @component ProjectActions
+ * @description Boutons d'actions pour un projet.
+ * Affiche les différentes actions possibles sur un projet (édition, revue,
+ * gestion des tâches, des risques, du cadrage, de l'équipe, suppression).
+ * Les actions disponibles dépendent des permissions de l'utilisateur connecté.
+ */
+
 import { Button } from "@/components/ui/button";
 import { 
   Pencil, 

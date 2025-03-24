@@ -1,3 +1,11 @@
+/**
+ * @component ProjectPPTX
+ * @description Gère la génération de présentations PowerPoint (PPTX) pour les projets.
+ * Utilise les données du projet, de ses revues, risques et tâches pour créer une
+ * présentation structurée avec un style cohérent. Permet d'exporter les informations
+ * du projet dans un format facilement partageable.
+ */
+
 import pptxgen from "pptxgenjs";
 import { pptxStyles, pptxColors } from "./PPTXStyles";
 import { ProjectData } from "./types";

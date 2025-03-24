@@ -1,3 +1,10 @@
+/**
+ * @component InnovationRadarChart
+ * @description Graphique radar visualisant le score d'innovation d'un projet.
+ * Représente visuellement les 5 dimensions d'innovation: novateur, usager, 
+ * ouverture, agilité et impact. Utilise la bibliothèque Recharts pour le rendu.
+ */
+
 import { ResponsiveContainer, RadarChart, PolarGrid, PolarAngleAxis, Radar } from 'recharts';
 
 interface InnovationData {

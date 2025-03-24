@@ -1,4 +1,11 @@
 
+/**
+ * @component DeleteProjectDialog
+ * @description Boîte de dialogue de confirmation pour la suppression d'un projet.
+ * Demande confirmation avant de supprimer définitivement un projet et ses données associées.
+ * Gère l'appel à l'API de suppression et les notifications de succès ou d'erreur.
+ */
+
 import {
   AlertDialog,
   AlertDialogAction,

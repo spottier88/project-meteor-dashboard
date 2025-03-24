@@ -1,4 +1,12 @@
 
+/**
+ * @component OrganizationFilters
+ * @description Ensemble de filtres pour les entités organisationnelles.
+ * Permet de filtrer les projets par pôle, direction et service.
+ * Gère les dépendances entre les filtres (réinitialisation des valeurs
+ * enfants quand un parent change).
+ */
+
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useQuery } from "@tanstack/react-query";

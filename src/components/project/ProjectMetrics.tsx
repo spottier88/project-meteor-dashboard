@@ -1,4 +1,12 @@
 
+/**
+ * @component ProjectMetrics
+ * @description Affiche les métriques clés d'un projet sous forme visuelle.
+ * Présente le pourcentage d'avancement avec une barre de progression colorée,
+ * la tendance d'évolution (amélioration, stabilité, dégradation) et la date
+ * de dernière revue du projet.
+ */
+
 import { Progress } from "@/components/ui/progress";
 import { ArrowDown, ArrowRight, ArrowUp } from "lucide-react";
 import { ProgressStatus } from "@/types/project";

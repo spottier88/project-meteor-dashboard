@@ -1,4 +1,11 @@
 
+/**
+ * @component Separator
+ * @description Composant UI réutilisable permettant d'ajouter des séparateurs
+ * horizontaux ou verticaux dans l'interface. Basé sur Radix UI.
+ * Utilisé pour délimiter visuellement différentes sections de l'application.
+ */
+
 import * as React from "react"
 import * as SeparatorPrimitive from "@radix-ui/react-separator"
 

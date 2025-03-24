@@ -1,4 +1,12 @@
 
+/**
+ * @component FramingSectionEditor
+ * @description Éditeur pour les sections du cadrage de projet.
+ * Permet de modifier les différentes sections du document de cadrage
+ * (contexte, parties prenantes, gouvernance, objectifs, calendrier, livrables).
+ * Gère la sauvegarde des modifications dans la base de données.
+ */
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
