@@ -3,6 +3,7 @@ import { useTaskFormInitialization } from "./useTaskFormInitialization";
 import { useUnsavedChangesTracker } from "./useUnsavedChangesTracker";
 import { useTaskSubmit } from "./useTaskSubmit";
 import { UseTaskFormParams, TaskData } from "../types/TaskFormTypes";
+import { format } from "date-fns";
 
 export const useTaskForm = ({
   projectId,
@@ -55,12 +56,19 @@ export const useTaskForm = ({
 
   // Fonction principale de soumission qui prépare les données avant de les envoyer
   const handleSubmit = async () => {
+    // Formatage des dates pour préserver le jour local, sans conversion UTC
+    const formatLocalDate = (date?: Date) => {
+      if (!date) return undefined;
+      // Format YYYY-MM-DD sans conversion de timezone
+      return format(date, 'yyyy-MM-dd');
+    };
+
     const taskData: TaskData = {
       title,
       description,
       status,
-      due_date: dueDate?.toISOString().split('T')[0],
-      start_date: startDate?.toISOString().split('T')[0],
+      due_date: formatLocalDate(dueDate),
+      start_date: formatLocalDate(startDate),
       assignee,
       parent_task_id: parentTaskId === "none" ? null : parentTaskId || null,
     };
