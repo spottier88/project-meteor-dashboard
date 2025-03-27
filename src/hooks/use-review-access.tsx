@@ -40,12 +40,17 @@ export const useReviewAccess = (projectId: string) => {
     enabled: !!userProfile?.id && !!projectId,
   });
   
-  // Seuls les admins et chefs de projet (principaux ou secondaires) peuvent créer ou modifier des revues
-  const canModifyReview = isAdmin || projectAccess?.isProjectManager || projectAccess?.isSecondaryProjectManager;
+  // Seuls les admins et chefs de projet (principaux ou secondaires) peuvent créer des revues
+  // Les managers n'ont plus ce droit
+  const canCreateReview = isAdmin || projectAccess?.isProjectManager || projectAccess?.isSecondaryProjectManager;
   
+  // Nouvelle propriété pour contrôler qui peut supprimer des revues
+  // Les managers ne peuvent pas supprimer de revues
+  const canDeleteReview = isAdmin || projectAccess?.isProjectManager || projectAccess?.isSecondaryProjectManager;
+
   return {
-    canCreateReview: canModifyReview,
-    canDeleteReview: canModifyReview,
+    canCreateReview,
+    canDeleteReview,
     canViewReviews: true // Tout le monde peut voir les revues s'ils ont accès au projet
   };
 };
