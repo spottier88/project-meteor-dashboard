@@ -1,4 +1,3 @@
-
 import { useQuery } from "@tanstack/react-query";
 import { useState, useEffect } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
@@ -33,10 +32,9 @@ export const ReviewHistory = () => {
   const navigate = useNavigate();
   const { projectId } = useParams();
   const [selectedReview, setSelectedReview] = useState<{ id: string; date: string } | null>(null);
-  const { canCreateReview } = useReviewAccess(projectId || "");
+  const { canDeleteReview } = useReviewAccess(projectId || "");
   const location = useLocation();
   
-  // Récupérer l'état de navigation pour forcer le rafraîchissement
   const refreshFlag = location.state?.refresh;
   const refreshTimestamp = location.state?.timestamp;
 
@@ -55,7 +53,7 @@ export const ReviewHistory = () => {
   });
 
   const { data: reviews, isLoading, refetch } = useQuery({
-    queryKey: ["reviews", projectId, refreshTimestamp], // Ajouter le timestamp à la queryKey
+    queryKey: ["reviews", projectId, refreshTimestamp],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("reviews")
@@ -71,10 +69,9 @@ export const ReviewHistory = () => {
       if (error) throw error;
       return data;
     },
-    staleTime: 0, // Ne jamais considérer les données comme "fraîches"
+    staleTime: 0,
   });
 
-  // Effet pour déclencher un refetch si le flag de rafraîchissement est présent
   useEffect(() => {
     if (refreshFlag) {
       refetch();
@@ -143,7 +140,7 @@ export const ReviewHistory = () => {
                       <span className={cn("text-sm font-medium", progressColors[review.progress])}>
                         {progressLabels[review.progress]}
                       </span>
-                      {canCreateReview && (
+                      {canDeleteReview && (
                         <Button 
                           variant="outline" 
                           size="sm" 
