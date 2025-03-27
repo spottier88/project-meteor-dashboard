@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Input } from "@/components/ui/input";
@@ -48,6 +49,23 @@ export const ProjectSelectionSheet = ({
     enabled: !!user?.id,
   });
 
+  // Récupérer les projets où l'utilisateur est chef de projet secondaire
+  const { data: secondaryManagedProjects } = useQuery({
+    queryKey: ["secondaryManagedProjects", user?.id],
+    queryFn: async () => {
+      if (!user?.id) return [];
+      const { data, error } = await supabase
+        .from("project_members")
+        .select("project_id")
+        .eq("user_id", user.id)
+        .eq("role", "secondary_manager");
+      
+      if (error) throw error;
+      return data?.map(item => item.project_id) || [];
+    },
+    enabled: !!user?.id,
+  });
+
   const isAdmin = userRoles?.some(role => role.role === "admin");
 
   // Filter projects based on user role and search term
@@ -59,8 +77,11 @@ export const ProjectSelectionSheet = ({
     // If admin, show all projects that match search
     if (isAdmin) return matchesSearch;
 
-    // For non-admin users, only show their projects that match search
-    return matchesSearch && project.project_manager === user?.email;
+    // Pour les non-admins, montrer les projets où ils sont chef de projet principal OU secondaire
+    return matchesSearch && (
+      project.project_manager === user?.email || 
+      secondaryManagedProjects?.includes(project.id)
+    );
   });
 
   return (
