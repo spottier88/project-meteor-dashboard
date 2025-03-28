@@ -115,10 +115,14 @@ export const TaskGantt = ({ tasks, projectId, readOnly = false, onEditTask }: Ta
       });
     },
     onError: (error) => {
+      const errorMessage = error instanceof Error 
+        ? error.message 
+        : "Une erreur inconnue s'est produite";
+        
       toast({
         variant: "destructive",
         title: "Erreur",
-        description: `Impossible de mettre à jour la tâche: ${error.message}`,
+        description: `Impossible de mettre à jour la tâche: ${errorMessage}`,
       });
       console.error("Erreur lors de la mise à jour de la tâche:", error);
     }
