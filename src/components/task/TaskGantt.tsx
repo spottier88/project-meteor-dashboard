@@ -1,12 +1,12 @@
 
 import { useEffect, useRef, useState } from 'react';
-import { Gantt, Task, ViewMode, DisplayOption, StylingOption } from 'gantt-task-react';
-import "gantt-task-react/dist/index.css";
-import { GanttViewButtons } from '@/components/gantt/GanttViewButtons';
-import { GanttLegend } from '@/components/gantt/GanttLegend';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { formatUserName } from '@/utils/formatUserName';
+import { GanttViewButtons } from '@/components/gantt/GanttViewButtons';
+import { GanttLegend } from '@/components/gantt/GanttLegend';
+import { Gantt, Task, ViewMode } from 'wx-react-gantt'; // Nouvelle importation de wx-react-gantt
+import 'wx-react-gantt/dist/index.css'; // Importation des styles
 
 interface TaskInterface {
   id: string;
@@ -185,9 +185,6 @@ export const TaskGantt = ({ tasks, projectId, readOnly = false, onEditTask }: Ta
     }
   };
 
-  // Removed getGanttDisplayOptions and getGanttStylingOptions functions that were causing type errors
-  // We'll apply the permitted properties directly to the Gantt component instead
-
   const handleViewModeChange = (mode: 'week' | 'month' | 'year') => {
     switch (mode) {
       case 'week':
@@ -228,7 +225,7 @@ export const TaskGantt = ({ tasks, projectId, readOnly = false, onEditTask }: Ta
               onDelete={(task) => console.log('Task deleted', task)}
               onSelect={(task) => console.log('Task selected', task)}
               listCellWidth=""
-              ganttHeight={0}
+              ganttHeight={500}
               rowHeight={50}
               barCornerRadius={14}
               handleWidth={8}
