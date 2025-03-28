@@ -174,7 +174,8 @@ export const TaskGantt = ({ tasks, projectId, readOnly = false, onEditTask }: Ta
           backgroundColor: getColorForStatus(task.status),
           progressColor: '#a3a3a3'
         },
-        isDisabled: readOnly
+        isDisabled: readOnly,
+        _isMilestone: isJalon
       });
       
       const childTasks = tasks
@@ -230,8 +231,14 @@ export const TaskGantt = ({ tasks, projectId, readOnly = false, onEditTask }: Ta
     const originalTask = tasks.find(t => t.id === task.id);
     if (!originalTask) return;
 
-    const startDate = task.start.toISOString();
-    const dueDate = task.end.toISOString();
+    const isMilestone = task._isMilestone || task.type === 'milestone';
+    
+    let startDate = task.start.toISOString();
+    let dueDate = task.end.toISOString();
+    
+    if (isMilestone) {
+      startDate = dueDate;
+    }
     
     if (startDate === originalTask.start_date && dueDate === originalTask.due_date) {
       return;
