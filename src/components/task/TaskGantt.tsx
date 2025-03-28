@@ -313,7 +313,7 @@ export const TaskGantt = ({ tasks, projectId, readOnly = false, onEditTask }: Ta
       <div className="bg-white p-4 rounded-lg shadow">
         <GanttLegend showTasks={true} />
 
-        <div ref={ganttRef} className="h-[600px] w-full overflow-x-auto">
+        <div ref={ganttRef} className="h-full w-full overflow-x-auto">
           {showTasks ? (
             <Gantt
               tasks={generateGanttTasks()}
