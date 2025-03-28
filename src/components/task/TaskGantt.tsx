@@ -1,3 +1,4 @@
+
 import { useEffect, useRef, useState } from 'react';
 import Timeline from 'react-gantt-timeline';
 import { GanttViewButtons } from '@/components/gantt/GanttViewButtons';
@@ -118,7 +119,10 @@ export const TaskGantt = ({ tasks, projectId, readOnly = false, onEditTask }: Ta
     
     parentTasks.forEach(task => {
       const taskId = task.id;
-      const taskStartDate = task.start_date ? new Date(task.start_date) : new Date();
+      // Si la tâche n'a qu'une date d'échéance, utiliser celle-ci comme date de début également (jalon)
+      const hasStartDate = !!task.start_date;
+      const taskStartDate = task.start_date ? new Date(task.start_date) : 
+                           (task.due_date ? new Date(task.due_date) : new Date());
       const taskEndDate = task.due_date ? new Date(task.due_date) : new Date();
       
       allTasks.push({
@@ -127,7 +131,7 @@ export const TaskGantt = ({ tasks, projectId, readOnly = false, onEditTask }: Ta
         end: taskEndDate,
         name: `${task.title} ${task.assignee ? `- ${formatUserName(task.assignee, profiles)}` : ''}`,
         color: getColorForStatus(task.status),
-        type: 'task',
+        type: hasStartDate && task.start_date !== task.due_date ? 'task' : 'milestone',
         project_id: task.project_id,
       });
       
@@ -141,7 +145,10 @@ export const TaskGantt = ({ tasks, projectId, readOnly = false, onEditTask }: Ta
       
       childTasks.forEach(childTask => {
         const childTaskId = childTask.id;
-        const childStartDate = childTask.start_date ? new Date(childTask.start_date) : taskStartDate;
+        // Même logique pour les sous-tâches - traiter comme jalon si pas de date de début
+        const hasChildStartDate = !!childTask.start_date;
+        const childStartDate = childTask.start_date ? new Date(childTask.start_date) : 
+                              (childTask.due_date ? new Date(childTask.due_date) : taskStartDate);
         const childEndDate = childTask.due_date ? new Date(childTask.due_date) : taskEndDate;
         
         allTasks.push({
@@ -150,7 +157,7 @@ export const TaskGantt = ({ tasks, projectId, readOnly = false, onEditTask }: Ta
           end: childEndDate,
           name: `  └ ${childTask.title} ${childTask.assignee ? `- ${formatUserName(childTask.assignee, profiles)}` : ''}`,
           color: getColorForStatus(childTask.status),
-          type: 'subtask',
+          type: hasChildStartDate && childTask.start_date !== childTask.due_date ? 'subtask' : 'milestone',
           project_id: childTask.project_id,
           parent_id: taskId,
           parent_task_id: task.id,
@@ -272,7 +279,7 @@ export const TaskGantt = ({ tasks, projectId, readOnly = false, onEditTask }: Ta
                   style: {backgroundColor: "#fbf9f9", borderBottom: 'solid 0.5px #cfcfcd'}
                 },
                 task: {
-                  showLabel: true,
+                  showLabel: false, // Désactive l'affichage des libellés sur les barres
                   style: {
                     position: 'absolute',
                     borderRadius: 14,
