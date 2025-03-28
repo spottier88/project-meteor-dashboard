@@ -1,3 +1,4 @@
+
 import { useEffect, useRef, useState } from 'react';
 import { Gantt, Task, ViewMode, DisplayOption, StylingOption } from 'gantt-task-react';
 import "gantt-task-react/dist/index.css";
@@ -184,30 +185,8 @@ export const TaskGantt = ({ tasks, projectId, readOnly = false, onEditTask }: Ta
     }
   };
 
-  const getGanttDisplayOptions = (): DisplayOption => {
-    return {
-      viewMode: viewMode,
-      viewDate: new Date(),
-      locale: 'fr-FR',
-      columnWidth: viewMode === ViewMode.Year ? 15 : (viewMode === ViewMode.Month ? 30 : 60),
-      ganttHeight: 600,
-      rowHeight: 50,
-      barCornerRadius: 14,
-      handleWidth: 8,
-      fontFamily: 'Arial, sans-serif',
-    };
-  };
-
-  const getGanttStylingOptions = (): StylingOption => {
-    return {
-      arrowColor: '#777',
-      todayColor: 'rgba(252, 220, 0, 0.4)',
-      barProgressColor: '#a3a3a3',
-      projectProgressColor: '#7db59a',
-      projectProgressSelectedColor: '#59a985',
-      nonWorkingTimeColor: '#f8f8f8',
-    };
-  };
+  // Removed getGanttDisplayOptions and getGanttStylingOptions functions that were causing type errors
+  // We'll apply the permitted properties directly to the Gantt component instead
 
   const handleViewModeChange = (mode: 'week' | 'month' | 'year') => {
     switch (mode) {
@@ -222,15 +201,6 @@ export const TaskGantt = ({ tasks, projectId, readOnly = false, onEditTask }: Ta
         break;
     }
   };
-
-  const dateLocale = {
-    name: 'fr',
-    weekdays: ['Dimanche', 'Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi'],
-    weekdaysShort: ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam'],
-    weekdaysMin: ['Di', 'Lu', 'Ma', 'Me', 'Je', 'Ve', 'Sa'],
-    months: ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'],
-    monthsShort: ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin', 'Juil', 'Août', 'Sep', 'Oct', 'Nov', 'Déc'],
-  }
 
   return (
     <div className="space-y-4">
@@ -258,7 +228,6 @@ export const TaskGantt = ({ tasks, projectId, readOnly = false, onEditTask }: Ta
               onDelete={(task) => console.log('Task deleted', task)}
               onSelect={(task) => console.log('Task selected', task)}
               listCellWidth="300px"
-              columnWidth={viewMode === ViewMode.Year ? 15 : (viewMode === ViewMode.Month ? 30 : 60)}
               ganttHeight={600}
               rowHeight={50}
               barCornerRadius={14}
@@ -276,7 +245,11 @@ export const TaskGantt = ({ tasks, projectId, readOnly = false, onEditTask }: Ta
                 </div>
               )}
               locale="fr"
-              nonWorkingDays={[6, 0]}
+              arrowColor="#777"
+              todayColor="rgba(252, 220, 0, 0.4)"
+              barProgressColor="#a3a3a3"
+              projectProgressColor="#7db59a"
+              projectProgressSelectedColor="#59a985"
             />
           ) : (
             <div className="flex items-center justify-center h-full">
