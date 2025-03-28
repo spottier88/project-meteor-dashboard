@@ -5,8 +5,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { formatUserName } from '@/utils/formatUserName';
 import { GanttViewButtons } from '@/components/gantt/GanttViewButtons';
 import { GanttLegend } from '@/components/gantt/GanttLegend';
-import { Gantt, Task, ViewMode } from 'wx-react-gantt'; // Nouvelle importation de wx-react-gantt
-import 'wx-react-gantt/dist/index.css'; // Importation des styles
+import { Gantt, Task, ViewMode } from 'wx-react-gantt'; // Importation de wx-react-gantt
 
 interface TaskInterface {
   id: string;
