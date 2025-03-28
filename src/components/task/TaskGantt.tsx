@@ -125,13 +125,16 @@ export const TaskGantt = ({ tasks, projectId, readOnly = false, onEditTask }: Ta
                            (task.due_date ? new Date(task.due_date) : new Date());
       const taskEndDate = task.due_date ? new Date(task.due_date) : new Date();
       
+      // Déterminer si c'est un jalon ou une tâche normale
+      const isJalon = !hasStartDate || (task.start_date === task.due_date);
+      
       allTasks.push({
         id: taskId,
         start: taskStartDate,
         end: taskEndDate,
         name: `${task.title} ${task.assignee ? `- ${formatUserName(task.assignee, profiles)}` : ''}`,
         color: getColorForStatus(task.status),
-        type: hasStartDate && task.start_date !== task.due_date ? 'task' : 'milestone',
+        type: isJalon ? 'milestone' : 'task',
         project_id: task.project_id,
       });
       
@@ -151,13 +154,16 @@ export const TaskGantt = ({ tasks, projectId, readOnly = false, onEditTask }: Ta
                               (childTask.due_date ? new Date(childTask.due_date) : taskStartDate);
         const childEndDate = childTask.due_date ? new Date(childTask.due_date) : taskEndDate;
         
+        // Déterminer si c'est un jalon ou une sous-tâche normale
+        const isChildJalon = !hasChildStartDate || (childTask.start_date === childTask.due_date);
+        
         allTasks.push({
           id: childTaskId,
           start: childStartDate,
           end: childEndDate,
           name: `  └ ${childTask.title} ${childTask.assignee ? `- ${formatUserName(childTask.assignee, profiles)}` : ''}`,
           color: getColorForStatus(childTask.status),
-          type: hasChildStartDate && childTask.start_date !== childTask.due_date ? 'subtask' : 'milestone',
+          type: isChildJalon ? 'milestone' : 'subtask',
           project_id: childTask.project_id,
           parent_id: taskId,
           parent_task_id: task.id,

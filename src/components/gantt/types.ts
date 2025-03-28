@@ -14,7 +14,7 @@ export interface GanttTask {
   end: Date;
   name: string;
   color: string;
-  type: 'project' | 'task' | 'subtask' | 'separator';
+  type: 'project' | 'task' | 'subtask' | 'separator' | 'milestone';
   project_id?: string;
   parent_id?: string;
   parent_task_id?: string;
