@@ -1,14 +1,14 @@
 
 import { useEffect, useRef, useState } from 'react';
-import Timeline from 'react-gantt-timeline';
+import { Gantt, Task, ViewMode, DisplayOption, StylingOption } from 'gantt-task-react';
+import "gantt-task-react/dist/index.css";
 import { GanttViewButtons } from '@/components/gantt/GanttViewButtons';
 import { GanttLegend } from '@/components/gantt/GanttLegend';
-import { GanttTask, GanttLink } from '@/components/gantt/types';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { formatUserName } from '@/utils/formatUserName';
 
-interface Task {
+interface TaskInterface {
   id: string;
   title: string;
   description?: string;
@@ -21,22 +21,22 @@ interface Task {
 }
 
 interface TaskGanttProps {
-  tasks: Task[];
+  tasks: TaskInterface[];
   projectId: string;
   readOnly?: boolean;
-  onEditTask?: (task: Task) => void;
+  onEditTask?: (task: TaskInterface) => void;
 }
 
 export const TaskGantt = ({ tasks, projectId, readOnly = false, onEditTask }: TaskGanttProps) => {
-  const [mode, setMode] = useState<'week' | 'month' | 'year'>('month');
-  const [dayWidth, setDayWidth] = useState(30);
+  const [viewMode, setViewMode] = useState<ViewMode>(ViewMode.Month);
   const [showTasks, setShowTasks] = useState(true);
   const ganttRef = useRef<HTMLDivElement>(null);
-
+  
+  // Cette effet simule la correction du problème de rendu initial que nous avions avec l'ancien composant
   useEffect(() => {
     const timer = setTimeout(() => {
-      setDayWidth(prevWidth => prevWidth + 0.1);
-      setTimeout(() => setDayWidth(prevWidth => Math.floor(prevWidth)), 50);
+      // Force un re-rendu pour s'assurer que le composant s'affiche correctement
+      setViewMode(prev => prev);
     }, 100);
     
     return () => clearTimeout(timer);
@@ -106,8 +106,9 @@ export const TaskGantt = ({ tasks, projectId, readOnly = false, onEditTask }: Ta
     }
   };
 
-  const generateTasks = (): GanttTask[] => {
-    const allTasks: GanttTask[] = [];
+  // Convertir les tâches dans le format attendu par gantt-task-react
+  const generateGanttTasks = (): Task[] => {
+    const ganttTasks: Task[] = [];
     
     const parentTasks = tasks
       .filter(task => !task.parent_task_id)
@@ -128,16 +129,22 @@ export const TaskGantt = ({ tasks, projectId, readOnly = false, onEditTask }: Ta
       // Déterminer si c'est un jalon ou une tâche normale
       const isJalon = !hasStartDate || (task.start_date === task.due_date);
       
-      allTasks.push({
+      // Ajouter la tâche parente
+      ganttTasks.push({
         id: taskId,
+        name: `${task.title} ${task.assignee ? `- ${formatUserName(task.assignee, profiles)}` : ''}`,
         start: taskStartDate,
         end: taskEndDate,
-        name: `${task.title} ${task.assignee ? `- ${formatUserName(task.assignee, profiles)}` : ''}`,
-        color: getColorForStatus(task.status),
+        progress: task.status === 'done' ? 100 : (task.status === 'in_progress' ? 50 : 0),
         type: isJalon ? 'milestone' : 'task',
-        project_id: task.project_id,
+        styles: { 
+          backgroundColor: getColorForStatus(task.status),
+          progressColor: '#a3a3a3'
+        },
+        isDisabled: readOnly
       });
       
+      // Ajouter les sous-tâches
       const childTasks = tasks
         .filter(childTask => childTask.parent_task_id === task.id)
         .sort((a, b) => {
@@ -157,65 +164,100 @@ export const TaskGantt = ({ tasks, projectId, readOnly = false, onEditTask }: Ta
         // Déterminer si c'est un jalon ou une sous-tâche normale
         const isChildJalon = !hasChildStartDate || (childTask.start_date === childTask.due_date);
         
-        allTasks.push({
+        ganttTasks.push({
           id: childTaskId,
+          name: `   ${childTask.title} ${childTask.assignee ? `- ${formatUserName(childTask.assignee, profiles)}` : ''}`,
           start: childStartDate,
           end: childEndDate,
-          name: `  └ ${childTask.title} ${childTask.assignee ? `- ${formatUserName(childTask.assignee, profiles)}` : ''}`,
-          color: getColorForStatus(childTask.status),
-          type: isChildJalon ? 'milestone' : 'subtask',
-          project_id: childTask.project_id,
-          parent_id: taskId,
-          parent_task_id: task.id,
+          progress: childTask.status === 'done' ? 100 : (childTask.status === 'in_progress' ? 50 : 0),
+          type: isChildJalon ? 'milestone' : 'task',
+          project: taskId, // Référence à la tâche parente
+          dependencies: [taskId], // Dépendance à la tâche parente
+          styles: { 
+            backgroundColor: getColorForStatus(childTask.status),
+            progressColor: '#a3a3a3'
+          },
+          isDisabled: readOnly
         });
       });
     });
 
-    return allTasks;
+    return ganttTasks;
   };
 
-  const generateLinks = (tasks: GanttTask[]): GanttLink[] => {
-    const links: GanttLink[] = [];
-    
-    tasks.forEach(task => {
-      if (task.type === 'subtask' && task.parent_id) {
-        links.push({
-          id: `link-task-${task.id}`,
-          source: task.parent_id,
-          target: task.id,
-          type: 'finish_to_start'
-        });
+  const handleTaskClick = (task: Task) => {
+    if (!readOnly && onEditTask) {
+      const originalTask = tasks.find(t => t.id === task.id);
+      if (originalTask) {
+        onEditTask(originalTask);
       }
-    });
-    
-    return links;
+    }
   };
 
-  const ganttTasks = generateTasks();
-  const links = generateLinks(ganttTasks);
+  // Options d'affichage pour le diagramme de Gantt
+  const getGanttDisplayOptions = (): DisplayOption => {
+    return {
+      viewMode: viewMode,
+      viewDate: new Date(),
+      locale: 'fr-FR',
+      headerHeight: 50,
+      taskListWidth: 300, // Largeur de la colonne des tâches
+      listCellWidth: '300px', // Largeur du contenu de la colonne
+      columnWidth: viewMode === ViewMode.Year ? 15 : (viewMode === ViewMode.Month ? 30 : 60),
+      ganttHeight: 600,
+      rowHeight: 50,
+      barCornerRadius: 14,
+      handleWidth: 8,
+      fontFamily: 'Arial, sans-serif',
+    };
+  };
 
-  const setViewMode = (newMode: 'week' | 'month' | 'year') => {
-    setMode(newMode);
-    switch (newMode) {
+  // Configuration des styles pour le diagramme de Gantt
+  const getGanttStylingOptions = (): StylingOption => {
+    return {
+      baselineColor: '#dbf6fd',
+      progressColor: '#a3a3a3',
+      arrowColor: '#777',
+      todayColor: 'rgba(252, 220, 0, 0.4)',
+      projectProgressColor: '#7db59a',
+      projectProgressSelectedColor: '#59a985',
+      selectedTaskColor: '#1976d2',
+      nonWorkingTimeColor: '#f8f8f8',
+    };
+  };
+
+  // Conversion du mode d'affichage pour l'interface utilisateur
+  const handleViewModeChange = (mode: 'week' | 'month' | 'year') => {
+    switch (mode) {
       case 'week':
-        setDayWidth(60);
+        setViewMode(ViewMode.Week);
         break;
       case 'month':
-        setDayWidth(30);
+        setViewMode(ViewMode.Month);
         break;
       case 'year':
-        setDayWidth(15);
+        setViewMode(ViewMode.Year);
         break;
     }
+  };
+
+  // Traduire les libellés des jours de la semaine et des mois
+  const customDayjs = {
+    months: [
+      'Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 
+      'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'
+    ],
+    weekDays: ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam'],
+    weekDaysShort: ['D', 'L', 'M', 'M', 'J', 'V', 'S'],
   };
 
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center mb-4">
         <GanttViewButtons
-          mode={mode}
+          mode={viewMode === ViewMode.Week ? 'week' : (viewMode === ViewMode.Month ? 'month' : 'year')}
           showTasks={showTasks}
-          onViewModeChange={setViewMode}
+          onViewModeChange={handleViewModeChange}
           onShowTasksChange={setShowTasks}
         />
       </div>
@@ -224,118 +266,39 @@ export const TaskGantt = ({ tasks, projectId, readOnly = false, onEditTask }: Ta
         <GanttLegend showTasks={true} />
 
         <div ref={ganttRef} className="h-[600px] w-full overflow-x-auto">
-          <Timeline 
-            data={ganttTasks}
-            links={links}
-            mode={mode}
-            onSelectItem={(item) => {
-              if (!readOnly && onEditTask) {
-                const task = tasks.find(t => t.id === item.id);
-                if (task) {
-                  onEditTask(task);
-                }
-              }
-            }}
-            itemHeight={50}
-            rowHeight={45}
-            taskHeight={40}
-            nonWorkingDays={[6, 0]}
-            dayWidth={dayWidth}
-            config={{
-              header: {
-                top: {
-                  style: {backgroundColor: "#333333"}
-                },
-                middle: {
-                  style: {backgroundColor: "chocolate"},
-                  selectedStyle: {backgroundColor: "#b13525"}
-                },
-                bottom: {
-                  style: {background: "grey", fontSize: 9},
-                  selectedStyle: {backgroundColor: "#b13525", fontWeight: 'bold'}
-                }
-              },
-              taskList: {
-                title: {
-                  label: "Tâches",
-                  style: {
-                    backgroundColor: '#333333',
-                    borderBottom: 'solid 1px silver',
-                    color: 'white',
-                    textAlign: 'left',
-                    padding: '0 10px'
-                  }
-                },
-                task: {
-                  style: {
-                    textAlign: 'left',
-                    padding: '0 10px'
-                  }
-                },
-                verticalSeparator: {
-                  style: {backgroundColor: '#333333'},
-                  grip: {
-                    style: {backgroundColor: '#cfcfcd'}
-                  }
-                },
-                display: showTasks,
-                width: 300, // Augmentation de la largeur de la colonne des noms de tâches
-              },
-              dataViewPort: {
-                rows: {
-                  style: {backgroundColor: "#fbf9f9", borderBottom: 'solid 0.5px #cfcfcd'}
-                },
-                task: {
-                  showLabel: false, // Désactive l'affichage des libellés sur les barres
-                  style: {
-                    position: 'absolute',
-                    borderRadius: 14,
-                    color: '#333333',
-                    textAlign: 'left',
-                    backgroundColor: 'grey'
-                  },
-                  selectedStyle: {
-                    position: 'absolute',
-                    borderRadius: 14,
-                    border: '1px solid #1976d2',
-                    color: '#333333',
-                    textAlign: 'left',
-                    backgroundColor: 'rgba(25, 118, 210, 0.3)'
-                  }
-                },
-                milestone: { // Ajout de la configuration des jalons
-                  width: 12,
-                  height: 12,
-                  top: 14,
-                  backgroundColor: '#f1c453',
-                  borderWidth: 1,
-                  borderColor: '#d9a738',
-                  borderRadius: 6
-                }
-              },
-              links: {
-                color: '#787878',
-                selectedColor: '#ff00fa',
-                thickness: 2
-              },
-              handleWidth: 0,
-              gridColor: '#eee',
-              todayColor: 'rgba(252, 220, 0, 0.4)',
-              viewMode: mode,
-              locale: 'fr-FR',
-              dateFormat: {
-                month: {
-                  short: ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin', 'Juil', 'Août', 'Sept', 'Oct', 'Nov', 'Déc'],
-                  long: ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre']
-                },
-                week: {
-                  letter: ['D', 'L', 'M', 'M', 'J', 'V', 'S'],
-                  short: ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam'],
-                  long: ['Dimanche', 'Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi']
-                }
-              }
-            }}
-          />
+          {showTasks ? (
+            <Gantt
+              tasks={generateGanttTasks()}
+              viewMode={viewMode}
+              onDateChange={(task) => console.log('Date changed', task)}
+              onProgressChange={(task) => console.log('Progress changed', task)}
+              onClick={handleTaskClick}
+              onDoubleClick={handleTaskClick}
+              onTaskDelete={(task) => console.log('Task deleted', task)}
+              onSelect={(task) => console.log('Task selected', task)}
+              displayOption={getGanttDisplayOptions()}
+              listCellWidth="300px"
+              columnWidth={viewMode === ViewMode.Year ? 15 : (viewMode === ViewMode.Month ? 30 : 60)}
+              TooltipContent={({ task }) => (
+                <div className="p-2 bg-white shadow rounded border">
+                  <div><strong>{task.name}</strong></div>
+                  <div>Début: {task.start.toLocaleDateString('fr-FR')}</div>
+                  <div>Fin: {task.end.toLocaleDateString('fr-FR')}</div>
+                  <div>Statut: {
+                    task.progress === 100 ? 'Terminé' : 
+                    (task.progress > 0 ? 'En cours' : 'À faire')
+                  }</div>
+                </div>
+              )}
+              ganttHeight={600}
+              locale={customDayjs}
+              nonWorkingDays={[6, 0]} // Samedi et dimanche
+            />
+          ) : (
+            <div className="flex items-center justify-center h-full">
+              <p className="text-gray-500">Activer l'affichage de la liste des tâches pour voir le diagramme de Gantt</p>
+            </div>
+          )}
         </div>
       </div>
     </div>
