@@ -200,7 +200,6 @@ export const TaskGantt = ({ tasks, projectId, readOnly = false, onEditTask }: Ta
       viewMode: viewMode,
       viewDate: new Date(),
       locale: 'fr-FR',
-      headerHeight: 50,
       taskListWidth: 300, // Largeur de la colonne des tâches
       listCellWidth: '300px', // Largeur du contenu de la colonne
       columnWidth: viewMode === ViewMode.Year ? 15 : (viewMode === ViewMode.Month ? 30 : 60),
@@ -215,10 +214,9 @@ export const TaskGantt = ({ tasks, projectId, readOnly = false, onEditTask }: Ta
   // Configuration des styles pour le diagramme de Gantt
   const getGanttStylingOptions = (): StylingOption => {
     return {
-      baselineColor: '#dbf6fd',
-      progressColor: '#a3a3a3',
       arrowColor: '#777',
       todayColor: 'rgba(252, 220, 0, 0.4)',
+      progressColor: '#a3a3a3',
       projectProgressColor: '#7db59a',
       projectProgressSelectedColor: '#59a985',
       selectedTaskColor: '#1976d2',
@@ -241,15 +239,15 @@ export const TaskGantt = ({ tasks, projectId, readOnly = false, onEditTask }: Ta
     }
   };
 
-  // Traduire les libellés des jours de la semaine et des mois
-  const customDayjs = {
-    months: [
-      'Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 
-      'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'
-    ],
-    weekDays: ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam'],
-    weekDaysShort: ['D', 'L', 'M', 'M', 'J', 'V', 'S'],
-  };
+  // Configurer les libellés localisés
+  const dateLocale = {
+    name: 'fr',
+    weekdays: ['Dimanche', 'Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi'],
+    weekdaysShort: ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam'],
+    weekdaysMin: ['Di', 'Lu', 'Ma', 'Me', 'Je', 'Ve', 'Sa'],
+    months: ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'],
+    monthsShort: ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin', 'Juil', 'Août', 'Sep', 'Oct', 'Nov', 'Déc'],
+  }
 
   return (
     <div className="space-y-4">
@@ -291,7 +289,7 @@ export const TaskGantt = ({ tasks, projectId, readOnly = false, onEditTask }: Ta
                 </div>
               )}
               ganttHeight={600}
-              locale={customDayjs}
+              locale="fr"
               nonWorkingDays={[6, 0]} // Samedi et dimanche
             />
           ) : (
