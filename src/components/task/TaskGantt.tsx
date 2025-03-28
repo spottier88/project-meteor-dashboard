@@ -200,8 +200,9 @@ export const TaskGantt = ({ tasks, projectId, readOnly = false, onEditTask }: Ta
       viewMode: viewMode,
       viewDate: new Date(),
       locale: 'fr-FR',
-      taskListWidth: 300, // Largeur de la colonne des tâches
-      listCellWidth: '300px', // Largeur du contenu de la colonne
+      // Suppression de taskListWidth qui n'existe pas dans DisplayOption
+      // Utilisation de listCellWidth comme spécifié dans la documentation
+      listCellWidth: "300px",
       columnWidth: viewMode === ViewMode.Year ? 15 : (viewMode === ViewMode.Month ? 30 : 60),
       ganttHeight: 600,
       rowHeight: 50,
@@ -216,7 +217,8 @@ export const TaskGantt = ({ tasks, projectId, readOnly = false, onEditTask }: Ta
     return {
       arrowColor: '#777',
       todayColor: 'rgba(252, 220, 0, 0.4)',
-      progressColor: '#a3a3a3',
+      // Renommage de progressColor en barProgressColor comme suggéré par l'erreur
+      barProgressColor: '#a3a3a3',
       projectProgressColor: '#7db59a',
       projectProgressSelectedColor: '#59a985',
       selectedTaskColor: '#1976d2',
@@ -272,7 +274,8 @@ export const TaskGantt = ({ tasks, projectId, readOnly = false, onEditTask }: Ta
               onProgressChange={(task) => console.log('Progress changed', task)}
               onClick={handleTaskClick}
               onDoubleClick={handleTaskClick}
-              onTaskDelete={(task) => console.log('Task deleted', task)}
+              // Correction de onTaskDelete à onDelete selon l'erreur
+              onDelete={(task) => console.log('Task deleted', task)}
               onSelect={(task) => console.log('Task selected', task)}
               displayOption={getGanttDisplayOptions()}
               listCellWidth="300px"
