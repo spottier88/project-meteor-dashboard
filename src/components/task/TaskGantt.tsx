@@ -5,7 +5,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { formatUserName } from '@/utils/formatUserName';
 import { GanttViewButtons } from '@/components/gantt/GanttViewButtons';
 import { GanttLegend } from '@/components/gantt/GanttLegend';
-import { Gantt, Task, ViewMode } from 'wx-react-gantt'; // Importation de wx-react-gantt
+import { Gantt } from 'wx-react-gantt'; // Importation de wx-react-gantt
 
 interface TaskInterface {
   id: string;
@@ -24,6 +24,38 @@ interface TaskGanttProps {
   projectId: string;
   readOnly?: boolean;
   onEditTask?: (task: TaskInterface) => void;
+}
+
+// Définir notre propre enum ViewMode puisqu'il n'est pas exporté par la librairie
+enum ViewMode {
+  Hour = "Hour",
+  QuarterDay = "Quarter Day",
+  HalfDay = "Half Day",
+  Day = "Day",
+  Week = "Week",
+  Month = "Month",
+  Year = "Year"
+}
+
+// Définir notre propre interface Task basée sur la documentation
+interface Task {
+  id: string;
+  name: string;
+  start: Date;
+  end: Date;
+  progress: number;
+  type: 'task' | 'milestone' | 'project';
+  hideChildren?: boolean;
+  styles?: {
+    backgroundColor?: string;
+    backgroundSelectedColor?: string;
+    progressColor?: string;
+    progressSelectedColor?: string;
+  };
+  isDisabled?: boolean;
+  project?: string;
+  dependencies?: string[];
+  canHaveChildren?: boolean;
 }
 
 export const TaskGantt = ({ tasks, projectId, readOnly = false, onEditTask }: TaskGanttProps) => {
