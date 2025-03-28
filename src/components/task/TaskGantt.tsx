@@ -128,7 +128,7 @@ export const TaskGantt = ({ tasks, projectId, readOnly = false, onEditTask }: Ta
         color: getColorForStatus(task.status),
         type: 'task',
         project_id: task.project_id,
-        status: task.status
+        // Nous ne définissons pas le status ici car il n'est pas compatible
       });
       
       // Trouver et ajouter les sous-tâches pour cette tâche
@@ -155,7 +155,7 @@ export const TaskGantt = ({ tasks, projectId, readOnly = false, onEditTask }: Ta
           project_id: childTask.project_id,
           parent_id: taskId,
           parent_task_id: task.id,
-          status: childTask.status
+          // Nous ne définissons pas le status ici car il n'est pas compatible
         });
       });
     });
