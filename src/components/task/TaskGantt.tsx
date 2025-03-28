@@ -1,11 +1,12 @@
+
 import { useEffect, useRef, useState } from 'react';
+import { Gantt, Task, ViewMode, DisplayOption, StylingOption } from 'gantt-task-react';
+import "gantt-task-react/dist/index.css";
+import { GanttViewButtons } from '@/components/gantt/GanttViewButtons';
+import { GanttLegend } from '@/components/gantt/GanttLegend';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { formatUserName } from '@/utils/formatUserName';
-import { GanttViewButtons } from '@/components/gantt/GanttViewButtons';
-import { GanttLegend } from '@/components/gantt/GanttLegend';
-import { Gantt } from 'wx-react-gantt';
-import '@/components/gantt/gantt-styles.css';
 
 interface TaskInterface {
   id: string;
@@ -24,36 +25,6 @@ interface TaskGanttProps {
   projectId: string;
   readOnly?: boolean;
   onEditTask?: (task: TaskInterface) => void;
-}
-
-enum ViewMode {
-  Hour = "Hour",
-  QuarterDay = "Quarter Day",
-  HalfDay = "Half Day",
-  Day = "Day",
-  Week = "Week",
-  Month = "Month",
-  Year = "Year"
-}
-
-interface Task {
-  id: string;
-  name: string;
-  start: Date;
-  end: Date;
-  progress: number;
-  type: 'task' | 'milestone' | 'project';
-  hideChildren?: boolean;
-  styles?: {
-    backgroundColor?: string;
-    backgroundSelectedColor?: string;
-    progressColor?: string;
-    progressSelectedColor?: string;
-  };
-  isDisabled?: boolean;
-  project?: string;
-  dependencies?: string[];
-  canHaveChildren?: boolean;
 }
 
 export const TaskGantt = ({ tasks, projectId, readOnly = false, onEditTask }: TaskGanttProps) => {
@@ -214,6 +185,9 @@ export const TaskGantt = ({ tasks, projectId, readOnly = false, onEditTask }: Ta
     }
   };
 
+  // Removed getGanttDisplayOptions and getGanttStylingOptions functions that were causing type errors
+  // We'll apply the permitted properties directly to the Gantt component instead
+
   const handleViewModeChange = (mode: 'week' | 'month' | 'year') => {
     switch (mode) {
       case 'week':
@@ -254,7 +228,7 @@ export const TaskGantt = ({ tasks, projectId, readOnly = false, onEditTask }: Ta
               onDelete={(task) => console.log('Task deleted', task)}
               onSelect={(task) => console.log('Task selected', task)}
               listCellWidth=""
-              ganttHeight={500}
+              ganttHeight={0}
               rowHeight={50}
               barCornerRadius={14}
               handleWidth={8}
