@@ -1,0 +1,117 @@
+
+/**
+ * Styles pour le composant Gantt basés sur la documentation wx-react-gantt
+ * Inspiré de https://docs.svar.dev/react/gantt/guides/styling
+ */
+
+.wx-gantt {
+  font-family: Arial, sans-serif;
+  border: 1px solid #e0e0e0;
+  position: relative;
+}
+
+/* Customizing the header */
+.wx-gantt-table-header {
+  background-color: #f5f5f5;
+  font-weight: bold;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.wx-gantt-row-cell-container {
+  padding: 0 10px;
+}
+
+/* Row styling */
+.wx-gantt-table-row {
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.wx-gantt-table-row:hover {
+  background-color: #f9f9f9;
+}
+
+/* Customize timeline headers */
+.wx-gantt-timeline-header {
+  background-color: #f5f5f5;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+/* Today line */
+.wx-gantt-today-line {
+  background-color: rgba(252, 220, 0, 0.4);
+}
+
+/* Bar customization */
+.wx-gantt-bar-main-container {
+  border-radius: 14px;
+}
+
+/* Task bars */
+.wx-gantt-bar-wrapper.task .wx-gantt-bar-main-container {
+  height: 35px;
+}
+
+/* Milestone styling */
+.wx-gantt-bar-wrapper.milestone .wx-gantt-bar-main-container {
+  transform: rotate(45deg);
+  border-radius: 0;
+}
+
+/* Project bars */
+.wx-gantt-bar-wrapper.project .wx-gantt-bar-main-container {
+  border-radius: 4px;
+  background-color: #9b87f5;
+}
+
+/* Progress bar */
+.wx-gantt-bar-progress {
+  background-color: #a3a3a3;
+  border-radius: 14px 0 0 14px;
+}
+
+/* Task relations */
+.wx-gantt-arrow-relations {
+  stroke: #777;
+  stroke-width: 1.5;
+}
+
+/* Handle for resizing */
+.wx-gantt-bar-handle {
+  width: 8px;
+}
+
+/* Calendar column styling */
+.wx-gantt-calendar-header-day {
+  text-align: center;
+  border-right: 1px solid #e0e0e0;
+}
+
+.wx-gantt-calendar-header-month,
+.wx-gantt-calendar-header-year {
+  text-align: center;
+  border-right: 1px solid #e0e0e0;
+  background-color: #f0f0f0;
+}
+
+/* Status colors */
+.wx-gantt-bar-todo {
+  background-color: #F2FCE2;
+}
+
+.wx-gantt-bar-in-progress {
+  background-color: #D3E4FD;
+}
+
+.wx-gantt-bar-done {
+  background-color: #E2E8F0;
+}
+
+/* Tooltip styling */
+.wx-gantt-tooltip {
+  background-color: white;
+  border: 1px solid #e0e0e0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  border-radius: 4px;
+  padding: 8px;
+  z-index: 100;
+}

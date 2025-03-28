@@ -1,11 +1,11 @@
-
 import { useEffect, useRef, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { formatUserName } from '@/utils/formatUserName';
 import { GanttViewButtons } from '@/components/gantt/GanttViewButtons';
 import { GanttLegend } from '@/components/gantt/GanttLegend';
-import { Gantt } from 'wx-react-gantt'; // Importation de wx-react-gantt
+import { Gantt } from 'wx-react-gantt';
+import '@/components/gantt/gantt-styles.css';
 
 interface TaskInterface {
   id: string;
@@ -26,7 +26,6 @@ interface TaskGanttProps {
   onEditTask?: (task: TaskInterface) => void;
 }
 
-// Définir notre propre enum ViewMode puisqu'il n'est pas exporté par la librairie
 enum ViewMode {
   Hour = "Hour",
   QuarterDay = "Quarter Day",
@@ -37,7 +36,6 @@ enum ViewMode {
   Year = "Year"
 }
 
-// Définir notre propre interface Task basée sur la documentation
 interface Task {
   id: string;
   name: string;
