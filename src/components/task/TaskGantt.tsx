@@ -1,4 +1,3 @@
-
 import { useEffect, useRef, useState } from 'react';
 import { Gantt, Task, ViewMode, DisplayOption, StylingOption } from 'gantt-task-react';
 import "gantt-task-react/dist/index.css";
@@ -32,10 +31,8 @@ export const TaskGantt = ({ tasks, projectId, readOnly = false, onEditTask }: Ta
   const [showTasks, setShowTasks] = useState(true);
   const ganttRef = useRef<HTMLDivElement>(null);
   
-  // Cette effet simule la correction du problème de rendu initial que nous avions avec l'ancien composant
   useEffect(() => {
     const timer = setTimeout(() => {
-      // Force un re-rendu pour s'assurer que le composant s'affiche correctement
       setViewMode(prev => prev);
     }, 100);
     
@@ -106,7 +103,6 @@ export const TaskGantt = ({ tasks, projectId, readOnly = false, onEditTask }: Ta
     }
   };
 
-  // Convertir les tâches dans le format attendu par gantt-task-react
   const generateGanttTasks = (): Task[] => {
     const ganttTasks: Task[] = [];
     
@@ -120,16 +116,13 @@ export const TaskGantt = ({ tasks, projectId, readOnly = false, onEditTask }: Ta
     
     parentTasks.forEach(task => {
       const taskId = task.id;
-      // Si la tâche n'a qu'une date d'échéance, utiliser celle-ci comme date de début également (jalon)
       const hasStartDate = !!task.start_date;
       const taskStartDate = task.start_date ? new Date(task.start_date) : 
                            (task.due_date ? new Date(task.due_date) : new Date());
       const taskEndDate = task.due_date ? new Date(task.due_date) : new Date();
       
-      // Déterminer si c'est un jalon ou une tâche normale
       const isJalon = !hasStartDate || (task.start_date === task.due_date);
       
-      // Ajouter la tâche parente
       ganttTasks.push({
         id: taskId,
         name: `${task.title} ${task.assignee ? `- ${formatUserName(task.assignee, profiles)}` : ''}`,
@@ -144,7 +137,6 @@ export const TaskGantt = ({ tasks, projectId, readOnly = false, onEditTask }: Ta
         isDisabled: readOnly
       });
       
-      // Ajouter les sous-tâches
       const childTasks = tasks
         .filter(childTask => childTask.parent_task_id === task.id)
         .sort((a, b) => {
@@ -155,13 +147,11 @@ export const TaskGantt = ({ tasks, projectId, readOnly = false, onEditTask }: Ta
       
       childTasks.forEach(childTask => {
         const childTaskId = childTask.id;
-        // Même logique pour les sous-tâches - traiter comme jalon si pas de date de début
         const hasChildStartDate = !!childTask.start_date;
         const childStartDate = childTask.start_date ? new Date(childTask.start_date) : 
                               (childTask.due_date ? new Date(childTask.due_date) : taskStartDate);
         const childEndDate = childTask.due_date ? new Date(childTask.due_date) : taskEndDate;
         
-        // Déterminer si c'est un jalon ou une sous-tâche normale
         const isChildJalon = !hasChildStartDate || (childTask.start_date === childTask.due_date);
         
         ganttTasks.push({
@@ -171,8 +161,8 @@ export const TaskGantt = ({ tasks, projectId, readOnly = false, onEditTask }: Ta
           end: childEndDate,
           progress: childTask.status === 'done' ? 100 : (childTask.status === 'in_progress' ? 50 : 0),
           type: isChildJalon ? 'milestone' : 'task',
-          project: taskId, // Référence à la tâche parente
-          dependencies: [taskId], // Dépendance à la tâche parente
+          project: taskId,
+          dependencies: [taskId],
           styles: { 
             backgroundColor: getColorForStatus(childTask.status),
             progressColor: '#a3a3a3'
@@ -194,15 +184,11 @@ export const TaskGantt = ({ tasks, projectId, readOnly = false, onEditTask }: Ta
     }
   };
 
-  // Options d'affichage pour le diagramme de Gantt
   const getGanttDisplayOptions = (): DisplayOption => {
     return {
       viewMode: viewMode,
       viewDate: new Date(),
       locale: 'fr-FR',
-      // Suppression de taskListWidth qui n'existe pas dans DisplayOption
-      // Utilisation de listCellWidth comme spécifié dans la documentation
-      listCellWidth: "300px",
       columnWidth: viewMode === ViewMode.Year ? 15 : (viewMode === ViewMode.Month ? 30 : 60),
       ganttHeight: 600,
       rowHeight: 50,
@@ -212,21 +198,17 @@ export const TaskGantt = ({ tasks, projectId, readOnly = false, onEditTask }: Ta
     };
   };
 
-  // Configuration des styles pour le diagramme de Gantt
   const getGanttStylingOptions = (): StylingOption => {
     return {
       arrowColor: '#777',
       todayColor: 'rgba(252, 220, 0, 0.4)',
-      // Renommage de progressColor en barProgressColor comme suggéré par l'erreur
       barProgressColor: '#a3a3a3',
       projectProgressColor: '#7db59a',
       projectProgressSelectedColor: '#59a985',
-      selectedTaskColor: '#1976d2',
       nonWorkingTimeColor: '#f8f8f8',
     };
   };
 
-  // Conversion du mode d'affichage pour l'interface utilisateur
   const handleViewModeChange = (mode: 'week' | 'month' | 'year') => {
     switch (mode) {
       case 'week':
@@ -241,7 +223,6 @@ export const TaskGantt = ({ tasks, projectId, readOnly = false, onEditTask }: Ta
     }
   };
 
-  // Configurer les libellés localisés
   const dateLocale = {
     name: 'fr',
     weekdays: ['Dimanche', 'Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi'],
@@ -274,12 +255,15 @@ export const TaskGantt = ({ tasks, projectId, readOnly = false, onEditTask }: Ta
               onProgressChange={(task) => console.log('Progress changed', task)}
               onClick={handleTaskClick}
               onDoubleClick={handleTaskClick}
-              // Correction de onTaskDelete à onDelete selon l'erreur
               onDelete={(task) => console.log('Task deleted', task)}
               onSelect={(task) => console.log('Task selected', task)}
-              displayOption={getGanttDisplayOptions()}
               listCellWidth="300px"
               columnWidth={viewMode === ViewMode.Year ? 15 : (viewMode === ViewMode.Month ? 30 : 60)}
+              ganttHeight={600}
+              rowHeight={50}
+              barCornerRadius={14}
+              handleWidth={8}
+              fontFamily="Arial, sans-serif"
               TooltipContent={({ task }) => (
                 <div className="p-2 bg-white shadow rounded border">
                   <div><strong>{task.name}</strong></div>
@@ -291,9 +275,8 @@ export const TaskGantt = ({ tasks, projectId, readOnly = false, onEditTask }: Ta
                   }</div>
                 </div>
               )}
-              ganttHeight={600}
               locale="fr"
-              nonWorkingDays={[6, 0]} // Samedi et dimanche
+              nonWorkingDays={[6, 0]}
             />
           ) : (
             <div className="flex items-center justify-center h-full">
