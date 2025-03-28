@@ -1,3 +1,4 @@
+
 /**
  * @component GanttViewButtons
  * @description Boutons de contrôle pour modifier la vue du diagramme de Gantt.
@@ -7,7 +8,7 @@
 
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { Calendar, Eye, EyeOff } from 'lucide-react';
+import { Calendar, Eye, EyeOff, List } from 'lucide-react';
 
 interface GanttViewButtonsProps {
   mode: 'week' | 'month' | 'year';
@@ -55,13 +56,13 @@ export const GanttViewButtons = ({
       >
         {showTasks ? (
           <>
-            <EyeOff className="h-4 w-4 mr-2" />
-            Masquer les tâches
+            <List className="h-4 w-4 mr-2" />
+            Masquer la liste
           </>
         ) : (
           <>
-            <Eye className="h-4 w-4 mr-2" />
-            Afficher les tâches
+            <List className="h-4 w-4 mr-2" />
+            Afficher la liste
           </>
         )}
       </Button>

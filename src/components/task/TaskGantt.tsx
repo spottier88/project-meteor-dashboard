@@ -1,4 +1,3 @@
-
 import { useEffect, useRef, useState } from 'react';
 import Timeline from 'react-gantt-timeline';
 import { GanttViewButtons } from '@/components/gantt/GanttViewButtons';
@@ -33,7 +32,15 @@ export const TaskGantt = ({ tasks, projectId, readOnly = false, onEditTask }: Ta
   const [showTasks, setShowTasks] = useState(true);
   const ganttRef = useRef<HTMLDivElement>(null);
 
-  // Récupérer les profils des membres du projet
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDayWidth(prevWidth => prevWidth + 0.1);
+      setTimeout(() => setDayWidth(prevWidth => Math.floor(prevWidth)), 50);
+    }, 100);
+    
+    return () => clearTimeout(timer);
+  }, []);
+
   const { data: projectMembers } = useQuery({
     queryKey: ["projectMembers", projectId],
     queryFn: async () => {
@@ -54,7 +61,6 @@ export const TaskGantt = ({ tasks, projectId, readOnly = false, onEditTask }: Ta
 
       if (error) throw error;
       
-      // Récupérer aussi le chef de projet
       const { data: project } = await supabase
         .from("projects")
         .select("project_manager")
@@ -69,7 +75,6 @@ export const TaskGantt = ({ tasks, projectId, readOnly = false, onEditTask }: Ta
           .maybeSingle();
           
         if (pmProfile) {
-          // Vérifier que le chef de projet n'est pas déjà dans la liste
           const isAlreadyInList = data?.some(m => m.profiles?.email === pmProfile.email);
           if (!isAlreadyInList) {
             data?.push({
@@ -85,7 +90,6 @@ export const TaskGantt = ({ tasks, projectId, readOnly = false, onEditTask }: Ta
     enabled: !!projectId,
   });
 
-  // Extraire les profils pour les passer à formatUserName
   const profiles = projectMembers?.map(member => member.profiles) || [];
 
   const getColorForStatus = (status: string) => {
@@ -101,11 +105,9 @@ export const TaskGantt = ({ tasks, projectId, readOnly = false, onEditTask }: Ta
     }
   };
 
-  // Création des tâches avec organisation hiérarchique pour Gantt
   const generateTasks = (): GanttTask[] => {
     const allTasks: GanttTask[] = [];
     
-    // Organiser les tâches par niveau hiérarchique
     const parentTasks = tasks
       .filter(task => !task.parent_task_id)
       .sort((a, b) => {
@@ -114,7 +116,6 @@ export const TaskGantt = ({ tasks, projectId, readOnly = false, onEditTask }: Ta
         return dateA - dateB;
       });
     
-    // Créer les tâches Gantt pour les tâches parentes
     parentTasks.forEach(task => {
       const taskId = task.id;
       const taskStartDate = task.start_date ? new Date(task.start_date) : new Date();
@@ -128,10 +129,8 @@ export const TaskGantt = ({ tasks, projectId, readOnly = false, onEditTask }: Ta
         color: getColorForStatus(task.status),
         type: 'task',
         project_id: task.project_id,
-        // Nous ne définissons pas le status ici car il n'est pas compatible
       });
       
-      // Trouver et ajouter les sous-tâches pour cette tâche
       const childTasks = tasks
         .filter(childTask => childTask.parent_task_id === task.id)
         .sort((a, b) => {
@@ -155,7 +154,6 @@ export const TaskGantt = ({ tasks, projectId, readOnly = false, onEditTask }: Ta
           project_id: childTask.project_id,
           parent_id: taskId,
           parent_task_id: task.id,
-          // Nous ne définissons pas le status ici car il n'est pas compatible
         });
       });
     });
@@ -163,13 +161,10 @@ export const TaskGantt = ({ tasks, projectId, readOnly = false, onEditTask }: Ta
     return allTasks;
   };
 
-  // Création des liens entre tâches parentes et enfants
   const generateLinks = (tasks: GanttTask[]): GanttLink[] => {
     const links: GanttLink[] = [];
     
-    // Parcourir toutes les tâches pour créer les liens
     tasks.forEach(task => {
-      // Créer des liens entre tâches et sous-tâches
       if (task.type === 'subtask' && task.parent_id) {
         links.push({
           id: `link-task-${task.id}`,
@@ -222,7 +217,6 @@ export const TaskGantt = ({ tasks, projectId, readOnly = false, onEditTask }: Ta
             mode={mode}
             onSelectItem={(item) => {
               if (!readOnly && onEditTask) {
-                // Trouver la tâche correspondante dans la liste des tâches
                 const task = tasks.find(t => t.id === item.id);
                 if (task) {
                   onEditTask(task);
@@ -270,7 +264,8 @@ export const TaskGantt = ({ tasks, projectId, readOnly = false, onEditTask }: Ta
                   grip: {
                     style: {backgroundColor: '#cfcfcd'}
                   }
-                }
+                },
+                display: showTasks,
               },
               dataViewPort: {
                 rows: {
