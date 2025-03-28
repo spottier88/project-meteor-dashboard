@@ -284,12 +284,12 @@ export const TaskGantt = ({ tasks, projectId, readOnly = false, onEditTask }: Ta
       case 'week':
         setViewMode(ViewMode.Week);
         // Ajuster la largeur des colonnes pour le mode semaine
-        setColumnWidth(250);
+        setColumnWidth(150);
         break;
       case 'month':
         setViewMode(ViewMode.Month);
         // Ajuster la largeur des colonnes pour le mode mois
-        setColumnWidth(300);
+        setColumnWidth(250);
         break;
       case 'year':
         setViewMode(ViewMode.Year);
