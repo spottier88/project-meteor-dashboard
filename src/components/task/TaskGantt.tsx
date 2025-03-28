@@ -37,6 +37,8 @@ export const TaskGantt = ({ tasks, projectId, readOnly = false, onEditTask }: Ta
   const [viewMode, setViewMode] = useState<ViewMode>(ViewMode.Month);
   const [showTasks, setShowTasks] = useState(true);
   const [isDragging, setIsDragging] = useState(false);
+  // Ajout d'un état pour la largeur des colonnes
+  const [columnWidth, setColumnWidth] = useState(300); // Valeur par défaut pour le mode Mois
   const ganttRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -281,12 +283,18 @@ export const TaskGantt = ({ tasks, projectId, readOnly = false, onEditTask }: Ta
     switch (mode) {
       case 'week':
         setViewMode(ViewMode.Week);
+        // Ajuster la largeur des colonnes pour le mode semaine
+        setColumnWidth(250);
         break;
       case 'month':
         setViewMode(ViewMode.Month);
+        // Ajuster la largeur des colonnes pour le mode mois
+        setColumnWidth(300);
         break;
       case 'year':
         setViewMode(ViewMode.Year);
+        // Ajuster la largeur des colonnes pour le mode année
+        setColumnWidth(350);
         break;
     }
   };
@@ -312,18 +320,17 @@ export const TaskGantt = ({ tasks, projectId, readOnly = false, onEditTask }: Ta
               viewMode={viewMode}
               onDateChange={handleTaskChange}
               onProgressChange={(task) => console.log('Progress changed', task)}
-              // Modification: Utiliser onDoubleClick pour ouvrir le formulaire
               onClick={() => {}} // Ne rien faire sur clic simple
               onDoubleClick={handleTaskClick} // Ouvrir le formulaire sur double-clic
               onDelete={(task) => console.log('Task deleted', task)}
               onSelect={(task) => console.log('Task selected', task)}
-              // Ajouter des gestionnaires pour le déplacement
               onExpanderClick={handleDragStart}
               listCellWidth=""
               ganttHeight={0}
               rowHeight={50}
               barCornerRadius={14}
               handleWidth={8}
+              columnWidth={columnWidth} // Utiliser la largeur de colonne dynamique
               fontFamily="Arial, sans-serif"
               TooltipContent={({ task }) => (
                 <div className="p-2 bg-white shadow rounded border">
