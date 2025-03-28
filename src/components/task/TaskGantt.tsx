@@ -279,6 +279,7 @@ export const TaskGantt = ({ tasks, projectId, readOnly = false, onEditTask }: Ta
                   }
                 },
                 display: showTasks,
+                width: 300, // Augmentation de la largeur de la colonne des noms de tâches
               },
               dataViewPort: {
                 rows: {
@@ -301,6 +302,15 @@ export const TaskGantt = ({ tasks, projectId, readOnly = false, onEditTask }: Ta
                     textAlign: 'left',
                     backgroundColor: 'rgba(25, 118, 210, 0.3)'
                   }
+                },
+                milestone: { // Ajout de la configuration des jalons
+                  width: 12,
+                  height: 12,
+                  top: 14,
+                  backgroundColor: '#f1c453',
+                  borderWidth: 1,
+                  borderColor: '#d9a738',
+                  borderRadius: 6
                 }
               },
               links: {
