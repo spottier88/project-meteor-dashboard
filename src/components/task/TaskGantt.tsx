@@ -1,3 +1,4 @@
+
 import { useEffect, useRef, useState } from 'react';
 import { Gantt, Task, ViewMode, DisplayOption, StylingOption } from 'gantt-task-react';
 import "gantt-task-react/dist/index.css";
@@ -35,6 +36,7 @@ interface TaskGanttProps {
 export const TaskGantt = ({ tasks, projectId, readOnly = false, onEditTask }: TaskGanttProps) => {
   const [viewMode, setViewMode] = useState<ViewMode>(ViewMode.Month);
   const [showTasks, setShowTasks] = useState(true);
+  const [isDragging, setIsDragging] = useState(false);
   const ganttRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -213,7 +215,8 @@ export const TaskGantt = ({ tasks, projectId, readOnly = false, onEditTask }: Ta
             backgroundColor: getColorForStatus(childTask.status),
             progressColor: '#a3a3a3'
           },
-          isDisabled: readOnly
+          isDisabled: readOnly,
+          _isMilestone: isChildJalon
         });
       });
     });
@@ -221,7 +224,11 @@ export const TaskGantt = ({ tasks, projectId, readOnly = false, onEditTask }: Ta
     return ganttTasks;
   };
 
+  // Modification: Utilisation du double-clic au lieu du clic simple
   const handleTaskClick = (task: Task) => {
+    // Ne pas ouvrir le formulaire si on est en déplacement
+    if (isDragging) return;
+    
     if (!readOnly && onEditTask) {
       const originalTask = tasks.find(t => t.id === task.id);
       if (originalTask) {
@@ -230,8 +237,16 @@ export const TaskGantt = ({ tasks, projectId, readOnly = false, onEditTask }: Ta
     }
   };
 
+  // Gestion du début du déplacement
+  const handleDragStart = () => {
+    setIsDragging(true);
+  };
+
   const handleTaskChange = (task: ExtendedTask) => {
     if (readOnly) return;
+    
+    // Indiquer qu'on est en train de déplacer
+    setIsDragging(true);
     
     const originalTask = tasks.find(t => t.id === task.id);
     if (!originalTask) return;
@@ -246,6 +261,7 @@ export const TaskGantt = ({ tasks, projectId, readOnly = false, onEditTask }: Ta
     }
     
     if (startDate === originalTask.start_date && dueDate === originalTask.due_date) {
+      setIsDragging(false);
       return;
     }
     
@@ -254,6 +270,11 @@ export const TaskGantt = ({ tasks, projectId, readOnly = false, onEditTask }: Ta
       start_date: startDate,
       due_date: dueDate
     });
+    
+    // Réinitialiser l'état de déplacement après un court délai
+    setTimeout(() => {
+      setIsDragging(false);
+    }, 500);
   };
 
   const handleViewModeChange = (mode: 'week' | 'month' | 'year') => {
@@ -291,10 +312,13 @@ export const TaskGantt = ({ tasks, projectId, readOnly = false, onEditTask }: Ta
               viewMode={viewMode}
               onDateChange={handleTaskChange}
               onProgressChange={(task) => console.log('Progress changed', task)}
-              onClick={handleTaskClick}
-              onDoubleClick={handleTaskClick}
+              // Modification: Utiliser onDoubleClick pour ouvrir le formulaire
+              onClick={() => {}} // Ne rien faire sur clic simple
+              onDoubleClick={handleTaskClick} // Ouvrir le formulaire sur double-clic
               onDelete={(task) => console.log('Task deleted', task)}
               onSelect={(task) => console.log('Task selected', task)}
+              // Ajouter des gestionnaires pour le déplacement
+              onExpanderClick={handleDragStart}
               listCellWidth=""
               ganttHeight={0}
               rowHeight={50}
