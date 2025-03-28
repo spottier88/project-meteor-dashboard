@@ -1,12 +1,12 @@
-
 import { useEffect, useRef, useState } from 'react';
 import { Gantt, Task, ViewMode, DisplayOption, StylingOption } from 'gantt-task-react';
 import "gantt-task-react/dist/index.css";
 import { GanttViewButtons } from '@/components/gantt/GanttViewButtons';
 import { GanttLegend } from '@/components/gantt/GanttLegend';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { formatUserName } from '@/utils/formatUserName';
+import { useToast } from '@/hooks/use-toast';
 
 interface TaskInterface {
   id: string;
@@ -31,6 +31,8 @@ export const TaskGantt = ({ tasks, projectId, readOnly = false, onEditTask }: Ta
   const [viewMode, setViewMode] = useState<ViewMode>(ViewMode.Month);
   const [showTasks, setShowTasks] = useState(true);
   const ganttRef = useRef<HTMLDivElement>(null);
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
   
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -87,6 +89,39 @@ export const TaskGantt = ({ tasks, projectId, readOnly = false, onEditTask }: Ta
       return data || [];
     },
     enabled: !!projectId,
+  });
+
+  const updateTaskDatesMutation = useMutation({
+    mutationFn: async (updatedTask: { id: string; start_date?: string; due_date?: string }) => {
+      const { id, start_date, due_date } = updatedTask;
+      
+      const { error } = await supabase
+        .from('tasks')
+        .update({ 
+          start_date: start_date, 
+          due_date: due_date 
+        })
+        .eq('id', id);
+      
+      if (error) throw error;
+      
+      return updatedTask;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['tasks', projectId] });
+      toast({
+        title: "Tâche mise à jour",
+        description: "Les dates de la tâche ont été mises à jour avec succès.",
+      });
+    },
+    onError: (error) => {
+      toast({
+        variant: "destructive",
+        title: "Erreur",
+        description: `Impossible de mettre à jour la tâche: ${error.message}`,
+      });
+      console.error("Erreur lors de la mise à jour de la tâche:", error);
+    }
   });
 
   const profiles = projectMembers?.map(member => member.profiles) || [];
@@ -185,8 +220,25 @@ export const TaskGantt = ({ tasks, projectId, readOnly = false, onEditTask }: Ta
     }
   };
 
-  // Removed getGanttDisplayOptions and getGanttStylingOptions functions that were causing type errors
-  // We'll apply the permitted properties directly to the Gantt component instead
+  const handleTaskChange = (task: Task) => {
+    if (readOnly) return;
+    
+    const originalTask = tasks.find(t => t.id === task.id);
+    if (!originalTask) return;
+
+    const startDate = task.start.toISOString();
+    const dueDate = task.end.toISOString();
+    
+    if (startDate === originalTask.start_date && dueDate === originalTask.due_date) {
+      return;
+    }
+    
+    updateTaskDatesMutation.mutate({
+      id: task.id,
+      start_date: startDate,
+      due_date: dueDate
+    });
+  };
 
   const handleViewModeChange = (mode: 'week' | 'month' | 'year') => {
     switch (mode) {
@@ -221,7 +273,7 @@ export const TaskGantt = ({ tasks, projectId, readOnly = false, onEditTask }: Ta
             <Gantt
               tasks={generateGanttTasks()}
               viewMode={viewMode}
-              onDateChange={(task) => console.log('Date changed', task)}
+              onDateChange={handleTaskChange}
               onProgressChange={(task) => console.log('Progress changed', task)}
               onClick={handleTaskClick}
               onDoubleClick={handleTaskClick}
