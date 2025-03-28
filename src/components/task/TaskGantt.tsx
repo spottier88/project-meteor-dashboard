@@ -8,6 +8,11 @@ import { supabase } from '@/integrations/supabase/client';
 import { formatUserName } from '@/utils/formatUserName';
 import { useToast } from '@/hooks/use-toast';
 
+// Extension du type Task pour inclure notre propriété _isMilestone
+interface ExtendedTask extends Task {
+  _isMilestone?: boolean;
+}
+
 interface TaskInterface {
   id: string;
   title: string;
@@ -143,8 +148,8 @@ export const TaskGantt = ({ tasks, projectId, readOnly = false, onEditTask }: Ta
     }
   };
 
-  const generateGanttTasks = (): Task[] => {
-    const ganttTasks: Task[] = [];
+  const generateGanttTasks = (): ExtendedTask[] => {
+    const ganttTasks: ExtendedTask[] = [];
     
     const parentTasks = tasks
       .filter(task => !task.parent_task_id)
@@ -225,7 +230,7 @@ export const TaskGantt = ({ tasks, projectId, readOnly = false, onEditTask }: Ta
     }
   };
 
-  const handleTaskChange = (task: Task) => {
+  const handleTaskChange = (task: ExtendedTask) => {
     if (readOnly) return;
     
     const originalTask = tasks.find(t => t.id === task.id);
