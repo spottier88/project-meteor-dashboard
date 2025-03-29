@@ -14,7 +14,9 @@ export interface GanttTask extends Task {
   lifecycle_status?: ProjectLifecycleStatus;
   completion?: number;
   status?: ProjectStatus;
-  progress?: ProgressStatus;
+  // Modifié: Renommé progress (du Task) en taskProgress pour éviter le conflit
+  // Car progress dans l'interface Task est un number, alors que ProgressStatus est un string
+  taskProgress?: ProgressStatus;
   _isMilestone?: boolean;
 }
 

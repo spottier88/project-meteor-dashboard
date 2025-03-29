@@ -46,13 +46,21 @@ export const ProjectGanttView = ({ projects }: ProjectGanttViewProps) => {
       const projectStartDate = project.start_date ? new Date(project.start_date) : new Date();
       const projectEndDate = project.end_date ? new Date(project.end_date) : new Date();
       
+      // Transforme le ProgressStatus en valeur numérique pour le composant Gantt
+      let progressValue = 0;
+      if (project.progress === 'better') {
+        progressValue = 100;
+      } else if (project.progress === 'stable') {
+        progressValue = 50;
+      }
+      
       // Ajouter le projet comme tâche principale
       tasks.push({
         id: project.id,
         name: project.title,
         start: projectStartDate,
         end: projectEndDate,
-        progress: project.progress === 'better' ? 100 : (project.progress === 'stable' ? 50 : 0),
+        progress: progressValue,
         type: 'project',
         hideChildren: !showTasks,
         styles: {
@@ -173,7 +181,7 @@ export const ProjectGanttView = ({ projects }: ProjectGanttViewProps) => {
           <Gantt
             tasks={ganttTasks}
             viewMode={viewMode}
-            listCellWidth={""} // Utilisation du comportement par défaut
+            listCellWidth={showTasks ? "150" : "0"} // Utilisation 0 pour masquer la colonne des titres
             columnWidth={columnWidth}
             ganttHeight={550}
             rowHeight={50}
