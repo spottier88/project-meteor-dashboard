@@ -1,4 +1,3 @@
-
 import React, { useRef, useState } from 'react';
 import { Gantt, Task, ViewMode } from 'gantt-task-react';
 import "gantt-task-react/dist/index.css";
@@ -12,6 +11,7 @@ export const ProjectGanttView = ({ projects }: ProjectGanttViewProps) => {
   const [showTasks, setShowTasks] = useState(false);
   const [columnWidth, setColumnWidth] = useState(300); // Valeur par défaut pour le mode Mois
   const ganttRef = useRef<HTMLDivElement>(null);
+  const [collapsedProjects, setCollapsedProjects] = useState<string[]>([]);
 
   const getColorForStatus = (status: string, isProject: boolean = false) => {
     if (isProject) {
@@ -30,23 +30,19 @@ export const ProjectGanttView = ({ projects }: ProjectGanttViewProps) => {
     }
   };
 
-  // Fonction pour générer les tâches au format attendu par gantt-task-react
   const generateGanttTasks = (): Task[] => {
     const tasks: Task[] = [];
     
-    // Tri des projets par date de début
     const sortedProjects = [...projects].sort((a, b) => {
       const dateA = a.start_date ? new Date(a.start_date).getTime() : 0;
       const dateB = b.start_date ? new Date(b.start_date).getTime() : 0;
       return dateA - dateB;
     });
     
-    // Ajouter les projets comme tâches principales
     sortedProjects.forEach((project) => {
       const projectStartDate = project.start_date ? new Date(project.start_date) : new Date();
       const projectEndDate = project.end_date ? new Date(project.end_date) : new Date();
       
-      // Transforme le ProgressStatus en valeur numérique pour le composant Gantt
       let progressValue = 0;
       if (project.progress === 'better') {
         progressValue = 100;
@@ -54,7 +50,8 @@ export const ProjectGanttView = ({ projects }: ProjectGanttViewProps) => {
         progressValue = 50;
       }
       
-      // Ajouter le projet comme tâche principale
+      const isProjectCollapsed = collapsedProjects.includes(project.id);
+      
       tasks.push({
         id: project.id,
         name: project.title,
@@ -62,16 +59,14 @@ export const ProjectGanttView = ({ projects }: ProjectGanttViewProps) => {
         end: projectEndDate,
         progress: progressValue,
         type: 'project',
-        hideChildren: !showTasks,
+        hideChildren: isProjectCollapsed || !showTasks,
         styles: {
           backgroundColor: '#9b87f5',
           progressColor: '#7a66d4',
         },
       });
       
-      // Ajouter les tâches si showTasks est true et si des tâches existent
       if (showTasks && project.tasks && project.tasks.length > 0) {
-        // Filtrer les tâches parentes (sans parent_task_id)
         const parentTasks = project.tasks
           .filter(task => !task.parent_task_id)
           .sort((a, b) => {
@@ -80,7 +75,6 @@ export const ProjectGanttView = ({ projects }: ProjectGanttViewProps) => {
             return dateA - dateB;
           });
         
-        // Ajouter les tâches parentes
         parentTasks.forEach(task => {
           const taskId = `${project.id}-${task.id}`;
           const taskStartDate = task.start_date ? new Date(task.start_date) : projectStartDate;
@@ -103,7 +97,6 @@ export const ProjectGanttView = ({ projects }: ProjectGanttViewProps) => {
             },
           });
           
-          // Filtrer les sous-tâches pour cette tâche parente
           const childTasks = project.tasks
             .filter(childTask => childTask.parent_task_id === task.id)
             .sort((a, b) => {
@@ -112,7 +105,6 @@ export const ProjectGanttView = ({ projects }: ProjectGanttViewProps) => {
               return dateA - dateB;
             });
           
-          // Ajouter les sous-tâches
           childTasks.forEach(childTask => {
             const childTaskId = `${project.id}-${childTask.id}`;
             const childStartDate = childTask.start_date ? new Date(childTask.start_date) : taskStartDate;
@@ -159,7 +151,18 @@ export const ProjectGanttView = ({ projects }: ProjectGanttViewProps) => {
     }
   };
 
-  // Préparer les tâches pour le Gantt
+  const handleExpanderClick = (task: Task) => {
+    if (task.type === 'project') {
+      setCollapsedProjects(prev => {
+        if (prev.includes(task.id)) {
+          return prev.filter(id => id !== task.id);
+        } else {
+          return [...prev, task.id];
+        }
+      });
+    }
+  };
+
   const ganttTasks = generateGanttTasks();
 
   return (
@@ -177,17 +180,26 @@ export const ProjectGanttView = ({ projects }: ProjectGanttViewProps) => {
       <div className="bg-white p-4 rounded-lg shadow">
         <GanttLegend showTasks={showTasks} />
 
-        <div ref={ganttRef} className="h-[600px] w-full overflow-x-auto">
+        <div 
+          ref={ganttRef} 
+          className="h-[70vh] w-full overflow-x-auto overflow-y-hidden"
+          style={{ 
+            position: 'relative',
+            borderRadius: '8px',
+            border: '1px solid #e5e7eb'
+          }}
+        >
           <Gantt
             tasks={ganttTasks}
             viewMode={viewMode}
-            listCellWidth={showTasks ? "150" : "0"} // Utilisation 0 pour masquer la colonne des titres
+            listCellWidth={showTasks ? "150" : "0"}
             columnWidth={columnWidth}
-            ganttHeight={550}
+            ganttHeight={65 * window.innerHeight / 100}
             rowHeight={50}
             barCornerRadius={14}
             handleWidth={8}
             fontFamily="Arial, sans-serif"
+            onExpanderClick={handleExpanderClick}
             TooltipContent={({ task }) => (
               <div className="p-2 bg-white shadow rounded border">
                 <div><strong>{task.name}</strong></div>
