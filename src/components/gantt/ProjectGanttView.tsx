@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import { Gantt, Task, ViewMode } from 'gantt-task-react';
 import "gantt-task-react/dist/index.css";
 import { GanttViewButtons } from './GanttViewButtons';
@@ -12,6 +12,15 @@ export const ProjectGanttView = ({ projects }: ProjectGanttViewProps) => {
   const [columnWidth, setColumnWidth] = useState(300); // Valeur par défaut pour le mode Mois
   const ganttRef = useRef<HTMLDivElement>(null);
   const [collapsedProjects, setCollapsedProjects] = useState<string[]>([]);
+  const [refreshKey, setRefreshKey] = useState(0);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setRefreshKey(prev => prev + 1);
+    }, 50);
+    
+    return () => clearTimeout(timer);
+  }, [showTasks]);
 
   const getColorForStatus = (status: string, isProject: boolean = false) => {
     if (isProject) {
@@ -163,6 +172,11 @@ export const ProjectGanttView = ({ projects }: ProjectGanttViewProps) => {
     }
   };
 
+  const handleShowTasksChange = (value: boolean) => {
+    setShowTasks(value);
+    setRefreshKey(prev => prev + 1);
+  };
+
   const ganttTasks = generateGanttTasks();
 
   return (
@@ -172,7 +186,7 @@ export const ProjectGanttView = ({ projects }: ProjectGanttViewProps) => {
           mode={viewMode === ViewMode.Week ? 'week' : (viewMode === ViewMode.Month ? 'month' : 'year')}
           showTasks={showTasks}
           onViewModeChange={handleViewModeChange}
-          onShowTasksChange={setShowTasks}
+          onShowTasksChange={handleShowTasksChange}
         />
         <GanttExportButtons tasks={ganttTasks} ganttRef={ganttRef} />
       </div>
@@ -190,6 +204,7 @@ export const ProjectGanttView = ({ projects }: ProjectGanttViewProps) => {
           }}
         >
           <Gantt
+            key={`gantt-${refreshKey}-${showTasks ? 'with-labels' : 'no-labels'}-${viewMode}`}
             tasks={ganttTasks}
             viewMode={viewMode}
             listCellWidth={showTasks ? "150" : "0"}

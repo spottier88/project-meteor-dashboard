@@ -41,6 +41,8 @@ export const TaskGantt = ({ tasks, projectId, readOnly = false, onEditTask }: Ta
   const ganttRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  // Nouvel état pour forcer le rafraîchissement
+  const [refreshKey, setRefreshKey] = useState(0);
   
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -49,6 +51,15 @@ export const TaskGantt = ({ tasks, projectId, readOnly = false, onEditTask }: Ta
     
     return () => clearTimeout(timer);
   }, []);
+
+  // Nouvel effet pour forcer le rafraîchissement lorsque showTasks change
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setRefreshKey(prev => prev + 1);
+    }, 50);
+    
+    return () => clearTimeout(timer);
+  }, [showTasks]);
 
   const { data: projectMembers } = useQuery({
     queryKey: ["projectMembers", projectId],
@@ -298,6 +309,12 @@ export const TaskGantt = ({ tasks, projectId, readOnly = false, onEditTask }: Ta
     }
   };
 
+  // Fonction pour gérer le changement de l'état showTasks
+  const handleShowTasksChange = (value: boolean) => {
+    setShowTasks(value);
+    // Le useEffect se chargera de forcer le rafraîchissement
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center mb-4">
@@ -305,7 +322,7 @@ export const TaskGantt = ({ tasks, projectId, readOnly = false, onEditTask }: Ta
           mode={viewMode === ViewMode.Week ? 'week' : (viewMode === ViewMode.Month ? 'month' : 'year')}
           showTasks={showTasks}
           onViewModeChange={handleViewModeChange}
-          onShowTasksChange={setShowTasks}
+          onShowTasksChange={handleShowTasksChange}
         />
       </div>
 
@@ -314,6 +331,7 @@ export const TaskGantt = ({ tasks, projectId, readOnly = false, onEditTask }: Ta
 
         <div ref={ganttRef} className="h-full w-full overflow-x-auto">
           <Gantt
+            key={`gantt-${refreshKey}-${showTasks ? 'with-labels' : 'no-labels'}-${viewMode}`}
             tasks={generateGanttTasks()}
             viewMode={viewMode}
             onDateChange={handleTaskChange}
