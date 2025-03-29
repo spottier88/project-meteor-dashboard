@@ -209,7 +209,7 @@ export const ProjectGanttView = ({ projects }: ProjectGanttViewProps) => {
             viewMode={viewMode}
             listCellWidth={showTasks ? "150" : "0"}
             columnWidth={columnWidth}
-            ganttHeight={400}
+            ganttHeight={250}
             rowHeight={50}
             barCornerRadius={14}
             handleWidth={8}
