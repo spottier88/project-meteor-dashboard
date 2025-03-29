@@ -1,4 +1,3 @@
-
 import { useEffect, useRef, useState } from 'react';
 import { Gantt, Task, ViewMode, DisplayOption, StylingOption } from 'gantt-task-react';
 import "gantt-task-react/dist/index.css";
@@ -284,12 +283,12 @@ export const TaskGantt = ({ tasks, projectId, readOnly = false, onEditTask }: Ta
       case 'week':
         setViewMode(ViewMode.Week);
         // Ajuster la largeur des colonnes pour le mode semaine
-        setColumnWidth(150);
+        setColumnWidth(250);
         break;
       case 'month':
         setViewMode(ViewMode.Month);
         // Ajuster la largeur des colonnes pour le mode mois
-        setColumnWidth(250);
+        setColumnWidth(300);
         break;
       case 'year':
         setViewMode(ViewMode.Year);
@@ -314,47 +313,41 @@ export const TaskGantt = ({ tasks, projectId, readOnly = false, onEditTask }: Ta
         <GanttLegend showTasks={true} />
 
         <div ref={ganttRef} className="h-full w-full overflow-x-auto">
-          {showTasks ? (
-            <Gantt
-              tasks={generateGanttTasks()}
-              viewMode={viewMode}
-              onDateChange={handleTaskChange}
-              onProgressChange={(task) => console.log('Progress changed', task)}
-              onClick={() => {}} // Ne rien faire sur clic simple
-              onDoubleClick={handleTaskClick} // Ouvrir le formulaire sur double-clic
-              onDelete={(task) => console.log('Task deleted', task)}
-              onSelect={(task) => console.log('Task selected', task)}
-              onExpanderClick={handleDragStart}
-              listCellWidth=""
-              ganttHeight={0}
-              rowHeight={50}
-              barCornerRadius={14}
-              handleWidth={8}
-              columnWidth={columnWidth} // Utiliser la largeur de colonne dynamique
-              fontFamily="Arial, sans-serif"
-              TooltipContent={({ task }) => (
-                <div className="p-2 bg-white shadow rounded border">
-                  <div><strong>{task.name}</strong></div>
-                  <div>Début: {task.start.toLocaleDateString('fr-FR')}</div>
-                  <div>Fin: {task.end.toLocaleDateString('fr-FR')}</div>
-                  <div>Statut: {
-                    task.progress === 100 ? 'Terminé' : 
-                    (task.progress > 0 ? 'En cours' : 'À faire')
-                  }</div>
-                </div>
-              )}
-              locale="fr"
-              arrowColor="#777"
-              todayColor="rgba(252, 220, 0, 0.4)"
-              barProgressColor="#a3a3a3"
-              projectProgressColor="#7db59a"
-              projectProgressSelectedColor="#59a985"
-            />
-          ) : (
-            <div className="flex items-center justify-center h-full">
-              <p className="text-gray-500">Activer l'affichage de la liste des tâches pour voir le diagramme de Gantt</p>
-            </div>
-          )}
+          <Gantt
+            tasks={generateGanttTasks()}
+            viewMode={viewMode}
+            onDateChange={handleTaskChange}
+            onProgressChange={(task) => console.log('Progress changed', task)}
+            onClick={() => {}} // Ne rien faire sur clic simple
+            onDoubleClick={handleTaskClick} // Ouvrir le formulaire sur double-clic
+            onDelete={(task) => console.log('Task deleted', task)}
+            onSelect={(task) => console.log('Task selected', task)}
+            onExpanderClick={handleDragStart}
+            listCellWidth={showTasks ? "" : "0"} // Utiliser 0 pour masquer la colonne des titres
+            ganttHeight={0}
+            rowHeight={50}
+            barCornerRadius={14}
+            handleWidth={8}
+            columnWidth={columnWidth} // Utiliser la largeur de colonne dynamique
+            fontFamily="Arial, sans-serif"
+            TooltipContent={({ task }) => (
+              <div className="p-2 bg-white shadow rounded border">
+                <div><strong>{task.name}</strong></div>
+                <div>Début: {task.start.toLocaleDateString('fr-FR')}</div>
+                <div>Fin: {task.end.toLocaleDateString('fr-FR')}</div>
+                <div>Statut: {
+                  task.progress === 100 ? 'Terminé' : 
+                  (task.progress > 0 ? 'En cours' : 'À faire')
+                }</div>
+              </div>
+            )}
+            locale="fr"
+            arrowColor="#777"
+            todayColor="rgba(252, 220, 0, 0.4)"
+            barProgressColor="#a3a3a3"
+            projectProgressColor="#7db59a"
+            projectProgressSelectedColor="#59a985"
+          />
         </div>
       </div>
     </div>
