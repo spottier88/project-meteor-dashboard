@@ -1,16 +1,17 @@
 
-import React from 'react';
-import Timeline from 'react-gantt-timeline';
+import React, { useRef, useState } from 'react';
+import { Gantt, Task, ViewMode } from 'gantt-task-react';
+import "gantt-task-react/dist/index.css";
 import { GanttViewButtons } from './GanttViewButtons';
 import { GanttExportButtons } from './GanttExportButtons';
 import { GanttLegend } from './GanttLegend';
-import { GanttTask, GanttLink, ProjectGanttViewProps } from './types';
+import { ProjectGanttViewProps } from './types';
 
 export const ProjectGanttView = ({ projects }: ProjectGanttViewProps) => {
-  const [mode, setMode] = React.useState<'week' | 'month' | 'year'>('month');
-  const [dayWidth, setDayWidth] = React.useState(30);
-  const [showTasks, setShowTasks] = React.useState(false);
-  const ganttRef = React.useRef<HTMLDivElement>(null);
+  const [viewMode, setViewMode] = useState<ViewMode>(ViewMode.Month);
+  const [showTasks, setShowTasks] = useState(false);
+  const [columnWidth, setColumnWidth] = useState(300); // Valeur par défaut pour le mode Mois
+  const ganttRef = useRef<HTMLDivElement>(null);
 
   const getColorForStatus = (status: string, isProject: boolean = false) => {
     if (isProject) {
@@ -29,9 +30,9 @@ export const ProjectGanttView = ({ projects }: ProjectGanttViewProps) => {
     }
   };
 
-  // Création des tâches avec organisation hiérarchique
-  const generateTasks = (): GanttTask[] => {
-    const allTasks: GanttTask[] = [];
+  // Fonction pour générer les tâches au format attendu par gantt-task-react
+  const generateGanttTasks = (): Task[] => {
+    const tasks: Task[] = [];
     
     // Tri des projets par date de début
     const sortedProjects = [...projects].sort((a, b) => {
@@ -40,35 +41,29 @@ export const ProjectGanttView = ({ projects }: ProjectGanttViewProps) => {
       return dateA - dateB;
     });
     
-    sortedProjects.forEach((project, index) => {
-      // Ajouter un séparateur entre les projets (sauf pour le premier)
-      if (index > 0) {
-        allTasks.push({
-          id: `separator-${project.id}`,
-          start: new Date(),
-          end: new Date(),
-          name: "",
-          color: "#ffffff",
-          type: "separator",
-          isDisabled: true
-        });
-      }
+    // Ajouter les projets comme tâches principales
+    sortedProjects.forEach((project) => {
+      const projectStartDate = project.start_date ? new Date(project.start_date) : new Date();
+      const projectEndDate = project.end_date ? new Date(project.end_date) : new Date();
       
-      // Ajouter le projet comme élément parent
-      const projectTask: GanttTask = {
+      // Ajouter le projet comme tâche principale
+      tasks.push({
         id: project.id,
-        start: project.start_date ? new Date(project.start_date) : new Date(),
-        end: project.end_date ? new Date(project.end_date) : new Date(),
-        name: `${project.title}`,
-        color: getColorForStatus(project.lifecycle_status, true),
+        name: project.title,
+        start: projectStartDate,
+        end: projectEndDate,
+        progress: project.progress === 'better' ? 100 : (project.progress === 'stable' ? 50 : 0),
         type: 'project',
-        completion: project.completion
-      };
+        hideChildren: !showTasks,
+        styles: {
+          backgroundColor: '#9b87f5',
+          progressColor: '#7a66d4',
+        },
+      });
       
-      allTasks.push(projectTask);
-
+      // Ajouter les tâches si showTasks est true et si des tâches existent
       if (showTasks && project.tasks && project.tasks.length > 0) {
-        // Organiser les tâches par niveau hiérarchique
+        // Filtrer les tâches parentes (sans parent_task_id)
         const parentTasks = project.tasks
           .filter(task => !task.parent_task_id)
           .sort((a, b) => {
@@ -77,24 +72,30 @@ export const ProjectGanttView = ({ projects }: ProjectGanttViewProps) => {
             return dateA - dateB;
           });
         
-        // Créer les tâches Gantt pour les tâches parentes
+        // Ajouter les tâches parentes
         parentTasks.forEach(task => {
           const taskId = `${project.id}-${task.id}`;
-          const taskStartDate = task.start_date ? new Date(task.start_date) : new Date(project.start_date || new Date());
-          const taskEndDate = task.due_date ? new Date(task.due_date) : new Date(project.end_date || new Date());
+          const taskStartDate = task.start_date ? new Date(task.start_date) : projectStartDate;
+          const taskEndDate = task.due_date ? new Date(task.due_date) : projectEndDate;
           
-          allTasks.push({
+          const isJalon = !task.start_date || (task.start_date === task.due_date);
+          
+          tasks.push({
             id: taskId,
+            name: task.title,
             start: taskStartDate,
             end: taskEndDate,
-            name: `  └ ${task.title}`, // Indentation visuelle pour montrer la hiérarchie
-            color: getColorForStatus(task.status),
-            type: 'task',
-            project_id: project.id,
-            parent_id: project.id // Lien explicite avec le projet parent
+            progress: task.status === 'done' ? 100 : (task.status === 'in_progress' ? 50 : 0),
+            type: isJalon ? 'milestone' : 'task',
+            project: project.id,
+            dependencies: [project.id],
+            styles: {
+              backgroundColor: getColorForStatus(task.status),
+              progressColor: '#a3a3a3',
+            },
           });
           
-          // Trouver et ajouter les sous-tâches pour cette tâche
+          // Filtrer les sous-tâches pour cette tâche parente
           const childTasks = project.tasks
             .filter(childTask => childTask.parent_task_id === task.id)
             .sort((a, b) => {
@@ -103,200 +104,99 @@ export const ProjectGanttView = ({ projects }: ProjectGanttViewProps) => {
               return dateA - dateB;
             });
           
+          // Ajouter les sous-tâches
           childTasks.forEach(childTask => {
             const childTaskId = `${project.id}-${childTask.id}`;
             const childStartDate = childTask.start_date ? new Date(childTask.start_date) : taskStartDate;
             const childEndDate = childTask.due_date ? new Date(childTask.due_date) : taskEndDate;
             
-            allTasks.push({
+            const isChildJalon = !childTask.start_date || (childTask.start_date === childTask.due_date);
+            
+            tasks.push({
               id: childTaskId,
+              name: childTask.title,
               start: childStartDate,
               end: childEndDate,
-              name: `    └ ${childTask.title}`, // Double indentation pour les sous-tâches
-              color: getColorForStatus(childTask.status),
-              type: 'subtask',
-              project_id: project.id,
-              parent_id: taskId, // Lien explicite avec la tâche parente
-              parent_task_id: task.id
+              progress: childTask.status === 'done' ? 100 : (childTask.status === 'in_progress' ? 50 : 0),
+              type: isChildJalon ? 'milestone' : 'task',
+              project: taskId,
+              dependencies: [taskId],
+              styles: {
+                backgroundColor: getColorForStatus(childTask.status),
+                progressColor: '#a3a3a3',
+              },
             });
           });
         });
       }
     });
-
-    return allTasks;
+    
+    return tasks;
   };
 
-  // Création des liens entre tâches parentes et enfants
-  const generateLinks = (tasks: GanttTask[]): GanttLink[] => {
-    const links: GanttLink[] = [];
-    
-    if (!showTasks) return links;
-    
-    // Parcourir toutes les tâches pour créer les liens
-    tasks.forEach(task => {
-      // Créer des liens entre projets et tâches
-      if (task.type === 'task' && task.parent_id) {
-        links.push({
-          id: `link-project-${task.id}`,
-          source: task.parent_id,
-          target: task.id,
-          type: 'finish_to_start'
-        });
-      }
-      
-      // Créer des liens entre tâches et sous-tâches
-      if (task.type === 'subtask' && task.parent_id) {
-        links.push({
-          id: `link-task-${task.id}`,
-          source: task.parent_id,
-          target: task.id,
-          type: 'finish_to_start'
-        });
-      }
-    });
-    
-    return links;
-  };
-
-  const tasks = generateTasks();
-  const links = generateLinks(tasks);
-
-  const setViewMode = (newMode: 'week' | 'month' | 'year') => {
-    setMode(newMode);
-    switch (newMode) {
+  const handleViewModeChange = (mode: 'week' | 'month' | 'year') => {
+    switch (mode) {
       case 'week':
-        setDayWidth(60);
+        setViewMode(ViewMode.Week);
+        setColumnWidth(250);
         break;
       case 'month':
-        setDayWidth(30);
+        setViewMode(ViewMode.Month);
+        setColumnWidth(300);
         break;
       case 'year':
-        setDayWidth(15);
+        setViewMode(ViewMode.Year);
+        setColumnWidth(350);
         break;
     }
   };
+
+  // Préparer les tâches pour le Gantt
+  const ganttTasks = generateGanttTasks();
 
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center mb-4">
         <GanttViewButtons
-          mode={mode}
+          mode={viewMode === ViewMode.Week ? 'week' : (viewMode === ViewMode.Month ? 'month' : 'year')}
           showTasks={showTasks}
-          onViewModeChange={setViewMode}
+          onViewModeChange={handleViewModeChange}
           onShowTasksChange={setShowTasks}
         />
-        <GanttExportButtons tasks={tasks} ganttRef={ganttRef} />
+        <GanttExportButtons tasks={ganttTasks} ganttRef={ganttRef} />
       </div>
 
       <div className="bg-white p-4 rounded-lg shadow">
         <GanttLegend showTasks={showTasks} />
 
-        <div ref={ganttRef} className="h-[600px] w-full">
-          <Timeline 
-            data={tasks}
-            links={links}
-            mode={mode}
-            onSelectItem={(item) => console.log("Item clicked:", item)}
-            itemHeight={50}
-            rowHeight={45}
-            taskHeight={40}
-            nonWorkingDays={[6, 0]}
-            dayWidth={dayWidth}
-            config={{
-              header: {
-                top: {
-                  style: {backgroundColor: "#333333"}
-                },
-                middle: {
-                  style: {backgroundColor: "chocolate"},
-                  selectedStyle: {backgroundColor: "#b13525"}
-                },
-                bottom: {
-                  style: {background: "grey", fontSize: 9},
-                  selectedStyle: {backgroundColor: "#b13525", fontWeight: 'bold'}
-                }
-              },
-              taskList: {
-                title: {
-                  label: "Projets et tâches",
-                  style: {
-                    backgroundColor: '#333333',
-                    borderBottom: 'solid 1px silver',
-                    color: 'white',
-                    textAlign: 'left',
-                    padding: '0 10px'
-                  }
-                },
-                task: {
-                  style: {
-                    textAlign: 'left',
-                    padding: '0 10px'
-                  }
-                },
-                verticalSeparator: {
-                  style: {backgroundColor: '#333333'},
-                  grip: {
-                    style: {backgroundColor: '#cfcfcd'}
-                  }
-                }
-              },
-              dataViewPort: {
-                rows: {
-                  style: {
-                    backgroundColor: (task) => task.type === "separator" ? "#f0f0f0" : "#fbf9f9", 
-                    borderBottom: (task) => task.type === "separator" ? 'solid 1px #cfcfcd' : 'solid 0.5px #cfcfcd',
-                    height: (task) => task.type === "separator" ? '10px' : 'auto'
-                  }
-                },
-                task: {
-                  showLabel: true,
-                  style: {
-                    position: 'absolute',
-                    borderRadius: 14,
-                    color: 'white',
-                    textAlign: 'left',
-                    backgroundColor: 'grey',
-                    visibility: (task) => task.type === "separator" ? "hidden" : "visible"
-                  },
-                  selectedStyle: {}
-                }
-              },
-              links: {
-                color: '#787878',
-                selectedColor: '#ff00fa',
-                thickness: 2
-              },
-              handleWidth: 0,
-              showProjectLabel: true,
-              projectBackgroundColor: '#9b87f5',
-              projectBackgroundSelectedColor: '#8b77e5',
-              projectSelectedColor: '#7a66d4',
-              projectCompletionColor: '#4CAF50',
-              projectProgressColor: '#2196F3',
-              projectDeadlineColor: '#f44336',
-              projectTextColor: '#ffffff',
-              projectTextStyle: { fontWeight: 'bold' },  // Mettre en gras pour les projets
-              taskTextColor: '#333333',
-              taskSelectedColor: '#1a73e8',
-              taskProgressColor: '#2196F3',
-              taskCompletionColor: '#4CAF50',
-              gridColor: '#eee',
-              todayColor: 'rgba(252, 220, 0, 0.4)',
-              viewMode: mode,
-              locale: 'fr-FR',
-              dateFormat: {
-                month: {
-                  short: ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin', 'Juil', 'Août', 'Sept', 'Oct', 'Nov', 'Déc'],
-                  long: ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre']
-                },
-                week: {
-                  letter: ['D', 'L', 'M', 'M', 'J', 'V', 'S'],
-                  short: ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam'],
-                  long: ['Dimanche', 'Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi']
-                }
-              }
-            }}
+        <div ref={ganttRef} className="h-[600px] w-full overflow-x-auto">
+          <Gantt
+            tasks={ganttTasks}
+            viewMode={viewMode}
+            listCellWidth={""} // Utilisation du comportement par défaut
+            columnWidth={columnWidth}
+            ganttHeight={550}
+            rowHeight={50}
+            barCornerRadius={14}
+            handleWidth={8}
+            fontFamily="Arial, sans-serif"
+            TooltipContent={({ task }) => (
+              <div className="p-2 bg-white shadow rounded border">
+                <div><strong>{task.name}</strong></div>
+                <div>Début: {task.start.toLocaleDateString('fr-FR')}</div>
+                <div>Fin: {task.end.toLocaleDateString('fr-FR')}</div>
+                <div>Statut: {
+                  task.progress === 100 ? 'Terminé' : 
+                  (task.progress > 0 ? 'En cours' : 'À faire')
+                }</div>
+              </div>
+            )}
+            locale="fr"
+            arrowColor="#777"
+            todayColor="rgba(252, 220, 0, 0.4)"
+            barProgressColor="#a3a3a3"
+            projectProgressColor="#7db59a"
+            projectProgressSelectedColor="#59a985"
           />
         </div>
       </div>

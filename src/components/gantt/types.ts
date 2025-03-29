@@ -7,22 +7,15 @@
  */
 
 import { ProjectStatus, ProgressStatus, ProjectLifecycleStatus } from '@/types/project';
+import { Task } from 'gantt-task-react';
 
-export interface GanttTask {
-  id: string;
-  start: Date;
-  end: Date;
-  name: string;
-  color: string;
-  type: 'project' | 'task' | 'subtask' | 'separator' | 'milestone';
-  project_id?: string;
-  parent_id?: string;
-  parent_task_id?: string;
-  status?: ProjectStatus;
-  progress?: ProgressStatus;
+// Type étendu pour les tâches Gantt utilisées dans notre application
+export interface GanttTask extends Task {
   lifecycle_status?: ProjectLifecycleStatus;
   completion?: number;
-  isDisabled?: boolean;
+  status?: ProjectStatus;
+  progress?: ProgressStatus;
+  _isMilestone?: boolean;
 }
 
 export interface GanttLink {
