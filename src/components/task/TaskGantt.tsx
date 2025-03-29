@@ -323,7 +323,7 @@ export const TaskGantt = ({ tasks, projectId, readOnly = false, onEditTask }: Ta
             onDelete={(task) => console.log('Task deleted', task)}
             onSelect={(task) => console.log('Task selected', task)}
             onExpanderClick={handleDragStart}
-            listCellWidth={showTasks ? "" : "0"} // Utiliser 0 pour masquer la colonne des titres
+            listCellWidth={showTasks ? "150" : "0"} // Utiliser 0 pour masquer la colonne des titres
             ganttHeight={0}
             rowHeight={50}
             barCornerRadius={14}
