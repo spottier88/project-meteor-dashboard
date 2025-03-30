@@ -1,6 +1,6 @@
+
 import { useEffect, useRef, useState } from 'react';
 import { Gantt, Task, ViewMode, DisplayOption, StylingOption } from 'gantt-task-react';
-//import "gantt-task-react/dist/index.css";
 import { GanttViewButtons } from '@/components/gantt/GanttViewButtons';
 import { GanttLegend } from '@/components/gantt/GanttLegend';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -52,7 +52,6 @@ export const TaskGantt = ({ tasks, projectId, readOnly = false, onEditTask }: Ta
     return () => clearTimeout(timer);
   }, []);
 
-  // Nouvel effet pour forcer le rafraîchissement lorsque showTasks change
   useEffect(() => {
     const timer = setTimeout(() => {
       setRefreshKey(prev => prev + 1);
@@ -305,6 +304,7 @@ export const TaskGantt = ({ tasks, projectId, readOnly = false, onEditTask }: Ta
     setShowTasks(value);
   };
 
+  // Personnalisation des en-têtes pour le composant Gantt
   const TaskListHeader = () => {
     return (
       <div className="grid grid-cols-3 font-semibold bg-gray-100 border-b border-gray-200">
