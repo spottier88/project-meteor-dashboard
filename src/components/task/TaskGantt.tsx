@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Gantt, Task, ViewMode, DisplayOption, StylingOption } from 'gantt-task-react';
-import "gantt-task-react/dist/index.css";
+//import "gantt-task-react/dist/index.css";
 import { GanttViewButtons } from '@/components/gantt/GanttViewButtons';
 import { GanttLegend } from '@/components/gantt/GanttLegend';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
