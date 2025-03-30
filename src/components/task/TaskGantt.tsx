@@ -1,6 +1,5 @@
-
 import { useEffect, useRef, useState } from 'react';
-import { Gantt, Task, ViewMode, DisplayOption, StylingOption } from '@wamra/gantt-task-react';
+import { Gantt, Task, ViewMode } from 'gantt-task-react';
 import { GanttViewButtons } from '@/components/gantt/GanttViewButtons';
 import { GanttLegend } from '@/components/gantt/GanttLegend';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -161,8 +160,8 @@ export const TaskGantt = ({ tasks, projectId, readOnly = false, onEditTask }: Ta
     }
   };
 
-  const generateGanttTasks = (): ExtendedTask[] => {
-    const ganttTasks: ExtendedTask[] = [];
+  const generateGanttTasks = (): Task[] => {
+    const ganttTasks: Task[] = [];
     
     const parentTasks = tasks
       .filter(task => !task.parent_task_id)
