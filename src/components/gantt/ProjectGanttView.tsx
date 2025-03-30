@@ -1,6 +1,6 @@
+
 import React, { useRef, useState, useEffect } from 'react';
-import { Gantt, Task, ViewMode } from 'gantt-task-react';
-import "gantt-task-react/dist/index.css";
+import { Gantt, Task, ViewMode } from '@wamra/gantt-task-react';
 import { GanttViewButtons } from './GanttViewButtons';
 import { GanttExportButtons } from './GanttExportButtons';
 import { GanttLegend } from './GanttLegend';
