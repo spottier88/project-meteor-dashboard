@@ -236,9 +236,7 @@ export const TaskGantt = ({ tasks, projectId, readOnly = false, onEditTask }: Ta
     return ganttTasks;
   };
 
-  // Modification: Utilisation du double-clic au lieu du clic simple
   const handleTaskClick = (task: Task) => {
-    // Ne pas ouvrir le formulaire si on est en déplacement
     if (isDragging) return;
     
     if (!readOnly && onEditTask) {
@@ -249,7 +247,6 @@ export const TaskGantt = ({ tasks, projectId, readOnly = false, onEditTask }: Ta
     }
   };
 
-  // Gestion du début du déplacement
   const handleDragStart = () => {
     setIsDragging(true);
   };
@@ -257,7 +254,6 @@ export const TaskGantt = ({ tasks, projectId, readOnly = false, onEditTask }: Ta
   const handleTaskChange = (task: ExtendedTask) => {
     if (readOnly) return;
     
-    // Indiquer qu'on est en train de déplacer
     setIsDragging(true);
     
     const originalTask = tasks.find(t => t.id === task.id);
@@ -283,7 +279,6 @@ export const TaskGantt = ({ tasks, projectId, readOnly = false, onEditTask }: Ta
       due_date: dueDate
     });
     
-    // Réinitialiser l'état de déplacement après un court délai
     setTimeout(() => {
       setIsDragging(false);
     }, 500);
@@ -293,26 +288,31 @@ export const TaskGantt = ({ tasks, projectId, readOnly = false, onEditTask }: Ta
     switch (mode) {
       case 'week':
         setViewMode(ViewMode.Week);
-        // Ajuster la largeur des colonnes pour le mode semaine
         setColumnWidth(250);
         break;
       case 'month':
         setViewMode(ViewMode.Month);
-        // Ajuster la largeur des colonnes pour le mode mois
         setColumnWidth(300);
         break;
       case 'year':
         setViewMode(ViewMode.Year);
-        // Ajuster la largeur des colonnes pour le mode année
         setColumnWidth(350);
         break;
     }
   };
 
-  // Fonction pour gérer le changement de l'état showTasks
   const handleShowTasksChange = (value: boolean) => {
     setShowTasks(value);
-    // Le useEffect se chargera de forcer le rafraîchissement
+  };
+
+  const TaskListHeader = () => {
+    return (
+      <div className="grid grid-cols-3 font-semibold bg-gray-100 border-b border-gray-200">
+        <div className="p-2 truncate">Titre</div>
+        <div className="p-2 truncate">Début</div>
+        <div className="p-2 truncate">Fin</div>
+      </div>
+    );
   };
 
   return (
@@ -348,6 +348,7 @@ export const TaskGantt = ({ tasks, projectId, readOnly = false, onEditTask }: Ta
             handleWidth={8}
             columnWidth={columnWidth} // Utiliser la largeur de colonne dynamique
             fontFamily="Arial, sans-serif"
+            TaskListHeader={showTasks ? TaskListHeader : undefined}
             TooltipContent={({ task }) => (
               <div className="p-2 bg-white shadow rounded border">
                 <div><strong>{task.name}</strong></div>

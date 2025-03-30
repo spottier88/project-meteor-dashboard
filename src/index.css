@@ -1,3 +1,4 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -55,5 +56,12 @@
 
   ::-webkit-scrollbar-thumb:hover {
     @apply bg-muted-foreground;
+  }
+  
+  /* Styles pour les en-têtes de colonnes Gantt */
+  .gantt-task-react-grid-cols-3 > div {
+    width: calc(100% / 3);
+    padding: 8px;
+    box-sizing: border-box;
   }
 }

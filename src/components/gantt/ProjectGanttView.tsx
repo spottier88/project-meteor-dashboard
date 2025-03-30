@@ -179,6 +179,16 @@ export const ProjectGanttView = ({ projects }: ProjectGanttViewProps) => {
 
   const ganttTasks = generateGanttTasks();
 
+  const TaskListHeader = () => {
+    return (
+      <div className="grid grid-cols-3 font-semibold bg-gray-100 border-b border-gray-200">
+        <div className="p-2 truncate">Titre</div>
+        <div className="p-2 truncate">Début</div>
+        <div className="p-2 truncate">Fin</div>
+      </div>
+    );
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center mb-4">
@@ -215,6 +225,7 @@ export const ProjectGanttView = ({ projects }: ProjectGanttViewProps) => {
             handleWidth={8}
             fontFamily="Arial, sans-serif"
             onExpanderClick={handleExpanderClick}
+            TaskListHeader={showTasks ? TaskListHeader : undefined}
             TooltipContent={({ task }) => (
               <div className="p-2 bg-white shadow rounded border">
                 <div><strong>{task.name}</strong></div>
