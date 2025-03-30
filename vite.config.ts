@@ -12,8 +12,6 @@ export default defineConfig(({ mode }) => ({
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
-      // Alias pour le package GitHub
-      "@wamra/gantt-task-react": "gantt-task-react",
     },
     dedupe: ['react', 'react-dom'],
   },

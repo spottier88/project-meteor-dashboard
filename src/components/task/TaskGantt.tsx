@@ -1,3 +1,4 @@
+
 import { useEffect, useRef, useState } from 'react';
 import { Gantt, Task, ViewMode } from 'gantt-task-react';
 import { GanttViewButtons } from '@/components/gantt/GanttViewButtons';
@@ -193,7 +194,7 @@ export const TaskGantt = ({ tasks, projectId, readOnly = false, onEditTask }: Ta
         },
         isDisabled: readOnly,
         _isMilestone: isJalon
-      });
+      } as ExtendedTask);
       
       const childTasks = tasks
         .filter(childTask => childTask.parent_task_id === task.id)
@@ -227,7 +228,7 @@ export const TaskGantt = ({ tasks, projectId, readOnly = false, onEditTask }: Ta
           },
           isDisabled: readOnly,
           _isMilestone: isChildJalon
-        });
+        } as ExtendedTask);
       });
     });
 

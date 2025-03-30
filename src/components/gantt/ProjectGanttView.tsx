@@ -6,6 +6,11 @@ import { GanttExportButtons } from './GanttExportButtons';
 import { GanttLegend } from './GanttLegend';
 import { ProjectGanttViewProps } from './types';
 
+// Extension du type Task pour les besoins spécifiques du projet
+interface ExtendedTask extends Task {
+  _isMilestone?: boolean;
+}
+
 export const ProjectGanttView = ({ projects }: ProjectGanttViewProps) => {
   const [viewMode, setViewMode] = useState<ViewMode>(ViewMode.Month);
   const [showTasks, setShowTasks] = useState(false);
@@ -104,7 +109,8 @@ export const ProjectGanttView = ({ projects }: ProjectGanttViewProps) => {
               backgroundColor: getColorForStatus(task.status),
               progressColor: '#a3a3a3',
             },
-          });
+            _isMilestone: isJalon
+          } as ExtendedTask);
           
           const childTasks = project.tasks
             .filter(childTask => childTask.parent_task_id === task.id)
@@ -134,7 +140,8 @@ export const ProjectGanttView = ({ projects }: ProjectGanttViewProps) => {
                 backgroundColor: getColorForStatus(childTask.status),
                 progressColor: '#a3a3a3',
               },
-            });
+              _isMilestone: isChildJalon
+            } as ExtendedTask);
           });
         });
       }
