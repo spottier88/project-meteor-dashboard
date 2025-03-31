@@ -1,4 +1,3 @@
-
 import { useEffect, useRef, useState } from 'react';
 import { Gantt, Task, ViewMode } from 'gantt-task-react';
 import "gantt-task-react/dist/index.css";
@@ -339,34 +338,6 @@ export const TaskGantt = ({ tasks, projectId, readOnly = false, onEditTask }: Ta
             barProgressColor="#a3a3a3"
             projectProgressColor="#7db59a"
             projectProgressSelectedColor="#59a985"
-            TaskListTable={{
-              columns: [
-                {
-                  id: 'name',
-                  label: 'Titre',
-                  width: 220,
-                  renderer: (props) => (
-                    <div className="truncate px-2 font-medium">{props.task.name}</div>
-                  ),
-                },
-                {
-                  id: 'start',
-                  label: 'Début',
-                  width: 85,
-                  renderer: (props) => (
-                    <div className="px-2">{format(props.task.start, 'dd/MM/yy')}</div>
-                  ),
-                },
-                {
-                  id: 'end',
-                  label: 'Fin',
-                  width: 85,
-                  renderer: (props) => (
-                    <div className="px-2">{format(props.task.end, 'dd/MM/yy')}</div>
-                  ),
-                },
-              ],
-            }}
           />
         </div>
       </div>
