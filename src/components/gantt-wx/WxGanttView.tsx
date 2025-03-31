@@ -111,40 +111,48 @@ export const WxGanttView = ({ tasks, projectId, readOnly = false, onEditTask }: 
       
       console.log(`Nombre de tâches principales: ${parentTasks.length}`);
       
-      parentTasks.forEach(task => {
+      for (const task of parentTasks) {
         try {
           const ganttTask = convertTaskToGantt(
             task, 
             task.assignee ? formatUserName(task.assignee, profiles) : '',
             readOnly
           );
-          ganttTasks.push(ganttTask);
+          
+          // N'ajouter la tâche que si elle a des dates valides
+          if (ganttTask) {
+            ganttTasks.push(ganttTask);
+            
+            // Formatter les sous-tâches
+            const childTasks = tasks
+              .filter(childTask => childTask.parent_task_id === task.id)
+              .sort((a, b) => {
+                const dateA = a.start_date ? new Date(a.start_date).getTime() : 0;
+                const dateB = b.start_date ? new Date(b.start_date).getTime() : 0;
+                return dateA - dateB;
+              });
+            
+            for (const childTask of childTasks) {
+              try {
+                const ganttChildTask = convertTaskToGantt(
+                  childTask,
+                  childTask.assignee ? formatUserName(childTask.assignee, profiles) : '',
+                  readOnly
+                );
+                
+                // N'ajouter la sous-tâche que si elle a des dates valides
+                if (ganttChildTask) {
+                  ganttTasks.push(ganttChildTask);
+                }
+              } catch (error) {
+                console.error(`Erreur lors de la conversion de la sous-tâche ${childTask.id}:`, error);
+              }
+            }
+          }
         } catch (error) {
           console.error(`Erreur lors de la conversion de la tâche principale ${task.id}:`, error);
         }
-
-        // Formatter les sous-tâches
-        const childTasks = tasks
-          .filter(childTask => childTask.parent_task_id === task.id)
-          .sort((a, b) => {
-            const dateA = a.start_date ? new Date(a.start_date).getTime() : 0;
-            const dateB = b.start_date ? new Date(b.start_date).getTime() : 0;
-            return dateA - dateB;
-          });
-        
-        childTasks.forEach(childTask => {
-          try {
-            const ganttChildTask = convertTaskToGantt(
-              childTask,
-              childTask.assignee ? formatUserName(childTask.assignee, profiles) : '',
-              readOnly
-            );
-            ganttTasks.push(ganttChildTask);
-          } catch (error) {
-            console.error(`Erreur lors de la conversion de la sous-tâche ${childTask.id}:`, error);
-          }
-        });
-      });
+      }
 
       console.log(`Total des tâches formatées pour Gantt: ${ganttTasks.length}`);
       return ganttTasks;
@@ -214,6 +222,19 @@ export const WxGanttView = ({ tasks, projectId, readOnly = false, onEditTask }: 
     }
   };
 
+  // Configuration du Gantt avec un gestionnaire d'erreur pour le template de tooltip
+  const safeFormatDate = (date: any): string => {
+    try {
+      if (!date) return 'Non définie';
+      const dateObj = new Date(date);
+      if (isNaN(dateObj.getTime())) return 'Date invalide';
+      return format(dateObj, 'dd/MM/yyyy');
+    } catch (error) {
+      console.error('Erreur de formatage de date:', error);
+      return 'Date invalide';
+    }
+  };
+
   // Configuration du Gantt
   const ganttConfig = {
     locale: 'fr',
@@ -231,8 +252,8 @@ export const WxGanttView = ({ tasks, projectId, readOnly = false, onEditTask }: 
       return `
         <div class="p-2 bg-white shadow rounded border">
           <div><strong>${task.text}</strong></div>
-          <div>Début: ${format(new Date(task.start_date), 'dd/MM/yyyy')}</div>
-          <div>Fin: ${format(new Date(task.end_date), 'dd/MM/yyyy')}</div>
+          <div>Début: ${safeFormatDate(task.start_date)}</div>
+          <div>Fin: ${safeFormatDate(task.end_date)}</div>
           <div>Statut: ${task.progress === 1 ? 'Terminé' : task.progress > 0 ? 'En cours' : 'À faire'}</div>
         </div>
       `;

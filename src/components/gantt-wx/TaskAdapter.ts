@@ -28,29 +28,62 @@ export interface TaskData {
 }
 
 /**
+ * Vérifie si une chaîne de date est valide pour la conversion en objet Date
+ */
+const isValidDateString = (dateStr?: string): boolean => {
+  if (!dateStr) return false;
+  
+  // Vérifier si la date peut être convertie en objet Date valide
+  const date = new Date(dateStr);
+  return !isNaN(date.getTime());
+};
+
+/**
  * Convertit une tâche du format de l'application vers le format attendu par le Gantt
  */
 export const convertTaskToGantt = (
   task: TaskData, 
   assigneeName: string = '',
   isReadOnly: boolean = false
-): GanttTask => {
-  // S'assurer que nous avons des dates valides
-  const hasStartDate = !!task.start_date;
-  const startDate = hasStartDate ? new Date(task.start_date) : 
-                    (task.due_date ? new Date(task.due_date) : new Date());
+): GanttTask | null => {
+  // Vérifier si au moins une des dates est valide
+  const hasValidStartDate = isValidDateString(task.start_date);
+  const hasValidDueDate = isValidDateString(task.due_date);
   
-  // Pour l'end_date, s'assurer qu'elle est après la start_date ou le même jour pour les jalons
-  let endDate = task.due_date ? new Date(task.due_date) : new Date(startDate);
+  // Si aucune date valide, ne pas inclure la tâche dans le Gantt
+  if (!hasValidStartDate && !hasValidDueDate) {
+    return null;
+  }
   
-  // Si la date de fin est avant la date de début, utilisez la date de début
-  if (endDate < startDate) {
+  // Déterminer la date de début
+  let startDate: Date;
+  if (hasValidStartDate) {
+    startDate = new Date(task.start_date!);
+  } else if (hasValidDueDate) {
+    // Si pas de date de début mais une date d'échéance, utiliser la date d'échéance (jalon)
+    startDate = new Date(task.due_date!);
+  } else {
+    // Ne devrait jamais arriver grâce à la vérification précédente
+    return null;
+  }
+  
+  // Déterminer la date de fin
+  let endDate: Date;
+  if (hasValidDueDate) {
+    endDate = new Date(task.due_date!);
+    // S'assurer que la date de fin n'est pas antérieure à la date de début
+    if (endDate < startDate) {
+      endDate = new Date(startDate);
+    }
+  } else {
+    // Si pas de date d'échéance, utiliser la date de début
     endDate = new Date(startDate);
   }
   
   // Déterminer si c'est un jalon (même date début/fin ou pas de date de début)
-  const isMilestone = (!hasStartDate && task.due_date) || 
-                      (task.start_date && task.due_date && task.start_date === task.due_date);
+  const isMilestone = (!hasValidStartDate && hasValidDueDate) || 
+                      (hasValidStartDate && hasValidDueDate && 
+                       task.start_date === task.due_date);
   
   // Calculer la progression en fonction du statut
   const progress = task.status === 'done' ? 1 : task.status === 'in_progress' ? 0.5 : 0;
