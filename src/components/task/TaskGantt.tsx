@@ -32,6 +32,9 @@ interface ExtendedTask extends Task {
   _isMilestone?: boolean;
 }
 
+// Type définissant la structure d'une dépendance dans cette version de Gantt
+type Dependency = string;
+
 export const TaskGantt = ({ tasks, projectId, readOnly = false, onEditTask }: TaskGanttProps) => {
   const [viewMode, setViewMode] = useState<ViewMode>(ViewMode.Month);
   const [showTasks, setShowTasks] = useState(true);
@@ -180,8 +183,8 @@ export const TaskGantt = ({ tasks, projectId, readOnly = false, onEditTask }: Ta
           progress: childTask.status === 'done' ? 100 : childTask.status === 'in_progress' ? 50 : 0,
           type: isChildJalon ? 'milestone' : 'task',
           project: taskId,
-          // La bibliothèque attend désormais un tableau de string pour les dépendances et non pas un tableau d'objets
-          dependencies: taskId ? [taskId.toString()] : [],
+          // Dans cette version de la bibliothèque, les dépendances sont des chaînes simples
+          dependencies: taskId ? [taskId] : [],
           styles: {
             barBackgroundColor: getColorForStatus(childTask.status),
             barProgressColor: '#a3a3a3',
@@ -310,8 +313,8 @@ export const TaskGantt = ({ tasks, projectId, readOnly = false, onEditTask }: Ta
             onClick={() => {}}
             onDoubleClick={handleTaskClick}
             onDelete={(task) => console.log('Task deleted', task)}
-            // Suppression de columnWidth car non supporté dans la nouvelle version
-            ganttHeight={600}
+            // Utilisons height au lieu de ganttHeight qui n'est plus supporté
+            height={600}
             rowHeight={50}
             barCornerRadius={14}
             handleWidth={8}
