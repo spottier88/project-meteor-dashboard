@@ -54,6 +54,7 @@
     "date-fns": "^3.6.0",
     "date-fns-tz": "^3.2.0",
     "embla-carousel-react": "^8.3.0",
+    "gantt-task-react": "^0.3.9",
     "html2canvas": "^1.4.1",
     "ical": "^0.8.0",
     "input-otp": "^1.2.4",
