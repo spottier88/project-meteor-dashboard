@@ -1,6 +1,6 @@
 
 import { useEffect, useRef, useState } from 'react';
-import { Gantt, Task, ViewMode } from '@wamra/gantt-task-react';
+import { Gantt, Task, ViewMode, StylingOption } from '@wamra/gantt-task-react';
 import "@wamra/gantt-task-react/dist/index.css";
 import { GanttViewButtons } from '@/components/gantt/GanttViewButtons';
 import { GanttLegend } from '@/components/gantt/GanttLegend';
@@ -9,6 +9,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { formatUserName } from '@/utils/formatUserName';
 import { toast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
+import { ExtendedGanttTask } from '@/components/gantt/types.d';
 
 interface TaskGanttProps {
   tasks: Array<{
@@ -148,7 +149,7 @@ export const TaskGantt = ({ tasks, projectId, readOnly = false, onEditTask }: Ta
         type: isJalon ? 'milestone' : 'task',
         styles: {
           barBackgroundColor: getColorForStatus(task.status),
-          progressColor: '#a3a3a3',
+          barProgressColor: '#a3a3a3',
         },
         isDisabled: readOnly,
         _isMilestone: isJalon
@@ -179,10 +180,10 @@ export const TaskGantt = ({ tasks, projectId, readOnly = false, onEditTask }: Ta
           progress: childTask.status === 'done' ? 100 : childTask.status === 'in_progress' ? 50 : 0,
           type: isChildJalon ? 'milestone' : 'task',
           project: taskId,
-          dependencies: taskId ? [{ id: taskId }] : [],
+          dependencies: taskId ? [taskId] : [],
           styles: {
             barBackgroundColor: getColorForStatus(childTask.status),
-            progressColor: '#a3a3a3',
+            barProgressColor: '#a3a3a3',
           },
           isDisabled: readOnly,
           _isMilestone: isChildJalon
@@ -308,14 +309,13 @@ export const TaskGantt = ({ tasks, projectId, readOnly = false, onEditTask }: Ta
             onClick={() => {}}
             onDoubleClick={handleTaskClick}
             onDelete={(task) => console.log('Task deleted', task)}
-            listCellWidth={showTasks ? "150" : "0"}
+            columnWidth={columnWidth}
             ganttHeight={600}
             rowHeight={50}
             barCornerRadius={14}
             handleWidth={8}
-            columnWidth={columnWidth}
-            fontFamily="Arial, sans-serif"
             TaskListHeader={showTasks ? TaskListHeader : undefined}
+            TaskListTable={showTasks ? undefined : undefined}
             TooltipContent={({ task }) => (
               <div className="p-2 bg-white shadow rounded border">
                 <div><strong>{task.name}</strong></div>
@@ -330,6 +330,7 @@ export const TaskGantt = ({ tasks, projectId, readOnly = false, onEditTask }: Ta
             barProgressColor="#a3a3a3"
             projectProgressColor="#7db59a"
             projectProgressSelectedColor="#59a985"
+            fontFamily="Arial, sans-serif"
           />
         </div>
       </div>
