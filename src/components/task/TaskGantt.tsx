@@ -149,7 +149,7 @@ export const TaskGantt = ({ tasks, projectId, readOnly = false, onEditTask }: Ta
         progress: task.status === 'done' ? 100 : task.status === 'in_progress' ? 50 : 0,
         type: isJalon ? 'milestone' : 'task',
         styles: {
-          backgroundColor: getColorForStatus(task.status),
+          barBackgroundColor: getColorForStatus(task.status),
           progressColor: '#a3a3a3',
         },
         isDisabled: readOnly,
@@ -182,7 +182,7 @@ export const TaskGantt = ({ tasks, projectId, readOnly = false, onEditTask }: Ta
           type: isChildJalon ? 'milestone' : 'task',
           project: taskId,
           styles: {
-            backgroundColor: getColorForStatus(childTask.status),
+            barBackgroundColor: getColorForStatus(childTask.status),
             progressColor: '#a3a3a3',
           },
           isDisabled: readOnly,
@@ -309,7 +309,6 @@ export const TaskGantt = ({ tasks, projectId, readOnly = false, onEditTask }: Ta
             onClick={() => {}}
             onDoubleClick={handleTaskClick}
             onDelete={(task) => console.log('Task deleted', task)}
-            columnWidth={columnWidth}
             TaskListHeader={showTasks ? TaskListHeader : undefined}
             TaskListTable={showTasks ? undefined : undefined}
             TooltipContent={({ task }) => (
