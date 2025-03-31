@@ -86,43 +86,66 @@ export const DHtmlxGanttView = ({ tasks, projectId, readOnly = false, onEditTask
   const profiles = projectMembers?.map(member => member.profiles) || [];
 
   const formatTasks = () => {
-    const ganttTasks: any[] = [];
+    if (!tasks || tasks.length === 0) {
+      console.log("Aucune tâche à afficher dans le Gantt");
+      return [];
+    }
     
-    // Formatter les tâches principales
-    const parentTasks = tasks
-      .filter(task => !task.parent_task_id)
-      .sort((a, b) => {
-        const dateA = a.start_date ? new Date(a.start_date).getTime() : 0;
-        const dateB = b.start_date ? new Date(b.start_date).getTime() : 0;
-        return dateA - dateB;
-      });
-    
-    parentTasks.forEach(task => {
-      ganttTasks.push(convertTaskToGantt(
-        task, 
-        task.assignee ? formatUserName(task.assignee, profiles) : '',
-        readOnly
-      ));
-
-      // Formatter les sous-tâches
-      const childTasks = tasks
-        .filter(childTask => childTask.parent_task_id === task.id)
+    try {
+      const ganttTasks = [];
+      
+      // Formatter les tâches principales
+      const parentTasks = tasks
+        .filter(task => !task.parent_task_id)
         .sort((a, b) => {
           const dateA = a.start_date ? new Date(a.start_date).getTime() : 0;
           const dateB = b.start_date ? new Date(b.start_date).getTime() : 0;
           return dateA - dateB;
         });
       
-      childTasks.forEach(childTask => {
-        ganttTasks.push(convertTaskToGantt(
-          childTask,
-          childTask.assignee ? formatUserName(childTask.assignee, profiles) : '',
-          readOnly
-        ));
-      });
-    });
+      console.log(`Nombre de tâches principales: ${parentTasks.length}`);
+      
+      parentTasks.forEach(task => {
+        try {
+          const ganttTask = convertTaskToGantt(
+            task, 
+            task.assignee ? formatUserName(task.assignee, profiles) : '',
+            readOnly
+          );
+          ganttTasks.push(ganttTask);
+        } catch (error) {
+          console.error(`Erreur lors de la conversion de la tâche principale ${task.id}:`, error);
+        }
 
-    return ganttTasks;
+        // Formatter les sous-tâches
+        const childTasks = tasks
+          .filter(childTask => childTask.parent_task_id === task.id)
+          .sort((a, b) => {
+            const dateA = a.start_date ? new Date(a.start_date).getTime() : 0;
+            const dateB = b.start_date ? new Date(b.start_date).getTime() : 0;
+            return dateA - dateB;
+          });
+        
+        childTasks.forEach(childTask => {
+          try {
+            const ganttChildTask = convertTaskToGantt(
+              childTask,
+              childTask.assignee ? formatUserName(childTask.assignee, profiles) : '',
+              readOnly
+            );
+            ganttTasks.push(ganttChildTask);
+          } catch (error) {
+            console.error(`Erreur lors de la conversion de la sous-tâche ${childTask.id}:`, error);
+          }
+        });
+      });
+
+      console.log(`Total des tâches formatées pour Gantt: ${ganttTasks.length}`);
+      return ganttTasks;
+    } catch (error) {
+      console.error("Erreur lors du formatage des tâches pour Gantt:", error);
+      return [];
+    }
   };
 
   const handleTaskClick = (taskId: string) => {
@@ -173,7 +196,7 @@ export const DHtmlxGanttView = ({ tasks, projectId, readOnly = false, onEditTask
       });
       
       if (onEditTask) {
-        onEditTask(null);
+        onEditTask(null); // Rafraîchir les données
       }
     } catch (error) {
       console.error('Erreur lors de la mise à jour des dates:', error);
@@ -210,6 +233,13 @@ export const DHtmlxGanttView = ({ tasks, projectId, readOnly = false, onEditTask
     }
   };
 
+  const formattedTasks = formatTasks();
+
+  useEffect(() => {
+    console.log("Tasks disponibles pour le Gantt:", tasks?.length || 0);
+    console.log("Tasks formatées pour le Gantt:", formattedTasks.length);
+  }, [tasks]);
+
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center mb-4">
@@ -225,22 +255,28 @@ export const DHtmlxGanttView = ({ tasks, projectId, readOnly = false, onEditTask
         <GanttLegend showTasks={true} />
 
         <div ref={ganttRef} className="h-[600px] w-full overflow-x-auto">
-          <Gantt
-            tasks={formatTasks()}
-            config={ganttConfig}
-            onTaskClick={handleTaskClick}
-            onTaskDblClick={handleTaskClick}
-            onAfterTaskDrag={(taskId, startDate, endDate) => {
-              if (!readOnly) {
-                setIsDragging(false);
-                updateTaskDates(taskId, new Date(startDate), new Date(endDate));
-              }
-            }}
-            onBeforeTaskDrag={() => {
-              setIsDragging(true);
-              return !readOnly;
-            }}
-          />
+          {formattedTasks.length > 0 ? (
+            <Gantt
+              tasks={formattedTasks}
+              config={ganttConfig}
+              onTaskClick={handleTaskClick}
+              onTaskDblClick={handleTaskClick}
+              onAfterTaskDrag={(taskId, startDate, endDate) => {
+                if (!readOnly) {
+                  setIsDragging(false);
+                  updateTaskDates(taskId, new Date(startDate), new Date(endDate));
+                }
+              }}
+              onBeforeTaskDrag={() => {
+                setIsDragging(true);
+                return !readOnly;
+              }}
+            />
+          ) : (
+            <div className="flex items-center justify-center h-full">
+              <p className="text-muted-foreground">Aucune tâche à afficher dans le diagramme Gantt</p>
+            </div>
+          )}
         </div>
       </div>
     </div>

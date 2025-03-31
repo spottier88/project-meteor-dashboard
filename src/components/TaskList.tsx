@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -50,13 +51,17 @@ export const TaskList = ({
   const { data: tasks, refetch } = useQuery({
     queryKey: ["tasks", projectId],
     queryFn: async () => {
+      console.log(`Récupération des tâches pour le projet ${projectId}`);
       const { data, error } = await supabase
         .from("tasks")
         .select("*")
         .eq("project_id", projectId)
         .order("created_at", { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error("Erreur lors de la récupération des tâches:", error);
+        throw error;
+      }
       
       console.log(`Récupération de ${data?.length || 0} tâches pour le projet ${projectId}`);
       return data;

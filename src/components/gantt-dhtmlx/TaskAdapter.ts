@@ -35,12 +35,22 @@ export const convertTaskToGantt = (
   assigneeName: string = '',
   isReadOnly: boolean = false
 ): GanttTask => {
+  // S'assurer que nous avons des dates valides
   const hasStartDate = !!task.start_date;
-  const startDate = task.start_date ? new Date(task.start_date) : 
+  const startDate = hasStartDate ? new Date(task.start_date) : 
                     (task.due_date ? new Date(task.due_date) : new Date());
-  const endDate = task.due_date ? new Date(task.due_date) : new Date(startDate);
   
-  const isMilestone = !hasStartDate || (task.start_date === task.due_date);
+  // Pour l'end_date, s'assurer qu'elle est après la start_date ou le même jour pour les jalons
+  let endDate = task.due_date ? new Date(task.due_date) : new Date(startDate);
+  
+  // Si la date de fin est avant la date de début, utilisez la date de début
+  if (endDate < startDate) {
+    endDate = new Date(startDate);
+  }
+  
+  // Déterminer si c'est un jalon (même date début/fin ou pas de date de début)
+  const isMilestone = (!hasStartDate && task.due_date) || 
+                      (task.start_date && task.due_date && task.start_date === task.due_date);
   
   return {
     id: task.id,
