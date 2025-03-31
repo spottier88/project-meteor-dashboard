@@ -1,9 +1,9 @@
 
 /**
- * Adaptateurs pour convertir les données de tâches vers le format attendu par DHtmlX Gantt
+ * Adaptateurs pour convertir les données de tâches vers le format attendu par le composant Gantt
  */
 
-export interface DhtmlxTask {
+export interface GanttTask {
   id: string;
   text: string;
   start_date: Date;
@@ -28,13 +28,13 @@ export interface TaskData {
 }
 
 /**
- * Convertit une tâche du format de l'application vers le format DHtmlX
+ * Convertit une tâche du format de l'application vers le format attendu par le Gantt
  */
-export const convertTaskToDhtmlx = (
+export const convertTaskToGantt = (
   task: TaskData, 
   assigneeName: string = '',
   isReadOnly: boolean = false
-): DhtmlxTask => {
+): GanttTask => {
   const hasStartDate = !!task.start_date;
   const startDate = task.start_date ? new Date(task.start_date) : 
                     (task.due_date ? new Date(task.due_date) : new Date());

@@ -1,13 +1,14 @@
 
 import { useEffect, useRef, useState } from 'react';
-import { Gantt } from '@dhtmlx/trial-react-gantt';
+import { Gantt } from 'wx-react-gantt';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { formatUserName } from '@/utils/formatUserName';
-import { toast } from '@/hooks/use-toast';
+import { useToast } from '@/components/ui/use-toast';
 import { format } from 'date-fns';
 import { GanttViewButtons } from '@/components/gantt/GanttViewButtons';
 import { GanttLegend } from '@/components/gantt/GanttLegend';
+import { convertTaskToGantt } from './TaskAdapter';
 
 interface DHtmlxGanttViewProps {
   tasks: Array<{
@@ -31,6 +32,7 @@ export const DHtmlxGanttView = ({ tasks, projectId, readOnly = false, onEditTask
   const [viewMode, setViewMode] = useState<'day' | 'week' | 'month'>('month');
   const ganttRef = useRef<HTMLDivElement>(null);
   const [isDragging, setIsDragging] = useState(false);
+  const { toast } = useToast();
 
   const { data: projectMembers } = useQuery({
     queryKey: ["projectMembers", projectId],
@@ -83,21 +85,8 @@ export const DHtmlxGanttView = ({ tasks, projectId, readOnly = false, onEditTask
 
   const profiles = projectMembers?.map(member => member.profiles) || [];
 
-  const getColorForStatus = (status: string) => {
-    switch (status) {
-      case 'todo':
-        return '#F2FCE2';
-      case 'in_progress':
-        return '#D3E4FD';
-      case 'done':
-        return '#E2E8F0';
-      default:
-        return '#F3F4F6';
-    }
-  };
-
   const formatTasks = () => {
-    const dhtmlxTasks: any[] = [];
+    const ganttTasks: any[] = [];
     
     // Formatter les tâches principales
     const parentTasks = tasks
@@ -109,24 +98,11 @@ export const DHtmlxGanttView = ({ tasks, projectId, readOnly = false, onEditTask
       });
     
     parentTasks.forEach(task => {
-      const hasStartDate = !!task.start_date;
-      const taskStartDate = task.start_date ? new Date(task.start_date) : 
-                          (task.due_date ? new Date(task.due_date) : new Date());
-      const taskEndDate = task.due_date ? new Date(task.due_date) : new Date();
-      
-      const isJalon = !hasStartDate || (task.start_date === task.due_date);
-      
-      dhtmlxTasks.push({
-        id: task.id,
-        text: `${task.title} ${task.assignee ? `- ${formatUserName(task.assignee, profiles)}` : ''}`,
-        start_date: taskStartDate,
-        end_date: taskEndDate,
-        progress: task.status === 'done' ? 1 : task.status === 'in_progress' ? 0.5 : 0,
-        type: isJalon ? 'milestone' : 'task',
-        color: getColorForStatus(task.status),
-        parent: 0,
-        readonly: readOnly
-      });
+      ganttTasks.push(convertTaskToGantt(
+        task, 
+        task.assignee ? formatUserName(task.assignee, profiles) : '',
+        readOnly
+      ));
 
       // Formatter les sous-tâches
       const childTasks = tasks
@@ -138,28 +114,15 @@ export const DHtmlxGanttView = ({ tasks, projectId, readOnly = false, onEditTask
         });
       
       childTasks.forEach(childTask => {
-        const hasChildStartDate = !!childTask.start_date;
-        const childStartDate = childTask.start_date ? new Date(childTask.start_date) : 
-                              (childTask.due_date ? new Date(childTask.due_date) : taskStartDate);
-        const childEndDate = childTask.due_date ? new Date(childTask.due_date) : taskEndDate;
-        
-        const isChildJalon = !hasChildStartDate || (childTask.start_date === childTask.due_date);
-        
-        dhtmlxTasks.push({
-          id: childTask.id,
-          text: `${childTask.title} ${childTask.assignee ? `- ${formatUserName(childTask.assignee, profiles)}` : ''}`,
-          start_date: childStartDate,
-          end_date: childEndDate,
-          progress: childTask.status === 'done' ? 1 : childTask.status === 'in_progress' ? 0.5 : 0,
-          type: isChildJalon ? 'milestone' : 'task',
-          color: getColorForStatus(childTask.status),
-          parent: task.id,
-          readonly: readOnly
-        });
+        ganttTasks.push(convertTaskToGantt(
+          childTask,
+          childTask.assignee ? formatUserName(childTask.assignee, profiles) : '',
+          readOnly
+        ));
       });
     });
 
-    return dhtmlxTasks;
+    return ganttTasks;
   };
 
   const handleTaskClick = (taskId: string) => {
@@ -222,7 +185,7 @@ export const DHtmlxGanttView = ({ tasks, projectId, readOnly = false, onEditTask
     }
   };
 
-  // Configuration du Gantt DHTMLX
+  // Configuration du Gantt
   const ganttConfig = {
     locale: 'fr',
     readonly: readOnly,
