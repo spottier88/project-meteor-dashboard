@@ -1,7 +1,7 @@
 
 import { useEffect, useRef, useState } from 'react';
-import { Gantt, Task, ViewMode } from '@wamra/gantt-task-react';
-import "@wamra/gantt-task-react/dist/index.css";
+import { Gantt, Task, ViewMode } from 'gantt-task-react';
+import "gantt-task-react/dist/index.css";
 import { GanttViewButtons } from '@/components/gantt/GanttViewButtons';
 import { GanttLegend } from '@/components/gantt/GanttLegend';
 import { useQuery } from '@tanstack/react-query';
@@ -37,7 +37,6 @@ export const TaskGantt = ({ tasks, projectId, readOnly = false, onEditTask }: Ta
   const [viewMode, setViewMode] = useState<ViewMode>(ViewMode.Month);
   const [showTasks, setShowTasks] = useState(true);
   const [isDragging, setIsDragging] = useState(false);
-  const [columnWidth, setColumnWidth] = useState(300);
   const ganttRef = useRef<HTMLDivElement>(null);
   const [refreshKey, setRefreshKey] = useState(0);
 
@@ -149,7 +148,7 @@ export const TaskGantt = ({ tasks, projectId, readOnly = false, onEditTask }: Ta
         progress: task.status === 'done' ? 100 : task.status === 'in_progress' ? 50 : 0,
         type: isJalon ? 'milestone' : 'task',
         styles: {
-          barBackgroundColor: getColorForStatus(task.status),
+          backgroundColor: getColorForStatus(task.status),
           progressColor: '#a3a3a3',
         },
         isDisabled: readOnly,
@@ -182,7 +181,7 @@ export const TaskGantt = ({ tasks, projectId, readOnly = false, onEditTask }: Ta
           type: isChildJalon ? 'milestone' : 'task',
           project: taskId,
           styles: {
-            barBackgroundColor: getColorForStatus(childTask.status),
+            backgroundColor: getColorForStatus(childTask.status),
             progressColor: '#a3a3a3',
           },
           isDisabled: readOnly,
@@ -259,15 +258,12 @@ export const TaskGantt = ({ tasks, projectId, readOnly = false, onEditTask }: Ta
     switch (mode) {
       case 'week':
         setViewMode(ViewMode.Week);
-        setColumnWidth(250);
         break;
       case 'month':
         setViewMode(ViewMode.Month);
-        setColumnWidth(300);
         break;
       case 'year':
         setViewMode(ViewMode.Year);
-        setColumnWidth(350);
         break;
     }
   };
@@ -319,13 +315,12 @@ export const TaskGantt = ({ tasks, projectId, readOnly = false, onEditTask }: Ta
                 <div>Statut: {task.progress === 100 ? 'Terminé' : task.progress > 0 ? 'En cours' : 'À faire'}</div>
               </div>
             )}
-            locale="fr"
             arrowColor="#777"
             todayColor="rgba(252, 220, 0, 0.4)"
-            barProgressColor="#a3a3a3"
-            projectProgressColor="#7db59a"
-            projectProgressSelectedColor="#59a985"
-            fontFamily="Arial, sans-serif"
+            barFill="#a3a3a3"
+            barProgressColor="#7db59a"
+            projectProgressColor="#59a985"
+            rtl={false}
           />
         </div>
       </div>

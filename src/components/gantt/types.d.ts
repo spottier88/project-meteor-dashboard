@@ -1,5 +1,5 @@
 
-import { Task as GanttReactTask } from '@wamra/gantt-task-react';
+import { Task as GanttReactTask } from 'gantt-task-react';
 
 // Définir une interface pour les dépendances selon la bibliothèque
 export interface Dependency {
