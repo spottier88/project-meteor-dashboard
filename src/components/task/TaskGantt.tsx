@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Gantt, Task, ViewMode, StylingOption } from '@wamra/gantt-task-react';
+import { Gantt, Task, ViewMode } from '@wamra/gantt-task-react';
 import "@wamra/gantt-task-react/dist/index.css";
 import { GanttViewButtons } from '@/components/gantt/GanttViewButtons';
 import { GanttLegend } from '@/components/gantt/GanttLegend';
@@ -179,7 +179,7 @@ export const TaskGantt = ({ tasks, projectId, readOnly = false, onEditTask }: Ta
           progress: childTask.status === 'done' ? 100 : childTask.status === 'in_progress' ? 50 : 0,
           type: isChildJalon ? 'milestone' : 'task',
           project: taskId,
-          dependencies: taskId ? [taskId] : undefined,
+          dependencies: undefined,
           styles: {
             barBackgroundColor: getColorForStatus(childTask.status),
             barProgressColor: '#a3a3a3',
@@ -308,7 +308,6 @@ export const TaskGantt = ({ tasks, projectId, readOnly = false, onEditTask }: Ta
             onClick={() => {}}
             onDoubleClick={handleTaskClick}
             onDelete={(task) => console.log('Task deleted', task)}
-            rowHeight={50}
             barCornerRadius={14}
             handleWidth={8}
             TaskListHeader={showTasks ? TaskListHeader : undefined}

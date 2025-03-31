@@ -1,6 +1,14 @@
 
 import { Task as GanttReactTask } from '@wamra/gantt-task-react';
 
+// Définir une interface pour les dépendances selon la bibliothèque
+export interface Dependency {
+  id: string;
+  predecessorId: string;
+  successorId: string;
+  type: number;
+}
+
 // Ajoutons une extension du type Task de gantt-task-react pour notre utilisation spécifique
 export interface ExtendedGanttTask extends GanttReactTask {
   _isMilestone?: boolean;
