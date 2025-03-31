@@ -1,3 +1,4 @@
+
 import { Task as GanttReactTask } from 'gantt-task-react';
 
 // Ajoutons une extension du type Task de gantt-task-react pour notre utilisation spécifique

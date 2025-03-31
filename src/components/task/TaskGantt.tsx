@@ -4,10 +4,12 @@ import { Gantt, Task, ViewMode } from 'gantt-task-react';
 import "gantt-task-react/dist/index.css";
 import { GanttViewButtons } from '@/components/gantt/GanttViewButtons';
 import { GanttLegend } from '@/components/gantt/GanttLegend';
-import { GanttTask } from '@/components/gantt/types';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { formatUserName } from '@/utils/formatUserName';
+import { ExtendedGanttTask } from '@/components/gantt/types';
+import { toast } from '@/hooks/use-toast';
+import { format } from 'date-fns';
 
 interface TaskGanttProps {
   tasks: Array<{
@@ -209,9 +211,50 @@ export const TaskGantt = ({ tasks, projectId, readOnly = false, onEditTask }: Ta
     setIsDragging(true);
   };
 
+  // Nouvelle fonction pour mettre à jour une tâche dans la base de données
+  const updateTaskDates = async (taskId: string, startDate: Date, endDate: Date) => {
+    try {
+      // Formatage des dates pour la base de données (YYYY-MM-DD)
+      const formattedStartDate = format(startDate, 'yyyy-MM-dd');
+      const formattedEndDate = format(endDate, 'yyyy-MM-dd');
+      
+      const { error } = await supabase
+        .from('tasks')
+        .update({
+          start_date: formattedStartDate,
+          due_date: formattedEndDate
+        })
+        .eq('id', taskId);
+      
+      if (error) throw error;
+      
+      toast({
+        title: 'Tâche mise à jour',
+        description: `Dates ajustées : du ${format(startDate, 'dd/MM/yyyy')} au ${format(endDate, 'dd/MM/yyyy')}`,
+      });
+      
+      // Force un rafraîchissement des tâches
+      if (onEditTask) {
+        onEditTask(null);
+      }
+    } catch (error) {
+      console.error('Erreur lors de la mise à jour des dates:', error);
+      toast({
+        title: 'Erreur',
+        description: 'Impossible de mettre à jour les dates de la tâche',
+        variant: 'destructive',
+      });
+    }
+  };
+
   const handleTaskChange = (task: Task) => {
-    // Ici nous pourrons implémenter la mise à jour de la tâche via Supabase
-    console.log('Task updated', task);
+    if (readOnly) return;
+    
+    const originalTask = tasks.find(t => t.id === task.id);
+    if (originalTask) {
+      updateTaskDates(task.id, task.start, task.end);
+    }
+    
     setTimeout(() => {
       setIsDragging(false);
     }, 500);
@@ -285,8 +328,8 @@ export const TaskGantt = ({ tasks, projectId, readOnly = false, onEditTask }: Ta
             TooltipContent={({ task }) => (
               <div className="p-2 bg-white shadow rounded border">
                 <div><strong>{task.name}</strong></div>
-                <div>Début: {task.start.toLocaleDateString('fr-FR')}</div>
-                <div>Fin: {task.end.toLocaleDateString('fr-FR')}</div>
+                <div>Début: {format(task.start, 'dd/MM/yyyy')}</div>
+                <div>Fin: {format(task.end, 'dd/MM/yyyy')}</div>
                 <div>Statut: {task.progress === 100 ? 'Terminé' : task.progress > 0 ? 'En cours' : 'À faire'}</div>
               </div>
             )}
@@ -296,6 +339,34 @@ export const TaskGantt = ({ tasks, projectId, readOnly = false, onEditTask }: Ta
             barProgressColor="#a3a3a3"
             projectProgressColor="#7db59a"
             projectProgressSelectedColor="#59a985"
+            TaskListTable={{
+              columns: [
+                {
+                  id: 'name',
+                  label: 'Titre',
+                  width: 220,
+                  renderer: (props) => (
+                    <div className="truncate px-2 font-medium">{props.task.name}</div>
+                  ),
+                },
+                {
+                  id: 'start',
+                  label: 'Début',
+                  width: 85,
+                  renderer: (props) => (
+                    <div className="px-2">{format(props.task.start, 'dd/MM/yy')}</div>
+                  ),
+                },
+                {
+                  id: 'end',
+                  label: 'Fin',
+                  width: 85,
+                  renderer: (props) => (
+                    <div className="px-2">{format(props.task.end, 'dd/MM/yy')}</div>
+                  ),
+                },
+              ],
+            }}
           />
         </div>
       </div>
