@@ -12,6 +12,7 @@ export interface Dependency {
 // Ajoutons une extension du type Task de gantt-task-react pour notre utilisation spécifique
 export interface ExtendedGanttTask extends GanttReactTask {
   _isMilestone?: boolean;
+  project?: string; // Ajout de la propriété project pour la relation parent-enfant
 }
 
 // Conservons les interfaces existantes telles quelles pour la compatibilité
