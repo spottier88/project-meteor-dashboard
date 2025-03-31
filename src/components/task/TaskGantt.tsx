@@ -1,4 +1,3 @@
-
 import { useEffect, useRef, useState } from 'react';
 import { Gantt, Task, ViewMode, StylingOption } from '@wamra/gantt-task-react';
 import "@wamra/gantt-task-react/dist/index.css";
@@ -31,9 +30,6 @@ interface TaskGanttProps {
 interface ExtendedTask extends Task {
   _isMilestone?: boolean;
 }
-
-// Type définissant la structure d'une dépendance dans cette version de Gantt
-type Dependency = string;
 
 export const TaskGantt = ({ tasks, projectId, readOnly = false, onEditTask }: TaskGanttProps) => {
   const [viewMode, setViewMode] = useState<ViewMode>(ViewMode.Month);
@@ -183,8 +179,7 @@ export const TaskGantt = ({ tasks, projectId, readOnly = false, onEditTask }: Ta
           progress: childTask.status === 'done' ? 100 : childTask.status === 'in_progress' ? 50 : 0,
           type: isChildJalon ? 'milestone' : 'task',
           project: taskId,
-          // Dans cette version de la bibliothèque, les dépendances sont des chaînes simples
-          dependencies: taskId ? [taskId] : [],
+          dependencies: taskId ? [taskId] : undefined,
           styles: {
             barBackgroundColor: getColorForStatus(childTask.status),
             barProgressColor: '#a3a3a3',
@@ -313,8 +308,6 @@ export const TaskGantt = ({ tasks, projectId, readOnly = false, onEditTask }: Ta
             onClick={() => {}}
             onDoubleClick={handleTaskClick}
             onDelete={(task) => console.log('Task deleted', task)}
-            // Utilisons height au lieu de ganttHeight qui n'est plus supporté
-            height={600}
             rowHeight={50}
             barCornerRadius={14}
             handleWidth={8}
