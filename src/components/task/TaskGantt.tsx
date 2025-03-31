@@ -6,7 +6,7 @@ import { GanttLegend } from '@/components/gantt/GanttLegend';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { formatUserName } from '@/utils/formatUserName';
-import { ExtendedGanttTask } from '@/components/gantt/types';
+import { ExtendedGanttTask } from '@/components/gantt/types.d';
 import { toast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
 
@@ -27,7 +27,6 @@ interface TaskGanttProps {
   onEditTask?: (task: any) => void;
 }
 
-// Étendre l'interface Task pour ajouter notre propriété personnalisée
 interface ExtendedTask extends Task {
   _isMilestone?: boolean;
 }
@@ -36,9 +35,8 @@ export const TaskGantt = ({ tasks, projectId, readOnly = false, onEditTask }: Ta
   const [viewMode, setViewMode] = useState<ViewMode>(ViewMode.Month);
   const [showTasks, setShowTasks] = useState(true);
   const [isDragging, setIsDragging] = useState(false);
-  const [columnWidth, setColumnWidth] = useState(300); // Valeur par défaut pour le mode Mois
+  const [columnWidth, setColumnWidth] = useState(300);
   const ganttRef = useRef<HTMLDivElement>(null);
-  // Nouvel état pour forcer le rafraîchissement
   const [refreshKey, setRefreshKey] = useState(0);
 
   useEffect(() => {
@@ -210,10 +208,8 @@ export const TaskGantt = ({ tasks, projectId, readOnly = false, onEditTask }: Ta
     setIsDragging(true);
   };
 
-  // Nouvelle fonction pour mettre à jour une tâche dans la base de données
   const updateTaskDates = async (taskId: string, startDate: Date, endDate: Date) => {
     try {
-      // Formatage des dates pour la base de données (YYYY-MM-DD)
       const formattedStartDate = format(startDate, 'yyyy-MM-dd');
       const formattedEndDate = format(endDate, 'yyyy-MM-dd');
       
@@ -232,7 +228,6 @@ export const TaskGantt = ({ tasks, projectId, readOnly = false, onEditTask }: Ta
         description: `Dates ajustées : du ${format(startDate, 'dd/MM/yyyy')} au ${format(endDate, 'dd/MM/yyyy')}`,
       });
       
-      // Force un rafraîchissement des tâches
       if (onEditTask) {
         onEditTask(null);
       }
@@ -280,7 +275,6 @@ export const TaskGantt = ({ tasks, projectId, readOnly = false, onEditTask }: Ta
     setShowTasks(value);
   };
 
-  // Personnalisation des en-têtes pour le composant Gantt
   const TaskListHeader = () => {
     return (
       <div className="grid grid-cols-3 font-semibold bg-gray-100 border-b border-gray-200">
