@@ -1,3 +1,4 @@
+
 import { useEffect, useRef, useState } from 'react';
 import { Gantt, Task, ViewMode } from '@wamra/gantt-task-react';
 import "@wamra/gantt-task-react/dist/index.css";
@@ -308,7 +309,8 @@ export const TaskGantt = ({ tasks, projectId, readOnly = false, onEditTask }: Ta
             onClick={() => {}}
             onDoubleClick={handleTaskClick}
             onDelete={(task) => console.log('Task deleted', task)}
-            handleWidth={8}
+            listCellWidth={columnWidth}
+            columnWidth={columnWidth}
             TaskListHeader={showTasks ? TaskListHeader : undefined}
             TaskListTable={showTasks ? undefined : undefined}
             TooltipContent={({ task }) => (
