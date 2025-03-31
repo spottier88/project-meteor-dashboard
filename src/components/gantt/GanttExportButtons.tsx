@@ -1,4 +1,3 @@
-
 /**
  * @component GanttExportButtons
  * @description Boutons d'exportation pour le diagramme de Gantt.
@@ -11,10 +10,10 @@ import { Button } from '@/components/ui/button';
 import { FileSpreadsheet, Image } from 'lucide-react';
 import html2canvas from 'html2canvas';
 import * as XLSX from 'xlsx';
-import { Task } from 'gantt-task-react';
+import { GanttTask } from './types';
 
 interface GanttExportButtonsProps {
-  tasks: Task[];
+  tasks: GanttTask[];
   ganttRef: React.RefObject<HTMLDivElement>;
 }
 
@@ -26,9 +25,9 @@ export const GanttExportButtons = ({ tasks, ganttRef }: GanttExportButtonsProps)
       'Date de fin': task.end.toLocaleDateString('fr-FR'),
       'Type': task.type === 'project' ? 'Projet' : 'Tâche',
       'Statut': task.type === 'project' 
-        ? 'N/A' 
-        : (task.progress === 100 ? 'Terminé' : (task.progress > 0 ? 'En cours' : 'À faire')),
-      'Avancement (%)': Math.round(task.progress || 0)
+        ? task.lifecycle_status 
+        : task.status,
+      'Avancement (%)': task.type === 'project' ? task.completion || 0 : ''
     }));
 
     const ws = XLSX.utils.json_to_sheet(data);

@@ -1,20 +1,14 @@
 
 import { useEffect, useRef, useState } from 'react';
-import { Gantt, Task, ViewMode } from '@wamra/gantt-task-react';
-import "@wamra/gantt-task-react/dist/style.css";
+import Timeline from 'react-gantt-timeline';
 import { GanttViewButtons } from '@/components/gantt/GanttViewButtons';
 import { GanttLegend } from '@/components/gantt/GanttLegend';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { GanttTask, GanttLink } from '@/components/gantt/types';
+import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { formatUserName } from '@/utils/formatUserName';
-import { useToast } from '@/hooks/use-toast';
 
-// Extension du type Task pour inclure notre propriété _isMilestone
-interface ExtendedTask extends Task {
-  _isMilestone?: boolean;
-}
-
-interface TaskInterface {
+interface Task {
   id: string;
   title: string;
   description?: string;
@@ -27,39 +21,26 @@ interface TaskInterface {
 }
 
 interface TaskGanttProps {
-  tasks: TaskInterface[];
+  tasks: Task[];
   projectId: string;
   readOnly?: boolean;
-  onEditTask?: (task: TaskInterface) => void;
+  onEditTask?: (task: Task) => void;
 }
 
 export const TaskGantt = ({ tasks, projectId, readOnly = false, onEditTask }: TaskGanttProps) => {
-  const [viewMode, setViewMode] = useState<ViewMode>(ViewMode.Month);
+  const [mode, setMode] = useState<'week' | 'month' | 'year'>('month');
+  const [dayWidth, setDayWidth] = useState(30);
   const [showTasks, setShowTasks] = useState(true);
-  const [isDragging, setIsDragging] = useState(false);
-  // Ajout d'un état pour la largeur des colonnes
-  const [columnWidth, setColumnWidth] = useState(300); // Valeur par défaut pour le mode Mois
   const ganttRef = useRef<HTMLDivElement>(null);
-  const { toast } = useToast();
-  const queryClient = useQueryClient();
-  // Nouvel état pour forcer le rafraîchissement
-  const [refreshKey, setRefreshKey] = useState(0);
-  
+
   useEffect(() => {
     const timer = setTimeout(() => {
-      setViewMode(prev => prev);
+      setDayWidth(prevWidth => prevWidth + 0.1);
+      setTimeout(() => setDayWidth(prevWidth => Math.floor(prevWidth)), 50);
     }, 100);
     
     return () => clearTimeout(timer);
   }, []);
-
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setRefreshKey(prev => prev + 1);
-    }, 50);
-    
-    return () => clearTimeout(timer);
-  }, [showTasks]);
 
   const { data: projectMembers } = useQuery({
     queryKey: ["projectMembers", projectId],
@@ -110,43 +91,6 @@ export const TaskGantt = ({ tasks, projectId, readOnly = false, onEditTask }: Ta
     enabled: !!projectId,
   });
 
-  const updateTaskDatesMutation = useMutation({
-    mutationFn: async (updatedTask: { id: string; start_date?: string; due_date?: string }) => {
-      const { id, start_date, due_date } = updatedTask;
-      
-      const { error } = await supabase
-        .from('tasks')
-        .update({ 
-          start_date: start_date, 
-          due_date: due_date 
-        })
-        .eq('id', id);
-      
-      if (error) throw error;
-      
-      return updatedTask;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['tasks', projectId] });
-      toast({
-        title: "Tâche mise à jour",
-        description: "Les dates de la tâche ont été mises à jour avec succès.",
-      });
-    },
-    onError: (error) => {
-      const errorMessage = error instanceof Error 
-        ? error.message 
-        : "Une erreur inconnue s'est produite";
-        
-      toast({
-        variant: "destructive",
-        title: "Erreur",
-        description: `Impossible de mettre à jour la tâche: ${errorMessage}`,
-      });
-      console.error("Erreur lors de la mise à jour de la tâche:", error);
-    }
-  });
-
   const profiles = projectMembers?.map(member => member.profiles) || [];
 
   const getColorForStatus = (status: string) => {
@@ -162,8 +106,8 @@ export const TaskGantt = ({ tasks, projectId, readOnly = false, onEditTask }: Ta
     }
   };
 
-  const generateGanttTasks = (): Task[] => {
-    const ganttTasks: Task[] = [];
+  const generateTasks = (): GanttTask[] => {
+    const allTasks: GanttTask[] = [];
     
     const parentTasks = tasks
       .filter(task => !task.parent_task_id)
@@ -175,27 +119,24 @@ export const TaskGantt = ({ tasks, projectId, readOnly = false, onEditTask }: Ta
     
     parentTasks.forEach(task => {
       const taskId = task.id;
+      // Si la tâche n'a qu'une date d'échéance, utiliser celle-ci comme date de début également (jalon)
       const hasStartDate = !!task.start_date;
       const taskStartDate = task.start_date ? new Date(task.start_date) : 
                            (task.due_date ? new Date(task.due_date) : new Date());
       const taskEndDate = task.due_date ? new Date(task.due_date) : new Date();
       
+      // Déterminer si c'est un jalon ou une tâche normale
       const isJalon = !hasStartDate || (task.start_date === task.due_date);
       
-      ganttTasks.push({
+      allTasks.push({
         id: taskId,
-        name: `${task.title} ${task.assignee ? `- ${formatUserName(task.assignee, profiles)}` : ''}`,
         start: taskStartDate,
         end: taskEndDate,
-        progress: task.status === 'done' ? 100 : (task.status === 'in_progress' ? 50 : 0),
+        name: `${task.title} ${task.assignee ? `- ${formatUserName(task.assignee, profiles)}` : ''}`,
+        color: getColorForStatus(task.status),
         type: isJalon ? 'milestone' : 'task',
-        styles: { 
-          backgroundColor: getColorForStatus(task.status),
-          progressColor: '#a3a3a3'
-        },
-        isDisabled: readOnly,
-        _isMilestone: isJalon
-      } as ExtendedTask);
+        project_id: task.project_id,
+      });
       
       const childTasks = tasks
         .filter(childTask => childTask.parent_task_id === task.id)
@@ -207,166 +148,193 @@ export const TaskGantt = ({ tasks, projectId, readOnly = false, onEditTask }: Ta
       
       childTasks.forEach(childTask => {
         const childTaskId = childTask.id;
+        // Même logique pour les sous-tâches - traiter comme jalon si pas de date de début
         const hasChildStartDate = !!childTask.start_date;
         const childStartDate = childTask.start_date ? new Date(childTask.start_date) : 
                               (childTask.due_date ? new Date(childTask.due_date) : taskStartDate);
         const childEndDate = childTask.due_date ? new Date(childTask.due_date) : taskEndDate;
         
+        // Déterminer si c'est un jalon ou une sous-tâche normale
         const isChildJalon = !hasChildStartDate || (childTask.start_date === childTask.due_date);
         
-        ganttTasks.push({
+        allTasks.push({
           id: childTaskId,
-          name: `   ${childTask.title} ${childTask.assignee ? `- ${formatUserName(childTask.assignee, profiles)}` : ''}`,
           start: childStartDate,
           end: childEndDate,
-          progress: childTask.status === 'done' ? 100 : (childTask.status === 'in_progress' ? 50 : 0),
-          type: isChildJalon ? 'milestone' : 'task',
-          project: taskId,
-          dependencies: [taskId],
-          styles: { 
-            backgroundColor: getColorForStatus(childTask.status),
-            progressColor: '#a3a3a3'
-          },
-          isDisabled: readOnly,
-          _isMilestone: isChildJalon
-        } as ExtendedTask);
+          name: `  └ ${childTask.title} ${childTask.assignee ? `- ${formatUserName(childTask.assignee, profiles)}` : ''}`,
+          color: getColorForStatus(childTask.status),
+          type: isChildJalon ? 'milestone' : 'subtask',
+          project_id: childTask.project_id,
+          parent_id: taskId,
+          parent_task_id: task.id,
+        });
       });
     });
 
-    return ganttTasks;
+    return allTasks;
   };
 
-  const handleTaskClick = (task: Task) => {
-    if (isDragging) return;
+  const generateLinks = (tasks: GanttTask[]): GanttLink[] => {
+    const links: GanttLink[] = [];
     
-    if (!readOnly && onEditTask) {
-      const originalTask = tasks.find(t => t.id === task.id);
-      if (originalTask) {
-        onEditTask(originalTask);
+    tasks.forEach(task => {
+      if (task.type === 'subtask' && task.parent_id) {
+        links.push({
+          id: `link-task-${task.id}`,
+          source: task.parent_id,
+          target: task.id,
+          type: 'finish_to_start'
+        });
       }
-    }
-  };
-
-  const handleDragStart = () => {
-    setIsDragging(true);
-  };
-
-  const handleTaskChange = (task: ExtendedTask) => {
-    if (readOnly) return;
-    
-    setIsDragging(true);
-    
-    const originalTask = tasks.find(t => t.id === task.id);
-    if (!originalTask) return;
-
-    const isMilestone = task._isMilestone || task.type === 'milestone';
-    
-    let startDate = task.start.toISOString();
-    let dueDate = task.end.toISOString();
-    
-    if (isMilestone) {
-      startDate = dueDate;
-    }
-    
-    if (startDate === originalTask.start_date && dueDate === originalTask.due_date) {
-      setIsDragging(false);
-      return;
-    }
-    
-    updateTaskDatesMutation.mutate({
-      id: task.id,
-      start_date: startDate,
-      due_date: dueDate
     });
     
-    setTimeout(() => {
-      setIsDragging(false);
-    }, 500);
+    return links;
   };
 
-  const handleViewModeChange = (mode: 'week' | 'month' | 'year') => {
-    switch (mode) {
+  const ganttTasks = generateTasks();
+  const links = generateLinks(ganttTasks);
+
+  const setViewMode = (newMode: 'week' | 'month' | 'year') => {
+    setMode(newMode);
+    switch (newMode) {
       case 'week':
-        setViewMode(ViewMode.Week);
-        setColumnWidth(250);
+        setDayWidth(60);
         break;
       case 'month':
-        setViewMode(ViewMode.Month);
-        setColumnWidth(300);
+        setDayWidth(30);
         break;
       case 'year':
-        setViewMode(ViewMode.Year);
-        setColumnWidth(350);
+        setDayWidth(15);
         break;
     }
-  };
-
-  const handleShowTasksChange = (value: boolean) => {
-    setShowTasks(value);
-  };
-
-  // Personnalisation des en-têtes pour le composant Gantt
-  const TaskListHeader = () => {
-    return (
-      <div className="grid grid-cols-3 font-semibold bg-gray-100 border-b border-gray-200">
-        <div className="p-2 truncate">Titre</div>
-        <div className="p-2 truncate">Début</div>
-        <div className="p-2 truncate">Fin</div>
-      </div>
-    );
   };
 
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center mb-4">
         <GanttViewButtons
-          mode={viewMode === ViewMode.Week ? 'week' : (viewMode === ViewMode.Month ? 'month' : 'year')}
+          mode={mode}
           showTasks={showTasks}
-          onViewModeChange={handleViewModeChange}
-          onShowTasksChange={handleShowTasksChange}
+          onViewModeChange={setViewMode}
+          onShowTasksChange={setShowTasks}
         />
       </div>
 
       <div className="bg-white p-4 rounded-lg shadow">
         <GanttLegend showTasks={true} />
 
-        <div ref={ganttRef} className="h-full w-full overflow-x-auto">
-          <Gantt
-            key={`gantt-${refreshKey}-${showTasks ? 'with-labels' : 'no-labels'}-${viewMode}`}
-            tasks={generateGanttTasks()}
-            viewMode={viewMode}
-            onDateChange={handleTaskChange}
-            onProgressChange={(task) => console.log('Progress changed', task)}
-            onClick={() => {}} // Ne rien faire sur clic simple
-            onDoubleClick={handleTaskClick} // Ouvrir le formulaire sur double-clic
-            onDelete={(task) => console.log('Task deleted', task)}
-            onSelect={(task) => console.log('Task selected', task)}
-            onExpanderClick={handleDragStart}
-            listCellWidth={showTasks ? "150" : "0"} // Utiliser 0 pour masquer la colonne des titres
-            ganttHeight={0}
-            rowHeight={50}
-            barCornerRadius={14}
-            handleWidth={8}
-            columnWidth={columnWidth} // Utiliser la largeur de colonne dynamique
-            fontFamily="Arial, sans-serif"
-            TaskListHeader={showTasks ? TaskListHeader : undefined}
-            TooltipContent={({ task }) => (
-              <div className="p-2 bg-white shadow rounded border">
-                <div><strong>{task.name}</strong></div>
-                <div>Début: {task.start.toLocaleDateString('fr-FR')}</div>
-                <div>Fin: {task.end.toLocaleDateString('fr-FR')}</div>
-                <div>Statut: {
-                  task.progress === 100 ? 'Terminé' : 
-                  (task.progress > 0 ? 'En cours' : 'À faire')
-                }</div>
-              </div>
-            )}
-            locale="fr"
-            arrowColor="#777"
-            todayColor="rgba(252, 220, 0, 0.4)"
-            barProgressColor="#a3a3a3"
-            projectProgressColor="#7db59a"
-            projectProgressSelectedColor="#59a985"
+        <div ref={ganttRef} className="h-[600px] w-full overflow-x-auto">
+          <Timeline 
+            data={ganttTasks}
+            links={links}
+            mode={mode}
+            onSelectItem={(item) => {
+              if (!readOnly && onEditTask) {
+                const task = tasks.find(t => t.id === item.id);
+                if (task) {
+                  onEditTask(task);
+                }
+              }
+            }}
+            itemHeight={50}
+            rowHeight={45}
+            taskHeight={40}
+            nonWorkingDays={[6, 0]}
+            dayWidth={dayWidth}
+            config={{
+              header: {
+                top: {
+                  style: {backgroundColor: "#333333"}
+                },
+                middle: {
+                  style: {backgroundColor: "chocolate"},
+                  selectedStyle: {backgroundColor: "#b13525"}
+                },
+                bottom: {
+                  style: {background: "grey", fontSize: 9},
+                  selectedStyle: {backgroundColor: "#b13525", fontWeight: 'bold'}
+                }
+              },
+              taskList: {
+                title: {
+                  label: "Tâches",
+                  style: {
+                    backgroundColor: '#333333',
+                    borderBottom: 'solid 1px silver',
+                    color: 'white',
+                    textAlign: 'left',
+                    padding: '0 10px'
+                  }
+                },
+                task: {
+                  style: {
+                    textAlign: 'left',
+                    padding: '0 10px'
+                  }
+                },
+                verticalSeparator: {
+                  style: {backgroundColor: '#333333'},
+                  grip: {
+                    style: {backgroundColor: '#cfcfcd'}
+                  }
+                },
+                display: showTasks,
+                width: 300, // Augmentation de la largeur de la colonne des noms de tâches
+              },
+              dataViewPort: {
+                rows: {
+                  style: {backgroundColor: "#fbf9f9", borderBottom: 'solid 0.5px #cfcfcd'}
+                },
+                task: {
+                  showLabel: false, // Désactive l'affichage des libellés sur les barres
+                  style: {
+                    position: 'absolute',
+                    borderRadius: 14,
+                    color: '#333333',
+                    textAlign: 'left',
+                    backgroundColor: 'grey'
+                  },
+                  selectedStyle: {
+                    position: 'absolute',
+                    borderRadius: 14,
+                    border: '1px solid #1976d2',
+                    color: '#333333',
+                    textAlign: 'left',
+                    backgroundColor: 'rgba(25, 118, 210, 0.3)'
+                  }
+                },
+                milestone: { // Ajout de la configuration des jalons
+                  width: 12,
+                  height: 12,
+                  top: 14,
+                  backgroundColor: '#f1c453',
+                  borderWidth: 1,
+                  borderColor: '#d9a738',
+                  borderRadius: 6
+                }
+              },
+              links: {
+                color: '#787878',
+                selectedColor: '#ff00fa',
+                thickness: 2
+              },
+              handleWidth: 0,
+              gridColor: '#eee',
+              todayColor: 'rgba(252, 220, 0, 0.4)',
+              viewMode: mode,
+              locale: 'fr-FR',
+              dateFormat: {
+                month: {
+                  short: ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin', 'Juil', 'Août', 'Sept', 'Oct', 'Nov', 'Déc'],
+                  long: ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre']
+                },
+                week: {
+                  letter: ['D', 'L', 'M', 'M', 'J', 'V', 'S'],
+                  short: ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam'],
+                  long: ['Dimanche', 'Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi']
+                }
+              }
+            }}
           />
         </div>
       </div>
