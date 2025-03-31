@@ -7,7 +7,6 @@ import { GanttLegend } from '@/components/gantt/GanttLegend';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { formatUserName } from '@/utils/formatUserName';
-import { ExtendedGanttTask } from '@/components/gantt/types.d';
 import { toast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
 
@@ -148,7 +147,7 @@ export const TaskGantt = ({ tasks, projectId, readOnly = false, onEditTask }: Ta
         progress: task.status === 'done' ? 100 : task.status === 'in_progress' ? 50 : 0,
         type: isJalon ? 'milestone' : 'task',
         styles: {
-          backgroundColor: getColorForStatus(task.status),
+          barBackgroundColor: getColorForStatus(task.status),
           progressColor: '#a3a3a3',
         },
         isDisabled: readOnly,
@@ -180,9 +179,9 @@ export const TaskGantt = ({ tasks, projectId, readOnly = false, onEditTask }: Ta
           progress: childTask.status === 'done' ? 100 : childTask.status === 'in_progress' ? 50 : 0,
           type: isChildJalon ? 'milestone' : 'task',
           project: taskId,
-          dependencies: [taskId],
+          dependencies: taskId ? [{ id: taskId }] : [],
           styles: {
-            backgroundColor: getColorForStatus(childTask.status),
+            barBackgroundColor: getColorForStatus(childTask.status),
             progressColor: '#a3a3a3',
           },
           isDisabled: readOnly,
@@ -309,8 +308,6 @@ export const TaskGantt = ({ tasks, projectId, readOnly = false, onEditTask }: Ta
             onClick={() => {}}
             onDoubleClick={handleTaskClick}
             onDelete={(task) => console.log('Task deleted', task)}
-            onSelect={(task) => console.log('Task selected', task)}
-            onExpanderClick={handleDragStart}
             listCellWidth={showTasks ? "150" : "0"}
             ganttHeight={600}
             rowHeight={50}

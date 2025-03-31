@@ -1,5 +1,5 @@
 
-import { Task as GanttReactTask } from 'gantt-task-react';
+import { Task as GanttReactTask } from '@wamra/gantt-task-react';
 
 // Ajoutons une extension du type Task de gantt-task-react pour notre utilisation spécifique
 export interface ExtendedGanttTask extends GanttReactTask {
