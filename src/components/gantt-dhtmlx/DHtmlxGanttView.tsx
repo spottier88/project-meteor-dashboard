@@ -1,17 +1,15 @@
 
 import { useEffect, useRef, useState } from 'react';
-import { Gantt, Task, ViewMode } from '@wamra/gantt-task-react';
-import "@wamra/gantt-task-react/dist/index.css";
-import { GanttViewButtons } from '@/components/gantt/GanttViewButtons';
-import { GanttLegend } from '@/components/gantt/GanttLegend';
+import { Gantt } from '@dhtmlx/trial-react-gantt';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { formatUserName } from '@/utils/formatUserName';
 import { toast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
-import { ExtendedGanttTask } from '@/components/gantt/types.d';
+import { GanttViewButtons } from '@/components/gantt/GanttViewButtons';
+import { GanttLegend } from '@/components/gantt/GanttLegend';
 
-interface TaskGanttProps {
+interface DHtmlxGanttViewProps {
   tasks: Array<{
     id: string;
     title: string;
@@ -28,34 +26,11 @@ interface TaskGanttProps {
   onEditTask?: (task: any) => void;
 }
 
-interface ExtendedTask extends Task {
-  _isMilestone?: boolean;
-  project?: string;
-}
-
-export const TaskGantt = ({ tasks, projectId, readOnly = false, onEditTask }: TaskGanttProps) => {
-  const [viewMode, setViewMode] = useState<ViewMode>(ViewMode.Month);
+export const DHtmlxGanttView = ({ tasks, projectId, readOnly = false, onEditTask }: DHtmlxGanttViewProps) => {
   const [showTasks, setShowTasks] = useState(true);
-  const [isDragging, setIsDragging] = useState(false);
-  const [columnWidth, setColumnWidth] = useState(300);
+  const [viewMode, setViewMode] = useState<'day' | 'week' | 'month'>('month');
   const ganttRef = useRef<HTMLDivElement>(null);
-  const [refreshKey, setRefreshKey] = useState(0);
-
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setViewMode(prev => prev);
-    }, 100);
-    
-    return () => clearTimeout(timer);
-  }, []);
-
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setRefreshKey(prev => prev + 1);
-    }, 50);
-    
-    return () => clearTimeout(timer);
-  }, [showTasks]);
+  const [isDragging, setIsDragging] = useState(false);
 
   const { data: projectMembers } = useQuery({
     queryKey: ["projectMembers", projectId],
@@ -121,9 +96,10 @@ export const TaskGantt = ({ tasks, projectId, readOnly = false, onEditTask }: Ta
     }
   };
 
-  const generateGanttTasks = (): ExtendedTask[] => {
-    const ganttTasks: ExtendedTask[] = [];
+  const formatTasks = () => {
+    const dhtmlxTasks: any[] = [];
     
+    // Formatter les tâches principales
     const parentTasks = tasks
       .filter(task => !task.parent_task_id)
       .sort((a, b) => {
@@ -133,7 +109,6 @@ export const TaskGantt = ({ tasks, projectId, readOnly = false, onEditTask }: Ta
       });
     
     parentTasks.forEach(task => {
-      const taskId = task.id;
       const hasStartDate = !!task.start_date;
       const taskStartDate = task.start_date ? new Date(task.start_date) : 
                           (task.due_date ? new Date(task.due_date) : new Date());
@@ -141,21 +116,19 @@ export const TaskGantt = ({ tasks, projectId, readOnly = false, onEditTask }: Ta
       
       const isJalon = !hasStartDate || (task.start_date === task.due_date);
       
-      ganttTasks.push({
-        id: taskId,
-        name: `${task.title} ${task.assignee ? `- ${formatUserName(task.assignee, profiles)}` : ''}`,
-        start: taskStartDate,
-        end: taskEndDate,
-        progress: task.status === 'done' ? 100 : task.status === 'in_progress' ? 50 : 0,
+      dhtmlxTasks.push({
+        id: task.id,
+        text: `${task.title} ${task.assignee ? `- ${formatUserName(task.assignee, profiles)}` : ''}`,
+        start_date: taskStartDate,
+        end_date: taskEndDate,
+        progress: task.status === 'done' ? 1 : task.status === 'in_progress' ? 0.5 : 0,
         type: isJalon ? 'milestone' : 'task',
-        styles: {
-          barBackgroundColor: getColorForStatus(task.status),
-          barProgressColor: '#a3a3a3',
-        },
-        isDisabled: readOnly,
-        _isMilestone: isJalon
+        color: getColorForStatus(task.status),
+        parent: 0,
+        readonly: readOnly
       });
-      
+
+      // Formatter les sous-tâches
       const childTasks = tasks
         .filter(childTask => childTask.parent_task_id === task.id)
         .sort((a, b) => {
@@ -165,7 +138,6 @@ export const TaskGantt = ({ tasks, projectId, readOnly = false, onEditTask }: Ta
         });
       
       childTasks.forEach(childTask => {
-        const childTaskId = childTask.id;
         const hasChildStartDate = !!childTask.start_date;
         const childStartDate = childTask.start_date ? new Date(childTask.start_date) : 
                               (childTask.due_date ? new Date(childTask.due_date) : taskStartDate);
@@ -173,40 +145,48 @@ export const TaskGantt = ({ tasks, projectId, readOnly = false, onEditTask }: Ta
         
         const isChildJalon = !hasChildStartDate || (childTask.start_date === childTask.due_date);
         
-        ganttTasks.push({
-          id: childTaskId,
-          name: `   ${childTask.title} ${childTask.assignee ? `- ${formatUserName(childTask.assignee, profiles)}` : ''}`,
-          start: childStartDate,
-          end: childEndDate,
-          progress: childTask.status === 'done' ? 100 : childTask.status === 'in_progress' ? 50 : 0,
+        dhtmlxTasks.push({
+          id: childTask.id,
+          text: `${childTask.title} ${childTask.assignee ? `- ${formatUserName(childTask.assignee, profiles)}` : ''}`,
+          start_date: childStartDate,
+          end_date: childEndDate,
+          progress: childTask.status === 'done' ? 1 : childTask.status === 'in_progress' ? 0.5 : 0,
           type: isChildJalon ? 'milestone' : 'task',
-          project: taskId,
-          styles: {
-            barBackgroundColor: getColorForStatus(childTask.status),
-            barProgressColor: '#a3a3a3',
-          },
-          isDisabled: readOnly,
-          _isMilestone: isChildJalon
+          color: getColorForStatus(childTask.status),
+          parent: task.id,
+          readonly: readOnly
         });
       });
     });
 
-    return ganttTasks;
+    return dhtmlxTasks;
   };
 
-  const handleTaskClick = (task: Task) => {
-    if (isDragging) return;
+  const handleTaskClick = (taskId: string) => {
+    if (isDragging || readOnly) return;
     
-    if (!readOnly && onEditTask) {
-      const originalTask = tasks.find(t => t.id === task.id);
-      if (originalTask) {
-        onEditTask(originalTask);
-      }
+    const originalTask = tasks.find(t => t.id === taskId);
+    if (originalTask && onEditTask) {
+      onEditTask(originalTask);
     }
   };
 
-  const handleDragStart = () => {
-    setIsDragging(true);
+  const handleViewModeChange = (mode: 'week' | 'month' | 'year') => {
+    switch (mode) {
+      case 'week':
+        setViewMode('day');
+        break;
+      case 'month':
+        setViewMode('week');
+        break;
+      case 'year':
+        setViewMode('month');
+        break;
+    }
+  };
+
+  const handleShowTasksChange = (value: boolean) => {
+    setShowTasks(value);
   };
 
   const updateTaskDates = async (taskId: string, startDate: Date, endDate: Date) => {
@@ -242,55 +222,36 @@ export const TaskGantt = ({ tasks, projectId, readOnly = false, onEditTask }: Ta
     }
   };
 
-  const handleTaskChange = (task: Task) => {
-    if (readOnly) return;
-    
-    const originalTask = tasks.find(t => t.id === task.id);
-    if (originalTask) {
-      updateTaskDates(task.id, task.start, task.end);
+  // Configuration du Gantt DHTMLX
+  const ganttConfig = {
+    locale: 'fr',
+    readonly: readOnly,
+    scales: [
+      { unit: 'month', step: 1, format: 'MMMM yyyy' },
+      { unit: viewMode, step: 1 }
+    ],
+    columns: [
+      { name: 'text', label: 'Tâche', width: showTasks ? '300px' : '0px' },
+      { name: 'start_date', label: 'Début', width: showTasks ? '120px' : '0px' },
+      { name: 'end_date', label: 'Fin', width: showTasks ? '120px' : '0px' },
+    ],
+    taskTooltipTemplate: (task: any) => {
+      return `
+        <div class="p-2 bg-white shadow rounded border">
+          <div><strong>${task.text}</strong></div>
+          <div>Début: ${format(new Date(task.start_date), 'dd/MM/yyyy')}</div>
+          <div>Fin: ${format(new Date(task.end_date), 'dd/MM/yyyy')}</div>
+          <div>Statut: ${task.progress === 1 ? 'Terminé' : task.progress > 0 ? 'En cours' : 'À faire'}</div>
+        </div>
+      `;
     }
-    
-    setTimeout(() => {
-      setIsDragging(false);
-    }, 500);
-  };
-
-  const handleViewModeChange = (mode: 'week' | 'month' | 'year') => {
-    switch (mode) {
-      case 'week':
-        setViewMode(ViewMode.Week);
-        setColumnWidth(250);
-        break;
-      case 'month':
-        setViewMode(ViewMode.Month);
-        setColumnWidth(300);
-        break;
-      case 'year':
-        setViewMode(ViewMode.Year);
-        setColumnWidth(350);
-        break;
-    }
-  };
-
-  const handleShowTasksChange = (value: boolean) => {
-    setShowTasks(value);
-  };
-
-  const TaskListHeader = () => {
-    return (
-      <div className="grid grid-cols-3 font-semibold bg-gray-100 border-b border-gray-200">
-        <div className="p-2 truncate">Titre</div>
-        <div className="p-2 truncate">Début</div>
-        <div className="p-2 truncate">Fin</div>
-      </div>
-    );
   };
 
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center mb-4">
         <GanttViewButtons
-          mode={viewMode === ViewMode.Week ? 'week' : viewMode === ViewMode.Month ? 'month' : 'year'}
+          mode={viewMode === 'day' ? 'week' : viewMode === 'week' ? 'month' : 'year'}
           showTasks={showTasks}
           onViewModeChange={handleViewModeChange}
           onShowTasksChange={handleShowTasksChange}
@@ -302,32 +263,20 @@ export const TaskGantt = ({ tasks, projectId, readOnly = false, onEditTask }: Ta
 
         <div ref={ganttRef} className="h-[600px] w-full overflow-x-auto">
           <Gantt
-            tasks={generateGanttTasks()}
-            viewMode={viewMode}
-            onDateChange={handleTaskChange}
-            onProgressChange={(task) => console.log('Progress changed', task)}
-            onClick={() => {}}
-            onDoubleClick={handleTaskClick}
-            onDelete={(task) => console.log('Task deleted', task)}
-            columnWidth={columnWidth}
-            TaskListHeader={showTasks ? TaskListHeader : undefined}
-            TaskListTable={showTasks ? undefined : undefined}
-            TooltipContent={({ task }) => (
-              <div className="p-2 bg-white shadow rounded border">
-                <div><strong>{task.name}</strong></div>
-                <div>Début: {format(task.start, 'dd/MM/yyyy')}</div>
-                <div>Fin: {format(task.end, 'dd/MM/yyyy')}</div>
-                <div>Statut: {task.progress === 100 ? 'Terminé' : task.progress > 0 ? 'En cours' : 'À faire'}</div>
-              </div>
-            )}
-            locale="fr"
-            arrowColor="#777"
-            todayColor="rgba(252, 220, 0, 0.4)"
-            barFill={65}
-            barProgressColor="#a3a3a3"
-            projectProgressColor="#7db59a"
-            projectProgressSelectedColor="#59a985"
-            fontFamily="Arial, sans-serif"
+            tasks={formatTasks()}
+            config={ganttConfig}
+            onTaskClick={handleTaskClick}
+            onTaskDblClick={handleTaskClick}
+            onAfterTaskDrag={(taskId, startDate, endDate) => {
+              if (!readOnly) {
+                setIsDragging(false);
+                updateTaskDates(taskId, new Date(startDate), new Date(endDate));
+              }
+            }}
+            onBeforeTaskDrag={() => {
+              setIsDragging(true);
+              return !readOnly;
+            }}
           />
         </div>
       </div>

@@ -10,7 +10,7 @@ import { TaskTable } from "./task/TaskTable";
 import { Input } from "@/components/ui/input";
 import { ViewToggle, ViewMode } from "@/components/ViewToggle";
 import { KanbanBoard } from "@/components/KanbanBoard";
-import { TaskGantt } from "@/components/task/TaskGantt";
+import { DHtmlxGanttView } from "@/components/gantt-dhtmlx/DHtmlxGanttView";
 import { useTaskPermissions } from "@/hooks/use-task-permissions";
 import { usePermissionsContext } from "@/contexts/PermissionsContext";
 import {
@@ -162,7 +162,7 @@ export const TaskList = ({
             }}
           />
         ) : (
-          <TaskGantt
+          <DHtmlxGanttView
             tasks={filteredTasks || []}
             projectId={projectId}
             readOnly={!canCreateTask}
