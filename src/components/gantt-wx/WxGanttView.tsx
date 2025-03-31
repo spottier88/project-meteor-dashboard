@@ -10,7 +10,7 @@ import { GanttViewButtons } from '@/components/gantt/GanttViewButtons';
 import { GanttLegend } from '@/components/gantt/GanttLegend';
 import { convertTaskToGantt } from './TaskAdapter';
 
-interface DHtmlxGanttViewProps {
+interface WxGanttViewProps {
   tasks: Array<{
     id: string;
     title: string;
@@ -27,7 +27,7 @@ interface DHtmlxGanttViewProps {
   onEditTask?: (task: any) => void;
 }
 
-export const DHtmlxGanttView = ({ tasks, projectId, readOnly = false, onEditTask }: DHtmlxGanttViewProps) => {
+export const WxGanttView = ({ tasks, projectId, readOnly = false, onEditTask }: WxGanttViewProps) => {
   const [showTasks, setShowTasks] = useState(true);
   const [viewMode, setViewMode] = useState<'day' | 'week' | 'month'>('month');
   const ganttRef = useRef<HTMLDivElement>(null);
@@ -38,6 +38,8 @@ export const DHtmlxGanttView = ({ tasks, projectId, readOnly = false, onEditTask
     queryKey: ["projectMembers", projectId],
     queryFn: async () => {
       if (!projectId) return [];
+      
+      console.log(`Récupération des membres pour le projet ${projectId}`);
       
       const { data, error } = await supabase
         .from("project_members")
@@ -52,7 +54,10 @@ export const DHtmlxGanttView = ({ tasks, projectId, readOnly = false, onEditTask
         `)
         .eq("project_id", projectId);
 
-      if (error) throw error;
+      if (error) {
+        console.error("Erreur lors de la récupération des membres du projet:", error);
+        throw error;
+      }
       
       const { data: project } = await supabase
         .from("projects")
@@ -78,6 +83,7 @@ export const DHtmlxGanttView = ({ tasks, projectId, readOnly = false, onEditTask
         }
       }
       
+      console.log(`Récupération de ${data?.length || 0} membres pour le projet ${projectId}`);
       return data || [];
     },
     enabled: !!projectId,

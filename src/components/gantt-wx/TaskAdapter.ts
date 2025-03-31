@@ -1,6 +1,6 @@
 
 /**
- * Adaptateurs pour convertir les données de tâches vers le format attendu par le composant Gantt
+ * Adapteurs pour convertir les données de tâches vers le format attendu par le composant Gantt
  */
 
 export interface GanttTask {
@@ -52,12 +52,15 @@ export const convertTaskToGantt = (
   const isMilestone = (!hasStartDate && task.due_date) || 
                       (task.start_date && task.due_date && task.start_date === task.due_date);
   
+  // Calculer la progression en fonction du statut
+  const progress = task.status === 'done' ? 1 : task.status === 'in_progress' ? 0.5 : 0;
+  
   return {
     id: task.id,
     text: `${task.title}${assigneeName ? ` - ${assigneeName}` : ''}`,
     start_date: startDate,
     end_date: endDate,
-    progress: task.status === 'done' ? 1 : task.status === 'in_progress' ? 0.5 : 0,
+    progress: progress,
     parent: task.parent_task_id || 0,
     type: isMilestone ? 'milestone' : 'task',
     color: getColorForStatus(task.status),
