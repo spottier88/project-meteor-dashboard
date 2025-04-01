@@ -9,6 +9,7 @@ import { format, parseISO } from 'date-fns';
 import { GanttViewButtons } from '@/components/gantt/GanttViewButtons';
 import { GanttLegend } from '@/components/gantt/GanttLegend';
 import { convertTaskToGantt } from './TaskAdapter';
+import { logger } from '@/utils/logger';
 import "wx-react-gantt/dist/gantt.css";
 
 interface WxGanttViewProps {
@@ -93,6 +94,9 @@ export const WxGanttView = ({ tasks, projectId, readOnly = false, onEditTask }: 
   const profiles = projectMembers?.map(member => member.profiles) || [];
 
   const formatTasks = () => {
+    console.log("Début du formatage des tâches pour Gantt");
+    console.log("Nombre de tâches disponibles:", tasks?.length || 0);
+    
     if (!tasks || tasks.length === 0) {
       console.log("Aucune tâche à afficher dans le Gantt");
       return [];
@@ -101,6 +105,7 @@ export const WxGanttView = ({ tasks, projectId, readOnly = false, onEditTask }: 
     try {
       const ganttTasks = [];
       
+      // Trier les tâches parentes par date
       const parentTasks = tasks
         .filter(task => !task.parent_task_id)
         .sort((a, b) => {
@@ -111,17 +116,16 @@ export const WxGanttView = ({ tasks, projectId, readOnly = false, onEditTask }: 
       
       console.log(`Nombre de tâches principales: ${parentTasks.length}`);
       
+      // Traiter les tâches parentes et leurs enfants
       for (const task of parentTasks) {
         try {
-          const ganttTask = convertTaskToGantt(
-            task, 
-            task.assignee ? formatUserName(task.assignee, profiles) : '',
-            readOnly
-          );
+          const assigneeName = task.assignee ? formatUserName(task.assignee, profiles) : '';
+          const ganttTask = convertTaskToGantt(task, assigneeName, readOnly);
           
           if (ganttTask) {
             ganttTasks.push(ganttTask);
             
+            // Trouver et ajouter les tâches enfants
             const childTasks = tasks
               .filter(childTask => childTask.parent_task_id === task.id)
               .sort((a, b) => {
@@ -130,13 +134,12 @@ export const WxGanttView = ({ tasks, projectId, readOnly = false, onEditTask }: 
                 return dateA - dateB;
               });
             
+            console.log(`Tâche ${task.id} (${task.title}) a ${childTasks.length} sous-tâches`);
+            
             for (const childTask of childTasks) {
               try {
-                const ganttChildTask = convertTaskToGantt(
-                  childTask,
-                  childTask.assignee ? formatUserName(childTask.assignee, profiles) : '',
-                  readOnly
-                );
+                const childAssigneeName = childTask.assignee ? formatUserName(childTask.assignee, profiles) : '';
+                const ganttChildTask = convertTaskToGantt(childTask, childAssigneeName, readOnly);
                 
                 if (ganttChildTask) {
                   ganttTasks.push(ganttChildTask);
@@ -152,6 +155,7 @@ export const WxGanttView = ({ tasks, projectId, readOnly = false, onEditTask }: 
       }
 
       console.log(`Total des tâches formatées pour Gantt: ${ganttTasks.length}`);
+      console.log("Structure des tâches pour Gantt:", ganttTasks);
       return ganttTasks;
     } catch (error) {
       console.error("Erreur lors du formatage des tâches pour Gantt:", error);
@@ -161,6 +165,7 @@ export const WxGanttView = ({ tasks, projectId, readOnly = false, onEditTask }: 
 
   const handleTaskClick = (taskId: string) => {
     if (isDragging || readOnly) return;
+    console.log("Clic sur la tâche:", taskId);
     
     const originalTask = tasks.find(t => t.id === taskId);
     if (originalTask && onEditTask) {
@@ -169,6 +174,7 @@ export const WxGanttView = ({ tasks, projectId, readOnly = false, onEditTask }: 
   };
 
   const handleViewModeChange = (mode: 'week' | 'month' | 'year') => {
+    console.log("Changement de mode vue:", mode);
     switch (mode) {
       case 'week':
         setViewMode('day');
@@ -183,6 +189,7 @@ export const WxGanttView = ({ tasks, projectId, readOnly = false, onEditTask }: 
   };
 
   const handleShowTasksChange = (value: boolean) => {
+    console.log("Affichage des tâches:", value);
     setShowTasks(value);
   };
 
@@ -190,6 +197,8 @@ export const WxGanttView = ({ tasks, projectId, readOnly = false, onEditTask }: 
     try {
       const formattedStartDate = format(startDate, 'yyyy-MM-dd');
       const formattedEndDate = format(endDate, 'yyyy-MM-dd');
+      
+      console.log(`Mise à jour des dates: tâche ${taskId}, début: ${formattedStartDate}, fin: ${formattedEndDate}`);
       
       const { error } = await supabase
         .from('tasks')
@@ -229,29 +238,12 @@ export const WxGanttView = ({ tasks, projectId, readOnly = false, onEditTask }: 
     }
   };
 
-  // Configuration du Gantt selon la documentation
+  // Configuration simplifiée du Gantt selon la documentation
   const ganttConfig = {
-    locale: 'fr',
     readonly: readOnly,
     scales: [
-      { unit: 'month', step: 1, format: 'MMMM yyyy' },
-      { unit: viewMode, step: 1 }
-    ],
-    columns: [
-      { name: 'text', label: 'Tâche', width: showTasks ? '300px' : '0px' },
-      { name: 'start_date', label: 'Début', width: showTasks ? '120px' : '0px' },
-      { name: 'duration', label: 'Durée (jours)', width: showTasks ? '120px' : '0px' },
-    ],
-    tooltip_text: function(start, end, task) {
-      return `
-        <div class="p-2 bg-white shadow rounded border">
-          <div><strong>${task.text}</strong></div>
-          <div>Début: ${formatDateString(start ? start.toISOString() : null)}</div>
-          <div>Fin: ${formatDateString(end ? end.toISOString() : null)}</div>
-          <div>Statut: ${task.progress === 1 ? 'Terminé' : task.progress > 0 ? 'En cours' : 'À faire'}</div>
-        </div>
-      `;
-    }
+      { unit: 'month', step: 1, format: 'MMMM yyyy' }
+    ]
   };
 
   const formattedTasks = formatTasks();
@@ -259,7 +251,7 @@ export const WxGanttView = ({ tasks, projectId, readOnly = false, onEditTask }: 
   useEffect(() => {
     console.log("Tasks disponibles pour le Gantt:", tasks?.length || 0);
     console.log("Tasks formatées pour le Gantt:", formattedTasks.length);
-  }, [tasks]);
+  }, [tasks, formattedTasks.length]);
 
   return (
     <div className="space-y-4">
@@ -283,12 +275,14 @@ export const WxGanttView = ({ tasks, projectId, readOnly = false, onEditTask }: 
               onTaskClick={handleTaskClick}
               onTaskDblClick={handleTaskClick}
               onAfterTaskDrag={(taskId, startDate, endDate) => {
+                console.log("Fin du glisser-déposer:", taskId, startDate, endDate);
                 if (!readOnly) {
                   setIsDragging(false);
                   updateTaskDates(taskId, new Date(startDate), new Date(endDate));
                 }
               }}
               onBeforeTaskDrag={() => {
+                console.log("Début du glisser-déposer, readOnly:", readOnly);
                 setIsDragging(true);
                 return !readOnly;
               }}

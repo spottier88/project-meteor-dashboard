@@ -6,13 +6,14 @@
 export interface GanttTask {
   id: string;
   text: string;
-  start_date: string; // Modifié: string au format DD-MM-YYYY au lieu d'un objet Date
-  duration: number;   // Ajouté: durée en jours au lieu de end_date
-  progress: number;
-  parent: string | number;
+  start_date: string; // Format DD-MM-YYYY (string)
+  duration: number;   // Durée en jours
+  progress: number;   // 0-1
+  parent?: string | number; // Optionnel - ID de la tâche parente
   type?: string;      // Optionnel pour les jalons
   color?: string;     // Couleur optionnelle
-  readonly?: boolean;
+  readonly?: boolean; // Optionnel pour restreindre l'édition
+  open?: boolean;     // Optionnel pour les tâches avec enfants
 }
 
 export interface TaskData {
@@ -68,12 +69,15 @@ export const convertTaskToGantt = (
   assigneeName: string = '',
   isReadOnly: boolean = false
 ): GanttTask | null => {
+  console.log("Conversion de la tâche:", task);
+  
   // Vérifier si au moins une des dates est valide
   const hasValidStartDate = isValidDateString(task.start_date);
   const hasValidDueDate = isValidDateString(task.due_date);
   
   // Si aucune date valide, ne pas inclure la tâche dans le Gantt
   if (!hasValidStartDate && !hasValidDueDate) {
+    console.log("Tâche sans dates valides, ignorée:", task.id);
     return null;
   }
   
@@ -86,17 +90,20 @@ export const convertTaskToGantt = (
     startDateStr = task.due_date!;
   } else {
     // Ne devrait jamais arriver grâce à la vérification précédente
+    console.log("Tâche sans dates valides (cas improbable):", task.id);
     return null;
   }
   
-  // Déterminer la date de fin ou la durée
+  // Déterminer la durée
   let duration: number;
   if (hasValidDueDate) {
     // Calculer la durée à partir des dates de début et de fin
     duration = calculateDuration(startDateStr, task.due_date!);
+    console.log(`Durée calculée: ${duration} jours entre ${startDateStr} et ${task.due_date}`);
   } else {
     // Si pas de date d'échéance, définir la durée à 1 jour (jalon)
     duration = 1;
+    console.log("Jalon sans date d'échéance, durée = 1 jour:", task.id);
   }
   
   // Déterminer si c'est un jalon (même date début/fin ou pas de date de début)
@@ -107,17 +114,31 @@ export const convertTaskToGantt = (
   // Calculer la progression en fonction du statut
   const progress = task.status === 'done' ? 1 : task.status === 'in_progress' ? 0.5 : 0;
   
-  return {
+  // Définir l'objet tâche pour Gantt
+  const ganttTask: GanttTask = {
     id: task.id,
     text: `${task.title}${assigneeName ? ` - ${assigneeName}` : ''}`,
     start_date: formatDateForGantt(startDateStr),
     duration: duration,
     progress: progress,
-    parent: task.parent_task_id || 0,
     type: isMilestone ? 'milestone' : 'task',
     color: getColorForStatus(task.status),
     readonly: isReadOnly
   };
+  
+  // Ajouter la propriété parent seulement si elle existe
+  // (selon la doc, les tâches sans parent ne devraient pas avoir cette propriété)
+  if (task.parent_task_id) {
+    ganttTask.parent = task.parent_task_id;
+  }
+  
+  // Pour les tâches parentes, ajouter la propriété open
+  if (!task.parent_task_id) {
+    ganttTask.open = true;
+  }
+  
+  console.log("Tâche convertie pour Gantt:", ganttTask);
+  return ganttTask;
 };
 
 /**
