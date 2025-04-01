@@ -7,7 +7,6 @@ import { useToast } from '@/components/ui/use-toast';
 import { GanttViewButtons } from '@/components/gantt/GanttViewButtons';
 import { GanttLegend } from '@/components/gantt/GanttLegend';
 import { convertTasksToGoogleChartFormat, getColorForStatus } from './TaskAdapter';
-import { logger } from '@/utils/logger';
 
 interface GoogleGanttViewProps {
   tasks: Array<{
@@ -92,28 +91,16 @@ export const GoogleGanttView = ({ tasks, projectId, readOnly = false, onEditTask
   // Convertir les tâches au format Google Charts
   const formattedTasks = convertTasksToGoogleChartFormat(tasks, profiles);
 
-  // Options pour le diagramme Timeline (Gantt)
+  // Options pour le diagramme Timeline
   const options = {
     height: 600,
-    tooltip: { isHtml: true },
-    hAxis: {
-      format: viewMode === 'day' ? 'HH:mm' : viewMode === 'week' ? 'dd/MM' : 'MMM yyyy',
-    },
     timeline: {
-      groupByRowLabel: false,
-      colorByRowLabel: false,
-      rowLabelStyle: {
-        fontName: 'Arial',
-        fontSize: 13,
-        color: '#333',
-      },
-      barLabelStyle: {
-        fontName: 'Arial',
-        fontSize: 11,
-      },
       showRowLabels: true,
       showBarLabels: true,
-      singleColor: false,
+      groupByRowLabel: false
+    },
+    hAxis: {
+      format: viewMode === 'day' ? 'HH:mm' : viewMode === 'week' ? 'dd/MM' : 'MMM yyyy',
     },
     colors: tasks.map(task => getColorForStatus(task.status)),
   };
@@ -128,10 +115,9 @@ export const GoogleGanttView = ({ tasks, projectId, readOnly = false, onEditTask
     if (selection && selection.length > 0) {
       const row = selection[0].row;
       if (row !== null && row >= 0) {
-        const taskId = formattedTasks[row + 1][0] as string; // +1 car la première ligne est l'en-tête
-        console.log("Clic sur la tâche:", taskId);
-        
-        const originalTask = tasks.find(t => t.id === taskId);
+        // Trouver la tâche correspondante en utilisant le titre comme identifiant
+        const taskTitle = formattedTasks[row + 1][0];
+        const originalTask = tasks.find(t => t.title === taskTitle);
         if (originalTask && onEditTask) {
           onEditTask(originalTask);
         }
