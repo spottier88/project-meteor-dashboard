@@ -9,6 +9,7 @@ import { format } from 'date-fns';
 import { GanttViewButtons } from '@/components/gantt/GanttViewButtons';
 import { GanttLegend } from '@/components/gantt/GanttLegend';
 import { convertTaskToGantt } from './TaskAdapter';
+import "wx-react-gantt/dist/gantt.css";
 
 interface WxGanttViewProps {
   tasks: Array<{
