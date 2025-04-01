@@ -1,4 +1,3 @@
-
 import { useEffect, useRef, useState } from 'react';
 import { Gantt } from 'wx-react-gantt';
 import { useQuery } from '@tanstack/react-query';
@@ -101,7 +100,6 @@ export const WxGanttView = ({ tasks, projectId, readOnly = false, onEditTask }: 
     try {
       const ganttTasks = [];
       
-      // Formatter les tâches principales
       const parentTasks = tasks
         .filter(task => !task.parent_task_id)
         .sort((a, b) => {
@@ -120,11 +118,9 @@ export const WxGanttView = ({ tasks, projectId, readOnly = false, onEditTask }: 
             readOnly
           );
           
-          // N'ajouter la tâche que si elle a des dates valides
           if (ganttTask) {
             ganttTasks.push(ganttTask);
             
-            // Formatter les sous-tâches
             const childTasks = tasks
               .filter(childTask => childTask.parent_task_id === task.id)
               .sort((a, b) => {
@@ -141,7 +137,6 @@ export const WxGanttView = ({ tasks, projectId, readOnly = false, onEditTask }: 
                   readOnly
                 );
                 
-                // N'ajouter la sous-tâche que si elle a des dates valides
                 if (ganttChildTask) {
                   ganttTasks.push(ganttChildTask);
                 }
@@ -223,20 +218,16 @@ export const WxGanttView = ({ tasks, projectId, readOnly = false, onEditTask }: 
     }
   };
 
-  // Configuration du Gantt avec un gestionnaire d'erreur pour le template de tooltip
-  const safeFormatDate = (date: any): string => {
+  const formatDateString = (dateStr: string | null): string => {
+    if (!dateStr) return 'Non définie';
     try {
-      if (!date) return 'Non définie';
-      const dateObj = new Date(date);
-      if (isNaN(dateObj.getTime())) return 'Date invalide';
-      return format(dateObj, 'dd/MM/yyyy');
+      return format(new Date(dateStr), 'dd/MM/yyyy');
     } catch (error) {
       console.error('Erreur de formatage de date:', error);
       return 'Date invalide';
     }
   };
 
-  // Configuration du Gantt
   const ganttConfig = {
     locale: 'fr',
     readonly: readOnly,
@@ -249,12 +240,12 @@ export const WxGanttView = ({ tasks, projectId, readOnly = false, onEditTask }: 
       { name: 'start_date', label: 'Début', width: showTasks ? '120px' : '0px' },
       { name: 'end_date', label: 'Fin', width: showTasks ? '120px' : '0px' },
     ],
-    taskTooltipTemplate: (task: any) => {
+    tooltip_text: function(start: Date, end: Date, task: any) {
       return `
         <div class="p-2 bg-white shadow rounded border">
           <div><strong>${task.text}</strong></div>
-          <div>Début: ${safeFormatDate(task.start_date)}</div>
-          <div>Fin: ${safeFormatDate(task.end_date)}</div>
+          <div>Début: ${formatDateString(start ? start.toISOString() : null)}</div>
+          <div>Fin: ${formatDateString(end ? end.toISOString() : null)}</div>
           <div>Statut: ${task.progress === 1 ? 'Terminé' : task.progress > 0 ? 'En cours' : 'À faire'}</div>
         </div>
       `;
