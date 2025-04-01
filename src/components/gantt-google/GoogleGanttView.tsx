@@ -118,6 +118,7 @@ export const GoogleGanttView = ({ tasks, projectId, readOnly = false, onEditTask
     tooltip: { isHtml: true }, // Activer les tooltips HTML
     colors: tasks.map(task => getColorForStatus(task.status)),
     language: 'fr',
+    enableInteractivity: false,
     calendar: frenchLanguage
   };
 
