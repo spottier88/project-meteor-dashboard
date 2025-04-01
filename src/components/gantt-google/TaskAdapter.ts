@@ -136,16 +136,16 @@ export const convertTasksToGoogleChartFormat = (
     // Déterminer les dépendances (tâche parente)
     const dependencies = task.parent_task_id || null;
     
-    // Ajouter la tâche au tableau de données
+    // Ajouter la tâche au tableau de données - correction du format pour respecter les types attendus par Google Charts
     dataTable.push([
-      task.id,                            // ID de la tâche
-      task.title,                         // Nom de la tâche
-      assigneeName,                       // Ressource (assigné)
-      startDate,                          // Date de début
-      endDate,                            // Date de fin
-      task.status,                        // Statut
-      dependencies,                       // Dépendances
-      percentComplete                     // Pourcentage d'avancement
+      task.id,                            // ID de la tâche (string)
+      task.title,                         // Nom de la tâche (string)
+      assigneeName,                       // Ressource (assigné) (string)
+      startDate,                          // Date de début (Date object)
+      endDate,                            // Date de fin (Date object)
+      task.status,                        // Statut (string)
+      dependencies,                       // Dépendances (string or null)
+      percentComplete                     // Pourcentage d'avancement (number)
     ]);
     
     console.log(`Tâche ajoutée au Gantt: ${task.id} (${task.title}), début: ${startDate.toISOString()}, fin: ${endDate.toISOString()}`);
