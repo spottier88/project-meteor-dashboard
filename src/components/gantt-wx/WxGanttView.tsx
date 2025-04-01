@@ -1,10 +1,11 @@
+
 import { useEffect, useRef, useState } from 'react';
 import { Gantt } from 'wx-react-gantt';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { formatUserName } from '@/utils/formatUserName';
 import { useToast } from '@/components/ui/use-toast';
-import { format } from 'date-fns';
+import { format, parseISO } from 'date-fns';
 import { GanttViewButtons } from '@/components/gantt/GanttViewButtons';
 import { GanttLegend } from '@/components/gantt/GanttLegend';
 import { convertTaskToGantt } from './TaskAdapter';
@@ -221,13 +222,14 @@ export const WxGanttView = ({ tasks, projectId, readOnly = false, onEditTask }: 
   const formatDateString = (dateStr: string | null): string => {
     if (!dateStr) return 'Non définie';
     try {
-      return format(new Date(dateStr), 'dd/MM/yyyy');
+      return format(parseISO(dateStr), 'dd/MM/yyyy');
     } catch (error) {
       console.error('Erreur de formatage de date:', error);
       return 'Date invalide';
     }
   };
 
+  // Configuration du Gantt selon la documentation
   const ganttConfig = {
     locale: 'fr',
     readonly: readOnly,
@@ -238,9 +240,9 @@ export const WxGanttView = ({ tasks, projectId, readOnly = false, onEditTask }: 
     columns: [
       { name: 'text', label: 'Tâche', width: showTasks ? '300px' : '0px' },
       { name: 'start_date', label: 'Début', width: showTasks ? '120px' : '0px' },
-      { name: 'end_date', label: 'Fin', width: showTasks ? '120px' : '0px' },
+      { name: 'duration', label: 'Durée (jours)', width: showTasks ? '120px' : '0px' },
     ],
-    tooltip_text: function(start: Date, end: Date, task: any) {
+    tooltip_text: function(start, end, task) {
       return `
         <div class="p-2 bg-white shadow rounded border">
           <div><strong>${task.text}</strong></div>

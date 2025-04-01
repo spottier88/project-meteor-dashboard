@@ -6,12 +6,12 @@
 export interface GanttTask {
   id: string;
   text: string;
-  start_date: Date;
-  end_date: Date;
+  start_date: string; // Modifié: string au format DD-MM-YYYY au lieu d'un objet Date
+  duration: number;   // Ajouté: durée en jours au lieu de end_date
   progress: number;
   parent: string | number;
-  type: string;
-  color: string;
+  type?: string;      // Optionnel pour les jalons
+  color?: string;     // Couleur optionnelle
   readonly?: boolean;
 }
 
@@ -39,6 +39,28 @@ const isValidDateString = (dateStr?: string): boolean => {
 };
 
 /**
+ * Convertit une date au format YYYY-MM-DD (ISO) en format DD-MM-YYYY (Gantt)
+ */
+const formatDateForGantt = (dateStr: string): string => {
+  const date = new Date(dateStr);
+  const day = String(date.getDate()).padStart(2, '0');
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const year = date.getFullYear();
+  return `${day}-${month}-${year}`;
+};
+
+/**
+ * Calcule la durée en jours entre deux dates
+ */
+const calculateDuration = (startDateStr: string, endDateStr: string): number => {
+  const startDate = new Date(startDateStr);
+  const endDate = new Date(endDateStr);
+  const diffTime = endDate.getTime() - startDate.getTime();
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  return diffDays <= 0 ? 1 : diffDays; // Durée minimum d'un jour
+};
+
+/**
  * Convertit une tâche du format de l'application vers le format attendu par le Gantt
  */
 export const convertTaskToGantt = (
@@ -56,28 +78,25 @@ export const convertTaskToGantt = (
   }
   
   // Déterminer la date de début
-  let startDate: Date;
+  let startDateStr: string;
   if (hasValidStartDate) {
-    startDate = new Date(task.start_date!);
+    startDateStr = task.start_date!;
   } else if (hasValidDueDate) {
     // Si pas de date de début mais une date d'échéance, utiliser la date d'échéance (jalon)
-    startDate = new Date(task.due_date!);
+    startDateStr = task.due_date!;
   } else {
     // Ne devrait jamais arriver grâce à la vérification précédente
     return null;
   }
   
-  // Déterminer la date de fin
-  let endDate: Date;
+  // Déterminer la date de fin ou la durée
+  let duration: number;
   if (hasValidDueDate) {
-    endDate = new Date(task.due_date!);
-    // S'assurer que la date de fin n'est pas antérieure à la date de début
-    if (endDate < startDate) {
-      endDate = new Date(startDate);
-    }
+    // Calculer la durée à partir des dates de début et de fin
+    duration = calculateDuration(startDateStr, task.due_date!);
   } else {
-    // Si pas de date d'échéance, utiliser la date de début
-    endDate = new Date(startDate);
+    // Si pas de date d'échéance, définir la durée à 1 jour (jalon)
+    duration = 1;
   }
   
   // Déterminer si c'est un jalon (même date début/fin ou pas de date de début)
@@ -91,8 +110,8 @@ export const convertTaskToGantt = (
   return {
     id: task.id,
     text: `${task.title}${assigneeName ? ` - ${assigneeName}` : ''}`,
-    start_date: startDate,
-    end_date: endDate,
+    start_date: formatDateForGantt(startDateStr),
+    duration: duration,
     progress: progress,
     parent: task.parent_task_id || 0,
     type: isMilestone ? 'milestone' : 'task',
