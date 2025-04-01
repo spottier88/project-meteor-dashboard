@@ -48,7 +48,7 @@ export const getColorForStatus = (status: string): string => {
 export const convertTasksToGoogleChartFormat = (
   tasks: TaskData[], 
   profiles: any[] = []
-): any[] => {
+): any[][] => {
   if (!tasks || tasks.length === 0) {
     console.log("Aucune tâche à convertir pour le diagramme Gantt");
     return [
@@ -68,7 +68,7 @@ export const convertTasksToGoogleChartFormat = (
   console.log("Conversion de tâches pour Google Charts, nombre:", tasks.length);
   
   // Définir l'en-tête du tableau pour Google Charts
-  const dataTable = [
+  const dataTable: any[][] = [
     [
       { type: 'string', id: 'Task ID' },
       { type: 'string', id: 'Task Name' },
@@ -136,16 +136,16 @@ export const convertTasksToGoogleChartFormat = (
     // Déterminer les dépendances (tâche parente)
     const dependencies = task.parent_task_id || null;
     
-    // Ajouter la tâche au tableau de données - format pour Google Charts
+    // Ajouter la tâche au tableau de données - format pour les données (pas les en-têtes)
     dataTable.push([
-      task.id,             // Task ID - string
-      task.title,          // Task Name - string
-      assigneeName,        // Resource - string
-      startDate,           // Start Date - Date object
-      endDate,             // End Date - Date object
-      task.status,         // Status - string
-      dependencies,        // Dependencies - string or null
-      percentComplete      // Percent Complete - number
+      task.id,             // Task ID - Valeur directe (string)
+      task.title,          // Task Name - Valeur directe (string)
+      assigneeName,        // Resource - Valeur directe (string)
+      startDate,           // Start Date - Valeur directe (Date object)
+      endDate,             // End Date - Valeur directe (Date object)
+      task.status,         // Status - Valeur directe (string)
+      dependencies,        // Dependencies - Valeur directe (string ou null)
+      percentComplete      // Percent Complete - Valeur directe (number)
     ]);
     
     console.log(`Tâche ajoutée au Gantt: ${task.id} (${task.title}), début: ${startDate.toISOString()}, fin: ${endDate.toISOString()}`);
