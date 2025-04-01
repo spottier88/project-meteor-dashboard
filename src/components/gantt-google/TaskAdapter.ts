@@ -43,12 +43,44 @@ export const getColorForStatus = (status: string): string => {
 };
 
 /**
+ * Générateur de tooltip personnalisé pour les tâches
+ */
+export function createCustomTooltip(task: TaskData, assigneeName: string): string {
+  const startDate = task.start_date ? new Date(task.start_date).toLocaleDateString('fr-FR') : 'Non définie';
+  const dueDate = task.due_date ? new Date(task.due_date).toLocaleDateString('fr-FR') : 'Non définie';
+  
+  return `
+    <div style="padding: 10px; max-width: 300px;">
+      <div style="font-weight: bold; margin-bottom: 5px;">${task.title}</div>
+      ${task.description ? `<div style="margin-bottom: 5px;">${task.description}</div>` : ''}
+      <div style="display: flex; justify-content: space-between; margin-bottom: 3px;">
+        <span>Statut:</span>
+        <span>${task.status === 'todo' ? 'À faire' : task.status === 'in_progress' ? 'En cours' : 'Terminée'}</span>
+      </div>
+      <div style="display: flex; justify-content: space-between; margin-bottom: 3px;">
+        <span>Assigné à:</span>
+        <span>${assigneeName || 'Non assigné'}</span>
+      </div>
+      <div style="display: flex; justify-content: space-between; margin-bottom: 3px;">
+        <span>Début:</span>
+        <span>${startDate}</span>
+      </div>
+      <div style="display: flex; justify-content: space-between;">
+        <span>Échéance:</span>
+        <span>${dueDate}</span>
+      </div>
+    </div>
+  `;
+}
+
+/**
  * Convertit un tableau de tâches au format Google Charts Timeline
  * Pour les diagrammes Timeline, Google Charts attend un format spécifique:
- * - Première colonne: string (Task/Label)
+ * - Première colonne: string (Task ID/Label)
  * - Deuxième colonne: string (Resource/Bar label)
  * - Troisième colonne: Date (Start date)
  * - Quatrième colonne: Date (End date)
+ * - Cinquième colonne optionnelle: string (Tooltip)
  */
 export const convertTasksToGoogleChartFormat = (
   tasks: TaskData[], 
@@ -59,9 +91,10 @@ export const convertTasksToGoogleChartFormat = (
     return [
       [
         { type: 'string', id: 'Task ID' },
-        { type: 'string', id: 'Task Name' },
-        { type: 'date', id: 'Start Date' },
-        { type: 'date', id: 'End Date' }
+        { type: 'string', id: 'Resource' },
+        { type: 'date', id: 'Start' },
+        { type: 'date', id: 'End' },
+        { type: 'string', id: 'Tooltip', role: 'tooltip', p: { html: true } }
       ]
     ];
   }
@@ -74,7 +107,8 @@ export const convertTasksToGoogleChartFormat = (
       { type: 'string', id: 'Task ID' },
       { type: 'string', id: 'Resource' },
       { type: 'date', id: 'Start' },
-      { type: 'date', id: 'End' }
+      { type: 'date', id: 'End' },
+      { type: 'string', id: 'Tooltip', role: 'tooltip', p: { html: true } }
     ]
   ];
 
@@ -127,12 +161,16 @@ export const convertTasksToGoogleChartFormat = (
     // Obtenir le nom de l'assigné
     const assigneeName = task.assignee ? getUserName(task.assignee) : 'Non assigné';
     
-    // Ajouter la tâche au tableau de données - format Timeline
+    // Créer le tooltip HTML personnalisé
+    const tooltip = createCustomTooltip(task, assigneeName);
+    
+    // Ajouter la tâche au tableau de données - format Timeline avec tooltip HTML
     dataTable.push([
       task.title,          // Task Label (string)
       assigneeName,        // Resource (string)
       startDate,           // Start Date (Date object)
-      endDate              // End Date (Date object)
+      endDate,             // End Date (Date object)
+      tooltip              // HTML tooltip (string)
     ]);
     
     console.log(`Tâche ajoutée au Gantt: ${task.id} (${task.title}), début: ${startDate.toISOString()}, fin: ${endDate.toISOString()}`);
