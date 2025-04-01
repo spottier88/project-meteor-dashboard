@@ -4,10 +4,9 @@ import { Chart } from 'react-google-charts';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
-import { format } from 'date-fns';
 import { GanttViewButtons } from '@/components/gantt/GanttViewButtons';
 import { GanttLegend } from '@/components/gantt/GanttLegend';
-import { convertTasksToGoogleChartFormat } from './TaskAdapter';
+import { convertTasksToGoogleChartFormat, getColorForStatus } from './TaskAdapter';
 import { logger } from '@/utils/logger';
 
 interface GoogleGanttViewProps {
@@ -93,40 +92,30 @@ export const GoogleGanttView = ({ tasks, projectId, readOnly = false, onEditTask
   // Convertir les tâches au format Google Charts
   const formattedTasks = convertTasksToGoogleChartFormat(tasks, profiles);
 
-  // Option pour le diagramme Gantt
+  // Options pour le diagramme Timeline (Gantt)
   const options = {
     height: 600,
-    gantt: {
-      trackHeight: 30,
-      barHeight: 20,
-      labelStyle: {
-        fontName: 'sans-serif',
-        fontSize: 12,
-      },
-      palette: [
-        {
-          color: '#F2FCE2', // Todo
-          dark: '#E5F0D5',
-          light: '#F9FDEE',
-        },
-        {
-          color: '#D3E4FD', // In progress
-          dark: '#C6D7F0',
-          light: '#E9F3FE',
-        },
-        {
-          color: '#E2E8F0', // Done
-          dark: '#D5DBE3',
-          light: '#F1F4F8',
-        },
-      ],
-      // Définir l'échelle de temps en fonction du mode de vue
-      innerGridHorizLine: {
-        stroke: '#efefef',
-      },
-      innerGridTrack: {fill: '#f9f9f9'},
-      innerGridDarkTrack: {fill: '#f1f1f1'}
+    tooltip: { isHtml: true },
+    hAxis: {
+      format: viewMode === 'day' ? 'HH:mm' : viewMode === 'week' ? 'dd/MM' : 'MMM yyyy',
     },
+    timeline: {
+      groupByRowLabel: false,
+      colorByRowLabel: false,
+      rowLabelStyle: {
+        fontName: 'Arial',
+        fontSize: 13,
+        color: '#333',
+      },
+      barLabelStyle: {
+        fontName: 'Arial',
+        fontSize: 11,
+      },
+      showRowLabels: true,
+      showBarLabels: true,
+      singleColor: false,
+    },
+    colors: tasks.map(task => getColorForStatus(task.status)),
   };
 
   // Gérer le clic sur une tâche
@@ -191,7 +180,7 @@ export const GoogleGanttView = ({ tasks, projectId, readOnly = false, onEditTask
         <div className="h-[600px] w-full overflow-x-auto">
           {formattedTasks.length > 1 ? (
             <Chart
-              chartType="Gantt"
+              chartType="Timeline"
               width="100%"
               height="100%"
               data={formattedTasks}

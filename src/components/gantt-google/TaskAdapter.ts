@@ -44,6 +44,13 @@ export const getColorForStatus = (status: string): string => {
 
 /**
  * Convertit un tableau de tâches au format Google Charts Timeline
+ * Pour les diagrammes Timeline, Google Charts attend un format spécifique:
+ * - Première colonne: string (ID de la tâche ou groupe)
+ * - Deuxième colonne: string (Nom de la tâche)
+ * - Troisième colonne: string (Resource/Assignee)
+ * - Quatrième colonne: Date (Date de début)
+ * - Cinquième colonne: Date (Date de fin)
+ * - Options: style, tooltip, etc.
  */
 export const convertTasksToGoogleChartFormat = (
   tasks: TaskData[], 
@@ -58,9 +65,9 @@ export const convertTasksToGoogleChartFormat = (
         { type: 'string', id: 'Resource' },
         { type: 'date', id: 'Start Date' },
         { type: 'date', id: 'End Date' },
-        { type: 'string', id: 'Status' },
-        { type: 'string', id: 'Dependencies' },
-        { type: 'number', id: 'Percent Complete' }
+        { type: 'number', id: 'Duration' },
+        { type: 'number', id: 'Percent Complete' },
+        { type: 'string', id: 'Dependencies' }
       ]
     ];
   }
@@ -75,9 +82,9 @@ export const convertTasksToGoogleChartFormat = (
       { type: 'string', id: 'Resource' },
       { type: 'date', id: 'Start Date' },
       { type: 'date', id: 'End Date' },
-      { type: 'string', id: 'Status' },
-      { type: 'string', id: 'Dependencies' },
-      { type: 'number', id: 'Percent Complete' }
+      { type: 'number', id: 'Duration' },
+      { type: 'number', id: 'Percent Complete' },
+      { type: 'string', id: 'Dependencies' }
     ]
   ];
 
@@ -127,6 +134,10 @@ export const convertTasksToGoogleChartFormat = (
       endDate.setDate(endDate.getDate() + 1);
     }
     
+    // Calculer la durée en millisecondes puis la convertir en jours
+    const durationMs = endDate.getTime() - startDate.getTime();
+    const durationDays = Math.ceil(durationMs / (1000 * 60 * 60 * 24));
+    
     // Calculer le pourcentage d'avancement
     const percentComplete = task.status === 'done' ? 100 : task.status === 'in_progress' ? 50 : 0;
     
@@ -134,7 +145,7 @@ export const convertTasksToGoogleChartFormat = (
     const assigneeName = task.assignee ? getUserName(task.assignee) : 'Non assigné';
     
     // Déterminer les dépendances (tâche parente)
-    const dependencies = task.parent_task_id || null;
+    const dependencies = task.parent_task_id || '';
     
     // Ajouter la tâche au tableau de données - format pour les données (pas les en-têtes)
     dataTable.push([
@@ -143,12 +154,12 @@ export const convertTasksToGoogleChartFormat = (
       assigneeName,        // Resource - Valeur directe (string)
       startDate,           // Start Date - Valeur directe (Date object)
       endDate,             // End Date - Valeur directe (Date object)
-      task.status,         // Status - Valeur directe (string)
-      dependencies,        // Dependencies - Valeur directe (string ou null)
-      percentComplete      // Percent Complete - Valeur directe (number)
+      durationDays,        // Duration - Valeur directe (number) en jours
+      percentComplete,     // Percent Complete - Valeur directe (number)
+      dependencies         // Dependencies - Valeur directe (string)
     ]);
     
-    console.log(`Tâche ajoutée au Gantt: ${task.id} (${task.title}), début: ${startDate.toISOString()}, fin: ${endDate.toISOString()}`);
+    console.log(`Tâche ajoutée au Gantt: ${task.id} (${task.title}), début: ${startDate.toISOString()}, fin: ${endDate.toISOString()}, durée: ${durationDays} jours`);
   }
   
   console.log("Nombre de lignes de données pour Google Charts:", dataTable.length - 1);
