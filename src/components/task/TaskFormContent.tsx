@@ -2,10 +2,10 @@
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { DatePicker } from "@/components/form/DatePicker";
 import { Separator } from "@/components/ui/separator";
 import { ParentTaskSelector } from "./ParentTaskSelector";
 import { AssigneeSelector } from "./AssigneeSelector";
+import { DateInputField } from "@/components/form/DateInputField";
 
 interface TaskFormContentProps {
   title: string;
@@ -123,12 +123,12 @@ export const TaskFormContent = ({
             setAssignmentMode={setAssignmentMode}
             projectMembers={projectMembers}
           />
-          <DatePicker
+          <DateInputField
             label="Date de début"
             date={startDate}
             onDateChange={setStartDate}
           />
-          <DatePicker
+          <DateInputField
             label="Date d'échéance"
             date={dueDate}
             onDateChange={setDueDate}
