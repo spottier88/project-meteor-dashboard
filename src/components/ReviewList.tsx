@@ -54,7 +54,7 @@ export const ReviewList = ({ projectId }: ReviewListProps) => {
                 </div>
                 {review.comment && (
                   <div className="pt-2">
-                    <span className="text-sm text-muted-foreground">Commentaire</span>
+                    <span className="text-sm text-muted-foreground">Situation générale</span>
                     <p className="text-sm mt-1">{review.comment}</p>
                   </div>
                 )}
