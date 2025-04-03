@@ -156,7 +156,7 @@ export const ReviewHistory = () => {
                 <CardContent className="space-y-4">
                   {review.comment && (
                     <div>
-                      <h4 className="font-medium mb-1">Commentaires</h4>
+                      <h4 className="font-medium mb-1">Situation générale</h4>
                       <p className="text-sm text-muted-foreground">{review.comment}</p>
                     </div>
                   )}
