@@ -1,3 +1,4 @@
+
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -85,7 +86,9 @@ export const UserManagement = () => {
       
       if (error) throw error;
       
-      return new Set(data.map(assignment => assignment.user_id));
+      const assignmentSet = new Set(data.map(assignment => assignment.user_id));
+      console.log("Manager assignments:", assignmentSet);
+      return assignmentSet;
     },
   });
 
@@ -104,14 +107,27 @@ export const UserManagement = () => {
 
       if (rolesError) throw rolesError;
 
-      return (profilesData as UserProfile[]).map(profile => ({
-        ...profile,
-        roles: rolesData
+      const usersWithRoles = (profilesData as UserProfile[]).map(profile => {
+        const userRoles = rolesData
           .filter((role: UserRoleData) => role.user_id === profile.id)
-          .map((role: UserRoleData) => role.role),
-        lastLogin: lastLogins?.[profile.id],
-        hasManagerAssignment: managerAssignments?.has(profile.id) || false
-      }));
+          .map((role: UserRoleData) => role.role);
+        
+        const hasManagerRole = userRoles.includes("manager");
+        const hasAssignment = hasManagerRole ? managerAssignments?.has(profile.id) || false : false;
+        
+        if (hasManagerRole) {
+          console.log(`User ${profile.email} has manager role. Has assignment: ${hasAssignment}`);
+        }
+
+        return {
+          ...profile,
+          roles: userRoles,
+          lastLogin: lastLogins?.[profile.id],
+          hasManagerAssignment: hasAssignment
+        };
+      });
+      
+      return usersWithRoles;
     },
     enabled: !!lastLogins && !!managerAssignments,
   });
