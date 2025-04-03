@@ -115,10 +115,10 @@ export const ReviewFormFields = ({ form }: ReviewFormFieldsProps) => {
         name="comment"
         render={({ field }) => (
           <FormItem>
-            <FormLabel>Commentaires</FormLabel>
+            <FormLabel>Situation générale</FormLabel>
             <FormControl>
               <Textarea
-                placeholder="Ajoutez vos commentaires ici..."
+                placeholder="Décrivez la situation de votre projet à date..."
                 className="min-h-[100px]"
                 {...field}
               />
