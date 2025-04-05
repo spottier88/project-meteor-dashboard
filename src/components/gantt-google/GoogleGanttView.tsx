@@ -7,8 +7,6 @@ import { useToast } from '@/components/ui/use-toast';
 import { GanttViewButtons } from '@/components/gantt/GanttViewButtons';
 import { GanttLegend } from '@/components/gantt/GanttLegend';
 import { convertTasksToGoogleChartFormat, getColorForStatus } from './TaskAdapter';
-import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import { CalendarRange, CalendarDays, CalendarClock } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface GoogleGanttViewProps {
@@ -30,7 +28,7 @@ interface GoogleGanttViewProps {
 
 export const GoogleGanttView = ({ tasks, projectId, readOnly = false, onEditTask }: GoogleGanttViewProps) => {
   const [showTasks, setShowTasks] = useState(true);
-  const [viewMode, setViewMode] = useState<'day' | 'week' | 'month'>('month');
+  const [viewMode] = useState<'month'>('month'); // Fixer le mode sur 'month' par défaut
   const { toast } = useToast();
 
   // Récupérer les membres du projet pour afficher les noms des personnes assignées
@@ -113,7 +111,7 @@ export const GoogleGanttView = ({ tasks, projectId, readOnly = false, onEditTask
       colorByRowLabel: false
     },
     hAxis: {
-      format: viewMode === 'day' ? 'HH:mm' : viewMode === 'week' ? 'dd/MM' : 'MMM yyyy',
+      format: 'MMM yyyy', // Mode année par défaut
     },
     tooltip: { isHtml: true }, // Activer les tooltips HTML
     colors: tasks.map(task => getColorForStatus(task.status)),
@@ -142,29 +140,9 @@ export const GoogleGanttView = ({ tasks, projectId, readOnly = false, onEditTask
     }
   };
 
-  const handleViewModeChange = (mode: 'week' | 'month' | 'year') => {
-    console.log("Changement de mode vue:", mode);
-    
-    switch (mode) {
-      case 'week':
-        setViewMode('day');
-        break;
-      case 'month':
-        setViewMode('week');
-        break;
-      case 'year':
-        setViewMode('month');
-        break;
-    }
-  };
-
   const handleShowTasksChange = (value: boolean) => {
     console.log("Affichage des tâches:", value);
     setShowTasks(value);
-  };
-
-  const handleScaleChange = (value: string) => {
-    if (value) setViewMode(value as 'day' | 'week' | 'month');
   };
 
   useEffect(() => {
@@ -175,45 +153,13 @@ export const GoogleGanttView = ({ tasks, projectId, readOnly = false, onEditTask
     <div className="space-y-4">
       <div className="flex justify-between items-center mb-4">
         <div className="flex gap-4 items-center">
+          {/* Bouton simple pour afficher/masquer la liste des tâches */}
           <GanttViewButtons
-            mode={viewMode === 'day' ? 'week' : viewMode === 'week' ? 'month' : 'year'}
+            mode="year" // Valeur par défaut
             showTasks={showTasks}
-            onViewModeChange={handleViewModeChange}
+            onViewModeChange={() => {}} // Fonction vide, plus de changement de mode
             onShowTasksChange={handleShowTasksChange}
           />
-          
-          <TooltipProvider>
-            <div className="border rounded-md p-1">
-              <ToggleGroup type="single" value={viewMode} onValueChange={handleScaleChange}>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <ToggleGroupItem value="day" aria-label="Vue journalière">
-                      <CalendarClock className="h-4 w-4" />
-                    </ToggleGroupItem>
-                  </TooltipTrigger>
-                  <TooltipContent>Semaine</TooltipContent>
-                </Tooltip>
-                
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <ToggleGroupItem value="week" aria-label="Vue hebdomadaire">
-                      <CalendarDays className="h-4 w-4" />
-                    </ToggleGroupItem>
-                  </TooltipTrigger>
-                  <TooltipContent>Mois</TooltipContent>
-                </Tooltip>
-                
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <ToggleGroupItem value="month" aria-label="Vue mensuelle">
-                      <CalendarRange className="h-4 w-4" />
-                    </ToggleGroupItem>
-                  </TooltipTrigger>
-                  <TooltipContent>Année</TooltipContent>
-                </Tooltip>
-              </ToggleGroup>
-            </div>
-          </TooltipProvider>
         </div>
       </div>
 
