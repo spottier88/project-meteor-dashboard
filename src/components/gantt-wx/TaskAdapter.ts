@@ -102,16 +102,17 @@ export const createDefaultColumns = (): GanttColumn[] => {
       name: 'Tâche',
       key: 'name',
       width: 250,
-      resizable: true
+      resizable: true,
+      cell: ({ task }) => task?.name ?? '—',
     },
     {
       name: 'Début',
       key: 'start',
       width: 120,
       align: 'center',
-      cellRenderer: (task: GanttTask) => {
-        if (!task || !task.start) return '-';
-        return task.start.toLocaleDateString('fr-FR');
+      cell: ({ task }) => {
+        if (!task?.start) return '-';
+        return new Date(task.start).toLocaleDateString('fr-FR');
       }
     },
     {
@@ -119,9 +120,9 @@ export const createDefaultColumns = (): GanttColumn[] => {
       key: 'end',
       width: 120,
       align: 'center',
-      cellRenderer: (task: GanttTask) => {
-        if (!task || !task.end) return '-';
-        return task.end.toLocaleDateString('fr-FR');
+      cell: ({ task }) => {
+        if (!task?.end) return '-';
+        return new Date(task.end).toLocaleDateString('fr-FR');
       }
     },
     {
@@ -129,9 +130,8 @@ export const createDefaultColumns = (): GanttColumn[] => {
       key: 'status',
       width: 100,
       align: 'center',
-      cellRenderer: (task: GanttTask) => {
-        if (!task) return '-';
-        switch (task.status) {
+      cell: ({ task }) => {
+        switch (task?.status) {
           case 'todo': return 'À faire';
           case 'in_progress': return 'En cours';
           case 'done': return 'Terminé';
@@ -143,10 +143,8 @@ export const createDefaultColumns = (): GanttColumn[] => {
       name: 'Assignée à',
       key: 'assignee',
       width: 150,
-      cellRenderer: (task: GanttTask) => {
-        if (!task) return '-';
-        return task.assignee || '-';
-      }
+      cell: ({ task }) => task?.assignee || '-',
     }
   ];
 };
+
