@@ -1,0 +1,58 @@
+
+/* Styles personnalisés pour wx-react-gantt */
+.gantt-board-container {
+  width: 100%;
+  overflow: hidden;
+  padding: 1rem;
+  font-family: inherit;
+}
+
+/* Couleur d'en-tête */
+.wx-gantt .wx-gantt-header {
+  background-color: #f8f9fa;
+  border-bottom: 1px solid #e9ecef;
+}
+
+/* Style des barres de tâches */
+.wx-gantt .wx-gantt-timeline-task-bar {
+  border-radius: 4px;
+}
+
+/* Style des dépendances */
+.wx-gantt .wx-gantt-timeline-dependency-line {
+  stroke-width: 1.5;
+  stroke: #8E9196;
+}
+
+/* Style des lignes de grille */
+.wx-gantt .wx-gantt-timeline-grid-line {
+  stroke: #f0f0f0;
+}
+
+/* Style de l'en-tête de la chronologie */
+.wx-gantt .wx-gantt-timeline-header {
+  font-weight: 500;
+  color: #333;
+}
+
+/* Style du tableau */
+.wx-gantt .wx-gantt-list-cell {
+  border-color: #e9ecef;
+}
+
+/* Style des lignes aujourd'hui */
+.wx-gantt .wx-gantt-timeline-today-line {
+  stroke: #9b87f5;
+  stroke-width: 2;
+  stroke-dasharray: 5, 5;
+}
+
+/* Hauteur des lignes */
+.wx-gantt .wx-gantt-task-row {
+  height: 40px;
+}
+
+/* Style lors du survol des tâches */
+.wx-gantt .wx-gantt-timeline-task-bar:hover {
+  filter: brightness(1.1);
+}

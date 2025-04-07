@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -9,6 +10,7 @@ import { TaskTable } from "./task/TaskTable";
 import { Input } from "@/components/ui/input";
 import { ViewToggle, ViewMode } from "@/components/ViewToggle";
 import { KanbanBoard } from "@/components/KanbanBoard";
+import { GanttBoard } from "@/components/GanttBoard";
 import { useTaskPermissions } from "@/hooks/use-task-permissions";
 import { usePermissionsContext } from "@/contexts/PermissionsContext";
 import {
@@ -152,8 +154,20 @@ export const TaskList = ({
               }
             }}
           />
-        ) : (
+        ) : view === "grid" ? (
           <KanbanBoard
+            projectId={projectId}
+            readOnly={!canCreateTask}
+            onEditTask={(task) => {
+              if (canEditTask(task.assignee)) {
+                setSelectedTask(task);
+                setIsTaskFormOpen(true);
+              }
+            }}
+          />
+        ) : (
+          <GanttBoard
+            tasks={filteredTasks || []}
             projectId={projectId}
             readOnly={!canCreateTask}
             onEditTask={(task) => {
