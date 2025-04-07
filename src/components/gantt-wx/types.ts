@@ -20,6 +20,8 @@ export interface GanttTask {
   project_id?: string;
   status?: "todo" | "in_progress" | "done";
   assignee?: string;
+  // Propriété cell nécessaire pour le rendu dans wx-react-gantt
+  cell?: Record<string, any>;
 }
 
 export interface GanttDependency {

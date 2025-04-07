@@ -24,6 +24,9 @@ export const GanttBoard = ({
   // Convertir les tâches et créer les dépendances
   const ganttTasks = useMemo(() => {
     try {
+      if (!tasks || tasks.length === 0) {
+        return [];
+      }
       return convertTasksToGanttFormat(tasks);
     } catch (err) {
       console.error("Erreur lors de la conversion des tâches:", err);
@@ -34,6 +37,9 @@ export const GanttBoard = ({
   
   const ganttDependencies = useMemo(() => {
     try {
+      if (!tasks || tasks.length === 0) {
+        return [];
+      }
       return createDependenciesFromTasks(tasks);
     } catch (err) {
       console.error("Erreur lors de la création des dépendances:", err);

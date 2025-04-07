@@ -63,7 +63,9 @@ export const convertTasksToGanttFormat = (tasks: any[]): GanttTask[] => {
       // Propriétés supplémentaires pour référence
       project_id: task.project_id,
       status: task.status,
-      assignee: task.assignee
+      assignee: task.assignee,
+      // Propriété cell explicitée pour wx-react-gantt
+      cell: {} 
     };
   }).filter(Boolean) as GanttTask[]; // Filtrer les valeurs null et cast vers GanttTask[]
 };
