@@ -1,14 +1,14 @@
 
 import { useEffect, useState, useMemo } from 'react';
 import { Gantt } from 'wx-react-gantt';
-import { GanttBoardProps } from './gantt-wx/types';
 import { 
   convertTasksToGanttFormat, 
   createDependenciesFromTasks,
   createDefaultColumns
 } from './gantt-wx/TaskAdapter';
 import { Skeleton } from '@/components/ui/skeleton';
-import 'wx-react-gantt/dist/style.css';
+// Modifier l'importation du CSS de wx-react-gantt
+import 'wx-react-gantt/dist/index.css';
 import './gantt-wx/gantt-custom.css';
 
 export const GanttBoard = ({ 
