@@ -7,6 +7,7 @@ import {
   createDefaultColumns
 } from './gantt-wx/TaskAdapter';
 import { Skeleton } from '@/components/ui/skeleton';
+import { GanttBoardProps } from './gantt-wx/types';
 // Modifier l'importation du CSS de wx-react-gantt
 import 'wx-react-gantt/dist/gantt.css';
 

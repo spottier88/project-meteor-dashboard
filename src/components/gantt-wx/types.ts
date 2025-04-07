@@ -12,7 +12,7 @@ export interface GanttTask {
   start: Date | null;
   end: Date | null;
   progress?: number;
-  type?: string;
+  type: string; // Champ obligatoire pour wx-react-gantt
   hideChildren?: boolean;
   isExpanded?: boolean;
   backgroundColor?: string;

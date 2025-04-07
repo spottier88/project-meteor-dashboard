@@ -45,7 +45,8 @@ export const convertTasksToGanttFormat = (tasks: any[]): GanttTask[] => {
         progress = 100;
         break;
     }
-    
+
+    // Assurer que les tâches ont toujours un type défini (ajouté pour résoudre l'erreur)
     return {
       id: task.id,
       parentId: task.parent_task_id || null,
@@ -53,6 +54,7 @@ export const convertTasksToGanttFormat = (tasks: any[]): GanttTask[] => {
       start: startDate,
       end: endDate,
       progress: progress,
+      type: 'task', // Ajouter explicitement un type pour éviter des erreurs undefined
       backgroundColor: backgroundColor,
       // Autres propriétés utiles
       project_id: task.project_id,
@@ -66,6 +68,8 @@ export const convertTasksToGanttFormat = (tasks: any[]): GanttTask[] => {
  * Crée des dépendances entre les tâches parentes et enfants
  */
 export const createDependenciesFromTasks = (tasks: any[]): GanttDependency[] => {
+  if (!tasks || !tasks.length) return [];
+  
   const dependencies: GanttDependency[] = [];
   
   // Créer des dépendances entre les tâches parentes et enfants
