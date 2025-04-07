@@ -8,7 +8,7 @@ import {
 } from './gantt-wx/TaskAdapter';
 import { Skeleton } from '@/components/ui/skeleton';
 import { GanttBoardProps } from './gantt-wx/types';
-// Modifier l'importation du CSS de wx-react-gantt
+// Importer le bon fichier CSS
 import 'wx-react-gantt/dist/gantt.css';
 
 export const GanttBoard = ({ 

@@ -38,8 +38,6 @@ export interface GanttColumn {
   align?: 'center' | 'left' | 'right';
   sortable?: boolean;
   resizable?: boolean;
-  cellTemplate?: React.ReactNode;
-  headerTemplate?: React.ReactNode;
   cellRenderer?: (task: GanttTask) => React.ReactNode;
   headerRenderer?: (column: GanttColumn) => React.ReactNode;
 }

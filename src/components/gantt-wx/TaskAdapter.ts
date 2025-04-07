@@ -46,17 +46,17 @@ export const convertTasksToGanttFormat = (tasks: any[]): GanttTask[] => {
         break;
     }
 
-    // Assurer que les tâches ont toujours un type défini (ajouté pour résoudre l'erreur)
+    // Assurer que les tâches ont toujours un type défini
     return {
       id: task.id,
       parentId: task.parent_task_id || null,
-      name: task.title,
+      name: task.title || "Tâche sans titre",  // S'assurer qu'il y a toujours un nom
       start: startDate,
       end: endDate,
       progress: progress,
-      type: 'task', // Ajouter explicitement un type pour éviter des erreurs undefined
+      type: 'task', // Champ obligatoire pour wx-react-gantt
       backgroundColor: backgroundColor,
-      // Autres propriétés utiles
+      // Propriétés supplémentaires pour référence
       project_id: task.project_id,
       status: task.status,
       assignee: task.assignee
