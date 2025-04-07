@@ -10,6 +10,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { GanttBoardProps } from './gantt-wx/types';
 // Importer le bon fichier CSS
 import 'wx-react-gantt/dist/gantt.css';
+import './gantt-wx/gantt-custom.css';
 
 export const GanttBoard = ({ 
   tasks = [], 
@@ -18,10 +19,28 @@ export const GanttBoard = ({
   onEditTask 
 }: GanttBoardProps) => {
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   
   // Convertir les tâches et créer les dépendances
-  const ganttTasks = useMemo(() => convertTasksToGanttFormat(tasks), [tasks]);
-  const ganttDependencies = useMemo(() => createDependenciesFromTasks(tasks), [tasks]);
+  const ganttTasks = useMemo(() => {
+    try {
+      return convertTasksToGanttFormat(tasks);
+    } catch (err) {
+      console.error("Erreur lors de la conversion des tâches:", err);
+      setError("Erreur de conversion des tâches");
+      return [];
+    }
+  }, [tasks]);
+  
+  const ganttDependencies = useMemo(() => {
+    try {
+      return createDependenciesFromTasks(tasks);
+    } catch (err) {
+      console.error("Erreur lors de la création des dépendances:", err);
+      return [];
+    }
+  }, [tasks]);
+  
   const columns = useMemo(() => createDefaultColumns(), []);
   
   // Gérer le chargement initial
@@ -43,6 +62,14 @@ export const GanttBoard = ({
 
   if (isLoading) {
     return <Skeleton className="h-96 w-full" />;
+  }
+  
+  if (error) {
+    return (
+      <div className="flex items-center justify-center h-96 bg-white rounded-lg border">
+        <p className="text-red-500">{error}</p>
+      </div>
+    );
   }
   
   if (!tasks.length) {

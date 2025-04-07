@@ -8,6 +8,8 @@ export const convertTasksToGanttFormat = (tasks: any[]): GanttTask[] => {
   if (!tasks || !tasks.length) return [];
   
   return tasks.map(task => {
+    if (!task) return null;
+    
     // Utiliser les dates de début et de fin si disponibles, sinon utiliser des valeurs par défaut
     let startDate = task.start_date ? new Date(task.start_date) : new Date();
     let endDate = task.due_date ? new Date(task.due_date) : new Date(startDate);
@@ -46,22 +48,24 @@ export const convertTasksToGanttFormat = (tasks: any[]): GanttTask[] => {
         break;
     }
 
-    // Assurer que les tâches ont toujours un type défini
+    // Créer l'objet tâche avec toutes les propriétés requises par wx-react-gantt
     return {
       id: task.id,
       parentId: task.parent_task_id || null,
-      name: task.title || "Tâche sans titre",  // S'assurer qu'il y a toujours un nom
+      name: task.title || "Tâche sans titre",
       start: startDate,
       end: endDate,
       progress: progress,
-      type: 'task', // Champ obligatoire pour wx-react-gantt
+      type: 'task', // Type obligatoire pour wx-react-gantt
+      isExpanded: true, // Assurer que les tâches sont toujours développées
+      hideChildren: false,
       backgroundColor: backgroundColor,
       // Propriétés supplémentaires pour référence
       project_id: task.project_id,
       status: task.status,
       assignee: task.assignee
     };
-  });
+  }).filter(Boolean) as GanttTask[]; // Filtrer les valeurs null et cast vers GanttTask[]
 };
 
 /**
@@ -74,7 +78,7 @@ export const createDependenciesFromTasks = (tasks: any[]): GanttDependency[] => 
   
   // Créer des dépendances entre les tâches parentes et enfants
   tasks.forEach(task => {
-    if (task.parent_task_id) {
+    if (task && task.parent_task_id) {
       dependencies.push({
         id: `${task.parent_task_id}_to_${task.id}`,
         fromId: task.parent_task_id,
@@ -104,7 +108,7 @@ export const createDefaultColumns = (): GanttColumn[] => {
       width: 120,
       align: 'center',
       cellRenderer: (task: GanttTask) => {
-        if (!task.start) return '-';
+        if (!task || !task.start) return '-';
         return task.start.toLocaleDateString('fr-FR');
       }
     },
@@ -114,7 +118,7 @@ export const createDefaultColumns = (): GanttColumn[] => {
       width: 120,
       align: 'center',
       cellRenderer: (task: GanttTask) => {
-        if (!task.end) return '-';
+        if (!task || !task.end) return '-';
         return task.end.toLocaleDateString('fr-FR');
       }
     },
@@ -124,6 +128,7 @@ export const createDefaultColumns = (): GanttColumn[] => {
       width: 100,
       align: 'center',
       cellRenderer: (task: GanttTask) => {
+        if (!task) return '-';
         switch (task.status) {
           case 'todo': return 'À faire';
           case 'in_progress': return 'En cours';
@@ -136,7 +141,10 @@ export const createDefaultColumns = (): GanttColumn[] => {
       name: 'Assignée à',
       key: 'assignee',
       width: 150,
-      cellRenderer: (task: GanttTask) => task.assignee || '-'
+      cellRenderer: (task: GanttTask) => {
+        if (!task) return '-';
+        return task.assignee || '-';
+      }
     }
   ];
 };
