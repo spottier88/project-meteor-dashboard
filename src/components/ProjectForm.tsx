@@ -35,7 +35,12 @@ export const ProjectForm = ({ isOpen, onClose, onSubmit, project }: ProjectFormP
     enabled: isOpen && !!user?.id && !!validation.userRoles,
   });
 
-  const { handleSubmit } = useProjectFormSubmit({
+  const { 
+    handleSubmit, 
+    showAccessWarning, 
+    handleProceedAnyway, 
+    handleCancelSubmit 
+  } = useProjectFormSubmit({
     project,
     canEdit,
     canCreate,
@@ -123,6 +128,7 @@ export const ProjectForm = ({ isOpen, onClose, onSubmit, project }: ProjectFormP
         </DialogContent>
       </Dialog>
 
+      {/* Alerte pour les modifications non enregistrées */}
       <AlertDialog open={showUnsavedChangesAlert} onOpenChange={setShowUnsavedChangesAlert}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -135,6 +141,25 @@ export const ProjectForm = ({ isOpen, onClose, onSubmit, project }: ProjectFormP
             <AlertDialogCancel onClick={handleCancelClose}>Annuler</AlertDialogCancel>
             <AlertDialogAction onClick={handleConfirmClose} className="bg-red-600 hover:bg-red-700">
               Quitter sans enregistrer
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Alerte pour la perte d'accès au projet */}
+      <AlertDialog open={showAccessWarning} onOpenChange={handleCancelSubmit}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Attention - Perte d'accès</AlertDialogTitle>
+            <AlertDialogDescription>
+              Après cette modification, vous n'aurez plus accès à ce projet.
+              Êtes-vous sûr de vouloir continuer ?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={handleCancelSubmit}>Annuler</AlertDialogCancel>
+            <AlertDialogAction onClick={handleProceedAnyway} className="bg-red-600 hover:bg-red-700">
+              Continuer quand même
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

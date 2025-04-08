@@ -4,6 +4,9 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useUser } from "@supabase/auth-helpers-react";
 import { ProjectFormState } from "../components/form/useProjectFormState";
 import { supabase } from "@/integrations/supabase/client";
+import { willUserStillHaveAccess } from "@/utils/projectAccessCheck";
+import { useState } from "react";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 
 interface UseProjectFormSubmitProps {
   project?: any;
@@ -25,8 +28,10 @@ export const useProjectFormSubmit = ({
   const { toast } = useToast();
   const user = useUser();
   const queryClient = useQueryClient();
+  const [showAccessWarning, setShowAccessWarning] = useState(false);
+  const [isProceedingAnyway, setIsProceedingAnyway] = useState(false);
 
-  const handleSubmit = async () => {
+  const checkAccessAndSubmit = async () => {
     if (!formState.validateStep3()) {
       toast({
         title: "Erreur",
@@ -54,6 +59,37 @@ export const useProjectFormSubmit = ({
       return;
     }
 
+    // Vérifier si le chef de projet ou l'organisation a changé
+    if (project?.id && (
+      project.project_manager !== formState.projectManager ||
+      project.pole_id !== formState.poleId ||
+      project.direction_id !== formState.directionId ||
+      project.service_id !== formState.serviceId
+    )) {
+      // Vérifier si l'utilisateur aura toujours accès après la modification
+      const willHaveAccess = await willUserStillHaveAccess(
+        user?.id,
+        project.id,
+        formState.projectManager,
+        formState.poleId === "none" ? null : formState.poleId,
+        formState.directionId === "none" ? null : formState.directionId,
+        formState.serviceId === "none" ? null : formState.serviceId,
+      );
+
+      if (!willHaveAccess && !isProceedingAnyway) {
+        setShowAccessWarning(true);
+        return;
+      }
+    }
+
+    // Réinitialiser l'indicateur pour les futures soumissions
+    setIsProceedingAnyway(false);
+    
+    // Continuer avec la soumission
+    submitProject();
+  };
+
+  const submitProject = async () => {
     formState.setIsSubmitting(true);
     try {
       const projectData = {
@@ -111,5 +147,20 @@ export const useProjectFormSubmit = ({
     }
   };
 
-  return { handleSubmit };
+  const handleProceedAnyway = () => {
+    setIsProceedingAnyway(true);
+    setShowAccessWarning(false);
+    submitProject();
+  };
+
+  const handleCancelSubmit = () => {
+    setShowAccessWarning(false);
+  };
+
+  return { 
+    handleSubmit: checkAccessAndSubmit, 
+    showAccessWarning,
+    handleProceedAnyway,
+    handleCancelSubmit
+  };
 };
