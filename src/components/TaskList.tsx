@@ -163,7 +163,7 @@ export const TaskList = ({
                 setIsTaskFormOpen(true);
               }
             }}
-          /> 
+          /> )
       ) : (
         <div className="text-center py-4 text-muted-foreground">
           Aucune tâche pour ce projet
