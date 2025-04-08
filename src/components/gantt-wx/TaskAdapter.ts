@@ -64,7 +64,6 @@ export const convertTasksToGanttFormat = (tasks: any[]): GanttTask[] => {
       project_id: task.project_id,
       status: task.status,
       assignee: task.assignee,
-
     };
   }).filter(Boolean) as GanttTask[]; // Filtrer les valeurs null et cast vers GanttTask[]
 };
@@ -146,4 +145,3 @@ export const createDefaultColumns = (): GanttColumn[] => {
     }
   ];
 };
-

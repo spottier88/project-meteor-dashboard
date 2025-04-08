@@ -20,8 +20,6 @@ export interface GanttTask {
   project_id?: string;
   status?: "todo" | "in_progress" | "done";
   assignee?: string;
-  // Propriété cell nécessaire pour le rendu dans wx-react-gantt
-  cell?: Record<string, any>;
 }
 
 export interface GanttDependency {
@@ -40,6 +38,7 @@ export interface GanttColumn {
   align?: 'center' | 'left' | 'right';
   sortable?: boolean;
   resizable?: boolean;
+  cell?: ({ task }: { task: GanttTask }) => React.ReactNode;
   cellRenderer?: (task: GanttTask) => React.ReactNode;
   headerRenderer?: (column: GanttColumn) => React.ReactNode;
 }
