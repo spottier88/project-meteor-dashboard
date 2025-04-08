@@ -23,16 +23,30 @@ const ProjectSummaryActions = ({ project, risks = [], tasks = [] }: ProjectSumma
 
   const handleExportPPTX = async () => {
     try {
-      const { data: lastReview } = await supabase
+      // Récupérer la dernière revue avec ses actions associées
+      const { data: lastReview, error: reviewError } = await supabase
         .from("reviews")
-        .select(`
-          *,
-          review_actions(*)
-        `)
+        .select("*")
         .eq("project_id", project.id)
         .order("created_at", { ascending: false })
         .limit(1)
         .single();
+
+      if (reviewError) {
+        console.error("Erreur lors de la récupération de la revue:", reviewError);
+        throw reviewError;
+      }
+
+      // Récupérer les actions associées à cette revue
+      const { data: reviewActions, error: actionsError } = await supabase
+        .from("review_actions")
+        .select("*")
+        .eq("review_id", lastReview.id);
+
+      if (actionsError) {
+        console.error("Erreur lors de la récupération des actions:", actionsError);
+        throw actionsError;
+      }
 
       const projectData = {
         project: {
@@ -55,7 +69,7 @@ const ProjectSummaryActions = ({ project, risks = [], tasks = [] }: ProjectSumma
           progress: lastReview.progress,
           comment: lastReview.comment,
           created_at: lastReview.created_at,
-          actions: lastReview.review_actions || []
+          actions: reviewActions || []
         } : undefined,
         risks,
         tasks,

@@ -1,3 +1,4 @@
+
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { useProjectCart } from "@/hooks/use-project-cart";
@@ -44,12 +45,24 @@ export const ProjectCart = ({ isOpen, onClose }: ProjectCartProps) => {
             return null;
           }
 
+          // Récupérer les actions de la dernière revue
+          let reviewActions = [];
+          if (reviewResult.data?.review_id) {
+            const { data: actionsData, error: actionsError } = await supabase
+              .from("review_actions")
+              .select("*")
+              .eq("review_id", reviewResult.data.review_id);
+              
+            if (!actionsError) {
+              reviewActions = actionsData || [];
+              console.log(`Récupération de ${reviewActions.length} actions pour la revue ${reviewResult.data.review_id}`);
+            }
+          }
+
           const [risksResult, tasksResult] = await Promise.all([
             supabase.from("risks").select("*").eq("project_id", projectId),
             supabase.from("tasks").select("*").eq("project_id", projectId),
           ]);
-
-          console.log("Review data with actions:", reviewResult.data);
 
           const [poleResult, directionResult, serviceResult] = await Promise.all([
             projectResult.data.pole_id
@@ -80,6 +93,7 @@ export const ProjectCart = ({ isOpen, onClose }: ProjectCartProps) => {
                   completion: reviewResult.data.completion,
                   comment: reviewResult.data.comment,
                   created_at: reviewResult.data.created_at,
+                  actions: reviewActions,
                 }
               : undefined,
             risks: risksResult.data || [],
