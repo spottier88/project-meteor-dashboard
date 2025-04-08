@@ -55,7 +55,7 @@ const ProjectSummaryActions = ({ project, risks = [], tasks = [] }: ProjectSumma
           progress: lastReview.progress,
           comment: lastReview.comment,
           created_at: lastReview.created_at,
-          actions: lastReview.review_actions
+          actions: lastReview.review_actions || []
         } : undefined,
         risks,
         tasks,

@@ -183,7 +183,11 @@ const addRisksSection = (slide: pptxgen.Slide, data: ProjectData, grid: any) => 
     grid.x + 0.2, risksY + titleHeight, 4.1, riskBoxHeight - titleHeight);
     
   addSection(slide, "ACTIONS CORRECTIVES", grid.x + 4.6, risksY, 4.7, riskBoxHeight);
-  addBulletList(slide, data.lastReview?.actions?.map(a => a.description) || [], 
+
+  // Récupérer les descriptions des actions correctives s'il y en a
+  const actionDescriptions = data.lastReview?.actions?.map(a => a.description) || [];
+  
+  addBulletList(slide, actionDescriptions, 
     grid.x + 4.8, risksY + titleHeight, 4.3, riskBoxHeight - titleHeight);
 };
 
@@ -238,4 +242,3 @@ const addBulletList = (
     });
   }
 };
-
