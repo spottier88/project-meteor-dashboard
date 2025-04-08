@@ -10,7 +10,6 @@ import { TaskTable } from "./task/TaskTable";
 import { Input } from "@/components/ui/input";
 import { ViewToggle, ViewMode } from "@/components/ViewToggle";
 import { KanbanBoard } from "@/components/KanbanBoard";
-import { GanttBoard } from "@/components/GanttBoard";
 import { useTaskPermissions } from "@/hooks/use-task-permissions";
 import { usePermissionsContext } from "@/contexts/PermissionsContext";
 import {
@@ -165,19 +164,7 @@ export const TaskList = ({
               }
             }}
           />
-        ) : (
-          <GanttBoard
-            tasks={filteredTasks || []}
-            projectId={projectId}
-            readOnly={!canCreateTask}
-            onEditTask={(task) => {
-              if (canEditTask(task.assignee)) {
-                setSelectedTask(task);
-                setIsTaskFormOpen(true);
-              }
-            }}
-          />
-        )
+        ) 
       ) : (
         <div className="text-center py-4 text-muted-foreground">
           Aucune tâche pour ce projet
