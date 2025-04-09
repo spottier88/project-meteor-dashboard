@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import {
   Dialog,
@@ -19,6 +18,7 @@ import { Separator } from "@/components/ui/separator";
 import { EntityType } from "@/types/user";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { UserHierarchyAssignmentForm } from "./UserHierarchyAssignmentForm";
+import { ManagerEntitiesList } from "./ManagerEntitiesList";
 
 interface ProfileFormProps {
   isOpen: boolean;
@@ -73,6 +73,8 @@ export const ProfileForm = ({ isOpen, onClose, profile }: ProfileFormProps) => {
     },
     enabled: !!profile?.id,
   });
+
+  const isManager = userRoles?.some(role => role.role === "manager") || false;
 
   const { data: hierarchyAssignments, refetch: refetchAssignments } = useQuery({
     queryKey: ["hierarchyAssignments", profile?.id, refreshAssignments],
@@ -159,14 +161,11 @@ export const ProfileForm = ({ isOpen, onClose, profile }: ProfileFormProps) => {
   };
 
   const handleAssignmentUpdate = () => {
-    // Forcer le rechargement des affectations
     setRefreshAssignments(prev => prev + 1);
     
-    // Invalider les requêtes de permissions pour forcer leur rechargement
     queryClient.invalidateQueries({ queryKey: ["userAccessibleOrganizations"] });
     queryClient.invalidateQueries({ queryKey: ["userRoles"] });
     
-    // Invalider les données du contexte de permissions
     queryClient.invalidateQueries({ queryKey: ["accessibleOrganizations"] });
   };
 
@@ -178,9 +177,12 @@ export const ProfileForm = ({ isOpen, onClose, profile }: ProfileFormProps) => {
         </DialogHeader>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid grid-cols-2 w-full">
+          <TabsList className={`grid ${isManager ? 'grid-cols-3' : 'grid-cols-2'} w-full`}>
             <TabsTrigger value="profile">Informations</TabsTrigger>
             <TabsTrigger value="assignment">Affectation</TabsTrigger>
+            {isManager && (
+              <TabsTrigger value="management">Gestion</TabsTrigger>
+            )}
           </TabsList>
           
           <TabsContent value="profile" className="space-y-4 mt-4">
@@ -261,6 +263,21 @@ export const ProfileForm = ({ isOpen, onClose, profile }: ProfileFormProps) => {
               )}
             </div>
           </TabsContent>
+          
+          {isManager && (
+            <TabsContent value="management" className="mt-4">
+              <div className="mb-4">
+                <h3 className="text-sm font-medium mb-2">Mes attributions de gestion</h3>
+                <p className="text-sm text-muted-foreground mb-4">
+                  Vous avez le rôle de manager et êtes responsable des entités suivantes dans l'organisation.
+                </p>
+                
+                {profile && (
+                  <ManagerEntitiesList userId={profile.id} />
+                )}
+              </div>
+            </TabsContent>
+          )}
         </Tabs>
 
         <DialogFooter>
