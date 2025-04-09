@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useUser } from "@supabase/auth-helpers-react";
 import { MonitoringLevel } from "@/types/monitoring";
@@ -98,10 +97,8 @@ export const useProjectFormState = (isOpen: boolean, project?: any) => {
   useEffect(() => {
     const initializeForm = async () => {
       if (isOpen) {
-        // Réinitialisation de l'état des modifications non enregistrées
         setHasUnsavedChanges(false);
         
-        // Réinitialisation de tous les champs d'abord - garantit que les valeurs sont toujours dans un état connu
         setCurrentStep(0);
         setTitle("");
         setDescription("");
@@ -120,8 +117,6 @@ export const useProjectFormState = (isOpen: boolean, project?: any) => {
         setImpact(0);
         setLifecycleStatus("study");
         
-        // Réinitialisation spécifique des champs de cadrage (étape 4)
-        // Toujours initialiser ces champs à des valeurs vides connues
         setContext("");
         setStakeholders("");
         setGovernance("");
@@ -134,7 +129,6 @@ export const useProjectFormState = (isOpen: boolean, project?: any) => {
           setOwnerId(user.id);
         }
 
-        // Si nous avons un projet existant, charger ses données
         if (project) {
           setTitle(project.title || "");
           setDescription(project.description || "");
@@ -194,7 +188,6 @@ export const useProjectFormState = (isOpen: boolean, project?: any) => {
               .maybeSingle();
 
             if (!framingError && framingData) {
-              // Utiliser les valeurs de la base ou des chaînes vides si null/undefined
               setContext(framingData.context || "");
               setStakeholders(framingData.stakeholders || "");
               setGovernance(framingData.governance || "");
@@ -202,16 +195,67 @@ export const useProjectFormState = (isOpen: boolean, project?: any) => {
               setTimeline(framingData.timeline || "");
               setDeliverables(framingData.deliverables || "");
             }
-            // Si pas de données de cadrage, les champs sont déjà initialisés à ""
           } catch (error) {
             console.error("Error in framing data fetch:", error);
-            // En cas d'erreur, s'assurer que les champs sont réinitialisés
-            setContext("");
-            setStakeholders("");
-            setGovernance("");
-            setObjectives("");
-            setTimeline("");
-            setDeliverables("");
+          }
+        } else if (user?.id) {
+          try {
+            const { data: userAssignments, error: assignmentError } = await supabase
+              .from("user_hierarchy_assignments")
+              .select("entity_id, entity_type")
+              .eq("user_id", user.id)
+              .order("created_at", { ascending: false });
+              
+            if (!assignmentError && userAssignments && userAssignments.length > 0) {
+              const serviceAssignment = userAssignments.find(a => a.entity_type === 'service');
+              if (serviceAssignment) {
+                const { data: serviceData, error: serviceError } = await supabase
+                  .from("services")
+                  .select("id, direction_id")
+                  .eq("id", serviceAssignment.entity_id)
+                  .single();
+                  
+                if (!serviceError && serviceData) {
+                  setServiceId(serviceData.id);
+                  
+                  const { data: directionData, error: directionError } = await supabase
+                    .from("directions")
+                    .select("id, pole_id")
+                    .eq("id", serviceData.direction_id)
+                    .single();
+                    
+                  if (!directionError && directionData) {
+                    setDirectionId(directionData.id);
+                    if (directionData.pole_id) {
+                      setPoleId(directionData.pole_id);
+                    }
+                  }
+                }
+              } else {
+                const directionAssignment = userAssignments.find(a => a.entity_type === 'direction');
+                if (directionAssignment) {
+                  const { data: directionData, error: directionError } = await supabase
+                    .from("directions")
+                    .select("id, pole_id")
+                    .eq("id", directionAssignment.entity_id)
+                    .single();
+                    
+                  if (!directionError && directionData) {
+                    setDirectionId(directionData.id);
+                    if (directionData.pole_id) {
+                      setPoleId(directionData.pole_id);
+                    }
+                  }
+                } else {
+                  const poleAssignment = userAssignments.find(a => a.entity_type === 'pole');
+                  if (poleAssignment) {
+                    setPoleId(poleAssignment.entity_id);
+                  }
+                }
+              }
+            }
+          } catch (error) {
+            console.error("Erreur lors de l'initialisation des champs d'organisation:", error);
           }
         }
       }
@@ -220,7 +264,6 @@ export const useProjectFormState = (isOpen: boolean, project?: any) => {
     initializeForm();
   }, [isOpen, project, user?.email, user?.id]);
 
-  // Effet pour suivre les modifications des champs
   useEffect(() => {
     if (isOpen && !isSubmitting) {
       setHasUnsavedChanges(true);
