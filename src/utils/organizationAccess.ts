@@ -91,23 +91,68 @@ export async function getUserAccessibleOrganizations(
       });
     }
 
-    // Récupérer les détails des entités accessibles
-    const [polesResult, directionsResult, servicesResult] = await Promise.all([
-      accessiblePoleIds.size > 0 ? 
-        supabase.from("poles").select("id, name").in("id", Array.from(accessiblePoleIds)).order("name") : 
-        { data: [] },
-      accessibleDirectionIds.size > 0 ? 
-        supabase.from("directions").select("id, name").in("id", Array.from(accessibleDirectionIds)).order("name") : 
-        { data: [] },
-      accessibleServiceIds.size > 0 ? 
-        supabase.from("services").select("id, name").in("id", Array.from(accessibleServiceIds)).order("name") : 
-        { data: [] }
-    ]);
+    // Récupérer tous les pôles accessibles et leurs détails
+    const { data: accessiblePoles } = await supabase
+      .from("poles")
+      .select("id, name")
+      .in("id", Array.from(accessiblePoleIds))
+      .order("name");
+    
+    // Pour chaque pôle accessible, récupérer toutes ses directions
+    let allAccessibleDirectionIds = new Set<string>(accessibleDirectionIds);
+    
+    if (accessiblePoles && accessiblePoles.length > 0) {
+      const { data: poleDirections } = await supabase
+        .from("directions")
+        .select("id, name")
+        .in("pole_id", accessiblePoles.map(p => p.id))
+        .order("name");
+        
+      if (poleDirections) {
+        poleDirections.forEach(direction => {
+          allAccessibleDirectionIds.add(direction.id);
+        });
+      }
+    }
+    
+    // Convertir le Set en Array pour la requête
+    const allAccessibleDirectionIdsArray = Array.from(allAccessibleDirectionIds);
+    
+    // Récupérer toutes les directions accessibles
+    const { data: accessibleDirections } = await supabase
+      .from("directions")
+      .select("id, name")
+      .in("id", allAccessibleDirectionIdsArray)
+      .order("name");
+      
+    // Pour chaque direction accessible, récupérer tous ses services
+    let allAccessibleServiceIds = new Set<string>(accessibleServiceIds);
+    
+    if (accessibleDirections && accessibleDirections.length > 0) {
+      const { data: directionServices } = await supabase
+        .from("services")
+        .select("id, name")
+        .in("direction_id", accessibleDirections.map(d => d.id))
+        .order("name");
+        
+      if (directionServices) {
+        directionServices.forEach(service => {
+          allAccessibleServiceIds.add(service.id);
+        });
+      }
+    }
+    
+    // Récupérer tous les services accessibles
+    const { data: accessibleServices } = await supabase
+      .from("services")
+      .select("id, name")
+      .in("id", Array.from(allAccessibleServiceIds))
+      .order("name");
 
     return {
-      poles: polesResult.data || [],
-      directions: directionsResult.data || [],
-      services: servicesResult.data || []
+      poles: accessiblePoles || [],
+      directions: accessibleDirections || [],
+      services: accessibleServices || []
     };
   }
 
