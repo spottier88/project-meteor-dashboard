@@ -13,6 +13,7 @@ interface ProjectFormContentProps {
   isManager: boolean;
   projectManagers?: UserProfile[];
   project?: any;
+  canEditOrganization?: boolean;
 }
 
 export const ProjectFormContent = ({
@@ -22,6 +23,7 @@ export const ProjectFormContent = ({
   isManager,
   projectManagers,
   project,
+  canEditOrganization = true,
 }: ProjectFormContentProps) => {
   return (
     <div className="flex-1 overflow-y-auto pr-2 px-1 my-4">

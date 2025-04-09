@@ -4,7 +4,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { useEffect, useState } from "react";
 import { OrganizationFieldsSelects } from "../organization/OrganizationFieldsSelects";
 import { usePermissionsContext } from "@/contexts/PermissionsContext";
-import { AccessibleOrganization } from "@/types/user";
 
 interface OrganizationFieldsProps {
   poleId: string;
@@ -76,6 +75,36 @@ export const OrganizationFields = ({
     enabled: canAccessAllOrganizations,
   });
 
+  // Requête pour récupérer les directions pour un pôle spécifique
+  const { data: poleDirections } = useQuery({
+    queryKey: ["pole_directions", poleId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("directions")
+        .select("id, name, pole_id")
+        .eq("pole_id", poleId)
+        .order("name");
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !canAccessAllOrganizations && !!accessibleOrganizations && poleId !== "none",
+  });
+
+  // Requête pour récupérer les services pour une direction spécifique
+  const { data: directionServices } = useQuery({
+    queryKey: ["direction_services", directionId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("services")
+        .select("id, name, direction_id")
+        .eq("direction_id", directionId)
+        .order("name");
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !canAccessAllOrganizations && !!accessibleOrganizations && directionId !== "none",
+  });
+
   // Effet pour l'initialisation
   useEffect(() => {
     if (!isInitialized && 
@@ -120,21 +149,10 @@ export const OrganizationFields = ({
   
   if (canAccessAllOrganizations) {
     directions = (allDirections || []).filter(d => poleId !== "none" && d.pole_id === poleId);
-  } else if (accessibleOrganizations) {
-    if (poleId !== "none") {
-      // Si un pôle est sélectionné, récupérer les directions spécifiques à ce pôle
-      const { data: poleDirections } = await supabase
-        .from("directions")
-        .select("id, name, pole_id")
-        .eq("pole_id", poleId)
-        .order("name");
-        
-      // Filtrer pour ne garder que les directions accessibles
-      const accessibleDirectionIds = new Set(accessibleOrganizations.directions.map(d => d.id));
-      directions = (poleDirections || []).filter(d => accessibleDirectionIds.has(d.id));
-    } else {
-      directions = [];
-    }
+  } else if (accessibleOrganizations && poleDirections) {
+    // Filtrer pour ne garder que les directions accessibles
+    const accessibleDirectionIds = new Set(accessibleOrganizations.directions.map(d => d.id));
+    directions = poleDirections.filter(d => accessibleDirectionIds.has(d.id));
   }
 
   // Filtrer les services accessibles en fonction de la direction sélectionnée
@@ -143,21 +161,10 @@ export const OrganizationFields = ({
   
   if (canAccessAllOrganizations) {
     services = (allServices || []).filter(s => directionId !== "none" && s.direction_id === directionId);
-  } else if (accessibleOrganizations) {
-    if (directionId !== "none") {
-      // Si une direction est sélectionnée, récupérer les services spécifiques à cette direction
-      const { data: directionServices } = await supabase
-        .from("services")
-        .select("id, name, direction_id")
-        .eq("direction_id", directionId)
-        .order("name");
-        
-      // Filtrer pour ne garder que les services accessibles
-      const accessibleServiceIds = new Set(accessibleOrganizations.services.map(s => s.id));
-      services = (directionServices || []).filter(s => accessibleServiceIds.has(s.id));
-    } else {
-      services = [];
-    }
+  } else if (accessibleOrganizations && directionServices) {
+    // Filtrer pour ne garder que les services accessibles
+    const accessibleServiceIds = new Set(accessibleOrganizations.services.map(s => s.id));
+    services = directionServices.filter(s => accessibleServiceIds.has(s.id));
   }
 
   return (
