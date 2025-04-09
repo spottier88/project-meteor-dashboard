@@ -62,6 +62,7 @@ export interface ProjectFormState {
   hasUnsavedChanges: boolean;
   setHasUnsavedChanges: (value: boolean) => void;
   resetHasUnsavedChanges: () => void;
+  hasNoHierarchyAssignment: boolean;
 }
 
 export const useProjectFormState = (isOpen: boolean, project?: any) => {
@@ -92,6 +93,7 @@ export const useProjectFormState = (isOpen: boolean, project?: any) => {
   const [timeline, setTimeline] = useState("");
   const [deliverables, setDeliverables] = useState("");
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [hasNoHierarchyAssignment, setHasNoHierarchyAssignment] = useState(false);
 
   const user = useUser();
 
@@ -210,6 +212,7 @@ export const useProjectFormState = (isOpen: boolean, project?: any) => {
               
             if (!assignmentError && userAssignments && userAssignments.length > 0) {
               // L'utilisateur a des affectations hiérarchiques
+              setHasNoHierarchyAssignment(false);
               const serviceAssignment = userAssignments.find(a => a.entity_type === 'service');
               if (serviceAssignment) {
                 const { data: serviceData, error: serviceError } = await supabase
@@ -257,9 +260,9 @@ export const useProjectFormState = (isOpen: boolean, project?: any) => {
                 }
               }
             } else {
-              // Si l'utilisateur n'a pas d'affectation, ne rien faire
-              // Les valeurs par défaut "none" seront utilisées
-              console.log("Nouvel utilisateur sans affectation hiérarchique");
+              // Si l'utilisateur n'a pas d'affectation
+              setHasNoHierarchyAssignment(true);
+              console.log("Utilisateur sans affectation hiérarchique");
             }
           } catch (error) {
             console.error("Erreur lors de l'initialisation des champs d'organisation:", error);
@@ -347,5 +350,6 @@ export const useProjectFormState = (isOpen: boolean, project?: any) => {
     hasUnsavedChanges,
     setHasUnsavedChanges,
     resetHasUnsavedChanges,
+    hasNoHierarchyAssignment,
   };
 };

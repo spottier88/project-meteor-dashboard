@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import {
   Dialog,
@@ -16,6 +17,8 @@ import { Badge } from "@/components/ui/badge";
 import { useQuery } from "@tanstack/react-query";
 import { Separator } from "@/components/ui/separator";
 import { EntityType } from "@/types/user";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { UserHierarchyAssignmentForm } from "./UserHierarchyAssignmentForm";
 
 interface ProfileFormProps {
   isOpen: boolean;
@@ -58,6 +61,7 @@ export const ProfileForm = ({ isOpen, onClose, profile }: ProfileFormProps) => {
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [activeTab, setActiveTab] = useState("profile");
 
   useEffect(() => {
     if (profile) {
@@ -167,78 +171,102 @@ export const ProfileForm = ({ isOpen, onClose, profile }: ProfileFormProps) => {
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Mon profil</DialogTitle>
         </DialogHeader>
-        <div className="grid gap-4 py-4">
-          <div className="grid gap-2">
-            <Label htmlFor="email">Email</Label>
-            <Input
-              id="email"
-              value={profile?.email || ""}
-              readOnly
-              className="bg-gray-100"
-            />
-          </div>
-          <div className="grid gap-2">
-            <Label htmlFor="firstName">Prénom</Label>
-            <Input
-              id="firstName"
-              value={firstName}
-              onChange={(e) => setFirstName(e.target.value)}
-            />
-          </div>
-          <div className="grid gap-2">
-            <Label htmlFor="lastName">Nom</Label>
-            <Input
-              id="lastName"
-              value={lastName}
-              onChange={(e) => setLastName(e.target.value)}
-            />
-          </div>
 
-          <Separator className="my-2" />
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <TabsList className="grid grid-cols-2 w-full">
+            <TabsTrigger value="profile">Informations</TabsTrigger>
+            <TabsTrigger value="assignment">Affectation</TabsTrigger>
+          </TabsList>
           
-          <div className="grid gap-2">
-            <Label>Rôles</Label>
-            <div className="flex flex-wrap gap-2">
-              {userRoles?.map((role) => (
-                <Badge key={role.id} variant="secondary">
-                  {getRoleLabel(role.role)}
-                </Badge>
-              ))}
+          <TabsContent value="profile" className="space-y-4 mt-4">
+            <div className="grid gap-2">
+              <Label htmlFor="email">Email</Label>
+              <Input
+                id="email"
+                value={profile?.email || ""}
+                readOnly
+                className="bg-gray-100"
+              />
             </div>
-          </div>
+            <div className="grid gap-2">
+              <Label htmlFor="firstName">Prénom</Label>
+              <Input
+                id="firstName"
+                value={firstName}
+                onChange={(e) => setFirstName(e.target.value)}
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="lastName">Nom</Label>
+              <Input
+                id="lastName"
+                value={lastName}
+                onChange={(e) => setLastName(e.target.value)}
+              />
+            </div>
 
-          {hierarchyAssignments && hierarchyAssignments.length > 0 && (
-            <>
-              <Separator className="my-2" />
-              <div className="grid gap-2">
-                <Label>Affectations</Label>
-                <div className="space-y-2">
-                  {hierarchyAssignments.map((assignment) => (
-                    <div key={assignment.id} className="flex items-center gap-2">
-                      <Badge variant="outline">
-                        {getEntityTypeLabel(assignment.entity_type)}
-                      </Badge>
-                      <span className="text-sm text-muted-foreground">
-                        {assignment.entity_name}
-                      </span>
-                    </div>
-                  ))}
-                </div>
+            <Separator className="my-4" />
+            
+            <div className="grid gap-2">
+              <Label>Rôles</Label>
+              <div className="flex flex-wrap gap-2">
+                {userRoles?.map((role) => (
+                  <Badge key={role.id} variant="secondary">
+                    {getRoleLabel(role.role)}
+                  </Badge>
+                ))}
               </div>
-            </>
-          )}
-        </div>
+            </div>
+
+            {hierarchyAssignments && hierarchyAssignments.length > 0 && (
+              <>
+                <Separator className="my-4" />
+                <div className="grid gap-2">
+                  <Label>Affectation actuelle</Label>
+                  <div className="space-y-2">
+                    {hierarchyAssignments.map((assignment) => (
+                      <div key={assignment.id} className="flex items-center gap-2">
+                        <Badge variant="outline">
+                          {getEntityTypeLabel(assignment.entity_type)}
+                        </Badge>
+                        <span className="text-sm text-muted-foreground">
+                          {assignment.entity_name}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </>
+            )}
+          </TabsContent>
+          
+          <TabsContent value="assignment" className="mt-4">
+            <div className="mb-4">
+              <h3 className="text-sm font-medium mb-2">Gérer mon affectation hiérarchique</h3>
+              <p className="text-sm text-muted-foreground mb-4">
+                Votre affectation hiérarchique détermine où vos projets apparaîtront dans l'organisation 
+                et peut influer sur certaines fonctionnalités de l'application.
+              </p>
+              {profile && (
+                <UserHierarchyAssignmentForm userId={profile.id} />
+              )}
+            </div>
+          </TabsContent>
+        </Tabs>
+
         <DialogFooter>
           <Button variant="outline" onClick={onClose}>
-            Annuler
+            Fermer
           </Button>
-          <Button onClick={handleSubmit} disabled={isSubmitting}>
-            {isSubmitting ? "Enregistrement..." : "Mettre à jour"}
-          </Button>
+          {activeTab === "profile" && (
+            <Button onClick={handleSubmit} disabled={isSubmitting}>
+              {isSubmitting ? "Enregistrement..." : "Mettre à jour"}
+            </Button>
+          )}
         </DialogFooter>
       </DialogContent>
     </Dialog>

@@ -12,6 +12,9 @@ import { getProjectManagers } from "@/utils/projectManagers";
 import { useState } from "react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "./ui/alert-dialog";
 import { useProjectPermissions } from "@/hooks/useProjectPermissions";
+import { ProfileForm } from "./profile/ProfileForm";
+import { UserProfile } from "@/types/user";
+import { supabase } from "@/integrations/supabase/client";
 
 interface ProjectFormProps {
   isOpen: boolean;
@@ -26,6 +29,23 @@ export const ProjectForm = ({ isOpen, onClose, onSubmit, project }: ProjectFormP
   const validation = useProjectFormValidation();
   const { canEdit, canCreate, canEditOrganization, accessibleOrganizations } = useProjectPermissions(project?.id || "");
   const [showUnsavedChangesAlert, setShowUnsavedChangesAlert] = useState(false);
+  const [isProfileFormOpen, setIsProfileFormOpen] = useState(false);
+
+  const { data: profile } = useQuery({
+    queryKey: ["profile", user?.id],
+    queryFn: async () => {
+      if (!user?.id) return null;
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("id", user.id)
+        .single();
+
+      if (error) throw error;
+      return data as UserProfile;
+    },
+    enabled: !!user?.id,
+  });
 
   const { data: projectManagers } = useQuery({
     queryKey: ["projectManagers", user?.id, validation.userRoles],
@@ -90,83 +110,83 @@ export const ProjectForm = ({ isOpen, onClose, onSubmit, project }: ProjectFormP
     setShowUnsavedChangesAlert(false);
   };
 
+  const handleOpenProfile = () => {
+    setIsProfileFormOpen(true);
+  };
+
   return (
     <>
       <Dialog open={isOpen} onOpenChange={handleCloseRequest}>
-        <DialogContent className="sm:max-w-[700px] md:max-w-[800px] h-[80vh] flex flex-col p-6">
+        <DialogContent className="sm:max-w-[700px] max-h-[85vh] overflow-y-auto" onInteractOutside={e => {
+          if (formState.hasUnsavedChanges) {
+            e.preventDefault();
+          }
+        }}>
           <ProjectFormHeader 
-            currentStep={formState.currentStep}
-            isEditing={!!project}
+            currentStep={formState.currentStep} 
+            isEditMode={!!project} 
+            title={formState.title}
           />
-          
-          <ProjectFormContent
-            currentStep={formState.currentStep}
+          <ProjectFormContent 
+            canEditOrganization={canEditOrganization} 
             formState={formState}
-            isAdmin={validation.isAdmin}
-            isManager={validation.isManager}
             projectManagers={projectManagers}
             project={project}
-            canEditOrganization={canEditOrganization}
+            isEditMode={!!project}
+            onOpenProfile={handleOpenProfile}
           />
-          
-          <DialogFooter className="mt-6">
-            <ProjectFormNavigation
+          <DialogFooter>
+            <ProjectFormNavigation 
               currentStep={formState.currentStep}
+              isSubmitting={formState.isSubmitting}
               onPrevious={handlePrevious}
               onNext={handleNext}
-              canGoNext={
-                formState.currentStep === 0 
-                  ? validation.validateStep1(formState.title, formState.projectManager)
-                  : formState.currentStep === 1 
-                  ? validation.validateStep2()
-                  : formState.currentStep === 2 
-                  ? validation.validateStep3()
-                  : true
-              }
-              isLastStep={formState.currentStep === 3}
-              isSubmitting={formState.isSubmitting}
-              onClose={handleCloseRequest}
+              isEditMode={!!project}
             />
           </DialogFooter>
         </DialogContent>
       </Dialog>
-
-      {/* Alerte pour les modifications non enregistrées */}
+      
       <AlertDialog open={showUnsavedChangesAlert} onOpenChange={setShowUnsavedChangesAlert}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Modifications non enregistrées</AlertDialogTitle>
             <AlertDialogDescription>
-              Vous avez des modifications non enregistrées. Êtes-vous sûr de vouloir quitter sans enregistrer ?
+              Vous avez des modifications non enregistrées. Êtes-vous sûr de vouloir fermer ce formulaire ?
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel onClick={handleCancelClose}>Annuler</AlertDialogCancel>
-            <AlertDialogAction onClick={handleConfirmClose} className="bg-red-600 hover:bg-red-700">
-              Quitter sans enregistrer
-            </AlertDialogAction>
+            <AlertDialogAction onClick={handleConfirmClose}>Confirmer</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-
-      {/* Alerte pour la perte d'accès au projet */}
-      <AlertDialog open={showAccessWarning} onOpenChange={handleCancelSubmit}>
+      
+      <AlertDialog open={showAccessWarning} onOpenChange={(open) => {
+        if (!open) handleCancelSubmit();
+      }}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Attention - Perte d'accès</AlertDialogTitle>
+            <AlertDialogTitle>Attention au changement d'attribution</AlertDialogTitle>
             <AlertDialogDescription>
-              Après cette modification, vous n'aurez plus accès à ce projet.
-              Êtes-vous sûr de vouloir continuer ?
+              L'organisation que vous avez sélectionnée ne correspond pas à vos droits d'accès.
+              Si vous continuez, vous pourriez perdre la capacité de gérer ce projet ultérieurement.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel onClick={handleCancelSubmit}>Annuler</AlertDialogCancel>
-            <AlertDialogAction onClick={handleProceedAnyway} className="bg-red-600 hover:bg-red-700">
-              Continuer quand même
-            </AlertDialogAction>
+            <AlertDialogAction onClick={handleProceedAnyway}>Continuer quand même</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {profile && (
+        <ProfileForm 
+          isOpen={isProfileFormOpen} 
+          onClose={() => setIsProfileFormOpen(false)} 
+          profile={profile}
+        />
+      )}
     </>
   );
 };
