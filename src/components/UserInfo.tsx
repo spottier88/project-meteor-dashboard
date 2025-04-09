@@ -107,6 +107,13 @@ export const UserInfo = () => {
       window.location.href = "/login";
     }
   };
+  
+  const handleCloseProfileForm = () => {
+    setIsProfileFormOpen(false);
+    // Forcer le rechargement du contexte de permissions
+    queryClient.invalidateQueries({ queryKey: ["userRoles"] });
+    queryClient.invalidateQueries({ queryKey: ["accessibleOrganizations"] });
+  };
 
   if (!user) return null;
 
@@ -144,7 +151,7 @@ export const UserInfo = () => {
 
       <ProfileForm
         isOpen={isProfileFormOpen}
-        onClose={() => setIsProfileFormOpen(false)}
+        onClose={handleCloseProfileForm}
         profile={profile}
       />
       

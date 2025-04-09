@@ -120,7 +120,7 @@ export function PermissionsProvider({ children }: { children: React.ReactNode })
     }
 
     loadAccessibleOrganizations();
-  }, [user?.id, isAdmin, isManager, isLoading, isError]);
+  }, [user?.id, isAdmin, isManager, isLoading, isError, userRoles]); // Ajout de userRoles comme dépendance
 
   useEffect(() => {
     console.log("[PermissionsProvider] State update:", {

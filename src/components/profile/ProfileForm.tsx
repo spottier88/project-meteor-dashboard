@@ -14,7 +14,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { UserProfile } from "@/types/user";
 import { Badge } from "@/components/ui/badge";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Separator } from "@/components/ui/separator";
 import { EntityType } from "@/types/user";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -45,6 +45,7 @@ const getRoleLabel = (role: string): string => {
 
 export const ProfileForm = ({ isOpen, onClose, profile }: ProfileFormProps) => {
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -160,6 +161,13 @@ export const ProfileForm = ({ isOpen, onClose, profile }: ProfileFormProps) => {
   const handleAssignmentUpdate = () => {
     // Forcer le rechargement des affectations
     setRefreshAssignments(prev => prev + 1);
+    
+    // Invalider les requêtes de permissions pour forcer leur rechargement
+    queryClient.invalidateQueries({ queryKey: ["userAccessibleOrganizations"] });
+    queryClient.invalidateQueries({ queryKey: ["userRoles"] });
+    
+    // Invalider les données du contexte de permissions
+    queryClient.invalidateQueries({ queryKey: ["accessibleOrganizations"] });
   };
 
   return (
