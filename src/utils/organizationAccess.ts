@@ -156,6 +156,53 @@ export async function getUserAccessibleOrganizations(
     };
   }
 
+  // Pour les chefs de projet, récupérer les entités associées à leurs projets
+  if (userId) {
+    // Récupérer tous les projets dont l'utilisateur est chef de projet
+    const { data: userProjects } = await supabase
+      .from("projects")
+      .select("pole_id, direction_id, service_id")
+      .eq("project_manager_id", userId);
+    
+    // Extraire les IDs des pôles, directions et services des projets gérés
+    const projectPoleIds = new Set<string>();
+    const projectDirectionIds = new Set<string>();
+    const projectServiceIds = new Set<string>();
+
+    if (userProjects && userProjects.length > 0) {
+      userProjects.forEach(project => {
+        if (project.pole_id) {
+          projectPoleIds.add(project.pole_id);
+        }
+        if (project.direction_id) {
+          projectDirectionIds.add(project.direction_id);
+        }
+        if (project.service_id) {
+          projectServiceIds.add(project.service_id);
+        }
+      });
+    }
+
+    // Récupérer les entités des projets
+    const [polesResult, directionsResult, servicesResult] = await Promise.all([
+      projectPoleIds.size > 0 ? 
+        supabase.from("poles").select("id, name").in("id", Array.from(projectPoleIds)).order("name") : 
+        { data: [] },
+      projectDirectionIds.size > 0 ? 
+        supabase.from("directions").select("id, name").in("id", Array.from(projectDirectionIds)).order("name") : 
+        { data: [] },
+      projectServiceIds.size > 0 ? 
+        supabase.from("services").select("id, name").in("id", Array.from(projectServiceIds)).order("name") : 
+        { data: [] }
+    ]);
+
+    return {
+      poles: polesResult.data || [],
+      directions: directionsResult.data || [],
+      services: servicesResult.data || []
+    };
+  }
+
   // Pour les autres utilisateurs, retourner des listes vides
   return { poles: [], directions: [], services: [] };
 }
