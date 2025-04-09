@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useUser } from "@supabase/auth-helpers-react";
 import { MonitoringLevel } from "@/types/monitoring";
@@ -200,6 +201,7 @@ export const useProjectFormState = (isOpen: boolean, project?: any) => {
           }
         } else if (user?.id) {
           try {
+            // Récupérer les affectations hiérarchiques de l'utilisateur
             const { data: userAssignments, error: assignmentError } = await supabase
               .from("user_hierarchy_assignments")
               .select("entity_id, entity_type")
@@ -207,6 +209,7 @@ export const useProjectFormState = (isOpen: boolean, project?: any) => {
               .order("created_at", { ascending: false });
               
             if (!assignmentError && userAssignments && userAssignments.length > 0) {
+              // L'utilisateur a des affectations hiérarchiques
               const serviceAssignment = userAssignments.find(a => a.entity_type === 'service');
               if (serviceAssignment) {
                 const { data: serviceData, error: serviceError } = await supabase
@@ -253,6 +256,10 @@ export const useProjectFormState = (isOpen: boolean, project?: any) => {
                   }
                 }
               }
+            } else {
+              // Si l'utilisateur n'a pas d'affectation, ne rien faire
+              // Les valeurs par défaut "none" seront utilisées
+              console.log("Nouvel utilisateur sans affectation hiérarchique");
             }
           } catch (error) {
             console.error("Erreur lors de l'initialisation des champs d'organisation:", error);
