@@ -24,7 +24,7 @@ export const ProjectForm = ({ isOpen, onClose, onSubmit, project }: ProjectFormP
   const user = useUser();
   const formState = useProjectFormState(isOpen, project);
   const validation = useProjectFormValidation();
-  const { canEdit, canCreate } = useProjectPermissions(project?.id || "");
+  const { canEdit, canCreate, canEditOrganization, accessibleOrganizations } = useProjectPermissions(project?.id || "");
   const [showUnsavedChangesAlert, setShowUnsavedChangesAlert] = useState(false);
 
   const { data: projectManagers } = useQuery({
@@ -44,12 +44,14 @@ export const ProjectForm = ({ isOpen, onClose, onSubmit, project }: ProjectFormP
     project,
     canEdit,
     canCreate,
+    canEditOrganization,
     formState,
     onSubmit,
     onClose: () => {
       formState.resetHasUnsavedChanges();
       onClose();
     },
+    accessibleOrganizations
   });
 
   const handleNext = () => {
@@ -104,6 +106,7 @@ export const ProjectForm = ({ isOpen, onClose, onSubmit, project }: ProjectFormP
             isManager={validation.isManager}
             projectManagers={projectManagers}
             project={project}
+            canEditOrganization={canEditOrganization}
           />
           
           <DialogFooter className="mt-6">

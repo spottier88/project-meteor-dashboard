@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
 export const useProjectPermissions = (projectId: string) => {
-  const { userProfile, isAdmin } = usePermissionsContext();
+  const { userProfile, isAdmin, accessibleOrganizations } = usePermissionsContext();
   
   const { data: projectAccess } = useQuery({
     queryKey: ["projectAccess", projectId, userProfile?.id],
@@ -18,7 +18,7 @@ export const useProjectPermissions = (projectId: string) => {
 
       const { data: project } = await supabase
         .from("projects")
-        .select("project_manager")
+        .select("project_manager, pole_id, direction_id, service_id")
         .eq("id", projectId)
         .single();
 
@@ -29,7 +29,12 @@ export const useProjectPermissions = (projectId: string) => {
           canEdit: true,
           isProjectManager,
           isSecondaryProjectManager: false,
-          isMember: true
+          isMember: true,
+          projectOrganization: {
+            pole_id: project?.pole_id,
+            direction_id: project?.direction_id,
+            service_id: project?.service_id
+          }
         };
       }
 
@@ -61,7 +66,12 @@ export const useProjectPermissions = (projectId: string) => {
         canEdit: !!canAccess || isSecondaryProjectManager,
         isProjectManager,
         isSecondaryProjectManager,
-        isMember: !!isMember
+        isMember: !!isMember,
+        projectOrganization: {
+          pole_id: project?.pole_id,
+          direction_id: project?.direction_id,
+          service_id: project?.service_id
+        }
       };
     },
     enabled: !!userProfile?.id && !!projectId,
@@ -82,16 +92,42 @@ export const useProjectPermissions = (projectId: string) => {
   });
 
   const isProjectManager = userRoles?.some(ur => ur.role === 'chef_projet') || false;
+  const isManager = userRoles?.some(ur => ur.role === 'manager') || false;
+
+  // Vérifier si les entités du projet sont dans le périmètre accessible
+  const canEditOrganization = () => {
+    if (isAdmin) return true;
+    if (!accessibleOrganizations || !projectAccess?.projectOrganization) return false;
+
+    const { pole_id, direction_id, service_id } = projectAccess.projectOrganization;
+    
+    // Vérifier l'accès au pôle
+    const hasPoleAccess = !pole_id || 
+      accessibleOrganizations.poles.some(p => p.id === pole_id);
+    
+    // Vérifier l'accès à la direction
+    const hasDirectionAccess = !direction_id || 
+      accessibleOrganizations.directions.some(d => d.id === direction_id);
+    
+    // Vérifier l'accès au service
+    const hasServiceAccess = !service_id || 
+      accessibleOrganizations.services.some(s => s.id === service_id);
+    
+    return hasPoleAccess && hasDirectionAccess && hasServiceAccess;
+  };
 
   return {
     canManageRisks: isAdmin || projectAccess?.canEdit || projectAccess?.isSecondaryProjectManager || false,
     canEdit: projectAccess?.canEdit || false,
     canCreate: isAdmin || isProjectManager,
+    canEditOrganization: canEditOrganization(),
     canManageTeam: isAdmin || projectAccess?.isProjectManager || projectAccess?.isSecondaryProjectManager || false,
     isAdmin,
+    isManager,
     isProjectManager: projectAccess?.isProjectManager || false,
     isSecondaryProjectManager: projectAccess?.isSecondaryProjectManager || false,
     isMember: projectAccess?.isMember || false,
     userEmail: userProfile?.email,
+    accessibleOrganizations
   };
 };

@@ -1,4 +1,3 @@
-
 import { ProjectStatus, ProgressStatus } from "./project";
 
 export type UserRole = "admin" | "chef_projet" | "manager" | "membre" | "time_tracker";
@@ -32,6 +31,17 @@ export interface HierarchyAssignmentWithDetails extends HierarchyAssignment {
   entity_details: {
     name: string;
   };
+}
+
+export interface AccessibleOrganization {
+  id: string;
+  name: string;
+}
+
+export interface AccessibleOrganizations {
+  poles: AccessibleOrganization[];
+  directions: AccessibleOrganization[];
+  services: AccessibleOrganization[];
 }
 
 export interface HierarchyPath {

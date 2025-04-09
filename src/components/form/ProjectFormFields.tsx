@@ -1,3 +1,4 @@
+
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { UserProfile } from "@/types/user";
@@ -46,6 +47,7 @@ interface ProjectFormFieldsProps {
     service_id?: string;
   };
   projectManagers?: UserProfile[];
+  canEditOrganization?: boolean;
 }
 
 export const ProjectFormFields = ({
@@ -77,12 +79,14 @@ export const ProjectFormFields = ({
   setServiceId,
   project,
   projectManagers,
+  canEditOrganization = true
 }: ProjectFormFieldsProps) => {
   console.log("ProjectFormFields - Current state:", {
     poleId,
     directionId,
     monitoringLevel,
-    monitoringEntityId
+    monitoringEntityId,
+    canEditOrganization
   });
 
   return (
@@ -111,15 +115,26 @@ export const ProjectFormFields = ({
         directionId={directionId}
       />
 
-      <OrganizationFields
-        poleId={poleId}
-        setPoleId={setPoleId}
-        directionId={directionId}
-        setDirectionId={setDirectionId}
-        serviceId={serviceId}
-        setServiceId={setServiceId}
-        project={project}
-      />
+      <div className="relative">
+        {!canEditOrganization && project && (
+          <div className="absolute inset-0 bg-gray-100/50 flex items-center justify-center z-10 rounded">
+            <div className="bg-white p-4 rounded shadow">
+              <p className="text-sm text-muted-foreground">
+                Vous n'avez pas les droits nécessaires pour modifier l'organisation de ce projet
+              </p>
+            </div>
+          </div>
+        )}
+        <OrganizationFields
+          poleId={poleId}
+          setPoleId={setPoleId}
+          directionId={directionId}
+          setDirectionId={setDirectionId}
+          serviceId={serviceId}
+          setServiceId={setServiceId}
+          project={project}
+        />
+      </div>
     </div>
   );
 };

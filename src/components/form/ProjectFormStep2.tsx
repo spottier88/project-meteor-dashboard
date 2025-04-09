@@ -1,8 +1,10 @@
+
 import { MonitoringLevel } from "@/types/monitoring";
 import { OrganizationFields } from "./OrganizationFields";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
+import { usePermissionsContext } from "@/contexts/PermissionsContext";
 
 interface ProjectFormStep2Props {
   monitoringLevel: MonitoringLevel;
@@ -37,6 +39,8 @@ export const ProjectFormStep2 = ({
   setServiceId,
   project,
 }: ProjectFormStep2Props) => {
+  const { isAdmin } = usePermissionsContext();
+  
   return (
     <div className="space-y-6">
       <OrganizationFields

@@ -1,9 +1,10 @@
 
-import React, { createContext, useContext, useEffect } from 'react';
+import React, { createContext, useContext, useEffect, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useUser, useSession } from '@supabase/auth-helpers-react';
-import { UserRole } from '@/types/user';
+import { UserRole, AccessibleOrganizations } from '@/types/user';
+import { getUserAccessibleOrganizations } from '@/utils/organizationAccess';
 
 interface PermissionsState {
   userRoles: UserRole[] | undefined;
@@ -12,11 +13,15 @@ interface PermissionsState {
   isManager: boolean;
   isProjectManager: boolean;
   isMember: boolean;
-  isTimeTracker: boolean; // Ajout de la propriété pour le nouveau rôle
+  isTimeTracker: boolean;
   highestRole: UserRole | null;
   hasRole: (role: UserRole) => boolean;
   isLoading: boolean;
   isError: boolean;
+  // Nouvelles propriétés
+  accessibleOrganizations: AccessibleOrganizations | null;
+  canAccessAllOrganizations: boolean;
+  isLoadingOrganizations: boolean;
 }
 
 const PermissionsContext = createContext<PermissionsState | undefined>(undefined);
@@ -26,6 +31,8 @@ const roleHierarchy: UserRole[] = ['admin', 'manager', 'chef_projet', 'membre', 
 export function PermissionsProvider({ children }: { children: React.ReactNode }) {
   const user = useUser();
   const session = useSession();
+  const [accessibleOrganizations, setAccessibleOrganizations] = useState<AccessibleOrganizations | null>(null);
+  const [isLoadingOrganizations, setIsLoadingOrganizations] = useState(true);
 
   const { data: userRoles, isLoading: isLoadingRoles, isError: isRolesError } = useQuery({
     queryKey: ['userRoles', user?.id, session?.access_token] as const,
@@ -91,9 +98,29 @@ export function PermissionsProvider({ children }: { children: React.ReactNode })
   const isManager = hasRole('manager');
   const isProjectManager = hasRole('chef_projet');
   const isMember = hasRole('membre');
-  const isTimeTracker = hasRole('time_tracker'); // Vérification du nouveau rôle
+  const isTimeTracker = hasRole('time_tracker');
   const isLoading = isLoadingRoles || isLoadingProfile;
   const isError = isRolesError || isProfileError;
+  const canAccessAllOrganizations = isAdmin;
+
+  // Chargement des organisations accessibles
+  useEffect(() => {
+    async function loadAccessibleOrganizations() {
+      if (user?.id && !isLoading && !isError) {
+        setIsLoadingOrganizations(true);
+        try {
+          const organizations = await getUserAccessibleOrganizations(user.id, isAdmin, isManager);
+          setAccessibleOrganizations(organizations);
+        } catch (error) {
+          console.error("[PermissionsProvider] Error loading accessible organizations:", error);
+        } finally {
+          setIsLoadingOrganizations(false);
+        }
+      }
+    }
+
+    loadAccessibleOrganizations();
+  }, [user?.id, isAdmin, isManager, isLoading, isError]);
 
   useEffect(() => {
     console.log("[PermissionsProvider] State update:", {
@@ -105,12 +132,17 @@ export function PermissionsProvider({ children }: { children: React.ReactNode })
       isManager,
       isProjectManager,
       isMember,
-      isTimeTracker, // Ajout du nouveau rôle dans les logs
+      isTimeTracker,
       isLoading,
       isError,
-      sessionStatus: !!session
+      sessionStatus: !!session,
+      accessibleOrganizations: {
+        poles: accessibleOrganizations?.poles?.length || 0,
+        directions: accessibleOrganizations?.directions?.length || 0,
+        services: accessibleOrganizations?.services?.length || 0
+      }
     });
-  }, [user?.id, userProfile, userRoles, highestRole, isAdmin, isManager, isProjectManager, isMember, isTimeTracker, isLoading, isError, session]);
+  }, [user?.id, userProfile, userRoles, highestRole, isAdmin, isManager, isProjectManager, isMember, isTimeTracker, isLoading, isError, session, accessibleOrganizations]);
 
   if (!session) {
     return null;
@@ -133,11 +165,14 @@ export function PermissionsProvider({ children }: { children: React.ReactNode })
       isManager,
       isProjectManager,
       isMember,
-      isTimeTracker, // Ajout du nouveau rôle au contexte
+      isTimeTracker,
       highestRole,
       hasRole,
       isLoading,
       isError,
+      accessibleOrganizations,
+      canAccessAllOrganizations,
+      isLoadingOrganizations
     }}>
       {children}
     </PermissionsContext.Provider>

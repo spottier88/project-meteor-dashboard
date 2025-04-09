@@ -1,7 +1,10 @@
+
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useEffect, useState } from "react";
 import { OrganizationFieldsSelects } from "../organization/OrganizationFieldsSelects";
+import { usePermissionsContext } from "@/contexts/PermissionsContext";
+import { AccessibleOrganization } from "@/types/user";
 
 interface OrganizationFieldsProps {
   poleId: string;
@@ -29,9 +32,10 @@ export const OrganizationFields = ({
   project,
 }: OrganizationFieldsProps) => {
   const [isInitialized, setIsInitialized] = useState(false);
+  const { canAccessAllOrganizations, accessibleOrganizations, isLoadingOrganizations } = usePermissionsContext();
 
-  // Fetch poles data
-  const { data: poles, isLoading: isLoadingPoles } = useQuery({
+  // Récupérer les données des pôles - pour les admins ou si on a besoin de tous les pôles
+  const { data: allPoles, isLoading: isLoadingAllPoles } = useQuery({
     queryKey: ["poles"],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -41,10 +45,11 @@ export const OrganizationFields = ({
       if (error) throw error;
       return data;
     },
+    enabled: canAccessAllOrganizations,
   });
 
-  // Fetch directions data
-  const { data: allDirections, isLoading: isLoadingDirections } = useQuery({
+  // Récupérer les données des directions - pour les admins ou si on a besoin de toutes les directions
+  const { data: allDirections, isLoading: isLoadingAllDirections } = useQuery({
     queryKey: ["all_directions"],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -54,10 +59,11 @@ export const OrganizationFields = ({
       if (error) throw error;
       return data;
     },
+    enabled: canAccessAllOrganizations,
   });
 
-  // Fetch services data
-  const { data: allServices, isLoading: isLoadingServices } = useQuery({
+  // Récupérer les données des services - pour les admins ou si on a besoin de tous les services
+  const { data: allServices, isLoading: isLoadingAllServices } = useQuery({
     queryKey: ["all_services"],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -67,11 +73,15 @@ export const OrganizationFields = ({
       if (error) throw error;
       return data;
     },
+    enabled: canAccessAllOrganizations,
   });
 
   // Effet pour l'initialisation
   useEffect(() => {
-    if (!isInitialized && !isLoadingPoles && !isLoadingDirections && !isLoadingServices && project) {
+    if (!isInitialized && 
+        ((canAccessAllOrganizations && !isLoadingAllPoles && !isLoadingAllDirections && !isLoadingAllServices) || 
+         (!canAccessAllOrganizations && !isLoadingOrganizations && accessibleOrganizations)) && 
+        project) {
       if (project.pole_id) {
         setPoleId(project.pole_id);
       }
@@ -88,23 +98,67 @@ export const OrganizationFields = ({
     }
   }, [
     isInitialized,
-    isLoadingPoles,
-    isLoadingDirections,
-    isLoadingServices,
+    isLoadingAllPoles,
+    isLoadingAllDirections,
+    isLoadingAllServices,
+    isLoadingOrganizations,
+    canAccessAllOrganizations,
+    accessibleOrganizations,
     project,
     setPoleId,
     setDirectionId,
     setServiceId,
   ]);
 
-  // Filtrer les directions et services
-  const directions = allDirections?.filter(
-    d => poleId !== "none" && d.pole_id === poleId
-  ) || [];
+  // Définir les sources de données en fonction des permissions
+  const poles = canAccessAllOrganizations ? allPoles : accessibleOrganizations?.poles;
+  const isLoadingPoles = canAccessAllOrganizations ? isLoadingAllPoles : isLoadingOrganizations;
 
-  const services = allServices?.filter(
-    s => directionId !== "none" && s.direction_id === directionId
-  ) || [];
+  // Filtrer les directions accessibles en fonction du pôle sélectionné
+  let directions: any[] = [];
+  const isLoadingDirections = canAccessAllOrganizations ? isLoadingAllDirections : isLoadingOrganizations;
+  
+  if (canAccessAllOrganizations) {
+    directions = (allDirections || []).filter(d => poleId !== "none" && d.pole_id === poleId);
+  } else if (accessibleOrganizations) {
+    if (poleId !== "none") {
+      // Si un pôle est sélectionné, récupérer les directions spécifiques à ce pôle
+      const { data: poleDirections } = await supabase
+        .from("directions")
+        .select("id, name, pole_id")
+        .eq("pole_id", poleId)
+        .order("name");
+        
+      // Filtrer pour ne garder que les directions accessibles
+      const accessibleDirectionIds = new Set(accessibleOrganizations.directions.map(d => d.id));
+      directions = (poleDirections || []).filter(d => accessibleDirectionIds.has(d.id));
+    } else {
+      directions = [];
+    }
+  }
+
+  // Filtrer les services accessibles en fonction de la direction sélectionnée
+  let services: any[] = [];
+  const isLoadingServices = canAccessAllOrganizations ? isLoadingAllServices : isLoadingOrganizations;
+  
+  if (canAccessAllOrganizations) {
+    services = (allServices || []).filter(s => directionId !== "none" && s.direction_id === directionId);
+  } else if (accessibleOrganizations) {
+    if (directionId !== "none") {
+      // Si une direction est sélectionnée, récupérer les services spécifiques à cette direction
+      const { data: directionServices } = await supabase
+        .from("services")
+        .select("id, name, direction_id")
+        .eq("direction_id", directionId)
+        .order("name");
+        
+      // Filtrer pour ne garder que les services accessibles
+      const accessibleServiceIds = new Set(accessibleOrganizations.services.map(s => s.id));
+      services = (directionServices || []).filter(s => accessibleServiceIds.has(s.id));
+    } else {
+      services = [];
+    }
+  }
 
   return (
     <OrganizationFieldsSelects

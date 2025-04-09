@@ -6,30 +6,78 @@ import { ProjectFormState } from "../components/form/useProjectFormState";
 import { supabase } from "@/integrations/supabase/client";
 import { willUserStillHaveAccess } from "@/utils/projectAccessCheck";
 import { useState } from "react";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { AccessibleOrganizations } from "@/types/user";
 
 interface UseProjectFormSubmitProps {
   project?: any;
   canEdit: boolean;
   canCreate: boolean;
+  canEditOrganization: boolean;
   formState: ProjectFormState;
   onSubmit: (projectData: any) => Promise<any>;
   onClose: () => void;
+  accessibleOrganizations?: AccessibleOrganizations | null;
 }
 
 export const useProjectFormSubmit = ({
   project,
   canEdit,
   canCreate,
+  canEditOrganization,
   formState,
   onSubmit,
   onClose,
+  accessibleOrganizations
 }: UseProjectFormSubmitProps) => {
   const { toast } = useToast();
   const user = useUser();
   const queryClient = useQueryClient();
   const [showAccessWarning, setShowAccessWarning] = useState(false);
   const [isProceedingAnyway, setIsProceedingAnyway] = useState(false);
+
+  // Fonction pour vérifier si les entités sélectionnées sont accessibles
+  const validateOrganizationSelection = (): boolean => {
+    if (!accessibleOrganizations) return true;
+
+    // Pour un nouveau projet, vérifier que les entités sélectionnées sont dans le périmètre accessible
+    if (formState.poleId !== "none") {
+      const isPoleAccessible = accessibleOrganizations.poles.some(p => p.id === formState.poleId);
+      if (!isPoleAccessible) {
+        toast({
+          title: "Erreur",
+          description: "Le pôle sélectionné n'est pas dans votre périmètre accessible",
+          variant: "destructive",
+        });
+        return false;
+      }
+    }
+    
+    if (formState.directionId !== "none") {
+      const isDirectionAccessible = accessibleOrganizations.directions.some(d => d.id === formState.directionId);
+      if (!isDirectionAccessible) {
+        toast({
+          title: "Erreur",
+          description: "La direction sélectionnée n'est pas dans votre périmètre accessible",
+          variant: "destructive",
+        });
+        return false;
+      }
+    }
+    
+    if (formState.serviceId !== "none") {
+      const isServiceAccessible = accessibleOrganizations.services.some(s => s.id === formState.serviceId);
+      if (!isServiceAccessible) {
+        toast({
+          title: "Erreur",
+          description: "Le service sélectionné n'est pas dans votre périmètre accessible",
+          variant: "destructive",
+        });
+        return false;
+      }
+    }
+    
+    return true;
+  };
 
   const checkAccessAndSubmit = async () => {
     if (!formState.validateStep3()) {
@@ -56,6 +104,25 @@ export const useProjectFormSubmit = ({
         description: "Vous n'avez pas les droits nécessaires pour créer un projet",
         variant: "destructive",
       });
+      return;
+    }
+
+    // Pour un projet existant, vérifier si l'utilisateur peut modifier l'organisation
+    if (project?.id && !canEditOrganization && (
+      project.pole_id !== formState.poleId ||
+      project.direction_id !== formState.directionId ||
+      project.service_id !== formState.serviceId
+    )) {
+      toast({
+        title: "Erreur",
+        description: "Vous n'avez pas les droits nécessaires pour modifier l'organisation de ce projet",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Valider les sélections d'entités organisationnelles
+    if (!validateOrganizationSelection()) {
       return;
     }
 
