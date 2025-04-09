@@ -49,6 +49,7 @@ export const ProfileForm = ({ isOpen, onClose, profile }: ProfileFormProps) => {
   const [lastName, setLastName] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [activeTab, setActiveTab] = useState("profile");
+  const [refreshAssignments, setRefreshAssignments] = useState(0);
 
   useEffect(() => {
     if (profile) {
@@ -72,8 +73,8 @@ export const ProfileForm = ({ isOpen, onClose, profile }: ProfileFormProps) => {
     enabled: !!profile?.id,
   });
 
-  const { data: hierarchyAssignments } = useQuery({
-    queryKey: ["hierarchyAssignments", profile?.id],
+  const { data: hierarchyAssignments, refetch: refetchAssignments } = useQuery({
+    queryKey: ["hierarchyAssignments", profile?.id, refreshAssignments],
     queryFn: async () => {
       if (!profile?.id) return null;
 
@@ -154,6 +155,11 @@ export const ProfileForm = ({ isOpen, onClose, profile }: ProfileFormProps) => {
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const handleAssignmentUpdate = () => {
+    // Forcer le rechargement des affectations
+    setRefreshAssignments(prev => prev + 1);
   };
 
   return (
@@ -240,7 +246,10 @@ export const ProfileForm = ({ isOpen, onClose, profile }: ProfileFormProps) => {
               )}
               
               {profile && (
-                <UserHierarchyAssignmentForm userId={profile.id} />
+                <UserHierarchyAssignmentForm 
+                  userId={profile.id} 
+                  onUpdate={handleAssignmentUpdate}
+                />
               )}
             </div>
           </TabsContent>
