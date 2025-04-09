@@ -139,6 +139,13 @@ export const OrganizationFields = ({
     setServiceId,
   ]);
 
+  // Effet de debug pour vérifier les données chargées
+  useEffect(() => {
+    if (accessibleOrganizations) {
+      console.log("OrganizationFields - Accessible organizations:", accessibleOrganizations);
+    }
+  }, [accessibleOrganizations]);
+
   // Définir les sources de données en fonction des permissions
   const poles = canAccessAllOrganizations ? allPoles : accessibleOrganizations?.poles;
   const isLoadingPoles = canAccessAllOrganizations ? isLoadingAllPoles : isLoadingOrganizations;
@@ -165,6 +172,13 @@ export const OrganizationFields = ({
     // Filtrer pour ne garder que les services accessibles
     const accessibleServiceIds = new Set(accessibleOrganizations.services.map(s => s.id));
     services = directionServices.filter(s => accessibleServiceIds.has(s.id));
+  } else if (accessibleOrganizations && directionId !== "none") {
+    // Si on n'a pas encore chargé les services de la direction, utiliser directement les services accessibles de cette direction
+    services = accessibleOrganizations.services.filter(s => {
+      // On doit charger les détails du service pour connaître sa direction
+      const matchingService = allServices?.find(as => as.id === s.id);
+      return matchingService?.direction_id === directionId;
+    });
   }
 
   return (

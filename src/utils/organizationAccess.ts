@@ -156,51 +156,141 @@ export async function getUserAccessibleOrganizations(
     };
   }
 
-  // Pour les chefs de projet, récupérer les entités associées à leurs projets
+  // Pour les chefs de projet, récupérer les entités associées à leur affectation hiérarchique
   if (userId) {
-    // Récupérer tous les projets dont l'utilisateur est chef de projet
+    // Récupérer l'affectation hiérarchique de l'utilisateur
+    const { data: userHierarchyAssignments } = await supabase
+      .from("user_hierarchy_assignments")
+      .select(`
+        entity_id,
+        entity_type
+      `)
+      .eq("user_id", userId);
+    
+    const poleIds = new Set<string>();
+    const directionIds = new Set<string>();
+    const serviceIds = new Set<string>();
+    
+    // Traiter les affectations hiérarchiques de l'utilisateur
+    if (userHierarchyAssignments && userHierarchyAssignments.length > 0) {
+      for (const assignment of userHierarchyAssignments) {
+        if (assignment.entity_type === 'pole') {
+          poleIds.add(assignment.entity_id);
+          
+          // Récupérer toutes les directions de ce pôle
+          const { data: poleDirections } = await supabase
+            .from("directions")
+            .select("id")
+            .eq("pole_id", assignment.entity_id);
+          
+          if (poleDirections) {
+            poleDirections.forEach(direction => {
+              directionIds.add(direction.id);
+              
+              // Récupérer tous les services de cette direction
+              supabase
+                .from("services")
+                .select("id")
+                .eq("direction_id", direction.id)
+                .then(({ data: directionServices }) => {
+                  if (directionServices) {
+                    directionServices.forEach(service => {
+                      serviceIds.add(service.id);
+                    });
+                  }
+                });
+            });
+          }
+        } else if (assignment.entity_type === 'direction') {
+          directionIds.add(assignment.entity_id);
+          
+          // Récupérer le pôle parent de cette direction
+          const { data: direction } = await supabase
+            .from("directions")
+            .select("pole_id")
+            .eq("id", assignment.entity_id)
+            .single();
+          
+          if (direction && direction.pole_id) {
+            poleIds.add(direction.pole_id);
+          }
+          
+          // Récupérer tous les services de cette direction
+          const { data: directionServices } = await supabase
+            .from("services")
+            .select("id")
+            .eq("direction_id", assignment.entity_id);
+          
+          if (directionServices) {
+            directionServices.forEach(service => {
+              serviceIds.add(service.id);
+            });
+          }
+        } else if (assignment.entity_type === 'service') {
+          serviceIds.add(assignment.entity_id);
+          
+          // Récupérer la direction et le pôle parents de ce service
+          const { data: service } = await supabase
+            .from("services")
+            .select(`
+              direction_id,
+              directions:direction_id (
+                id,
+                pole_id
+              )
+            `)
+            .eq("id", assignment.entity_id)
+            .single();
+          
+          if (service) {
+            directionIds.add(service.direction_id);
+            if (service.directions && service.directions.pole_id) {
+              poleIds.add(service.directions.pole_id);
+            }
+          }
+        }
+      }
+    }
+    
+    // Récupérer également les entités associées aux projets gérés par l'utilisateur
     const { data: userProjects } = await supabase
       .from("projects")
       .select("pole_id, direction_id, service_id")
       .eq("project_manager_id", userId);
     
-    // Extraire les IDs des pôles, directions et services des projets gérés
-    const projectPoleIds = new Set<string>();
-    const projectDirectionIds = new Set<string>();
-    const projectServiceIds = new Set<string>();
-
     if (userProjects && userProjects.length > 0) {
       userProjects.forEach(project => {
         if (project.pole_id) {
-          projectPoleIds.add(project.pole_id);
+          poleIds.add(project.pole_id);
         }
         if (project.direction_id) {
-          projectDirectionIds.add(project.direction_id);
+          directionIds.add(project.direction_id);
         }
         if (project.service_id) {
-          projectServiceIds.add(project.service_id);
+          serviceIds.add(project.service_id);
         }
       });
     }
 
-    // Récupérer les entités des projets
+    // Récupérer les détails des entités
     const [polesResult, directionsResult, servicesResult] = await Promise.all([
-      projectPoleIds.size > 0 ? 
-        supabase.from("poles").select("id, name").in("id", Array.from(projectPoleIds)).order("name") : 
+      poleIds.size > 0 ? 
+        supabase.from("poles").select("id, name").in("id", Array.from(poleIds)).order("name") : 
         { data: [] },
-      projectDirectionIds.size > 0 ? 
-        supabase.from("directions").select("id, name").in("id", Array.from(projectDirectionIds)).order("name") : 
+      directionIds.size > 0 ? 
+        supabase.from("directions").select("id, name").in("id", Array.from(directionIds)).order("name") : 
         { data: [] },
-      projectServiceIds.size > 0 ? 
-        supabase.from("services").select("id, name").in("id", Array.from(projectServiceIds)).order("name") : 
+      serviceIds.size > 0 ? 
+        supabase.from("services").select("id, name").in("id", Array.from(serviceIds)).order("name") : 
         { data: [] }
     ]);
 
-    return {
-      poles: polesResult.data || [],
-      directions: directionsResult.data || [],
-      services: servicesResult.data || []
-    };
+    // Vérifier que les données existent avant de filtrer
+    const poles = polesResult.data || [];
+    const directions = directionsResult.data || [];
+    const services = servicesResult.data || [];
+    
+    return { poles, directions, services };
   }
 
   // Pour les autres utilisateurs, retourner des listes vides
