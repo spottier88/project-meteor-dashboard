@@ -43,19 +43,6 @@ const getRoleLabel = (role: string): string => {
   }
 };
 
-const getEntityTypeLabel = (type: EntityType): string => {
-  switch (type) {
-    case "pole":
-      return "Pôle";
-    case "direction":
-      return "Direction";
-    case "service":
-      return "Service";
-    default:
-      return type;
-  }
-};
-
 export const ProfileForm = ({ isOpen, onClose, profile }: ProfileFormProps) => {
   const { toast } = useToast();
   const [firstName, setFirstName] = useState("");
@@ -221,27 +208,6 @@ export const ProfileForm = ({ isOpen, onClose, profile }: ProfileFormProps) => {
                 ))}
               </div>
             </div>
-
-            {hierarchyAssignments && hierarchyAssignments.length > 0 && (
-              <>
-                <Separator className="my-4" />
-                <div className="grid gap-2">
-                  <Label>Affectation actuelle</Label>
-                  <div className="space-y-2">
-                    {hierarchyAssignments.map((assignment) => (
-                      <div key={assignment.id} className="flex items-center gap-2">
-                        <Badge variant="outline">
-                          {getEntityTypeLabel(assignment.entity_type)}
-                        </Badge>
-                        <span className="text-sm text-muted-foreground">
-                          {assignment.entity_name}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </>
-            )}
           </TabsContent>
           
           <TabsContent value="assignment" className="mt-4">
@@ -251,6 +217,28 @@ export const ProfileForm = ({ isOpen, onClose, profile }: ProfileFormProps) => {
                 Votre affectation hiérarchique détermine où vos projets apparaîtront dans l'organisation 
                 et peut influer sur certaines fonctionnalités de l'application.
               </p>
+              
+              {hierarchyAssignments && hierarchyAssignments.length > 0 && (
+                <div className="mb-4 p-3 bg-secondary/20 rounded-md">
+                  <h4 className="text-sm font-medium mb-2">Affectation actuelle</h4>
+                  <div className="space-y-2">
+                    {hierarchyAssignments.map((assignment) => (
+                      <div key={assignment.id} className="flex items-center gap-2">
+                        <Badge variant="outline">
+                          {assignment.entity_type === 'pole' ? 'Pôle' : 
+                           assignment.entity_type === 'direction' ? 'Direction' : 
+                           assignment.entity_type === 'service' ? 'Service' : 
+                           assignment.entity_type}
+                        </Badge>
+                        <span className="text-sm text-muted-foreground">
+                          {assignment.entity_name}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+              
               {profile && (
                 <UserHierarchyAssignmentForm userId={profile.id} />
               )}
