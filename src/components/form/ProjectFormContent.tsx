@@ -1,10 +1,10 @@
 
 import { useEffect } from "react";
 import { ProjectFormState } from "./useProjectFormState";
-import { FormStep1 } from "./FormStep1";
-import { FormStep2 } from "./FormStep2";
-import { FormStep3 } from "./FormStep3";
-import { FormStep4 } from "./FormStep4";
+import { ProjectFormStep1 } from "./ProjectFormStep1";
+import { ProjectFormStep2 } from "./ProjectFormStep2";
+import { ProjectFormStep3 } from "./ProjectFormStep3";
+import { ProjectFormStep4 } from "./ProjectFormStep4";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle, HelpCircle } from "lucide-react";
 import { Button } from "../ui/button";
@@ -35,26 +35,29 @@ export const ProjectFormContent = ({
     switch (formState.currentStep) {
       case 0:
         return (
-          <FormStep1
+          <ProjectFormStep1
             title={formState.title}
             setTitle={formState.setTitle}
             description={formState.description}
             setDescription={formState.setDescription}
             projectManager={formState.projectManager}
             setProjectManager={formState.setProjectManager}
-            projectManagers={projectManagers}
-            project={project}
-          />
-        );
-      case 1:
-        return (
-          <FormStep2
             startDate={formState.startDate}
             setStartDate={formState.setStartDate}
             endDate={formState.endDate}
             setEndDate={formState.setEndDate}
             priority={formState.priority}
             setPriority={formState.setPriority}
+            lifecycleStatus={formState.lifecycleStatus}
+            setLifecycleStatus={formState.setLifecycleStatus}
+            isAdmin={false}
+            isManager={false}
+            projectManagers={projectManagers}
+          />
+        );
+      case 1:
+        return (
+          <ProjectFormStep2
             monitoringLevel={formState.monitoringLevel}
             setMonitoringLevel={formState.setMonitoringLevel}
             monitoringEntityId={formState.monitoringEntityId}
@@ -65,15 +68,12 @@ export const ProjectFormContent = ({
             setDirectionId={formState.setDirectionId}
             serviceId={formState.serviceId}
             setServiceId={formState.setServiceId}
-            lifecycleStatus={formState.lifecycleStatus}
-            setLifecycleStatus={formState.setLifecycleStatus}
             project={project}
-            canEditOrganization={canEditOrganization}
           />
         );
       case 2:
         return (
-          <FormStep3
+          <ProjectFormStep3
             novateur={formState.novateur}
             setNovateur={formState.setNovateur}
             usager={formState.usager}
@@ -88,7 +88,7 @@ export const ProjectFormContent = ({
         );
       case 3:
         return (
-          <FormStep4
+          <ProjectFormStep4
             context={formState.context}
             setContext={formState.setContext}
             stakeholders={formState.stakeholders} 

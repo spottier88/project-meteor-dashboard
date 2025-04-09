@@ -5,19 +5,21 @@ interface ProjectFormNavigationProps {
   currentStep: number;
   onPrevious: () => void;
   onNext: () => void;
-  canGoNext: boolean;
-  isLastStep: boolean;
+  isEditMode: boolean;
   isSubmitting: boolean;
-  onClose: () => void;
+  canGoNext?: boolean;
+  isLastStep?: boolean;
+  onClose?: () => void;
 }
 
 export const ProjectFormNavigation = ({
   currentStep,
   onPrevious,
   onNext,
-  canGoNext,
-  isLastStep,
+  isEditMode,
   isSubmitting,
+  canGoNext = true,
+  isLastStep = currentStep === 3,
   onClose,
 }: ProjectFormNavigationProps) => {
   return (
@@ -33,14 +35,16 @@ export const ProjectFormNavigation = ({
         </Button>
       )}
       <div className="flex space-x-2">
-        <Button
-          type="button"
-          variant="outline"
-          onClick={onClose}
-          disabled={isSubmitting}
-        >
-          Annuler
-        </Button>
+        {onClose && (
+          <Button
+            type="button"
+            variant="outline"
+            onClick={onClose}
+            disabled={isSubmitting}
+          >
+            Annuler
+          </Button>
+        )}
         <Button
           type="button"
           onClick={onNext}

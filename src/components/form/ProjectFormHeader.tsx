@@ -4,14 +4,15 @@ import { Progress } from "@/components/ui/progress";
 
 interface ProjectFormHeaderProps {
   currentStep: number;
-  isEditing: boolean;
+  isEditMode: boolean;
+  title?: string;
 }
 
-export const ProjectFormHeader = ({ currentStep, isEditing }: ProjectFormHeaderProps) => {
+export const ProjectFormHeader = ({ currentStep, isEditMode, title }: ProjectFormHeaderProps) => {
   return (
     <DialogHeader className="space-y-3">
       <DialogTitle>
-        {isEditing ? "Modifier le projet" : "Nouveau projet"}
+        {isEditMode ? `Modifier le projet ${title ? `"${title}"` : ""}` : "Nouveau projet"}
       </DialogTitle>
       <DialogDescription>
         {currentStep === 0 

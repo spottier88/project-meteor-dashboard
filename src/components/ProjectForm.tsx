@@ -124,7 +124,7 @@ export const ProjectForm = ({ isOpen, onClose, onSubmit, project }: ProjectFormP
         }}>
           <ProjectFormHeader 
             currentStep={formState.currentStep} 
-            isEditMode={!!project} 
+            isEditMode={!!project}
             title={formState.title}
           />
           <ProjectFormContent 
@@ -142,6 +142,9 @@ export const ProjectForm = ({ isOpen, onClose, onSubmit, project }: ProjectFormP
               onPrevious={handlePrevious}
               onNext={handleNext}
               isEditMode={!!project}
+              onClose={handleCloseRequest}
+              isLastStep={formState.currentStep === 3}
+              canGoNext={formState.currentStep === 0 ? !!formState.title && !!formState.projectManager : true}
             />
           </DialogFooter>
         </DialogContent>
