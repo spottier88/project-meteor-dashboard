@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useUser } from "@supabase/auth-helpers-react";
@@ -104,6 +105,10 @@ const Index = () => {
           project_monitoring!left (
             monitoring_level,
             monitoring_entity_id
+          ),
+          project_manager_profile:profiles!projects_project_manager_id_fkey (
+            first_name,
+            last_name
           )
         `)
         .order("created_at", { ascending: false });
@@ -196,7 +201,17 @@ const Index = () => {
       const query = searchQuery.toLowerCase();
       const matchesTitle = project.title?.toLowerCase().includes(query);
       const matchesManager = project.project_manager?.toLowerCase().includes(query);
-      return matchesTitle || matchesManager;
+      
+      // Nouvelle logique: rechercher aussi dans le nom/prénom du chef de projet
+      const projectManagerProfile = project.project_manager_profile;
+      const managerFirstName = projectManagerProfile?.first_name?.toLowerCase() || "";
+      const managerLastName = projectManagerProfile?.last_name?.toLowerCase() || "";
+      const matchesManagerName = 
+        managerFirstName.includes(query) || 
+        managerLastName.includes(query) || 
+        `${managerFirstName} ${managerLastName}`.includes(query);
+      
+      return matchesTitle || matchesManager || matchesManagerName;
     }
 
     return true;
