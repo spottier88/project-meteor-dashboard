@@ -1,4 +1,3 @@
-
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -8,6 +7,7 @@ import { useToast } from "@/hooks/use-toast";
 import { HierarchyPathAssignmentForm } from "@/components/manager/HierarchyPathAssignmentForm";
 import { AssignmentsList } from "@/components/manager/AssignmentsList";
 import { HierarchyPath } from "@/types/user";
+import { useEffect } from "react";
 
 interface ManagerPathAssignmentWithDetails {
   id: string;
@@ -20,6 +20,21 @@ export const ManagerAssignments = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+
+  const handleNavigateBack = () => {
+    queryClient.invalidateQueries({ queryKey: ["users"] });
+    queryClient.invalidateQueries({ queryKey: ["lastLogins"] });
+    queryClient.invalidateQueries({ queryKey: ["managerAssignments"] });
+    navigate("/admin/users");
+  };
+
+  useEffect(() => {
+    return () => {
+      queryClient.invalidateQueries({ queryKey: ["users"] });
+      queryClient.invalidateQueries({ queryKey: ["lastLogins"] });
+      queryClient.invalidateQueries({ queryKey: ["managerAssignments"] });
+    };
+  }, [queryClient]);
 
   const { data: profile, isLoading: isLoadingProfile } = useQuery({
     queryKey: ["profile", userId],
@@ -68,7 +83,6 @@ export const ManagerAssignments = () => {
       }
     },
     onSuccess: () => {
-      // Invalider toutes les requêtes nécessaires
       queryClient.invalidateQueries({ queryKey: ["manager_path_assignments"] });
       queryClient.invalidateQueries({ queryKey: ["managerAssignments"] });
       queryClient.invalidateQueries({ queryKey: ["users"] });
@@ -95,7 +109,6 @@ export const ManagerAssignments = () => {
       if (error) throw error;
     },
     onSuccess: () => {
-      // Invalider toutes les requêtes nécessaires
       queryClient.invalidateQueries({ queryKey: ["manager_path_assignments"] });
       queryClient.invalidateQueries({ queryKey: ["managerAssignments"] });
       queryClient.invalidateQueries({ queryKey: ["users"] });
@@ -124,7 +137,7 @@ export const ManagerAssignments = () => {
   return (
     <div className="container mx-auto py-8 px-4">
       <div className="mb-8">
-        <Button variant="ghost" onClick={() => navigate("/admin/users")} className="mb-4">
+        <Button variant="ghost" onClick={handleNavigateBack} className="mb-4">
           <Settings className="mr-2 h-4 w-4" />
           Retour à la gestion des utilisateurs
         </Button>
