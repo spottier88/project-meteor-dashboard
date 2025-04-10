@@ -1,4 +1,3 @@
-
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -156,6 +155,8 @@ export const UserManagement = () => {
       });
 
       queryClient.invalidateQueries({ queryKey: ["users"] });
+      queryClient.invalidateQueries({ queryKey: ["lastLogins"] });
+      queryClient.invalidateQueries({ queryKey: ["managerAssignments"] });
     } catch (error) {
       console.error("Error:", error);
       toast({
@@ -170,6 +171,8 @@ export const UserManagement = () => {
 
   const handleFormSubmit = () => {
     queryClient.invalidateQueries({ queryKey: ["users"] });
+    queryClient.invalidateQueries({ queryKey: ["lastLogins"] });
+    queryClient.invalidateQueries({ queryKey: ["managerAssignments"] });
   };
 
   const handleSort = (key: string) => {

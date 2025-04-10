@@ -142,6 +142,10 @@ export const ProfileForm = ({ isOpen, onClose, profile }: ProfileFormProps) => {
 
       if (error) throw error;
 
+      queryClient.invalidateQueries({ queryKey: ["users"] });
+      queryClient.invalidateQueries({ queryKey: ["lastLogins"] });
+      queryClient.invalidateQueries({ queryKey: ["managerAssignments"] });
+
       toast({
         title: "Succès",
         description: "Votre profil a été mis à jour",
@@ -165,8 +169,11 @@ export const ProfileForm = ({ isOpen, onClose, profile }: ProfileFormProps) => {
     
     queryClient.invalidateQueries({ queryKey: ["userAccessibleOrganizations"] });
     queryClient.invalidateQueries({ queryKey: ["userRoles"] });
-    
     queryClient.invalidateQueries({ queryKey: ["accessibleOrganizations"] });
+    
+    queryClient.invalidateQueries({ queryKey: ["users"] });
+    queryClient.invalidateQueries({ queryKey: ["lastLogins"] });
+    queryClient.invalidateQueries({ queryKey: ["managerAssignments"] });
   };
 
   return (

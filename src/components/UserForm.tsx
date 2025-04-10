@@ -14,6 +14,7 @@ import { UserFormFields } from "./form/UserFormFields";
 import { UserRole } from "@/types/user";
 import { HierarchyAssignmentFields } from "./form/HierarchyAssignmentFields";
 import { HierarchyAssignment } from "@/types/user";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface UserFormProps {
   isOpen: boolean;
@@ -30,6 +31,7 @@ interface UserFormProps {
 
 export const UserForm = ({ isOpen, onClose, onSubmit, user }: UserFormProps) => {
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const [firstName, setFirstName] = useState(user?.first_name || "");
   const [lastName, setLastName] = useState(user?.last_name || "");
   const [email, setEmail] = useState(user?.email || "");
@@ -62,7 +64,6 @@ export const UserForm = ({ isOpen, onClose, onSubmit, user }: UserFormProps) => 
       setRoles(user.roles);
       setSelectedUserId("");
       
-      // Charger l'affectation hiérarchique existante
       const loadHierarchyAssignment = async () => {
         const { data, error } = await supabase
           .from("user_hierarchy_assignments")
@@ -105,7 +106,6 @@ export const UserForm = ({ isOpen, onClose, onSubmit, user }: UserFormProps) => 
 
     try {
       if (user) {
-        // Update existing user
         const { error: profileError } = await supabase
           .from("profiles")
           .update({
@@ -116,7 +116,6 @@ export const UserForm = ({ isOpen, onClose, onSubmit, user }: UserFormProps) => 
 
         if (profileError) throw profileError;
 
-        // Get current roles to compare
         const { data: currentRoles, error: getRolesError } = await supabase
           .from("user_roles")
           .select("role")
@@ -127,15 +126,12 @@ export const UserForm = ({ isOpen, onClose, onSubmit, user }: UserFormProps) => 
         const currentRoleSet = new Set(currentRoles.map(r => r.role));
         const newRoleSet = new Set(roles);
 
-        // Roles to remove (in current but not in new)
         const rolesToRemove = currentRoles
           .map(r => r.role)
           .filter(role => !newRoleSet.has(role));
 
-        // Roles to add (in new but not in current)
         const rolesToAdd = roles.filter(role => !currentRoleSet.has(role));
 
-        // Remove roles that are no longer needed
         if (rolesToRemove.length > 0) {
           const { error: deleteRolesError } = await supabase
             .from("user_roles")
@@ -146,7 +142,6 @@ export const UserForm = ({ isOpen, onClose, onSubmit, user }: UserFormProps) => 
           if (deleteRolesError) throw deleteRolesError;
         }
 
-        // Add new roles
         if (rolesToAdd.length > 0) {
           const { error: insertRolesError } = await supabase
             .from("user_roles")
@@ -160,15 +155,12 @@ export const UserForm = ({ isOpen, onClose, onSubmit, user }: UserFormProps) => 
           if (insertRolesError) throw insertRolesError;
         }
 
-        // Update hierarchy assignment if provided
         if (hierarchyAssignment) {
-          // Delete existing assignment if any
           await supabase
             .from("user_hierarchy_assignments")
             .delete()
             .eq("user_id", user.id);
 
-          // Insert new assignment
           const { error: hierarchyError } = await supabase
             .from("user_hierarchy_assignments")
             .insert({
@@ -179,15 +171,9 @@ export const UserForm = ({ isOpen, onClose, onSubmit, user }: UserFormProps) => 
 
           if (hierarchyError) throw hierarchyError;
         }
-
-        toast({
-          title: "Succès",
-          description: "L'utilisateur a été mis à jour",
-        });
       } else {
         const userId = selectedUserId || crypto.randomUUID();
         
-        // Create profile for existing or new user
         const { error: profileError } = await supabase
           .from("profiles")
           .insert({
@@ -199,7 +185,6 @@ export const UserForm = ({ isOpen, onClose, onSubmit, user }: UserFormProps) => 
 
         if (profileError) throw profileError;
 
-        // Add roles for the user
         const { error: rolesError } = await supabase
           .from("user_roles")
           .insert(
@@ -211,7 +196,6 @@ export const UserForm = ({ isOpen, onClose, onSubmit, user }: UserFormProps) => 
 
         if (rolesError) throw rolesError;
 
-        // Add hierarchy assignment if provided
         if (hierarchyAssignment) {
           const { error: hierarchyError } = await supabase
             .from("user_hierarchy_assignments")
@@ -223,12 +207,16 @@ export const UserForm = ({ isOpen, onClose, onSubmit, user }: UserFormProps) => 
 
           if (hierarchyError) throw hierarchyError;
         }
-
-        toast({
-          title: "Succès",
-          description: "L'utilisateur a été créé",
-        });
       }
+
+      queryClient.invalidateQueries({ queryKey: ["users"] });
+      queryClient.invalidateQueries({ queryKey: ["lastLogins"] });
+      queryClient.invalidateQueries({ queryKey: ["managerAssignments"] });
+      
+      toast({
+        title: "Succès",
+        description: user ? "L'utilisateur a été mis à jour" : "L'utilisateur a été créé",
+      });
 
       onSubmit();
       onClose();

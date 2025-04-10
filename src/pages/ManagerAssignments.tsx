@@ -1,3 +1,4 @@
+
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -67,7 +68,10 @@ export const ManagerAssignments = () => {
       }
     },
     onSuccess: () => {
+      // Invalider toutes les requêtes nécessaires
       queryClient.invalidateQueries({ queryKey: ["manager_path_assignments"] });
+      queryClient.invalidateQueries({ queryKey: ["managerAssignments"] });
+      queryClient.invalidateQueries({ queryKey: ["users"] });
       toast({
         title: "Succès",
         description: "L'affectation a été ajoutée",
@@ -91,7 +95,10 @@ export const ManagerAssignments = () => {
       if (error) throw error;
     },
     onSuccess: () => {
+      // Invalider toutes les requêtes nécessaires
       queryClient.invalidateQueries({ queryKey: ["manager_path_assignments"] });
+      queryClient.invalidateQueries({ queryKey: ["managerAssignments"] });
+      queryClient.invalidateQueries({ queryKey: ["users"] });
       toast({
         title: "Succès",
         description: "L'affectation a été supprimée",
