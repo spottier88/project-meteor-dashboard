@@ -48,6 +48,8 @@ const getRoleLabel = (role: UserRole): string => {
       return "Manager";
     case "membre":
       return "Membre";
+    case "time_tracker":
+      return "Suivi activités";
     default:
       return role;
   }
