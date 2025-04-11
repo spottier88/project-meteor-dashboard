@@ -9,6 +9,7 @@ import { Copy, Check, HelpCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Badge } from "./ui/badge";
+import { ForEntityType } from "@/types/project";
 
 type Project = Database["public"]["Tables"]["projects"]["Row"];
 
@@ -45,27 +46,40 @@ export const ProjectHeader = ({ project }: ProjectHeaderProps) => {
         return null;
       }
       
-      let tableName = "";
+      let data = null;
+      let error = null;
       
-      switch (project.for_entity_type) {
-        case "pole":
-          tableName = "poles";
-          break;
-        case "direction":
-          tableName = "directions";
-          break;
-        case "service":
-          tableName = "services";
-          break;
-        default:
-          return null;
+      // Use separate queries based on entity type to satisfy TypeScript
+      if (project.for_entity_type === "pole") {
+        const result = await supabase
+          .from("poles")
+          .select("name")
+          .eq("id", project.for_entity_id)
+          .maybeSingle();
+        
+        data = result.data;
+        error = result.error;
+      } 
+      else if (project.for_entity_type === "direction") {
+        const result = await supabase
+          .from("directions")
+          .select("name")
+          .eq("id", project.for_entity_id)
+          .maybeSingle();
+        
+        data = result.data;
+        error = result.error;
+      } 
+      else if (project.for_entity_type === "service") {
+        const result = await supabase
+          .from("services")
+          .select("name")
+          .eq("id", project.for_entity_id)
+          .maybeSingle();
+        
+        data = result.data;
+        error = result.error;
       }
-      
-      const { data, error } = await supabase
-        .from(tableName)
-        .select("name")
-        .eq("id", project.for_entity_id)
-        .maybeSingle();
         
       if (error || !data) {
         console.error(`Error fetching ${project.for_entity_type} name:`, error);
