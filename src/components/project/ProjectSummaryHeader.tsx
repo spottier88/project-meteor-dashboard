@@ -1,3 +1,4 @@
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ProjectStatus, ProgressStatus } from "@/types/project";
 import { statusIcons } from "@/lib/project-status";
@@ -7,6 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Badge } from "@/components/ui/badge";
 
 interface ProjectSummaryHeaderProps {
   title: string;
@@ -74,6 +76,80 @@ export const ProjectSummaryHeader = ({
     },
     enabled: !!id,
   });
+  
+  const { data: project } = useQuery({
+    queryKey: ["project", id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("projects")
+        .select("for_entity_type, for_entity_id")
+        .eq("id", id)
+        .maybeSingle();
+
+      if (error) {
+        console.error("Error fetching project:", error);
+        return null;
+      }
+
+      return data;
+    },
+    enabled: !!id,
+  });
+  
+  const { data: forEntityName } = useQuery({
+    queryKey: ["forEntity", project?.for_entity_type, project?.for_entity_id],
+    queryFn: async () => {
+      if (!project?.for_entity_type || !project?.for_entity_id) {
+        return null;
+      }
+      
+      let data = null;
+      let error = null;
+      
+      // Use separate queries based on entity type to satisfy TypeScript
+      if (project.for_entity_type === "pole") {
+        const result = await supabase
+          .from("poles")
+          .select("name")
+          .eq("id", project.for_entity_id)
+          .maybeSingle();
+        
+        data = result.data;
+        error = result.error;
+      } 
+      else if (project.for_entity_type === "direction") {
+        const result = await supabase
+          .from("directions")
+          .select("name")
+          .eq("id", project.for_entity_id)
+          .maybeSingle();
+        
+        data = result.data;
+        error = result.error;
+      } 
+      else if (project.for_entity_type === "service") {
+        const result = await supabase
+          .from("services")
+          .select("name")
+          .eq("id", project.for_entity_id)
+          .maybeSingle();
+        
+        data = result.data;
+        error = result.error;
+      }
+        
+      if (error || !data) {
+        console.error(`Error fetching ${project.for_entity_type} name:`, error);
+        return null;
+      }
+      
+      return {
+        type: project.for_entity_type,
+        name: data.name
+      };
+    },
+    enabled: !!project?.for_entity_type && !!project?.for_entity_id,
+  });
 
   const { data: projectManagerProfile } = useQuery({
     queryKey: ["projectManagerProfile", project_manager],
@@ -140,6 +216,19 @@ export const ProjectSummaryHeader = ({
     }
     return "-";
   };
+  
+  const getForEntityTypeLabel = (type: string) => {
+    switch (type) {
+      case "pole":
+        return "Pôle";
+      case "direction":
+        return "Direction";
+      case "service":
+        return "Service";
+      default:
+        return type;
+    }
+  };
 
   return (
     <Card>
@@ -177,6 +266,15 @@ export const ProjectSummaryHeader = ({
           </div>
           {description && (
             <p className="text-sm text-muted-foreground">{description}</p>
+          )}
+          
+          {forEntityName && (
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-muted-foreground">Projet réalisé pour :</span>
+              <Badge variant="outline" className="text-sm">
+                {getForEntityTypeLabel(forEntityName.type)} {forEntityName.name}
+              </Badge>
+            </div>
           )}
         </div>
         {getStatusIcon()}
