@@ -24,7 +24,7 @@ export const ProjectFormStep5 = ({
   const [selectedPoleId, setSelectedPoleId] = useState<string | undefined>(undefined);
   const [selectedDirectionId, setSelectedDirectionId] = useState<string | undefined>(undefined);
   
-  // Charger les pôles
+  // Chargement des pôles - toujours activé
   const { data: poles, isLoading: isLoadingPoles } = useQuery({
     queryKey: ["poles"],
     queryFn: async () => {
@@ -37,10 +37,12 @@ export const ProjectFormStep5 = ({
     },
   });
 
-  // Charger les directions en fonction du pôle sélectionné
+  // Chargement des directions en fonction du pôle sélectionné
   const { data: directions, isLoading: isLoadingDirections } = useQuery({
     queryKey: ["directions", selectedPoleId],
     queryFn: async () => {
+      if (!selectedPoleId) return [];
+      
       const { data, error } = await supabase
         .from("directions")
         .select("*")
@@ -49,13 +51,15 @@ export const ProjectFormStep5 = ({
       if (error) throw error;
       return data;
     },
-    enabled: !!selectedPoleId && forEntityType !== "pole",
+    enabled: !!selectedPoleId, // Activé uniquement si un pôle est sélectionné
   });
 
-  // Charger les services en fonction de la direction sélectionnée
+  // Chargement des services en fonction de la direction sélectionnée
   const { data: services, isLoading: isLoadingServices } = useQuery({
     queryKey: ["services", selectedDirectionId],
     queryFn: async () => {
+      if (!selectedDirectionId) return [];
+      
       const { data, error } = await supabase
         .from("services")
         .select("*")
@@ -64,10 +68,10 @@ export const ProjectFormStep5 = ({
       if (error) throw error;
       return data;
     },
-    enabled: !!selectedDirectionId && forEntityType === "service",
+    enabled: !!selectedDirectionId, // Activé uniquement si une direction est sélectionnée
   });
   
-  // À l'initialisation ou quand le type d'entité change, réinitialiser l'ID de l'entité
+  // Réinitialisation des sélections quand le type d'entité change
   useEffect(() => {
     if (forEntityType === null) {
       setForEntityId(undefined);
@@ -76,97 +80,61 @@ export const ProjectFormStep5 = ({
     }
   }, [forEntityType, setForEntityId]);
   
-  // Retrouver la hiérarchie complète pour une entité sélectionnée au chargement initial
+  // Récupération de la hiérarchie lors du chargement initial d'un projet existant
   useEffect(() => {
-    const loadHierarchy = async () => {
-      if (forEntityId && forEntityType) {
-        try {
-          if (forEntityType === "service" && services) {
-            // Trouver le service
-            const service = services.find(s => s.id === forEntityId);
-            if (service) {
-              setSelectedDirectionId(service.direction_id);
-              
-              // Trouver le pôle parent de la direction
-              const { data: direction } = await supabase
-                .from("directions")
-                .select("pole_id")
-                .eq("id", service.direction_id)
-                .single();
-                
-              if (direction) {
-                setSelectedPoleId(direction.pole_id);
-              }
-            }
-          } else if (forEntityType === "direction" && directions) {
-            // Trouver la direction
-            const direction = directions.find(d => d.id === forEntityId);
-            if (direction) {
-              setSelectedPoleId(direction.pole_id);
-            }
-          } else if (forEntityType === "pole") {
-            setSelectedPoleId(forEntityId);
-          }
-        } catch (error) {
-          console.error("Erreur lors du chargement de la hiérarchie:", error);
+    const loadInitialHierarchy = async () => {
+      // Seulement exécuter au chargement initial avec un forEntityId défini
+      if (!forEntityId || !forEntityType) return;
+      
+      try {
+        if (forEntityType === "pole") {
+          // Pour un pôle, c'est simple
+          setSelectedPoleId(forEntityId);
         }
-      }
-    };
-    
-    loadHierarchy();
-  }, [forEntityId, forEntityType, services, directions]);
-  
-  // Retrouver la hiérarchie initiale lors du premier chargement du composant
-  useEffect(() => {
-    const initializeHierarchy = async () => {
-      if (forEntityId && forEntityType && !selectedPoleId && !selectedDirectionId) {
-        try {
-          if (forEntityType === "service") {
-            // Recherche du service et de sa hiérarchie
-            const { data: service } = await supabase
-              .from("services")
-              .select("direction_id")
-              .eq("id", forEntityId)
-              .single();
+        else if (forEntityType === "direction") {
+          // Pour une direction, on charge son pôle parent
+          const { data: direction } = await supabase
+            .from("directions")
+            .select("pole_id")
+            .eq("id", forEntityId)
+            .single();
+          
+          if (direction) {
+            setSelectedPoleId(direction.pole_id);
+          }
+        }
+        else if (forEntityType === "service") {
+          // Pour un service, on charge sa direction parente et le pôle parent
+          const { data: service } = await supabase
+            .from("services")
+            .select("direction_id")
+            .eq("id", forEntityId)
+            .single();
+          
+          if (service) {
+            setSelectedDirectionId(service.direction_id);
             
-            if (service) {
-              setSelectedDirectionId(service.direction_id);
-              
-              // Trouver le pôle parent
-              const { data: direction } = await supabase
-                .from("directions")
-                .select("pole_id")
-                .eq("id", service.direction_id)
-                .single();
-                
-              if (direction) {
-                setSelectedPoleId(direction.pole_id);
-              }
-            }
-          } else if (forEntityType === "direction") {
-            // Recherche de la direction et de son pôle parent
+            // Ensuite on charge le pôle parent de cette direction
             const { data: direction } = await supabase
               .from("directions")
               .select("pole_id")
-              .eq("id", forEntityId)
+              .eq("id", service.direction_id)
               .single();
-              
+            
             if (direction) {
               setSelectedPoleId(direction.pole_id);
             }
-          } else if (forEntityType === "pole") {
-            setSelectedPoleId(forEntityId);
           }
-        } catch (error) {
-          console.error("Erreur lors de l'initialisation de la hiérarchie:", error);
         }
+      } catch (error) {
+        console.error("Erreur lors du chargement de la hiérarchie initiale:", error);
       }
     };
     
-    initializeHierarchy();
-  }, [forEntityId, forEntityType]);
+    loadInitialHierarchy();
+  }, [forEntityId, forEntityType]); // Exécuté uniquement quand ces valeurs changent
 
-  // Gérer le changement de type d'entité
+  // Gestion du changement de type d'entité
   const handleEntityTypeChange = (value: string) => {
     setForEntityType(value === "null" ? null : value as ForEntityType);
     setForEntityId(undefined);
@@ -174,13 +142,12 @@ export const ProjectFormStep5 = ({
     setSelectedDirectionId(undefined);
   };
   
-  // Gérer les sélections en fonction du type d'entité
+  // Rendu des sélecteurs en fonction du type d'entité
   const renderEntitySelector = () => {
     if (!forEntityType) return null;
     
-    const isLoading = isLoadingPoles || (forEntityType !== "pole" && isLoadingDirections) || (forEntityType === "service" && isLoadingServices);
-    
-    if (isLoading) {
+    // Affiche un squelette pendant le chargement initial des données
+    if (isLoadingPoles) {
       return <Skeleton className="h-10 w-full" />;
     }
     
@@ -232,7 +199,7 @@ export const ProjectFormStep5 = ({
               </Select>
             </div>
             
-            {selectedPoleId && (
+            {selectedPoleId && !isLoadingDirections && (
               <div className="grid gap-2">
                 <Label htmlFor="direction-selector">Sélectionner une direction</Label>
                 <Select
@@ -251,6 +218,10 @@ export const ProjectFormStep5 = ({
                   </SelectContent>
                 </Select>
               </div>
+            )}
+            
+            {selectedPoleId && isLoadingDirections && (
+              <Skeleton className="h-10 w-full" />
             )}
           </div>
         );
@@ -281,7 +252,7 @@ export const ProjectFormStep5 = ({
               </Select>
             </div>
             
-            {selectedPoleId && (
+            {selectedPoleId && !isLoadingDirections && (
               <div className="grid gap-2">
                 <Label htmlFor="direction-selector">Sélectionner une direction</Label>
                 <Select
@@ -305,7 +276,11 @@ export const ProjectFormStep5 = ({
               </div>
             )}
             
-            {selectedDirectionId && (
+            {selectedPoleId && isLoadingDirections && (
+              <Skeleton className="h-10 w-full" />
+            )}
+            
+            {selectedDirectionId && !isLoadingServices && (
               <div className="grid gap-2">
                 <Label htmlFor="service-selector">Sélectionner un service</Label>
                 <Select
@@ -324,6 +299,10 @@ export const ProjectFormStep5 = ({
                   </SelectContent>
                 </Select>
               </div>
+            )}
+            
+            {selectedDirectionId && isLoadingServices && (
+              <Skeleton className="h-10 w-full" />
             )}
           </div>
         );
