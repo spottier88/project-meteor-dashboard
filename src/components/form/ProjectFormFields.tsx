@@ -81,12 +81,15 @@ export const ProjectFormFields = ({
   projectManagers,
   canEditOrganization = true
 }: ProjectFormFieldsProps) => {
-  console.log("ProjectFormFields - Current state:", {
+  // Ajouter un log pour vérifier les valeurs reçues
+  console.log("ProjectFormFields - permissions values:", {
+    isAdmin,
+    isManager,
+    canEditOrganization,
     poleId,
     directionId,
     monitoringLevel,
     monitoringEntityId,
-    canEditOrganization
   });
 
   return (

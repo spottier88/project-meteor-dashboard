@@ -46,13 +46,31 @@ export const BasicProjectFields = ({
   setPriority,
   monitoringLevel,
   setMonitoringLevel,
+  monitoringEntityId,
+  setMonitoringEntityId,
   isAdmin,
-  isManager,
+  isManager = false,
   projectManagers,
   poleId,
   directionId,
 }: BasicProjectFieldsProps) => {
-  const canEditProjectManager = isAdmin || isManager;
+  // CORRECTION DU BUG: Forcer canEditProjectManager à true si l'utilisateur est admin
+  // Ajouter un log pour vérifier les valeurs
+  console.log("BasicProjectFields - permissions before fix:", {
+    isAdmin,
+    isManager, 
+    canEditProjectManagerBefore: isAdmin || isManager
+  });
+  
+  // S'assurer que isAdmin est bien considéré comme un booléen
+  const canEditProjectManager = Boolean(isAdmin) || Boolean(isManager);
+  
+  // Log après correction
+  console.log("BasicProjectFields - permissions after fix:", {
+    isAdmin: Boolean(isAdmin),
+    isManager: Boolean(isManager),
+    canEditProjectManagerAfter: canEditProjectManager
+  });
 
   return (
     <div className="space-y-4">

@@ -1,11 +1,7 @@
 
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { ProjectFormFields } from "./ProjectFormFields";
+import { MonitoringLevel } from "@/types/monitoring";
 import { UserProfile } from "@/types/user";
-import { Label } from "@/components/ui/label";
-import { ProjectLifecycleStatus, lifecycleStatusLabels } from "@/types/project";
-import { DateInputField } from "./DateInputField";
 
 interface ProjectFormStep1Props {
   title: string;
@@ -20,11 +16,35 @@ interface ProjectFormStep1Props {
   setEndDate: (date: Date | undefined) => void;
   priority: string;
   setPriority: (value: string) => void;
-  lifecycleStatus: ProjectLifecycleStatus;
-  setLifecycleStatus: (value: ProjectLifecycleStatus) => void;
+  monitoringLevel: MonitoringLevel;
+  setMonitoringLevel: (value: MonitoringLevel) => void;
+  monitoringEntityId: string | null;
+  setMonitoringEntityId: (value: string | null) => void;
   isAdmin: boolean;
   isManager: boolean;
+  ownerId: string;
+  setOwnerId: (value: string) => void;
+  poleId: string;
+  setPoleId: (value: string) => void;
+  directionId: string;
+  setDirectionId: (value: string) => void;
+  serviceId: string;
+  setServiceId: (value: string) => void;
+  project?: {
+    id: string;
+    title: string;
+    description?: string;
+    project_manager?: string;
+    start_date?: string;
+    end_date?: string;
+    priority?: string;
+    owner_id?: string;
+    pole_id?: string;
+    direction_id?: string;
+    service_id?: string;
+  };
   projectManagers?: UserProfile[];
+  canEditOrganization?: boolean;
 }
 
 export const ProjectFormStep1 = ({
@@ -40,106 +60,64 @@ export const ProjectFormStep1 = ({
   setEndDate,
   priority,
   setPriority,
-  lifecycleStatus,
-  setLifecycleStatus,
+  monitoringLevel,
+  setMonitoringLevel,
+  monitoringEntityId,
+  setMonitoringEntityId,
   isAdmin,
   isManager,
+  ownerId,
+  setOwnerId,
+  poleId,
+  setPoleId,
+  directionId,
+  setDirectionId,
+  serviceId,
+  setServiceId,
+  project,
   projectManagers,
+  canEditOrganization = true
 }: ProjectFormStep1Props) => {
-  const canEditProjectManager = isAdmin || isManager;
+  // Ajouter un log pour vérifier les valeurs reçues
+  console.log("ProjectFormStep1 - permissions received:", { 
+    isAdmin, 
+    isManager
+  });
 
   return (
-    <div className="space-y-4">
-      <div className="grid gap-2">
-        <Label htmlFor="title">Titre *</Label>
-        <Input
-          id="title"
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          placeholder="Nom du projet"
+    <div className="space-y-6">
+      <div className="grid gap-4">
+        <ProjectFormFields
+          title={title}
+          setTitle={setTitle}
+          description={description}
+          setDescription={setDescription}
+          projectManager={projectManager}
+          setProjectManager={setProjectManager}
+          startDate={startDate}
+          setStartDate={setStartDate}
+          endDate={endDate}
+          setEndDate={setEndDate}
+          priority={priority}
+          setPriority={setPriority}
+          monitoringLevel={monitoringLevel}
+          setMonitoringLevel={setMonitoringLevel}
+          monitoringEntityId={monitoringEntityId}
+          setMonitoringEntityId={setMonitoringEntityId}
+          isAdmin={isAdmin}
+          isManager={isManager}
+          ownerId={ownerId}
+          setOwnerId={setOwnerId}
+          poleId={poleId}
+          setPoleId={setPoleId}
+          directionId={directionId}
+          setDirectionId={setDirectionId}
+          serviceId={serviceId}
+          setServiceId={setServiceId}
+          project={project}
+          projectManagers={projectManagers}
+          canEditOrganization={canEditOrganization}
         />
-      </div>
-
-      <div className="grid gap-2">
-        <Label htmlFor="description">Description</Label>
-        <Textarea
-          id="description"
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
-          placeholder="Description du projet"
-        />
-      </div>
-
-      <div className="grid gap-2">
-        <Label htmlFor="lifecycle-status">Statut du projet</Label>
-        <Select value={lifecycleStatus} onValueChange={(value: ProjectLifecycleStatus) => setLifecycleStatus(value)}>
-          <SelectTrigger>
-            <SelectValue placeholder="Sélectionner un statut" />
-          </SelectTrigger>
-          <SelectContent>
-            {Object.entries(lifecycleStatusLabels).map(([value, label]) => (
-              <SelectItem key={value} value={value}>
-                {label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-
-      <div className="grid gap-2">
-        <Label htmlFor="project-manager">Chef de projet *</Label>
-        {canEditProjectManager && projectManagers ? (
-          <Select value={projectManager} onValueChange={setProjectManager}>
-            <SelectTrigger>
-              <SelectValue placeholder="Sélectionner un chef de projet" />
-            </SelectTrigger>
-            <SelectContent>
-              {projectManagers.map((manager) => (
-                <SelectItem key={manager.id} value={manager.email || ""}>
-                  {manager.first_name && manager.last_name
-                    ? `${manager.first_name} ${manager.last_name} (${manager.email})`
-                    : manager.email}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        ) : (
-          <Input
-            id="project-manager"
-            value={projectManager}
-            onChange={(e) => setProjectManager(e.target.value)}
-            readOnly={!canEditProjectManager}
-            className={!canEditProjectManager ? "bg-gray-100" : ""}
-          />
-        )}
-      </div>
-
-      <div className="grid gap-4 sm:grid-cols-2">
-        <DateInputField
-          label="Date de début"
-          date={startDate}
-          onDateChange={setStartDate}
-        />
-        <DateInputField
-          label="Date de fin"
-          date={endDate}
-          onDateChange={setEndDate}
-          minDate={startDate}
-        />
-      </div>
-
-      <div className="grid gap-2">
-        <Label htmlFor="priority">Priorité</Label>
-        <Select value={priority} onValueChange={setPriority}>
-          <SelectTrigger>
-            <SelectValue placeholder="Sélectionner une priorité" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="high">Haute</SelectItem>
-            <SelectItem value="medium">Moyenne</SelectItem>
-            <SelectItem value="low">Basse</SelectItem>
-          </SelectContent>
-        </Select>
       </div>
     </div>
   );

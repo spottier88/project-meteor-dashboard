@@ -1,3 +1,4 @@
+
 import { Dialog, DialogContent, DialogFooter } from "@/components/ui/dialog";
 import { useQuery } from "@tanstack/react-query";
 import { useUser } from "@supabase/auth-helpers-react";
@@ -29,6 +30,12 @@ export const ProjectForm = ({ isOpen, onClose, onSubmit, project }: ProjectFormP
   const { canEdit, canCreate, canEditOrganization, accessibleOrganizations } = useProjectPermissions(project?.id || "");
   const [showUnsavedChangesAlert, setShowUnsavedChangesAlert] = useState(false);
   const [isProfileFormOpen, setIsProfileFormOpen] = useState(false);
+
+  // Ajouter un log pour vérifier les valeurs de validation
+  console.log("ProjectForm - validation values:", {
+    isAdmin: validation.isAdmin,
+    isManager: validation.isManager
+  });
 
   const { data: profile } = useQuery({
     queryKey: ["profile", user?.id],
@@ -129,12 +136,14 @@ export const ProjectForm = ({ isOpen, onClose, onSubmit, project }: ProjectFormP
             title={formState.title}
           />
           <ProjectFormContent 
-            canEditOrganization={canEditOrganization} 
+            canEditOrganization={canEditOrganization}
             formState={formState}
             projectManagers={projectManagers}
             project={project}
             isEditMode={!!project}
             onOpenProfile={handleOpenProfile}
+            isAdmin={validation.isAdmin} // Ajout explicite de isAdmin
+            isManager={validation.isManager} // Ajout explicite de isManager
           />
           <DialogFooter>
             <ProjectFormNavigation 
