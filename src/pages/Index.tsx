@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useUser } from "@supabase/auth-helpers-react";
@@ -8,7 +7,7 @@ import { DashboardHeader } from "@/components/DashboardHeader";
 import { UserInfo } from "@/components/UserInfo";
 import { ViewMode } from "@/components/ViewToggle";
 import { MonitoringLevel } from "@/types/monitoring";
-import { ProjectLifecycleStatus } from "@/types/project";
+import { ProjectLifecycleStatus, ForEntityType } from "@/types/project";
 import { ProjectFilters } from "@/components/project/ProjectFilters";
 import { ProjectList } from "@/components/project/ProjectList";
 import { ProjectModals } from "@/components/project/ProjectModals";
@@ -133,6 +132,7 @@ const Index = () => {
           progress: latestReview?.progress || null,
           completion: latestReview?.completion || 0,
           lastReviewDate: project.last_review_date,
+          for_entity_type: project.for_entity_type as ForEntityType,
         };
       }) || [];
     },
@@ -202,7 +202,6 @@ const Index = () => {
       const matchesTitle = project.title?.toLowerCase().includes(query);
       const matchesManager = project.project_manager?.toLowerCase().includes(query);
       
-      // Nouvelle logique: rechercher aussi dans le nom/prénom du chef de projet
       const projectManagerProfile = project.project_manager_profile;
       const managerFirstName = projectManagerProfile?.first_name?.toLowerCase() || "";
       const managerLastName = projectManagerProfile?.last_name?.toLowerCase() || "";
