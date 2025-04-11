@@ -1,3 +1,4 @@
+
 import { Card, CardContent } from "@/components/ui/card";
 import { TaskSummary } from "./TaskSummary";
 import { useNavigate } from "react-router-dom";
@@ -6,7 +7,7 @@ import { ProjectMetrics } from "./project/ProjectMetrics";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { AddToCartButton } from "./cart/AddToCartButton";
-import { ProjectStatus, ProgressStatus, ProjectLifecycleStatus } from "@/types/project";
+import { ProjectStatus, ProgressStatus, ProjectLifecycleStatus, ForEntityType } from "@/types/project";
 import { LifecycleStatusBadge } from "./project/LifecycleStatusBadge";
 import { useProjectPermissions } from "@/hooks/useProjectPermissions";
 import { cn } from "@/lib/utils";
@@ -25,6 +26,8 @@ interface ProjectCardProps {
   direction_id?: string;
   service_id?: string;
   lifecycle_status: ProjectLifecycleStatus;
+  for_entity_type?: ForEntityType;
+  for_entity_id?: string;
   onReview: (id: string, title: string) => void;
   onEdit: (id: string) => void;
   onViewHistory: (id: string, title: string) => void;
@@ -44,6 +47,8 @@ export const ProjectCard = ({
   direction_id,
   service_id,
   lifecycle_status,
+  for_entity_type,
+  for_entity_id,
   onEdit,
   onViewHistory,
   onReview,
