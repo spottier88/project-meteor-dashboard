@@ -8,6 +8,7 @@ import { useState } from "react";
 import { Copy, Check, HelpCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Badge } from "./ui/badge";
 
 type Project = Database["public"]["Tables"]["projects"]["Row"];
 
@@ -36,6 +37,48 @@ export const ProjectHeader = ({ project }: ProjectHeaderProps) => {
     },
     enabled: !!project.id,
   });
+  
+  const { data: forEntityName } = useQuery({
+    queryKey: ["forEntity", project.for_entity_type, project.for_entity_id],
+    queryFn: async () => {
+      if (!project.for_entity_type || !project.for_entity_id) {
+        return null;
+      }
+      
+      let tableName = "";
+      
+      switch (project.for_entity_type) {
+        case "pole":
+          tableName = "poles";
+          break;
+        case "direction":
+          tableName = "directions";
+          break;
+        case "service":
+          tableName = "services";
+          break;
+        default:
+          return null;
+      }
+      
+      const { data, error } = await supabase
+        .from(tableName)
+        .select("name")
+        .eq("id", project.for_entity_id)
+        .maybeSingle();
+        
+      if (error || !data) {
+        console.error(`Error fetching ${project.for_entity_type} name:`, error);
+        return null;
+      }
+      
+      return {
+        type: project.for_entity_type,
+        name: data.name
+      };
+    },
+    enabled: !!project.for_entity_type && !!project.for_entity_id,
+  });
 
   const copyCodeToClipboard = () => {
     if (projectCode?.code) {
@@ -43,6 +86,19 @@ export const ProjectHeader = ({ project }: ProjectHeaderProps) => {
       navigator.clipboard.writeText(formattedCode);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
+    }
+  };
+  
+  const getForEntityTypeLabel = (type: string) => {
+    switch (type) {
+      case "pole":
+        return "Pôle";
+      case "direction":
+        return "Direction";
+      case "service":
+        return "Service";
+      default:
+        return type;
     }
   };
 
@@ -84,6 +140,16 @@ export const ProjectHeader = ({ project }: ProjectHeaderProps) => {
           {project.description && (
             <p className="text-muted-foreground">{project.description}</p>
           )}
+          
+          {forEntityName && (
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-muted-foreground">Projet réalisé pour :</span>
+              <Badge variant="outline" className="text-sm">
+                {getForEntityTypeLabel(forEntityName.type)} {forEntityName.name}
+              </Badge>
+            </div>
+          )}
+          
           <div className="grid grid-cols-2 gap-4">
             <div>
               <span className="text-sm text-muted-foreground">Chef de projet</span>

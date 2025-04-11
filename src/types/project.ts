@@ -1,3 +1,4 @@
+
 export type ProjectStatus = "sunny" | "cloudy" | "stormy";
 export type ProgressStatus = "better" | "stable" | "worse";
 export type ProjectLifecycleStatus = "study" | "validated" | "in_progress" | "completed" | "suspended" | "abandoned";
@@ -10,6 +11,8 @@ export const lifecycleStatusLabels: Record<ProjectLifecycleStatus, string> = {
   suspended: "Suspendu",
   abandoned: "Abandonné",
 };
+
+export type ForEntityType = "pole" | "direction" | "service" | null;
 
 export interface Project {
   id: string;
@@ -25,4 +28,6 @@ export interface Project {
   direction_id?: string;
   service_id?: string;
   lifecycle_status: ProjectLifecycleStatus;
+  for_entity_type?: ForEntityType;
+  for_entity_id?: string;
 }

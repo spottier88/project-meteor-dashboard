@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { useUser } from "@supabase/auth-helpers-react";
 import { MonitoringLevel } from "@/types/monitoring";
-import { ProjectLifecycleStatus } from "@/types/project";
+import { ForEntityType, ProjectLifecycleStatus } from "@/types/project";
 import { supabase } from "@/integrations/supabase/client";
 
 export interface ProjectFormState {
@@ -63,6 +63,10 @@ export interface ProjectFormState {
   setHasUnsavedChanges: (value: boolean) => void;
   resetHasUnsavedChanges: () => void;
   hasNoHierarchyAssignment: boolean;
+  forEntityType: ForEntityType;
+  setForEntityType: (value: ForEntityType) => void;
+  forEntityId: string | undefined;
+  setForEntityId: (value: string | undefined) => void;
 }
 
 export const useProjectFormState = (isOpen: boolean, project?: any) => {
@@ -94,6 +98,8 @@ export const useProjectFormState = (isOpen: boolean, project?: any) => {
   const [deliverables, setDeliverables] = useState("");
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [hasNoHierarchyAssignment, setHasNoHierarchyAssignment] = useState(false);
+  const [forEntityType, setForEntityType] = useState<ForEntityType>(null);
+  const [forEntityId, setForEntityId] = useState<string | undefined>(undefined);
 
   const user = useUser();
 
@@ -126,6 +132,9 @@ export const useProjectFormState = (isOpen: boolean, project?: any) => {
         setObjectives("");
         setTimeline("");
         setDeliverables("");
+        
+        setForEntityType(null);
+        setForEntityId(undefined);
 
         if (user?.email) {
           setProjectManager(user.email);
@@ -144,6 +153,8 @@ export const useProjectFormState = (isOpen: boolean, project?: any) => {
           setServiceId(project.service_id || "none");
           setOwnerId(project.owner_id || "");
           setLifecycleStatus(project.lifecycle_status as ProjectLifecycleStatus || "study");
+          setForEntityType(project.for_entity_type as ForEntityType || null);
+          setForEntityId(project.for_entity_id || undefined);
 
           try {
             const { data: monitoringData, error } = await supabase
@@ -282,7 +293,8 @@ export const useProjectFormState = (isOpen: boolean, project?: any) => {
     title, description, projectManager, startDate, endDate, priority, 
     monitoringLevel, monitoringEntityId, poleId, directionId, serviceId, 
     novateur, usager, ouverture, agilite, impact, lifecycleStatus,
-    context, stakeholders, governance, objectives, timeline, deliverables
+    context, stakeholders, governance, objectives, timeline, deliverables,
+    forEntityType, forEntityId
   ]);
 
   const resetHasUnsavedChanges = () => {
@@ -351,5 +363,9 @@ export const useProjectFormState = (isOpen: boolean, project?: any) => {
     setHasUnsavedChanges,
     resetHasUnsavedChanges,
     hasNoHierarchyAssignment,
+    forEntityType,
+    setForEntityType,
+    forEntityId,
+    setForEntityId,
   };
 };

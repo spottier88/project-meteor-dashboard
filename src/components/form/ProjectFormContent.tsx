@@ -5,6 +5,7 @@ import { ProjectFormStep1 } from "./ProjectFormStep1";
 import { ProjectFormStep2 } from "./ProjectFormStep2";
 import { ProjectFormStep3 } from "./ProjectFormStep3";
 import { ProjectFormStep4 } from "./ProjectFormStep4";
+import { ProjectFormStep5 } from "./ProjectFormStep5";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle, HelpCircle } from "lucide-react";
 import { Button } from "../ui/button";
@@ -101,6 +102,15 @@ export const ProjectFormContent = ({
             setTimeline={formState.setTimeline}
             deliverables={formState.deliverables}
             setDeliverables={formState.setDeliverables}
+          />
+        );
+      case 4:
+        return (
+          <ProjectFormStep5
+            forEntityType={formState.forEntityType}
+            setForEntityType={formState.setForEntityType}
+            forEntityId={formState.forEntityId}
+            setForEntityId={formState.setForEntityId}
           />
         );
       default:

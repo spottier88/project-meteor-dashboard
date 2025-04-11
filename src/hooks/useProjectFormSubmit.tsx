@@ -1,4 +1,3 @@
-
 import { useToast } from "@/components/ui/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
 import { useUser } from "@supabase/auth-helpers-react";
@@ -173,6 +172,8 @@ export const useProjectFormSubmit = ({
         directionId: formState.directionId === "none" ? null : formState.directionId,
         serviceId: formState.serviceId === "none" ? null : formState.serviceId,
         lifecycleStatus: formState.lifecycleStatus,
+        for_entity_type: formState.forEntityType,
+        for_entity_id: formState.forEntityId,
         innovation: {
           novateur: formState.novateur,
           usager: formState.usager,

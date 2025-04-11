@@ -244,6 +244,8 @@ const Index = () => {
     directionId: string;
     serviceId: string;
     lifecycleStatus: ProjectLifecycleStatus;
+    for_entity_type: ForEntityType;
+    for_entity_id: string | undefined;
     innovation: {
       novateur: number;
       usager: number;
@@ -277,6 +279,8 @@ const Index = () => {
         direction_id: projectData.directionId === "none" ? null : projectData.directionId,
         service_id: projectData.serviceId === "none" ? null : projectData.serviceId,
         lifecycle_status: projectData.lifecycleStatus,
+        for_entity_type: projectData.for_entity_type,
+        for_entity_id: projectData.for_entity_id,
       };
 
       console.log("[ProjectForm] Project payload:", projectPayload);

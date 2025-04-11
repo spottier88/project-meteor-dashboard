@@ -777,6 +777,8 @@ export type Database = {
           description: string | null
           direction_id: string | null
           end_date: string | null
+          for_entity_id: string | null
+          for_entity_type: string | null
           id: string
           last_review_date: string | null
           lifecycle_status: Database["public"]["Enums"]["project_lifecycle_status"]
@@ -798,6 +800,8 @@ export type Database = {
           description?: string | null
           direction_id?: string | null
           end_date?: string | null
+          for_entity_id?: string | null
+          for_entity_type?: string | null
           id?: string
           last_review_date?: string | null
           lifecycle_status?: Database["public"]["Enums"]["project_lifecycle_status"]
@@ -819,6 +823,8 @@ export type Database = {
           description?: string | null
           direction_id?: string | null
           end_date?: string | null
+          for_entity_id?: string | null
+          for_entity_type?: string | null
           id?: string
           last_review_date?: string | null
           lifecycle_status?: Database["public"]["Enums"]["project_lifecycle_status"]

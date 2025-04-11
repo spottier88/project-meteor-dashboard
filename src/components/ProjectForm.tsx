@@ -1,4 +1,3 @@
-
 import { Dialog, DialogContent, DialogFooter } from "@/components/ui/dialog";
 import { useQuery } from "@tanstack/react-query";
 import { useUser } from "@supabase/auth-helpers-react";
@@ -82,6 +81,8 @@ export const ProjectForm = ({ isOpen, onClose, onSubmit, project }: ProjectFormP
     } else if (formState.currentStep === 2 && validation.validateStep3()) {
       formState.setCurrentStep(3);
     } else if (formState.currentStep === 3) {
+      formState.setCurrentStep(4);
+    } else if (formState.currentStep === 4) {
       handleSubmit();
     }
   };
@@ -143,7 +144,7 @@ export const ProjectForm = ({ isOpen, onClose, onSubmit, project }: ProjectFormP
               onNext={handleNext}
               isEditMode={!!project}
               onClose={handleCloseRequest}
-              isLastStep={formState.currentStep === 3}
+              isLastStep={formState.currentStep === 4}
               canGoNext={formState.currentStep === 0 ? !!formState.title && !!formState.projectManager : true}
             />
           </DialogFooter>
