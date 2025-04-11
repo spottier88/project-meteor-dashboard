@@ -21,7 +21,9 @@ export const ProjectFormHeader = ({ currentStep, isEditMode, title }: ProjectFor
           ? "Étape 2: Organisation et niveau de suivi"
           : currentStep === 2
           ? "Étape 3: Critères d'innovation"
-          : "Étape 4: Cadrage du projet"}
+          : currentStep === 3
+          ? "Étape 4: Cadrage du projet"
+          : "Étape 5: Informations complémentaires"}
       </DialogDescription>
       <Progress value={(currentStep + 1) * 25} className="h-2" />
     </DialogHeader>
