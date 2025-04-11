@@ -25,7 +25,7 @@ export const ProjectFormHeader = ({ currentStep, isEditMode, title }: ProjectFor
           ? "Étape 4: Cadrage du projet"
           : "Étape 5: Informations complémentaires"}
       </DialogDescription>
-      <Progress value={(currentStep + 1) * 25} className="h-2" />
+      <Progress value={(currentStep + 1) * 20} className="h-2" />
     </DialogHeader>
   );
 };
