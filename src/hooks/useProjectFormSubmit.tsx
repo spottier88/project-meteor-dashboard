@@ -1,3 +1,4 @@
+
 import { useToast } from "@/components/ui/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
 import { useUser } from "@supabase/auth-helpers-react";
@@ -34,14 +35,51 @@ export const useProjectFormSubmit = ({
   const [showAccessWarning, setShowAccessWarning] = useState(false);
   const [isProceedingAnyway, setIsProceedingAnyway] = useState(false);
 
+  // Fonction pour vérifier si une entité est accessible en tenant compte de la hiérarchie
+  const isEntityAccessible = (entityType: string, entityId: string): boolean => {
+    if (!accessibleOrganizations) return true;
+    
+    if (entityType === 'pole') {
+      return accessibleOrganizations.poles.some(p => p.id === entityId);
+    } 
+    else if (entityType === 'direction') {
+      // Vérifier si la direction est directement accessible
+      if (accessibleOrganizations.directions.some(d => d.id === entityId)) {
+        return true;
+      }
+      
+      // Si la direction n'est pas directement accessible, vérifier si son pôle parent est accessible
+      // Note: nous devons faire une requête pour trouver le pôle parent
+      return false; // Nous allons gérer ce cas dans validateOrganizationSelection
+    } 
+    else if (entityType === 'service') {
+      // Vérifier si le service est directement accessible
+      if (accessibleOrganizations.services.some(s => s.id === entityId)) {
+        return true;
+      }
+      
+      // Si le service n'est pas directement accessible, nous vérifierons sa hiérarchie dans validateOrganizationSelection
+      return false;
+    }
+    
+    return false;
+  };
+
   // Fonction pour vérifier si les entités sélectionnées sont accessibles
-  const validateOrganizationSelection = (): boolean => {
+  const validateOrganizationSelection = async (): Promise<boolean> => {
     if (!accessibleOrganizations) return true;
 
-    // Pour un nouveau projet, vérifier que les entités sélectionnées sont dans le périmètre accessible
+    // Vérifions l'accès en tenant compte de la hiérarchie
+    const hierarchyCheck = {
+      poleAccessible: true,
+      directionAccessible: true,
+      serviceAccessible: true
+    };
+
+    // Vérification pour le pôle
     if (formState.poleId !== "none") {
-      const isPoleAccessible = accessibleOrganizations.poles.some(p => p.id === formState.poleId);
-      if (!isPoleAccessible) {
+      hierarchyCheck.poleAccessible = isEntityAccessible('pole', formState.poleId);
+      if (!hierarchyCheck.poleAccessible) {
         toast({
           title: "Erreur",
           description: "Le pôle sélectionné n'est pas dans votre périmètre accessible",
@@ -51,9 +89,27 @@ export const useProjectFormSubmit = ({
       }
     }
     
+    // Vérification pour la direction
     if (formState.directionId !== "none") {
-      const isDirectionAccessible = accessibleOrganizations.directions.some(d => d.id === formState.directionId);
-      if (!isDirectionAccessible) {
+      // Vérifier d'abord l'accès direct à la direction
+      hierarchyCheck.directionAccessible = isEntityAccessible('direction', formState.directionId);
+      
+      // Si pas d'accès direct, vérifier si le pôle parent est accessible
+      if (!hierarchyCheck.directionAccessible && formState.poleId !== "none" && hierarchyCheck.poleAccessible) {
+        // Si le pôle sélectionné est accessible et est bien le parent de cette direction,
+        // alors on considère que la direction est accessible par héritage
+        const { data: direction } = await supabase
+          .from("directions")
+          .select("pole_id")
+          .eq("id", formState.directionId)
+          .single();
+          
+        if (direction && direction.pole_id === formState.poleId) {
+          hierarchyCheck.directionAccessible = true;
+        }
+      }
+      
+      if (!hierarchyCheck.directionAccessible) {
         toast({
           title: "Erreur",
           description: "La direction sélectionnée n'est pas dans votre périmètre accessible",
@@ -63,9 +119,39 @@ export const useProjectFormSubmit = ({
       }
     }
     
+    // Vérification pour le service
     if (formState.serviceId !== "none") {
-      const isServiceAccessible = accessibleOrganizations.services.some(s => s.id === formState.serviceId);
-      if (!isServiceAccessible) {
+      // Vérifier d'abord l'accès direct au service
+      hierarchyCheck.serviceAccessible = isEntityAccessible('service', formState.serviceId);
+      
+      // Si pas d'accès direct, vérifier la hiérarchie
+      if (!hierarchyCheck.serviceAccessible) {
+        const { data: service } = await supabase
+          .from("services")
+          .select(`
+            direction_id,
+            directions:direction_id (
+              pole_id
+            )
+          `)
+          .eq("id", formState.serviceId)
+          .single();
+          
+        if (service) {
+          // Vérifier si la direction parente est accessible (soit directement, soit par héritage)
+          if (formState.directionId !== "none" && service.direction_id === formState.directionId && hierarchyCheck.directionAccessible) {
+            hierarchyCheck.serviceAccessible = true;
+          }
+          // Ou vérifier si le pôle parent est accessible
+          else if (formState.poleId !== "none" && service.directions && 
+                  service.directions.pole_id === formState.poleId && 
+                  hierarchyCheck.poleAccessible) {
+            hierarchyCheck.serviceAccessible = true;
+          }
+        }
+      }
+      
+      if (!hierarchyCheck.serviceAccessible) {
         toast({
           title: "Erreur",
           description: "Le service sélectionné n'est pas dans votre périmètre accessible",
@@ -120,8 +206,8 @@ export const useProjectFormSubmit = ({
       return;
     }
 
-    // Valider les sélections d'entités organisationnelles
-    if (!validateOrganizationSelection()) {
+    // Valider les sélections d'entités organisationnelles en tenant compte de la hiérarchie
+    if (!(await validateOrganizationSelection())) {
       return;
     }
 
