@@ -95,10 +95,13 @@ export const useProjectPermissions = (projectId: string) => {
   const isProjectManager = userRoles?.some(ur => ur.role === 'chef_projet') || false;
   const isManager = userRoles?.some(ur => ur.role === 'manager') || false;
 
-  // Fonction optimisée avec useMemo pour éviter des re-rendus excessifs
+  // Updated canEditOrganization logic to include project managers
   const canEditOrganization = useMemo(() => {
     // Si l'utilisateur est admin, il peut toujours éditer
     if (isAdmin) return true;
+    
+    // Si l'utilisateur est le chef de projet du projet, il peut éditer
+    if (projectAccess?.isProjectManager) return true;
     
     // Si l'utilisateur est le manager du projet (via l'attribution), il peut éditer
     if (isManager && projectAccess?.canEdit) return true;
@@ -127,7 +130,7 @@ export const useProjectPermissions = (projectId: string) => {
     canManageRisks: isAdmin || projectAccess?.canEdit || projectAccess?.isSecondaryProjectManager || false,
     canEdit: projectAccess?.canEdit || false,
     canCreate: isAdmin || isProjectManager,
-    canEditOrganization,  // Utilisation de la valeur mémorisée
+    canEditOrganization,  // Updated canEditOrganization
     canManageTeam: isAdmin || projectAccess?.isProjectManager || projectAccess?.isSecondaryProjectManager || false,
     isAdmin,
     isManager,
