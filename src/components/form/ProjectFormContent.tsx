@@ -74,14 +74,17 @@ export const ProjectFormContent = ({
       case 1:
         return (
           <ProjectFormStep2
-            forEntityType={formState.forEntityType}
-            setForEntityType={formState.setForEntityType}
-            forEntityId={formState.forEntityId}
-            setForEntityId={formState.setForEntityId}
+            monitoringLevel={formState.monitoringLevel}
+            setMonitoringLevel={formState.setMonitoringLevel}
+            monitoringEntityId={formState.monitoringEntityId}
+            setMonitoringEntityId={formState.setMonitoringEntityId}
             poleId={formState.poleId}
-            isAdmin={isAdmin}  // Transmission explicite
-            isEditMode={isEditMode}
-            onOpenProfile={onOpenProfile}
+            setPoleId={formState.setPoleId}
+            directionId={formState.directionId}
+            setDirectionId={formState.setDirectionId}
+            serviceId={formState.serviceId}
+            setServiceId={formState.setServiceId}
+            project={project}
           />
         );
       case 2:
@@ -119,12 +122,10 @@ export const ProjectFormContent = ({
       case 4:
         return (
           <ProjectFormStep5
-            additionalNotes={formState.additionalNotes}
-            setAdditionalNotes={formState.setAdditionalNotes}
-            lifecycleStatus={formState.lifecycleStatus}
-            setLifecycleStatus={formState.setLifecycleStatus}
-            isAdmin={isAdmin}  // Transmission explicite
-            isEditMode={isEditMode}
+            forEntityType={formState.forEntityType}
+            setForEntityType={formState.setForEntityType}
+            forEntityId={formState.forEntityId}
+            setForEntityId={formState.setForEntityId}
           />
         );
       default:
