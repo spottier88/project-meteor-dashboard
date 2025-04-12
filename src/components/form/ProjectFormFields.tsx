@@ -118,26 +118,28 @@ export const ProjectFormFields = ({
         directionId={directionId}
       />
 
-      <div className="relative">
-        {!canEditOrganization && project && (
-          <div className="absolute inset-0 bg-gray-100/50 flex items-center justify-center z-10 rounded">
-            <div className="bg-white p-4 rounded shadow">
-              <p className="text-sm text-muted-foreground">
-                Vous n'avez pas les droits nécessaires pour modifier l'organisation de ce projet
-              </p>
+      {canEditOrganization && (
+        <div className="relative">
+          {!canEditOrganization && project && (
+            <div className="absolute inset-0 bg-gray-100/50 flex items-center justify-center z-10 rounded">
+              <div className="bg-white p-4 rounded shadow">
+                <p className="text-sm text-muted-foreground">
+                  Vous n'avez pas les droits nécessaires pour modifier l'organisation de ce projet
+                </p>
+              </div>
             </div>
-          </div>
-        )}
-        <OrganizationFields
-          poleId={poleId}
-          setPoleId={setPoleId}
-          directionId={directionId}
-          setDirectionId={setDirectionId}
-          serviceId={serviceId}
-          setServiceId={setServiceId}
-          project={project}
-        />
-      </div>
+          )}
+          <OrganizationFields
+            poleId={poleId}
+            setPoleId={setPoleId}
+            directionId={directionId}
+            setDirectionId={setDirectionId}
+            serviceId={serviceId}
+            setServiceId={setServiceId}
+            project={project}
+          />
+        </div>
+      )}
     </div>
   );
 };

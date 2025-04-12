@@ -116,7 +116,7 @@ export const ProjectFormStep1 = ({
           setServiceId={setServiceId}
           project={project}
           projectManagers={projectManagers}
-          canEditOrganization={canEditOrganization}
+          canEditOrganization={false} // Force à false pour empêcher l'affichage dans l'étape 1
         />
       </div>
     </div>

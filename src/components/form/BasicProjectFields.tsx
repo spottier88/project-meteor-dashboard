@@ -157,54 +157,6 @@ export const BasicProjectFields = ({
           </SelectContent>
         </Select>
       </div>
-
-      <div className="grid gap-2">
-        <Label htmlFor="monitoring-level" className="text-sm font-medium">
-          Niveau de suivi
-        </Label>
-        <Select 
-          value={monitoringLevel} 
-          onValueChange={(value: MonitoringLevel) => {
-            setMonitoringLevel(value);
-          }}
-        >
-          <SelectTrigger>
-            <SelectValue placeholder="Sélectionner un niveau de suivi" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="none">Aucun</SelectItem>
-            <SelectItem value="dgs">DGS</SelectItem>
-            <SelectItem value="pole" disabled={!poleId}>Pôle</SelectItem>
-            <SelectItem value="direction" disabled={!directionId}>Direction</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-
-      {monitoringLevel === 'pole' && poleId && (
-        <div className="grid gap-2">
-          <Label className="text-sm font-medium">
-            Entité de suivi
-          </Label>
-          <Input
-            value="Pôle du projet"
-            readOnly
-            className="bg-gray-100"
-          />
-        </div>
-      )}
-
-      {monitoringLevel === 'direction' && directionId && (
-        <div className="grid gap-2">
-          <Label className="text-sm font-medium">
-            Entité de suivi
-          </Label>
-          <Input
-            value="Direction du projet"
-            readOnly
-            className="bg-gray-100"
-          />
-        </div>
-      )}
     </div>
   );
 };
