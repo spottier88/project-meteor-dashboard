@@ -9,7 +9,7 @@ import { useProjectFormState } from "./form/useProjectFormState";
 import { useProjectFormValidation } from "./form/useProjectFormValidation";
 import { useProjectFormSubmit } from "@/hooks/useProjectFormSubmit";
 import { getProjectManagers } from "@/utils/projectManagers";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "./ui/alert-dialog";
 import { useProjectPermissions } from "@/hooks/useProjectPermissions";
 import { ProfileForm } from "./profile/ProfileForm";
@@ -31,11 +31,19 @@ export const ProjectForm = ({ isOpen, onClose, onSubmit, project }: ProjectFormP
   const [showUnsavedChangesAlert, setShowUnsavedChangesAlert] = useState(false);
   const [isProfileFormOpen, setIsProfileFormOpen] = useState(false);
 
-  // Ajouter un log pour vérifier les valeurs de validation
-  console.log("ProjectForm - validation values:", {
-    isAdmin: validation.isAdmin,
-    isManager: validation.isManager
-  });
+  // Utiliser useMemo pour éviter les logs en boucle et les re-rendus inutiles
+  const validationValues = useMemo(() => {
+    // Log une seule fois par changement réel
+    console.log("ProjectForm - validation values:", {
+      isAdmin: validation.isAdmin,
+      isManager: validation.isManager
+    });
+    
+    return {
+      isAdmin: validation.isAdmin,
+      isManager: validation.isManager
+    };
+  }, [validation.isAdmin, validation.isManager]);
 
   const { data: profile } = useQuery({
     queryKey: ["profile", user?.id],
@@ -142,8 +150,8 @@ export const ProjectForm = ({ isOpen, onClose, onSubmit, project }: ProjectFormP
             project={project}
             isEditMode={!!project}
             onOpenProfile={handleOpenProfile}
-            isAdmin={validation.isAdmin} // Ajout explicite de isAdmin
-            isManager={validation.isManager} // Ajout explicite de isManager
+            isAdmin={validationValues.isAdmin}
+            isManager={validationValues.isManager}
           />
           <DialogFooter>
             <ProjectFormNavigation 

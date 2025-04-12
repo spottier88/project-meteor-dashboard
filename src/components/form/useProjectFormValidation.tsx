@@ -10,6 +10,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useUser } from "@supabase/auth-helpers-react";
 import { supabase } from "@/integrations/supabase/client";
 import { UserRoleData } from "@/types/user";
+import { useMemo } from "react";
 
 export const useProjectFormValidation = () => {
   const user = useUser();
@@ -29,15 +30,20 @@ export const useProjectFormValidation = () => {
     enabled: !!user?.id,
   });
 
-  const isAdmin = userRoles?.some(ur => ur.role === 'admin') || false;
-  const isManager = userRoles?.some(ur => ur.role === 'manager') || false;
-  
-  // Log pour vérifier les valeurs
-  console.log("useProjectFormValidation - roles detected:", {
-    userRoles: userRoles?.map(ur => ur.role),
-    isAdmin,
-    isManager
-  });
+  // Utiliser useMemo pour stabiliser ces valeurs et éviter des re-rendus inutiles
+  const { isAdmin, isManager } = useMemo(() => {
+    const isAdminRole = userRoles?.some(ur => ur.role === 'admin') || false;
+    const isManagerRole = userRoles?.some(ur => ur.role === 'manager') || false;
+    
+    // Log pour vérifier les valeurs (une seule fois par changement réel)
+    console.log("useProjectFormValidation - roles detected:", {
+      userRoles: userRoles?.map(ur => ur.role),
+      isAdmin: isAdminRole,
+      isManager: isManagerRole
+    });
+    
+    return { isAdmin: isAdminRole, isManager: isManagerRole };
+  }, [userRoles]);
 
   const validateStep1 = (title: string, projectManager: string) => {
     return title.trim() !== "" && projectManager.trim() !== "";

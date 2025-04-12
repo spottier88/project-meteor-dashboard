@@ -1,4 +1,3 @@
-
 import { ProjectFormFields } from "./ProjectFormFields";
 import { ProjectFormStep1 } from "./ProjectFormStep1";
 import { ProjectFormStep2 } from "./ProjectFormStep2";
@@ -6,6 +5,7 @@ import { ProjectFormStep3 } from "./ProjectFormStep3";
 import { ProjectFormStep4 } from "./ProjectFormStep4";
 import { ProjectFormStep5 } from "./ProjectFormStep5";
 import { UserProfile } from "@/types/user";
+import { useMemo } from "react";
 
 interface ProjectFormContentProps {
   canEditOrganization: boolean;
@@ -28,12 +28,15 @@ export const ProjectFormContent = ({
   isAdmin,  // Récupération explicite
   isManager  // Récupération explicite
 }: ProjectFormContentProps) => {
-  // Ajouter un log pour vérifier les valeurs reçues
-  console.log("ProjectFormContent - permissions received:", {
-    isAdmin,
-    isManager,
-    canEditOrganization
-  });
+  const permissions = useMemo(() => {
+    console.log("ProjectFormContent - permissions received:", {
+      isAdmin,
+      isManager,
+      canEditOrganization
+    });
+    
+    return { isAdmin, isManager, canEditOrganization };
+  }, [isAdmin, isManager, canEditOrganization]);
 
   const getRenderContent = () => {
     switch (formState.currentStep) {
@@ -56,8 +59,8 @@ export const ProjectFormContent = ({
             setMonitoringLevel={formState.setMonitoringLevel}
             monitoringEntityId={formState.monitoringEntityId}
             setMonitoringEntityId={formState.setMonitoringEntityId}
-            isAdmin={isAdmin}  // Transmission explicite
-            isManager={isManager}  // Transmission explicite
+            isAdmin={permissions.isAdmin}
+            isManager={permissions.isManager}
             ownerId={formState.ownerId}
             setOwnerId={formState.setOwnerId}
             poleId={formState.poleId}
@@ -68,7 +71,7 @@ export const ProjectFormContent = ({
             setServiceId={formState.setServiceId}
             project={project}
             projectManagers={projectManagers}
-            canEditOrganization={canEditOrganization}
+            canEditOrganization={false}
           />
         );
       case 1:

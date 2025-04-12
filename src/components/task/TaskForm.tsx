@@ -6,7 +6,7 @@ import { TaskFormProps } from "./TaskFormTypes";
 import { usePermissionsContext } from "@/contexts/PermissionsContext";
 import { useTaskFormData } from "@/hooks/use-task-form-data";
 import { TaskFormContent } from "./TaskFormContent";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -28,6 +28,12 @@ export const TaskForm = ({
 }: TaskFormProps) => {
   const { isAdmin, isManager } = usePermissionsContext();
   const [showUnsavedChangesAlert, setShowUnsavedChangesAlert] = useState(false);
+  
+  // Utiliser useMemo pour stabiliser les valeurs et éviter les re-rendus excessifs
+  const permissions = useMemo(() => ({ 
+    isAdmin, 
+    isManager 
+  }), [isAdmin, isManager]);
   
   // Utilisation du hook personnalisé pour récupérer les données
   const { 
