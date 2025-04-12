@@ -1,3 +1,4 @@
+
 import { ProjectFormFields } from "./ProjectFormFields";
 import { ProjectFormStep1 } from "./ProjectFormStep1";
 import { ProjectFormStep2 } from "./ProjectFormStep2";
@@ -14,8 +15,8 @@ interface ProjectFormContentProps {
   project?: any;
   isEditMode: boolean;
   onOpenProfile: () => void;
-  isAdmin: boolean;  // Propriété ajoutée explicitement
-  isManager: boolean;  // Propriété ajoutée explicitement
+  isAdmin: boolean;
+  isManager: boolean;
 }
 
 export const ProjectFormContent = ({
@@ -25,8 +26,8 @@ export const ProjectFormContent = ({
   project,
   isEditMode,
   onOpenProfile,
-  isAdmin,  // Récupération explicite
-  isManager  // Récupération explicite
+  isAdmin,
+  isManager
 }: ProjectFormContentProps) => {
   const permissions = useMemo(() => {
     console.log("ProjectFormContent - permissions received:", {
@@ -55,23 +56,11 @@ export const ProjectFormContent = ({
             setEndDate={formState.setEndDate}
             priority={formState.priority}
             setPriority={formState.setPriority}
-            monitoringLevel={formState.monitoringLevel}
-            setMonitoringLevel={formState.setMonitoringLevel}
-            monitoringEntityId={formState.monitoringEntityId}
-            setMonitoringEntityId={formState.setMonitoringEntityId}
             isAdmin={permissions.isAdmin}
             isManager={permissions.isManager}
             ownerId={formState.ownerId}
             setOwnerId={formState.setOwnerId}
-            poleId={formState.poleId}
-            setPoleId={formState.setPoleId}
-            directionId={formState.directionId}
-            setDirectionId={formState.setDirectionId}
-            serviceId={formState.serviceId}
-            setServiceId={formState.setServiceId}
-            project={project}
             projectManagers={projectManagers}
-            canEditOrganization={false}
           />
         );
       case 1:
@@ -81,12 +70,7 @@ export const ProjectFormContent = ({
             setMonitoringLevel={formState.setMonitoringLevel}
             monitoringEntityId={formState.monitoringEntityId}
             setMonitoringEntityId={formState.setMonitoringEntityId}
-            poleId={formState.poleId}
-            setPoleId={formState.setPoleId}
-            directionId={formState.directionId}
-            setDirectionId={formState.setDirectionId}
-            serviceId={formState.serviceId}
-            setServiceId={formState.setServiceId}
+            projectManagerOrganization={formState.projectManagerOrganization}
             project={project}
           />
         );

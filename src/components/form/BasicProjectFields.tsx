@@ -3,7 +3,6 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { UserProfile } from "@/types/user";
-import { MonitoringLevel } from "@/types/monitoring";
 import { Label } from "@/components/ui/label";
 import { DateInputField } from "./DateInputField";
 
@@ -20,15 +19,9 @@ interface BasicProjectFieldsProps {
   setEndDate: (date: Date | undefined) => void;
   priority: string;
   setPriority: (value: string) => void;
-  monitoringLevel: MonitoringLevel;
-  setMonitoringLevel: (value: MonitoringLevel) => void;
-  monitoringEntityId: string | null;
-  setMonitoringEntityId: (value: string | null) => void;
   isAdmin: boolean;
   isManager?: boolean;
   projectManagers?: UserProfile[];
-  poleId?: string;
-  directionId?: string;
 }
 
 export const BasicProjectFields = ({
@@ -44,15 +37,9 @@ export const BasicProjectFields = ({
   setEndDate,
   priority,
   setPriority,
-  monitoringLevel,
-  setMonitoringLevel,
-  monitoringEntityId,
-  setMonitoringEntityId,
   isAdmin,
   isManager = false,
   projectManagers,
-  poleId,
-  directionId,
 }: BasicProjectFieldsProps) => {
   // CORRECTION DU BUG: Forcer canEditProjectManager à true si l'utilisateur est admin
   // Ajouter un log pour vérifier les valeurs

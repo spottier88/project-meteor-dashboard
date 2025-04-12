@@ -26,12 +26,12 @@ export interface ProjectFormState {
   setMonitoringEntityId: (id: string | null) => void;
   ownerId: string;
   setOwnerId: (id: string) => void;
-  poleId: string;
-  setPoleId: (id: string) => void;
-  directionId: string;
-  setDirectionId: (id: string) => void;
-  serviceId: string;
-  setServiceId: (id: string) => void;
+  projectManagerOrganization: {
+    pole?: { id: string; name: string } | null;
+    direction?: { id: string; name: string } | null;
+    service?: { id: string; name: string } | null;
+  };
+  loadProjectManagerOrganization: (email: string) => Promise<void>;
   novateur: number;
   setNovateur: (value: number) => void;
   usager: number;
@@ -80,9 +80,11 @@ export const useProjectFormState = (isOpen: boolean, project?: any) => {
   const [monitoringLevel, setMonitoringLevel] = useState<MonitoringLevel>("none");
   const [monitoringEntityId, setMonitoringEntityId] = useState<string | null>(null);
   const [ownerId, setOwnerId] = useState("");
-  const [poleId, setPoleId] = useState("none");
-  const [directionId, setDirectionId] = useState("none");
-  const [serviceId, setServiceId] = useState("none");
+  const [projectManagerOrganization, setProjectManagerOrganization] = useState<{
+    pole?: { id: string; name: string } | null;
+    direction?: { id: string; name: string } | null;
+    service?: { id: string; name: string } | null;
+  }>({});
   const [novateur, setNovateur] = useState(0);
   const [usager, setUsager] = useState(0);
   const [ouverture, setOuverture] = useState(0);
@@ -103,6 +105,138 @@ export const useProjectFormState = (isOpen: boolean, project?: any) => {
 
   const user = useUser();
 
+  // Fonction pour charger les informations d'organisation pour un chef de projet
+  const loadProjectManagerOrganization = async (email: string) => {
+    if (!email) {
+      setProjectManagerOrganization({});
+      return;
+    }
+    
+    try {
+      // Récupérer l'identifiant de l'utilisateur à partir de son email
+      const { data: userProfile, error: userError } = await supabase
+        .from("profiles")
+        .select("id")
+        .eq("email", email)
+        .single();
+      
+      if (userError || !userProfile) {
+        console.error("Erreur lors de la récupération du profil utilisateur:", userError);
+        setProjectManagerOrganization({});
+        return;
+      }
+      
+      // Récupérer l'affectation hiérarchique de l'utilisateur
+      const { data: userAssignments, error: assignmentError } = await supabase
+        .from("user_hierarchy_assignments")
+        .select("entity_id, entity_type")
+        .eq("user_id", userProfile.id)
+        .order("created_at", { ascending: false });
+      
+      if (assignmentError || !userAssignments || userAssignments.length === 0) {
+        console.log("Aucune affectation hiérarchique trouvée pour l'utilisateur:", email);
+        setProjectManagerOrganization({});
+        setHasNoHierarchyAssignment(true);
+        return;
+      }
+      
+      setHasNoHierarchyAssignment(false);
+      
+      // Initialiser l'organisation du projet
+      const organization: { 
+        pole?: { id: string; name: string } | null;
+        direction?: { id: string; name: string } | null;
+        service?: { id: string; name: string } | null;
+      } = {};
+      
+      // Récupérer les informations des entités assignées
+      for (const assignment of userAssignments) {
+        if (assignment.entity_type === 'service') {
+          const { data: service } = await supabase
+            .from("services")
+            .select("id, name, direction_id")
+            .eq("id", assignment.entity_id)
+            .single();
+          
+          if (service) {
+            organization.service = { id: service.id, name: service.name };
+            
+            // Récupérer la direction parente
+            const { data: direction } = await supabase
+              .from("directions")
+              .select("id, name, pole_id")
+              .eq("id", service.direction_id)
+              .single();
+              
+            if (direction) {
+              organization.direction = { id: direction.id, name: direction.name };
+              
+              // Récupérer le pôle parent
+              if (direction.pole_id) {
+                const { data: pole } = await supabase
+                  .from("poles")
+                  .select("id, name")
+                  .eq("id", direction.pole_id)
+                  .single();
+                  
+                if (pole) {
+                  organization.pole = { id: pole.id, name: pole.name };
+                }
+              }
+            }
+            
+            // Une fois qu'on a trouvé un service, on arrête la recherche
+            break;
+          }
+        } else if (assignment.entity_type === 'direction') {
+          const { data: direction } = await supabase
+            .from("directions")
+            .select("id, name, pole_id")
+            .eq("id", assignment.entity_id)
+            .single();
+            
+          if (direction) {
+            organization.direction = { id: direction.id, name: direction.name };
+            
+            // Récupérer le pôle parent
+            if (direction.pole_id) {
+              const { data: pole } = await supabase
+                .from("poles")
+                .select("id, name")
+                .eq("id", direction.pole_id)
+                .single();
+                
+              if (pole) {
+                organization.pole = { id: pole.id, name: pole.name };
+              }
+            }
+            
+            // Une fois qu'on a trouvé une direction, on arrête la recherche
+            break;
+          }
+        } else if (assignment.entity_type === 'pole') {
+          const { data: pole } = await supabase
+            .from("poles")
+            .select("id, name")
+            .eq("id", assignment.entity_id)
+            .single();
+            
+          if (pole) {
+            organization.pole = { id: pole.id, name: pole.name };
+            
+            // Une fois qu'on a trouvé un pôle, on arrête la recherche
+            break;
+          }
+        }
+      }
+      
+      setProjectManagerOrganization(organization);
+    } catch (error) {
+      console.error("Erreur lors du chargement de l'organisation du chef de projet:", error);
+      setProjectManagerOrganization({});
+    }
+  };
+
   useEffect(() => {
     const initializeForm = async () => {
       if (isOpen) {
@@ -116,9 +250,7 @@ export const useProjectFormState = (isOpen: boolean, project?: any) => {
         setPriority("medium");
         setMonitoringLevel("none");
         setMonitoringEntityId(null);
-        setPoleId("none");
-        setDirectionId("none");
-        setServiceId("none");
+        setProjectManagerOrganization({});
         setNovateur(0);
         setUsager(0);
         setOuverture(0);
@@ -139,6 +271,8 @@ export const useProjectFormState = (isOpen: boolean, project?: any) => {
         if (user?.email) {
           setProjectManager(user.email);
           setOwnerId(user.id);
+          // Charger l'organisation du chef de projet initial (l'utilisateur connecté)
+          await loadProjectManagerOrganization(user.email);
         }
 
         if (project) {
@@ -148,13 +282,13 @@ export const useProjectFormState = (isOpen: boolean, project?: any) => {
           setStartDate(project.start_date ? new Date(project.start_date) : undefined);
           setEndDate(project.end_date ? new Date(project.end_date) : undefined);
           setPriority(project.priority || "medium");
-          setPoleId(project.pole_id || "none");
-          setDirectionId(project.direction_id || "none");
-          setServiceId(project.service_id || "none");
           setOwnerId(project.owner_id || "");
           setLifecycleStatus(project.lifecycle_status as ProjectLifecycleStatus || "study");
           setForEntityType(project.for_entity_type as ForEntityType || null);
           setForEntityId(project.for_entity_id || undefined);
+
+          // Charger l'organisation du chef de projet existant
+          await loadProjectManagerOrganization(project.project_manager);
 
           try {
             const { data: monitoringData, error } = await supabase
@@ -212,72 +346,6 @@ export const useProjectFormState = (isOpen: boolean, project?: any) => {
           } catch (error) {
             console.error("Error in framing data fetch:", error);
           }
-        } else if (user?.id) {
-          try {
-            // Récupérer les affectations hiérarchiques de l'utilisateur
-            const { data: userAssignments, error: assignmentError } = await supabase
-              .from("user_hierarchy_assignments")
-              .select("entity_id, entity_type")
-              .eq("user_id", user.id)
-              .order("created_at", { ascending: false });
-              
-            if (!assignmentError && userAssignments && userAssignments.length > 0) {
-              // L'utilisateur a des affectations hiérarchiques
-              setHasNoHierarchyAssignment(false);
-              const serviceAssignment = userAssignments.find(a => a.entity_type === 'service');
-              if (serviceAssignment) {
-                const { data: serviceData, error: serviceError } = await supabase
-                  .from("services")
-                  .select("id, direction_id")
-                  .eq("id", serviceAssignment.entity_id)
-                  .single();
-                  
-                if (!serviceError && serviceData) {
-                  setServiceId(serviceData.id);
-                  
-                  const { data: directionData, error: directionError } = await supabase
-                    .from("directions")
-                    .select("id, pole_id")
-                    .eq("id", serviceData.direction_id)
-                    .single();
-                    
-                  if (!directionError && directionData) {
-                    setDirectionId(directionData.id);
-                    if (directionData.pole_id) {
-                      setPoleId(directionData.pole_id);
-                    }
-                  }
-                }
-              } else {
-                const directionAssignment = userAssignments.find(a => a.entity_type === 'direction');
-                if (directionAssignment) {
-                  const { data: directionData, error: directionError } = await supabase
-                    .from("directions")
-                    .select("id, pole_id")
-                    .eq("id", directionAssignment.entity_id)
-                    .single();
-                    
-                  if (!directionError && directionData) {
-                    setDirectionId(directionData.id);
-                    if (directionData.pole_id) {
-                      setPoleId(directionData.pole_id);
-                    }
-                  }
-                } else {
-                  const poleAssignment = userAssignments.find(a => a.entity_type === 'pole');
-                  if (poleAssignment) {
-                    setPoleId(poleAssignment.entity_id);
-                  }
-                }
-              }
-            } else {
-              // Si l'utilisateur n'a pas d'affectation
-              setHasNoHierarchyAssignment(true);
-              console.log("Utilisateur sans affectation hiérarchique");
-            }
-          } catch (error) {
-            console.error("Erreur lors de l'initialisation des champs d'organisation:", error);
-          }
         }
       }
     };
@@ -285,13 +353,20 @@ export const useProjectFormState = (isOpen: boolean, project?: any) => {
     initializeForm();
   }, [isOpen, project, user?.email, user?.id]);
 
+  // Observer les changements dans le projectManager pour mettre à jour l'organisation
+  useEffect(() => {
+    if (projectManager) {
+      loadProjectManagerOrganization(projectManager);
+    }
+  }, [projectManager]);
+
   useEffect(() => {
     if (isOpen && !isSubmitting) {
       setHasUnsavedChanges(true);
     }
   }, [
     title, description, projectManager, startDate, endDate, priority, 
-    monitoringLevel, monitoringEntityId, poleId, directionId, serviceId, 
+    monitoringLevel, monitoringEntityId, 
     novateur, usager, ouverture, agilite, impact, lifecycleStatus,
     context, stakeholders, governance, objectives, timeline, deliverables,
     forEntityType, forEntityId
@@ -326,12 +401,8 @@ export const useProjectFormState = (isOpen: boolean, project?: any) => {
     setMonitoringEntityId,
     ownerId,
     setOwnerId,
-    poleId,
-    setPoleId,
-    directionId,
-    setDirectionId,
-    serviceId,
-    setServiceId,
+    projectManagerOrganization,
+    loadProjectManagerOrganization,
     novateur,
     setNovateur,
     usager,

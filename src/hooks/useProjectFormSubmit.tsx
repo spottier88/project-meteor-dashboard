@@ -1,9 +1,9 @@
+
 import { useToast } from "@/components/ui/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
 import { useUser } from "@supabase/auth-helpers-react";
 import { ProjectFormState } from "../components/form/useProjectFormState";
 import { supabase } from "@/integrations/supabase/client";
-import { willUserStillHaveAccess } from "@/utils/projectAccessCheck";
 import { useState } from "react";
 import { AccessibleOrganizations } from "@/types/user";
 
@@ -34,125 +34,6 @@ export const useProjectFormSubmit = ({
   const [showAccessWarning, setShowAccessWarning] = useState(false);
   const [isProceedingAnyway, setIsProceedingAnyway] = useState(false);
 
-  // Fonction pour vérifier si une entité est directement accessible
-  const isEntityDirectlyAccessible = (entityType: string, entityId: string): boolean => {
-    if (!accessibleOrganizations) return true;
-    
-    if (entityType === 'pole') {
-      return accessibleOrganizations.poles.some(p => p.id === entityId);
-    } 
-    else if (entityType === 'direction') {
-      return accessibleOrganizations.directions.some(d => d.id === entityId);
-    } 
-    else if (entityType === 'service') {
-      return accessibleOrganizations.services.some(s => s.id === entityId);
-    }
-    
-    return false;
-  };
-
-  // Fonction pour vérifier si les entités sélectionnées sont accessibles
-  const validateOrganizationSelection = async (): Promise<boolean> => {
-    if (!accessibleOrganizations) return true;
-
-    // Vérifions l'accès en tenant compte de la hiérarchie descendante uniquement
-    const hierarchyCheck = {
-      poleAccessible: true,
-      directionAccessible: true,
-      serviceAccessible: true
-    };
-
-    // Vérification pour le pôle - accès direct uniquement
-    if (formState.poleId !== "none") {
-      hierarchyCheck.poleAccessible = isEntityDirectlyAccessible('pole', formState.poleId);
-      
-      if (!hierarchyCheck.poleAccessible) {
-        toast({
-          title: "Erreur",
-          description: "Le pôle sélectionné n'est pas dans votre périmètre accessible",
-          variant: "destructive",
-        });
-        return false;
-      }
-    }
-    
-    // Vérification pour la direction
-    if (formState.directionId !== "none") {
-      // Vérifier d'abord l'accès direct à la direction
-      hierarchyCheck.directionAccessible = isEntityDirectlyAccessible('direction', formState.directionId);
-      
-      // Si pas d'accès direct, vérifier la hiérarchie descendante
-      if (!hierarchyCheck.directionAccessible) {
-        // Récupérer le pôle parent de cette direction
-        const { data: direction } = await supabase
-          .from("directions")
-          .select("pole_id")
-          .eq("id", formState.directionId)
-          .single();
-        
-        // Vérifier si l'utilisateur a accès au pôle parent de cette direction
-        if (direction && direction.pole_id) {
-          // L'utilisateur a accès à la direction si et seulement si il a accès direct au pôle parent
-          if (isEntityDirectlyAccessible('pole', direction.pole_id)) {
-            hierarchyCheck.directionAccessible = true;
-          }
-        }
-      }
-      
-      if (!hierarchyCheck.directionAccessible) {
-        toast({
-          title: "Erreur",
-          description: "La direction sélectionnée n'est pas dans votre périmètre accessible",
-          variant: "destructive",
-        });
-        return false;
-      }
-    }
-    
-    // Vérification pour le service
-    if (formState.serviceId !== "none") {
-      // Vérifier d'abord l'accès direct au service
-      hierarchyCheck.serviceAccessible = isEntityDirectlyAccessible('service', formState.serviceId);
-      
-      // Si pas d'accès direct, vérifier la hiérarchie descendante
-      if (!hierarchyCheck.serviceAccessible) {
-        const { data: service } = await supabase
-          .from("services")
-          .select(`
-            direction_id,
-            directions:direction_id (
-              pole_id
-            )
-          `)
-          .eq("id", formState.serviceId)
-          .single();
-          
-        if (service) {
-          // L'utilisateur a accès au service si:
-          // 1. Il a accès direct à la direction parente
-          if (service.direction_id && isEntityDirectlyAccessible('direction', service.direction_id)) {
-            hierarchyCheck.serviceAccessible = true;
-          } 
-          // 2. Ou s'il a accès direct au pôle parent
-          else if (service.directions?.pole_id && isEntityDirectlyAccessible('pole', service.directions.pole_id)) {
-            hierarchyCheck.serviceAccessible = true;
-          }
-        }
-      }
-      
-      if (!hierarchyCheck.serviceAccessible) {
-        toast({
-          title: "Erreur",
-          description: "Le service sélectionné n'est pas dans votre périmètre accessible",
-          variant: "destructive",
-        });
-        return false;
-      }
-    }
-    
-    return true;
-  };
-
   const checkAccessAndSubmit = async () => {
     if (!formState.validateStep3()) {
       toast({
@@ -181,40 +62,13 @@ export const useProjectFormSubmit = ({
       return;
     }
 
-    // Pour un projet existant, vérifier si l'utilisateur peut modifier l'organisation
-    if (project?.id && !canEditOrganization && (
-      project.pole_id !== formState.poleId ||
-      project.direction_id !== formState.directionId ||
-      project.service_id !== formState.serviceId
-    )) {
-      toast({
-        title: "Erreur",
-        description: "Vous n'avez pas les droits nécessaires pour modifier l'organisation de ce projet",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    // Valider les sélections d'entités organisationnelles en tenant compte de la hiérarchie
-    if (!(await validateOrganizationSelection())) {
-      return;
-    }
-
-    // Vérifier si le chef de projet ou l'organisation a changé
-    if (project?.id && (
-      project.project_manager !== formState.projectManager ||
-      project.pole_id !== formState.poleId ||
-      project.direction_id !== formState.directionId ||
-      project.service_id !== formState.serviceId
-    )) {
+    // Vérifier si le chef de projet a changé
+    if (project?.id && project.project_manager !== formState.projectManager) {
       // Vérifier si l'utilisateur aura toujours accès après la modification
       const willHaveAccess = await willUserStillHaveAccess(
         user?.id,
         project.id,
         formState.projectManager,
-        formState.poleId === "none" ? null : formState.poleId,
-        formState.directionId === "none" ? null : formState.directionId,
-        formState.serviceId === "none" ? null : formState.serviceId,
       );
 
       if (!willHaveAccess && !isProceedingAnyway) {
@@ -230,9 +84,52 @@ export const useProjectFormSubmit = ({
     submitProject();
   };
 
+  // Fonction pour vérifier si l'utilisateur aura toujours accès après modification
+  const willUserStillHaveAccess = async (
+    userId: string | undefined,
+    projectId: string,
+    newProjectManager: string,
+  ): Promise<boolean> => {
+    if (!userId) return false;
+
+    // Si l'utilisateur est le nouveau chef de projet, il aura toujours accès
+    const { data: userProfile } = await supabase
+      .from("profiles")
+      .select("email")
+      .eq("id", userId)
+      .single();
+
+    if (userProfile?.email === newProjectManager) {
+      return true;
+    }
+
+    // Vérifier si l'utilisateur est admin
+    const { data: userRoles } = await supabase
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", userId);
+
+    if (userRoles?.some(ur => ur.role === 'admin')) {
+      return true;
+    }
+
+    // Vérifier si l'utilisateur est membre du projet
+    const { data: isMember } = await supabase
+      .from("project_members")
+      .select("user_id")
+      .eq("project_id", projectId)
+      .eq("user_id", userId)
+      .maybeSingle();
+
+    return !!isMember;
+  };
+
   const submitProject = async () => {
     formState.setIsSubmitting(true);
     try {
+      // Déterminer les IDs des entités organisationnelles à partir de l'organisation du chef de projet
+      const { pole, direction, service } = formState.projectManagerOrganization;
+      
       const projectData = {
         title: formState.title,
         description: formState.description,
@@ -241,11 +138,12 @@ export const useProjectFormSubmit = ({
         endDate: formState.endDate,
         priority: formState.priority,
         monitoringLevel: formState.monitoringLevel,
-        monitoringEntityId: formState.monitoringEntityId || null,
+        monitoringEntityId: getMonitoringEntityId(formState.monitoringLevel),
         owner_id: user?.id || null,
-        poleId: formState.poleId === "none" ? null : formState.poleId,
-        directionId: formState.directionId === "none" ? null : formState.directionId,
-        serviceId: formState.serviceId === "none" ? null : formState.serviceId,
+        // Assignation basée sur l'organisation du chef de projet
+        poleId: pole?.id || null,
+        directionId: direction?.id || null,
+        serviceId: service?.id || null,
         lifecycleStatus: formState.lifecycleStatus,
         for_entity_type: formState.forEntityType,
         for_entity_id: formState.forEntityId,
@@ -265,6 +163,18 @@ export const useProjectFormSubmit = ({
           deliverables: formState.deliverables,
         },
       };
+
+      // Fonction pour obtenir l'ID de l'entité de suivi en fonction du niveau
+      function getMonitoringEntityId(level: string) {
+        switch (level) {
+          case 'pole':
+            return pole?.id || null;
+          case 'direction':
+            return direction?.id || null;
+          default:
+            return null;
+        }
+      }
 
       // Soumettre les données du projet
       const result = await onSubmit(projectData);
