@@ -107,15 +107,9 @@ export const ProjectFormFields = ({
         setEndDate={setEndDate}
         priority={priority}
         setPriority={setPriority}
-        monitoringLevel={monitoringLevel}
-        setMonitoringLevel={setMonitoringLevel}
-        monitoringEntityId={monitoringEntityId}
-        setMonitoringEntityId={setMonitoringEntityId}
         isAdmin={isAdmin}
         isManager={isManager}
         projectManagers={projectManagers}
-        poleId={poleId}
-        directionId={directionId}
       />
 
       {canEditOrganization && (
