@@ -1,4 +1,3 @@
-
 import { ProjectFormFields } from "./ProjectFormFields";
 import { ProjectFormStep1 } from "./ProjectFormStep1";
 import { ProjectFormStep2 } from "./ProjectFormStep2";
@@ -7,6 +6,7 @@ import { ProjectFormStep4 } from "./ProjectFormStep4";
 import { ProjectFormStep5 } from "./ProjectFormStep5";
 import { UserProfile } from "@/types/user";
 import { useMemo } from "react";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface ProjectFormContentProps {
   canEditOrganization: boolean;
@@ -121,8 +121,10 @@ export const ProjectFormContent = ({
   };
 
   return (
-    <div className="w-full">
-      {getRenderContent()}
+    <div className="w-full h-full">
+      <ScrollArea className="h-full pr-2">
+        {getRenderContent()}
+      </ScrollArea>
     </div>
   );
 };

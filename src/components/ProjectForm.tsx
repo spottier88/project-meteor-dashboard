@@ -148,7 +148,7 @@ export const ProjectForm = ({ isOpen, onClose, onSubmit, project }: ProjectFormP
               isEditMode={!!project}
               title={formState.title}
             />
-            <div className="flex-1 overflow-y-auto my-4 pr-2">
+            <div className="flex-1 overflow-y-auto my-4">
               <ProjectFormContent 
                 canEditOrganization={canEditOrganization}
                 formState={formState}
@@ -160,7 +160,7 @@ export const ProjectForm = ({ isOpen, onClose, onSubmit, project }: ProjectFormP
                 isManager={validationValues.isManager}
               />
             </div>
-            <DialogFooter className="sticky bottom-0 pt-4 border-t bg-background">
+            <DialogFooter className="sticky bottom-0 pt-4 border-t bg-background mt-auto">
               <ProjectFormNavigation 
                 currentStep={formState.currentStep}
                 isSubmitting={formState.isSubmitting}
