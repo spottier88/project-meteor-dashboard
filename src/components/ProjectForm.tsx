@@ -1,3 +1,4 @@
+
 import { Dialog, DialogContent, DialogFooter } from "@/components/ui/dialog";
 import { useQuery } from "@tanstack/react-query";
 import { useUser } from "@supabase/auth-helpers-react";
@@ -131,7 +132,7 @@ export const ProjectForm = ({ isOpen, onClose, onSubmit, project }: ProjectFormP
     <>
       <Dialog open={isOpen} onOpenChange={handleCloseRequest}>
         <DialogContent 
-          className="sm:max-w-[700px] flex flex-col relative" 
+          className="sm:max-w-[700px] flex flex-col" 
           style={{ height: "85vh" }}
           onInteractOutside={e => {
             if (formState.hasUnsavedChanges) {
@@ -146,7 +147,7 @@ export const ProjectForm = ({ isOpen, onClose, onSubmit, project }: ProjectFormP
               title={formState.title}
             />
             
-            <div className="flex-1 overflow-auto pb-20 my-4">
+            <div className="flex-1 overflow-auto my-4">
               <ProjectFormContent 
                 canEditOrganization={canEditOrganization}
                 formState={formState}
@@ -159,7 +160,7 @@ export const ProjectForm = ({ isOpen, onClose, onSubmit, project }: ProjectFormP
               />
             </div>
             
-            <div className="absolute bottom-0 left-0 right-0 border-t bg-background p-4">
+            <div className="border-t bg-background p-4 mt-auto">
               <ProjectFormNavigation 
                 currentStep={formState.currentStep}
                 isSubmitting={formState.isSubmitting}
