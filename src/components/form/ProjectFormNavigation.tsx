@@ -23,7 +23,7 @@ export const ProjectFormNavigation = ({
   onClose,
 }: ProjectFormNavigationProps) => {
   return (
-    <div className="flex justify-between w-full py-2">
+    <div className="flex justify-between w-full">
       <div>
         {currentStep > 0 && (
           <Button
