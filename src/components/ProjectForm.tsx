@@ -1,4 +1,3 @@
-
 import { Dialog, DialogContent, DialogFooter } from "@/components/ui/dialog";
 import { useQuery } from "@tanstack/react-query";
 import { useUser } from "@supabase/auth-helpers-react";
@@ -31,9 +30,7 @@ export const ProjectForm = ({ isOpen, onClose, onSubmit, project }: ProjectFormP
   const [showUnsavedChangesAlert, setShowUnsavedChangesAlert] = useState(false);
   const [isProfileFormOpen, setIsProfileFormOpen] = useState(false);
 
-  // Utiliser useMemo pour éviter les logs en boucle et les re-rendus inutiles
   const validationValues = useMemo(() => {
-    // Log une seule fois par changement réel
     console.log("ProjectForm - validation values:", {
       isAdmin: validation.isAdmin,
       isManager: validation.isManager
@@ -160,7 +157,7 @@ export const ProjectForm = ({ isOpen, onClose, onSubmit, project }: ProjectFormP
                 isManager={validationValues.isManager}
               />
             </div>
-            <DialogFooter className="sticky bottom-0 pt-4 border-t bg-background mt-auto">
+            <DialogFooter className="sticky bottom-0 pt-4 border-t bg-background">
               <ProjectFormNavigation 
                 currentStep={formState.currentStep}
                 isSubmitting={formState.isSubmitting}
@@ -175,7 +172,7 @@ export const ProjectForm = ({ isOpen, onClose, onSubmit, project }: ProjectFormP
           </div>
         </DialogContent>
       </Dialog>
-      
+
       <AlertDialog open={showUnsavedChangesAlert} onOpenChange={setShowUnsavedChangesAlert}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -190,7 +187,7 @@ export const ProjectForm = ({ isOpen, onClose, onSubmit, project }: ProjectFormP
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-      
+
       <AlertDialog open={showAccessWarning} onOpenChange={(open) => {
         if (!open) handleCancelSubmit();
       }}>
