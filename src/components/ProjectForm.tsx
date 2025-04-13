@@ -133,38 +133,46 @@ export const ProjectForm = ({ isOpen, onClose, onSubmit, project }: ProjectFormP
   return (
     <>
       <Dialog open={isOpen} onOpenChange={handleCloseRequest}>
-        <DialogContent className="sm:max-w-[700px] max-h-[85vh] overflow-y-auto" onInteractOutside={e => {
-          if (formState.hasUnsavedChanges) {
-            e.preventDefault();
-          }
-        }}>
-          <ProjectFormHeader 
-            currentStep={formState.currentStep} 
-            isEditMode={!!project}
-            title={formState.title}
-          />
-          <ProjectFormContent 
-            canEditOrganization={canEditOrganization}
-            formState={formState}
-            projectManagers={projectManagers}
-            project={project}
-            isEditMode={!!project}
-            onOpenProfile={handleOpenProfile}
-            isAdmin={validationValues.isAdmin}
-            isManager={validationValues.isManager}
-          />
-          <DialogFooter>
-            <ProjectFormNavigation 
-              currentStep={formState.currentStep}
-              isSubmitting={formState.isSubmitting}
-              onPrevious={handlePrevious}
-              onNext={handleNext}
+        <DialogContent 
+          className="sm:max-w-[700px] flex flex-col" 
+          style={{ height: "85vh" }}
+          onInteractOutside={e => {
+            if (formState.hasUnsavedChanges) {
+              e.preventDefault();
+            }
+          }}
+        >
+          <div className="flex flex-col h-full">
+            <ProjectFormHeader 
+              currentStep={formState.currentStep} 
               isEditMode={!!project}
-              onClose={handleCloseRequest}
-              isLastStep={formState.currentStep === 4}
-              canGoNext={formState.currentStep === 0 ? !!formState.title && !!formState.projectManager : true}
+              title={formState.title}
             />
-          </DialogFooter>
+            <div className="flex-1 overflow-y-auto my-4 pr-2">
+              <ProjectFormContent 
+                canEditOrganization={canEditOrganization}
+                formState={formState}
+                projectManagers={projectManagers}
+                project={project}
+                isEditMode={!!project}
+                onOpenProfile={handleOpenProfile}
+                isAdmin={validationValues.isAdmin}
+                isManager={validationValues.isManager}
+              />
+            </div>
+            <DialogFooter className="sticky bottom-0 pt-4 border-t bg-background">
+              <ProjectFormNavigation 
+                currentStep={formState.currentStep}
+                isSubmitting={formState.isSubmitting}
+                onPrevious={handlePrevious}
+                onNext={handleNext}
+                isEditMode={!!project}
+                onClose={handleCloseRequest}
+                isLastStep={formState.currentStep === 4}
+                canGoNext={formState.currentStep === 0 ? !!formState.title && !!formState.projectManager : true}
+              />
+            </DialogFooter>
+          </div>
         </DialogContent>
       </Dialog>
       

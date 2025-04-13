@@ -121,7 +121,7 @@ export const ProjectFormContent = ({
   };
 
   return (
-    <div className="mb-4">
+    <div className="w-full">
       {getRenderContent()}
     </div>
   );

@@ -23,17 +23,19 @@ export const ProjectFormNavigation = ({
   onClose,
 }: ProjectFormNavigationProps) => {
   return (
-    <div className="flex justify-between space-x-2">
-      {currentStep > 0 && (
-        <Button
-          type="button"
-          variant="outline"
-          onClick={onPrevious}
-          disabled={isSubmitting}
-        >
-          Précédent
-        </Button>
-      )}
+    <div className="flex justify-between w-full py-2">
+      <div>
+        {currentStep > 0 && (
+          <Button
+            type="button"
+            variant="outline"
+            onClick={onPrevious}
+            disabled={isSubmitting}
+          >
+            Précédent
+          </Button>
+        )}
+      </div>
       <div className="flex space-x-2">
         {onClose && (
           <Button
