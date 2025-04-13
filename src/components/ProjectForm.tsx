@@ -1,3 +1,4 @@
+
 import { Dialog, DialogContent, DialogFooter } from "@/components/ui/dialog";
 import { useQuery } from "@tanstack/react-query";
 import { useUser } from "@supabase/auth-helpers-react";
@@ -145,7 +146,9 @@ export const ProjectForm = ({ isOpen, onClose, onSubmit, project }: ProjectFormP
               isEditMode={!!project}
               title={formState.title}
             />
-            <div className="flex-1 overflow-hidden my-4">
+            
+            {/* Contenu principal avec défilement */}
+            <div className="flex-1 overflow-hidden my-4 min-h-0">
               <ProjectFormContent 
                 canEditOrganization={canEditOrganization}
                 formState={formState}
@@ -157,7 +160,9 @@ export const ProjectForm = ({ isOpen, onClose, onSubmit, project }: ProjectFormP
                 isManager={validationValues.isManager}
               />
             </div>
-            <div className="sticky bottom-0 pt-4 border-t bg-background w-full">
+            
+            {/* Barre de navigation fixée en bas */}
+            <div className="mt-auto sticky bottom-0 pt-4 border-t bg-background w-full">
               <ProjectFormNavigation 
                 currentStep={formState.currentStep}
                 isSubmitting={formState.isSubmitting}
