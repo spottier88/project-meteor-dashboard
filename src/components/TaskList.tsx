@@ -10,6 +10,7 @@ import { TaskTable } from "./task/TaskTable";
 import { Input } from "@/components/ui/input";
 import { ViewToggle, ViewMode } from "@/components/ViewToggle";
 import { KanbanBoard } from "@/components/KanbanBoard";
+import { TaskGantt } from "@/components/task/TaskGantt";
 import { useTaskPermissions } from "@/hooks/use-task-permissions";
 import { usePermissionsContext } from "@/contexts/PermissionsContext";
 import {
@@ -164,6 +165,17 @@ export const TaskList = ({
               }
             }}
           /> 
+        ) : view === "gantt" ? (
+          <TaskGantt 
+            tasks={filteredTasks || []}
+            projectId={projectId}
+            onEdit={(task) => {
+              if (canEditTask(task.assignee)) {
+                setSelectedTask(task);
+                setIsTaskFormOpen(true);
+              }
+            }}
+          />
         ) : null
       ) : (
         <div className="text-center py-4 text-muted-foreground">
