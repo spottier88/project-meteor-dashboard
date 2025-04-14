@@ -49,14 +49,20 @@ export const TaskGantt: React.FC<TaskGanttProps> = ({ tasks, projectId, onEdit }
   };
 
   // Gérer le clic sur une tâche (pour l'édition)
-  const handleTaskClick = (task: Task, event: React.MouseEvent) => {
-    // Ne pas ouvrir l'édition si on est en train de déplacer/redimensionner la tâche
-    if (event.target instanceof HTMLElement && 
-        (event.target.classList.contains('bar-wrapper') ||
-         event.target.classList.contains('bar'))) {
+  const handleTaskClick = (task: Task) => {
+    // Vérifier si l'élément cliqué est une partie interactive du Gantt
+    // cette vérification empêche l'ouverture de l'édition lors du déplacement/redimensionnement
+    const target = document.activeElement;
+    
+    // Si l'élément actif est une barre de tâche ou un élément de redimensionnement, ne pas ouvrir l'édition
+    if (target instanceof HTMLElement && 
+        (target.classList.contains('bar-wrapper') || 
+         target.classList.contains('bar') ||
+         target.classList.contains('handle') || 
+         target.classList.contains('bar-label'))) {
       return;
     }
-
+    
     if (onEdit) {
       // Trouver la tâche originale correspondante
       const originalTask = tasks.find(t => t.id === task.id);
@@ -129,13 +135,7 @@ export const TaskGantt: React.FC<TaskGanttProps> = ({ tasks, projectId, onEdit }
           viewMode={viewMode}
           onDateChange={handleDateChange}
           onProgressChange={() => {}}
-          onClick={(task) => {
-            // Utilise une fonction wrapper pour gérer le click
-            // La bibliothèque fournit seulement la tâche, pas l'événement
-            const clickEvent = window.event as MouseEvent;
-            const reactEvent = new MouseEvent('click', clickEvent);
-            handleTaskClick(task, reactEvent as unknown as React.MouseEvent);
-          }}
+          onClick={handleTaskClick}
           listCellWidth={showTaskList ? "250px" : ""}
           columnWidth={columnWidth}
           locale="fr-FR"
