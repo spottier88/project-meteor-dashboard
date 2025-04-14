@@ -24,22 +24,36 @@ export const TaskGantt: React.FC<TaskGanttProps> = ({ tasks, projectId, onEdit }
   
   // Gérer le changement de date d'une tâche
   const handleDateChange = async (task: Task) => {
+    console.log("Date change detected:", task.id, task.start, task.end);
+    
     // Trouver la tâche originale correspondante
     const originalTask = tasks.find(t => t.id === task.id);
-    if (!originalTask) return;
+    if (!originalTask) {
+      console.error("Tâche originale non trouvée:", task.id);
+      return;
+    }
 
     try {
+      // Formatage des dates pour la base de données
+      const startDate = task.start.toISOString().split('T')[0];
+      const endDate = task.end.toISOString().split('T')[0];
+      
+      console.log("Mise à jour des dates:", startDate, endDate);
+      
       // Mettre à jour la tâche dans la base de données
       const { error } = await supabase
         .from('tasks')
         .update({
-          start_date: task.start.toISOString().split('T')[0],
-          due_date: task.end.toISOString().split('T')[0],
+          start_date: startDate,
+          due_date: endDate,
           updated_at: new Date().toISOString()
         })
         .eq('id', task.id);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Erreur lors de la mise à jour des dates:', error);
+        throw error;
+      }
 
       toast.success('Dates de la tâche mises à jour');
     } catch (error) {
