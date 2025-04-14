@@ -1,0 +1,59 @@
+
+/* Style pour le composant Gantt */
+.gantt-task-react {
+  font-family: inherit;
+}
+
+.gantt-task-react__main-container {
+  overflow: hidden;
+  outline: 1px solid #e0e0e0;
+  border-radius: 0.5rem;
+}
+
+.gantt-task-react__table-container {
+  border-right: 1px solid #e0e0e0;
+}
+
+.gantt-task-react__task-list-header-cell,
+.gantt-task-react__task-list-item {
+  display: table-cell;
+  vertical-align: middle;
+  padding: 0.5rem;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.gantt-task-react__task-list-header {
+  background-color: #f9f9f9;
+  border-bottom: 1px solid #e0e0e0;
+  font-weight: 600;
+}
+
+.gantt-task-react__task-bar {
+  cursor: move;
+  position: absolute;
+  background-color: #3b82f6;
+  border-radius: 4px;
+  color: #fff;
+}
+
+.gantt-task-react__task-bar-progress {
+  background-color: rgba(0, 0, 0, 0.2);
+  position: absolute;
+  top: 0;
+  bottom: 0;
+}
+
+.gantt-task-react__task-bar:hover {
+  box-shadow: 0 1px 5px rgba(0, 0, 0, 0.2);
+}
+
+.gantt-task-react__calendar-header {
+  background-color: #f9f9f9;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.gantt-task-react__grid-row:nth-child(even) {
+  background-color: #fafafa;
+}
