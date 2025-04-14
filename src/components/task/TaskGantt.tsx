@@ -6,6 +6,8 @@ import "gantt-task-react/dist/index.css";
 import "@/styles/gantt.css";
 import { Button } from "@/components/ui/button";
 import { CalendarDays, CalendarRange, Calendar } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 interface TaskGanttProps {
   tasks: Array<any>;
@@ -20,8 +22,41 @@ export const TaskGantt: React.FC<TaskGanttProps> = ({ tasks, projectId, onEdit }
   // Convertir les tâches au format attendu par le composant Gantt
   const ganttTasks = mapTasksToGanttFormat(tasks);
   
-  // Gérer le clic sur une tâche
-  const handleTaskClick = (task: Task) => {
+  // Gérer le changement de date d'une tâche
+  const handleDateChange = async (task: Task) => {
+    // Trouver la tâche originale correspondante
+    const originalTask = tasks.find(t => t.id === task.id);
+    if (!originalTask) return;
+
+    try {
+      // Mettre à jour la tâche dans la base de données
+      const { error } = await supabase
+        .from('tasks')
+        .update({
+          start_date: task.start.toISOString().split('T')[0],
+          due_date: task.end.toISOString().split('T')[0],
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', task.id);
+
+      if (error) throw error;
+
+      toast.success('Dates de la tâche mises à jour');
+    } catch (error) {
+      console.error('Erreur lors de la mise à jour des dates:', error);
+      toast.error("Erreur lors de la mise à jour des dates");
+    }
+  };
+
+  // Gérer le clic sur une tâche (pour l'édition)
+  const handleTaskClick = (task: Task, event: React.MouseEvent) => {
+    // Ne pas ouvrir l'édition si on est en train de déplacer/redimensionner la tâche
+    if (event.target instanceof HTMLElement && 
+        (event.target.classList.contains('bar-wrapper') ||
+         event.target.classList.contains('bar'))) {
+      return;
+    }
+
     if (onEdit) {
       // Trouver la tâche originale correspondante
       const originalTask = tasks.find(t => t.id === task.id);
@@ -92,7 +127,7 @@ export const TaskGantt: React.FC<TaskGanttProps> = ({ tasks, projectId, onEdit }
         <Gantt
           tasks={ganttTasks}
           viewMode={viewMode}
-          onDateChange={() => {}}
+          onDateChange={handleDateChange}
           onProgressChange={() => {}}
           onClick={handleTaskClick}
           listCellWidth={showTaskList ? "250px" : ""}
