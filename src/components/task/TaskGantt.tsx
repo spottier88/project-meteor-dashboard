@@ -85,7 +85,7 @@ export const TaskGantt: React.FC<TaskGanttProps> = ({ tasks, projectId, onEdit }
           onDateChange={() => {}}
           onProgressChange={() => {}}
           onClick={handleTaskClick}
-          listCellWidth={showTaskList ? "250px" : "0px"}
+          listCellWidth={showTaskList ? "250px" : ""}
           columnWidth={60}
           locale="fr-FR" // Utilise une chaîne de caractères pour la locale au lieu d'un objet
           ganttHeight={500}
