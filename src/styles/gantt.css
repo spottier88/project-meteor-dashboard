@@ -12,6 +12,7 @@
 
 .gantt-task-react__table-container {
   border-right: 1px solid #e0e0e0;
+  transition: width 0.3s ease;
 }
 
 .gantt-task-react__task-list-header-cell,
@@ -31,15 +32,13 @@
 }
 
 .gantt-task-react__task-bar {
-  cursor: move;
+  cursor: pointer;
   position: absolute;
-  background-color: #3b82f6;
   border-radius: 4px;
   color: #fff;
 }
 
 .gantt-task-react__task-bar-progress {
-  background-color: rgba(0, 0, 0, 0.2);
   position: absolute;
   top: 0;
   bottom: 0;
@@ -56,4 +55,31 @@
 
 .gantt-task-react__grid-row:nth-child(even) {
   background-color: #fafafa;
+}
+
+/* Tooltips */
+.gantt-task-react__tooltip {
+  background: white;
+  padding: 12px;
+  box-shadow: 0 3px 6px rgba(0,0,0,0.16);
+  border-radius: 4px;
+}
+
+/* Today marker */
+.gantt-task-react__today-line {
+  background-color: #ff7875;
+  width: 2px;
+  z-index: 1;
+}
+
+/* Amélioration de l'affichage des dates */
+.gantt-task-react__upper-text, 
+.gantt-task-react__lower-text {
+  font-size: 0.8rem;
+  text-transform: capitalize;
+}
+
+/* Indicateur de progression plus visible */
+.gantt-task-react__task-bar-progress {
+  background-color: rgba(0, 0, 0, 0.2);
 }

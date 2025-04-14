@@ -58,6 +58,16 @@ export const mapTasksToGanttFormat = (tasks: any[]): Task[] => {
       isDisabled: false,
       hideChildren: false,
       project: type === 'task' ? task.parent_task_id : undefined,
+      dependencies: task.dependencies || [],
     };
+  });
+};
+
+// Fonction pour formater les dates en français
+export const formatDateFr = (date: Date): string => {
+  return date.toLocaleDateString('fr-FR', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
   });
 };
