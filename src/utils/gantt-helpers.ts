@@ -19,6 +19,12 @@ const getColorForStatus = (status: string) => {
 export const mapTasksToGanttFormat = (tasks: any[]): Task[] => {
   if (!tasks || tasks.length === 0) return [];
   
+  // On crée d'abord un dictionnaire des tâches par ID pour faciliter la recherche
+  const tasksById = tasks.reduce((acc, task) => {
+    acc[task.id] = task;
+    return acc;
+  }, {} as Record<string, any>);
+  
   return tasks.map(task => {
     // Définir les dates de début et de fin
     let start = task.start_date ? new Date(task.start_date) : new Date();
@@ -48,6 +54,18 @@ export const mapTasksToGanttFormat = (tasks: any[]): Task[] => {
     // Si c'est un jalon, on définit le type comme 'milestone', sinon 'task'
     const type = isMilestone ? 'milestone' : 'task';
     
+    // Construire les dépendances entre les tâches
+    // Si la tâche a un parent_task_id, l'ajouter comme dépendance
+    let dependencies: string[] = [];
+    if (task.parent_task_id && tasksById[task.parent_task_id]) {
+      dependencies.push(task.parent_task_id);
+    }
+    
+    // Ajouter également les dépendances explicites si elles existent
+    if (task.dependencies && Array.isArray(task.dependencies)) {
+      dependencies = [...dependencies, ...task.dependencies];
+    }
+    
     // Créer l'objet de tâche au format attendu par le composant Gantt
     return {
       id: task.id,
@@ -64,7 +82,7 @@ export const mapTasksToGanttFormat = (tasks: any[]): Task[] => {
       isDisabled: false,
       hideChildren: false,
       project: task.parent_task_id || undefined, // Utiliser parent_task_id pour relier les tâches filles aux tâches mères
-      dependencies: task.dependencies || [],
+      dependencies: dependencies.length > 0 ? dependencies : undefined, // Utiliser les dépendances calculées
     };
   });
 };
