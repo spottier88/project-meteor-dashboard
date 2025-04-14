@@ -48,21 +48,8 @@ export const TaskGantt: React.FC<TaskGanttProps> = ({ tasks, projectId, onEdit }
     }
   };
 
-  // Gérer le clic sur une tâche (pour l'édition)
-  const handleTaskClick = (task: Task) => {
-    // Vérifier si l'élément cliqué est une partie interactive du Gantt
-    // cette vérification empêche l'ouverture de l'édition lors du déplacement/redimensionnement
-    const target = document.activeElement;
-    
-    // Si l'élément actif est une barre de tâche ou un élément de redimensionnement, ne pas ouvrir l'édition
-    if (target instanceof HTMLElement && 
-        (target.classList.contains('bar-wrapper') || 
-         target.classList.contains('bar') ||
-         target.classList.contains('handle') || 
-         target.classList.contains('bar-label'))) {
-      return;
-    }
-    
+  // Gérer le double-clic sur une tâche pour l'édition
+  const handleTaskDoubleClick = (task: Task) => {
     if (onEdit) {
       // Trouver la tâche originale correspondante
       const originalTask = tasks.find(t => t.id === task.id);
@@ -135,7 +122,7 @@ export const TaskGantt: React.FC<TaskGanttProps> = ({ tasks, projectId, onEdit }
           viewMode={viewMode}
           onDateChange={handleDateChange}
           onProgressChange={() => {}}
-          onClick={handleTaskClick}
+          onDoubleClick={handleTaskDoubleClick}
           listCellWidth={showTaskList ? "250px" : ""}
           columnWidth={columnWidth}
           locale="fr-FR"
