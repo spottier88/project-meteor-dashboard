@@ -31,6 +31,16 @@ export const TaskGantt: React.FC<TaskGanttProps> = ({ tasks, projectId, onEdit }
     }
   };
 
+  // Définir la largeur des colonnes en fonction du mode de vue
+  let columnWidth = 65;
+  if (viewMode === ViewMode.Year) {
+    columnWidth = 250;
+  } else if (viewMode === ViewMode.Month) {
+    columnWidth = 200;
+  } else if (viewMode === ViewMode.Week) {
+    columnWidth = 100;
+  }
+
   return (
     <div className="space-y-4 rounded-md border">
       <div className="flex justify-between items-center p-4 border-b">
@@ -86,8 +96,8 @@ export const TaskGantt: React.FC<TaskGanttProps> = ({ tasks, projectId, onEdit }
           onProgressChange={() => {}}
           onClick={handleTaskClick}
           listCellWidth={showTaskList ? "250px" : ""}
-          columnWidth={60}
-          locale="fr-FR" // Utilise une chaîne de caractères pour la locale au lieu d'un objet
+          columnWidth={columnWidth}
+          locale="fr-FR"
           ganttHeight={500}
           TooltipContent={({ task }) => (
             <div className="bg-white p-2 rounded shadow-lg border">
