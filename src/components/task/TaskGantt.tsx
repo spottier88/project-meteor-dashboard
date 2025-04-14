@@ -129,7 +129,13 @@ export const TaskGantt: React.FC<TaskGanttProps> = ({ tasks, projectId, onEdit }
           viewMode={viewMode}
           onDateChange={handleDateChange}
           onProgressChange={() => {}}
-          onClick={handleTaskClick}
+          onClick={(task) => {
+            // Utilise une fonction wrapper pour gérer le click
+            // La bibliothèque fournit seulement la tâche, pas l'événement
+            const clickEvent = window.event as MouseEvent;
+            const reactEvent = new MouseEvent('click', clickEvent);
+            handleTaskClick(task, reactEvent as unknown as React.MouseEvent);
+          }}
           listCellWidth={showTaskList ? "250px" : ""}
           columnWidth={columnWidth}
           locale="fr-FR"
