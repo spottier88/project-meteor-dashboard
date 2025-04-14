@@ -31,23 +31,6 @@ export const TaskGantt: React.FC<TaskGanttProps> = ({ tasks, projectId, onEdit }
     }
   };
 
-  // Configuration locale française
-  const locale = {
-    name: 'fr-FR',
-    weekdays: ['Dimanche', 'Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi'],
-    weekdaysShort: ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam'],
-    weekdaysAbbrev: ['D', 'L', 'M', 'M', 'J', 'V', 'S'],
-    months: [
-      'Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin',
-      'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'
-    ],
-    monthsShort: [
-      'Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin',
-      'Juil', 'Août', 'Sep', 'Oct', 'Nov', 'Déc'
-    ],
-    today: "Aujourd'hui",
-  };
-  
   return (
     <div className="space-y-4 rounded-md border">
       <div className="flex justify-between items-center p-4 border-b">
@@ -104,7 +87,7 @@ export const TaskGantt: React.FC<TaskGanttProps> = ({ tasks, projectId, onEdit }
           onClick={handleTaskClick}
           listCellWidth={showTaskList ? "250px" : "0px"}
           columnWidth={60}
-          locale={locale}
+          locale="fr-FR" // Utilise une chaîne de caractères pour la locale au lieu d'un objet
           ganttHeight={500}
           TooltipContent={({ task }) => (
             <div className="bg-white p-2 rounded shadow-lg border">
