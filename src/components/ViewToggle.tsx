@@ -1,5 +1,5 @@
 
-import { LayoutGrid, Table2, Timeline } from "lucide-react";
+import { LayoutGrid, Table2, GanttChart } from "lucide-react";
 import { Button } from "./ui/button";
 import { cn } from "@/lib/utils";
 
@@ -46,7 +46,7 @@ export const ViewToggle = ({ currentView, onViewChange }: ViewToggleProps) => {
           currentView === "gantt" && "bg-primary text-primary-foreground"
         )}
       >
-        <Timeline className="h-4 w-4" />
+        <GanttChart className="h-4 w-4" />
         Vue Gantt
       </Button>
     </div>

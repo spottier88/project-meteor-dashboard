@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { Gantt, Task, ViewMode, DisplayOption } from 'gantt-task-react';
+import { Gantt, Task, ViewMode } from 'gantt-task-react';
 import { mapTasksToGanttFormat } from '@/utils/gantt-helpers';
 import "gantt-task-react/dist/index.css";
 import "@/styles/gantt.css";
@@ -16,29 +16,6 @@ export const TaskGantt: React.FC<TaskGanttProps> = ({ tasks, projectId, onEdit }
   
   // Convertir les tâches au format attendu par le composant Gantt
   const ganttTasks = mapTasksToGanttFormat(tasks);
-  
-  // Options d'affichage du Gantt
-  const options: DisplayOption = {
-    header: {
-      top: {
-        style: {
-          fontSize: '16px',
-          fontWeight: 'bold',
-        }
-      },
-    },
-    taskList: {
-      title: {
-        label: 'Tâches',
-      },
-      task: {
-        style: {
-          backgroundColor: 'white',
-          fontSize: '14px',
-        }
-      }
-    }
-  };
   
   // Gérer le clic sur une tâche
   const handleTaskClick = (task: Task) => {
@@ -62,7 +39,6 @@ export const TaskGantt: React.FC<TaskGanttProps> = ({ tasks, projectId, onEdit }
           onClick={handleTaskClick}
           listCellWidth="250px"
           columnWidth={60}
-          displayOption={options}
         />
       ) : (
         <div className="text-center py-8 text-muted-foreground">
