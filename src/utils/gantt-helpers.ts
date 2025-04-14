@@ -39,8 +39,14 @@ export const mapTasksToGanttFormat = (tasks: any[]): Task[] => {
     if (task.status === 'in_progress') progress = 50;
     if (task.status === 'done') progress = 100;
     
+    // Déterminer si c'est un jalon (milestone) ou une tâche normale
+    // Une tâche est un jalon si les dates de début et de fin sont identiques ou non définies
+    const isMilestone = !task.start_date || !task.due_date || 
+      (new Date(task.start_date).setHours(0, 0, 0, 0) === new Date(task.due_date).setHours(0, 0, 0, 0));
+    
     // Déterminer le type (tâche ou sous-tâche)
-    const type = task.parent_task_id ? 'task' : 'project';
+    // Si c'est un jalon, on définit le type comme 'milestone', sinon 'task'
+    const type = isMilestone ? 'milestone' : 'task';
     
     // Créer l'objet de tâche au format attendu par le composant Gantt
     return {
@@ -57,7 +63,7 @@ export const mapTasksToGanttFormat = (tasks: any[]): Task[] => {
       },
       isDisabled: false,
       hideChildren: false,
-      project: type === 'task' ? task.parent_task_id : undefined,
+      project: task.parent_task_id || undefined, // Utiliser parent_task_id pour relier les tâches filles aux tâches mères
       dependencies: task.dependencies || [],
     };
   });
