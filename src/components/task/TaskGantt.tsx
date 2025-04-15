@@ -41,20 +41,22 @@ export const TaskGantt: React.FC<TaskGanttProps> = ({ tasks, projectId, onEdit }
       console.log("Mise à jour des dates:", startDate, endDate);
       
       // Mettre à jour la tâche dans la base de données
-      const { error } = await supabase
+      const { error, data } = await supabase
         .from('tasks')
         .update({
           start_date: startDate,
           due_date: endDate,
           updated_at: new Date().toISOString()
         })
-        .eq('id', task.id);
+        .eq('id', task.id)
+        .select();
 
       if (error) {
         console.error('Erreur lors de la mise à jour des dates:', error);
         throw error;
       }
 
+      console.log('Mise à jour réussie, données retournées:', data);
       toast.success('Dates de la tâche mises à jour');
     } catch (error) {
       console.error('Erreur lors de la mise à jour des dates:', error);
