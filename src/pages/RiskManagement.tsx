@@ -1,6 +1,6 @@
 
 import { useParams, useNavigate } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
@@ -15,9 +15,10 @@ export const RiskManagement = () => {
   const { projectId } = useParams<{ projectId: string }>();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const { canEdit, isProjectManager, isAdmin, isSecondaryProjectManager } = useProjectPermissions(projectId || "");
 
-  const { data: project } = useQuery({
+  const { data: project, isLoading, error, refetch } = useQuery({
     queryKey: ["project", projectId],
     queryFn: async () => {
       if (!projectId) {
@@ -54,9 +55,28 @@ export const RiskManagement = () => {
     },
   });
 
-  if (!project) {
-    return <div>Chargement...</div>;
+  if (isLoading) {
+    return <div className="container mx-auto py-8 px-4">Chargement...</div>;
   }
+
+  if (error || !project) {
+    return (
+      <div className="container mx-auto py-8 px-4">
+        <div className="text-center py-8 text-muted-foreground">
+          Une erreur est survenue lors du chargement du projet
+        </div>
+        <Button variant="ghost" onClick={() => navigate("/")}>
+          <ArrowLeft className="h-4 w-4 mr-2" />
+          Retour aux projets
+        </Button>
+      </div>
+    );
+  }
+
+  // Fonction pour rafraîchir les données
+  const refreshData = () => {
+    refetch();
+  };
 
   return (
     <div className="container mx-auto py-8 px-4">
@@ -87,6 +107,7 @@ export const RiskManagement = () => {
           canEdit={canEdit}
           isProjectManager={isProjectManager}
           isAdmin={isAdmin}
+          onUpdate={refreshData}
         />
       </div>
     </div>

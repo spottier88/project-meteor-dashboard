@@ -18,16 +18,22 @@ interface TaskGanttProps {
 export const TaskGantt: React.FC<TaskGanttProps> = ({ tasks, projectId, onEdit }) => {
   const [viewMode, setViewMode] = useState<ViewMode>(ViewMode.Week);
   const [showTaskList, setShowTaskList] = useState<boolean>(true);
+  const [localTasks, setLocalTasks] = useState<Array<any>>(tasks);
+  
+  // Mettre à jour l'état local lorsque les props changent
+  React.useEffect(() => {
+    setLocalTasks(tasks);
+  }, [tasks]);
   
   // Convertir les tâches au format attendu par le composant Gantt
-  const ganttTasks = mapTasksToGanttFormat(tasks);
+  const ganttTasks = mapTasksToGanttFormat(localTasks);
   
   // Gérer le changement de date d'une tâche
   const handleDateChange = async (task: Task) => {
     console.log("Date change detected:", task.id, task.start, task.end);
     
     // Trouver la tâche originale correspondante
-    const originalTask = tasks.find(t => t.id === task.id);
+    const originalTask = localTasks.find(t => t.id === task.id);
     if (!originalTask) {
       console.error("Tâche originale non trouvée:", task.id);
       return;
@@ -57,6 +63,16 @@ export const TaskGantt: React.FC<TaskGanttProps> = ({ tasks, projectId, onEdit }
       }
 
       console.log('Mise à jour réussie, données retournées:', data);
+      
+      // Mettre à jour l'état local avec les nouvelles données
+      setLocalTasks(prevTasks => 
+        prevTasks.map(t => 
+          t.id === task.id 
+            ? { ...t, start_date: startDate, due_date: endDate } 
+            : t
+        )
+      );
+      
       toast.success('Dates de la tâche mises à jour');
     } catch (error) {
       console.error('Erreur lors de la mise à jour des dates:', error);
@@ -68,7 +84,7 @@ export const TaskGantt: React.FC<TaskGanttProps> = ({ tasks, projectId, onEdit }
   const handleTaskDoubleClick = (task: Task) => {
     if (onEdit) {
       // Trouver la tâche originale correspondante
-      const originalTask = tasks.find(t => t.id === task.id);
+      const originalTask = localTasks.find(t => t.id === task.id);
       if (originalTask) {
         onEdit(originalTask);
       }
