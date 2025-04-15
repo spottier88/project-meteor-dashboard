@@ -16,6 +16,7 @@ export interface RiskListProps {
   canEdit: boolean;
   isProjectManager: boolean;
   isAdmin: boolean;
+  onUpdate?: () => void; // Ajout de la propriété onUpdate en option
 }
 
 export const RiskList = ({
@@ -24,6 +25,7 @@ export const RiskList = ({
   canEdit,
   isProjectManager,
   isAdmin,
+  onUpdate, // Ajout du paramètre onUpdate
 }: RiskListProps) => {
   const { toast } = useToast();
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -68,6 +70,11 @@ export const RiskList = ({
       });
 
       refetch();
+      
+      // Appel de la fonction onUpdate après la suppression
+      if (onUpdate) {
+        onUpdate();
+      }
     } catch (error) {
       console.error("Error:", error);
       toast({
@@ -85,6 +92,10 @@ export const RiskList = ({
 
   const handleFormSubmit = () => {
     refetch();
+    // Appel de la fonction onUpdate après la soumission du formulaire
+    if (onUpdate) {
+      onUpdate();
+    }
     handleFormClose();
   };
 
