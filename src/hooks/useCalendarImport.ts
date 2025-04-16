@@ -71,7 +71,7 @@ export const useCalendarImport = () => {
       const currentAuthStatus = checkAuthStatus();
       
       if (!currentAuthStatus) {
-        console.log('useCalendarImport: Non authentifié, impossible de récupérer les événements');
+        // console.log('useCalendarImport: Non authentifié, impossible de récupérer les événements');
         throw new Error("Vous devez d'abord vous connecter à Microsoft");
       }
       
@@ -119,7 +119,7 @@ export const useCalendarImport = () => {
             const matchingCode = projectCodes.find(pc => pc.code === event.projectCode);
             if (matchingCode) {
               projectId = matchingCode.project_id;
-              console.log(`Code projet trouvé: ${event.projectCode} => ${projectId}`);
+              // console.log(`Code projet trouvé: ${event.projectCode} => ${projectId}`);
             }
           }
           
@@ -128,7 +128,7 @@ export const useCalendarImport = () => {
             const matchingActivityType = activityTypes.find(at => `A-${at.code}` === event.activityTypeCode);
             if (matchingActivityType) {
               activityType = matchingActivityType.code;
-              console.log(`Code type d'activité trouvé: ${event.activityTypeCode} => ${activityType}`);
+              // console.log(`Code type d'activité trouvé: ${event.activityTypeCode} => ${activityType}`);
             }
           }
 
@@ -152,7 +152,7 @@ export const useCalendarImport = () => {
           a.startTime.getTime() - b.startTime.getTime()
         );
         
-        console.log('Événements triés par date de début');
+        // console.log('Événements triés par date de début');
         
         setEvents(sortedEvents);
         return sortedEvents;
@@ -198,7 +198,7 @@ export const useCalendarImport = () => {
         );
       }
 
-      console.log('Import de', eventsToImport.length, 'événements');
+      // console.log('Import de', eventsToImport.length, 'événements');
 
       const { error: importError } = await supabase.from('calendar_imports').insert({
         start_date: startDate.toISOString(),
@@ -219,7 +219,7 @@ export const useCalendarImport = () => {
         project_id: event.projectId || null, // Peut être null maintenant
       }));
 
-      console.log('Activités à insérer:', activitiesToInsert);
+      // console.log('Activités à insérer:', activitiesToInsert);
 
       const { error: activitiesError } = await supabase
         .from('activities')

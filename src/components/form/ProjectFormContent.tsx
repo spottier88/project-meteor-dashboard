@@ -30,11 +30,11 @@ export const ProjectFormContent = ({
   isManager
 }: ProjectFormContentProps) => {
   const permissions = useMemo(() => {
-    console.log("ProjectFormContent - permissions received:", {
-      isAdmin,
-      isManager,
-      canEditOrganization
-    });
+    // console.log("ProjectFormContent - permissions received:", {
+    //   isAdmin,
+    //   isManager,
+    //   canEditOrganization
+    // });
     
     return { isAdmin, isManager, canEditOrganization };
   }, [isAdmin, isManager, canEditOrganization]);

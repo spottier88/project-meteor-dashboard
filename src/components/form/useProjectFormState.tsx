@@ -134,7 +134,7 @@ export const useProjectFormState = (isOpen: boolean, project?: any) => {
         .order("created_at", { ascending: false });
       
       if (assignmentError || !userAssignments || userAssignments.length === 0) {
-        console.log("Aucune affectation hiérarchique trouvée pour l'utilisateur:", email);
+        // console.log("Aucune affectation hiérarchique trouvée pour l'utilisateur:", email);
         setProjectManagerOrganization({});
         setHasNoHierarchyAssignment(true);
         return;

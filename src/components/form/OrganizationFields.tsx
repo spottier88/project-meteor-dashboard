@@ -142,7 +142,7 @@ export const OrganizationFields = ({
   // Effet de debug pour vérifier les données chargées
   useEffect(() => {
     if (accessibleOrganizations) {
-      console.log("OrganizationFields - Accessible organizations:", accessibleOrganizations);
+      // console.log("OrganizationFields - Accessible organizations:", accessibleOrganizations);
     }
   }, [accessibleOrganizations]);
 

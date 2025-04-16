@@ -38,7 +38,7 @@ export function PermissionsProvider({ children }: { children: React.ReactNode })
     queryKey: ['userRoles', user?.id, session?.access_token] as const,
     queryFn: async () => {
       if (!user?.id) {
-        console.log("[PermissionsProvider] No user ID available");
+        // console.log("[PermissionsProvider] No user ID available");
         return [];
       }
       const { data, error } = await supabase
@@ -122,27 +122,27 @@ export function PermissionsProvider({ children }: { children: React.ReactNode })
     loadAccessibleOrganizations();
   }, [user?.id, isAdmin, isManager, isLoading, isError, userRoles]); // Ajout de userRoles comme dépendance
 
-  useEffect(() => {
-    console.log("[PermissionsProvider] State update:", {
-      userId: user?.id,
-      userEmail: userProfile?.email,
-      userRoles,
-      highestRole,
-      isAdmin,
-      isManager,
-      isProjectManager,
-      isMember,
-      isTimeTracker,
-      isLoading,
-      isError,
-      sessionStatus: !!session,
-      accessibleOrganizations: {
-        poles: accessibleOrganizations?.poles?.length || 0,
-        directions: accessibleOrganizations?.directions?.length || 0,
-        services: accessibleOrganizations?.services?.length || 0
-      }
-    });
-  }, [user?.id, userProfile, userRoles, highestRole, isAdmin, isManager, isProjectManager, isMember, isTimeTracker, isLoading, isError, session, accessibleOrganizations]);
+  // useEffect(() => {
+    // console.log("[PermissionsProvider] State update:", {
+    //   userId: user?.id,
+    //   userEmail: userProfile?.email,
+    //   userRoles,
+    //   highestRole,
+    //   isAdmin,
+    //   isManager,
+    //   isProjectManager,
+    //   isMember,
+    //   isTimeTracker,
+    //   isLoading,
+    //   isError,
+    //   sessionStatus: !!session,
+    //   accessibleOrganizations: {
+    //     poles: accessibleOrganizations?.poles?.length || 0,
+    //     directions: accessibleOrganizations?.directions?.length || 0,
+    //     services: accessibleOrganizations?.services?.length || 0
+    //   }
+    // });
+  // }, [user?.id, userProfile, userRoles, highestRole, isAdmin, isManager, isProjectManager, isMember, isTimeTracker, isLoading, isError, session, accessibleOrganizations]);
 
   if (!session) {
     return null;

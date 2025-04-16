@@ -43,10 +43,10 @@ export const ProjectFormStep1 = ({
   projectManagers
 }: ProjectFormStep1Props) => {
   // Ajouter un log pour vérifier les valeurs reçues
-  console.log("ProjectFormStep1 - permissions received:", { 
-    isAdmin, 
-    isManager
-  });
+  // console.log("ProjectFormStep1 - permissions received:", { 
+  //   isAdmin, 
+  //   isManager
+  // });
 
   return (
     <div className="space-y-6">

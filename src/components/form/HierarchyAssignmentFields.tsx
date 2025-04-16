@@ -24,13 +24,13 @@ export const HierarchyAssignmentFields = ({
   const { data: poles, isLoading: isLoadingPoles } = useQuery({
     queryKey: ["poles"],
     queryFn: async () => {
-      console.log("Fetching poles...");
+      // console.log("Fetching poles...");
       const { data, error } = await supabase
         .from("poles")
         .select("*")
         .order("name");
       if (error) throw error;
-      console.log("Poles fetched:", data);
+      // console.log("Poles fetched:", data);
       return data;
     },
   });
@@ -38,7 +38,7 @@ export const HierarchyAssignmentFields = ({
   const { data: directions, isLoading: isLoadingDirections } = useQuery({
     queryKey: ["directions", selectedPoleId],
     queryFn: async () => {
-      console.log("Fetching directions for pole:", selectedPoleId);
+      // console.log("Fetching directions for pole:", selectedPoleId);
       if (selectedPoleId === "none") return [];
       const { data, error } = await supabase
         .from("directions")
@@ -46,7 +46,7 @@ export const HierarchyAssignmentFields = ({
         .eq("pole_id", selectedPoleId)
         .order("name");
       if (error) throw error;
-      console.log("Directions fetched:", data);
+      // console.log("Directions fetched:", data);
       return data;
     },
     enabled: selectedPoleId !== "none" && selectedPoleId !== "",
@@ -55,7 +55,7 @@ export const HierarchyAssignmentFields = ({
   const { data: services, isLoading: isLoadingServices } = useQuery({
     queryKey: ["services", selectedDirectionId],
     queryFn: async () => {
-      console.log("Fetching services for direction:", selectedDirectionId);
+      // console.log("Fetching services for direction:", selectedDirectionId);
       if (selectedDirectionId === "none") return [];
       const { data, error } = await supabase
         .from("services")
@@ -63,7 +63,7 @@ export const HierarchyAssignmentFields = ({
         .eq("direction_id", selectedDirectionId)
         .order("name");
       if (error) throw error;
-      console.log("Services fetched:", data);
+      // console.log("Services fetched:", data);
       return data;
     },
     enabled: selectedDirectionId !== "none" && selectedDirectionId !== "",
@@ -71,13 +71,13 @@ export const HierarchyAssignmentFields = ({
 
   useEffect(() => {
     if (initialAssignment) {
-      console.log("Initial assignment received:", initialAssignment);
+      // console.log("Initial assignment received:", initialAssignment);
       setSelectedEntityType(initialAssignment.entity_type as EntityType);
       
       const loadInitialSelections = async () => {
         try {
           if (initialAssignment.entity_type === 'service') {
-            console.log("Loading service hierarchy...");
+            // console.log("Loading service hierarchy...");
             const { data: service } = await supabase
               .from('services')
               .select(`
@@ -91,13 +91,13 @@ export const HierarchyAssignmentFields = ({
               .maybeSingle();
 
             if (service) {
-              console.log("Service hierarchy loaded:", service);
+              // console.log("Service hierarchy loaded:", service);
               setSelectedPoleId(service.directions.poles.id);
               setSelectedDirectionId(service.directions.id);
               setSelectedServiceId(initialAssignment.entity_id);
             }
           } else if (initialAssignment.entity_type === 'direction') {
-            console.log("Loading direction hierarchy...");
+            // console.log("Loading direction hierarchy...");
             const { data: direction } = await supabase
               .from('directions')
               .select(`
@@ -108,12 +108,12 @@ export const HierarchyAssignmentFields = ({
               .maybeSingle();
 
             if (direction) {
-              console.log("Direction hierarchy loaded:", direction);
+              // console.log("Direction hierarchy loaded:", direction);
               setSelectedPoleId(direction.poles.id);
               setSelectedDirectionId(initialAssignment.entity_id);
             }
           } else if (initialAssignment.entity_type === 'pole') {
-            console.log("Setting pole:", initialAssignment.entity_id);
+            // console.log("Setting pole:", initialAssignment.entity_id);
             setSelectedPoleId(initialAssignment.entity_id);
           }
         } catch (error) {
@@ -145,10 +145,10 @@ export const HierarchyAssignmentFields = ({
     }
 
     if (entityId) {
-      console.log("Updating assignment:", {
-        entityType: selectedEntityType,
-        entityId: entityId
-      });
+      // console.log("Updating assignment:", {
+      //   entityType: selectedEntityType,
+      //   entityId: entityId
+      // });
       onAssignmentChange({
         user_id: userId,
         entity_id: entityId,
@@ -158,7 +158,7 @@ export const HierarchyAssignmentFields = ({
   }, [selectedEntityType, selectedPoleId, selectedDirectionId, selectedServiceId, userId, onAssignmentChange]);
 
   const handleEntityTypeChange = (value: string) => {
-    console.log("Entity type changed to:", value);
+    // console.log("Entity type changed to:", value);
     setSelectedEntityType(value as EntityType | "none");
     if (value === "none") {
       setSelectedPoleId("none");
@@ -194,7 +194,7 @@ export const HierarchyAssignmentFields = ({
           <Select 
             value={selectedPoleId} 
             onValueChange={(value) => {
-              console.log("Pole selection changed to:", value);
+              // console.log("Pole selection changed to:", value);
               setSelectedPoleId(value);
               setSelectedDirectionId("none");
               setSelectedServiceId("none");
@@ -221,7 +221,7 @@ export const HierarchyAssignmentFields = ({
           <Select 
             value={selectedDirectionId} 
             onValueChange={(value) => {
-              console.log("Direction selection changed to:", value);
+              // console.log("Direction selection changed to:", value);
               setSelectedDirectionId(value);
               setSelectedServiceId("none");
             }}
@@ -247,7 +247,7 @@ export const HierarchyAssignmentFields = ({
           <Select 
             value={selectedServiceId} 
             onValueChange={(value) => {
-              console.log("Service selection changed to:", value);
+              // console.log("Service selection changed to:", value);
               setSelectedServiceId(value);
             }}
           >

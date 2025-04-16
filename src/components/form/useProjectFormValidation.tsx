@@ -36,11 +36,11 @@ export const useProjectFormValidation = () => {
     const isManagerRole = userRoles?.some(ur => ur.role === 'manager') || false;
     
     // Log pour vérifier les valeurs (une seule fois par changement réel)
-    console.log("useProjectFormValidation - roles detected:", {
-      userRoles: userRoles?.map(ur => ur.role),
-      isAdmin: isAdminRole,
-      isManager: isManagerRole
-    });
+    // console.log("useProjectFormValidation - roles detected:", {
+    //   userRoles: userRoles?.map(ur => ur.role),
+    //   isAdmin: isAdminRole,
+    //   isManager: isManagerRole
+    // });
     
     return { isAdmin: isAdminRole, isManager: isManagerRole };
   }, [userRoles]);

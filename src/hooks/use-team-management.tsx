@@ -98,7 +98,7 @@ export const useTeamManagement = (projectId: string) => {
         throw new Error("ID du membre non défini");
       }
       
-      console.log(`Updating member ${memberId} in project ${projectId} to role ${role}`);
+      // console.log(`Updating member ${memberId} in project ${projectId} to role ${role}`);
       
       // Vérifier d'abord si l'enregistrement existe
       const { data: checkData, error: checkError } = await supabase
@@ -108,7 +108,7 @@ export const useTeamManagement = (projectId: string) => {
         .eq("project_id", projectId)
         .single();
       
-      console.log("Check result:", checkData, checkError);
+      // console.log("Check result:", checkData, checkError);
       
       if (checkError) {
         console.error("Error checking member existence:", checkError);
@@ -131,7 +131,7 @@ export const useTeamManagement = (projectId: string) => {
         throw error;
       }
       
-      console.log("Update response:", data);
+      // console.log("Update response:", data);
       return data;
     },
     onSuccess: () => {

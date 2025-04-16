@@ -262,9 +262,9 @@ const Index = () => {
     };
   }) => {
     try {
-      console.log("[ProjectForm] Starting project operation with detailed logs");
-      console.log("[ProjectForm] Current user session:", await supabase.auth.getSession());
-      console.log("[ProjectForm] User roles from context:", userProfile?.roles);
+      // console.log("[ProjectForm] Starting project operation with detailed logs");
+      // console.log("[ProjectForm] Current user session:", await supabase.auth.getSession());
+      // console.log("[ProjectForm] User roles from context:", userProfile?.roles);
 
       const projectPayload = {
         title: projectData.title,
@@ -282,14 +282,14 @@ const Index = () => {
         for_entity_id: projectData.for_entity_id,
       };
 
-      console.log("[ProjectForm] Project payload:", projectPayload);
+      // console.log("[ProjectForm] Project payload:", projectPayload);
 
       const { data: userRoles, error: rolesError } = await supabase
         .from('user_roles')
         .select('role')
         .eq('user_id', user?.id);
       
-      console.log("[ProjectForm] User roles from direct query:", userRoles);
+      // console.log("[ProjectForm] User roles from direct query:", userRoles);
       if (rolesError) {
         console.error("[ProjectForm] Error fetching roles:", rolesError);
       }
@@ -297,14 +297,14 @@ const Index = () => {
       let projectId;
 
       if (selectedProject?.id) {
-        console.log("[ProjectForm] Updating project:", selectedProject.id);
+        // console.log("[ProjectForm] Updating project:", selectedProject.id);
         const { data: updatedProject, error: projectError } = await supabase
           .from("projects")
           .update(projectPayload)
           .eq("id", selectedProject.id)
           .select();
 
-        console.log("[ProjectForm] Project update result:", { updatedProject, error: projectError });
+        // console.log("[ProjectForm] Project update result:", { updatedProject, error: projectError });
 
         if (projectError) {
           console.error("[ProjectForm] Project update error:", projectError);
@@ -313,7 +313,7 @@ const Index = () => {
 
         projectId = selectedProject.id;
 
-        console.log("[ProjectForm] Updating innovation scores for project:", selectedProject.id);
+        // console.log("[ProjectForm] Updating innovation scores for project:", selectedProject.id);
         const { data: innovationData, error: innovationError } = await supabase
           .from("project_innovation_scores")
           .upsert({
@@ -325,14 +325,14 @@ const Index = () => {
           })
           .select();
 
-        console.log("[ProjectForm] Innovation scores update result:", { innovationData, error: innovationError });
+        // console.log("[ProjectForm] Innovation scores update result:", { innovationData, error: innovationError });
 
         if (innovationError) {
           console.error("[ProjectForm] Innovation scores update error:", innovationError);
           throw innovationError;
         }
 
-        console.log("[ProjectForm] Updating monitoring for project:", selectedProject.id);
+        // console.log("[ProjectForm] Updating monitoring for project:", selectedProject.id);
         const { data: monitoringData, error: monitoringError } = await supabase
           .from("project_monitoring")
           .upsert({
@@ -344,7 +344,7 @@ const Index = () => {
           })
           .select();
 
-        console.log("[ProjectForm] Monitoring update result:", { monitoringData, error: monitoringError });
+        // console.log("[ProjectForm] Monitoring update result:", { monitoringData, error: monitoringError });
 
         if (monitoringError) {
           console.error("[ProjectForm] Monitoring update error:", monitoringError);
@@ -352,14 +352,14 @@ const Index = () => {
         }
 
       } else {
-        console.log("[ProjectForm] Creating new project with user:", user?.id);
+        // console.log("[ProjectForm] Creating new project with user:", user?.id);
         const { data: newProject, error: projectError } = await supabase
           .from("projects")
           .insert(projectPayload)
           .select()
           .single();
 
-        console.log("[ProjectForm] Project creation result:", { newProject, error: projectError });
+        // console.log("[ProjectForm] Project creation result:", { newProject, error: projectError });
 
         if (projectError) {
           console.error("[ProjectForm] Project creation error:", projectError.message);
@@ -369,7 +369,7 @@ const Index = () => {
 
         projectId = newProject.id;
 
-        console.log("[ProjectForm] Creating innovation scores for new project:", newProject.id);
+        // console.log("[ProjectForm] Creating innovation scores for new project:", newProject.id);
         const { data: innovationData, error: innovationError } = await supabase
           .from("project_innovation_scores")
           .insert({
@@ -378,7 +378,7 @@ const Index = () => {
           })
           .select();
 
-        console.log("[ProjectForm] Innovation scores creation result:", { innovationData, error: innovationError });
+        // console.log("[ProjectForm] Innovation scores creation result:", { innovationData, error: innovationError });
 
         if (innovationError) {
           console.error("[ProjectForm] Innovation scores creation error:", innovationError.message);
@@ -386,7 +386,7 @@ const Index = () => {
           throw innovationError;
         }
 
-        console.log("[ProjectForm] Creating monitoring for new project:", newProject.id);
+        // console.log("[ProjectForm] Creating monitoring for new project:", newProject.id);
         const { data: monitoringData, error: monitoringError } = await supabase
           .from("project_monitoring")
           .insert({
@@ -396,7 +396,7 @@ const Index = () => {
           })
           .select();
 
-        console.log("[ProjectForm] Monitoring creation result:", { monitoringData, error: monitoringError });
+        // console.log("[ProjectForm] Monitoring creation result:", { monitoringData, error: monitoringError });
 
         if (monitoringError) {
           console.error("[ProjectForm] Monitoring creation error:", monitoringError.message);
@@ -406,7 +406,7 @@ const Index = () => {
       }
 
       if (projectId) {
-        console.log("[ProjectForm] Checking existing framing data for project:", projectId);
+        // console.log("[ProjectForm] Checking existing framing data for project:", projectId);
         
         const { data: existingFraming, error: checkFramingError } = await supabase
           .from("project_framing")
@@ -414,7 +414,7 @@ const Index = () => {
           .eq("project_id", projectId)
           .maybeSingle();
           
-        console.log("[ProjectForm] Existing framing check result:", { existingFraming, error: checkFramingError });
+        // console.log("[ProjectForm] Existing framing check result:", { existingFraming, error: checkFramingError });
         
         if (checkFramingError) {
           console.error("[ProjectForm] Error checking existing framing:", checkFramingError);
@@ -432,27 +432,27 @@ const Index = () => {
         };
 
         if (existingFraming) {
-          console.log("[ProjectForm] Updating existing framing data for project:", projectId);
+          // console.log("[ProjectForm] Updating existing framing data for project:", projectId);
           const { data: updatedFraming, error: updateFramingError } = await supabase
             .from("project_framing")
             .update(framingData)
             .eq("id", existingFraming.id)
             .select();
 
-          console.log("[ProjectForm] Framing update result:", { updatedFraming, error: updateFramingError });
+          // console.log("[ProjectForm] Framing update result:", { updatedFraming, error: updateFramingError });
           
           if (updateFramingError) {
             console.error("[ProjectForm] Error updating framing data:", updateFramingError);
             throw updateFramingError;
           }
         } else {
-          console.log("[ProjectForm] Creating new framing data for project:", projectId);
+          // console.log("[ProjectForm] Creating new framing data for project:", projectId);
           const { data: newFraming, error: insertFramingError } = await supabase
             .from("project_framing")
             .insert(framingData)
             .select();
 
-          console.log("[ProjectForm] Framing creation result:", { newFraming, error: insertFramingError });
+          // console.log("[ProjectForm] Framing creation result:", { newFraming, error: insertFramingError });
           
           if (insertFramingError) {
             console.error("[ProjectForm] Error inserting framing data:", insertFramingError);
@@ -463,7 +463,7 @@ const Index = () => {
         console.error("[ProjectForm] No project ID available to save framing data");
       }
 
-      console.log("[ProjectForm] Project operation completed successfully");
+      // console.log("[ProjectForm] Project operation completed successfully");
       
       return { id: projectId };
     } catch (error) {

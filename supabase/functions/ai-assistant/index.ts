@@ -216,7 +216,7 @@ serve(async (req) => {
         
         // Utilisation du template de secours
         if (fallbackTemplates[promptType] && fallbackTemplates[promptType][promptSection]) {
-          console.log(`Utilisation du template de secours pour ${promptType}/${promptSection}`);
+          // console.log(`Utilisation du template de secours pour ${promptType}/${promptSection}`);
           usedFallbackTemplate = true;
           
           // Ajouter le template de secours comme message système au début des messages
@@ -291,7 +291,7 @@ serve(async (req) => {
 
     // Vérifier que nous avons un message système pour les notes de cadrage
     if (promptType === 'framework_note' && !finalMessages.some(msg => msg.role === 'system')) {
-      console.log(`Aucun template trouvé pour ${promptType}/${promptSection}, utilisation du template de secours générique`);
+      // console.log(`Aucun template trouvé pour ${promptType}/${promptSection}, utilisation du template de secours générique`);
       
       // Utiliser un template de secours générique si rien n'a été trouvé
       finalMessages = [
@@ -308,7 +308,7 @@ serve(async (req) => {
 
     // Appel à l'API OpenAI
     try {
-      console.log(`Appel OpenAI pour ${promptType}/${promptSection} (template de secours: ${usedFallbackTemplate ? 'Oui' : 'Non'})`);
+      // console.log(`Appel OpenAI pour ${promptType}/${promptSection} (template de secours: ${usedFallbackTemplate ? 'Oui' : 'Non'})`);
       
       const openaiResponse = await fetch('https://api.openai.com/v1/chat/completions', {
         method: 'POST',

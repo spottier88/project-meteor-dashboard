@@ -82,15 +82,15 @@ export const ProjectFormFields = ({
   canEditOrganization = true
 }: ProjectFormFieldsProps) => {
   // Ajouter un log pour vérifier les valeurs reçues
-  console.log("ProjectFormFields - permissions values:", {
-    isAdmin,
-    isManager,
-    canEditOrganization,
-    poleId,
-    directionId,
-    monitoringLevel,
-    monitoringEntityId,
-  });
+  // console.log("ProjectFormFields - permissions values:", {
+  //   isAdmin,
+  //   isManager,
+  //   canEditOrganization,
+  //   poleId,
+  //   directionId,
+  //   monitoringLevel,
+  //   monitoringEntityId,
+  // });
 
   return (
     <div className="grid gap-4 py-4">

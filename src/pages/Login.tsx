@@ -36,7 +36,7 @@ const Login = () => {
   // Fonction simplifiée pour déconnecter l'utilisateur sans boucle
   const performLogout = async () => {
     try {
-      console.log("Déconnexion simple effectuée");
+      // console.log("Déconnexion simple effectuée");
       await supabase.auth.signOut({ scope: 'local' });
       clearSupabaseCookies();
     } catch (error) {
@@ -51,7 +51,7 @@ const Login = () => {
       if (initialCheckDone.current) return;
       
       try {
-        console.log("Vérification de session au démarrage");
+        // console.log("Vérification de session au démarrage");
         setIsCheckingSession(true);
         
         // Récupérer la session actuelle
@@ -66,10 +66,10 @@ const Login = () => {
 
         // Si session active et valide
         if (sessionData?.session) {
-          console.log("Session active détectée, redirection vers la page principale");
+          // console.log("Session active détectée, redirection vers la page principale");
           navigate("/");
         } else {
-          console.log("Aucune session active détectée");
+          // console.log("Aucune session active détectée");
           setIsCheckingSession(false);
         }
       } catch (error) {
@@ -86,18 +86,18 @@ const Login = () => {
   // Gestionnaire d'état d'authentification modifié pour gérer PASSWORD_RECOVERY
   useEffect(() => {
     const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log("Événement d'authentification:", event);
+      // console.log("Événement d'authentification:", event);
       
       // Gérer l'événement PASSWORD_RECOVERY
       if (event === 'PASSWORD_RECOVERY') {
-        console.log("Événement PASSWORD_RECOVERY détecté, redirection vers le formulaire de réinitialisation");
+        // console.log("Événement PASSWORD_RECOVERY détecté, redirection vers le formulaire de réinitialisation");
         // Rediriger vers la page de callback avec le paramètre reset=true
         window.location.href = '/auth/callback?reset=true';
         return;
       }
       
       if (event === 'SIGNED_OUT') {
-        console.log("Événement SIGNED_OUT détecté");
+        // console.log("Événement SIGNED_OUT détecté");
         // Réinitialiser l'état local sans déclencher de nouvelle déconnexion
         setEmail("");
         setPassword("");
@@ -114,7 +114,7 @@ const Login = () => {
       }
 
       if (event === 'SIGNED_IN' && session) {
-        console.log("Événement SIGNED_IN détecté, redirection vers /");
+        // console.log("Événement SIGNED_IN détecté, redirection vers /");
         navigate("/");
       }
     });

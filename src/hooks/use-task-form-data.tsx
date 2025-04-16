@@ -55,7 +55,7 @@ export const useTaskFormData = (projectId: string, isOpen: boolean, taskId?: str
         
         // Si le chef de projet n'est pas dans la liste, le récupérer et l'ajouter
         if (!projectManagerExists) {
-          console.log("Adding project manager to members list");
+          // console.log("Adding project manager to members list");
           const { data: pmProfile, error: pmError } = await supabase
             .from("profiles")
             .select("id, email, first_name, last_name")

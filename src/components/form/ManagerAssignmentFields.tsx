@@ -83,7 +83,7 @@ export const ManagerAssignmentFields = ({ userId, onAssignmentChange }: ManagerA
   }, [selectedPoleId, selectedDirectionId, selectedServiceId, userId, onAssignmentChange]);
 
   const handlePoleChange = (value: string) => {
-    console.log("Pole changed to:", value);
+    // console.log("Pole changed to:", value);
     setSelectedPoleId(value);
     // Reset lower levels when selecting a pole
     setSelectedDirectionId("none");
@@ -91,14 +91,14 @@ export const ManagerAssignmentFields = ({ userId, onAssignmentChange }: ManagerA
   };
 
   const handleDirectionChange = (value: string) => {
-    console.log("Direction changed to:", value);
+    // console.log("Direction changed to:", value);
     setSelectedDirectionId(value);
     // Reset service when selecting a direction
     setSelectedServiceId("none");
   };
 
   const handleServiceChange = (value: string) => {
-    console.log("Service changed to:", value);
+    // console.log("Service changed to:", value);
     setSelectedServiceId(value);
   };
 
