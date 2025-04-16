@@ -161,7 +161,7 @@ export const CalendarImport = () => {
           setStep(ImportStep.AUTH);
           toast({
             title: "Import réussi",
-            description: `${selectedEvents.length} événement(s) importé(s) avec succès.`,
+            description: `${selectedEvents.length} événement(s) importé(s) avec succès.",
           });
         },
         onError: (error) => {

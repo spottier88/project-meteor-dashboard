@@ -26,7 +26,7 @@ serve(async (req) => {
       throw new Error('Calendar URL is required');
     }
 
-    console.log('Fetching calendar from:', calendarUrl);
+    // Pas de console.log ici, c'est une fonction serverless
     
     const response = await fetch(calendarUrl);
     
@@ -35,7 +35,6 @@ serve(async (req) => {
     }
     
     const icsData = await response.text();
-    console.log('Calendar data fetched successfully');
 
     return new Response(JSON.stringify({ icsData }), {
       headers: { 
@@ -45,7 +44,7 @@ serve(async (req) => {
     });
 
   } catch (error) {
-    console.error('Error:', error.message);
+    // On garde un message d'erreur minimal pour le débogage
     return new Response(JSON.stringify({ error: error.message }), { 
       status: 400,
       headers: { 
