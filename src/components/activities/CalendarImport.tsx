@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Calendar } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -161,7 +162,7 @@ export const CalendarImport = () => {
           setStep(ImportStep.AUTH);
           toast({
             title: "Import réussi",
-            description: `${selectedEvents.length} événement(s) importé(s) avec succès.",
+            description: `${selectedEvents.length} événement(s) importé(s) avec succès.`,
           });
         },
         onError: (error) => {
