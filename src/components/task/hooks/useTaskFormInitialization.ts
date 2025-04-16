@@ -16,7 +16,6 @@ export const useTaskFormInitialization = ({ task, projectMembers }: Pick<UseTask
   const [assignmentMode, setAssignmentMode] = useState<"free" | "member">("free");
   const [parentTaskId, setParentTaskId] = useState<string | undefined>(task?.parent_task_id);
 
-  // Initialisation des valeurs du formulaire
   useEffect(() => {
     if (task) {
       setTitle(task.title);
@@ -27,13 +26,9 @@ export const useTaskFormInitialization = ({ task, projectMembers }: Pick<UseTask
       setAssignee(task.assignee || "");
       setParentTaskId(task.parent_task_id);
       
-      // Détermine si l'assigné est un membre du projet ou une saisie libre
       const isMember = projectMembers?.some(m => m.profiles.email === task.assignee);
       setAssignmentMode(isMember ? "member" : "free");
-      
-      console.log(`Initialisation du formulaire pour la tâche ${task.id}, assignee: ${task.assignee}, mode: ${isMember ? "member" : "free"}`);
     } else {
-      // Réinitialisation du formulaire pour une nouvelle tâche
       setTitle("");
       setDescription("");
       setStatus("todo");
@@ -42,7 +37,6 @@ export const useTaskFormInitialization = ({ task, projectMembers }: Pick<UseTask
       setAssignee("");
       setParentTaskId(undefined);
       
-      // Pour les nouvelles tâches, utiliser "member" par défaut si des membres sont disponibles
       if (projectMembers && projectMembers.length > 0) {
         setAssignmentMode("member");
       } else {
@@ -50,13 +44,6 @@ export const useTaskFormInitialization = ({ task, projectMembers }: Pick<UseTask
       }
     }
   }, [task, projectMembers]);
-
-  // Log des membres disponibles pour debug
-  useEffect(() => {
-    if (projectMembers) {
-      console.log(`useTaskForm: ${projectMembers.length} membres disponibles pour le projet`);
-    }
-  }, [projectMembers]);
 
   return {
     title,

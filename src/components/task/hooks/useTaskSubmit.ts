@@ -1,11 +1,9 @@
-
 import { useState } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 import { TaskData } from "../types/TaskFormTypes";
-import { format } from "date-fns";
-import { fr } from "date-fns/locale";
+import { logger } from "@/utils/logger";
 
 interface UseTaskSubmitParams {
   projectId: string;
@@ -36,7 +34,6 @@ export const useTaskSubmit = ({
       return;
     }
 
-    // Si les dates sont définies, vérifier que la date de début est antérieure à la date d'échéance
     if (taskData.start_date && taskData.due_date && new Date(taskData.start_date) > new Date(taskData.due_date)) {
       toast({
         title: "Erreur",
@@ -49,8 +46,6 @@ export const useTaskSubmit = ({
     setIsSubmitting(true);
 
     try {
-      console.log("Saving task with parent_task_id:", taskData.parent_task_id === "none" ? null : taskData.parent_task_id || null);
-
       if (taskId) {
         const { error } = await supabase
           .from("tasks")
@@ -79,17 +74,15 @@ export const useTaskSubmit = ({
         });
       }
 
-      // Invalider les requêtes pour mettre à jour l'UI
       queryClient.invalidateQueries({ queryKey: ["tasks", projectId] });
       queryClient.invalidateQueries({ queryKey: ["project-tasks-for-parent", projectId] });
       
-      // Réinitialiser l'état des modifications non enregistrées
       resetHasUnsavedChanges();
       
       onSubmit();
       onClose();
     } catch (error) {
-      console.error("Error:", error);
+      logger.error("Erreur lors de la soumission de la tâche:" + error);
       toast({
         title: "Erreur",
         description: "Une erreur est survenue",

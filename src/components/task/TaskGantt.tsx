@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Gantt, Task, ViewMode } from 'gantt-task-react';
 import { mapTasksToGanttFormat } from '@/utils/gantt-helpers';
@@ -8,12 +7,13 @@ import { Button } from "@/components/ui/button";
 import { CalendarDays, CalendarRange, Calendar } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { logger } from "@/utils/logger";
 
 interface TaskGanttProps {
   tasks: Array<any>;
   projectId: string;
   onEdit?: (task: any) => void;
-  onUpdate?: () => void; // Nouvelle prop pour notifier le parent qu'une tâche a été mise à jour
+  onUpdate?: () => void;
 }
 
 export const TaskGantt: React.FC<TaskGanttProps> = ({ tasks, projectId, onEdit, onUpdate }) => {
@@ -21,33 +21,17 @@ export const TaskGantt: React.FC<TaskGanttProps> = ({ tasks, projectId, onEdit, 
   const [showTaskList, setShowTaskList] = useState<boolean>(true);
   const [localTasks, setLocalTasks] = useState<Array<any>>(tasks);
   
-  // Mettre à jour l'état local lorsque les props changent
   React.useEffect(() => {
     setLocalTasks(tasks);
   }, [tasks]);
   
-  // Convertir les tâches au format attendu par le composant Gantt
   const ganttTasks = mapTasksToGanttFormat(localTasks);
   
-  // Gérer le changement de date d'une tâche
   const handleDateChange = async (task: Task) => {
-    console.log("Date change detected:", task.id, task.start, task.end);
-    
-    // Trouver la tâche originale correspondante
-    const originalTask = localTasks.find(t => t.id === task.id);
-    if (!originalTask) {
-      console.error("Tâche originale non trouvée:", task.id);
-      return;
-    }
-
     try {
-      // Formatage des dates pour la base de données
       const startDate = task.start.toISOString().split('T')[0];
       const endDate = task.end.toISOString().split('T')[0];
       
-      console.log("Mise à jour des dates:", startDate, endDate);
-      
-      // Mettre à jour la tâche dans la base de données
       const { error, data } = await supabase
         .from('tasks')
         .update({
@@ -58,14 +42,8 @@ export const TaskGantt: React.FC<TaskGanttProps> = ({ tasks, projectId, onEdit, 
         .eq('id', task.id)
         .select();
 
-      if (error) {
-        console.error('Erreur lors de la mise à jour des dates:', error);
-        throw error;
-      }
+      if (error) throw error;
 
-      console.log('Mise à jour réussie, données retournées:', data);
-      
-      // Mettre à jour l'état local avec les nouvelles données
       setLocalTasks(prevTasks => 
         prevTasks.map(t => 
           t.id === task.id 
@@ -76,20 +54,17 @@ export const TaskGantt: React.FC<TaskGanttProps> = ({ tasks, projectId, onEdit, 
       
       toast.success('Dates de la tâche mises à jour');
       
-      // Notifier le parent qu'une mise à jour a eu lieu
       if (onUpdate) {
         onUpdate();
       }
     } catch (error) {
-      console.error('Erreur lors de la mise à jour des dates:', error);
+      logger.error('Erreur lors de la mise à jour des dates:' + error);
       toast.error("Erreur lors de la mise à jour des dates");
     }
   };
 
-  // Gérer le double-clic sur une tâche pour l'édition
   const handleTaskDoubleClick = (task: Task) => {
     if (onEdit) {
-      // Trouver la tâche originale correspondante
       const originalTask = localTasks.find(t => t.id === task.id);
       if (originalTask) {
         onEdit(originalTask);
@@ -97,7 +72,6 @@ export const TaskGantt: React.FC<TaskGanttProps> = ({ tasks, projectId, onEdit, 
     }
   };
 
-  // Définir la largeur des colonnes en fonction du mode de vue
   let columnWidth = 65;
   if (viewMode === ViewMode.Year) {
     columnWidth = 250;
