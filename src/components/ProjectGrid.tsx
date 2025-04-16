@@ -43,16 +43,16 @@ export const ProjectGrid = ({
   
   useEffect(() => {
     if (!isLoading && !isPermissionsLoaded) {
-      console.log(`[ProjectGrid] Initial permissions loaded:`, {
-        timestamp: new Date().toISOString(),
-        projectsCount: projects.length,
-        userEmail: userProfile?.email,
-        isAdmin,
-        isManager,
-        isProjectManager,
-        isMember,
-        highestRole
-      });
+      //console.log(`[ProjectGrid] Initial permissions loaded:`, {
+      //  timestamp: new Date().toISOString(),
+      //  projectsCount: projects.length,
+      //  userEmail: userProfile?.email,
+      //  isAdmin,
+      //  isManager,
+     //   isProjectManager,
+     //   isMember,
+     //   highestRole
+     // });
       setIsPermissionsLoaded(true);
     }
   }, [isLoading, isPermissionsLoaded, userProfile?.email, isAdmin, isManager, isProjectManager, isMember, highestRole, projects.length]);
