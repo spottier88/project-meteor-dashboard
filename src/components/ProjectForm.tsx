@@ -32,10 +32,10 @@ export const ProjectForm = ({ isOpen, onClose, onSubmit, project }: ProjectFormP
   const [isProfileFormOpen, setIsProfileFormOpen] = useState(false);
 
   const validationValues = useMemo(() => {
-    console.log("ProjectForm - validation values:", {
-      isAdmin: validation.isAdmin,
-      isManager: validation.isManager
-    });
+    // console.log("ProjectForm - validation values:", {
+    //   isAdmin: validation.isAdmin,
+    //   isManager: validation.isManager
+    // });
     
     return {
       isAdmin: validation.isAdmin,

@@ -61,7 +61,7 @@ export const ProjectGrid = ({
     queryKey: ["projectMemberships", user?.id],
     queryFn: async () => {
       if (!user?.id) {
-        console.log("[ProjectGrid] No user ID for memberships query");
+        // console.log("[ProjectGrid] No user ID for memberships query");
         return [];
       }
       const { data, error } = await supabase
@@ -85,7 +85,7 @@ export const ProjectGrid = ({
 
   const filteredProjects = useMemo(() => {
     if (!user) {
-      console.log("[ProjectGrid] No user logged in");
+      // console.log("[ProjectGrid] No user logged in");
       return [];
     }
 

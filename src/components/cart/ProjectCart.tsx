@@ -55,7 +55,7 @@ export const ProjectCart = ({ isOpen, onClose }: ProjectCartProps) => {
               
             if (!actionsError) {
               reviewActions = actionsData || [];
-              console.log(`Récupération de ${reviewActions.length} actions pour la revue ${reviewResult.data.review_id}`);
+              // console.log(`Récupération de ${reviewActions.length} actions pour la revue ${reviewResult.data.review_id}`);
             }
           }
 

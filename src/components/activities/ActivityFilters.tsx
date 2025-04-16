@@ -38,7 +38,7 @@ export const ActivityFilters = ({
   const { data: projects } = useQuery({
     queryKey: ['my-activity-projects-for-filter'],
     queryFn: async () => {
-      console.log("[ActivityFilters] Fetching my accessible projects with role context:", { isAdmin, isManager });
+      // console.log("[ActivityFilters] Fetching my accessible projects with role context:", { isAdmin, isManager });
       
       const { data: projectsData, error } = await supabase
         .from("projects")
@@ -69,7 +69,7 @@ export const ActivityFilters = ({
         return project.project_members?.some(member => member.user_id === user?.id);
       });
 
-      console.log("[ActivityFilters] Filtered projects:", filteredProjects);
+      // console.log("[ActivityFilters] Filtered projects:", filteredProjects);
       return filteredProjects || [];
     },
     enabled: !!user?.id,

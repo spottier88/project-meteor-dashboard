@@ -76,7 +76,7 @@ export const UserInfo = () => {
 
   const handleLogout = async () => {
     try {
-      console.log("Début de la procédure de déconnexion");
+      // console.log("Début de la procédure de déconnexion");
       
       queryClient.clear();
       
@@ -85,7 +85,7 @@ export const UserInfo = () => {
       
       clearSupabaseCookies();
       
-      console.log("Déconnexion effectuée avec succès, redirection vers login");
+      // console.log("Déconnexion effectuée avec succès, redirection vers login");
       
       toast({
         title: "Déconnexion réussie",

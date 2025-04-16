@@ -74,12 +74,12 @@ export const ProjectTable = ({
     queryKey: ["filteredProjects", projectIds, user?.id, userRoles, userProfile, projectMemberships, projectAccess],
     queryFn: async () => {
       if (!user) {
-        console.log("No user logged in");
+        // console.log("No user logged in");
         return [];
       }
 
       if (isAdmin) {
-        console.log("User is admin, showing all projects");
+        // console.log("User is admin, showing all projects");
         return projects;
       }
 

@@ -26,7 +26,7 @@ export const DateSelectionStep: React.FC<DateSelectionStepProps> = ({
 }) => {
   // Effet pour journaliser l'état d'authentification
   useEffect(() => {
-    console.log("DateSelectionStep: isAuthenticated =", isAuthenticated);
+    // console.log("DateSelectionStep: isAuthenticated =", isAuthenticated);
   }, [isAuthenticated]);
   
   // État local pour la validation
@@ -35,14 +35,14 @@ export const DateSelectionStep: React.FC<DateSelectionStepProps> = ({
 
   const handleStartDateSelect = (date: Date | undefined) => {
     if (date) {
-      console.log("DateSelectionStep: Selected start date:", date);
+      // console.log("DateSelectionStep: Selected start date:", date);
       onDateSelect(date, endDate || date);
     }
   };
 
   const handleEndDateSelect = (date: Date | undefined) => {
     if (date) {
-      console.log("DateSelectionStep: Selected end date:", date);
+      // console.log("DateSelectionStep: Selected end date:", date);
       onDateSelect(importDate || date, date);
     }
   };
