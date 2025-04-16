@@ -9,11 +9,11 @@ export const useManagerPermissions = (projectId: string) => {
   const hasManagerAccess = useMemo(() => {
     const result = isAdmin || isManager;
     
-    console.log('useManagerPermissions for project:', projectId, {
-      isAdmin,
-      isManager,
+ //   console.log('useManagerPermissions for project:', projectId, {
+ //     isAdmin,
+ //     isManager,
       result
-    });
+ //   });
     
     return result;
   }, [isAdmin, isManager, projectId]);
