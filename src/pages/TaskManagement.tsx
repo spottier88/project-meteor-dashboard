@@ -4,11 +4,12 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { TaskList } from "@/components/TaskList";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, FileSpreadsheet } from "lucide-react";
 import { ProjectStatus, ProgressStatus } from "@/types/project";
 import { useProjectPermissions } from "@/hooks/useProjectPermissions";
 import { useToast } from "@/components/ui/use-toast";
 import { ProjectSummaryHeader } from "@/components/project/ProjectSummaryHeader";
+import { exportTasksToExcel } from "@/utils/activityExport";
 
 export const TaskManagement = () => {
   const { projectId } = useParams<{ projectId: string }>();
@@ -53,20 +54,64 @@ export const TaskManagement = () => {
     },
   });
 
+  // Récupération de toutes les tâches pour l'export
+  const { data: allTasks } = useQuery({
+    queryKey: ["allTasks", projectId],
+    queryFn: async () => {
+      if (!projectId) return [];
+      
+      const { data, error } = await supabase
+        .from("tasks")
+        .select("*")
+        .eq("project_id", projectId)
+        .order("created_at", { ascending: false });
+
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!projectId,
+  });
+
+  const handleExportTasks = () => {
+    if (allTasks && allTasks.length > 0 && project) {
+      exportTasksToExcel(allTasks, project.title);
+      toast({
+        title: "Export réussi",
+        description: "La liste des tâches a été exportée avec succès.",
+      });
+    } else {
+      toast({
+        variant: "destructive",
+        title: "Erreur d'export",
+        description: "Aucune tâche à exporter.",
+      });
+    }
+  };
+
   if (!project) {
     return <div>Chargement...</div>;
   }
 
   return (
     <div className="container mx-auto py-8 px-4">
-      <Button
-        variant="ghost"
-        className="mb-6"
-        onClick={() => navigate("/")}
-      >
-        <ArrowLeft className="h-4 w-4 mr-2" />
-        Retour aux projets
-      </Button>
+      <div className="flex justify-between items-center mb-6">
+        <Button
+          variant="ghost"
+          onClick={() => navigate("/")}
+        >
+          <ArrowLeft className="h-4 w-4 mr-2" />
+          Retour aux projets
+        </Button>
+        
+        <Button
+          variant="outline"
+          onClick={handleExportTasks}
+          className="ml-auto"
+        >
+          <FileSpreadsheet className="h-4 w-4 mr-2" />
+          Exporter les tâches
+        </Button>
+      </div>
 
       <ProjectSummaryHeader
         title={project.title}

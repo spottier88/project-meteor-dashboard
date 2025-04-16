@@ -30,3 +30,60 @@ export const exportActivitiesToExcel = (activities: any[], periodStart: Date) =>
 
   XLSX.writeFile(wb, `activites_${format(periodStart, 'yyyy-MM-dd')}.xlsx`);
 };
+
+export const exportTasksToExcel = (tasks: any[], projectTitle: string) => {
+  if (!tasks || tasks.length === 0) return;
+
+  const exportData = tasks.map(task => {
+    // Formater les données pour l'export
+    return {
+      'Titre': task.title || '',
+      'Description': task.description || '',
+      'Statut': getStatusLabel(task.status),
+      'Assigné à': task.assignee || '',
+      'Date de début': task.start_date ? format(new Date(task.start_date), 'dd/MM/yyyy') : '',
+      'Date limite': task.due_date ? format(new Date(task.due_date), 'dd/MM/yyyy') : '',
+      'Tâche parente': task.parent_task_id ? 'Oui' : 'Non',
+      'ID de la tâche parente': task.parent_task_id || ''
+    };
+  });
+
+  // Créer une feuille Excel
+  const ws = XLSX.utils.json_to_sheet(exportData);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "Tâches");
+
+  // Définir la largeur des colonnes
+  const colWidths = [
+    { wch: 30 }, // Titre
+    { wch: 50 }, // Description
+    { wch: 15 }, // Statut
+    { wch: 30 }, // Assigné à
+    { wch: 15 }, // Date de début
+    { wch: 15 }, // Date limite
+    { wch: 10 }, // Tâche parente
+    { wch: 20 }, // ID de la tâche parente
+  ];
+  ws['!cols'] = colWidths;
+
+  // Générer le nom du fichier avec la date actuelle
+  const dateStr = format(new Date(), 'yyyy-MM-dd');
+  const fileName = `taches_${projectTitle.replace(/[^a-z0-9]/gi, '_').toLowerCase()}_${dateStr}.xlsx`;
+  
+  // Télécharger le fichier
+  XLSX.writeFile(wb, fileName);
+};
+
+// Fonction utilitaire pour traduire les statuts
+const getStatusLabel = (status: string): string => {
+  switch (status) {
+    case "todo":
+      return "À faire";
+    case "in_progress":
+      return "En cours";
+    case "done":
+      return "Terminé";
+    default:
+      return status;
+  }
+};
