@@ -13,9 +13,10 @@ interface TaskGanttProps {
   tasks: Array<any>;
   projectId: string;
   onEdit?: (task: any) => void;
+  onUpdate?: () => void; // Nouvelle prop pour notifier le parent qu'une tâche a été mise à jour
 }
 
-export const TaskGantt: React.FC<TaskGanttProps> = ({ tasks, projectId, onEdit }) => {
+export const TaskGantt: React.FC<TaskGanttProps> = ({ tasks, projectId, onEdit, onUpdate }) => {
   const [viewMode, setViewMode] = useState<ViewMode>(ViewMode.Week);
   const [showTaskList, setShowTaskList] = useState<boolean>(true);
   const [localTasks, setLocalTasks] = useState<Array<any>>(tasks);
@@ -74,6 +75,11 @@ export const TaskGantt: React.FC<TaskGanttProps> = ({ tasks, projectId, onEdit }
       );
       
       toast.success('Dates de la tâche mises à jour');
+      
+      // Notifier le parent qu'une mise à jour a eu lieu
+      if (onUpdate) {
+        onUpdate();
+      }
     } catch (error) {
       console.error('Erreur lors de la mise à jour des dates:', error);
       toast.error("Erreur lors de la mise à jour des dates");

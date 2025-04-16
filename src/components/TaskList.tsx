@@ -68,6 +68,12 @@ export const TaskList = ({
     },
   });
 
+  // Fonction pour rafraîchir les données des tâches
+  const refreshTasks = () => {
+    console.log("Rafraîchissement des tâches...");
+    refetch();
+  };
+
   const handleDeleteTask = async () => {
     if (!taskToDelete) return;
 
@@ -84,7 +90,7 @@ export const TaskList = ({
         description: "La tâche a été supprimée",
       });
 
-      refetch();
+      refreshTasks();
     } catch (error) {
       console.error("Error:", error);
       toast({
@@ -175,6 +181,7 @@ export const TaskList = ({
                 setIsTaskFormOpen(true);
               }
             }}
+            onUpdate={refreshTasks} // Ajout de la prop onUpdate pour rafraîchir les données après une mise à jour dans Gantt
           />
         ) : null
       ) : (
@@ -189,7 +196,7 @@ export const TaskList = ({
           setIsTaskFormOpen(false);
           setSelectedTask(null);
         }}
-        onSubmit={refetch}
+        onSubmit={refreshTasks} // Utilisation de la fonction refreshTasks
         projectId={projectId}
         task={selectedTask}
         readOnlyFields={!canCreateTask}
