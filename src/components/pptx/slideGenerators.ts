@@ -70,6 +70,12 @@ const addProjectHeader = (slide: pptxgen.Slide, data: ProjectData) => {
     });
   }
 
+  // Ajout du chef de projet
+  slide.addText([
+    { text: "Chef de projet: ", options: { bold: true, color: "FFFFFF", fontSize: 8 } },
+    { text: data.project.project_manager || "Non défini", options: { color: "FFFFFF", fontSize: 8 } }
+  ], { x: 7, y: 0.3, w: 3, h: 0.2, align: "right", valign: "top" });
+
   const hierarchyText = [
     data.project.pole_name,
     data.project.direction_name,

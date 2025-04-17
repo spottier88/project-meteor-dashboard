@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button";
 import { NavigationMenu, NavigationMenuItem, NavigationMenuLink, NavigationMenuList } from "@/components/ui/navigation-menu";
 import { Link, useNavigate } from "react-router-dom";
 import { usePermissionsContext } from '@/contexts/PermissionsContext';
-import { ShoppingCart, History, Plus, FileText } from 'lucide-react';
+import { ShoppingCart, History, Plus } from 'lucide-react';
 import { useProjectCart } from '@/hooks/use-project-cart';
 import { CartButton } from '@/components/cart/CartButton';
 import { ProjectCart } from '@/components/cart/ProjectCart';
@@ -27,7 +27,6 @@ interface DashboardHeaderProps {
 export const DashboardHeader: React.FC<DashboardHeaderProps> = ({ 
   onNewProject, 
   onNewReview
-  
 }) => {
   const navigate = useNavigate();
   const { isAdmin, isManager, hasRole, isTimeTracker } = usePermissionsContext();

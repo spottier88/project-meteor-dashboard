@@ -1,3 +1,4 @@
+
 /**
  * @component ProjectList
  * @description Composant principal pour l'affichage des listes de projets.
