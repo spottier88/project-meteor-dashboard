@@ -37,18 +37,6 @@ export const ViewToggle = ({ currentView, onViewChange }: ViewToggleProps) => {
         <Table2 className="h-4 w-4" />
         Vue tableau
       </Button>
-      <Button
-        variant="outline"
-        size="sm"
-        onClick={() => onViewChange("gantt")}
-        className={cn(
-          "flex items-center gap-2",
-          currentView === "gantt" && "bg-primary text-primary-foreground"
-        )}
-      >
-        <GanttChart className="h-4 w-4" />
-        Vue Gantt
-      </Button>
     </div>
   );
 };
