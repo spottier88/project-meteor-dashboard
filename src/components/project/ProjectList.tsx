@@ -35,7 +35,11 @@ export const ProjectList = ({
   return (
     <div className="space-y-4">
       <div className="flex justify-end">
-        <ViewToggle currentView={view} onViewChange={onViewChange} />
+        <ViewToggle 
+          currentView={view} 
+          onViewChange={onViewChange} 
+          availableViews={["grid", "table"]} // Limiter aux vues grille et tableau uniquement
+        />
       </div>
       {view === "grid" ? (
         <ProjectGrid
