@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { TaskGantt } from "@/components/task/TaskGantt";
 import { useState } from "react";
+import { Task } from "gantt-task-react";
 
 interface ProjectGanttSheetProps {
   isOpen: boolean;
@@ -58,6 +59,7 @@ export const ProjectGanttSheet = ({ isOpen, onClose, projectIds }: ProjectGanttS
       project_id: project.id,
       parent_task_id: null,
       hideChildren: collapsedProjects.has(project.id),
+      type: 'project'
     });
 
     // Ajouter les tâches du projet
@@ -74,8 +76,11 @@ export const ProjectGanttSheet = ({ isOpen, onClose, projectIds }: ProjectGanttS
     return acc;
   }, []) || [];
 
-  const handleExpanderClick = (task: any) => {
+  // Mise à jour de la fonction handleExpanderClick pour modifier la propriété hideChildren
+  const handleExpanderClick = (task: Task) => {
+    // Ne traite que les tâches de type projet
     if (task.type === 'project') {
+      // Inverse l'état d'expansion pour ce projet
       setCollapsedProjects(prev => {
         const newSet = new Set(prev);
         if (newSet.has(task.id)) {

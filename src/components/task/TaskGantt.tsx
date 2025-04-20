@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Gantt, Task, ViewMode } from 'gantt-task-react';
 import { mapTasksToGanttFormat } from '@/utils/gantt-helpers';
@@ -15,7 +14,7 @@ interface TaskGanttProps {
   projectId: string;
   onEdit?: (task: any) => void;
   onUpdate?: () => void;
-  onExpanderClick?: (task: any) => void; // Ajout de cette propriété
+  onExpanderClick?: (task: any) => void; // Propriété pour gérer l'expansion
 }
 
 export const TaskGantt: React.FC<TaskGanttProps> = ({ tasks, projectId, onEdit, onUpdate, onExpanderClick }) => {
@@ -74,7 +73,6 @@ export const TaskGantt: React.FC<TaskGanttProps> = ({ tasks, projectId, onEdit, 
     }
   };
 
-  // Ajout de la gestion des clics sur l'expandeur
   const handleExpanderClick = (task: Task) => {
     if (onExpanderClick) {
       onExpanderClick(task);
@@ -144,7 +142,7 @@ export const TaskGantt: React.FC<TaskGanttProps> = ({ tasks, projectId, onEdit, 
           onDateChange={handleDateChange}
           onProgressChange={() => {}}
           onDoubleClick={handleTaskDoubleClick}
-          onExpanderClick={handleExpanderClick} // Ajout du gestionnaire d'événement pour l'expandeur
+          onExpanderClick={handleExpanderClick}
           listCellWidth={showTaskList ? "250px" : ""}
           columnWidth={columnWidth}
           locale="fr-FR"
