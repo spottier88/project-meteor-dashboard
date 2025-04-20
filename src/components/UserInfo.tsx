@@ -1,3 +1,4 @@
+
 /**
  * @component UserInfo
  * @description Affiche les informations de l'utilisateur connecté et gère la déconnexion.
@@ -6,7 +7,7 @@
  * Gère également la logique de nettoyage des cookies lors de la déconnexion.
  */
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useSupabaseClient, useUser } from "@supabase/auth-helpers-react";
 import { Button } from "./ui/button";
 import { useNavigate } from "react-router-dom";
@@ -40,6 +41,7 @@ export const UserInfo = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [isProfileFormOpen, setIsProfileFormOpen] = useState(false);
+  const [refreshKey, setRefreshKey] = useState(0);
 
   const { data: profile } = useQuery({
     queryKey: ["profile", user?.id],
@@ -115,10 +117,13 @@ export const UserInfo = () => {
     queryClient.invalidateQueries({ queryKey: ["accessibleOrganizations"] });
     // Actualiser les affectations hiérarchiques pour mettre à jour le badge
     queryClient.invalidateQueries({ queryKey: ["hierarchyAssignments"] });
+    
+    // Incrémenter la clé de rafraîchissement pour forcer une requête
+    setRefreshKey(prev => prev + 1);
   };
 
-  const { data: hierarchyAssignments, refetch: refetchAssignments } = useQuery({
-    queryKey: ["hierarchyAssignments", profile?.id],
+  const { data: hierarchyAssignments } = useQuery({
+    queryKey: ["hierarchyAssignments", profile?.id, refreshKey],
     queryFn: async () => {
       if (!profile?.id) return null;
 
@@ -132,6 +137,7 @@ export const UserInfo = () => {
       return assignments;
     },
     enabled: !!profile?.id,
+    staleTime: 0, // Ne pas utiliser le cache
   });
 
   const isProfileIncomplete = (profile?: UserProfile | null): boolean => {
