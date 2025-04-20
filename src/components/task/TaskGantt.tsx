@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Gantt, Task, ViewMode } from 'gantt-task-react';
 import { mapTasksToGanttFormat } from '@/utils/gantt-helpers';
@@ -14,9 +15,10 @@ interface TaskGanttProps {
   projectId: string;
   onEdit?: (task: any) => void;
   onUpdate?: () => void;
+  onExpanderClick?: (task: any) => void; // Ajout de cette propriété
 }
 
-export const TaskGantt: React.FC<TaskGanttProps> = ({ tasks, projectId, onEdit, onUpdate }) => {
+export const TaskGantt: React.FC<TaskGanttProps> = ({ tasks, projectId, onEdit, onUpdate, onExpanderClick }) => {
   const [viewMode, setViewMode] = useState<ViewMode>(ViewMode.Week);
   const [showTaskList, setShowTaskList] = useState<boolean>(true);
   const [localTasks, setLocalTasks] = useState<Array<any>>(tasks);
@@ -69,6 +71,13 @@ export const TaskGantt: React.FC<TaskGanttProps> = ({ tasks, projectId, onEdit, 
       if (originalTask) {
         onEdit(originalTask);
       }
+    }
+  };
+
+  // Ajout de la gestion des clics sur l'expandeur
+  const handleExpanderClick = (task: Task) => {
+    if (onExpanderClick) {
+      onExpanderClick(task);
     }
   };
 
@@ -135,6 +144,7 @@ export const TaskGantt: React.FC<TaskGanttProps> = ({ tasks, projectId, onEdit, 
           onDateChange={handleDateChange}
           onProgressChange={() => {}}
           onDoubleClick={handleTaskDoubleClick}
+          onExpanderClick={handleExpanderClick} // Ajout du gestionnaire d'événement pour l'expandeur
           listCellWidth={showTaskList ? "250px" : ""}
           columnWidth={columnWidth}
           locale="fr-FR"
