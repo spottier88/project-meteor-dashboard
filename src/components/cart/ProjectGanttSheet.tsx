@@ -2,7 +2,7 @@
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { ProjectGanttView } from "../gantt/ProjectGanttView";
+import { TaskGantt } from "@/components/task/TaskGantt";
 
 interface ProjectGanttSheetProps {
   isOpen: boolean;
@@ -31,7 +31,8 @@ export const ProjectGanttSheet = ({ isOpen, onClose, projectIds }: ProjectGanttS
             title,
             start_date,
             due_date,
-            status
+            status,
+            parent_task_id
           )
         `)
         .in("id", projectIds);
@@ -42,6 +43,33 @@ export const ProjectGanttSheet = ({ isOpen, onClose, projectIds }: ProjectGanttS
     enabled: projectIds.length > 0,
   });
 
+  // Transformer les données des projets et tâches en un format plat pour le Gantt
+  const allTasks = projectsData?.reduce((acc: any[], project) => {
+    // Ajouter le projet comme une tâche parent
+    acc.push({
+      id: project.id,
+      title: project.title,
+      start_date: project.start_date,
+      due_date: project.end_date,
+      status: project.lifecycle_status,
+      project_id: project.id,
+      parent_task_id: null,
+    });
+
+    // Ajouter les tâches du projet
+    if (project.tasks) {
+      project.tasks.forEach((task: any) => {
+        acc.push({
+          ...task,
+          project_id: project.id,
+          parent_task_id: task.parent_task_id || project.id, // Si pas de parent_task_id, lier au projet
+        });
+      });
+    }
+
+    return acc;
+  }, []) || [];
+
   return (
     <Sheet open={isOpen} onOpenChange={onClose}>
       <SheetContent side="bottom" className="h-[80vh] w-full">
@@ -49,8 +77,13 @@ export const ProjectGanttSheet = ({ isOpen, onClose, projectIds }: ProjectGanttS
           <SheetTitle>Vue Gantt des projets sélectionnés</SheetTitle>
         </SheetHeader>
         <div className="mt-6">
-          {projectsData ? (
-            <ProjectGanttView projects={projectsData} />
+          {allTasks.length > 0 ? (
+            <TaskGantt
+              tasks={allTasks}
+              projectId={projectIds[0]} // Nécessaire mais non utilisé en mode lecture seule
+              onEdit={undefined} // Désactive l'édition
+              onUpdate={undefined} // Désactive la mise à jour
+            />
           ) : (
             <div className="flex justify-center items-center h-48">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
