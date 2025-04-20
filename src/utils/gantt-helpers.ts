@@ -1,5 +1,5 @@
 
-import { Task } from 'gantt-task-react';
+import { Task, TaskType } from 'gantt-task-react';
 
 // Fonction pour obtenir une couleur en fonction du statut de la tâche
 const getColorForStatus = (status: string) => {
@@ -51,7 +51,7 @@ export const mapTasksToGanttFormat = (tasks: any[]): Task[] => {
       (new Date(task.start_date).setHours(0, 0, 0, 0) === new Date(task.due_date).setHours(0, 0, 0, 0));
     
     // Déterminer le type (projet, tâche ou sous-tâche)
-    let type = 'task';
+    let type: TaskType = 'task';
     
     // Si c'est un projet (pas de parent_task_id et a un project_id qui est égal à son id)
     if (!task.parent_task_id && task.project_id === task.id) {
