@@ -1,5 +1,5 @@
 
-import { Task, TaskType } from 'gantt-task-react';
+import { Task } from 'gantt-task-react';
 
 // Fonction pour obtenir une couleur en fonction du statut de la tâche
 const getColorForStatus = (status: string) => {
@@ -14,6 +14,9 @@ const getColorForStatus = (status: string) => {
       return '#94a3b8'; // Gris par défaut
   }
 };
+
+// Définir le type TaskType manuellement puisqu'il n'est pas exporté par la bibliothèque
+type TaskType = 'task' | 'milestone' | 'project';
 
 // Fonction pour convertir les tâches au format attendu par le composant Gantt
 export const mapTasksToGanttFormat = (tasks: any[]): Task[] => {
