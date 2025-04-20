@@ -50,9 +50,17 @@ export const mapTasksToGanttFormat = (tasks: any[]): Task[] => {
     const isMilestone = !task.start_date || !task.due_date || 
       (new Date(task.start_date).setHours(0, 0, 0, 0) === new Date(task.due_date).setHours(0, 0, 0, 0));
     
-    // Déterminer le type (tâche ou sous-tâche)
-    // Si c'est un jalon, on définit le type comme 'milestone', sinon 'task'
-    const type = isMilestone ? 'milestone' : 'task';
+    // Déterminer le type (projet, tâche ou sous-tâche)
+    let type = 'task';
+    
+    // Si c'est un projet (pas de parent_task_id et a un project_id qui est égal à son id)
+    if (!task.parent_task_id && task.project_id === task.id) {
+      type = 'project';
+    } 
+    // Si c'est un jalon
+    else if (isMilestone) {
+      type = 'milestone';
+    }
     
     // Construire les dépendances entre les tâches
     // Si la tâche a un parent_task_id, l'ajouter comme dépendance
@@ -75,7 +83,7 @@ export const mapTasksToGanttFormat = (tasks: any[]): Task[] => {
       progress,
       type,
       styles: { 
-        backgroundColor: getColorForStatus(task.status),
+        backgroundColor: type === 'project' ? '#9b87f5' : getColorForStatus(task.status),
         progressColor: '#4d7c0f',
         progressSelectedColor: '#84cc16',
       },
