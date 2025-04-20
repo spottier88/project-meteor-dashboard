@@ -1,4 +1,3 @@
-
 /**
  * @component UserInfo
  * @description Affiche les informations de l'utilisateur connecté et gère la déconnexion.
@@ -11,7 +10,7 @@ import { useState } from "react";
 import { useSupabaseClient, useUser } from "@supabase/auth-helpers-react";
 import { Button } from "./ui/button";
 import { useNavigate } from "react-router-dom";
-import { LogOut, Settings } from "lucide-react";
+import { LogOut, Settings, AlertCircle } from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "./ui/use-toast";
 import { UserProfile, UserRoleData } from "@/types/user";
@@ -19,6 +18,7 @@ import { ProfileForm } from "./profile/ProfileForm";
 import { UserNotificationsDropdown } from "./notifications/UserNotificationsDropdown";
 import { RequiredNotificationDialog } from "./notifications/RequiredNotificationDialog";
 import { HelpButton } from "@/components/help/HelpButton";
+import { Badge } from "@/components/ui/badge";
 
 const clearSupabaseCookies = () => {
   const cookies = document.cookie.split(";");
@@ -115,24 +115,61 @@ export const UserInfo = () => {
     queryClient.invalidateQueries({ queryKey: ["accessibleOrganizations"] });
   };
 
+  const { data: hierarchyAssignments, refetch: refetchAssignments } = useQuery({
+    queryKey: ["hierarchyAssignments", profile?.id],
+    queryFn: async () => {
+      if (!profile?.id) return null;
+
+      const { data: assignments, error } = await supabase
+        .from("user_hierarchy_assignments")
+        .select("id, entity_type, entity_id")
+        .eq("user_id", profile.id);
+
+      if (error) throw error;
+
+      return assignments;
+    },
+    enabled: !!profile?.id,
+  });
+
+  const isProfileIncomplete = (profile?: UserProfile | null): boolean => {
+    if (!profile) return true;
+    if (!profile.first_name || !profile.last_name) return true;
+    
+    // Vérifier si l'utilisateur a une affectation hiérarchique
+    return !hierarchyAssignments || hierarchyAssignments.length === 0;
+  };
+
   if (!user) return null;
 
   return (
     <>
       <div className="flex items-center justify-between p-4 mb-4 bg-secondary/20 rounded-lg">
         <div 
-          className="flex flex-col cursor-pointer hover:opacity-80"
+          className="flex items-center gap-2 cursor-pointer hover:opacity-80"
           onClick={() => setIsProfileFormOpen(true)}
         >          
-          <span className="text-sm font-medium">
-            {profile?.first_name && profile?.last_name 
-              ? `${profile.first_name} ${profile.last_name}` 
-              : user.email}
-          </span>
-          <span className="text-xs text-muted-foreground">
-            {isAdmin ? "Administrateur" : "Chef de projet"}
-          </span>
+          <div className="flex flex-col">
+            <span className="text-sm font-medium">
+              {profile?.first_name && profile?.last_name 
+                ? `${profile.first_name} ${profile.last_name}` 
+                : user.email}
+            </span>
+            <span className="text-xs text-muted-foreground">
+              {isAdmin ? "Administrateur" : "Chef de projet"}
+            </span>
+          </div>
+          
+          {isProfileIncomplete(profile) && (
+            <div className="flex items-center text-amber-500" title="Informations de profil incomplètes">
+              <Badge variant="outline" className="gap-1 text-amber-500 border-amber-500">
+                <AlertCircle className="h-3 w-3" />
+                Profil incomplet
+              </Badge>
+            </div>
+          )}
         </div>
+
         <div className="flex items-center gap-2">
           <UserNotificationsDropdown />
           <HelpButton />
