@@ -3,6 +3,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sh
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { TaskGantt } from "@/components/task/TaskGantt";
+import { useState } from "react";
 
 interface ProjectGanttSheetProps {
   isOpen: boolean;
@@ -11,6 +12,8 @@ interface ProjectGanttSheetProps {
 }
 
 export const ProjectGanttSheet = ({ isOpen, onClose, projectIds }: ProjectGanttSheetProps) => {
+  const [collapsedProjects, setCollapsedProjects] = useState<Set<string>>(new Set());
+
   const { data: projectsData } = useQuery({
     queryKey: ["projectsGantt", projectIds],
     queryFn: async () => {
@@ -50,10 +53,11 @@ export const ProjectGanttSheet = ({ isOpen, onClose, projectIds }: ProjectGanttS
       id: project.id,
       title: project.title,
       start_date: project.start_date,
-      due_date: project.end_date,
+      end_date: project.end_date,
       status: project.lifecycle_status,
       project_id: project.id,
       parent_task_id: null,
+      hideChildren: collapsedProjects.has(project.id),
     });
 
     // Ajouter les tâches du projet
@@ -62,13 +66,27 @@ export const ProjectGanttSheet = ({ isOpen, onClose, projectIds }: ProjectGanttS
         acc.push({
           ...task,
           project_id: project.id,
-          parent_task_id: task.parent_task_id || project.id, // Si pas de parent_task_id, lier au projet
+          parent_task_id: task.parent_task_id || project.id,
         });
       });
     }
 
     return acc;
   }, []) || [];
+
+  const handleExpanderClick = (task: any) => {
+    if (task.type === 'project') {
+      setCollapsedProjects(prev => {
+        const newSet = new Set(prev);
+        if (newSet.has(task.id)) {
+          newSet.delete(task.id);
+        } else {
+          newSet.add(task.id);
+        }
+        return newSet;
+      });
+    }
+  };
 
   return (
     <Sheet open={isOpen} onOpenChange={onClose}>
@@ -80,9 +98,10 @@ export const ProjectGanttSheet = ({ isOpen, onClose, projectIds }: ProjectGanttS
           {allTasks.length > 0 ? (
             <TaskGantt
               tasks={allTasks}
-              projectId={projectIds[0]} // Nécessaire mais non utilisé en mode lecture seule
-              onEdit={undefined} // Désactive l'édition
-              onUpdate={undefined} // Désactive la mise à jour
+              projectId={projectIds[0]}
+              onEdit={undefined}
+              onUpdate={undefined}
+              onExpanderClick={handleExpanderClick}
             />
           ) : (
             <div className="flex justify-center items-center h-48">

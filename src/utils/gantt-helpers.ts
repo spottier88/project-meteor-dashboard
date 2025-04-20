@@ -49,16 +49,17 @@ export const mapTasksToGanttFormat = (tasks: any[]): Task[] => {
     if (task.status === 'done') progress = 100;
     
     // Déterminer si c'est un jalon (milestone) ou une tâche normale
-    // Une tâche est un jalon si les dates de début et de fin sont identiques ou non définies
     const isMilestone = !task.start_date || !task.due_date || 
       (new Date(task.start_date).setHours(0, 0, 0, 0) === new Date(task.due_date).setHours(0, 0, 0, 0));
     
     // Déterminer le type (projet, tâche ou sous-tâche)
     let type: TaskType = 'task';
+    let hideChildren = false;
     
     // Si c'est un projet (pas de parent_task_id et a un project_id qui est égal à son id)
     if (!task.parent_task_id && task.project_id === task.id) {
       type = 'project';
+      hideChildren = false; // Le projet peut être plié/déplié
     } 
     // Si c'est un jalon
     else if (isMilestone) {
@@ -66,7 +67,6 @@ export const mapTasksToGanttFormat = (tasks: any[]): Task[] => {
     }
     
     // Construire les dépendances entre les tâches
-    // Si la tâche a un parent_task_id, l'ajouter comme dépendance
     let dependencies: string[] = [];
     if (task.parent_task_id && tasksById[task.parent_task_id]) {
       dependencies.push(task.parent_task_id);
@@ -91,9 +91,9 @@ export const mapTasksToGanttFormat = (tasks: any[]): Task[] => {
         progressSelectedColor: '#84cc16',
       },
       isDisabled: false,
-      hideChildren: false,
-      project: task.parent_task_id || undefined, // Utiliser parent_task_id pour relier les tâches filles aux tâches mères
-      dependencies: dependencies.length > 0 ? dependencies : undefined, // Utiliser les dépendances calculées
+      hideChildren, // Ajout de la propriété hideChildren
+      project: task.parent_task_id || undefined,
+      dependencies: dependencies.length > 0 ? dependencies : undefined,
     };
   });
 };
