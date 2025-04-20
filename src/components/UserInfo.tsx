@@ -113,6 +113,8 @@ export const UserInfo = () => {
     // Forcer le rechargement du contexte de permissions
     queryClient.invalidateQueries({ queryKey: ["userRoles"] });
     queryClient.invalidateQueries({ queryKey: ["accessibleOrganizations"] });
+    // Actualiser les affectations hiérarchiques pour mettre à jour le badge
+    queryClient.invalidateQueries({ queryKey: ["hierarchyAssignments"] });
   };
 
   const { data: hierarchyAssignments, refetch: refetchAssignments } = useQuery({
