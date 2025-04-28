@@ -39,6 +39,7 @@ const createSummarySheet = (wb: XLSX.WorkBook, projectsData: any[]) => {
     'Avancement': `${data.project.completion || 0}%`,
     'Chef de projet': formatProjectManager(data.project),
     'Organisation': formatOrganization(data.project),
+    'Pour': formatForEntity(data.project), // Ajout de l'information "Pour qui"
     'Date de début': data.project.start_date ? format(new Date(data.project.start_date), 'dd/MM/yyyy') : '-',
     'Date de fin': data.project.end_date ? format(new Date(data.project.end_date), 'dd/MM/yyyy') : '-',
     'Météo': formatWeather(data.lastReview?.weather),
@@ -56,6 +57,7 @@ const createSummarySheet = (wb: XLSX.WorkBook, projectsData: any[]) => {
     { wch: 12 },  // Avancement
     { wch: 25 },  // Chef de projet
     { wch: 35 },  // Organisation
+    { wch: 35 },  // Pour
     { wch: 15 },  // Date de début
     { wch: 15 },  // Date de fin
     { wch: 10 },  // Météo
@@ -92,6 +94,7 @@ const createProjectSheet = (wb: XLSX.WorkBook, data: any) => {
     ['Service', data.project.service_name || '-'],
     ['Chef de projet', formatProjectManager(data.project)],
     ['Suivi DGS', data.project.suivi_dgs ? 'Oui' : 'Non'],
+    ['Pour qui', formatForEntity(data.project)], // Ajout de l'information "Pour qui"
     ['', ''],
     
     // Dernière revue
@@ -201,6 +204,20 @@ const formatOrganization = (project: any): string => {
   if (project.direction_name) parts.push(project.direction_name);
   if (project.service_name) parts.push(project.service_name);
   return parts.length > 0 ? parts.join(' / ') : '-';
+};
+
+// Nouvelle fonction pour formater l'entité pour laquelle le projet est réalisé
+const formatForEntity = (project: any): string => {
+  if (!project.for_entity_type || !project.for_entity_name) return '-';
+  
+  const entityTypeLabels: Record<string, string> = {
+    'pole': 'Pôle',
+    'direction': 'Direction',
+    'service': 'Service'
+  };
+  
+  const entityTypeLabel = entityTypeLabels[project.for_entity_type] || project.for_entity_type;
+  return `${entityTypeLabel} ${project.for_entity_name}`;
 };
 
 const formatWeather = (weather: string | null | undefined): string => {

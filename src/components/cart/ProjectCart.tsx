@@ -97,6 +97,40 @@ export const ProjectCart = ({ isOpen, onClose }: ProjectCartProps) => {
               : { data: null },
           ]);
 
+          // Récupérer l'information "Pour qui"
+          let forEntityName = null;
+          if (projectResult.data.for_entity_type && projectResult.data.for_entity_id) {
+            const entityType = projectResult.data.for_entity_type;
+            const entityId = projectResult.data.for_entity_id;
+            
+            let entityData = null;
+            
+            if (entityType === 'pole') {
+              const { data } = await supabase
+                .from("poles")
+                .select("name")
+                .eq("id", entityId)
+                .maybeSingle();
+              entityData = data;
+            } else if (entityType === 'direction') {
+              const { data } = await supabase
+                .from("directions")
+                .select("name")
+                .eq("id", entityId)
+                .maybeSingle();
+              entityData = data;
+            } else if (entityType === 'service') {
+              const { data } = await supabase
+                .from("services")
+                .select("name")
+                .eq("id", entityId)
+                .maybeSingle();
+              entityData = data;
+            }
+            
+            forEntityName = entityData?.name || null;
+          }
+
           // Récupérer les informations complètes du chef de projet
           let projectManagerName = null;
           if (projectResult.data.project_manager_id) {
@@ -121,7 +155,8 @@ export const ProjectCart = ({ isOpen, onClose }: ProjectCartProps) => {
               direction_name: directionResult.data?.name,
               service_name: serviceResult.data?.name,
               code: codeData?.code,
-              project_manager_name: projectManagerName
+              project_manager_name: projectManagerName,
+              for_entity_name: forEntityName // Ajouter le nom de l'entité pour laquelle le projet est réalisé
             },
             lastReview: reviewResult.data
               ? {
