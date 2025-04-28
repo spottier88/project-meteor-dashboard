@@ -4,11 +4,12 @@ import { Button } from "@/components/ui/button";
 import { useProjectCart } from "@/hooks/use-project-cart";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Trash2, Presentation, GanttChartSquare } from "lucide-react";
+import { Trash2, Presentation, GanttChartSquare, FileSpreadsheet } from "lucide-react";
 import { useToast } from "../ui/use-toast";
 import { generateProjectPPTX } from "../pptx/ProjectPPTX";
 import { useState } from "react";
 import { ProjectGanttSheet } from "./ProjectGanttSheet";
+import { exportProjectsToExcel } from "@/utils/projectExport";
 
 interface ProjectCartProps {
   isOpen: boolean;
@@ -55,9 +56,29 @@ export const ProjectCart = ({ isOpen, onClose }: ProjectCartProps) => {
               
             if (!actionsError) {
               reviewActions = actionsData || [];
-              // console.log(`Récupération de ${reviewActions.length} actions pour la revue ${reviewResult.data.review_id}`);
             }
           }
+
+          // Récupérer le code du projet
+          const { data: codeData } = await supabase
+            .from("project_codes")
+            .select("code")
+            .eq("project_id", projectId)
+            .maybeSingle();
+
+          // Récupérer les informations de cadrage
+          const { data: framingData } = await supabase
+            .from("project_framing")
+            .select("*")
+            .eq("project_id", projectId)
+            .maybeSingle();
+
+          // Récupérer les scores d'innovation
+          const { data: innovationData } = await supabase
+            .from("project_innovation_scores")
+            .select("*")
+            .eq("project_id", projectId)
+            .maybeSingle();
 
           const [risksResult, tasksResult] = await Promise.all([
             supabase.from("risks").select("*").eq("project_id", projectId),
@@ -76,6 +97,20 @@ export const ProjectCart = ({ isOpen, onClose }: ProjectCartProps) => {
               : { data: null },
           ]);
 
+          // Récupérer les informations complètes du chef de projet
+          let projectManagerName = null;
+          if (projectResult.data.project_manager_id) {
+            const { data: managerData } = await supabase
+              .from("profiles")
+              .select("first_name, last_name")
+              .eq("id", projectResult.data.project_manager_id)
+              .maybeSingle();
+              
+            if (managerData) {
+              projectManagerName = `${managerData.first_name || ''} ${managerData.last_name || ''}`.trim();
+            }
+          }
+
           return {
             project: {
               ...projectResult.data,
@@ -85,6 +120,8 @@ export const ProjectCart = ({ isOpen, onClose }: ProjectCartProps) => {
               pole_name: poleResult.data?.name,
               direction_name: directionResult.data?.name,
               service_name: serviceResult.data?.name,
+              code: codeData?.code,
+              project_manager_name: projectManagerName
             },
             lastReview: reviewResult.data
               ? {
@@ -96,6 +133,8 @@ export const ProjectCart = ({ isOpen, onClose }: ProjectCartProps) => {
                   actions: reviewActions,
                 }
               : undefined,
+            framing: framingData || undefined,
+            innovation: innovationData || undefined,
             risks: risksResult.data || [],
             tasks: tasksResult.data || [],
           };
@@ -148,6 +187,32 @@ export const ProjectCart = ({ isOpen, onClose }: ProjectCartProps) => {
     }
   };
 
+  const handleExcelExport = () => {
+    if (!projectsData) {
+      toast({
+        variant: "destructive",
+        title: "Erreur",
+        description: "Aucune donnée disponible pour l'export",
+      });
+      return;
+    }
+
+    try {
+      exportProjectsToExcel(projectsData);
+      toast({
+        title: "Succès",
+        description: "Fichier Excel généré avec succès",
+      });
+    } catch (error) {
+      console.error("Error generating Excel file:", error);
+      toast({
+        variant: "destructive",
+        title: "Erreur",
+        description: "Impossible de générer le fichier Excel",
+      });
+    }
+  };
+
   return (
     <>
       <Sheet open={isOpen} onOpenChange={onClose}>
@@ -181,6 +246,10 @@ export const ProjectCart = ({ isOpen, onClose }: ProjectCartProps) => {
                   <div className="space-x-2">
                     {projectsData && (
                       <>
+                        <Button onClick={handleExcelExport} variant="outline">
+                          <FileSpreadsheet className="h-4 w-4 mr-2" />
+                          Excel
+                        </Button>
                         <Button onClick={handlePPTXExport} variant="outline">
                           <Presentation className="h-4 w-4 mr-2" />
                           PPTX
