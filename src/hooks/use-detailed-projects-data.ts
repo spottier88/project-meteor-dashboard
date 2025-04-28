@@ -44,7 +44,7 @@ export const useDetailedProjectsData = (projectIds: string[], enabled: boolean =
 
           // Récupérer en parallèle toutes les données associées
           const [
-            codeData,
+            codeResult,
             framingData,
             innovationData,
             risksResult,
@@ -143,7 +143,7 @@ export const useDetailedProjectsData = (projectIds: string[], enabled: boolean =
               pole_name: poleResult.data?.name,
               direction_name: directionResult.data?.name,
               service_name: serviceResult.data?.name,
-              code: codeData?.code,
+              code: codeResult.data?.code,
               project_manager_name: projectManagerName,
               for_entity_name: forEntityName
             },

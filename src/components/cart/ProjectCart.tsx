@@ -1,3 +1,4 @@
+
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { useProjectCart } from "@/hooks/use-project-cart";
@@ -72,7 +73,7 @@ export const ProjectCart = ({ isOpen, onClose }: ProjectCartProps) => {
   };
 
   const handlePPTXExport = async () => {
-    if (!projectsData) {
+    if (!detailedProjectsData) {
       toast({
         variant: "destructive",
         title: "Erreur",
@@ -82,7 +83,7 @@ export const ProjectCart = ({ isOpen, onClose }: ProjectCartProps) => {
     }
 
     try {
-      await generateProjectPPTX(projectsData);
+      await generateProjectPPTX(detailedProjectsData);
       toast({
         title: "Succès",
         description: "Présentation PowerPoint générée avec succès",
