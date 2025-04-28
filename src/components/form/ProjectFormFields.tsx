@@ -19,6 +19,8 @@ interface ProjectFormFieldsProps {
   setEndDate: (date: Date | undefined) => void;
   priority: string;
   setPriority: (value: string) => void;
+  lifecycleStatus: string;
+  setLifecycleStatus: (value: string) => void;
   monitoringLevel: MonitoringLevel;
   setMonitoringLevel: (value: MonitoringLevel) => void;
   monitoringEntityId: string | null;
@@ -63,6 +65,8 @@ export const ProjectFormFields = ({
   setEndDate,
   priority,
   setPriority,
+  lifecycleStatus,
+  setLifecycleStatus,
   monitoringLevel,
   setMonitoringLevel,
   monitoringEntityId,
@@ -107,6 +111,8 @@ export const ProjectFormFields = ({
         setEndDate={setEndDate}
         priority={priority}
         setPriority={setPriority}
+        lifecycleStatus={lifecycleStatus}
+        setLifecycleStatus={setLifecycleStatus}
         isAdmin={isAdmin}
         isManager={isManager}
         projectManagers={projectManagers}

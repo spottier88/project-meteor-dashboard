@@ -1,4 +1,3 @@
-
 import { ProjectFormFields } from "./ProjectFormFields";
 import { ProjectFormStep1 } from "./ProjectFormStep1";
 import { ProjectFormStep2 } from "./ProjectFormStep2";
@@ -56,6 +55,8 @@ export const ProjectFormContent = ({
             setEndDate={formState.setEndDate}
             priority={formState.priority}
             setPriority={formState.setPriority}
+            lifecycleStatus={formState.lifecycleStatus}
+            setLifecycleStatus={formState.setLifecycleStatus}
             isAdmin={permissions.isAdmin}
             isManager={permissions.isManager}
             ownerId={formState.ownerId}
