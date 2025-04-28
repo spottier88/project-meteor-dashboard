@@ -23,6 +23,7 @@ export const ProjectCart = ({ isOpen, onClose }: ProjectCartProps) => {
   const { toast } = useToast();
   const [isGanttOpen, setIsGanttOpen] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
+  const [exportType, setExportType] = useState<'excel' | 'pptx' | null>(null);
 
   const { data: basicProjects } = useQuery({
     queryKey: ["basicProjects", cartItems],
@@ -37,16 +38,20 @@ export const ProjectCart = ({ isOpen, onClose }: ProjectCartProps) => {
     enabled: cartItems.length > 0,
   });
 
-  const { data: detailedProjectsData, isLoading: isLoadingDetails } = useDetailedProjectsData(
+  const { data: detailedProjectsData, isLoading: isLoadingDetails, refetch } = useDetailedProjectsData(
     cartItems,
-    isExporting
+    false // Nous ne l'activons pas automatiquement
   );
 
   const handleExcelExport = async () => {
     try {
+      setExportType('excel');
       setIsExporting(true);
 
-      if (!detailedProjectsData) {
+      // Déclencher le chargement des données
+      const { data } = await refetch();
+      
+      if (!data || data.length === 0) {
         toast({
           variant: "destructive",
           title: "Erreur",
@@ -55,7 +60,7 @@ export const ProjectCart = ({ isOpen, onClose }: ProjectCartProps) => {
         return;
       }
 
-      exportProjectsToExcel(detailedProjectsData);
+      exportProjectsToExcel(data);
       toast({
         title: "Succès",
         description: "Fichier Excel généré avec succès",
@@ -69,21 +74,28 @@ export const ProjectCart = ({ isOpen, onClose }: ProjectCartProps) => {
       });
     } finally {
       setIsExporting(false);
+      setExportType(null);
     }
   };
 
   const handlePPTXExport = async () => {
-    if (!detailedProjectsData) {
-      toast({
-        variant: "destructive",
-        title: "Erreur",
-        description: "Aucune donnée disponible pour l'export",
-      });
-      return;
-    }
-
     try {
-      await generateProjectPPTX(detailedProjectsData);
+      setExportType('pptx');
+      setIsExporting(true);
+      
+      // Déclencher le chargement des données
+      const { data } = await refetch();
+      
+      if (!data || data.length === 0) {
+        toast({
+          variant: "destructive",
+          title: "Erreur",
+          description: "Aucune donnée disponible pour l'export",
+        });
+        return;
+      }
+
+      await generateProjectPPTX(data);
       toast({
         title: "Succès",
         description: "Présentation PowerPoint générée avec succès",
@@ -95,7 +107,17 @@ export const ProjectCart = ({ isOpen, onClose }: ProjectCartProps) => {
         title: "Erreur",
         description: "Impossible de générer la présentation PowerPoint",
       });
+    } finally {
+      setIsExporting(false);
+      setExportType(null);
     }
+  };
+
+  // Déterminer le message de chargement en fonction du type d'export
+  const getLoadingMessage = () => {
+    if (exportType === 'excel') return "Chargement des données pour l'export Excel...";
+    if (exportType === 'pptx') return "Chargement des données pour l'export PowerPoint...";
+    return "Chargement des données...";
   };
 
   return (
@@ -137,7 +159,11 @@ export const ProjectCart = ({ isOpen, onClose }: ProjectCartProps) => {
                       <FileSpreadsheet className="h-4 w-4 mr-2" />
                       Excel
                     </Button>
-                    <Button onClick={handlePPTXExport} variant="outline">
+                    <Button 
+                      onClick={handlePPTXExport} 
+                      variant="outline"
+                      disabled={isExporting}
+                    >
                       <Presentation className="h-4 w-4 mr-2" />
                       PPTX
                     </Button>
@@ -149,8 +175,8 @@ export const ProjectCart = ({ isOpen, onClose }: ProjectCartProps) => {
                 </div>
               </>
             )}
-            {(isExporting && isLoadingDetails) && (
-              <LoadingOverlay message="Chargement des données pour l'export..." />
+            {isExporting && isLoadingDetails && (
+              <LoadingOverlay message={getLoadingMessage()} />
             )}
           </div>
         </SheetContent>

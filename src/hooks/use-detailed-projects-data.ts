@@ -7,7 +7,7 @@ export const useDetailedProjectsData = (projectIds: string[], enabled: boolean =
   return useQuery({
     queryKey: ["detailedProjects", projectIds],
     queryFn: async () => {
-      if (projectIds.length === 0) return null;
+      if (projectIds.length === 0) return [];
 
       const fetchProjectData = async (projectId: string) => {
         try {
@@ -172,6 +172,7 @@ export const useDetailedProjectsData = (projectIds: string[], enabled: boolean =
       const validResults = results.filter((result): result is NonNullable<typeof result> => result !== null);
       return validResults;
     },
-    enabled: enabled && projectIds.length > 0,
+    enabled: enabled || false,
+    staleTime: 5 * 60 * 1000, // Cache les données pendant 5 minutes
   });
 };
