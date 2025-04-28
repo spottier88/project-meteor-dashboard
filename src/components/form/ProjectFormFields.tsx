@@ -5,6 +5,7 @@ import { UserProfile } from "@/types/user";
 import { OrganizationFields } from "./OrganizationFields";
 import { BasicProjectFields } from "./BasicProjectFields";
 import { MonitoringLevel } from "@/types/monitoring";
+import { ProjectLifecycleStatus } from "@/types/project";
 
 interface ProjectFormFieldsProps {
   title: string;
@@ -19,8 +20,8 @@ interface ProjectFormFieldsProps {
   setEndDate: (date: Date | undefined) => void;
   priority: string;
   setPriority: (value: string) => void;
-  lifecycleStatus: string;
-  setLifecycleStatus: (value: string) => void;
+  lifecycleStatus: ProjectLifecycleStatus;
+  setLifecycleStatus: (value: ProjectLifecycleStatus) => void;
   monitoringLevel: MonitoringLevel;
   setMonitoringLevel: (value: MonitoringLevel) => void;
   monitoringEntityId: string | null;

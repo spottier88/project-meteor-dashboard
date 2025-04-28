@@ -1,3 +1,4 @@
+
 import { ProjectFormFields } from "./ProjectFormFields";
 import { ProjectFormStep1 } from "./ProjectFormStep1";
 import { ProjectFormStep2 } from "./ProjectFormStep2";
@@ -6,6 +7,7 @@ import { ProjectFormStep4 } from "./ProjectFormStep4";
 import { ProjectFormStep5 } from "./ProjectFormStep5";
 import { UserProfile } from "@/types/user";
 import { useMemo } from "react";
+import { ProjectLifecycleStatus } from "@/types/project";
 
 interface ProjectFormContentProps {
   canEditOrganization: boolean;
@@ -55,7 +57,7 @@ export const ProjectFormContent = ({
             setEndDate={formState.setEndDate}
             priority={formState.priority}
             setPriority={formState.setPriority}
-            lifecycleStatus={formState.lifecycleStatus}
+            lifecycleStatus={formState.lifecycleStatus as ProjectLifecycleStatus}
             setLifecycleStatus={formState.setLifecycleStatus}
             isAdmin={permissions.isAdmin}
             isManager={permissions.isManager}
