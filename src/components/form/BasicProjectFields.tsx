@@ -1,10 +1,10 @@
-
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { UserProfile } from "@/types/user";
 import { Label } from "@/components/ui/label";
 import { DateInputField } from "./DateInputField";
+import { ProjectLifecycleStatus, lifecycleStatusLabels } from "@/types/project";
 
 interface BasicProjectFieldsProps {
   title: string;
@@ -19,6 +19,8 @@ interface BasicProjectFieldsProps {
   setEndDate: (date: Date | undefined) => void;
   priority: string;
   setPriority: (value: string) => void;
+  lifecycleStatus: ProjectLifecycleStatus;
+  setLifecycleStatus: (value: ProjectLifecycleStatus) => void;
   isAdmin: boolean;
   isManager?: boolean;
   projectManagers?: UserProfile[];
@@ -37,27 +39,13 @@ export const BasicProjectFields = ({
   setEndDate,
   priority,
   setPriority,
+  lifecycleStatus,
+  setLifecycleStatus,
   isAdmin,
   isManager = false,
   projectManagers,
 }: BasicProjectFieldsProps) => {
-  // CORRECTION DU BUG: Forcer canEditProjectManager à true si l'utilisateur est admin
-  // Ajouter un log pour vérifier les valeurs
-  // console.log("BasicProjectFields - permissions before fix:", {
-  //   isAdmin,
-  //   isManager, 
-  //   canEditProjectManagerBefore: isAdmin || isManager
-  // });
-  
-  // S'assurer que isAdmin est bien considéré comme un booléen
   const canEditProjectManager = Boolean(isAdmin) || Boolean(isManager);
-  
-  // Log après correction
-  // console.log("BasicProjectFields - permissions after fix:", {
-  //   isAdmin: Boolean(isAdmin),
-  //   isManager: Boolean(isManager),
-  //   canEditProjectManagerAfter: canEditProjectManager
-  // });
 
   return (
     <div className="space-y-4">
@@ -83,6 +71,24 @@ export const BasicProjectFields = ({
           onChange={(e) => setDescription(e.target.value)}
           placeholder="Description du projet"
         />
+      </div>
+
+      <div className="grid gap-2">
+        <label htmlFor="lifecycle-status" className="text-sm font-medium">
+          Statut
+        </label>
+        <Select value={lifecycleStatus} onValueChange={setLifecycleStatus}>
+          <SelectTrigger>
+            <SelectValue placeholder="Sélectionner un statut" />
+          </SelectTrigger>
+          <SelectContent>
+            {Object.entries(lifecycleStatusLabels).map(([value, label]) => (
+              <SelectItem key={value} value={value}>
+                {label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
       <div className="grid gap-2">

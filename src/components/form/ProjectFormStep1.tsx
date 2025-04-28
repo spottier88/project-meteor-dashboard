@@ -2,6 +2,7 @@
 import { MonitoringLevel } from "@/types/monitoring";
 import { UserProfile } from "@/types/user";
 import { BasicProjectFields } from "./BasicProjectFields";
+import { ProjectLifecycleStatus } from "@/types/project";
 
 interface ProjectFormStep1Props {
   title: string;
@@ -16,6 +17,8 @@ interface ProjectFormStep1Props {
   setEndDate: (date: Date | undefined) => void;
   priority: string;
   setPriority: (value: string) => void;
+  lifecycleStatus: ProjectLifecycleStatus;
+  setLifecycleStatus: (value: ProjectLifecycleStatus) => void;
   isAdmin: boolean;
   isManager: boolean;
   ownerId: string;
@@ -36,18 +39,14 @@ export const ProjectFormStep1 = ({
   setEndDate,
   priority,
   setPriority,
+  lifecycleStatus,
+  setLifecycleStatus,
   isAdmin,
   isManager,
   ownerId,
   setOwnerId,
   projectManagers
 }: ProjectFormStep1Props) => {
-  // Ajouter un log pour vérifier les valeurs reçues
-  // console.log("ProjectFormStep1 - permissions received:", { 
-  //   isAdmin, 
-  //   isManager
-  // });
-
   return (
     <div className="space-y-6">
       <div className="grid gap-4">
@@ -64,6 +63,8 @@ export const ProjectFormStep1 = ({
           setEndDate={setEndDate}
           priority={priority}
           setPriority={setPriority}
+          lifecycleStatus={lifecycleStatus}
+          setLifecycleStatus={setLifecycleStatus}
           isAdmin={isAdmin}
           isManager={isManager}
           projectManagers={projectManagers}
