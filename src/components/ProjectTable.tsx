@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Table, TableBody } from "@/components/ui/table";
 import { ProjectStatus, ProgressStatus, ProjectLifecycleStatus } from "@/types/project";
@@ -25,6 +26,7 @@ export const ProjectTable = ({
   onProjectEdit,
   onViewHistory,
   onProjectDeleted,
+  onFilteredProjectsChange,
 }: ProjectTableProps) => {
   const user = useUser();
   const { userProfile, userRoles, isAdmin, isLoading } = usePermissionsContext();
