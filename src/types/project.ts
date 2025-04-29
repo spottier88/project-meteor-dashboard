@@ -21,7 +21,7 @@ export interface Project {
   status: ProjectStatus | null;
   progress: ProgressStatus | null;
   completion: number;
-  lastReviewDate: string | null;
+  lastReviewDate?: string | null;
   project_manager?: string;
   owner_id?: string;
   pole_id?: string;
@@ -30,4 +30,5 @@ export interface Project {
   lifecycle_status: ProjectLifecycleStatus;
   for_entity_type?: ForEntityType;
   for_entity_id?: string;
+  weather?: ProjectStatus | null;
 }

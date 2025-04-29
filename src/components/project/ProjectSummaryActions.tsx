@@ -49,7 +49,8 @@ const ProjectSummaryActions = ({ project, risks = [], tasks = [] }: ProjectSumma
         return;
       }
 
-      const detailedProject = data[0];
+      // Casting explicite pour gérer le type Json
+      const detailedProject = data[0] as any;
 
       // Adapter les données pour respecter le format PPTXProjectData
       const projectData: PPTXProjectData = {
@@ -75,14 +76,14 @@ const ProjectSummaryActions = ({ project, risks = [], tasks = [] }: ProjectSumma
           created_at: detailedProject.lastReview.created_at,
           actions: detailedProject.lastReview.actions || []
         } : undefined,
-        risks: detailedProject.risks.map(risk => ({
+        risks: detailedProject.risks.map((risk: any) => ({
           description: risk.description,
           probability: risk.probability as RiskProbability,
           severity: risk.severity as RiskSeverity,
           status: risk.status as RiskStatus,
           mitigation_plan: risk.mitigation_plan
         })),
-        tasks: detailedProject.tasks.map(task => ({
+        tasks: detailedProject.tasks.map((task: any) => ({
           title: task.title,
           description: task.description,
           status: task.status as "todo" | "in_progress" | "done",

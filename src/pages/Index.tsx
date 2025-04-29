@@ -10,7 +10,8 @@ import { ProjectFilters } from "@/components/project/ProjectFilters";
 import { ProjectList } from "@/components/project/ProjectList";
 import { ProjectModals } from "@/components/project/ProjectModals";
 import { usePermissionsContext } from "@/contexts/PermissionsContext";
-import { useProjectsListView } from "@/hooks/use-projects-list-view";
+import { useProjectsListView, ProjectListItem } from "@/hooks/use-projects-list-view";
+import { supabase } from "@/integrations/supabase/client";
 
 const LoadingSpinner = () => (
   <div className="flex justify-center items-center h-48">
@@ -489,7 +490,7 @@ const Index = () => {
       <ProjectList
         view={view}
         onViewChange={setView}
-        projects={filteredProjects}
+        projects={filteredProjects as any[]}
         onProjectEdit={handleEditProject}
         onProjectReview={handleProjectSelect}
         onViewHistory={handleViewHistory}

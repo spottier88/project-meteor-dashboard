@@ -62,8 +62,10 @@ export const useProjectsListView = (enabled = true) => {
           return [];
         }
 
-        // Typage explicite des données
-        const projects: ProjectListItem[] = Array.isArray(data) ? data : [];
+        // Conversion explicite du type Json[] à ProjectListItem[]
+        const projects = Array.isArray(data) 
+          ? data.map(item => item as unknown as ProjectListItem)
+          : [];
         
         console.log(`${projects.length} projets récupérés avec succès via la vue optimisée`);
         return projects;

@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Table, TableBody } from "@/components/ui/table";
 import { ProjectStatus, ProgressStatus, ProjectLifecycleStatus } from "@/types/project";
@@ -26,7 +25,6 @@ export const ProjectTable = ({
   onProjectEdit,
   onViewHistory,
   onProjectDeleted,
-  onFilteredProjectsChange,
 }: ProjectTableProps) => {
   const user = useUser();
   const { userProfile, userRoles, isAdmin, isLoading } = usePermissionsContext();
@@ -141,9 +139,9 @@ export const ProjectTable = ({
               key={project.id}
               project={{
                 ...project,
+                lastReviewDate: project.review_created_at || project.last_review_date,
                 weather: project.weather,
-                progress: project.review_progress || project.progress,
-                lastReviewDate: project.review_created_at || project.last_review_date
+                progress: project.review_progress || project.progress
               }}
               onProjectEdit={onProjectEdit}
               onViewHistory={onViewHistory}
