@@ -13,6 +13,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { generateProjectPPTX } from "@/components/pptx/ProjectPPTX";
 import { ProjectData as PPTXProjectData } from "@/components/pptx/types";
 import { ProjectStatus, ProgressStatus, ProjectLifecycleStatus } from "@/types/project";
+import { RiskProbability, RiskSeverity, RiskStatus } from "@/types/risk";
 
 interface ProjectSummaryActionsProps {
   project: any;
@@ -84,15 +85,15 @@ const ProjectSummaryActions = ({ project, risks = [], tasks = [] }: ProjectSumma
         } : undefined,
         risks: risks.map(risk => ({
           description: risk.description,
-          probability: risk.probability,
-          severity: risk.severity,
-          status: risk.status,
+          probability: risk.probability as RiskProbability,
+          severity: risk.severity as RiskSeverity,
+          status: risk.status as RiskStatus,
           mitigation_plan: risk.mitigation_plan
         })),
         tasks: tasks.map(task => ({
           title: task.title,
           description: task.description,
-          status: task.status,
+          status: task.status as "todo" | "in_progress" | "done",
           assignee: task.assignee,
           due_date: task.due_date
         })),

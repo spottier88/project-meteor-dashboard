@@ -1,4 +1,3 @@
-
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { useProjectCart } from "@/hooks/use-project-cart";
@@ -14,6 +13,7 @@ import { LoadingOverlay } from "../ui/loading-overlay";
 import { useDetailedProjectsData, ProjectData } from "@/hooks/use-detailed-projects-data";
 import { ProjectData as PPTXProjectData } from "../pptx/types";
 import { ProjectStatus, ProgressStatus } from "@/types/project";
+import { RiskProbability, RiskSeverity, RiskStatus } from "@/types/risk";
 
 interface ProjectCartProps {
   isOpen: boolean;
@@ -61,8 +61,20 @@ export const ProjectCart = ({ isOpen, onClose }: ProjectCartProps) => {
           progress: item.lastReview.progress || "stable" as ProgressStatus,
           actions: item.lastReview.actions || []
         } : undefined,
-        risks: item.risks || [],
-        tasks: item.tasks || []
+        risks: item.risks.map(risk => ({
+          description: risk.description,
+          probability: risk.probability,
+          severity: risk.severity,
+          status: risk.status,
+          mitigation_plan: risk.mitigation_plan
+        })),
+        tasks: item.tasks.map(task => ({
+          title: task.title,
+          description: task.description,
+          status: task.status as "todo" | "in_progress" | "done",
+          assignee: task.assignee,
+          due_date: task.due_date
+        }))
       };
     });
   };

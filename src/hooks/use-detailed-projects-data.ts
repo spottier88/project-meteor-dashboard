@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Json } from "@/integrations/supabase/types";
 import { format } from "date-fns";
 import { ProjectStatus, ProgressStatus, ProjectLifecycleStatus } from "@/types/project";
+import { RiskProbability, RiskSeverity, RiskStatus } from "@/types/risk";
 
 export type ProjectData = {
   project: {
@@ -50,9 +51,9 @@ export type ProjectData = {
   risks: Array<{
     id: string;
     description: string;
-    probability: string;
-    severity: string;
-    status: string;
+    probability: RiskProbability;
+    severity: RiskSeverity;
+    status: RiskStatus;
     mitigation_plan: string | null;
   }>;
   tasks: Array<{
@@ -71,7 +72,7 @@ export const useDetailedProjectsData = (projectIds: string[], enabled: boolean =
   return useQuery({
     queryKey: ["detailedProjects", projectIds],
     queryFn: async () => {
-      if (projectIds.length === 0) return [];
+      if (!projectIds || projectIds.length === 0) return [];
 
       try {
         console.log(`Récupération des données pour ${projectIds.length} projets en une seule requête`);
@@ -93,26 +94,27 @@ export const useDetailedProjectsData = (projectIds: string[], enabled: boolean =
         }
 
         // Vérifier si data est un tableau et qu'il contient des éléments
+        if (!Array.isArray(data) || data.length === 0) {
+          console.log("Les données récupérées ne sont pas au format attendu ou sont vides");
+          return [];
+        }
+
         // Cast des données retournées au type ProjectData, en vérifiant que les valeurs
         // des enums sont bien assignées correctement
-        const projectsData = Array.isArray(data) ? data.map(item => {
+        const projectsData: ProjectData[] = data.map((item: any) => {
           // S'assurer que les types d'enum sont correctement assignés
           const typedItem = { ...item };
           
           // Conversion explicite pour project.status
           if (typedItem.project && typeof typedItem.project.status === 'string') {
             const status = typedItem.project.status as string;
-            if (status === 'sunny' || status === 'cloudy' || status === 'stormy' || status === null) {
-              typedItem.project.status = status as ProjectStatus;
-            }
+            typedItem.project.status = status as ProjectStatus;
           }
           
           // Conversion explicite pour project.progress
           if (typedItem.project && typeof typedItem.project.progress === 'string') {
             const progress = typedItem.project.progress as string;
-            if (progress === 'better' || progress === 'stable' || progress === 'worse' || progress === null) {
-              typedItem.project.progress = progress as ProgressStatus;
-            }
+            typedItem.project.progress = progress as ProgressStatus;
           }
           
           // Conversion explicite pour project.lifecycle_status
@@ -124,21 +126,27 @@ export const useDetailedProjectsData = (projectIds: string[], enabled: boolean =
           if (typedItem.lastReview) {
             if (typeof typedItem.lastReview.weather === 'string') {
               const weather = typedItem.lastReview.weather as string;
-              if (weather === 'sunny' || weather === 'cloudy' || weather === 'stormy' || weather === null) {
-                typedItem.lastReview.weather = weather as ProjectStatus;
-              }
+              typedItem.lastReview.weather = weather as ProjectStatus;
             }
             
             if (typeof typedItem.lastReview.progress === 'string') {
               const progress = typedItem.lastReview.progress as string;
-              if (progress === 'better' || progress === 'stable' || progress === 'worse' || progress === null) {
-                typedItem.lastReview.progress = progress as ProgressStatus;
-              }
+              typedItem.lastReview.progress = progress as ProgressStatus;
             }
           }
           
-          return typedItem as unknown as ProjectData;
-        }) : [];
+          // Conversion des risques
+          if (typedItem.risks && Array.isArray(typedItem.risks)) {
+            typedItem.risks = typedItem.risks.map(risk => ({
+              ...risk,
+              probability: risk.probability as RiskProbability,
+              severity: risk.severity as RiskSeverity,
+              status: risk.status as RiskStatus
+            }));
+          }
+          
+          return typedItem as ProjectData;
+        });
         
         console.log(`${projectsData.length} projets récupérés avec succès`);
         return projectsData;
