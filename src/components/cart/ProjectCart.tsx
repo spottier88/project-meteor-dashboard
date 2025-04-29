@@ -11,7 +11,7 @@ import { useState } from "react";
 import { ProjectGanttSheet } from "./ProjectGanttSheet";
 import { exportProjectsToExcel } from "@/utils/projectExport";
 import { LoadingOverlay } from "../ui/loading-overlay";
-import { useDetailedProjectsData } from "@/hooks/use-detailed-projects-data";
+import { useDetailedProjectsData, ProjectData } from "@/hooks/use-detailed-projects-data";
 
 interface ProjectCartProps {
   isOpen: boolean;
@@ -60,7 +60,7 @@ export const ProjectCart = ({ isOpen, onClose }: ProjectCartProps) => {
         return;
       }
 
-      exportProjectsToExcel(data);
+      exportProjectsToExcel(data as ProjectData[]);
       toast({
         title: "Succès",
         description: "Fichier Excel généré avec succès",
@@ -95,7 +95,7 @@ export const ProjectCart = ({ isOpen, onClose }: ProjectCartProps) => {
         return;
       }
 
-      await generateProjectPPTX(data);
+      await generateProjectPPTX(data as ProjectData[]);
       toast({
         title: "Succès",
         description: "Présentation PowerPoint générée avec succès",
