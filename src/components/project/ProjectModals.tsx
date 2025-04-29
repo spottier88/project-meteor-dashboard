@@ -56,7 +56,7 @@ export const ProjectModals = ({
       />
 
       <ProjectSelectionSheet
-        projects={projects || []}
+        projects={projects}
         isOpen={isProjectSelectionOpen}
         onClose={onProjectSelectionClose}
         onProjectSelect={onProjectSelect}

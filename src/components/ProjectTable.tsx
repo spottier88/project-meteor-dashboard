@@ -142,7 +142,7 @@ export const ProjectTable = ({
               project={{
                 ...project,
                 lastReviewDate: project.review_created_at || project.last_review_date,
-                weather: project.weather,
+                weather: project.weather || project.status,
                 progress: project.review_progress || project.progress
               }}
               onProjectEdit={onProjectEdit}
