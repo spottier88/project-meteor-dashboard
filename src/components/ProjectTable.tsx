@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Table, TableBody } from "@/components/ui/table";
 import { ProjectStatus, ProgressStatus, ProjectLifecycleStatus } from "@/types/project";
@@ -10,6 +11,7 @@ import { SortDirection } from "./ui/sortable-header";
 import { useManagerProjectAccess } from "@/hooks/use-manager-project-access";
 import { usePermissionsContext } from "@/contexts/PermissionsContext";
 import { ProjectListItem } from "@/hooks/use-projects-list-view";
+import { ProjectPagination } from "./project/ProjectPagination";
 
 interface ProjectTableProps {
   projects: ProjectListItem[];
@@ -18,6 +20,9 @@ interface ProjectTableProps {
   onViewHistory: (id: string, title: string) => void;
   onProjectDeleted: () => void;
   onFilteredProjectsChange?: (projectIds: string[]) => void;
+  currentPage: number;
+  pageSize: number;
+  onPageChange: (page: number) => void;
 }
 
 export const ProjectTable = ({
@@ -26,6 +31,9 @@ export const ProjectTable = ({
   onViewHistory,
   onProjectDeleted,
   onFilteredProjectsChange,
+  currentPage,
+  pageSize,
+  onPageChange,
 }: ProjectTableProps) => {
   const user = useUser();
   const { userProfile, userRoles, isAdmin, isLoading } = usePermissionsContext();
@@ -116,6 +124,21 @@ export const ProjectTable = ({
     });
   }, [filteredProjects, sortKey, sortDirection]);
 
+  // Paginer les projets après tri
+  const paginatedProjects = React.useMemo(() => {
+    if (!sortedProjects) return [];
+    
+    const startIndex = (currentPage - 1) * pageSize;
+    const endIndex = startIndex + pageSize;
+    return sortedProjects.slice(startIndex, endIndex);
+  }, [sortedProjects, currentPage, pageSize]);
+
+  // Calculer le nombre total de pages
+  const totalPages = React.useMemo(() => {
+    if (!sortedProjects) return 1;
+    return Math.max(1, Math.ceil(sortedProjects.length / pageSize));
+  }, [sortedProjects, pageSize]);
+
   if (isLoading) {
     return <div className="flex justify-center items-center h-48">
       <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
@@ -127,30 +150,46 @@ export const ProjectTable = ({
   }
 
   return (
-    <div className="rounded-md border">
-      <Table>
-        <ProjectTableHeader
-          currentSort={sortKey}
-          currentDirection={sortDirection}
-          onSort={handleSort}
-        />
-        <TableBody>
-          {sortedProjects.map((project) => (
-            <ProjectTableRow
-              key={project.id}
-              project={{
-                ...project,
-                weather: project.weather || project.status,
-                progress: project.review_progress || project.progress,
-                lastReviewDate: project.review_created_at || project.last_review_date
-              }}
-              onProjectEdit={onProjectEdit}
-              onViewHistory={onViewHistory}
-              onProjectDeleted={onProjectDeleted}
-            />
-          ))}
-        </TableBody>
-      </Table>
+    <div className="space-y-4">
+      <div className="rounded-md border">
+        <Table>
+          <ProjectTableHeader
+            currentSort={sortKey}
+            currentDirection={sortDirection}
+            onSort={handleSort}
+          />
+          <TableBody>
+            {paginatedProjects.map((project) => (
+              <ProjectTableRow
+                key={project.id}
+                project={{
+                  ...project,
+                  weather: project.weather || project.status,
+                  progress: project.review_progress || project.progress,
+                  lastReviewDate: project.review_created_at || project.last_review_date
+                }}
+                onProjectEdit={onProjectEdit}
+                onViewHistory={onViewHistory}
+                onProjectDeleted={onProjectDeleted}
+              />
+            ))}
+          </TableBody>
+        </Table>
+      </div>
+      
+      {/* Composant de pagination */}
+      <ProjectPagination 
+        currentPage={currentPage}
+        totalPages={totalPages}
+        onPageChange={onPageChange}
+      />
+      
+      {/* Information sur le nombre de projets */}
+      <div className="text-sm text-muted-foreground text-center">
+        Affichage de {Math.min(sortedProjects.length, (currentPage - 1) * pageSize + 1)} 
+        {" - "}
+        {Math.min(sortedProjects.length, currentPage * pageSize)} sur {sortedProjects.length} projets
+      </div>
     </div>
   );
 };

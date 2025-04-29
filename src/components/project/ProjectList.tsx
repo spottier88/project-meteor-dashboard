@@ -6,6 +6,7 @@
  * et les actions (édition, revue, historique) aux composants enfants.
  */
 
+import { useState, useEffect } from "react";
 import { ViewMode } from "@/components/ViewToggle";
 import { ProjectGrid } from "@/components/ProjectGrid";
 import { ProjectTable } from "@/components/ProjectTable";
@@ -32,6 +33,28 @@ export const ProjectList = ({
   onProjectDeleted,
   onFilteredProjectsChange,
 }: ProjectListProps) => {
+  // État pour la pagination
+  const [currentPage, setCurrentPage] = useState(() => {
+    return parseInt(localStorage.getItem("projectsCurrentPage") || "1");
+  });
+  const [pageSize, setPageSize] = useState(() => {
+    return parseInt(localStorage.getItem("projectsPageSize") || "10");
+  });
+
+  // Remise à la première page lorsque les projets changent (filtrage)
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [projects.length]);
+
+  // Sauvegarde des préférences de pagination
+  useEffect(() => {
+    localStorage.setItem("projectsCurrentPage", currentPage.toString());
+  }, [currentPage]);
+
+  useEffect(() => {
+    localStorage.setItem("projectsPageSize", pageSize.toString());
+  }, [pageSize]);
+
   return (
     <div className="space-y-4">
       <div className="flex justify-end">
@@ -57,6 +80,9 @@ export const ProjectList = ({
           onViewHistory={onViewHistory}
           onProjectDeleted={onProjectDeleted}
           onFilteredProjectsChange={onFilteredProjectsChange}
+          currentPage={currentPage}
+          pageSize={pageSize}
+          onPageChange={setCurrentPage}
         />
       )}
     </div>
