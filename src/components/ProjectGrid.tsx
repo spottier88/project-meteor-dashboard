@@ -7,23 +7,10 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useManagerProjectAccess } from "@/hooks/use-manager-project-access";
 import { usePermissionsContext } from "@/contexts/PermissionsContext";
-
-interface Project {
-  id: string;
-  title: string;
-  status: ProjectStatus;
-  progress: ProgressStatus;
-  completion: number;
-  lastReviewDate: string;
-  project_manager?: string;
-  pole_id?: string;
-  direction_id?: string;
-  service_id?: string;
-  lifecycle_status: ProjectLifecycleStatus;
-}
+import { ProjectListItem } from '@/hooks/use-projects-list-view';
 
 interface ProjectGridProps {
-  projects: Project[];
+  projects: ProjectListItem[];
   onProjectReview: (id: string, title: string) => void;
   onProjectEdit: (id: string) => void;
   onViewHistory: (id: string, title: string) => void;
@@ -43,16 +30,6 @@ export const ProjectGrid = ({
   
   useEffect(() => {
     if (!isLoading && !isPermissionsLoaded) {
-      //console.log(`[ProjectGrid] Initial permissions loaded:`, {
-      //  timestamp: new Date().toISOString(),
-      //  projectsCount: projects.length,
-      //  userEmail: userProfile?.email,
-      //  isAdmin,
-      //  isManager,
-     //   isProjectManager,
-     //   isMember,
-     //   highestRole
-     // });
       setIsPermissionsLoaded(true);
     }
   }, [isLoading, isPermissionsLoaded, userProfile?.email, isAdmin, isManager, isProjectManager, isMember, highestRole, projects.length]);
@@ -61,7 +38,6 @@ export const ProjectGrid = ({
     queryKey: ["projectMemberships", user?.id],
     queryFn: async () => {
       if (!user?.id) {
-        // console.log("[ProjectGrid] No user ID for memberships query");
         return [];
       }
       const { data, error } = await supabase
@@ -85,7 +61,6 @@ export const ProjectGrid = ({
 
   const filteredProjects = useMemo(() => {
     if (!user) {
-      // console.log("[ProjectGrid] No user logged in");
       return [];
     }
 

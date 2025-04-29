@@ -1299,8 +1299,16 @@ export type Database = {
           suivi_dgs: boolean
         }[]
       }
+      get_accessible_projects_list_view: {
+        Args: { p_user_id: string }
+        Returns: Json
+      }
       get_detailed_projects: {
         Args: { p_project_ids: string[] }
+        Returns: Json
+      }
+      get_projects_list_view: {
+        Args: Record<PropertyKey, never>
         Returns: Json
       }
       get_team_view_projects: {

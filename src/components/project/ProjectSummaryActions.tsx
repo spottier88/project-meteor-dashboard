@@ -6,7 +6,7 @@
  * les données du projet, des revues, des risques et des tâches.
  */
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
@@ -14,6 +14,7 @@ import { generateProjectPPTX } from "@/components/pptx/ProjectPPTX";
 import { ProjectData as PPTXProjectData } from "@/components/pptx/types";
 import { ProjectStatus, ProgressStatus, ProjectLifecycleStatus } from "@/types/project";
 import { RiskProbability, RiskSeverity, RiskStatus } from "@/types/risk";
+import { useDetailedProjectsData } from "@/hooks/use-detailed-projects-data";
 
 interface ProjectSummaryActionsProps {
   project: any;
@@ -23,74 +24,65 @@ interface ProjectSummaryActionsProps {
 
 const ProjectSummaryActions = ({ project, risks = [], tasks = [] }: ProjectSummaryActionsProps) => {
   const { toast } = useToast();
+  const [isExporting, setIsExporting] = useState(false);
 
   const handleExportPPTX = async () => {
     try {
-      // Récupérer la dernière revue avec ses actions associées
-      const { data: lastReview, error: reviewError } = await supabase
-        .from("reviews")
-        .select("*")
-        .eq("project_id", project.id)
-        .order("created_at", { ascending: false })
-        .limit(1)
-        .single();
+      setIsExporting(true);
 
-      if (reviewError && reviewError.code !== 'PGRST116') {
-        // PGRST116 est le code "No rows returned", ce n'est pas une erreur critique
-        console.error("Erreur lors de la récupération de la revue:", reviewError);
-        throw reviewError;
+      // Utiliser le hook optimisé pour récupérer les données détaillées du projet
+      const { data, error } = await supabase.rpc('get_detailed_projects', { 
+        p_project_ids: [project.id] 
+      });
+
+      if (error) {
+        console.error("Erreur lors de la récupération des données détaillées:", error);
+        throw error;
       }
 
-      // Si une revue a été trouvée, récupérer ses actions
-      let reviewActions = [];
-      if (lastReview) {
-        const { data: actions, error: actionsError } = await supabase
-          .from("review_actions")
-          .select("*")
-          .eq("review_id", lastReview.id);
-
-        if (actionsError) {
-          console.error("Erreur lors de la récupération des actions:", actionsError);
-          throw actionsError;
-        }
-
-        reviewActions = actions || [];
+      if (!data || data.length === 0) {
+        toast({
+          title: "Erreur",
+          description: "Impossible de récupérer les données du projet pour l'export.",
+          variant: "destructive",
+        });
+        return;
       }
+
+      const detailedProject = data[0];
 
       // Adapter les données pour respecter le format PPTXProjectData
       const projectData: PPTXProjectData = {
         project: {
-          title: project.title,
-          status: (project.status || "cloudy") as ProjectStatus,
-          progress: (project.progress || "stable") as ProgressStatus,
-          completion: project.completion || 0,
-          project_manager: project.project_manager,
-          last_review_date: project.last_review_date,
-          start_date: project.start_date,
-          end_date: project.end_date,
-          description: project.description,
-          pole_name: project.poles?.name,
-          direction_name: project.directions?.name,
-          service_name: project.services?.name,
-          lifecycle_status: project.lifecycle_status as ProjectLifecycleStatus,
+          title: detailedProject.project.title,
+          status: (detailedProject.project.status || "cloudy") as ProjectStatus,
+          progress: (detailedProject.project.progress || "stable") as ProgressStatus,
+          completion: detailedProject.project.completion || 0,
+          project_manager: detailedProject.project.project_manager,
+          last_review_date: detailedProject.project.last_review_date,
+          start_date: detailedProject.project.start_date,
+          end_date: detailedProject.project.end_date,
+          description: detailedProject.project.description,
+          pole_name: detailedProject.project.pole_name,
+          direction_name: detailedProject.project.direction_name,
+          service_name: detailedProject.project.service_name,
+          lifecycle_status: detailedProject.project.lifecycle_status as ProjectLifecycleStatus,
         },
-        lastReview: lastReview ? {
-          weather: (lastReview.weather || "cloudy") as ProjectStatus,
-          progress: (lastReview.progress || "stable") as ProgressStatus,
-          comment: lastReview.comment,
-          created_at: lastReview.created_at,
-          actions: reviewActions.map(action => ({
-            description: action.description
-          }))
+        lastReview: detailedProject.lastReview ? {
+          weather: (detailedProject.lastReview.weather || "cloudy") as ProjectStatus,
+          progress: (detailedProject.lastReview.progress || "stable") as ProgressStatus,
+          comment: detailedProject.lastReview.comment,
+          created_at: detailedProject.lastReview.created_at,
+          actions: detailedProject.lastReview.actions || []
         } : undefined,
-        risks: risks.map(risk => ({
+        risks: detailedProject.risks.map(risk => ({
           description: risk.description,
           probability: risk.probability as RiskProbability,
           severity: risk.severity as RiskSeverity,
           status: risk.status as RiskStatus,
           mitigation_plan: risk.mitigation_plan
         })),
-        tasks: tasks.map(task => ({
+        tasks: detailedProject.tasks.map(task => ({
           title: task.title,
           description: task.description,
           status: task.status as "todo" | "in_progress" | "done",
@@ -111,12 +103,19 @@ const ProjectSummaryActions = ({ project, risks = [], tasks = [] }: ProjectSumma
         description: "Une erreur est survenue lors de l'export PPTX.",
         variant: "destructive",
       });
+    } finally {
+      setIsExporting(false);
     }
   };
 
   return (
     <div className="flex space-x-4">
-      <Button onClick={handleExportPPTX}>Exporter en PPTX</Button>
+      <Button 
+        onClick={handleExportPPTX}
+        disabled={isExporting}
+      >
+        {isExporting ? "Exportation..." : "Exporter en PPTX"}
+      </Button>
     </div>
   );
 };

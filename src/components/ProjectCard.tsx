@@ -4,8 +4,6 @@ import { TaskSummary } from "./TaskSummary";
 import { useNavigate } from "react-router-dom";
 import { ProjectCardHeader } from "./project/ProjectCardHeader";
 import { ProjectMetrics } from "./project/ProjectMetrics";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
 import { AddToCartButton } from "./cart/AddToCartButton";
 import { ProjectStatus, ProgressStatus, ProjectLifecycleStatus, ForEntityType } from "@/types/project";
 import { LifecycleStatusBadge } from "./project/LifecycleStatusBadge";
@@ -18,13 +16,18 @@ interface ProjectCardProps {
   status: ProjectStatus | null;
   progress: ProgressStatus | null;
   completion: number;
-  lastReviewDate: string | null;
+  last_review_date: string | null;
+  review_created_at: string | null;
+  review_progress: ProgressStatus | null;
   id: string;
   project_manager?: string;
   owner_id?: string;
   pole_id?: string;
   direction_id?: string;
   service_id?: string;
+  pole_name?: string;
+  direction_name?: string;
+  service_name?: string;
   lifecycle_status: ProjectLifecycleStatus;
   for_entity_type?: ForEntityType;
   for_entity_id?: string;
@@ -39,13 +42,18 @@ export const ProjectCard = ({
   status,
   progress,
   completion,
-  lastReviewDate,
+  last_review_date,
+  review_created_at,
+  review_progress,
   id,
   project_manager,
   owner_id,
   pole_id,
   direction_id,
   service_id,
+  pole_name,
+  direction_name,
+  service_name,
   lifecycle_status,
   for_entity_type,
   for_entity_id,
@@ -56,94 +64,8 @@ export const ProjectCard = ({
   const navigate = useNavigate();
   const { canEdit, isMember, isProjectManager, isAdmin, canManageTeam, isSecondaryProjectManager } = useProjectPermissions(id);
 
-  const { data: organization } = useQuery({
-    queryKey: ["organization", pole_id, direction_id, service_id],
-    queryFn: async () => {
-      let org = { name: "", level: "" };
-
-      if (service_id) {
-        const { data } = await supabase
-          .from("services")
-          .select("name")
-          .eq("id", service_id)
-          .maybeSingle();
-        if (data) {
-          org = { name: data.name, level: "Service" };
-        }
-      } else if (direction_id) {
-        const { data } = await supabase
-          .from("directions")
-          .select("name")
-          .eq("id", direction_id)
-          .maybeSingle();
-        if (data) {
-          org = { name: data.name, level: "Direction" };
-        }
-      } else if (pole_id) {
-        const { data } = await supabase
-          .from("poles")
-          .select("name")
-          .eq("id", pole_id)
-          .maybeSingle();
-        if (data) {
-          org = { name: data.name, level: "Pôle" };
-        }
-      }
-
-      return org;
-    },
-    enabled: !!(pole_id || direction_id || service_id),
-    staleTime: 5 * 60 * 1000,
-  });
-
-  const { data: latestReview } = useQuery({
-    queryKey: ["projects", id, "latest-review"],
-    queryFn: async () => {
-      if (!id) {
-        console.error("No project ID provided for latest review query");
-        return null;
-      }
-
-      const { data, error } = await supabase
-        .from("latest_reviews")
-        .select("*")
-        .eq("project_id", id)
-        .maybeSingle();
-        
-      if (error) {
-        console.error("Error fetching latest review:", error);
-        return null;
-      }
-      
-      return data;
-    },
-    enabled: !!id,
-  });
-
-  const { data: projectManagerProfile } = useQuery({
-    queryKey: ["projectManagerProfile", project_manager],
-    queryFn: async () => {
-      if (!project_manager) return null;
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("*")
-        .eq("email", project_manager)
-        .maybeSingle();
-
-      if (error) {
-        console.error("Error fetching project manager profile:", error);
-        return null;
-      }
-      return data;
-    },
-    enabled: !!project_manager,
-  });
-
   const getProjectManagerDisplay = () => {
     if (!project_manager) return "-";
-    if (projectManagerProfile?.first_name && projectManagerProfile?.last_name) {
-      return `${projectManagerProfile.first_name} ${projectManagerProfile.last_name}`;
-    }
     return project_manager;
   };
 
@@ -166,13 +88,18 @@ export const ProjectCard = ({
     }
   };
 
+  // Utiliser la date issue de la dernière revue en priorité
+  const reviewDate = review_created_at || last_review_date;
+  // Utiliser le progressStatus issu de la dernière revue en priorité
+  const progressStatus = review_progress || progress;
+
   return (
     <Card className="w-full transition-all duration-300 hover:shadow-lg animate-fade-in overflow-hidden flex flex-col relative">
       <div className={cn("h-2 w-full", getStatusColorClass(lifecycle_status))} />
       
       <ProjectCardHeader
         title={title}
-        status={latestReview?.weather || null}
+        status={status || null}
         onEdit={onEdit}
         onViewHistory={onViewHistory}
         id={id}
@@ -217,9 +144,11 @@ export const ProjectCard = ({
           <div className="text-sm text-muted-foreground">
             Chef de projet : {getProjectManagerDisplay()}
           </div>
-          {organization?.name && (
+          {(pole_name || direction_name || service_name) && (
             <p className="text-sm text-muted-foreground">
-              {organization.level}: {organization.name}
+              {service_name ? `Service: ${service_name}` : 
+               direction_name ? `Direction: ${direction_name}` : 
+               pole_name ? `Pôle: ${pole_name}` : ""}
             </p>
           )}
           <div 
@@ -227,9 +156,9 @@ export const ProjectCard = ({
             onClick={() => navigate(`/projects/${id}`)}
           >
             <ProjectMetrics
-              progress={latestReview?.progress || null}
-              completion={latestReview?.completion || 0}
-              lastReviewDate={latestReview?.created_at || null}
+              progress={progressStatus || null}
+              completion={completion || 0}
+              lastReviewDate={reviewDate || null}
             />
           </div>
           <TaskSummary projectId={id} />

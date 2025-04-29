@@ -1,8 +1,6 @@
 import { useState, useEffect } from "react";
-import { useQuery } from "@tanstack/react-query";
 import { useUser } from "@supabase/auth-helpers-react";
 import { useNavigate } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
 import { DashboardHeader } from "@/components/DashboardHeader";
 import { UserInfo } from "@/components/UserInfo";
 import { ViewMode } from "@/components/ViewToggle";
@@ -12,6 +10,7 @@ import { ProjectFilters } from "@/components/project/ProjectFilters";
 import { ProjectList } from "@/components/project/ProjectList";
 import { ProjectModals } from "@/components/project/ProjectModals";
 import { usePermissionsContext } from "@/contexts/PermissionsContext";
+import { useProjectsListView } from "@/hooks/use-projects-list-view";
 
 const LoadingSpinner = () => (
   <div className="flex justify-center items-center h-48">
@@ -91,54 +90,8 @@ const Index = () => {
     localStorage.setItem("projectServiceId", serviceId);
   }, [serviceId]);
 
-  const { data: projects, refetch: refetchProjects } = useQuery({
-    queryKey: ["projects"],
-    queryFn: async () => {
-      const { data: projectsData, error: projectsError } = await supabase
-        .from("projects")
-        .select(`
-          *,
-          poles (id, name),
-          directions (id, name),
-          services (id, name),
-          project_monitoring!left (
-            monitoring_level,
-            monitoring_entity_id
-          ),
-          project_manager_profile:profiles!projects_project_manager_id_fkey (
-            first_name,
-            last_name
-          )
-        `)
-        .order("created_at", { ascending: false });
-
-      if (projectsError) {
-        throw projectsError;
-      }
-
-      const { data: reviewsData, error: reviewsError } = await supabase
-        .from("latest_reviews")
-        .select("*");
-
-      if (reviewsError) {
-        throw reviewsError;
-      }
-
-      return projectsData?.map(project => {
-        const latestReview = reviewsData?.find(review => review.project_id === project.id);
-        return {
-          ...project,
-          status: latestReview?.weather || null,
-          progress: latestReview?.progress || null,
-          completion: latestReview?.completion || 0,
-          lastReviewDate: project.last_review_date,
-          for_entity_type: project.for_entity_type as ForEntityType,
-        };
-      }) || [];
-    },
-    enabled: !!user?.id,
-    staleTime: 300000,
-  });
+  // Utilisation du hook optimisé
+  const { data: projects, isLoading: isProjectsLoading, refetch: refetchProjects } = useProjectsListView();
 
   const [accessibleProjectIds, setAccessibleProjectIds] = useState<string[]>([]);
 
@@ -153,17 +106,16 @@ const Index = () => {
 
     if (monitoringLevel !== 'all') {
       if (monitoringLevel === 'none') {
-        const hasNoMonitoring = !project.project_monitoring || 
-                              project.project_monitoring.monitoring_level === 'none';
+        const hasNoMonitoring = !project.monitoring_level || 
+                              project.monitoring_level === 'none';
         return hasNoMonitoring;
       }
 
-      const monitoring = project.project_monitoring;
-      if (!monitoring) {
+      if (!project.monitoring_level) {
         return false;
       }
       
-      const levelMatch = monitoring.monitoring_level === monitoringLevel;
+      const levelMatch = project.monitoring_level === monitoringLevel;
       return levelMatch;
     }
 
@@ -201,14 +153,7 @@ const Index = () => {
       const query = searchQuery.toLowerCase();
       const matchesTitle = project.title?.toLowerCase().includes(query);
       const matchesManager = project.project_manager?.toLowerCase().includes(query);
-      
-      const projectManagerProfile = project.project_manager_profile;
-      const managerFirstName = projectManagerProfile?.first_name?.toLowerCase() || "";
-      const managerLastName = projectManagerProfile?.last_name?.toLowerCase() || "";
-      const matchesManagerName = 
-        managerFirstName.includes(query) || 
-        managerLastName.includes(query) || 
-        `${managerFirstName} ${managerLastName}`.includes(query);
+      const matchesManagerName = project.project_manager_name?.toLowerCase().includes(query);
       
       return matchesTitle || matchesManager || matchesManagerName;
     }
@@ -499,7 +444,7 @@ const Index = () => {
     setIsProjectSelectionOpen(true);
   };
 
-  if (isPermissionsLoading) {
+  if (isPermissionsLoading || isProjectsLoading) {
     return <LoadingSpinner />;
   }
 

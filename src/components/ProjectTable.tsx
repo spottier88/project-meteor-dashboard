@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Table, TableBody } from "@/components/ui/table";
 import { ProjectStatus, ProgressStatus, ProjectLifecycleStatus } from "@/types/project";
@@ -9,25 +10,10 @@ import { supabase } from "@/integrations/supabase/client";
 import { SortDirection } from "./ui/sortable-header";
 import { useManagerProjectAccess } from "@/hooks/use-manager-project-access";
 import { usePermissionsContext } from "@/contexts/PermissionsContext";
-
-interface Project {
-  id: string;
-  title: string;
-  status: ProjectStatus | null;
-  progress: ProgressStatus | null;
-  completion: number;
-  lastReviewDate: string | null;
-  project_manager?: string;
-  owner_id?: string;
-  suivi_dgs?: boolean;
-  pole_id?: string;
-  direction_id?: string;
-  service_id?: string;
-  lifecycle_status: ProjectLifecycleStatus;
-}
+import { ProjectListItem } from "@/hooks/use-projects-list-view";
 
 interface ProjectTableProps {
-  projects: Project[];
+  projects: ProjectListItem[];
   onProjectReview: (id: string, title: string) => void;
   onProjectEdit: (id: string) => void;
   onViewHistory: (id: string, title: string) => void;
@@ -74,12 +60,10 @@ export const ProjectTable = ({
     queryKey: ["filteredProjects", projectIds, user?.id, userRoles, userProfile, projectMemberships, projectAccess],
     queryFn: async () => {
       if (!user) {
-        // console.log("No user logged in");
         return [];
       }
 
       if (isAdmin) {
-        // console.log("User is admin, showing all projects");
         return projects;
       }
 
@@ -155,7 +139,12 @@ export const ProjectTable = ({
           {sortedProjects.map((project) => (
             <ProjectTableRow
               key={project.id}
-              project={project}
+              project={{
+                ...project,
+                weather: project.weather,
+                progress: project.review_progress || project.progress,
+                lastReviewDate: project.review_created_at || project.last_review_date
+              }}
               onProjectEdit={onProjectEdit}
               onViewHistory={onViewHistory}
               onProjectDeleted={onProjectDeleted}
