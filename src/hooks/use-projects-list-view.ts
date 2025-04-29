@@ -84,8 +84,19 @@ export const useProjectsListView = (enabled = true) => {
           return [];
         }
 
-        // Typage explicite des données
-        const projects: ProjectListItem[] = Array.isArray(data) ? data : [];
+        // Typage explicite des données et conversion du JSON en ProjectListItem[]
+        const projects: ProjectListItem[] = Array.isArray(data) 
+          ? data.map((item: any) => ({
+              ...item,
+              lifecycle_status: item.lifecycle_status as ProjectLifecycleStatus,
+              status: item.status as ProjectStatus | null,
+              progress: item.progress as ProgressStatus | null,
+              weather: item.weather as ProjectStatus | null,
+              review_progress: item.review_progress as ProgressStatus | null,
+              monitoring_level: item.monitoring_level as MonitoringLevel | null,
+              completion: item.completion || 0
+            }))
+          : [];
         
         console.log(`${projects.length} projets récupérés avec succès via la vue optimisée`);
         return projects;

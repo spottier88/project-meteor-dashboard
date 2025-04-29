@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useUser } from "@supabase/auth-helpers-react";
 import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
 import { DashboardHeader } from "@/components/DashboardHeader";
 import { UserInfo } from "@/components/UserInfo";
 import { ViewMode } from "@/components/ViewToggle";

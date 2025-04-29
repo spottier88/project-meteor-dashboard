@@ -40,7 +40,7 @@ const ProjectSummaryActions = ({ project, risks = [], tasks = [] }: ProjectSumma
         throw error;
       }
 
-      if (!data || data.length === 0) {
+      if (!data || !Array.isArray(data) || data.length === 0) {
         toast({
           title: "Erreur",
           description: "Impossible de récupérer les données du projet pour l'export.",
