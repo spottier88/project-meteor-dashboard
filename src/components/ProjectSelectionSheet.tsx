@@ -4,22 +4,25 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sh
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { StatusIcon } from "./project/StatusIcon";
-import { ProjectStatus } from "@/types/project";
+import { Project, ProjectStatus } from "@/types/project";
 import { useUser } from "@supabase/auth-helpers-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { UserRoleData } from "@/types/user";
+import { ProjectListItem } from "@/hooks/use-projects-list-view";
 
-interface Project {
+interface ProjectWithStatus {
   id: string;
   title: string;
-  status: ProjectStatus;
-  lastReviewDate: string;
+  status?: ProjectStatus | null;
+  weather?: ProjectStatus | null;
+  last_review_date?: string | null;
+  lastReviewDate?: string | null;
   project_manager?: string;
 }
 
 interface ProjectSelectionSheetProps {
-  projects: Project[];
+  projects: (Project | ProjectListItem)[];
   isOpen: boolean;
   onClose: () => void;
   onProjectSelect: (id: string, title: string) => void;
@@ -84,6 +87,16 @@ export const ProjectSelectionSheet = ({
     );
   });
 
+  const getReviewDate = (project: ProjectWithStatus): string | null => {
+    // Gérer les deux formats possibles de date de revue
+    return project.last_review_date || project.lastReviewDate || null;
+  };
+
+  const getStatusForDisplay = (project: ProjectWithStatus): ProjectStatus | null => {
+    // Utiliser weather en priorité ou status si weather n'est pas disponible
+    return project.weather || project.status || null;
+  };
+
   return (
     <Sheet open={isOpen} onOpenChange={onClose}>
       <SheetContent className="w-full sm:max-w-xl overflow-y-auto">
@@ -117,9 +130,9 @@ export const ProjectSelectionSheet = ({
                     <TableCell className="font-medium">{project.title}</TableCell>
                     <TableCell>{project.project_manager || "-"}</TableCell>
                     <TableCell>
-                      <StatusIcon status={project.status} />
+                      <StatusIcon status={getStatusForDisplay(project)} />
                     </TableCell>
-                    <TableCell>{project.lastReviewDate}</TableCell>
+                    <TableCell>{getReviewDate(project)}</TableCell>
                   </TableRow>
                 ))}
                 {filteredProjects.length === 0 && (

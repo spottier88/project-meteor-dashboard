@@ -2,7 +2,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useUser } from "@supabase/auth-helpers-react";
-import { ProjectStatus, ProgressStatus, ProjectLifecycleStatus, ForEntityType } from "@/types/project";
+import { ProjectStatus, ProgressStatus, ProjectLifecycleStatus, ForEntityType, Project, ProjectWithExtendedData } from "@/types/project";
 import { MonitoringLevel } from "@/types/monitoring";
 
 export interface ProjectListItem {
@@ -35,6 +35,28 @@ export interface ProjectListItem {
   review_created_at: string | null;
   review_progress: ProgressStatus | null;
 }
+
+// Fonction utilitaire pour convertir ProjectListItem en Project si nécessaire
+export const convertToProject = (item: ProjectListItem): Project => {
+  return {
+    id: item.id,
+    title: item.title,
+    description: item.description || undefined,
+    status: item.status,
+    progress: item.progress,
+    completion: item.completion,
+    lastReviewDate: item.last_review_date,
+    project_manager: item.project_manager || undefined,
+    owner_id: item.owner_id || undefined,
+    pole_id: item.pole_id || undefined,
+    direction_id: item.direction_id || undefined,
+    service_id: item.service_id || undefined,
+    lifecycle_status: item.lifecycle_status,
+    for_entity_type: item.for_entity_type,
+    for_entity_id: item.for_entity_id || undefined,
+    weather: item.weather
+  };
+};
 
 export const useProjectsListView = (enabled = true) => {
   const user = useUser();

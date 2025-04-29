@@ -30,4 +30,22 @@ export interface Project {
   lifecycle_status: ProjectLifecycleStatus;
   for_entity_type?: ForEntityType;
   for_entity_id?: string;
+  weather?: ProjectStatus | null; // Ajout de la propriété weather
+}
+
+// Interface qui étend Project avec les propriétés additionnelles de ProjectListItem
+export interface ProjectWithExtendedData extends Project {
+  project_manager_name?: string | null;
+  pole_name?: string | null;
+  direction_name?: string | null;
+  service_name?: string | null;
+  start_date?: string | null;
+  end_date?: string | null;
+  monitoring_level?: string | null;
+  monitoring_entity_id?: string | null;
+  suivi_dgs?: boolean | null;
+  priority?: string | null;
+  review_created_at?: string | null;
+  review_progress?: ProgressStatus | null;
+  last_review_date?: string | null;
 }
