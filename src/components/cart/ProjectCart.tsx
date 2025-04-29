@@ -51,7 +51,7 @@ export const ProjectCart = ({ isOpen, onClose }: ProjectCartProps) => {
       // Déclencher le chargement des données
       const { data } = await refetch();
       
-      if (!data || data.length === 0) {
+      if (!data || !Array.isArray(data) || data.length === 0) {
         toast({
           variant: "destructive",
           title: "Erreur",
@@ -86,7 +86,7 @@ export const ProjectCart = ({ isOpen, onClose }: ProjectCartProps) => {
       // Déclencher le chargement des données
       const { data } = await refetch();
       
-      if (!data || data.length === 0) {
+      if (!data || !Array.isArray(data) || data.length === 0) {
         toast({
           variant: "destructive",
           title: "Erreur",
