@@ -1,4 +1,3 @@
-
 import { TableCell, TableRow } from "@/components/ui/table";
 import { ProjectActions } from "./ProjectActions";
 import { OrganizationCell } from "./OrganizationCell";
@@ -8,7 +7,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useUser } from "@supabase/auth-helpers-react";
 import { LifecycleStatusBadge } from "./LifecycleStatusBadge";
-import { ProjectLifecycleStatus } from "@/types/project";
+import { ProjectLifecycleStatus, ProjectStatus } from "@/types/project";
 import { AddToCartButton } from "../cart/AddToCartButton";
 import { MonitoringBadge } from "../monitoring/MonitoringBadge";
 
@@ -26,6 +25,7 @@ interface Project {
   service_id?: string;
   suivi_dgs?: boolean;
   lifecycle_status: ProjectLifecycleStatus;
+  weather?: ProjectStatus | null;
 }
 
 interface ProjectTableRowProps {

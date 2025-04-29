@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Table, TableBody } from "@/components/ui/table";
 import { ProjectStatus, ProgressStatus, ProjectLifecycleStatus } from "@/types/project";
