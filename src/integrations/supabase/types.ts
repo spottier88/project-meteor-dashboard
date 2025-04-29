@@ -1299,6 +1299,10 @@ export type Database = {
           suivi_dgs: boolean
         }[]
       }
+      get_detailed_projects: {
+        Args: { p_project_ids: string[] }
+        Returns: Json
+      }
       get_team_view_projects: {
         Args: { p_user_id: string }
         Returns: {
