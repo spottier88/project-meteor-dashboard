@@ -141,9 +141,9 @@ export const ProjectTable = ({
               key={project.id}
               project={{
                 ...project,
-                lastReviewDate: project.review_created_at || project.last_review_date,
-                weather: project.weather || project.status,
-                progress: project.review_progress || project.progress
+                weather: project.weather,
+                progress: project.review_progress || project.progress,
+                lastReviewDate: project.review_created_at || project.last_review_date
               }}
               onProjectEdit={onProjectEdit}
               onViewHistory={onViewHistory}
