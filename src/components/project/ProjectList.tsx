@@ -71,6 +71,9 @@ export const ProjectList = ({
           onProjectReview={onProjectReview}
           onViewHistory={onViewHistory}
           onFilteredProjectsChange={onFilteredProjectsChange}
+          currentPage={currentPage}
+          pageSize={pageSize}
+          onPageChange={setCurrentPage}
         />
       ) : (
         <ProjectTable

@@ -8,6 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useManagerProjectAccess } from "@/hooks/use-manager-project-access";
 import { usePermissionsContext } from "@/contexts/PermissionsContext";
 import { ProjectListItem } from '@/hooks/use-projects-list-view';
+import { ProjectPagination } from "./project/ProjectPagination";
 
 interface ProjectGridProps {
   projects: ProjectListItem[];
@@ -15,6 +16,9 @@ interface ProjectGridProps {
   onProjectEdit: (id: string) => void;
   onViewHistory: (id: string, title: string) => void;
   onFilteredProjectsChange?: (projectIds: string[]) => void;
+  currentPage: number;
+  pageSize: number;
+  onPageChange: (page: number) => void;
 }
 
 export const ProjectGrid = ({
@@ -23,6 +27,9 @@ export const ProjectGrid = ({
   onProjectEdit,
   onViewHistory,
   onFilteredProjectsChange,
+  currentPage,
+  pageSize,
+  onPageChange,
 }: ProjectGridProps) => {
   const user = useUser();
   const [isPermissionsLoaded, setIsPermissionsLoaded] = useState(false);
@@ -83,6 +90,25 @@ export const ProjectGrid = ({
     }
   }, [filteredProjects, onFilteredProjectsChange]);
 
+  // Paginer les projets filtrés
+  const paginatedProjects = useMemo(() => {
+    if (!filteredProjects) {
+      return [];
+    }
+    
+    const startIndex = (currentPage - 1) * pageSize;
+    const endIndex = startIndex + pageSize;
+    return filteredProjects.slice(startIndex, endIndex);
+  }, [filteredProjects, currentPage, pageSize]);
+
+  // Calculer le nombre total de pages
+  const totalPages = useMemo(() => {
+    if (!filteredProjects) {
+      return 1;
+    }
+    return Math.max(1, Math.ceil(filteredProjects.length / pageSize));
+  }, [filteredProjects, pageSize]);
+
   if (isLoading) {
     return <div className="flex justify-center items-center h-48">
       <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
@@ -90,16 +116,32 @@ export const ProjectGrid = ({
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-      {filteredProjects.map((project) => (
-        <ProjectCard
-          key={project.id}
-          {...project}
-          onReview={onProjectReview}
-          onEdit={onProjectEdit}
-          onViewHistory={onViewHistory}
-        />
-      ))}
+    <div className="space-y-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {paginatedProjects.map((project) => (
+          <ProjectCard
+            key={project.id}
+            {...project}
+            onReview={onProjectReview}
+            onEdit={onProjectEdit}
+            onViewHistory={onViewHistory}
+          />
+        ))}
+      </div>
+
+      {/* Composant de pagination */}
+      <ProjectPagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        onPageChange={onPageChange}
+      />
+      
+      {/* Information sur le nombre de projets */}
+      <div className="text-sm text-muted-foreground text-center">
+        Affichage de {Math.min(filteredProjects.length, (currentPage - 1) * pageSize + 1)} 
+        {" - "}
+        {Math.min(filteredProjects.length, currentPage * pageSize)} sur {filteredProjects.length} projets
+      </div>
     </div>
   );
 };
