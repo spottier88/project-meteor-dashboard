@@ -49,40 +49,41 @@ const ProjectSummaryActions = ({ project, risks = [], tasks = [] }: ProjectSumma
         return;
       }
 
-      const detailedProject = data[0];
+      // Parse les données JSON si nécessaire
+      const detailedProjectData = typeof data[0] === 'string' ? JSON.parse(data[0]) : data[0];
 
       // Adapter les données pour respecter le format PPTXProjectData
       const projectData: PPTXProjectData = {
         project: {
-          title: detailedProject.project.title,
-          status: (detailedProject.project.status || "cloudy") as ProjectStatus,
-          progress: (detailedProject.project.progress || "stable") as ProgressStatus,
-          completion: detailedProject.project.completion || 0,
-          project_manager: detailedProject.project.project_manager,
-          last_review_date: detailedProject.project.last_review_date,
-          start_date: detailedProject.project.start_date,
-          end_date: detailedProject.project.end_date,
-          description: detailedProject.project.description,
-          pole_name: detailedProject.project.pole_name,
-          direction_name: detailedProject.project.direction_name,
-          service_name: detailedProject.project.service_name,
-          lifecycle_status: detailedProject.project.lifecycle_status as ProjectLifecycleStatus,
+          title: detailedProjectData.project?.title || "",
+          status: (detailedProjectData.project?.status || "cloudy") as ProjectStatus,
+          progress: (detailedProjectData.project?.progress || "stable") as ProgressStatus,
+          completion: detailedProjectData.project?.completion || 0,
+          project_manager: detailedProjectData.project?.project_manager,
+          last_review_date: detailedProjectData.project?.last_review_date,
+          start_date: detailedProjectData.project?.start_date,
+          end_date: detailedProjectData.project?.end_date,
+          description: detailedProjectData.project?.description,
+          pole_name: detailedProjectData.project?.pole_name,
+          direction_name: detailedProjectData.project?.direction_name,
+          service_name: detailedProjectData.project?.service_name,
+          lifecycle_status: detailedProjectData.project?.lifecycle_status as ProjectLifecycleStatus,
         },
-        lastReview: detailedProject.lastReview ? {
-          weather: (detailedProject.lastReview.weather || "cloudy") as ProjectStatus,
-          progress: (detailedProject.lastReview.progress || "stable") as ProgressStatus,
-          comment: detailedProject.lastReview.comment,
-          created_at: detailedProject.lastReview.created_at,
-          actions: detailedProject.lastReview.actions || []
+        lastReview: detailedProjectData.lastReview ? {
+          weather: (detailedProjectData.lastReview?.weather || "cloudy") as ProjectStatus,
+          progress: (detailedProjectData.lastReview?.progress || "stable") as ProgressStatus,
+          comment: detailedProjectData.lastReview?.comment,
+          created_at: detailedProjectData.lastReview?.created_at,
+          actions: detailedProjectData.lastReview?.actions || []
         } : undefined,
-        risks: detailedProject.risks.map(risk => ({
+        risks: (detailedProjectData.risks || []).map((risk: any) => ({
           description: risk.description,
           probability: risk.probability as RiskProbability,
           severity: risk.severity as RiskSeverity,
           status: risk.status as RiskStatus,
           mitigation_plan: risk.mitigation_plan
         })),
-        tasks: detailedProject.tasks.map(task => ({
+        tasks: (detailedProjectData.tasks || []).map((task: any) => ({
           title: task.title,
           description: task.description,
           status: task.status as "todo" | "in_progress" | "done",

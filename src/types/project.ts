@@ -30,7 +30,7 @@ export interface Project {
   lifecycle_status: ProjectLifecycleStatus;
   for_entity_type?: ForEntityType;
   for_entity_id?: string;
-  weather?: ProjectStatus | null; // Add the weather property
+  weather?: ProjectStatus | null;
 }
 
 // Interface qui étend Project avec les propriétés additionnelles de ProjectListItem
