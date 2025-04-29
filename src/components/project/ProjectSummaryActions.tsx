@@ -11,6 +11,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import { generateProjectPPTX } from "@/components/pptx/ProjectPPTX";
+import { ProjectData as PPTXProjectData } from "@/components/pptx/types";
+import { ProjectStatus, ProgressStatus, ProjectLifecycleStatus } from "@/types/project";
 
 interface ProjectSummaryActionsProps {
   project: any;
@@ -32,28 +34,35 @@ const ProjectSummaryActions = ({ project, risks = [], tasks = [] }: ProjectSumma
         .limit(1)
         .single();
 
-      if (reviewError) {
+      if (reviewError && reviewError.code !== 'PGRST116') {
+        // PGRST116 est le code "No rows returned", ce n'est pas une erreur critique
         console.error("Erreur lors de la récupération de la revue:", reviewError);
         throw reviewError;
       }
 
-      // Récupérer les actions associées à cette revue
-      const { data: reviewActions, error: actionsError } = await supabase
-        .from("review_actions")
-        .select("*")
-        .eq("review_id", lastReview.id);
+      // Si une revue a été trouvée, récupérer ses actions
+      let reviewActions = [];
+      if (lastReview) {
+        const { data: actions, error: actionsError } = await supabase
+          .from("review_actions")
+          .select("*")
+          .eq("review_id", lastReview.id);
 
-      if (actionsError) {
-        console.error("Erreur lors de la récupération des actions:", actionsError);
-        throw actionsError;
+        if (actionsError) {
+          console.error("Erreur lors de la récupération des actions:", actionsError);
+          throw actionsError;
+        }
+
+        reviewActions = actions || [];
       }
 
-      const projectData = {
+      // Adapter les données pour respecter le format PPTXProjectData
+      const projectData: PPTXProjectData = {
         project: {
           title: project.title,
-          status: project.status,
-          progress: project.progress,
-          completion: project.completion,
+          status: (project.status || "cloudy") as ProjectStatus,
+          progress: (project.progress || "stable") as ProgressStatus,
+          completion: project.completion || 0,
           project_manager: project.project_manager,
           last_review_date: project.last_review_date,
           start_date: project.start_date,
@@ -62,17 +71,31 @@ const ProjectSummaryActions = ({ project, risks = [], tasks = [] }: ProjectSumma
           pole_name: project.poles?.name,
           direction_name: project.directions?.name,
           service_name: project.services?.name,
-          lifecycle_status: project.lifecycle_status,
+          lifecycle_status: project.lifecycle_status as ProjectLifecycleStatus,
         },
         lastReview: lastReview ? {
-          weather: lastReview.weather,
-          progress: lastReview.progress,
+          weather: (lastReview.weather || "cloudy") as ProjectStatus,
+          progress: (lastReview.progress || "stable") as ProgressStatus,
           comment: lastReview.comment,
           created_at: lastReview.created_at,
-          actions: reviewActions || []
+          actions: reviewActions.map(action => ({
+            description: action.description
+          }))
         } : undefined,
-        risks,
-        tasks,
+        risks: risks.map(risk => ({
+          description: risk.description,
+          probability: risk.probability,
+          severity: risk.severity,
+          status: risk.status,
+          mitigation_plan: risk.mitigation_plan
+        })),
+        tasks: tasks.map(task => ({
+          title: task.title,
+          description: task.description,
+          status: task.status,
+          assignee: task.assignee,
+          due_date: task.due_date
+        })),
       };
 
       await generateProjectPPTX([projectData]);

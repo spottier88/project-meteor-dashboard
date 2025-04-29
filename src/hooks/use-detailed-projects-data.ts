@@ -3,14 +3,15 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Json } from "@/integrations/supabase/types";
 import { format } from "date-fns";
+import { ProjectStatus, ProgressStatus, ProjectLifecycleStatus } from "@/types/project";
 
 export type ProjectData = {
   project: {
     id: string;
     title: string;
     description: string | null;
-    status: string | null;
-    progress: string | null;
+    status: ProjectStatus | null;
+    progress: ProgressStatus | null;
     last_review_date: string | null;
     project_manager: string | null;
     project_manager_name: string | null;
@@ -18,7 +19,7 @@ export type ProjectData = {
     pole_id: string | null;
     direction_id: string | null;
     service_id: string | null;
-    lifecycle_status: string;
+    lifecycle_status: ProjectLifecycleStatus;
     start_date: string | null;
     end_date: string | null;
     pole_name: string | null;
@@ -31,11 +32,11 @@ export type ProjectData = {
     suivi_dgs: boolean | null;
     priority: string | null;
     completion: number;
-    weather: string | null;
+    weather: ProjectStatus | null;
   };
   lastReview: {
-    weather: string | null;
-    progress: string | null;
+    weather: ProjectStatus | null;
+    progress: ProgressStatus | null;
     completion: number;
     comment: string | null;
     created_at: string | null;
@@ -92,7 +93,52 @@ export const useDetailedProjectsData = (projectIds: string[], enabled: boolean =
         }
 
         // Vérifier si data est un tableau et qu'il contient des éléments
-        const projectsData = Array.isArray(data) ? data as ProjectData[] : [];
+        // Cast des données retournées au type ProjectData, en vérifiant que les valeurs
+        // des enums sont bien assignées correctement
+        const projectsData = Array.isArray(data) ? data.map(item => {
+          // S'assurer que les types d'enum sont correctement assignés
+          const typedItem = { ...item };
+          
+          // Conversion explicite pour project.status
+          if (typedItem.project && typeof typedItem.project.status === 'string') {
+            const status = typedItem.project.status as string;
+            if (status === 'sunny' || status === 'cloudy' || status === 'stormy' || status === null) {
+              typedItem.project.status = status as ProjectStatus;
+            }
+          }
+          
+          // Conversion explicite pour project.progress
+          if (typedItem.project && typeof typedItem.project.progress === 'string') {
+            const progress = typedItem.project.progress as string;
+            if (progress === 'better' || progress === 'stable' || progress === 'worse' || progress === null) {
+              typedItem.project.progress = progress as ProgressStatus;
+            }
+          }
+          
+          // Conversion explicite pour project.lifecycle_status
+          if (typedItem.project && typeof typedItem.project.lifecycle_status === 'string') {
+            typedItem.project.lifecycle_status = typedItem.project.lifecycle_status as ProjectLifecycleStatus;
+          }
+          
+          // Conversion pour lastReview.weather et lastReview.progress si présents
+          if (typedItem.lastReview) {
+            if (typeof typedItem.lastReview.weather === 'string') {
+              const weather = typedItem.lastReview.weather as string;
+              if (weather === 'sunny' || weather === 'cloudy' || weather === 'stormy' || weather === null) {
+                typedItem.lastReview.weather = weather as ProjectStatus;
+              }
+            }
+            
+            if (typeof typedItem.lastReview.progress === 'string') {
+              const progress = typedItem.lastReview.progress as string;
+              if (progress === 'better' || progress === 'stable' || progress === 'worse' || progress === null) {
+                typedItem.lastReview.progress = progress as ProgressStatus;
+              }
+            }
+          }
+          
+          return typedItem as unknown as ProjectData;
+        }) : [];
         
         console.log(`${projectsData.length} projets récupérés avec succès`);
         return projectsData;

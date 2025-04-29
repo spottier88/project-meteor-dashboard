@@ -12,6 +12,8 @@ import { ProjectGanttSheet } from "./ProjectGanttSheet";
 import { exportProjectsToExcel } from "@/utils/projectExport";
 import { LoadingOverlay } from "../ui/loading-overlay";
 import { useDetailedProjectsData, ProjectData } from "@/hooks/use-detailed-projects-data";
+import { ProjectData as PPTXProjectData } from "../pptx/types";
+import { ProjectStatus, ProgressStatus } from "@/types/project";
 
 interface ProjectCartProps {
   isOpen: boolean;
@@ -43,6 +45,28 @@ export const ProjectCart = ({ isOpen, onClose }: ProjectCartProps) => {
     false // Nous ne l'activons pas automatiquement
   );
 
+  // Fonction pour adapter les données au format attendu par le générateur PPTX
+  const adaptDataForPPTX = (data: ProjectData[]): PPTXProjectData[] => {
+    return data.map(item => {
+      return {
+        project: {
+          ...item.project,
+          status: item.project.status || "cloudy" as ProjectStatus,
+          progress: item.project.progress || "stable" as ProgressStatus,
+          lifecycle_status: item.project.lifecycle_status,
+        },
+        lastReview: item.lastReview ? {
+          ...item.lastReview,
+          weather: item.lastReview.weather || "cloudy" as ProjectStatus,
+          progress: item.lastReview.progress || "stable" as ProgressStatus,
+          actions: item.lastReview.actions || []
+        } : undefined,
+        risks: item.risks || [],
+        tasks: item.tasks || []
+      };
+    });
+  };
+
   const handleExcelExport = async () => {
     try {
       setExportType('excel');
@@ -60,7 +84,7 @@ export const ProjectCart = ({ isOpen, onClose }: ProjectCartProps) => {
         return;
       }
 
-      exportProjectsToExcel(data as ProjectData[]);
+      exportProjectsToExcel(data);
       toast({
         title: "Succès",
         description: "Fichier Excel généré avec succès",
@@ -95,7 +119,10 @@ export const ProjectCart = ({ isOpen, onClose }: ProjectCartProps) => {
         return;
       }
 
-      await generateProjectPPTX(data as ProjectData[]);
+      // Adapter les données pour le format PPTX
+      const adaptedData = adaptDataForPPTX(data);
+      
+      await generateProjectPPTX(adaptedData);
       toast({
         title: "Succès",
         description: "Présentation PowerPoint générée avec succès",
