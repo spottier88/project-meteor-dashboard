@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { ProjectTemplateTask, useProjectTemplates } from "@/hooks/useProjectTemplates";
-import { PlusCircle, Pencil, Trash2, ChevronDown, ChevronRight, MoveVertical } from "lucide-react";
+import { PlusCircle, Pencil, Trash2, ChevronDown, ChevronRight } from "lucide-react";
 import { TemplateTaskForm } from "./TemplateTaskForm";
 import { 
   AlertDialog,
@@ -26,7 +26,7 @@ export const TemplateTaskList = ({
   tasks, 
   onTasksChanged 
 }: TemplateTaskListProps) => {
-  const { createTemplateTask, updateTemplateTask, deleteTemplateTask } = useProjectTemplates();
+  const { addTaskToTemplate, updateTemplateTask, deleteTemplateTask } = useProjectTemplates();
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [currentTask, setCurrentTask] = useState<ProjectTemplateTask | undefined>(undefined);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
@@ -74,7 +74,7 @@ export const TemplateTaskList = ({
     
     await deleteTemplateTask.mutateAsync({ 
       id: taskToDelete.id,
-      template_id: templateId
+      templateId: templateId
     });
     
     setIsDeleteDialogOpen(false);
@@ -86,7 +86,11 @@ export const TemplateTaskList = ({
     if (currentTask) {
       await updateTemplateTask.mutateAsync({ id: currentTask.id, ...taskData });
     } else {
-      await createTemplateTask.mutateAsync(taskData as any);
+      await addTaskToTemplate.mutateAsync({
+        ...taskData as any,
+        template_id: templateId,
+        title: taskData.title || "",
+      });
     }
     
     setIsFormOpen(false);

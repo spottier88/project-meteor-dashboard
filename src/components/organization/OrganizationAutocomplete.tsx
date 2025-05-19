@@ -1,21 +1,32 @@
 
 import React, { useState, useEffect } from 'react';
-import { 
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import { Button } from "@/components/ui/button";
-import { Check, ChevronsUpDown } from "lucide-react";
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
-import { cn } from "@/lib/utils";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Button } from "@/components/ui/button";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "@/components/ui/command";
+import { Check, ChevronsUpDown } from "lucide-react";
+import { cn } from "@/lib/utils";
+
+interface Organization {
+  pole: string | null;
+  direction: string | null;
+  service: string | null;
+  pole_name?: string;
+  direction_name?: string;
+  service_name?: string;
+}
 
 interface OrganizationAutocompleteProps {
-  organization: any;
-  setOrganization: (value: any) => void;
+  organization: Organization;
+  setOrganization: (org: Organization) => void;
   disabled?: boolean;
+}
+
+interface OrganizationOption {
+  value: string;
+  label: string;
+  organization: Organization;
 }
 
 export const OrganizationAutocomplete: React.FC<OrganizationAutocompleteProps> = ({
@@ -24,176 +35,171 @@ export const OrganizationAutocomplete: React.FC<OrganizationAutocompleteProps> =
   disabled = false
 }) => {
   const [open, setOpen] = useState(false);
-  const [selectedOrg, setSelectedOrg] = useState<any>(null);
-
-  // Requête pour récupérer les pôles
-  const { data: poles, isLoading: polesLoading } = useQuery({
+  const [options, setOptions] = useState<OrganizationOption[]>([]);
+  const [value, setValue] = useState<string>("");
+  const [displayValue, setDisplayValue] = useState<string>("");
+  
+  const { data: poles } = useQuery({
     queryKey: ["poles"],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("poles")
-        .select("*")
+        .select("id, name")
         .order("name");
+      
       if (error) throw error;
       return data;
-    },
-    enabled: !disabled,
+    }
   });
-
-  // Requête pour récupérer les directions
-  const { data: directions, isLoading: directionsLoading } = useQuery({
+  
+  const { data: directions } = useQuery({
     queryKey: ["directions"],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("directions")
-        .select("*, poles(name)")
+        .select("id, name, pole_id")
         .order("name");
+      
       if (error) throw error;
       return data;
-    },
-    enabled: !disabled,
+    }
   });
-
-  // Requête pour récupérer les services
-  const { data: services, isLoading: servicesLoading } = useQuery({
+  
+  const { data: services } = useQuery({
     queryKey: ["services"],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("services")
-        .select("*, directions(name, poles(name))")
+        .select("id, name, direction_id")
         .order("name");
+      
       if (error) throw error;
       return data;
-    },
-    enabled: !disabled,
+    }
   });
 
-  // Mettre à jour l'organisation sélectionnée lorsque les données sont chargées
+  // Construire les options de sélection avec la hiérarchie complète
   useEffect(() => {
-    if (!organization) return;
-    
-    // Formater l'affichage de l'organisation sélectionnée
-    if (organization.service) {
-      const service = services?.find(s => s.id === organization.service);
-      if (service) {
-        setSelectedOrg({
-          id: service.id,
-          name: `${service.directions.poles.name} > ${service.directions.name} > ${service.name}`,
-          type: "service"
+    if (poles && directions && services) {
+      const organizationOptions: OrganizationOption[] = [];
+      
+      // Ajouter les pôles
+      poles.forEach(pole => {
+        organizationOptions.push({
+          value: `pole-${pole.id}`,
+          label: pole.name,
+          organization: { pole: pole.id, direction: null, service: null, pole_name: pole.name }
         });
-      }
-    } else if (organization.direction) {
-      const direction = directions?.find(d => d.id === organization.direction);
-      if (direction) {
-        setSelectedOrg({
-          id: direction.id,
-          name: `${direction.poles.name} > ${direction.name}`,
-          type: "direction"
+        
+        // Ajouter les directions de ce pôle
+        const poleDirections = directions.filter(dir => dir.pole_id === pole.id);
+        poleDirections.forEach(direction => {
+          organizationOptions.push({
+            value: `direction-${direction.id}`,
+            label: `${pole.name} > ${direction.name}`,
+            organization: { 
+              pole: pole.id, 
+              direction: direction.id, 
+              service: null,
+              pole_name: pole.name,
+              direction_name: direction.name
+            }
+          });
+          
+          // Ajouter les services de cette direction
+          const directionServices = services.filter(srv => srv.direction_id === direction.id);
+          directionServices.forEach(service => {
+            organizationOptions.push({
+              value: `service-${service.id}`,
+              label: `${pole.name} > ${direction.name} > ${service.name}`,
+              organization: { 
+                pole: pole.id, 
+                direction: direction.id, 
+                service: service.id,
+                pole_name: pole.name,
+                direction_name: direction.name,
+                service_name: service.name
+              }
+            });
+          });
         });
-      }
-    } else if (organization.pole) {
-      const pole = poles?.find(p => p.id === organization.pole);
-      if (pole) {
-        setSelectedOrg({
-          id: pole.id,
-          name: pole.name,
-          type: "pole"
-        });
+      });
+      
+      setOptions(organizationOptions);
+    }
+  }, [poles, directions, services]);
+
+  // Déterminer la valeur affichée initiale en fonction de l'organisation sélectionnée
+  useEffect(() => {
+    if (organization && options.length > 0) {
+      const selectedOption = options.find(opt => {
+        if (organization.service) {
+          return opt.organization.service === organization.service;
+        } else if (organization.direction) {
+          return opt.organization.direction === organization.direction && !opt.organization.service;
+        } else if (organization.pole) {
+          return opt.organization.pole === organization.pole && !opt.organization.direction;
+        }
+        return false;
+      });
+      
+      if (selectedOption) {
+        setValue(selectedOption.value);
+        setDisplayValue(selectedOption.label);
+      } else {
+        setValue("");
+        setDisplayValue("");
       }
     }
-  }, [organization, poles, directions, services]);
+  }, [organization, options]);
 
-  // Construire la liste complète des options
-  const allOptions = [
-    ...(poles || []).map(pole => ({
-      id: pole.id,
-      name: pole.name,
-      type: "pole"
-    })),
-    ...(directions || []).map(direction => ({
-      id: direction.id,
-      name: `${direction.poles.name} > ${direction.name}`,
-      type: "direction"
-    })),
-    ...(services || []).map(service => ({
-      id: service.id,
-      name: `${service.directions.poles.name} > ${service.directions.name} > ${service.name}`,
-      type: "service"
-    }))
-  ];
-
-  const handleSelect = (value: any) => {
-    const option = allOptions.find(opt => opt.id === value);
-    if (!option) return;
-
-    setSelectedOrg(option);
+  const handleSelect = (currentValue: string) => {
+    const selectedOption = options.find(opt => opt.value === currentValue);
     
-    // Mettre à jour l'objet organization selon le type sélectionné
-    if (option.type === "pole") {
-      setOrganization({
-        pole: option.id,
-        direction: null,
-        service: null
-      });
-    } else if (option.type === "direction") {
-      // Trouver le pôle parent
-      const direction = directions?.find(d => d.id === option.id);
-      setOrganization({
-        pole: direction?.pole_id,
-        direction: option.id,
-        service: null
-      });
-    } else if (option.type === "service") {
-      // Trouver la direction et le pôle parents
-      const service = services?.find(s => s.id === option.id);
-      const direction = directions?.find(d => d.id === service?.direction_id);
-      setOrganization({
-        pole: direction?.pole_id,
-        direction: service?.direction_id,
-        service: option.id
-      });
+    if (selectedOption) {
+      setOrganization(selectedOption.organization);
+      setValue(currentValue);
+      setDisplayValue(selectedOption.label);
     }
-
+    
     setOpen(false);
   };
 
   return (
-    <Popover open={open && !disabled} onOpenChange={setOpen}>
+    <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <Button
           variant="outline"
           role="combobox"
           aria-expanded={open}
-          disabled={disabled}
           className="w-full justify-between"
+          disabled={disabled}
         >
-          {selectedOrg ? selectedOrg.name : "Sélectionner une organisation..."}
+          {displayValue || "Sélectionner une organisation"}
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-[400px] p-0">
+      <PopoverContent className="w-[500px] p-0">
         <Command>
           <CommandInput placeholder="Rechercher une organisation..." />
-          <CommandList>
-            <CommandEmpty>Aucun résultat trouvé.</CommandEmpty>
-            <CommandGroup>
-              {allOptions.map((option) => (
-                <CommandItem
-                  key={`${option.type}-${option.id}`}
-                  onSelect={() => handleSelect(option.id)}
-                  className="text-sm"
-                >
-                  <Check
-                    className={cn(
-                      "mr-2 h-4 w-4",
-                      selectedOrg?.id === option.id ? "opacity-100" : "opacity-0"
-                    )}
-                  />
-                  {option.name}
-                </CommandItem>
-              ))}
-            </CommandGroup>
-          </CommandList>
+          <CommandEmpty>Aucune organisation trouvée.</CommandEmpty>
+          <CommandGroup className="max-h-[300px] overflow-y-auto">
+            {options.map((option) => (
+              <CommandItem
+                key={option.value}
+                value={option.value}
+                onSelect={() => handleSelect(option.value)}
+              >
+                <Check
+                  className={cn(
+                    "mr-2 h-4 w-4",
+                    value === option.value ? "opacity-100" : "opacity-0"
+                  )}
+                />
+                {option.label}
+              </CommandItem>
+            ))}
+          </CommandGroup>
         </Command>
       </PopoverContent>
     </Popover>

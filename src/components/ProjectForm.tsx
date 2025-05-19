@@ -1,5 +1,5 @@
 
-import { Dialog, DialogContent, DialogFooter } from "@/components/ui/dialog";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { useQuery } from "@tanstack/react-query";
 import { useUser } from "@supabase/auth-helpers-react";
 import { ProjectFormHeader } from "./form/ProjectFormHeader";
@@ -7,7 +7,7 @@ import { ProjectFormContent } from "./form/ProjectFormContent";
 import { ProjectFormNavigation } from "./form/ProjectFormNavigation";
 import { useProjectFormState } from "./form/useProjectFormState";
 import { useProjectFormValidation } from "./form/useProjectFormValidation";
-import { useProjectFormSubmit } from "@/hooks/useProjectFormSubmit";
+import { useProjectFormSubmit, AccessibleOrganizations } from "@/hooks/useProjectFormSubmit";
 import { getProjectManagers } from "@/utils/projectManagers";
 import { useState, useMemo } from "react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "./ui/alert-dialog";
@@ -33,11 +33,6 @@ export const ProjectForm = ({ isOpen, onClose, onSubmit, project }: ProjectFormP
   const [isProfileFormOpen, setIsProfileFormOpen] = useState(false);
 
   const validationValues = useMemo(() => {
-    // console.log("ProjectForm - validation values:", {
-    //   isAdmin: validation.isAdmin,
-    //   isManager: validation.isManager
-    // });
-    
     return {
       isAdmin: validation.isAdmin,
       isManager: validation.isManager

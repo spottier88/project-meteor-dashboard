@@ -30,7 +30,7 @@ export const useProjectTemplates = () => {
   const [isLoadingAction, setIsLoadingAction] = useState(false);
 
   // Récupérer tous les modèles
-  const { data: templates, isLoading: isLoadingTemplates, refetch } = useQuery({
+  const { data: templates = [], isLoading: isLoadingTemplates, refetch: refetchTemplates } = useQuery({
     queryKey: ["project-templates"],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -47,22 +47,35 @@ export const useProjectTemplates = () => {
     }
   });
   
-  // Récupérer un modèle spécifique
-  const getTemplate = async (id: string) => {
-    const { data, error } = await supabase
-      .from("project_templates")
-      .select("*")
-      .eq("id", id)
-      .single();
-    
-    if (error) {
-      console.error("Error fetching template:", error);
+  // Récupérer un modèle spécifique avec ses tâches
+  const getTemplateWithTasks = async (templateId: string) => {
+    try {
+      const { data: template, error: templateError } = await supabase
+        .from("project_templates")
+        .select("*")
+        .eq("id", templateId)
+        .single();
+      
+      if (templateError) throw templateError;
+      
+      const { data: tasks, error: tasksError } = await supabase
+        .from("project_template_tasks")
+        .select("*")
+        .eq("template_id", templateId)
+        .order("order_index");
+      
+      if (tasksError) throw tasksError;
+      
+      return { 
+        template: template as ProjectTemplate, 
+        tasks: tasks as ProjectTemplateTask[] 
+      };
+    } catch (error) {
+      console.error("Error fetching template with tasks:", error);
       throw error;
     }
-    
-    return data as ProjectTemplate;
   };
-  
+
   // Récupérer les tâches d'un modèle
   const getTemplateTasks = async (templateId: string) => {
     const { data, error } = await supabase
@@ -152,12 +165,12 @@ export const useProjectTemplates = () => {
   
   // Ajouter une tâche à un modèle
   const addTaskToTemplate = useMutation({
-    mutationFn: async (taskData: Partial<ProjectTemplateTask>) => {
+    mutationFn: async (taskData: Omit<ProjectTemplateTask, 'id'>) => {
       setIsLoadingAction(true);
       try {
         const { data, error } = await supabase
           .from("project_template_tasks")
-          .insert([taskData])
+          .insert(taskData)
           .select();
         
         if (error) throw error;
@@ -218,8 +231,8 @@ export const useProjectTemplates = () => {
     templates,
     isLoadingTemplates,
     isLoadingAction,
-    refetchTemplates: refetch,
-    getTemplate,
+    refetchTemplates,
+    getTemplateWithTasks,
     getTemplateTasks,
     createTemplate,
     updateTemplate,
