@@ -6,12 +6,19 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Label } from "@/components/ui/label";
+import { Card } from "@/components/ui/card";
+import { ProjectTemplate } from "@/hooks/useProjectTemplates";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { useProjectTemplates } from "@/hooks/useProjectTemplates";
+import { FileText, Check } from "lucide-react";
 
 interface ProjectFormStep5Props {
   forEntityType: ForEntityType;
   setForEntityType: (value: ForEntityType) => void;
   forEntityId: string | undefined;
   setForEntityId: (value: string | undefined) => void;
+  templateId: string | undefined;
+  setTemplateId: (value: string | undefined) => void;
 }
 
 export const ProjectFormStep5 = ({
@@ -19,11 +26,22 @@ export const ProjectFormStep5 = ({
   setForEntityType,
   forEntityId,
   setForEntityId,
+  templateId,
+  setTemplateId
 }: ProjectFormStep5Props) => {
   // États pour gérer la sélection hiérarchique
   const [selectedPoleId, setSelectedPoleId] = useState<string | undefined>(undefined);
   const [selectedDirectionId, setSelectedDirectionId] = useState<string | undefined>(undefined);
   
+  // Utilisation du hook pour récupérer les modèles de projet et leurs tâches
+  const { 
+    templates,
+    isLoadingTemplates,
+    templateTasks,
+    isLoadingTemplateTasks,
+    setCurrentTemplateId
+  } = useProjectTemplates(templateId);
+
   // Chargement des pôles - toujours activé
   const { data: poles, isLoading: isLoadingPoles } = useQuery({
     queryKey: ["poles"],
@@ -133,6 +151,11 @@ export const ProjectFormStep5 = ({
     
     loadInitialHierarchy();
   }, [forEntityId, forEntityType]); // Exécuté uniquement quand ces valeurs changent
+
+  // Mettre à jour la liste des tâches du modèle lorsque le modèle change
+  useEffect(() => {
+    setCurrentTemplateId(templateId);
+  }, [templateId, setCurrentTemplateId]);
 
   // Gestion du changement de type d'entité
   const handleEntityTypeChange = (value: string) => {
@@ -312,6 +335,78 @@ export const ProjectFormStep5 = ({
     }
   };
 
+  // Rendu du sélecteur de modèle et de la prévisualisation des tâches
+  const renderTemplateSelector = () => {
+    return (
+      <div className="space-y-6 mt-8 border-t pt-6">
+        <h3 className="text-lg font-semibold">Modèle de projet</h3>
+        <div className="grid gap-2">
+          <Label htmlFor="template-selector">Sélectionner un modèle (facultatif)</Label>
+          <Select
+            value={templateId || "none"}
+            onValueChange={(value) => setTemplateId(value === "none" ? undefined : value)}
+          >
+            <SelectTrigger id="template-selector">
+              <SelectValue placeholder="Choisir un modèle" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="none">Aucun modèle</SelectItem>
+              {templates.map((template) => (
+                <SelectItem key={template.id} value={template.id}>
+                  {template.title}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        {templateId && (
+          <div className="mt-4">
+            <h4 className="text-sm font-medium mb-2">Tâches du modèle</h4>
+            {isLoadingTemplateTasks ? (
+              <div className="space-y-2">
+                <Skeleton className="h-10 w-full" />
+                <Skeleton className="h-10 w-full" />
+                <Skeleton className="h-10 w-full" />
+              </div>
+            ) : templateTasks && templateTasks.length > 0 ? (
+              <Card className="p-4">
+                <ScrollArea className="h-[200px]">
+                  <ul className="space-y-2">
+                    {templateTasks.map((task) => (
+                      <li key={task.id} className="flex items-start gap-2 p-2 hover:bg-muted rounded-md">
+                        <div className="mt-0.5">
+                          {task.parent_task_id ? (
+                            <FileText className="h-4 w-4 text-muted-foreground" />
+                          ) : (
+                            <Check className="h-4 w-4 text-primary" />
+                          )}
+                        </div>
+                        <div className="flex-1">
+                          <div className="font-medium">{task.title}</div>
+                          {task.description && (
+                            <div className="text-sm text-muted-foreground">{task.description}</div>
+                          )}
+                        </div>
+                        <div className="text-xs text-muted-foreground whitespace-nowrap">
+                          {task.duration_days} {task.duration_days === 1 ? 'jour' : 'jours'}
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                </ScrollArea>
+              </Card>
+            ) : (
+              <div className="text-sm text-muted-foreground">
+                Ce modèle ne contient pas de tâches.
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    );
+  };
+
   return (
     <div className="space-y-4">
       <h2 className="text-xl font-semibold">Informations complémentaires</h2>
@@ -335,6 +430,8 @@ export const ProjectFormStep5 = ({
       </div>
 
       {forEntityType && renderEntitySelector()}
+      
+      {renderTemplateSelector()}
     </div>
   );
 };

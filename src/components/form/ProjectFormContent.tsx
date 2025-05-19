@@ -116,6 +116,8 @@ export const ProjectFormContent = ({
             setForEntityType={formState.setForEntityType}
             forEntityId={formState.forEntityId}
             setForEntityId={formState.setForEntityId}
+            templateId={formState.templateId}
+            setTemplateId={formState.setTemplateId}
           />
         );
       default:

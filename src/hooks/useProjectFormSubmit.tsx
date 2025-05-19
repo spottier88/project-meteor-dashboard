@@ -162,6 +162,7 @@ export const useProjectFormSubmit = ({
           timeline: formState.timeline,
           deliverables: formState.deliverables,
         },
+        templateId: formState.templateId
       };
 
       // Fonction pour obtenir l'ID de l'entité de suivi en fonction du niveau
@@ -178,6 +179,11 @@ export const useProjectFormSubmit = ({
 
       // Soumettre les données du projet
       const result = await onSubmit(projectData);
+      
+      // Si un modèle a été sélectionné et qu'il s'agit d'un nouveau projet, créer les tâches
+      if (formState.templateId && result && result.id && !project) {
+        await createTasksFromTemplate(formState.templateId, result.id);
+      }
       
       await queryClient.invalidateQueries({ queryKey: ["projects"] });
       
@@ -197,6 +203,94 @@ export const useProjectFormSubmit = ({
       });
     } finally {
       formState.setIsSubmitting(false);
+    }
+  };
+
+  // Fonction pour créer les tâches d'un modèle pour un projet
+  const createTasksFromTemplate = async (templateId: string, projectId: string) => {
+    try {
+      // 1. Récupérer toutes les tâches du modèle
+      const { data: templateTasks, error } = await supabase
+        .from('project_template_tasks')
+        .select('*')
+        .eq('template_id', templateId)
+        .order('parent_task_id', { ascending: true, nullsFirst: true })
+        .order('order_index', { ascending: true });
+      
+      if (error) {
+        console.error("Erreur lors de la récupération des tâches du modèle:", error);
+        return;
+      }
+      
+      if (!templateTasks || templateTasks.length === 0) {
+        return; // Pas de tâches à créer
+      }
+      
+      // 2. Mapper les anciens IDs de tâches vers les nouveaux pour gérer les tâches parentes
+      const taskIdMap = new Map<string, string>();
+      
+      // 3. Créer d'abord les tâches principales (sans parent)
+      for (const task of templateTasks.filter(t => !t.parent_task_id)) {
+        const { data: newTask, error: taskError } = await supabase
+          .from('tasks')
+          .insert({
+            project_id: projectId,
+            title: task.title,
+            description: task.description,
+            status: 'todo', // Toujours commencer par "à faire"
+            due_date: task.duration_days ? new Date(Date.now() + task.duration_days * 86400000).toISOString().split('T')[0] : null,
+            duration: task.duration_days,
+          })
+          .select()
+          .single();
+        
+        if (taskError) {
+          console.error("Erreur lors de la création d'une tâche principale:", taskError);
+          continue;
+        }
+        
+        // Stocker la correspondance des IDs
+        taskIdMap.set(task.id, newTask.id);
+      }
+      
+      // 4. Créer ensuite les sous-tâches
+      for (const task of templateTasks.filter(t => t.parent_task_id)) {
+        const parentTaskId = taskIdMap.get(task.parent_task_id);
+        
+        if (!parentTaskId) {
+          console.error("Tâche parente non trouvée pour la sous-tâche:", task.id);
+          continue;
+        }
+        
+        const { error: taskError } = await supabase
+          .from('tasks')
+          .insert({
+            project_id: projectId,
+            title: task.title,
+            description: task.description,
+            status: 'todo', // Toujours commencer par "à faire"
+            due_date: task.duration_days ? new Date(Date.now() + task.duration_days * 86400000).toISOString().split('T')[0] : null,
+            duration: task.duration_days,
+            parent_task_id: parentTaskId,
+          });
+        
+        if (taskError) {
+          console.error("Erreur lors de la création d'une sous-tâche:", taskError);
+        }
+      }
+      
+      toast({
+        title: "Tâches créées",
+        description: `${templateTasks.length} tâches ont été créées à partir du modèle.`,
+      });
+      
+    } catch (error) {
+      console.error("Erreur lors de la création des tâches à partir du modèle:", error);
+      toast({
+        title: "Attention",
+        description: "Une erreur est survenue lors de la création des tâches depuis le modèle.",
+        variant: "destructive",
+      });
     }
   };
 
