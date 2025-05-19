@@ -4,7 +4,7 @@ import { UserProfile } from "@/types/user";
 import { BasicProjectFields } from "./BasicProjectFields";
 import { ProjectLifecycleStatus } from "@/types/project";
 
-interface ProjectFormStep1Props {
+export interface ProjectFormStep1Props {
   title: string;
   setTitle: (value: string) => void;
   description: string;

@@ -38,19 +38,6 @@ export const ProjectFormContent = ({
             setDescription={formState.setDescription}
             projectManager={formState.projectManager}
             setProjectManager={formState.setProjectManager}
-            projectManagers={projectManagers}
-            projectManagerOrganization={formState.projectManagerOrganization}
-            hasNoHierarchyAssignment={formState.hasNoHierarchyAssignment}
-            onOpenProfile={onOpenProfile}
-            isEditMode={isEditMode}
-            canEditOrganization={canEditOrganization}
-            isAdmin={isAdmin}
-            isManager={isManager}
-          />
-        );
-      case 1:
-        return (
-          <ProjectFormStep2
             startDate={formState.startDate}
             setStartDate={formState.setStartDate}
             endDate={formState.endDate}
@@ -59,20 +46,27 @@ export const ProjectFormContent = ({
             setPriority={formState.setPriority}
             lifecycleStatus={formState.lifecycleStatus}
             setLifecycleStatus={formState.setLifecycleStatus}
+            isAdmin={isAdmin}
+            isManager={isManager}
+            ownerId={formState.ownerId}
+            setOwnerId={formState.setOwnerId}
+            projectManagers={projectManagers}
+          />
+        );
+      case 1:
+        return (
+          <ProjectFormStep2
+            monitoringLevel={formState.monitoringLevel}
+            setMonitoringLevel={formState.setMonitoringLevel}
+            monitoringEntityId={formState.monitoringEntityId}
+            setMonitoringEntityId={formState.setMonitoringEntityId}
+            projectManagerOrganization={formState.projectManagerOrganization}
+            project={project}
           />
         );
       case 2:
         return (
           <ProjectFormStep3
-            monitoringLevel={formState.monitoringLevel}
-            setMonitoringLevel={formState.setMonitoringLevel}
-            monitoringEntityId={formState.monitoringEntityId}
-            setMonitoringEntityId={formState.setMonitoringEntityId}
-          />
-        );
-      case 3:
-        return (
-          <ProjectFormStep4
             novateur={formState.novateur}
             setNovateur={formState.setNovateur}
             usager={formState.usager}
@@ -83,6 +77,23 @@ export const ProjectFormContent = ({
             setAgilite={formState.setAgilite}
             impact={formState.impact}
             setImpact={formState.setImpact}
+          />
+        );
+      case 3:
+        return (
+          <ProjectFormStep4
+            context={formState.context}
+            setContext={formState.setContext}
+            stakeholders={formState.stakeholders}
+            setStakeholders={formState.setStakeholders}
+            governance={formState.governance}
+            setGovernance={formState.setGovernance}
+            objectives={formState.objectives}
+            setObjectives={formState.setObjectives}
+            timeline={formState.timeline}
+            setTimeline={formState.setTimeline}
+            deliverables={formState.deliverables}
+            setDeliverables={formState.setDeliverables}
           />
         );
       case 4:

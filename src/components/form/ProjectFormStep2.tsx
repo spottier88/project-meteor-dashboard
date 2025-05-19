@@ -7,7 +7,7 @@ import { usePermissionsContext } from "@/contexts/PermissionsContext";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Info } from "lucide-react";
 
-interface ProjectFormStep2Props {
+export interface ProjectFormStep2Props {
   monitoringLevel: MonitoringLevel;
   setMonitoringLevel: (value: MonitoringLevel) => void;
   monitoringEntityId: string | null;

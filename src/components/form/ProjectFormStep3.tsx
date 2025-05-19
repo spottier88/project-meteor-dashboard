@@ -1,3 +1,4 @@
+
 import { Slider } from "@/components/ui/slider";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
@@ -10,7 +11,7 @@ import {
 } from "@/components/ui/tooltip";
 import { HelpCircle } from "lucide-react";
 
-interface ProjectFormStep3Props {
+export interface ProjectFormStep3Props {
   novateur: number;
   setNovateur: (value: number) => void;
   usager: number;

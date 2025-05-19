@@ -2,7 +2,7 @@
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 
-interface ProjectFormStep4Props {
+export interface ProjectFormStep4Props {
   context: string;
   setContext: (value: string) => void;
   stakeholders: string;
