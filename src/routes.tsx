@@ -10,6 +10,8 @@ import { ProjectSummary } from "./pages/ProjectSummary";
 import { RiskManagement } from "./pages/RiskManagement";
 import { UserManagement } from "./pages/UserManagement";
 import { AdminDashboard } from "./pages/AdminDashboard";
+import { ProjectTemplateManagement } from "./pages/ProjectTemplateManagement";
+import { ProjectTemplateDetails } from "./pages/ProjectTemplateDetails";
 import { OrganizationManagement } from "./pages/OrganizationManagement";
 import { NotificationManagement } from "./pages/NotificationManagement";
 import { SessionContextProvider, useSession } from "@supabase/auth-helpers-react";
@@ -153,6 +155,22 @@ export const AppRoutes = () => {
             element={
               <ProtectedRoute>
                 <AIPromptManagement />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/templates"
+            element={
+              <ProtectedRoute>
+                <ProjectTemplateManagement />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/templates/:templateId"
+            element={
+              <ProtectedRoute>
+                <ProjectTemplateDetails />
               </ProtectedRoute>
             }
           />
