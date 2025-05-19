@@ -57,20 +57,23 @@ export const TemplateTaskDialog = ({
   const [parentTaskId, setParentTaskId] = useState<string | undefined>(undefined);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // Réinitialiser le formulaire lorsque le dialogue s'ouvre avec des valeurs par défaut
   useEffect(() => {
-    if (defaultValues) {
-      setTaskTitle(defaultValues.title || "");
-      setDescription(defaultValues.description || "");
-      setStatus(defaultValues.status || 'todo');
-      setDurationDays(defaultValues.durationDays || 0);
-      setParentTaskId(defaultValues.parentTaskId);
-    } else {
-      // Réinitialiser les champs quand le dialogue s'ouvre sans valeurs par défaut
-      setTaskTitle("");
-      setDescription("");
-      setStatus('todo');
-      setDurationDays(0);
-      setParentTaskId(undefined);
+    if (open) {
+      if (defaultValues) {
+        setTaskTitle(defaultValues.title || "");
+        setDescription(defaultValues.description || "");
+        setStatus(defaultValues.status || 'todo');
+        setDurationDays(defaultValues.durationDays || 0);
+        setParentTaskId(defaultValues.parentTaskId);
+      } else {
+        // Réinitialiser les champs quand le dialogue s'ouvre sans valeurs par défaut
+        setTaskTitle("");
+        setDescription("");
+        setStatus('todo');
+        setDurationDays(0);
+        setParentTaskId(undefined);
+      }
     }
   }, [defaultValues, open]);
 
@@ -88,6 +91,8 @@ export const TemplateTaskDialog = ({
         durationDays,
         parentTaskId: parentTaskId || undefined
       });
+    } catch (error) {
+      console.error("Erreur lors de la soumission de la tâche:", error);
     } finally {
       setIsSubmitting(false);
     }

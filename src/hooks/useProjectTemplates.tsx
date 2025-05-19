@@ -3,7 +3,15 @@ import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
-import { ProjectTemplate } from "@/components/templates/ProjectTemplateList";
+
+export interface ProjectTemplate {
+  id: string;
+  title: string;
+  description?: string;
+  created_at: string;
+  updated_at: string;
+  created_by?: string;
+}
 
 interface ProjectTemplateTask {
   id: string;
@@ -33,6 +41,7 @@ export const useProjectTemplates = (templateId?: string) => {
         .order('created_at', { ascending: false });
 
       if (error) {
+        console.error("Erreur lors de la récupération des modèles:", error);
         toast({
           title: "Erreur",
           description: "Impossible de récupérer les modèles de projets",
@@ -59,6 +68,7 @@ export const useProjectTemplates = (templateId?: string) => {
         .order('order_index', { ascending: true });
 
       if (error) {
+        console.error("Erreur lors de la récupération des tâches:", error);
         toast({
           title: "Erreur",
           description: "Impossible de récupérer les tâches du modèle",
@@ -84,7 +94,10 @@ export const useProjectTemplates = (templateId?: string) => {
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error("Erreur lors de la création du modèle:", error);
+        throw error;
+      }
       return data;
     },
     onSuccess: () => {
@@ -106,7 +119,10 @@ export const useProjectTemplates = (templateId?: string) => {
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error("Erreur lors de la mise à jour du modèle:", error);
+        throw error;
+      }
       return data;
     },
     onSuccess: () => {
@@ -129,7 +145,10 @@ export const useProjectTemplates = (templateId?: string) => {
         .delete()
         .eq('id', id);
 
-      if (error) throw error;
+      if (error) {
+        console.error("Erreur lors de la suppression du modèle:", error);
+        throw error;
+      }
       return id;
     },
     onSuccess: () => {
@@ -171,7 +190,10 @@ export const useProjectTemplates = (templateId?: string) => {
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error("Erreur lors de la création de la tâche:", error);
+        throw error;
+      }
       return data;
     },
     onSuccess: (_, variables) => {
@@ -204,7 +226,10 @@ export const useProjectTemplates = (templateId?: string) => {
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error("Erreur lors de la mise à jour de la tâche:", error);
+        throw error;
+      }
       return data;
     },
     onSuccess: (_, variables) => {
@@ -222,6 +247,10 @@ export const useProjectTemplates = (templateId?: string) => {
         .eq('id', id)
         .single();
 
+      if (!taskData) {
+        throw new Error("Tâche non trouvée");
+      }
+
       // Supprimer d'abord les sous-tâches
       await supabase
         .from('project_template_tasks')
@@ -234,7 +263,10 @@ export const useProjectTemplates = (templateId?: string) => {
         .delete()
         .eq('id', id);
 
-      if (error) throw error;
+      if (error) {
+        console.error("Erreur lors de la suppression de la tâche:", error);
+        throw error;
+      }
       return { id, templateId: taskData?.template_id };
     },
     onSuccess: (data) => {

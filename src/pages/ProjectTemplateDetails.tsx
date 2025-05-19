@@ -53,6 +53,7 @@ export const ProjectTemplateDetails = () => {
       });
       setIsDialogOpen(false);
     } catch (error) {
+      console.error("Erreur lors de la création de la tâche:", error);
       toast({
         title: "Erreur",
         description: "Une erreur est survenue lors de la création de la tâche.",
@@ -69,7 +70,7 @@ export const ProjectTemplateDetails = () => {
     durationDays: number;
     parentTaskId?: string;
   }) => {
-    if (!templateId) return;
+    if (!templateId || !data.id) return;
     
     try {
       await updateTemplateTask({
@@ -89,6 +90,7 @@ export const ProjectTemplateDetails = () => {
       setEditingTask(null);
       setIsDialogOpen(false);
     } catch (error) {
+      console.error("Erreur lors de la modification de la tâche:", error);
       toast({
         title: "Erreur",
         description: "Une erreur est survenue lors de la modification de la tâche.",
@@ -105,6 +107,7 @@ export const ProjectTemplateDetails = () => {
         description: "La tâche a été supprimée du modèle avec succès.",
       });
     } catch (error) {
+      console.error("Erreur lors de la suppression de la tâche:", error);
       toast({
         title: "Erreur",
         description: "Une erreur est survenue lors de la suppression de la tâche.",
@@ -170,7 +173,10 @@ export const ProjectTemplateDetails = () => {
           setIsDialogOpen(true);
         }}
         onDelete={handleDeleteTask}
-        onOpenDialog={() => setIsDialogOpen(true)}
+        onOpenDialog={() => {
+          setEditingTask(null);
+          setIsDialogOpen(true);
+        }}
       />
 
       <TemplateTaskDialog
