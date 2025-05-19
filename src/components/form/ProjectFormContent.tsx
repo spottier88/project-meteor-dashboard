@@ -37,12 +37,22 @@ export const ProjectFormContent: React.FC<ProjectFormContentProps> = ({
           setDescription={formState.setDescription}
           projectManager={formState.projectManager}
           setProjectManager={formState.setProjectManager}
-          projectManagers={projectManagers}
+          startDate={formState.startDate}
+          setStartDate={formState.setStartDate}
+          endDate={formState.endDate}
+          setEndDate={formState.setEndDate}
+          priority={formState.priority}
+          setPriority={formState.setPriority}
+          lifecycleStatus={formState.lifecycleStatus}
+          setLifecycleStatus={formState.setLifecycleStatus}
+          ownerId={formState.ownerId || ""}
+          setOwnerId={formState.setOwnerId || (() => {})}
           project={project}
           isEditMode={isEditMode}
           onOpenProfile={onOpenProfile}
           isAdmin={isAdmin}
           isManager={isManager}
+          projectManagers={projectManagers}
         />
       )}
       {formState.currentStep === 1 && (

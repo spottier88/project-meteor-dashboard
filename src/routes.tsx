@@ -1,11 +1,12 @@
+
 import {
   createBrowserRouter,
 } from "react-router-dom";
 import App from "./App";
-import { ErrorPage } from "@/components/ErrorPage";
+import { ErrorPage } from "./components/ErrorPage";
 import { Login } from "./pages/Login";
 import { AuthCallback } from "./pages/AuthCallback";
-import { ProtectedRoute } from "@/components/ProtectedRoute";
+import { ProtectedRoute } from "./components/ProtectedRoute";
 import { AdminDashboard } from "./pages/AdminDashboard";
 import { UsersManagement } from "./pages/UsersManagement";
 import { OrganizationManagement } from "./pages/OrganizationManagement";
@@ -101,3 +102,8 @@ export const router = createBrowserRouter([
     ),
   },
 ]);
+
+// Ajout de l'export pour AppRoutes qui sera utilisé dans App.tsx
+export const AppRoutes = () => {
+  return null; // Cette fonction sera appelée dans App.tsx
+};

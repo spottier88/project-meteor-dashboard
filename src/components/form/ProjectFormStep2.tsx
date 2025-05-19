@@ -1,134 +1,122 @@
-
-import { MonitoringLevel } from "@/types/monitoring";
+import React from 'react';
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Input } from "@/components/ui/input";
-import { usePermissionsContext } from "@/contexts/PermissionsContext";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Info } from "lucide-react";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { cn } from "@/lib/utils";
+import { format } from "date-fns";
+import { CalendarIcon } from "lucide-react";
 
 interface ProjectFormStep2Props {
-  monitoringLevel: MonitoringLevel;
-  setMonitoringLevel: (value: MonitoringLevel) => void;
-  monitoringEntityId: string | null;
-  setMonitoringEntityId: (value: string | null) => void;
-  projectManagerOrganization: {
-    pole?: { id: string; name: string } | null;
-    direction?: { id: string; name: string } | null;
-    service?: { id: string; name: string } | null;
-  };
-  project?: {
-    id: string;
-    title: string;
-  };
+  startDate: Date | undefined;
+  setStartDate: (date: Date | undefined) => void;
+  endDate: Date | undefined;
+  setEndDate: (date: Date | undefined) => void;
+  status: string;
+  setStatus: (value: string) => void;
+  priority: string;
+  setPriority: (value: string) => void;
+  project?: any; // Ajout de cette propriété manquante
 }
 
-export const ProjectFormStep2 = ({
-  monitoringLevel,
-  setMonitoringLevel,
-  monitoringEntityId,
-  setMonitoringEntityId,
-  projectManagerOrganization,
-  project,
-}: ProjectFormStep2Props) => {
-  const { isAdmin } = usePermissionsContext();
+export const ProjectFormStep2: React.FC<ProjectFormStep2Props> = ({
+  startDate,
+  setStartDate,
+  endDate,
+  setEndDate,
+  status,
+  setStatus,
+  priority,
+  setPriority,
+  project // Utilisation de la propriété ajoutée
+}) => {
   
-  // Détermine l'affectation organisationnelle à afficher
-  const organizationDisplay = () => {
-    if (projectManagerOrganization.service) {
-      return `Service: ${projectManagerOrganization.service.name}`;
-    }
-    if (projectManagerOrganization.direction) {
-      return `Direction: ${projectManagerOrganization.direction.name}`;
-    }
-    if (projectManagerOrganization.pole) {
-      return `Pôle: ${projectManagerOrganization.pole.name}`;
-    }
-    return "Aucune affectation";
-  };
-
-  // Détermine si le chef de projet a une affectation
-  const hasOrganization = projectManagerOrganization.pole || 
-                          projectManagerOrganization.direction || 
-                          projectManagerOrganization.service;
-
   return (
-    <div className="space-y-6">
-      <div className="space-y-4">
-        <div className="grid gap-2">
-          <Label htmlFor="organization">Organisation du projet</Label>
-          <Input
-            id="organization"
-            value={organizationDisplay()}
-            readOnly
-            className="bg-gray-100"
-          />
-          {!hasOrganization && (
-            <Alert variant="warning" className="mt-2">
-              <Info className="h-4 w-4" />
-              <AlertTitle>Attention</AlertTitle>
-              <AlertDescription>
-                Le chef de projet n'est affecté à aucune organisation. 
-                Le projet sera créé sans affectation organisationnelle.
-              </AlertDescription>
-            </Alert>
-          )}
-          <p className="text-sm text-muted-foreground mt-1">
-            L'organisation du projet est automatiquement basée sur l'affectation du chef de projet.
-          </p>
+    <div className="grid gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="space-y-2">
+          <Label htmlFor="start-date">Date de début</Label>
+          <Popover>
+            <PopoverTrigger asChild>
+              <Input
+                id="start-date"
+                placeholder="Choisir une date"
+                readOnly
+                value={startDate ? format(startDate, "PPP") : ""}
+                className={cn(
+                  "bg-white text-foreground shadow-sm",
+                  !startDate && "text-muted-foreground"
+                )}
+              />
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0" align="start">
+              <Calendar
+                mode="single"
+                selected={startDate}
+                onSelect={setStartDate}
+                disabled={endDate ? (date) => date > endDate : undefined}
+                initialFocus
+              />
+            </PopoverContent>
+          </Popover>
         </div>
-
-        <div className="grid gap-2">
-          <Label htmlFor="monitoring-level">Niveau de suivi</Label>
-          <Select 
-            value={monitoringLevel} 
-            onValueChange={(value: MonitoringLevel) => {
-              setMonitoringLevel(value);
-            }}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Sélectionner un niveau de suivi" />
+        <div className="space-y-2">
+          <Label htmlFor="end-date">Date de fin</Label>
+          <Popover>
+            <PopoverTrigger asChild>
+              <Input
+                id="end-date"
+                placeholder="Choisir une date"
+                readOnly
+                value={endDate ? format(endDate, "PPP") : ""}
+                className={cn(
+                  "bg-white text-foreground shadow-sm",
+                  !endDate && "text-muted-foreground"
+                )}
+              />
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0" align="start">
+              <Calendar
+                mode="single"
+                selected={endDate}
+                onSelect={setEndDate}
+                disabled={startDate ? (date) => date < startDate : undefined}
+                initialFocus
+              />
+            </PopoverContent>
+          </Popover>
+        </div>
+      </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="space-y-2">
+          <Label htmlFor="status">Statut</Label>
+          <Select value={status} onValueChange={setStatus}>
+            <SelectTrigger id="status">
+              <SelectValue placeholder="Sélectionner un statut" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="none">Aucun</SelectItem>
-              <SelectItem value="dgs">DGS</SelectItem>
-              <SelectItem 
-                value="pole" 
-                disabled={!projectManagerOrganization.pole}
-              >
-                Pôle
-              </SelectItem>
-              <SelectItem 
-                value="direction" 
-                disabled={!projectManagerOrganization.direction}
-              >
-                Direction
-              </SelectItem>
+              <SelectItem value="planned">Planifié</SelectItem>
+              <SelectItem value="inProgress">En cours</SelectItem>
+              <SelectItem value="onHold">En attente</SelectItem>
+              <SelectItem value="completed">Terminé</SelectItem>
+              <SelectItem value="cancelled">Annulé</SelectItem>
             </SelectContent>
           </Select>
         </div>
-
-        {monitoringLevel === 'pole' && projectManagerOrganization.pole && (
-          <div className="grid gap-2">
-            <Label>Entité de suivi</Label>
-            <Input
-              value={`Pôle: ${projectManagerOrganization.pole.name}`}
-              readOnly
-              className="bg-gray-100"
-            />
-          </div>
-        )}
-
-        {monitoringLevel === 'direction' && projectManagerOrganization.direction && (
-          <div className="grid gap-2">
-            <Label>Entité de suivi</Label>
-            <Input
-              value={`Direction: ${projectManagerOrganization.direction.name}`}
-              readOnly
-              className="bg-gray-100"
-            />
-          </div>
-        )}
+        <div className="space-y-2">
+          <Label htmlFor="priority">Priorité</Label>
+          <Select value={priority} onValueChange={setPriority}>
+            <SelectTrigger id="priority">
+              <SelectValue placeholder="Sélectionner une priorité" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="high">Haute</SelectItem>
+              <SelectItem value="medium">Moyenne</SelectItem>
+              <SelectItem value="low">Basse</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
       </div>
     </div>
   );
