@@ -53,7 +53,7 @@ export const ProjectFormStep5: React.FC<ProjectFormStep5Props> = ({
         }
       });
     }
-  }, [templates]);
+  }, [templates, getTemplateTasks]);
 
   const handleTemplateChange = (value: string) => {
     onTemplateSelect(value || null);

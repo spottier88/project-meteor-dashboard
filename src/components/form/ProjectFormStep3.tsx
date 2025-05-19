@@ -2,8 +2,9 @@
 import React from 'react';
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { OrganizationAutocomplete } from "../OrganizationAutocomplete";
-import { ProjectLifecycleStatus } from "@/types/project";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { ProjectLifecycleStatus, lifecycleStatusLabels } from "@/types/project";
+import { OrganizationAutocomplete } from "@/components/organization/OrganizationAutocomplete";
 
 interface ProjectFormStep3Props {
   organization: any;
@@ -36,13 +37,20 @@ export const ProjectFormStep3: React.FC<ProjectFormStep3Props> = ({
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="lifecycleStatus">Lifecycle Status</Label>
-          <Input
-            id="lifecycleStatus"
+          <Label htmlFor="lifecycleStatus">Statut du cycle de vie</Label>
+          <Select
             value={lifecycleStatus}
-            onChange={(e) => setLifecycleStatus(e.target.value as ProjectLifecycleStatus)}
-            placeholder="Lifecycle Status"
-          />
+            onValueChange={(value) => setLifecycleStatus(value as ProjectLifecycleStatus)}
+          >
+            <SelectTrigger id="lifecycleStatus">
+              <SelectValue placeholder="Sélectionner un statut" />
+            </SelectTrigger>
+            <SelectContent>
+              {Object.entries(lifecycleStatusLabels).map(([value, label]) => (
+                <SelectItem key={value} value={value}>{label}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
       </div>
     </div>

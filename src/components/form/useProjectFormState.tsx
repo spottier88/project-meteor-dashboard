@@ -1,11 +1,13 @@
+
 import { useState, useEffect } from "react";
+import { ProjectLifecycleStatus } from "@/types/project";
 
 export const useProjectFormState = (isOpen: boolean, project?: any) => {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [projectManager, setProjectManager] = useState<string | null>(null);
-  const [startDate, setStartDate] = useState<Date | null>(null);
-  const [endDate, setEndDate] = useState<Date | null>(null);
+  const [startDate, setStartDate] = useState<Date | undefined>(undefined);
+  const [endDate, setEndDate] = useState<Date | undefined>(undefined);
   const [status, setStatus] = useState<string | null>(null);
   const [progress, setProgress] = useState<string | null>(null);
   const [priority, setPriority] = useState<string | null>(null);
@@ -18,7 +20,7 @@ export const useProjectFormState = (isOpen: boolean, project?: any) => {
     direction: null,
     service: null,
   });
-  const [lifecycleStatus, setLifecycleStatus] = useState<string>("study");
+  const [lifecycleStatus, setLifecycleStatus] = useState<ProjectLifecycleStatus>("study");
   const [forEntity, setForEntity] = useState<{
     type: string | null;
     id: string | null;
@@ -38,8 +40,8 @@ export const useProjectFormState = (isOpen: boolean, project?: any) => {
       setTitle(project.title || "");
       setDescription(project.description || "");
       setProjectManager(project.project_manager || null);
-      setStartDate(project.start_date ? new Date(project.start_date) : null);
-      setEndDate(project.end_date ? new Date(project.end_date) : null);
+      setStartDate(project.start_date ? new Date(project.start_date) : undefined);
+      setEndDate(project.end_date ? new Date(project.end_date) : undefined);
       setStatus(project.status || null);
       setProgress(project.progress || null);
       setPriority(project.priority || null);
@@ -179,3 +181,5 @@ export const useProjectFormState = (isOpen: boolean, project?: any) => {
     setSelectedTemplateId,
   };
 };
+
+export type ProjectFormState = ReturnType<typeof useProjectFormState>;

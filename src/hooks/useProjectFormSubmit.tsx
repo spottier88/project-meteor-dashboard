@@ -3,34 +3,13 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { ProjectLifecycleStatus } from "@/types/project";
+import { ProjectFormState } from "@/components/form/useProjectFormState";
 
-// Définir le type ProjectFormState
-interface ProjectFormState {
-  title: string;
-  description: string;
-  projectManager: string;
-  startDate?: Date;
-  endDate?: Date;
-  status?: string;
-  priority: string;
-  organization?: {
-    pole?: string;
-    direction?: string;
-    service?: string;
-  };
-  lifecycleStatus: ProjectLifecycleStatus;
-  forEntity?: {
-    type?: string;
-    id?: string;
-  };
-  suiviDGS: boolean;
-  hasUnsavedChanges: boolean;
-  isSubmitting: boolean;
-  currentStep: number;
-  selectedTemplateId: string | null;
-  resetHasUnsavedChanges: () => void;
-  setSelectedTemplateId: (id: string | null) => void;
-}
+// Type pour les organisations accessibles
+export type AccessibleOrganizations = Array<{
+  id: string;
+  [key: string]: any;
+}>;
 
 interface UseProjectFormSubmitProps {
   project?: any;
@@ -40,7 +19,7 @@ interface UseProjectFormSubmitProps {
   formState: ProjectFormState;
   onSubmit: (data: any) => Promise<any>;
   onClose: () => void;
-  accessibleOrganizations?: any[];
+  accessibleOrganizations?: AccessibleOrganizations;
 }
 
 export const useProjectFormSubmit = ({
@@ -51,14 +30,14 @@ export const useProjectFormSubmit = ({
   formState,
   onSubmit,
   onClose,
-  accessibleOrganizations,
+  accessibleOrganizations = [],
 }: UseProjectFormSubmitProps) => {
   const navigate = useNavigate();
   const [showAccessWarning, setShowAccessWarning] = useState(false);
   const [submitData, setSubmitData] = useState<any>(null);
 
   const handleSubmit = () => {
-    if (canEditOrganization || canCreate || accessibleOrganizations?.some(org => org.id === formState.organization?.service)) {
+    if (canEditOrganization || canCreate || accessibleOrganizations.some(org => org.id === formState.organization?.service)) {
       setSubmitData({
         title: formState.title,
         description: formState.description,

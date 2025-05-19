@@ -44,16 +44,18 @@ export const useTemplateSelection = () => {
       const mainTasks = templateTasks.filter((task: ProjectTemplateTask) => task.parent_task_id === null);
       
       for (const task of mainTasks) {
-        const { data: newTask, error } = await supabase
+        const newTask = {
+          project_id: projectId,
+          title: task.title,
+          description: task.description,
+          status: task.status,
+          start_date: task.duration_days ? new Date() : null,
+          due_date: task.duration_days ? new Date(Date.now() + task.duration_days * 86400000) : null,
+        };
+        
+        const { data: createdTask, error } = await supabase
           .from("tasks")
-          .insert({
-            project_id: projectId,
-            title: task.title,
-            description: task.description,
-            status: task.status,
-            start_date: task.duration_days ? new Date() : null,
-            due_date: task.duration_days ? new Date(Date.now() + task.duration_days * 86400000) : null,
-          })
+          .insert([newTask])
           .select();
         
         if (error) {
@@ -61,8 +63,8 @@ export const useTemplateSelection = () => {
           continue;
         }
         
-        if (newTask && newTask.length > 0) {
-          taskIdMapping[task.id] = newTask[0].id;
+        if (createdTask && createdTask.length > 0) {
+          taskIdMapping[task.id] = createdTask[0].id;
         }
       }
       
@@ -77,17 +79,19 @@ export const useTemplateSelection = () => {
           continue;
         }
         
-        const { data: newTask, error } = await supabase
+        const newTask = {
+          project_id: projectId,
+          title: task.title,
+          description: task.description,
+          status: task.status,
+          parent_task_id: parentTaskId,
+          start_date: task.duration_days ? new Date() : null,
+          due_date: task.duration_days ? new Date(Date.now() + task.duration_days * 86400000) : null,
+        };
+        
+        const { data: createdTask, error } = await supabase
           .from("tasks")
-          .insert({
-            project_id: projectId,
-            title: task.title,
-            description: task.description,
-            status: task.status,
-            parent_task_id: parentTaskId,
-            start_date: task.duration_days ? new Date() : null,
-            due_date: task.duration_days ? new Date(Date.now() + task.duration_days * 86400000) : null,
-          })
+          .insert([newTask])
           .select();
         
         if (error) {
@@ -95,8 +99,8 @@ export const useTemplateSelection = () => {
           continue;
         }
         
-        if (newTask && newTask.length > 0) {
-          taskIdMapping[task.id] = newTask[0].id;
+        if (createdTask && createdTask.length > 0) {
+          taskIdMapping[task.id] = createdTask[0].id;
         }
       }
       

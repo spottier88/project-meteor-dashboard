@@ -1,15 +1,17 @@
-import React from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+
+import React from "react";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Input } from "@/components/ui/input";
-import { Building, Info } from "lucide-react";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 interface ProjectFormStep4Props {
-  forEntity: any;
-  setForEntity: (value: any) => void;
+  forEntity: {
+    type: string | null;
+    id: string | null;
+  };
+  setForEntity: (entity: { type: string | null; id: string | null }) => void;
   suiviDGS: boolean;
   setSuiviDGS: (value: boolean) => void;
   project?: any;
@@ -22,115 +24,119 @@ export const ProjectFormStep4: React.FC<ProjectFormStep4Props> = ({
   setSuiviDGS,
   project
 }) => {
-  const handleEntityTypeChange = (value: string) => {
-    setForEntity({
-      ...forEntity,
-      type: value,
-      id: "",
-    });
-  };
+  // Requête pour récupérer les pôles
+  const { data: poles } = useQuery({
+    queryKey: ["poles"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("poles")
+        .select("*")
+        .order("name");
+      if (error) throw error;
+      return data;
+    },
+  });
 
-  const handleEntityIdChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setForEntity({
-      ...forEntity,
-      id: e.target.value,
-    });
+  // Requête pour récupérer les directions
+  const { data: directions } = useQuery({
+    queryKey: ["directions"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("directions")
+        .select("*, poles(name)")
+        .order("name");
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  // Requête pour récupérer les services
+  const { data: services } = useQuery({
+    queryKey: ["services"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("services")
+        .select("*, directions(name, poles(name))")
+        .order("name");
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const selectedEntityOptions = () => {
+    if (forEntity.type === "pole") {
+      return poles?.map(pole => (
+        <SelectItem key={pole.id} value={pole.id}>{pole.name}</SelectItem>
+      ));
+    } else if (forEntity.type === "direction") {
+      return directions?.map(direction => (
+        <SelectItem key={direction.id} value={direction.id}>
+          {direction.poles?.name} &gt; {direction.name}
+        </SelectItem>
+      ));
+    } else if (forEntity.type === "service") {
+      return services?.map(service => (
+        <SelectItem key={service.id} value={service.id}>
+          {service.directions?.poles?.name} &gt; {service.directions?.name} &gt; {service.name}
+        </SelectItem>
+      ));
+    }
+    return null;
   };
 
   return (
     <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <div className="flex items-center gap-2">
-            <Building className="h-5 w-5" />
-            <CardTitle>Informations complémentaires</CardTitle>
-          </div>
-          <CardDescription>
-            Informations additionnelles pour le suivi du projet
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <div className="flex items-center gap-2">
-                <Label htmlFor="entity-type">Pour le compte de</Label>
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Info className="h-4 w-4 text-gray-400" />
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p>Indiquez si ce projet est réalisé pour une entité spécifique</p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-              </div>
-              <Select
-                value={forEntity?.type || ""}
-                onValueChange={handleEntityTypeChange}
-              >
-                <SelectTrigger id="entity-type">
-                  <SelectValue placeholder="Sélectionnez un type d'entité" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="">Aucune entité</SelectItem>
-                  <SelectItem value="commune">Commune</SelectItem>
-                  <SelectItem value="epci">EPCI</SelectItem>
-                  <SelectItem value="departement">Département</SelectItem>
-                  <SelectItem value="region">Région</SelectItem>
-                  <SelectItem value="autre">Autre</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+      <div className="space-y-4">
+        <div className="space-y-2">
+          <Label htmlFor="for-entity-type">Pour quelle entité</Label>
+          <Select 
+            value={forEntity.type || ""} 
+            onValueChange={(value) => setForEntity({ 
+              type: value || null, 
+              id: null 
+            })}
+          >
+            <SelectTrigger id="for-entity-type">
+              <SelectValue placeholder="Sélectionner un type d'entité" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="">Aucune</SelectItem>
+              <SelectItem value="pole">Pôle</SelectItem>
+              <SelectItem value="direction">Direction</SelectItem>
+              <SelectItem value="service">Service</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
 
-            {forEntity?.type && (
-              <div className="space-y-2">
-                <Label htmlFor="entity-id">
-                  {forEntity.type === "commune"
-                    ? "Code INSEE"
-                    : forEntity.type === "epci"
-                    ? "Code SIREN"
-                    : forEntity.type === "departement"
-                    ? "Numéro de département"
-                    : forEntity.type === "region"
-                    ? "Code région"
-                    : "Identifiant"}
-                </Label>
-                <Input
-                  id="entity-id"
-                  value={forEntity?.id || ""}
-                  onChange={handleEntityIdChange}
-                  placeholder={
-                    forEntity.type === "commune"
-                      ? "Ex: 75056"
-                      : forEntity.type === "epci"
-                      ? "Ex: 200054781"
-                      : forEntity.type === "departement"
-                      ? "Ex: 75"
-                      : forEntity.type === "region"
-                      ? "Ex: 11"
-                      : "Identifiant de l'entité"
-                  }
-                />
-              </div>
-            )}
-
-            <div className="flex items-center space-x-2 pt-2">
-              <Switch
-                id="suivi-dgs"
-                checked={suiviDGS}
-                onCheckedChange={setSuiviDGS}
-              />
-              <div className="grid gap-1.5">
-                <Label htmlFor="suivi-dgs">Suivi DGS</Label>
-                <p className="text-sm text-muted-foreground">
-                  Ce projet fait l'objet d'un suivi par la Direction Générale des Services
-                </p>
-              </div>
-            </div>
+        {forEntity.type && (
+          <div className="space-y-2">
+            <Label htmlFor="for-entity-id">Sélectionner l'entité</Label>
+            <Select 
+              value={forEntity.id || ""} 
+              onValueChange={(value) => setForEntity({ 
+                ...forEntity, 
+                id: value || null 
+              })}
+            >
+              <SelectTrigger id="for-entity-id">
+                <SelectValue placeholder="Sélectionner l'entité" />
+              </SelectTrigger>
+              <SelectContent>
+                {selectedEntityOptions()}
+              </SelectContent>
+            </Select>
           </div>
-        </CardContent>
-      </Card>
+        )}
+
+        <div className="flex items-center space-x-2 pt-4">
+          <Switch 
+            id="suiviDGS" 
+            checked={suiviDGS}
+            onCheckedChange={setSuiviDGS}
+          />
+          <Label htmlFor="suiviDGS">Suivi DGS</Label>
+        </div>
+      </div>
     </div>
   );
 };
