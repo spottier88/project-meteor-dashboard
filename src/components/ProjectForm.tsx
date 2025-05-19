@@ -97,7 +97,7 @@ export const ProjectForm = ({ isOpen, onClose, onSubmit, project }: ProjectFormP
       formState.resetHasUnsavedChanges();
       onClose();
     },
-    accessibleOrganizations: accessibleOrganizations || []
+    accessibleOrganizations: (accessibleOrganizations || []) as AccessibleOrganizations
   });
 
   const handleNext = () => {

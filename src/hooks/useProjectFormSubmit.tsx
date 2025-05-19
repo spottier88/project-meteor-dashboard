@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import { ProjectLifecycleStatus } from "@/types/project";
 import { ProjectFormState } from "@/components/form/useProjectFormState";
 
-// Type pour les organisations accessibles
+// Type for the accessible organizations - defining it as an array of objects with id and other properties
 export type AccessibleOrganizations = Array<{
   id: string;
   [key: string]: any;

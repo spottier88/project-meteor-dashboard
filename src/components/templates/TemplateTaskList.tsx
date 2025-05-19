@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { ProjectTemplateTask, useProjectTemplates } from "@/hooks/useProjectTemplates";
@@ -97,7 +96,7 @@ export const TemplateTaskList = ({
     onTasksChanged();
   };
 
-  // Fonction récursive pour rendre les tâches et leurs sous-tâches
+  // Organiser les tâches par hiérarchie
   const renderTasks = (tasksList: ProjectTemplateTask[], level = 0) => {
     return tasksList.map(task => (
       <div key={task.id} style={{ paddingLeft: `${level * 1}rem` }}>

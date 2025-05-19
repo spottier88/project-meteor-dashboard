@@ -97,9 +97,14 @@ export const useProjectTemplates = () => {
     mutationFn: async (templateData: Partial<ProjectTemplate>) => {
       setIsLoadingAction(true);
       try {
+        // Ensure title is included (required by Supabase type)
+        if (!templateData.title) {
+          throw new Error("Template title is required");
+        }
+        
         const { data, error } = await supabase
           .from("project_templates")
-          .insert([templateData])
+          .insert([templateData]) // Insert as an array with single object
           .select();
         
         if (error) throw error;
@@ -168,9 +173,14 @@ export const useProjectTemplates = () => {
     mutationFn: async (taskData: Omit<ProjectTemplateTask, 'id'>) => {
       setIsLoadingAction(true);
       try {
+        // Ensure required fields are present
+        if (!taskData.template_id || !taskData.title) {
+          throw new Error("Template ID and title are required");
+        }
+        
         const { data, error } = await supabase
           .from("project_template_tasks")
-          .insert(taskData)
+          .insert([taskData]) // Insert as an array with single object
           .select();
         
         if (error) throw error;
