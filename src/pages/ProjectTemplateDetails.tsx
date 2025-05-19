@@ -51,6 +51,7 @@ export const ProjectTemplateDetails = () => {
         title: "Tâche créée",
         description: "La tâche a été ajoutée au modèle avec succès.",
       });
+      // Fermer la boîte de dialogue après la création réussie
       setIsDialogOpen(false);
     } catch (error) {
       console.error("Erreur lors de la création de la tâche:", error);
@@ -87,6 +88,7 @@ export const ProjectTemplateDetails = () => {
         title: "Tâche modifiée",
         description: "La tâche a été modifiée avec succès.",
       });
+      // Assurons-nous de réinitialiser l'état de modification et de fermer la boîte de dialogue
       setEditingTask(null);
       setIsDialogOpen(false);
     } catch (error) {
@@ -181,7 +183,13 @@ export const ProjectTemplateDetails = () => {
 
       <TemplateTaskDialog
         open={isDialogOpen}
-        onOpenChange={setIsDialogOpen}
+        onOpenChange={(open) => {
+          if (!open) {
+            // Réinitialiser l'état d'édition lorsque la boîte de dialogue est fermée
+            setEditingTask(null);
+          }
+          setIsDialogOpen(open);
+        }}
         parentTaskOptions={getParentTaskOptions()}
         defaultValues={editingTask}
         onSubmit={editingTask ? handleUpdateTask : handleCreateTask}

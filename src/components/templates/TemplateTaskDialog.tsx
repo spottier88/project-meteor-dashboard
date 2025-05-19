@@ -91,6 +91,9 @@ export const TemplateTaskDialog = ({
         durationDays,
         parentTaskId: parentTaskId || undefined
       });
+      
+      // Ne pas fermer le dialogue ici - laisser le composant parent gérer la fermeture
+      // car il doit attendre que la mutation asynchrone soit terminée
     } catch (error) {
       console.error("Erreur lors de la soumission de la tâche:", error);
     } finally {
