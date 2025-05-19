@@ -1,5 +1,5 @@
 
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogFooter } from "@/components/ui/dialog";
 import { useQuery } from "@tanstack/react-query";
 import { useUser } from "@supabase/auth-helpers-react";
 import { ProjectFormHeader } from "./form/ProjectFormHeader";
@@ -7,7 +7,7 @@ import { ProjectFormContent } from "./form/ProjectFormContent";
 import { ProjectFormNavigation } from "./form/ProjectFormNavigation";
 import { useProjectFormState } from "./form/useProjectFormState";
 import { useProjectFormValidation } from "./form/useProjectFormValidation";
-import { useProjectFormSubmit, AccessibleOrganizations } from "@/hooks/useProjectFormSubmit";
+import { useProjectFormSubmit } from "@/hooks/useProjectFormSubmit";
 import { getProjectManagers } from "@/utils/projectManagers";
 import { useState, useMemo } from "react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "./ui/alert-dialog";
@@ -15,7 +15,6 @@ import { useProjectPermissions } from "@/hooks/useProjectPermissions";
 import { ProfileForm } from "./profile/ProfileForm";
 import { UserProfile } from "@/types/user";
 import { supabase } from "@/integrations/supabase/client";
-import { useTemplateSelection } from "@/hooks/useTemplateSelection";
 
 interface ProjectFormProps {
   isOpen: boolean;
@@ -33,6 +32,11 @@ export const ProjectForm = ({ isOpen, onClose, onSubmit, project }: ProjectFormP
   const [isProfileFormOpen, setIsProfileFormOpen] = useState(false);
 
   const validationValues = useMemo(() => {
+    // console.log("ProjectForm - validation values:", {
+    //   isAdmin: validation.isAdmin,
+    //   isManager: validation.isManager
+    // });
+    
     return {
       isAdmin: validation.isAdmin,
       isManager: validation.isManager
@@ -63,9 +67,6 @@ export const ProjectForm = ({ isOpen, onClose, onSubmit, project }: ProjectFormP
     enabled: isOpen && !!user?.id && !!validation.userRoles,
   });
 
-  // Import le hook useTemplateSelection pour appliquer le modèle au projet
-  const { applyTemplateToProject } = useTemplateSelection();
-
   const { 
     handleSubmit, 
     showAccessWarning, 
@@ -77,27 +78,12 @@ export const ProjectForm = ({ isOpen, onClose, onSubmit, project }: ProjectFormP
     canCreate,
     canEditOrganization,
     formState,
-    onSubmit: async (data) => {
-      // Soumettre le projet normalement
-      const result = await onSubmit(data);
-      
-      // Si un modèle est sélectionné et que c'est une création de projet (pas une édition)
-      if (formState.selectedTemplateId && !project) {
-        // Appliquer le modèle au projet nouvellement créé
-        await applyTemplateToProject(result.id, formState.selectedTemplateId);
-      }
-      
-      // Fermer le formulaire
-      formState.resetHasUnsavedChanges();
-      onClose();
-      
-      return result;
-    },
+    onSubmit,
     onClose: () => {
       formState.resetHasUnsavedChanges();
       onClose();
     },
-    accessibleOrganizations: (accessibleOrganizations || []) as AccessibleOrganizations
+    accessibleOrganizations
   });
 
   const handleNext = () => {

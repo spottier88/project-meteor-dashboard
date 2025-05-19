@@ -11,12 +11,6 @@ interface ProjectFormStep1Props {
   setDescription: (value: string) => void;
   projectManager: string;
   setProjectManager: (value: string) => void;
-  project?: any; // Ajout de cette propriété manquante
-  isEditMode: boolean; // Ajout de cette propriété manquante
-  onOpenProfile: () => void; // Ajout de cette propriété manquante
-  isAdmin: boolean;
-  isManager: boolean;
-  projectManagers?: UserProfile[];
   startDate: Date | undefined;
   setStartDate: (date: Date | undefined) => void;
   endDate: Date | undefined;
@@ -25,8 +19,11 @@ interface ProjectFormStep1Props {
   setPriority: (value: string) => void;
   lifecycleStatus: ProjectLifecycleStatus;
   setLifecycleStatus: (value: ProjectLifecycleStatus) => void;
+  isAdmin: boolean;
+  isManager: boolean;
   ownerId: string;
   setOwnerId: (value: string) => void;
+  projectManagers?: UserProfile[];
 }
 
 export const ProjectFormStep1 = ({
@@ -48,10 +45,7 @@ export const ProjectFormStep1 = ({
   isManager,
   ownerId,
   setOwnerId,
-  projectManagers,
-  project, // Utilisation de la propriété ajoutée
-  isEditMode, // Utilisation de la propriété ajoutée
-  onOpenProfile // Utilisation de la propriété ajoutée
+  projectManagers
 }: ProjectFormStep1Props) => {
   return (
     <div className="space-y-6">

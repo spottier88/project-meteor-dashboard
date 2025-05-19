@@ -2,8 +2,7 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { SessionContextProvider } from "@supabase/auth-helpers-react";
 import { supabase } from "@/integrations/supabase/client";
-import { RouterProvider } from "react-router-dom";
-import { router } from "./routes";
+import { AppRoutes } from "./routes";
 
 // Configurez le client de requête pour React Query
 const queryClient = new QueryClient({
@@ -19,7 +18,7 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <SessionContextProvider supabaseClient={supabase}>
-        <RouterProvider router={router} />
+        <AppRoutes />
       </SessionContextProvider>
     </QueryClientProvider>
   );

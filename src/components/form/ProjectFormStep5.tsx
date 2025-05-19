@@ -1,128 +1,340 @@
 
-import React, { useState, useEffect } from "react";
-import { 
-  Card, 
-  CardContent, 
-  CardDescription, 
-  CardHeader, 
-  CardTitle 
-} from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
-} from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useEffect, useState } from "react";
+import { ForEntityType } from "@/types/project";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Label } from "@/components/ui/label";
-import { Check, ListChecks, Info } from "lucide-react";
-import { useProjectTemplates, ProjectTemplate } from "@/hooks/useProjectTemplates";
-import { useTemplateSelection } from "@/hooks/useTemplateSelection";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface ProjectFormStep5Props {
-  onTemplateSelect: (templateId: string | null) => void;
-  selectedTemplateId: string | null;
+  forEntityType: ForEntityType;
+  setForEntityType: (value: ForEntityType) => void;
+  forEntityId: string | undefined;
+  setForEntityId: (value: string | undefined) => void;
 }
 
-export const ProjectFormStep5: React.FC<ProjectFormStep5Props> = ({ 
-  onTemplateSelect,
-  selectedTemplateId
-}) => {
-  const { templates, isLoadingTemplates, getTemplateTasks } = useProjectTemplates();
-  const [activeTemplates, setActiveTemplates] = useState<ProjectTemplate[]>([]);
-  const [templateTasksCount, setTemplateTasksCount] = useState<Record<string, number>>({});
+export const ProjectFormStep5 = ({
+  forEntityType,
+  setForEntityType,
+  forEntityId,
+  setForEntityId,
+}: ProjectFormStep5Props) => {
+  // États pour gérer la sélection hiérarchique
+  const [selectedPoleId, setSelectedPoleId] = useState<string | undefined>(undefined);
+  const [selectedDirectionId, setSelectedDirectionId] = useState<string | undefined>(undefined);
+  
+  // Chargement des pôles - toujours activé
+  const { data: poles, isLoading: isLoadingPoles } = useQuery({
+    queryKey: ["poles"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("poles")
+        .select("*")
+        .order("name");
+      if (error) throw error;
+      return data;
+    },
+  });
 
-  useEffect(() => {
-    // Filtrer les templates actifs
-    if (templates) {
-      const active = templates.filter(t => t.is_active);
-      setActiveTemplates(active);
+  // Chargement des directions en fonction du pôle sélectionné
+  const { data: directions, isLoading: isLoadingDirections } = useQuery({
+    queryKey: ["directions", selectedPoleId],
+    queryFn: async () => {
+      if (!selectedPoleId) return [];
       
-      // Récupérer le nombre de tâches pour chaque template
-      active.forEach(async template => {
-        try {
-          const tasks = await getTemplateTasks(template.id);
-          setTemplateTasksCount(prev => ({
-            ...prev,
-            [template.id]: tasks.length
-          }));
-        } catch (error) {
-          console.error("Erreur lors du chargement des tâches:", error);
-        }
-      });
+      const { data, error } = await supabase
+        .from("directions")
+        .select("*")
+        .eq("pole_id", selectedPoleId)
+        .order("name");
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!selectedPoleId, // Activé uniquement si un pôle est sélectionné
+  });
+
+  // Chargement des services en fonction de la direction sélectionnée
+  const { data: services, isLoading: isLoadingServices } = useQuery({
+    queryKey: ["services", selectedDirectionId],
+    queryFn: async () => {
+      if (!selectedDirectionId) return [];
+      
+      const { data, error } = await supabase
+        .from("services")
+        .select("*")
+        .eq("direction_id", selectedDirectionId)
+        .order("name");
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!selectedDirectionId, // Activé uniquement si une direction est sélectionnée
+  });
+  
+  // Réinitialisation des sélections quand le type d'entité change
+  useEffect(() => {
+    if (forEntityType === null) {
+      setForEntityId(undefined);
+      setSelectedPoleId(undefined);
+      setSelectedDirectionId(undefined);
     }
-  }, [templates, getTemplateTasks]);
+  }, [forEntityType, setForEntityId]);
+  
+  // Récupération de la hiérarchie lors du chargement initial d'un projet existant
+  useEffect(() => {
+    const loadInitialHierarchy = async () => {
+      // Seulement exécuter au chargement initial avec un forEntityId défini
+      if (!forEntityId || !forEntityType) return;
+      
+      try {
+        if (forEntityType === "pole") {
+          // Pour un pôle, c'est simple
+          setSelectedPoleId(forEntityId);
+        }
+        else if (forEntityType === "direction") {
+          // Pour une direction, on charge son pôle parent
+          const { data: direction } = await supabase
+            .from("directions")
+            .select("pole_id")
+            .eq("id", forEntityId)
+            .single();
+          
+          if (direction) {
+            setSelectedPoleId(direction.pole_id);
+          }
+        }
+        else if (forEntityType === "service") {
+          // Pour un service, on charge sa direction parente et le pôle parent
+          const { data: service } = await supabase
+            .from("services")
+            .select("direction_id")
+            .eq("id", forEntityId)
+            .single();
+          
+          if (service) {
+            setSelectedDirectionId(service.direction_id);
+            
+            // Ensuite on charge le pôle parent de cette direction
+            const { data: direction } = await supabase
+              .from("directions")
+              .select("pole_id")
+              .eq("id", service.direction_id)
+              .single();
+            
+            if (direction) {
+              setSelectedPoleId(direction.pole_id);
+            }
+          }
+        }
+      } catch (error) {
+        console.error("Erreur lors du chargement de la hiérarchie initiale:", error);
+      }
+    };
+    
+    loadInitialHierarchy();
+  }, [forEntityId, forEntityType]); // Exécuté uniquement quand ces valeurs changent
 
-  const handleTemplateChange = (value: string) => {
-    onTemplateSelect(value || null);
+  // Gestion du changement de type d'entité
+  const handleEntityTypeChange = (value: string) => {
+    setForEntityType(value === "null" ? null : value as ForEntityType);
+    setForEntityId(undefined);
+    setSelectedPoleId(undefined);
+    setSelectedDirectionId(undefined);
   };
-
-  return (
-    <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <div className="flex items-center gap-2">
-            <ListChecks className="h-5 w-5" />
-            <CardTitle>Modèle de projet (optionnel)</CardTitle>
+  
+  // Rendu des sélecteurs en fonction du type d'entité
+  const renderEntitySelector = () => {
+    if (!forEntityType) return null;
+    
+    // Affiche un squelette pendant le chargement initial des données
+    if (isLoadingPoles) {
+      return <Skeleton className="h-10 w-full" />;
+    }
+    
+    switch (forEntityType) {
+      case "pole":
+        return (
+          <div className="grid gap-2">
+            <Label htmlFor="pole-selector">Sélectionner un pôle</Label>
+            <Select
+              value={forEntityId}
+              onValueChange={setForEntityId}
+            >
+              <SelectTrigger id="pole-selector">
+                <SelectValue placeholder="Choisir un pôle" />
+              </SelectTrigger>
+              <SelectContent>
+                {poles?.map((pole) => (
+                  <SelectItem key={pole.id} value={pole.id}>
+                    {pole.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
-          <CardDescription>
-            Sélectionnez un modèle pour préremplir les tâches de votre projet
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-6">
-            <div className="space-y-2">
-              <div className="flex items-center gap-2">
-                <Label htmlFor="template-select">Modèle de projet</Label>
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Info className="h-4 w-4 text-gray-400" />
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p>Choisir un modèle créera automatiquement les tâches associées lors de la création du projet</p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-              </div>
-              <Select value={selectedTemplateId || ""} onValueChange={handleTemplateChange}>
-                <SelectTrigger id="template-select">
-                  <SelectValue placeholder="Sélectionnez un modèle (optionnel)" />
+        );
+        
+      case "direction":
+        return (
+          <div className="space-y-4">
+            <div className="grid gap-2">
+              <Label htmlFor="pole-selector">Sélectionner un pôle</Label>
+              <Select
+                value={selectedPoleId}
+                onValueChange={(value) => {
+                  setSelectedPoleId(value);
+                  setForEntityId(undefined);
+                }}
+              >
+                <SelectTrigger id="pole-selector">
+                  <SelectValue placeholder="Choisir un pôle" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Aucun modèle</SelectItem>
-                  {activeTemplates.map((template) => (
-                    <SelectItem key={template.id} value={template.id}>
-                      {template.title} {templateTasksCount[template.id] > 0 && 
-                        `(${templateTasksCount[template.id]} tâches)`}
+                  {poles?.map((pole) => (
+                    <SelectItem key={pole.id} value={pole.id}>
+                      {pole.name}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
-              
-              {isLoadingTemplates && (
-                <p className="text-sm text-muted-foreground">Chargement des modèles...</p>
-              )}
             </div>
-
-            {selectedTemplateId && (
-              <div className="p-4 bg-green-50 dark:bg-green-900/20 rounded-md">
-                <div className="flex gap-2 items-center">
-                  <Check className="h-5 w-5 text-green-500" />
-                  <p className="text-green-700 dark:text-green-300 font-medium">
-                    Modèle sélectionné
-                  </p>
-                </div>
-                <p className="text-sm text-green-600 dark:text-green-400 mt-1">
-                  Les {templateTasksCount[selectedTemplateId] || 0} tâches de ce modèle seront créées automatiquement avec votre projet.
-                </p>
+            
+            {selectedPoleId && !isLoadingDirections && (
+              <div className="grid gap-2">
+                <Label htmlFor="direction-selector">Sélectionner une direction</Label>
+                <Select
+                  value={forEntityId}
+                  onValueChange={setForEntityId}
+                >
+                  <SelectTrigger id="direction-selector">
+                    <SelectValue placeholder="Choisir une direction" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {directions?.map((direction) => (
+                      <SelectItem key={direction.id} value={direction.id}>
+                        {direction.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
             )}
+            
+            {selectedPoleId && isLoadingDirections && (
+              <Skeleton className="h-10 w-full" />
+            )}
           </div>
-        </CardContent>
-      </Card>
+        );
+        
+      case "service":
+        return (
+          <div className="space-y-4">
+            <div className="grid gap-2">
+              <Label htmlFor="pole-selector">Sélectionner un pôle</Label>
+              <Select
+                value={selectedPoleId}
+                onValueChange={(value) => {
+                  setSelectedPoleId(value);
+                  setSelectedDirectionId(undefined);
+                  setForEntityId(undefined);
+                }}
+              >
+                <SelectTrigger id="pole-selector">
+                  <SelectValue placeholder="Choisir un pôle" />
+                </SelectTrigger>
+                <SelectContent>
+                  {poles?.map((pole) => (
+                    <SelectItem key={pole.id} value={pole.id}>
+                      {pole.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            
+            {selectedPoleId && !isLoadingDirections && (
+              <div className="grid gap-2">
+                <Label htmlFor="direction-selector">Sélectionner une direction</Label>
+                <Select
+                  value={selectedDirectionId}
+                  onValueChange={(value) => {
+                    setSelectedDirectionId(value);
+                    setForEntityId(undefined);
+                  }}
+                >
+                  <SelectTrigger id="direction-selector">
+                    <SelectValue placeholder="Choisir une direction" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {directions?.map((direction) => (
+                      <SelectItem key={direction.id} value={direction.id}>
+                        {direction.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+            
+            {selectedPoleId && isLoadingDirections && (
+              <Skeleton className="h-10 w-full" />
+            )}
+            
+            {selectedDirectionId && !isLoadingServices && (
+              <div className="grid gap-2">
+                <Label htmlFor="service-selector">Sélectionner un service</Label>
+                <Select
+                  value={forEntityId}
+                  onValueChange={setForEntityId}
+                >
+                  <SelectTrigger id="service-selector">
+                    <SelectValue placeholder="Choisir un service" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {services?.map((service) => (
+                      <SelectItem key={service.id} value={service.id}>
+                        {service.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+            
+            {selectedDirectionId && isLoadingServices && (
+              <Skeleton className="h-10 w-full" />
+            )}
+          </div>
+        );
+        
+      default:
+        return null;
+    }
+  };
+
+  return (
+    <div className="space-y-4">
+      <h2 className="text-xl font-semibold">Informations complémentaires</h2>
+      
+      <div className="grid gap-2">
+        <Label htmlFor="for-entity-type">Projet réalisé pour</Label>
+        <Select
+          value={forEntityType || "null"}
+          onValueChange={handleEntityTypeChange}
+        >
+          <SelectTrigger id="for-entity-type">
+            <SelectValue placeholder="Sélectionner un type d'entité" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="null">Aucune entité spécifique</SelectItem>
+            <SelectItem value="pole">Pôle</SelectItem>
+            <SelectItem value="direction">Direction</SelectItem>
+            <SelectItem value="service">Service</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      {forEntityType && renderEntitySelector()}
     </div>
   );
 };

@@ -1,86 +1,134 @@
 
-import React from "react";
-import { DateInputField } from "./DateInputField";
+import { MonitoringLevel } from "@/types/monitoring";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
+import { usePermissionsContext } from "@/contexts/PermissionsContext";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Info } from "lucide-react";
 
 interface ProjectFormStep2Props {
-  startDate: Date | undefined;
-  setStartDate: (date: Date | undefined) => void;
-  endDate: Date | undefined;
-  setEndDate: (date: Date | undefined) => void;
-  status: string | null;
-  setStatus: (value: string | null) => void;
-  priority: string | null;
-  setPriority: (value: string | null) => void;
-  project?: any;
+  monitoringLevel: MonitoringLevel;
+  setMonitoringLevel: (value: MonitoringLevel) => void;
+  monitoringEntityId: string | null;
+  setMonitoringEntityId: (value: string | null) => void;
+  projectManagerOrganization: {
+    pole?: { id: string; name: string } | null;
+    direction?: { id: string; name: string } | null;
+    service?: { id: string; name: string } | null;
+  };
+  project?: {
+    id: string;
+    title: string;
+  };
 }
 
-export const ProjectFormStep2: React.FC<ProjectFormStep2Props> = ({
-  startDate,
-  setStartDate,
-  endDate,
-  setEndDate,
-  status,
-  setStatus,
-  priority,
-  setPriority,
-  project
-}) => {
+export const ProjectFormStep2 = ({
+  monitoringLevel,
+  setMonitoringLevel,
+  monitoringEntityId,
+  setMonitoringEntityId,
+  projectManagerOrganization,
+  project,
+}: ProjectFormStep2Props) => {
+  const { isAdmin } = usePermissionsContext();
+  
+  // Détermine l'affectation organisationnelle à afficher
+  const organizationDisplay = () => {
+    if (projectManagerOrganization.service) {
+      return `Service: ${projectManagerOrganization.service.name}`;
+    }
+    if (projectManagerOrganization.direction) {
+      return `Direction: ${projectManagerOrganization.direction.name}`;
+    }
+    if (projectManagerOrganization.pole) {
+      return `Pôle: ${projectManagerOrganization.pole.name}`;
+    }
+    return "Aucune affectation";
+  };
+
+  // Détermine si le chef de projet a une affectation
+  const hasOrganization = projectManagerOrganization.pole || 
+                          projectManagerOrganization.direction || 
+                          projectManagerOrganization.service;
+
   return (
     <div className="space-y-6">
       <div className="space-y-4">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <DateInputField
-              label="Date de début"
-              date={startDate}
-              onDateChange={setStartDate}
-            />
-          </div>
-          <div>
-            <DateInputField
-              label="Date de fin"
-              date={endDate}
-              onDateChange={setEndDate}
-              minDate={startDate}
-            />
-          </div>
+        <div className="grid gap-2">
+          <Label htmlFor="organization">Organisation du projet</Label>
+          <Input
+            id="organization"
+            value={organizationDisplay()}
+            readOnly
+            className="bg-gray-100"
+          />
+          {!hasOrganization && (
+            <Alert variant="warning" className="mt-2">
+              <Info className="h-4 w-4" />
+              <AlertTitle>Attention</AlertTitle>
+              <AlertDescription>
+                Le chef de projet n'est affecté à aucune organisation. 
+                Le projet sera créé sans affectation organisationnelle.
+              </AlertDescription>
+            </Alert>
+          )}
+          <p className="text-sm text-muted-foreground mt-1">
+            L'organisation du projet est automatiquement basée sur l'affectation du chef de projet.
+          </p>
         </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="status">Statut</Label>
+        <div className="grid gap-2">
+          <Label htmlFor="monitoring-level">Niveau de suivi</Label>
           <Select 
-            value={status || ""} 
-            onValueChange={(value) => setStatus(value || null)}
+            value={monitoringLevel} 
+            onValueChange={(value: MonitoringLevel) => {
+              setMonitoringLevel(value);
+            }}
           >
-            <SelectTrigger id="status">
-              <SelectValue placeholder="Sélectionner un statut" />
+            <SelectTrigger>
+              <SelectValue placeholder="Sélectionner un niveau de suivi" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="sunny">Bon déroulement</SelectItem>
-              <SelectItem value="cloudy">Quelques difficultés</SelectItem>
-              <SelectItem value="stormy">Difficultés majeures</SelectItem>
+              <SelectItem value="none">Aucun</SelectItem>
+              <SelectItem value="dgs">DGS</SelectItem>
+              <SelectItem 
+                value="pole" 
+                disabled={!projectManagerOrganization.pole}
+              >
+                Pôle
+              </SelectItem>
+              <SelectItem 
+                value="direction" 
+                disabled={!projectManagerOrganization.direction}
+              >
+                Direction
+              </SelectItem>
             </SelectContent>
           </Select>
         </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="priority">Priorité</Label>
-          <Select 
-            value={priority || ""} 
-            onValueChange={(value) => setPriority(value || null)}
-          >
-            <SelectTrigger id="priority">
-              <SelectValue placeholder="Sélectionner une priorité" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="high">Haute</SelectItem>
-              <SelectItem value="medium">Moyenne</SelectItem>
-              <SelectItem value="low">Basse</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
+        {monitoringLevel === 'pole' && projectManagerOrganization.pole && (
+          <div className="grid gap-2">
+            <Label>Entité de suivi</Label>
+            <Input
+              value={`Pôle: ${projectManagerOrganization.pole.name}`}
+              readOnly
+              className="bg-gray-100"
+            />
+          </div>
+        )}
+
+        {monitoringLevel === 'direction' && projectManagerOrganization.direction && (
+          <div className="grid gap-2">
+            <Label>Entité de suivi</Label>
+            <Input
+              value={`Direction: ${projectManagerOrganization.direction.name}`}
+              readOnly
+              className="bg-gray-100"
+            />
+          </div>
+        )}
       </div>
     </div>
   );

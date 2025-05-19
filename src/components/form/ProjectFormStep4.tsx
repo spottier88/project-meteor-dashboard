@@ -1,141 +1,102 @@
 
-import React from "react";
 import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { Textarea } from "@/components/ui/textarea";
 
 interface ProjectFormStep4Props {
-  forEntity: {
-    type: string | null;
-    id: string | null;
-  };
-  setForEntity: (entity: { type: string | null; id: string | null }) => void;
-  suiviDGS: boolean;
-  setSuiviDGS: (value: boolean) => void;
-  project?: any;
+  context: string;
+  setContext: (value: string) => void;
+  stakeholders: string;
+  setStakeholders: (value: string) => void;
+  governance: string;
+  setGovernance: (value: string) => void;
+  objectives: string;
+  setObjectives: (value: string) => void;
+  timeline: string;
+  setTimeline: (value: string) => void;
+  deliverables: string;
+  setDeliverables: (value: string) => void;
 }
 
-export const ProjectFormStep4: React.FC<ProjectFormStep4Props> = ({
-  forEntity,
-  setForEntity,
-  suiviDGS,
-  setSuiviDGS,
-  project
-}) => {
-  // Requête pour récupérer les pôles
-  const { data: poles } = useQuery({
-    queryKey: ["poles"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("poles")
-        .select("*")
-        .order("name");
-      if (error) throw error;
-      return data;
-    },
-  });
-
-  // Requête pour récupérer les directions
-  const { data: directions } = useQuery({
-    queryKey: ["directions"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("directions")
-        .select("*, poles(name)")
-        .order("name");
-      if (error) throw error;
-      return data;
-    },
-  });
-
-  // Requête pour récupérer les services
-  const { data: services } = useQuery({
-    queryKey: ["services"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("services")
-        .select("*, directions(name, poles(name))")
-        .order("name");
-      if (error) throw error;
-      return data;
-    },
-  });
-
-  const selectedEntityOptions = () => {
-    if (forEntity.type === "pole") {
-      return poles?.map(pole => (
-        <SelectItem key={pole.id} value={pole.id}>{pole.name}</SelectItem>
-      ));
-    } else if (forEntity.type === "direction") {
-      return directions?.map(direction => (
-        <SelectItem key={direction.id} value={direction.id}>
-          {direction.poles?.name} &gt; {direction.name}
-        </SelectItem>
-      ));
-    } else if (forEntity.type === "service") {
-      return services?.map(service => (
-        <SelectItem key={service.id} value={service.id}>
-          {service.directions?.poles?.name} &gt; {service.directions?.name} &gt; {service.name}
-        </SelectItem>
-      ));
-    }
-    return null;
-  };
-
+export const ProjectFormStep4 = ({
+  context,
+  setContext,
+  stakeholders,
+  setStakeholders,
+  governance,
+  setGovernance,
+  objectives,
+  setObjectives,
+  timeline,
+  setTimeline,
+  deliverables,
+  setDeliverables,
+}: ProjectFormStep4Props) => {
   return (
     <div className="space-y-6">
-      <div className="space-y-4">
-        <div className="space-y-2">
-          <Label htmlFor="for-entity-type">Pour quelle entité</Label>
-          <Select 
-            value={forEntity.type || ""} 
-            onValueChange={(value) => setForEntity({ 
-              type: value || null, 
-              id: null 
-            })}
-          >
-            <SelectTrigger id="for-entity-type">
-              <SelectValue placeholder="Sélectionner un type d'entité" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="">Aucune</SelectItem>
-              <SelectItem value="pole">Pôle</SelectItem>
-              <SelectItem value="direction">Direction</SelectItem>
-              <SelectItem value="service">Service</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
+      <div className="space-y-2">
+        <Label htmlFor="context">Contexte du projet</Label>
+        <Textarea
+          id="context"
+          value={context}
+          onChange={(e) => setContext(e.target.value)}
+          placeholder="Décrivez le contexte, les enjeux et la raison d'être du projet"
+          className="min-h-[100px]"
+        />
+      </div>
 
-        {forEntity.type && (
-          <div className="space-y-2">
-            <Label htmlFor="for-entity-id">Sélectionner l'entité</Label>
-            <Select 
-              value={forEntity.id || ""} 
-              onValueChange={(value) => setForEntity({ 
-                ...forEntity, 
-                id: value || null 
-              })}
-            >
-              <SelectTrigger id="for-entity-id">
-                <SelectValue placeholder="Sélectionner l'entité" />
-              </SelectTrigger>
-              <SelectContent>
-                {selectedEntityOptions()}
-              </SelectContent>
-            </Select>
-          </div>
-        )}
+      <div className="space-y-2">
+        <Label htmlFor="stakeholders">Parties prenantes</Label>
+        <Textarea
+          id="stakeholders"
+          value={stakeholders}
+          onChange={(e) => setStakeholders(e.target.value)}
+          placeholder="Listez les acteurs concernés par le projet"
+          className="min-h-[100px]"
+        />
+      </div>
 
-        <div className="flex items-center space-x-2 pt-4">
-          <Switch 
-            id="suiviDGS" 
-            checked={suiviDGS}
-            onCheckedChange={setSuiviDGS}
-          />
-          <Label htmlFor="suiviDGS">Suivi DGS</Label>
-        </div>
+      <div className="space-y-2">
+        <Label htmlFor="governance">Gouvernance</Label>
+        <Textarea
+          id="governance"
+          value={governance}
+          onChange={(e) => setGovernance(e.target.value)}
+          placeholder="Décrivez l'organisation du projet et les instances décisionnelles"
+          className="min-h-[100px]"
+        />
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="objectives">Objectifs</Label>
+        <Textarea
+          id="objectives"
+          value={objectives}
+          onChange={(e) => setObjectives(e.target.value)}
+          placeholder="Définissez les objectifs SMART du projet"
+          className="min-h-[100px]"
+        />
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="timeline">Planning prévisionnel</Label>
+        <Textarea
+          id="timeline"
+          value={timeline}
+          onChange={(e) => setTimeline(e.target.value)}
+          placeholder="Décrivez les principales échéances et jalons"
+          className="min-h-[100px]"
+        />
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="deliverables">Livrables attendus</Label>
+        <Textarea
+          id="deliverables"
+          value={deliverables}
+          onChange={(e) => setDeliverables(e.target.value)}
+          placeholder="Décrivez les résultats attendus du projet"
+          className="min-h-[100px]"
+        />
       </div>
     </div>
   );
