@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useUser } from "@supabase/auth-helpers-react";
 import { MonitoringLevel } from "@/types/monitoring";
@@ -289,6 +290,7 @@ export const useProjectFormState = (isOpen: boolean, project?: any) => {
           setLifecycleStatus(project.lifecycle_status as ProjectLifecycleStatus || "study");
           setForEntityType(project.for_entity_type as ForEntityType || null);
           setForEntityId(project.for_entity_id || undefined);
+          setTemplateId(project.template_id);
 
           // Charger l'organisation du chef de projet existant
           await loadProjectManagerOrganization(project.project_manager);

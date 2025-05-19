@@ -67,6 +67,8 @@ export interface ProjectFormState {
   setForEntityType: (value: ForEntityType) => void;
   forEntityId: string | undefined;
   setForEntityId: (value: string | undefined) => void;
+  templateId: string | undefined;
+  setTemplateId: (value: string | undefined) => void;
 }
 
 export const useProjectFormState = (isOpen: boolean, project?: any) => {
