@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useUser } from "@supabase/auth-helpers-react";
 import { MonitoringLevel } from "@/types/monitoring";
@@ -108,7 +107,6 @@ export const useProjectFormState = (isOpen: boolean, project?: any) => {
 
   const user = useUser();
 
-  // Fonction pour charger les informations d'organisation pour un chef de projet
   const loadProjectManagerOrganization = async (email: string) => {
     if (!email) {
       setProjectManagerOrganization({});
@@ -116,7 +114,6 @@ export const useProjectFormState = (isOpen: boolean, project?: any) => {
     }
     
     try {
-      // Récupérer l'identifiant de l'utilisateur à partir de son email
       const { data: userProfile, error: userError } = await supabase
         .from("profiles")
         .select("id")
@@ -129,7 +126,6 @@ export const useProjectFormState = (isOpen: boolean, project?: any) => {
         return;
       }
       
-      // Récupérer l'affectation hiérarchique de l'utilisateur
       const { data: userAssignments, error: assignmentError } = await supabase
         .from("user_hierarchy_assignments")
         .select("entity_id, entity_type")
@@ -137,7 +133,6 @@ export const useProjectFormState = (isOpen: boolean, project?: any) => {
         .order("created_at", { ascending: false });
       
       if (assignmentError || !userAssignments || userAssignments.length === 0) {
-        // console.log("Aucune affectation hiérarchique trouvée pour l'utilisateur:", email);
         setProjectManagerOrganization({});
         setHasNoHierarchyAssignment(true);
         return;
@@ -145,14 +140,12 @@ export const useProjectFormState = (isOpen: boolean, project?: any) => {
       
       setHasNoHierarchyAssignment(false);
       
-      // Initialiser l'organisation du projet
       const organization: { 
         pole?: { id: string; name: string } | null;
         direction?: { id: string; name: string } | null;
         service?: { id: string; name: string } | null;
       } = {};
       
-      // Récupérer les informations des entités assignées
       for (const assignment of userAssignments) {
         if (assignment.entity_type === 'service') {
           const { data: service } = await supabase
@@ -164,7 +157,6 @@ export const useProjectFormState = (isOpen: boolean, project?: any) => {
           if (service) {
             organization.service = { id: service.id, name: service.name };
             
-            // Récupérer la direction parente
             const { data: direction } = await supabase
               .from("directions")
               .select("id, name, pole_id")
@@ -174,7 +166,6 @@ export const useProjectFormState = (isOpen: boolean, project?: any) => {
             if (direction) {
               organization.direction = { id: direction.id, name: direction.name };
               
-              // Récupérer le pôle parent
               if (direction.pole_id) {
                 const { data: pole } = await supabase
                   .from("poles")
@@ -187,8 +178,6 @@ export const useProjectFormState = (isOpen: boolean, project?: any) => {
                 }
               }
             }
-            
-            // Une fois qu'on a trouvé un service, on arrête la recherche
             break;
           }
         } else if (assignment.entity_type === 'direction') {
@@ -201,7 +190,6 @@ export const useProjectFormState = (isOpen: boolean, project?: any) => {
           if (direction) {
             organization.direction = { id: direction.id, name: direction.name };
             
-            // Récupérer le pôle parent
             if (direction.pole_id) {
               const { data: pole } = await supabase
                 .from("poles")
@@ -213,8 +201,6 @@ export const useProjectFormState = (isOpen: boolean, project?: any) => {
                 organization.pole = { id: pole.id, name: pole.name };
               }
             }
-            
-            // Une fois qu'on a trouvé une direction, on arrête la recherche
             break;
           }
         } else if (assignment.entity_type === 'pole') {
@@ -226,8 +212,6 @@ export const useProjectFormState = (isOpen: boolean, project?: any) => {
             
           if (pole) {
             organization.pole = { id: pole.id, name: pole.name };
-            
-            // Une fois qu'on a trouvé un pôle, on arrête la recherche
             break;
           }
         }
@@ -275,7 +259,6 @@ export const useProjectFormState = (isOpen: boolean, project?: any) => {
         if (user?.email) {
           setProjectManager(user.email);
           setOwnerId(user.id);
-          // Charger l'organisation du chef de projet initial (l'utilisateur connecté)
           await loadProjectManagerOrganization(user.email);
         }
 
@@ -292,7 +275,6 @@ export const useProjectFormState = (isOpen: boolean, project?: any) => {
           setForEntityId(project.for_entity_id || undefined);
           setTemplateId(project.template_id);
 
-          // Charger l'organisation du chef de projet existant
           await loadProjectManagerOrganization(project.project_manager);
 
           try {
@@ -358,7 +340,6 @@ export const useProjectFormState = (isOpen: boolean, project?: any) => {
     initializeForm();
   }, [isOpen, project, user?.email, user?.id]);
 
-  // Observer les changements dans le projectManager pour mettre à jour l'organisation
   useEffect(() => {
     if (projectManager) {
       loadProjectManagerOrganization(projectManager);

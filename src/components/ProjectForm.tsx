@@ -1,4 +1,3 @@
-
 import { Dialog, DialogContent, DialogFooter } from "@/components/ui/dialog";
 import { useQuery } from "@tanstack/react-query";
 import { useUser } from "@supabase/auth-helpers-react";
@@ -32,11 +31,6 @@ export const ProjectForm = ({ isOpen, onClose, onSubmit, project }: ProjectFormP
   const [isProfileFormOpen, setIsProfileFormOpen] = useState(false);
 
   const validationValues = useMemo(() => {
-    // console.log("ProjectForm - validation values:", {
-    //   isAdmin: validation.isAdmin,
-    //   isManager: validation.isManager
-    // });
-    
     return {
       isAdmin: validation.isAdmin,
       isManager: validation.isManager
