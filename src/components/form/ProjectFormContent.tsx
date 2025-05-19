@@ -1,131 +1,88 @@
 
-import { ProjectFormFields } from "./ProjectFormFields";
+import React from "react";
 import { ProjectFormStep1 } from "./ProjectFormStep1";
 import { ProjectFormStep2 } from "./ProjectFormStep2";
 import { ProjectFormStep3 } from "./ProjectFormStep3";
 import { ProjectFormStep4 } from "./ProjectFormStep4";
 import { ProjectFormStep5 } from "./ProjectFormStep5";
-import { UserProfile } from "@/types/user";
-import { useMemo } from "react";
-import { ProjectLifecycleStatus } from "@/types/project";
 
 interface ProjectFormContentProps {
-  canEditOrganization: boolean;
   formState: any;
-  projectManagers?: UserProfile[];
+  projectManagers?: any[];
   project?: any;
   isEditMode: boolean;
+  canEditOrganization: boolean;
   onOpenProfile: () => void;
   isAdmin: boolean;
   isManager: boolean;
 }
 
-export const ProjectFormContent = ({
-  canEditOrganization,
+export const ProjectFormContent: React.FC<ProjectFormContentProps> = ({
   formState,
   projectManagers,
   project,
   isEditMode,
+  canEditOrganization,
   onOpenProfile,
   isAdmin,
-  isManager
-}: ProjectFormContentProps) => {
-  const permissions = useMemo(() => {
-    // console.log("ProjectFormContent - permissions received:", {
-    //   isAdmin,
-    //   isManager,
-    //   canEditOrganization
-    // });
-    
-    return { isAdmin, isManager, canEditOrganization };
-  }, [isAdmin, isManager, canEditOrganization]);
-
-  const getRenderContent = () => {
-    switch (formState.currentStep) {
-      case 0:
-        return (
-          <ProjectFormStep1
-            title={formState.title}
-            setTitle={formState.setTitle}
-            description={formState.description}
-            setDescription={formState.setDescription}
-            projectManager={formState.projectManager}
-            setProjectManager={formState.setProjectManager}
-            startDate={formState.startDate}
-            setStartDate={formState.setStartDate}
-            endDate={formState.endDate}
-            setEndDate={formState.setEndDate}
-            priority={formState.priority}
-            setPriority={formState.setPriority}
-            lifecycleStatus={formState.lifecycleStatus as ProjectLifecycleStatus}
-            setLifecycleStatus={formState.setLifecycleStatus}
-            isAdmin={permissions.isAdmin}
-            isManager={permissions.isManager}
-            ownerId={formState.ownerId}
-            setOwnerId={formState.setOwnerId}
-            projectManagers={projectManagers}
-          />
-        );
-      case 1:
-        return (
-          <ProjectFormStep2
-            monitoringLevel={formState.monitoringLevel}
-            setMonitoringLevel={formState.setMonitoringLevel}
-            monitoringEntityId={formState.monitoringEntityId}
-            setMonitoringEntityId={formState.setMonitoringEntityId}
-            projectManagerOrganization={formState.projectManagerOrganization}
-            project={project}
-          />
-        );
-      case 2:
-        return (
-          <ProjectFormStep3
-            novateur={formState.novateur}
-            setNovateur={formState.setNovateur}
-            usager={formState.usager}
-            setUsager={formState.setUsager}
-            impact={formState.impact}
-            setImpact={formState.setImpact}
-            ouverture={formState.ouverture}
-            setOuverture={formState.setOuverture}
-            agilite={formState.agilite}
-            setAgilite={formState.setAgilite}
-          />
-        );
-      case 3:
-        return (
-          <ProjectFormStep4
-            context={formState.context}
-            setContext={formState.setContext}
-            objectives={formState.objectives}
-            setObjectives={formState.setObjectives}
-            timeline={formState.timeline}
-            setTimeline={formState.setTimeline}
-            deliverables={formState.deliverables}
-            setDeliverables={formState.setDeliverables}
-            stakeholders={formState.stakeholders}
-            setStakeholders={formState.setStakeholders}
-            governance={formState.governance}
-            setGovernance={formState.setGovernance}
-          />
-        );
-      case 4:
-        return (
-          <ProjectFormStep5
-            forEntityType={formState.forEntityType}
-            setForEntityType={formState.setForEntityType}
-            forEntityId={formState.forEntityId}
-            setForEntityId={formState.setForEntityId}
-          />
-        );
-      default:
-        return null;
-    }
-  };
-
+  isManager,
+}) => {
   return (
-    <div className="w-full">
-      {getRenderContent()}
+    <div className="px-2">
+      {formState.currentStep === 0 && (
+        <ProjectFormStep1
+          title={formState.title}
+          setTitle={formState.setTitle}
+          description={formState.description}
+          setDescription={formState.setDescription}
+          projectManager={formState.projectManager}
+          setProjectManager={formState.setProjectManager}
+          projectManagers={projectManagers}
+          project={project}
+          isEditMode={isEditMode}
+          onOpenProfile={onOpenProfile}
+          isAdmin={isAdmin}
+          isManager={isManager}
+        />
+      )}
+      {formState.currentStep === 1 && (
+        <ProjectFormStep2
+          startDate={formState.startDate}
+          setStartDate={formState.setStartDate}
+          endDate={formState.endDate}
+          setEndDate={formState.setEndDate}
+          status={formState.status}
+          setStatus={formState.setStatus}
+          priority={formState.priority}
+          setPriority={formState.setPriority}
+          project={project}
+        />
+      )}
+      {formState.currentStep === 2 && (
+        <ProjectFormStep3
+          organization={formState.organization}
+          setOrganization={formState.setOrganization}
+          lifecycleStatus={formState.lifecycleStatus}
+          setLifecycleStatus={formState.setLifecycleStatus}
+          project={project}
+          canEditOrganization={canEditOrganization}
+        />
+      )}
+      {formState.currentStep === 3 && (
+        <ProjectFormStep4
+          forEntity={formState.forEntity}
+          setForEntity={formState.setForEntity}
+          suiviDGS={formState.suiviDGS}
+          setSuiviDGS={formState.setSuiviDGS}
+          project={project}
+        />
+      )}
+      {formState.currentStep === 4 && !isEditMode && (
+        <ProjectFormStep5
+          onTemplateSelect={formState.setSelectedTemplateId}
+          selectedTemplateId={formState.selectedTemplateId}
+        />
+      )}
     </div>
   );
 };

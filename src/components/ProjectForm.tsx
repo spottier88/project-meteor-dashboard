@@ -67,6 +67,9 @@ export const ProjectForm = ({ isOpen, onClose, onSubmit, project }: ProjectFormP
     enabled: isOpen && !!user?.id && !!validation.userRoles,
   });
 
+  // Import le hook useTemplateSelection pour appliquer le modèle au projet
+  const { applyTemplateToProject } = useTemplateSelection();
+
   const { 
     handleSubmit, 
     showAccessWarning, 
@@ -78,7 +81,22 @@ export const ProjectForm = ({ isOpen, onClose, onSubmit, project }: ProjectFormP
     canCreate,
     canEditOrganization,
     formState,
-    onSubmit,
+    onSubmit: async (data) => {
+      // Soumettre le projet normalement
+      const result = await onSubmit(data);
+      
+      // Si un modèle est sélectionné et que c'est une création de projet (pas une édition)
+      if (formState.selectedTemplateId && !project) {
+        // Appliquer le modèle au projet nouvellement créé
+        await applyTemplateToProject(result.id, formState.selectedTemplateId);
+      }
+      
+      // Fermer le formulaire
+      formState.resetHasUnsavedChanges();
+      onClose();
+      
+      return result;
+    },
     onClose: () => {
       formState.resetHasUnsavedChanges();
       onClose();
