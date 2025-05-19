@@ -54,15 +54,16 @@ export const useTemplateSelection = () => {
             start_date: task.duration_days ? new Date() : null,
             due_date: task.duration_days ? new Date(Date.now() + task.duration_days * 86400000) : null,
           })
-          .select()
-          .single();
+          .select();
         
         if (error) {
           toast.error(`Erreur lors de la création de la tâche "${task.title}"`);
           continue;
         }
         
-        taskIdMapping[task.id] = newTask.id;
+        if (newTask && newTask.length > 0) {
+          taskIdMapping[task.id] = newTask[0].id;
+        }
       }
       
       // 4. Ensuite créer les sous-tâches avec les références correctes
@@ -87,15 +88,16 @@ export const useTemplateSelection = () => {
             start_date: task.duration_days ? new Date() : null,
             due_date: task.duration_days ? new Date(Date.now() + task.duration_days * 86400000) : null,
           })
-          .select()
-          .single();
+          .select();
         
         if (error) {
           toast.error(`Erreur lors de la création de la sous-tâche "${task.title}"`);
           continue;
         }
         
-        taskIdMapping[task.id] = newTask.id;
+        if (newTask && newTask.length > 0) {
+          taskIdMapping[task.id] = newTask[0].id;
+        }
       }
       
       toast.success(`${Object.keys(taskIdMapping).length} tâches créées à partir du modèle`);
@@ -114,5 +116,6 @@ export const useTemplateSelection = () => {
     selectTemplate,
     applyTemplateToProject,
     isApplyingTemplate,
+    setSelectedTemplateId
   };
 };

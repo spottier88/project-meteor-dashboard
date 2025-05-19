@@ -15,6 +15,7 @@ import { useProjectPermissions } from "@/hooks/useProjectPermissions";
 import { ProfileForm } from "./profile/ProfileForm";
 import { UserProfile } from "@/types/user";
 import { supabase } from "@/integrations/supabase/client";
+import { useTemplateSelection } from "@/hooks/useTemplateSelection";
 
 interface ProjectFormProps {
   isOpen: boolean;
@@ -101,7 +102,7 @@ export const ProjectForm = ({ isOpen, onClose, onSubmit, project }: ProjectFormP
       formState.resetHasUnsavedChanges();
       onClose();
     },
-    accessibleOrganizations
+    accessibleOrganizations: accessibleOrganizations || []
   });
 
   const handleNext = () => {

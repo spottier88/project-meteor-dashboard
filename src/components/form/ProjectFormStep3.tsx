@@ -1,14 +1,16 @@
+
 import React from 'react';
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { OrganizationAutocomplete } from "../OrganizationAutocomplete";
+import { ProjectLifecycleStatus } from "@/types/project";
 
 interface ProjectFormStep3Props {
   organization: any;
   setOrganization: (value: any) => void;
-  lifecycleStatus: string;
-  setLifecycleStatus: (value: any) => void;
-  project?: any; // Ajout de cette propriété manquante
+  lifecycleStatus: ProjectLifecycleStatus;
+  setLifecycleStatus: (value: ProjectLifecycleStatus) => void;
+  project?: any;
   canEditOrganization: boolean;
 }
 
@@ -17,7 +19,7 @@ export const ProjectFormStep3: React.FC<ProjectFormStep3Props> = ({
   setOrganization,
   lifecycleStatus,
   setLifecycleStatus,
-  project, // Utilisation de la propriété ajoutée
+  project,
   canEditOrganization
 }) => {
   
@@ -38,7 +40,7 @@ export const ProjectFormStep3: React.FC<ProjectFormStep3Props> = ({
           <Input
             id="lifecycleStatus"
             value={lifecycleStatus}
-            onChange={(e) => setLifecycleStatus(e.target.value)}
+            onChange={(e) => setLifecycleStatus(e.target.value as ProjectLifecycleStatus)}
             placeholder="Lifecycle Status"
           />
         </div>

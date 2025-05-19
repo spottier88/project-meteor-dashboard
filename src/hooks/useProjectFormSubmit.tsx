@@ -1,6 +1,8 @@
+
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
+import { ProjectLifecycleStatus } from "@/types/project";
 
 // Définir le type ProjectFormState
 interface ProjectFormState {
@@ -16,7 +18,7 @@ interface ProjectFormState {
     direction?: string;
     service?: string;
   };
-  lifecycleStatus: string;
+  lifecycleStatus: ProjectLifecycleStatus;
   forEntity?: {
     type?: string;
     id?: string;

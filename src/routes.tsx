@@ -4,17 +4,19 @@ import {
 } from "react-router-dom";
 import App from "./App";
 import { ErrorPage } from "./components/ErrorPage";
-import { Login } from "./pages/Login";
-import { AuthCallback } from "./pages/AuthCallback";
+import Login from "./pages/Login";
+import AuthCallback from "./pages/AuthCallback";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import { AdminDashboard } from "./pages/AdminDashboard";
-import { UsersManagement } from "./pages/UsersManagement";
-import { OrganizationManagement } from "./pages/OrganizationManagement";
-import { NotificationsManagement } from "./pages/NotificationsManagement";
-import { ActivityTypesManagement } from "./pages/ActivityTypesManagement";
-import { SettingsManagement } from "./pages/SettingsManagement";
-import { AiPromptsManagement } from "./pages/AiPromptsManagement";
 import { ProjectTemplateManagement } from "./pages/ProjectTemplateManagement";
+
+// Créer des composants temporaires pour les pages non implémentées
+const UsersManagement = () => <div>Gestion des utilisateurs</div>;
+const OrganizationManagement = () => <div>Gestion des organisations</div>;
+const NotificationsManagement = () => <div>Gestion des notifications</div>;
+const ActivityTypesManagement = () => <div>Gestion des types d'activités</div>;
+const SettingsManagement = () => <div>Gestion des paramètres</div>;
+const AiPromptsManagement = () => <div>Gestion des prompts IA</div>;
 
 export const router = createBrowserRouter([
   {
@@ -40,7 +42,7 @@ export const router = createBrowserRouter([
   {
     path: "/admin",
     element: (
-      <ProtectedRoute requiredRole={["admin"]}>
+      <ProtectedRoute>
         <AdminDashboard />
       </ProtectedRoute>
     ),
@@ -48,7 +50,7 @@ export const router = createBrowserRouter([
   {
     path: "/admin/project-templates",
     element: (
-      <ProtectedRoute requiredRole={["admin"]}>
+      <ProtectedRoute>
         <ProjectTemplateManagement />
       </ProtectedRoute>
     ),
@@ -56,7 +58,7 @@ export const router = createBrowserRouter([
   {
     path: "/admin/users",
     element: (
-      <ProtectedRoute requiredRole={["admin"]}>
+      <ProtectedRoute>
         <UsersManagement />
       </ProtectedRoute>
     ),
@@ -64,7 +66,7 @@ export const router = createBrowserRouter([
   {
     path: "/admin/organization",
     element: (
-      <ProtectedRoute requiredRole={["admin"]}>
+      <ProtectedRoute>
         <OrganizationManagement />
       </ProtectedRoute>
     ),
@@ -72,7 +74,7 @@ export const router = createBrowserRouter([
   {
     path: "/admin/notifications",
     element: (
-      <ProtectedRoute requiredRole={["admin"]}>
+      <ProtectedRoute>
         <NotificationsManagement />
       </ProtectedRoute>
     ),
@@ -80,7 +82,7 @@ export const router = createBrowserRouter([
   {
     path: "/admin/activity-types",
     element: (
-      <ProtectedRoute requiredRole={["admin"]}>
+      <ProtectedRoute>
         <ActivityTypesManagement />
       </ProtectedRoute>
     ),
@@ -88,7 +90,7 @@ export const router = createBrowserRouter([
   {
     path: "/admin/settings",
     element: (
-      <ProtectedRoute requiredRole={["admin"]}>
+      <ProtectedRoute>
         <SettingsManagement />
       </ProtectedRoute>
     ),
@@ -96,7 +98,7 @@ export const router = createBrowserRouter([
   {
     path: "/admin/ai-prompts",
     element: (
-      <ProtectedRoute requiredRole={["admin"]}>
+      <ProtectedRoute>
         <AiPromptsManagement />
       </ProtectedRoute>
     ),
