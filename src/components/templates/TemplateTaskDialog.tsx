@@ -163,14 +163,14 @@ export const TemplateTaskDialog = ({
               <div className="grid gap-2">
                 <Label htmlFor="parent">Tâche parente (facultatif)</Label>
                 <Select 
-                  value={parentTaskId || ""}
-                  onValueChange={(value) => setParentTaskId(value || undefined)}
+                  value={parentTaskId || "none"}
+                  onValueChange={(value) => setParentTaskId(value === "none" ? undefined : value)}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Sélectionner une tâche parente" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Aucune (tâche principale)</SelectItem>
+                    <SelectItem value="none">Aucune (tâche principale)</SelectItem>
                     {parentTaskOptions.map(option => (
                       <SelectItem key={option.value} value={option.value}>
                         {option.label}
