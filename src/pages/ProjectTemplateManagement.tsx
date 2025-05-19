@@ -105,7 +105,11 @@ export const ProjectTemplateManagement = () => {
         templates={templates}
         isLoading={isLoadingTemplates || isLoadingAction}
         onEdit={(template) => {
-          setEditingTemplate(template);
+          setEditingTemplate({
+            id: template.id,
+            title: template.title,
+            description: template.description || ""
+          });
           setIsDialogOpen(true);
         }}
         onDelete={handleDeleteTemplate}

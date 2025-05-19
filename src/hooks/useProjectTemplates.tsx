@@ -3,16 +3,7 @@ import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
-
-interface ProjectTemplate {
-  id: string;
-  title: string;
-  description?: string;
-  is_active: boolean;
-  created_at: string;
-  updated_at: string;
-  created_by?: string;
-}
+import { ProjectTemplate } from "@/components/templates/ProjectTemplateList";
 
 interface ProjectTemplateTask {
   id: string;

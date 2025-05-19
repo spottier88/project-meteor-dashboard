@@ -22,15 +22,17 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 
+export interface ProjectTemplate {
+  id: string;
+  title: string;
+  description?: string;
+  created_at?: string;
+}
+
 interface ProjectTemplateListProps {
-  templates: {
-    id: string;
-    title: string;
-    description: string;
-    created_at?: string;
-  }[];
+  templates: ProjectTemplate[];
   isLoading: boolean;
-  onEdit: (template: { id: string; title: string; description: string }) => void;
+  onEdit: (template: ProjectTemplate) => void;
   onDelete: (id: string) => void;
   onViewDetails: (id: string) => void;
 }

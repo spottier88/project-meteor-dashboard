@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -30,9 +30,20 @@ export const ProjectTemplateDialog = ({
   defaultValues,
   title,
 }: ProjectTemplateDialogProps) => {
-  const [templateTitle, setTemplateTitle] = useState(defaultValues?.title || "");
-  const [description, setDescription] = useState(defaultValues?.description || "");
+  const [templateTitle, setTemplateTitle] = useState("");
+  const [description, setDescription] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  useEffect(() => {
+    if (defaultValues) {
+      setTemplateTitle(defaultValues.title || "");
+      setDescription(defaultValues.description || "");
+    } else {
+      // Réinitialiser les champs quand le dialogue s'ouvre sans valeurs par défaut
+      setTemplateTitle("");
+      setDescription("");
+    }
+  }, [defaultValues, open]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -41,8 +52,6 @@ export const ProjectTemplateDialog = ({
     setIsSubmitting(true);
     try {
       await onSubmit(templateTitle.trim(), description.trim());
-      setTemplateTitle("");
-      setDescription("");
     } finally {
       setIsSubmitting(false);
     }

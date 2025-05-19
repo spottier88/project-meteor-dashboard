@@ -24,7 +24,7 @@ export const ProjectTemplateDetails = () => {
     updateTemplateTask,
     deleteTemplateTask,
     isLoadingAction
-  } = useProjectTemplates();
+  } = useProjectTemplates(templateId);
 
   const currentTemplate = templates.find(t => t.id === templateId);
 
@@ -158,7 +158,17 @@ export const ProjectTemplateDetails = () => {
       <TemplateTaskList
         tasks={templateTasks || []}
         isLoading={isLoadingTemplateTasks || isLoadingAction}
-        onEdit={setEditingTask}
+        onEdit={(task) => {
+          setEditingTask({
+            id: task.id,
+            title: task.title,
+            description: task.description || "",
+            status: task.status,
+            durationDays: task.duration_days || 0,
+            parentTaskId: task.parent_task_id
+          });
+          setIsDialogOpen(true);
+        }}
         onDelete={handleDeleteTask}
         onOpenDialog={() => setIsDialogOpen(true)}
       />

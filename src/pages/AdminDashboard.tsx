@@ -1,5 +1,5 @@
 
-import { Settings, Users, Building2, Bell, Activity, BookOpenText, Template } from "lucide-react";
+import { Settings, Users, Building2, Bell, Activity, BookOpenText, FileText } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 
@@ -79,7 +79,7 @@ export const AdminDashboard = () => {
           className="h-32 flex flex-col items-center justify-center gap-2"
           onClick={() => navigate("/admin/templates")}
         >
-          <Template className="h-8 w-8" />
+          <FileText className="h-8 w-8" />
           <span>Modèles de projet</span>
         </Button>
       </div>
