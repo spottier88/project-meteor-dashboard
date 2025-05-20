@@ -190,7 +190,11 @@ export const useProjectFormSubmit = ({
         console.log("Pas de création de tâches - templateId:", formState.templateId, "project:", result?.id);
       }
       
+      // Invalider toutes les requêtes liées aux projets pour forcer un rafraîchissement
       await queryClient.invalidateQueries({ queryKey: ["projects"] });
+      
+      // Invalider spécifiquement la vue liste des projets pour la page d'accueil
+      await queryClient.invalidateQueries({ queryKey: ["projectsListView"] });
       
       // Réinitialiser l'indicateur de modifications non enregistrées
       formState.resetHasUnsavedChanges();
