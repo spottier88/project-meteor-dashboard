@@ -182,7 +182,10 @@ export const useProjectFormSubmit = ({
       // Si un modèle a été sélectionné et qu'il s'agit d'un nouveau projet, créer les tâches
       if (formState.templateId && result && result.id) {
         console.log("Création des tâches à partir du modèle:", formState.templateId, "pour le projet:", result.id);
-        await createTasksFromTemplate(formState.templateId, result.id, result.startDate);
+        // Nous passons explicitement formState.startDate pour utiliser la date saisie par l'utilisateur
+        const startDateString = formState.startDate ? formState.startDate.toISOString().split('T')[0] : undefined;
+        console.log("Date de début utilisée pour les tâches:", startDateString);
+        await createTasksFromTemplate(formState.templateId, result.id, startDateString);
       } else {
         console.log("Pas de création de tâches - templateId:", formState.templateId, "project:", result?.id);
       }
@@ -231,11 +234,15 @@ export const useProjectFormSubmit = ({
       }
       
       console.log(`Création de ${templateTasks.length} tâches pour le projet ${projectId}`);
+      console.log("Date de début du projet fournie:", projectStartDate);
       
       // Déterminer la date de départ pour les tâches
+      // Si projectStartDate est fourni, l'utiliser, sinon utiliser la date du jour
       const startDateObj = projectStartDate 
         ? new Date(projectStartDate) 
-        : new Date(); // Utiliser la date du jour si pas de date de début de projet
+        : new Date();
+      
+      console.log("Date de départ utilisée:", startDateObj.toISOString());
       
       // 2. Mapper les anciens IDs de tâches vers les nouveaux pour gérer les tâches parentes
       const taskIdMap = new Map<string, string>();
