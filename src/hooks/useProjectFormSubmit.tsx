@@ -1,4 +1,3 @@
-
 import { useToast } from "@/components/ui/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
 import { useUser } from "@supabase/auth-helpers-react";
@@ -183,7 +182,7 @@ export const useProjectFormSubmit = ({
       // Si un modèle a été sélectionné et qu'il s'agit d'un nouveau projet, créer les tâches
       if (formState.templateId && result && result.id) {
         console.log("Création des tâches à partir du modèle:", formState.templateId, "pour le projet:", result.id);
-        await createTasksFromTemplate(formState.templateId, result.id);
+        await createTasksFromTemplate(formState.templateId, result.id, result.startDate);
       } else {
         console.log("Pas de création de tâches - templateId:", formState.templateId, "project:", result?.id);
       }
@@ -211,7 +210,7 @@ export const useProjectFormSubmit = ({
   };
 
   // Fonction pour créer les tâches d'un modèle pour un projet
-  const createTasksFromTemplate = async (templateId: string, projectId: string) => {
+  const createTasksFromTemplate = async (templateId: string, projectId: string, projectStartDate?: string) => {
     try {
       // 1. Récupérer toutes les tâches du modèle
       const { data: templateTasks, error } = await supabase
@@ -233,17 +232,24 @@ export const useProjectFormSubmit = ({
       
       console.log(`Création de ${templateTasks.length} tâches pour le projet ${projectId}`);
       
+      // Déterminer la date de départ pour les tâches
+      const startDateObj = projectStartDate 
+        ? new Date(projectStartDate) 
+        : new Date(); // Utiliser la date du jour si pas de date de début de projet
+      
       // 2. Mapper les anciens IDs de tâches vers les nouveaux pour gérer les tâches parentes
       const taskIdMap = new Map<string, string>();
       
       // 3. Créer d'abord les tâches principales (sans parent)
       for (const task of templateTasks.filter(t => !t.parent_task_id)) {
-        // Calculer la date d'échéance basée sur la durée (si fournie)
-        let dueDate = null;
+        // Calculer la date de début et d'échéance
+        let taskStartDate = new Date(startDateObj);
+        let taskDueDate = null;
+        
+        // Si la tâche a une durée, calculer la date d'échéance
         if (task.duration_days) {
-          dueDate = new Date();
-          dueDate.setDate(dueDate.getDate() + task.duration_days);
-          dueDate = dueDate.toISOString().split('T')[0]; // Format YYYY-MM-DD
+          taskDueDate = new Date(taskStartDate);
+          taskDueDate.setDate(taskStartDate.getDate() + task.duration_days);
         }
         
         const { data: newTask, error: taskError } = await supabase
@@ -253,8 +259,8 @@ export const useProjectFormSubmit = ({
             title: task.title,
             description: task.description || '',
             status: 'todo', // Toujours commencer par "à faire"
-            due_date: dueDate,
-            duration: task.duration_days || null,
+            start_date: taskStartDate.toISOString().split('T')[0], // Format YYYY-MM-DD
+            due_date: taskDueDate ? taskDueDate.toISOString().split('T')[0] : null,
           })
           .select()
           .single();
@@ -278,12 +284,14 @@ export const useProjectFormSubmit = ({
           continue;
         }
         
-        // Calculer la date d'échéance basée sur la durée (si fournie)
-        let dueDate = null;
+        // Calculer la date de début et d'échéance
+        let taskStartDate = new Date(startDateObj);
+        let taskDueDate = null;
+        
+        // Si la tâche a une durée, calculer la date d'échéance
         if (task.duration_days) {
-          dueDate = new Date();
-          dueDate.setDate(dueDate.getDate() + task.duration_days);
-          dueDate = dueDate.toISOString().split('T')[0]; // Format YYYY-MM-DD
+          taskDueDate = new Date(taskStartDate);
+          taskDueDate.setDate(taskStartDate.getDate() + task.duration_days);
         }
         
         const { data: newTask, error: taskError } = await supabase
@@ -293,8 +301,8 @@ export const useProjectFormSubmit = ({
             title: task.title,
             description: task.description || '',
             status: 'todo', // Toujours commencer par "à faire"
-            due_date: dueDate,
-            duration: task.duration_days || null,
+            start_date: taskStartDate.toISOString().split('T')[0], // Format YYYY-MM-DD
+            due_date: taskDueDate ? taskDueDate.toISOString().split('T')[0] : null,
             parent_task_id: parentTaskId,
           })
           .select()
