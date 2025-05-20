@@ -105,6 +105,7 @@ export const ProjectFormContent = ({
             setForEntityId={formState.setForEntityId}
             templateId={formState.templateId}
             setTemplateId={formState.setTemplateId}
+            isEditMode={isEditMode}
           />
         );
       default:

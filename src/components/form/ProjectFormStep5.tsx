@@ -1,4 +1,3 @@
-
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useEffect, useState } from "react";
 import { ForEntityType } from "@/types/project";
@@ -11,6 +10,7 @@ import { ProjectTemplate } from "@/hooks/useProjectTemplates";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useProjectTemplates } from "@/hooks/useProjectTemplates";
 import { FileText, Check } from "lucide-react";
+import { TemplateSelectionWarning } from "./TemplateSelectionWarning";
 
 interface ProjectFormStep5Props {
   forEntityType: ForEntityType;
@@ -19,6 +19,7 @@ interface ProjectFormStep5Props {
   setForEntityId: (value: string | undefined) => void;
   templateId: string | undefined;
   setTemplateId: (value: string | undefined) => void;
+  isEditMode?: boolean;
 }
 
 export const ProjectFormStep5 = ({
@@ -27,7 +28,8 @@ export const ProjectFormStep5 = ({
   forEntityId,
   setForEntityId,
   templateId,
-  setTemplateId
+  setTemplateId,
+  isEditMode = false
 }: ProjectFormStep5Props) => {
   // États pour gérer la sélection hiérarchique
   const [selectedPoleId, setSelectedPoleId] = useState<string | undefined>(undefined);
@@ -359,6 +361,12 @@ export const ProjectFormStep5 = ({
             </SelectContent>
           </Select>
         </div>
+
+        {/* Ajouter l'avertissement ici */}
+        <TemplateSelectionWarning 
+          isEditMode={isEditMode} 
+          templateSelected={!!templateId} 
+        />
 
         {templateId && (
           <div className="mt-4">
