@@ -1,6 +1,5 @@
 
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/components/ui/use-toast";
 
 /**
  * Crée des tâches dans un projet à partir d'un modèle de projet
@@ -14,8 +13,6 @@ export const createTasksFromTemplate = async (
   projectId: string, 
   projectStartDate?: string
 ): Promise<boolean> => {
-  const { toast } = useToast();
-  
   try {
     // 1. Récupérer toutes les tâches du modèle
     const { data: templateTasks, error } = await supabase
