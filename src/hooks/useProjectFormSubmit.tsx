@@ -1,3 +1,4 @@
+
 import { useToast } from "@/components/ui/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
 import { useUser } from "@supabase/auth-helpers-react";
@@ -180,8 +181,11 @@ export const useProjectFormSubmit = ({
       const result = await onSubmit(projectData);
       
       // Si un modèle a été sélectionné et qu'il s'agit d'un nouveau projet, créer les tâches
-      if (formState.templateId && result && result.id && !project) {
+      if (formState.templateId && result && result.id) {
+        console.log("Création des tâches à partir du modèle:", formState.templateId, "pour le projet:", result.id);
         await createTasksFromTemplate(formState.templateId, result.id);
+      } else {
+        console.log("Pas de création de tâches - templateId:", formState.templateId, "project:", result?.id);
       }
       
       await queryClient.invalidateQueries({ queryKey: ["projects"] });
@@ -195,6 +199,7 @@ export const useProjectFormSubmit = ({
       });
       onClose();
     } catch (error: any) {
+      console.error("Erreur lors de la soumission du projet:", error);
       toast({
         title: "Erreur",
         description: error.message || "Une erreur est survenue lors de l'enregistrement",
@@ -222,23 +227,34 @@ export const useProjectFormSubmit = ({
       }
       
       if (!templateTasks || templateTasks.length === 0) {
+        console.log("Aucune tâche trouvée dans le modèle");
         return; // Pas de tâches à créer
       }
+      
+      console.log(`Création de ${templateTasks.length} tâches pour le projet ${projectId}`);
       
       // 2. Mapper les anciens IDs de tâches vers les nouveaux pour gérer les tâches parentes
       const taskIdMap = new Map<string, string>();
       
       // 3. Créer d'abord les tâches principales (sans parent)
       for (const task of templateTasks.filter(t => !t.parent_task_id)) {
+        // Calculer la date d'échéance basée sur la durée (si fournie)
+        let dueDate = null;
+        if (task.duration_days) {
+          dueDate = new Date();
+          dueDate.setDate(dueDate.getDate() + task.duration_days);
+          dueDate = dueDate.toISOString().split('T')[0]; // Format YYYY-MM-DD
+        }
+        
         const { data: newTask, error: taskError } = await supabase
           .from('tasks')
           .insert({
             project_id: projectId,
             title: task.title,
-            description: task.description,
+            description: task.description || '',
             status: 'todo', // Toujours commencer par "à faire"
-            due_date: task.duration_days ? new Date(Date.now() + task.duration_days * 86400000).toISOString().split('T')[0] : null,
-            duration: task.duration_days,
+            due_date: dueDate,
+            duration: task.duration_days || null,
           })
           .select()
           .single();
@@ -250,6 +266,7 @@ export const useProjectFormSubmit = ({
         
         // Stocker la correspondance des IDs
         taskIdMap.set(task.id, newTask.id);
+        console.log(`Tâche principale créée: ${task.title} (${newTask.id})`);
       }
       
       // 4. Créer ensuite les sous-tâches
@@ -261,21 +278,34 @@ export const useProjectFormSubmit = ({
           continue;
         }
         
-        const { error: taskError } = await supabase
+        // Calculer la date d'échéance basée sur la durée (si fournie)
+        let dueDate = null;
+        if (task.duration_days) {
+          dueDate = new Date();
+          dueDate.setDate(dueDate.getDate() + task.duration_days);
+          dueDate = dueDate.toISOString().split('T')[0]; // Format YYYY-MM-DD
+        }
+        
+        const { data: newTask, error: taskError } = await supabase
           .from('tasks')
           .insert({
             project_id: projectId,
             title: task.title,
-            description: task.description,
+            description: task.description || '',
             status: 'todo', // Toujours commencer par "à faire"
-            due_date: task.duration_days ? new Date(Date.now() + task.duration_days * 86400000).toISOString().split('T')[0] : null,
-            duration: task.duration_days,
+            due_date: dueDate,
+            duration: task.duration_days || null,
             parent_task_id: parentTaskId,
-          });
+          })
+          .select()
+          .single();
         
         if (taskError) {
           console.error("Erreur lors de la création d'une sous-tâche:", taskError);
+          continue;
         }
+        
+        console.log(`Sous-tâche créée: ${task.title} (${newTask.id}) - parent: ${parentTaskId}`);
       }
       
       toast({
