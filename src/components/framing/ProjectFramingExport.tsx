@@ -129,7 +129,7 @@ const styles = StyleSheet.create({
     paddingVertical: 2,
     borderRadius: 3,
     fontSize: 10,
-    display: 'inline',
+    // Suppression de display: 'inline' car ce n'est pas un type valide pour Display
   },
   todo: {
     backgroundColor: '#e2e8f0',

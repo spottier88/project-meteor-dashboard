@@ -15,7 +15,7 @@ import { ProjectData as PPTXProjectData } from "@/components/pptx/types";
 import { ProjectStatus, ProgressStatus, ProjectLifecycleStatus } from "@/types/project";
 import { RiskProbability, RiskSeverity, RiskStatus } from "@/types/risk";
 import { useDetailedProjectsData, ProjectData } from "@/hooks/use-detailed-projects-data";
-import { FileText, FilePresentation } from "lucide-react";
+import { Presentation, FileText } from "lucide-react";
 import { generateProjectFramingPDF } from "@/components/framing/ProjectFramingExport";
 
 interface ProjectSummaryActionsProps {
@@ -155,7 +155,7 @@ const ProjectSummaryActions = ({ project, risks = [], tasks = [] }: ProjectSumma
         disabled={isExporting || isExportingPDF}
         className="flex items-center"
       >
-        <FilePresentation className="h-4 w-4 mr-2" />
+        <Presentation className="h-4 w-4 mr-2" />
         {isExporting ? "Exportation..." : "Exporter en PPTX"}
       </Button>
       <Button
