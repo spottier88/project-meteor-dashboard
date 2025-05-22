@@ -294,99 +294,100 @@ export const generateProjectFramingWord = async (projectData: ProjectData): Prom
       );
     } else {
       // Création du tableau des risques
-      const risksTable = new Table({
-        width: {
-          size: 100,
-          type: WidthType.PERCENTAGE,
-        },
-        rows: [
-          // En-tête du tableau
+      const risksTableRows = [
+        // En-tête du tableau
+        new TableRow({
+          tableHeader: true,
+          children: [
+            new TableCell({
+              width: {
+                size: 50,
+                type: WidthType.PERCENTAGE,
+              },
+              children: [
+                new Paragraph({ 
+                  children: [new TextRun({ text: "Description", bold: true })]
+                })
+              ],
+              shading: {
+                fill: "F2F2F2",
+              },
+            }),
+            new TableCell({
+              width: {
+                size: 15,
+                type: WidthType.PERCENTAGE,
+              },
+              children: [
+                new Paragraph({ 
+                  children: [new TextRun({ text: "Probabilité", bold: true })]
+                })
+              ],
+              shading: {
+                fill: "F2F2F2",
+              },
+            }),
+            new TableCell({
+              width: {
+                size: 15,
+                type: WidthType.PERCENTAGE,
+              },
+              children: [
+                new Paragraph({ 
+                  children: [new TextRun({ text: "Sévérité", bold: true })]
+                })
+              ],
+              shading: {
+                fill: "F2F2F2",
+              },
+            }),
+            new TableCell({
+              width: {
+                size: 20,
+                type: WidthType.PERCENTAGE,
+              },
+              children: [
+                new Paragraph({ 
+                  children: [new TextRun({ text: "Statut", bold: true })]
+                })
+              ],
+              shading: {
+                fill: "F2F2F2",
+              },
+            }),
+          ],
+        }),
+        // Lignes de données
+        ...projectData.risks.map(risk => 
           new TableRow({
-            tableHeader: true,
             children: [
               new TableCell({
-                width: {
-                  size: 50,
-                  type: WidthType.PERCENTAGE,
-                },
-                children: [
-                  new Paragraph({ 
-                    children: [new TextRun({ text: "Description", bold: true })]
-                  })
-                ],
-                shading: {
-                  fill: "F2F2F2",
-                },
+                children: [new Paragraph(risk.description)],
               }),
               new TableCell({
-                width: {
-                  size: 15,
-                  type: WidthType.PERCENTAGE,
-                },
-                children: [
-                  new Paragraph({ 
-                    children: [new TextRun({ text: "Probabilité", bold: true })]
-                  })
-                ],
-                shading: {
-                  fill: "F2F2F2",
-                },
+                children: [new Paragraph(renderRiskProbabilityLabel(risk.probability))],
               }),
               new TableCell({
-                width: {
-                  size: 15,
-                  type: WidthType.PERCENTAGE,
-                },
-                children: [
-                  new Paragraph({ 
-                    children: [new TextRun({ text: "Sévérité", bold: true })]
-                  })
-                ],
-                shading: {
-                  fill: "F2F2F2",
-                },
+                children: [new Paragraph(renderRiskSeverityLabel(risk.severity))],
               }),
               new TableCell({
-                width: {
-                  size: 20,
-                  type: WidthType.PERCENTAGE,
-                },
-                children: [
-                  new Paragraph({ 
-                    children: [new TextRun({ text: "Statut", bold: true })]
-                  })
-                ],
-                shading: {
-                  fill: "F2F2F2",
-                },
+                children: [new Paragraph(renderRiskStatusLabel(risk.status))],
               }),
             ],
-          }),
-          // Lignes de données
-          ...projectData.risks.map(risk => 
-            new TableRow({
-              children: [
-                new TableCell({
-                  children: [new Paragraph(risk.description)],
-                }),
-                new TableCell({
-                  children: [new Paragraph(renderRiskProbabilityLabel(risk.probability))],
-                }),
-                new TableCell({
-                  children: [new Paragraph(renderRiskSeverityLabel(risk.severity))],
-                }),
-                new TableCell({
-                  children: [new Paragraph(renderRiskStatusLabel(risk.status))],
-                }),
-              ],
-            })
-          ),
-        ],
-      });
+          })
+        ),
+      ];
       
       // Ajout du tableau à la liste des paragraphes
-      // On doit convertir la Table en Paragraph, ce qui n'est pas directement possible
-      // Au lieu de cela, on va créer un document avec les paragraphes et le tableau
+      risksParagraphs.push(
+        new Table({
+          width: {
+            size: 100,
+            type: WidthType.PERCENTAGE,
+          },
+          rows: risksTableRows,
+        })
+      );
       
       // Plans d'atténuation
       if (projectData.risks.some(risk => risk.mitigation_plan)) {
@@ -634,11 +635,6 @@ export const generateProjectFramingWord = async (projectData: ProjectData): Prom
             ...generalInfoParagraphs,
             ...framingParagraphs,
             ...risksParagraphs,
-          ],
-        },
-        {
-          properties: {},
-          children: [
             ...tasksParagraphs,
           ],
         },
