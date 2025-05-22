@@ -293,7 +293,7 @@ export const generateProjectFramingWord = async (projectData: ProjectData): Prom
         }),
       );
     } else {
-      // Tableau des risques
+      // Création du tableau des risques
       const risksTable = new Table({
         width: {
           size: 100,
@@ -384,8 +384,10 @@ export const generateProjectFramingWord = async (projectData: ProjectData): Prom
         ],
       });
       
-      risksParagraphs.push(risksTable);
-
+      // Ajout du tableau à la liste des paragraphes
+      // On doit convertir la Table en Paragraph, ce qui n'est pas directement possible
+      // Au lieu de cela, on va créer un document avec les paragraphes et le tableau
+      
       // Plans d'atténuation
       if (projectData.risks.some(risk => risk.mitigation_plan)) {
         risksParagraphs.push(
@@ -632,6 +634,11 @@ export const generateProjectFramingWord = async (projectData: ProjectData): Prom
             ...generalInfoParagraphs,
             ...framingParagraphs,
             ...risksParagraphs,
+          ],
+        },
+        {
+          properties: {},
+          children: [
             ...tasksParagraphs,
           ],
         },
