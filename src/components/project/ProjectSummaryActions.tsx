@@ -2,8 +2,8 @@
 /**
  * @component ProjectSummaryActions
  * @description Actions disponibles sur la vue de résumé d'un projet.
- * Permet d'exporter les informations du projet au format PPTX en combinant
- * les données du projet, des revues, des risques et des tâches.
+ * Permet d'exporter les informations du projet au format PPTX ou PDF (note de cadrage)
+ * en combinant les données du projet, des revues, des risques et des tâches.
  */
 
 import { useState } from "react";
@@ -14,7 +14,9 @@ import { generateProjectPPTX } from "@/components/pptx/ProjectPPTX";
 import { ProjectData as PPTXProjectData } from "@/components/pptx/types";
 import { ProjectStatus, ProgressStatus, ProjectLifecycleStatus } from "@/types/project";
 import { RiskProbability, RiskSeverity, RiskStatus } from "@/types/risk";
-import { useDetailedProjectsData } from "@/hooks/use-detailed-projects-data";
+import { useDetailedProjectsData, ProjectData } from "@/hooks/use-detailed-projects-data";
+import { FileText, FilePresentation } from "lucide-react";
+import { generateProjectFramingPDF } from "@/components/framing/ProjectFramingExport";
 
 interface ProjectSummaryActionsProps {
   project: any;
@@ -25,14 +27,13 @@ interface ProjectSummaryActionsProps {
 const ProjectSummaryActions = ({ project, risks = [], tasks = [] }: ProjectSummaryActionsProps) => {
   const { toast } = useToast();
   const [isExporting, setIsExporting] = useState(false);
+  const [isExportingPDF, setIsExportingPDF] = useState(false);
 
-  const handleExportPPTX = async () => {
+  const fetchDetailedProject = async (projectId: string): Promise<ProjectData | null> => {
     try {
-      setIsExporting(true);
-
-      // Utiliser le hook optimisé pour récupérer les données détaillées du projet
+      // Récupérer les données détaillées du projet via RPC
       const { data, error } = await supabase.rpc('get_detailed_projects', { 
-        p_project_ids: [project.id] 
+        p_project_ids: [projectId] 
       });
 
       if (error) {
@@ -46,11 +47,23 @@ const ProjectSummaryActions = ({ project, risks = [], tasks = [] }: ProjectSumma
           description: "Impossible de récupérer les données du projet pour l'export.",
           variant: "destructive",
         });
-        return;
+        return null;
       }
 
-      // Parse les données JSON si nécessaire
-      const detailedProjectData = typeof data[0] === 'string' ? JSON.parse(data[0]) : data[0];
+      // Parse les données JSON si nécessaire et retourner la première entrée
+      return typeof data[0] === 'string' ? JSON.parse(data[0]) : data[0];
+    } catch (error) {
+      console.error("Erreur lors de la récupération des données du projet:", error);
+      throw error;
+    }
+  };
+
+  const handleExportPPTX = async () => {
+    try {
+      setIsExporting(true);
+
+      const detailedProjectData = await fetchDetailedProject(project.id);
+      if (!detailedProjectData) return;
 
       // Adapter les données pour respecter le format PPTXProjectData
       const projectData: PPTXProjectData = {
@@ -109,13 +122,50 @@ const ProjectSummaryActions = ({ project, risks = [], tasks = [] }: ProjectSumma
     }
   };
 
+  const handleExportFramingPDF = async () => {
+    try {
+      setIsExportingPDF(true);
+
+      const detailedProjectData = await fetchDetailedProject(project.id);
+      if (!detailedProjectData) return;
+
+      // Générer le PDF avec les données détaillées du projet
+      await generateProjectFramingPDF(detailedProjectData);
+      
+      toast({
+        title: "Export réussi",
+        description: "La note de cadrage PDF a été générée avec succès.",
+      });
+    } catch (error) {
+      console.error("Error exporting to PDF:", error);
+      toast({
+        title: "Erreur",
+        description: "Une erreur est survenue lors de l'export PDF.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsExportingPDF(false);
+    }
+  };
+
   return (
     <div className="flex space-x-4">
       <Button 
         onClick={handleExportPPTX}
-        disabled={isExporting}
+        disabled={isExporting || isExportingPDF}
+        className="flex items-center"
       >
+        <FilePresentation className="h-4 w-4 mr-2" />
         {isExporting ? "Exportation..." : "Exporter en PPTX"}
+      </Button>
+      <Button
+        onClick={handleExportFramingPDF}
+        disabled={isExporting || isExportingPDF}
+        variant="outline"
+        className="flex items-center"
+      >
+        <FileText className="h-4 w-4 mr-2" />
+        {isExportingPDF ? "Génération..." : "Note de cadrage PDF"}
       </Button>
     </div>
   );
