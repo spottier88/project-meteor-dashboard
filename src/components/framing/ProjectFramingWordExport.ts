@@ -293,105 +293,104 @@ export const generateProjectFramingWord = async (projectData: ProjectData): Prom
         }),
       );
     } else {
-      // Création du tableau des risques
-      const risksTableRows = [
-        // En-tête du tableau
-        new TableRow({
-          tableHeader: true,
-          children: [
-            new TableCell({
-              width: {
-                size: 50,
-                type: WidthType.PERCENTAGE,
-              },
-              children: [
-                new Paragraph({ 
-                  children: [new TextRun({ text: "Description", bold: true })]
-                })
-              ],
-              shading: {
-                fill: "F2F2F2",
-              },
-            }),
-            new TableCell({
-              width: {
-                size: 15,
-                type: WidthType.PERCENTAGE,
-              },
-              children: [
-                new Paragraph({ 
-                  children: [new TextRun({ text: "Probabilité", bold: true })]
-                })
-              ],
-              shading: {
-                fill: "F2F2F2",
-              },
-            }),
-            new TableCell({
-              width: {
-                size: 15,
-                type: WidthType.PERCENTAGE,
-              },
-              children: [
-                new Paragraph({ 
-                  children: [new TextRun({ text: "Sévérité", bold: true })]
-                })
-              ],
-              shading: {
-                fill: "F2F2F2",
-              },
-            }),
-            new TableCell({
-              width: {
-                size: 20,
-                type: WidthType.PERCENTAGE,
-              },
-              children: [
-                new Paragraph({ 
-                  children: [new TextRun({ text: "Statut", bold: true })]
-                })
-              ],
-              shading: {
-                fill: "F2F2F2",
-              },
-            }),
-          ],
-        }),
-        // Lignes de données
-        ...projectData.risks.map(risk => 
+      // Création du tableau des risques pour l'ajouter dans le document
+      const risksTable = new Table({
+        width: {
+          size: 100,
+          type: WidthType.PERCENTAGE,
+        },
+        rows: [
+          // En-tête du tableau
           new TableRow({
+            tableHeader: true,
             children: [
               new TableCell({
-                children: [new Paragraph(risk.description)],
+                width: {
+                  size: 50,
+                  type: WidthType.PERCENTAGE,
+                },
+                children: [
+                  new Paragraph({ 
+                    children: [new TextRun({ text: "Description", bold: true })]
+                  })
+                ],
+                shading: {
+                  fill: "F2F2F2",
+                },
               }),
               new TableCell({
-                children: [new Paragraph(renderRiskProbabilityLabel(risk.probability))],
+                width: {
+                  size: 15,
+                  type: WidthType.PERCENTAGE,
+                },
+                children: [
+                  new Paragraph({ 
+                    children: [new TextRun({ text: "Probabilité", bold: true })]
+                  })
+                ],
+                shading: {
+                  fill: "F2F2F2",
+                },
               }),
               new TableCell({
-                children: [new Paragraph(renderRiskSeverityLabel(risk.severity))],
+                width: {
+                  size: 15,
+                  type: WidthType.PERCENTAGE,
+                },
+                children: [
+                  new Paragraph({ 
+                    children: [new TextRun({ text: "Sévérité", bold: true })]
+                  })
+                ],
+                shading: {
+                  fill: "F2F2F2",
+                },
               }),
               new TableCell({
-                children: [new Paragraph(renderRiskStatusLabel(risk.status))],
+                width: {
+                  size: 20,
+                  type: WidthType.PERCENTAGE,
+                },
+                children: [
+                  new Paragraph({ 
+                    children: [new TextRun({ text: "Statut", bold: true })]
+                  })
+                ],
+                shading: {
+                  fill: "F2F2F2",
+                },
               }),
             ],
-          })
-        ),
-      ];
+          }),
+          // Lignes de données
+          ...projectData.risks.map(risk => 
+            new TableRow({
+              children: [
+                new TableCell({
+                  children: [new Paragraph(risk.description)],
+                }),
+                new TableCell({
+                  children: [new Paragraph(renderRiskProbabilityLabel(risk.probability))],
+                }),
+                new TableCell({
+                  children: [new Paragraph(renderRiskSeverityLabel(risk.severity))],
+                }),
+                new TableCell({
+                  children: [new Paragraph(renderRiskStatusLabel(risk.status))],
+                }),
+              ],
+            })
+          ),
+        ],
+      });
       
-      // Ajout du tableau à la liste des paragraphes
-      risksParagraphs.push(
-        new Table({
-          width: {
-            size: 100,
-            type: WidthType.PERCENTAGE,
-          },
-          rows: risksTableRows,
-        })
-      );
+      // Au lieu d'ajouter le tableau directement aux paragraphes (ce qui cause l'erreur),
+      // nous allons créer le document avec le tableau séparément
+      const children = [...risksParagraphs];
       
       // Plans d'atténuation
       if (projectData.risks.some(risk => risk.mitigation_plan)) {
-        risksParagraphs.push(
+        children.push(
           new Paragraph({
             text: "Plans d'atténuation",
             heading: HeadingLevel.HEADING_2,
@@ -402,7 +401,7 @@ export const generateProjectFramingWord = async (projectData: ProjectData): Prom
         projectData.risks
           .filter(risk => risk.mitigation_plan)
           .forEach(risk => {
-            risksParagraphs.push(
+            children.push(
               new Paragraph({
                 children: [
                   new TextRun({ text: risk.description, bold: true }),
@@ -415,227 +414,255 @@ export const generateProjectFramingWord = async (projectData: ProjectData): Prom
             );
           });
       }
-    }
-
-    // Saut de page avant la section des tâches
-    risksParagraphs.push(
-      new Paragraph({
-        text: "",
-        pageBreakBefore: true,
-      })
-    );
-    
-    // Section des tâches
-    const tasksParagraphs = [
-      new Paragraph({
-        text: "Tâches principales",
-        heading: HeadingLevel.HEADING_1,
-      })
-    ];
-
-    if (projectData.tasks.length === 0) {
-      tasksParagraphs.push(
+      
+      // Saut de page avant la section des tâches
+      children.push(
         new Paragraph({
-          text: "Aucune tâche définie pour ce projet.",
-        }),
+          text: "",
+          pageBreakBefore: true,
+        })
       );
-    } else {
-      // Filtrer les tâches par statut
-      const todoTasks = projectData.tasks.filter(task => task.status === 'todo' && !task.parent_task_id);
-      const inProgressTasks = projectData.tasks.filter(task => task.status === 'in_progress' && !task.parent_task_id);
-      const doneTasks = projectData.tasks.filter(task => task.status === 'done' && !task.parent_task_id);
+      
+      // Section des tâches
+      const tasksParagraphs = [
+        new Paragraph({
+          text: "Tâches principales",
+          heading: HeadingLevel.HEADING_1,
+        })
+      ];
 
-      // Obtenir les sous-tâches par tâche parente
-      const getSubtasks = (parentId: string) => {
-        return projectData.tasks.filter(task => task.parent_task_id === parentId);
-      };
-
-      // Tâches à faire
-      if (todoTasks.length > 0) {
+      if (projectData.tasks.length === 0) {
         tasksParagraphs.push(
           new Paragraph({
-            text: "À faire",
-            heading: HeadingLevel.HEADING_2,
-            spacing: { before: 300 },
+            text: "Aucune tâche définie pour ce projet.",
           }),
         );
+      } else {
+        // Filtrer les tâches par statut
+        const todoTasks = projectData.tasks.filter(task => task.status === 'todo' && !task.parent_task_id);
+        const inProgressTasks = projectData.tasks.filter(task => task.status === 'in_progress' && !task.parent_task_id);
+        const doneTasks = projectData.tasks.filter(task => task.status === 'done' && !task.parent_task_id);
 
-        todoTasks.forEach(task => {
+        // Obtenir les sous-tâches par tâche parente
+        const getSubtasks = (parentId: string) => {
+          return projectData.tasks.filter(task => task.parent_task_id === parentId);
+        };
+
+        // Tâches à faire
+        if (todoTasks.length > 0) {
           tasksParagraphs.push(
             new Paragraph({
-              children: [
-                new TextRun({ text: task.title, bold: true }),
-              ],
-              spacing: { before: 200 },
-            }),
-            new Paragraph({
-              children: [
-                new TextRun({ text: "Date d'échéance: ", bold: true }),
-                new TextRun(formatDate(task.due_date)),
-              ],
+              text: "À faire",
+              heading: HeadingLevel.HEADING_2,
+              spacing: { before: 300 },
             }),
           );
 
-          if (task.description) {
+          todoTasks.forEach(task => {
             tasksParagraphs.push(
               new Paragraph({
-                text: task.description,
-                spacing: { before: 100 },
+                children: [
+                  new TextRun({ text: task.title, bold: true }),
+                ],
+                spacing: { before: 200 },
+              }),
+              new Paragraph({
+                children: [
+                  new TextRun({ text: "Date d'échéance: ", bold: true }),
+                  new TextRun(formatDate(task.due_date)),
+                ],
               }),
             );
-          }
 
-          // Sous-tâches
-          const subtasks = getSubtasks(task.id);
-          if (subtasks.length > 0) {
-            subtasks.forEach(subtask => {
+            if (task.description) {
               tasksParagraphs.push(
                 new Paragraph({
-                  children: [
-                    new TextRun("- "),
-                    new TextRun(subtask.title),
-                    new TextRun(" ("),
-                    new TextRun(renderTaskStatusLabel(subtask.status)),
-                    new TextRun(")"),
-                  ],
-                  indent: {
-                    left: 400, // Indentation pour les sous-tâches
-                  },
+                  text: task.description,
+                  spacing: { before: 100 },
                 }),
               );
-            });
-          }
-        });
-      }
+            }
 
-      // Tâches en cours
-      if (inProgressTasks.length > 0) {
-        tasksParagraphs.push(
-          new Paragraph({
-            text: "En cours",
-            heading: HeadingLevel.HEADING_2,
-            spacing: { before: 300 },
-          }),
-        );
+            // Sous-tâches
+            const subtasks = getSubtasks(task.id);
+            if (subtasks.length > 0) {
+              subtasks.forEach(subtask => {
+                tasksParagraphs.push(
+                  new Paragraph({
+                    children: [
+                      new TextRun("- "),
+                      new TextRun(subtask.title),
+                      new TextRun(" ("),
+                      new TextRun(renderTaskStatusLabel(subtask.status)),
+                      new TextRun(")"),
+                    ],
+                    indent: {
+                      left: 400, // Indentation pour les sous-tâches
+                    },
+                  }),
+                );
+              });
+            }
+          });
+        }
 
-        inProgressTasks.forEach(task => {
+        // Tâches en cours
+        if (inProgressTasks.length > 0) {
           tasksParagraphs.push(
             new Paragraph({
-              children: [
-                new TextRun({ text: task.title, bold: true }),
-              ],
-              spacing: { before: 200 },
-            }),
-            new Paragraph({
-              children: [
-                new TextRun({ text: "Date d'échéance: ", bold: true }),
-                new TextRun(formatDate(task.due_date)),
-              ],
+              text: "En cours",
+              heading: HeadingLevel.HEADING_2,
+              spacing: { before: 300 },
             }),
           );
 
-          if (task.description) {
+          inProgressTasks.forEach(task => {
             tasksParagraphs.push(
               new Paragraph({
-                text: task.description,
-                spacing: { before: 100 },
+                children: [
+                  new TextRun({ text: task.title, bold: true }),
+                ],
+                spacing: { before: 200 },
+              }),
+              new Paragraph({
+                children: [
+                  new TextRun({ text: "Date d'échéance: ", bold: true }),
+                  new TextRun(formatDate(task.due_date)),
+                ],
               }),
             );
-          }
 
-          // Sous-tâches
-          const subtasks = getSubtasks(task.id);
-          if (subtasks.length > 0) {
-            subtasks.forEach(subtask => {
+            if (task.description) {
               tasksParagraphs.push(
                 new Paragraph({
-                  children: [
-                    new TextRun("- "),
-                    new TextRun(subtask.title),
-                    new TextRun(" ("),
-                    new TextRun(renderTaskStatusLabel(subtask.status)),
-                    new TextRun(")"),
-                  ],
-                  indent: {
-                    left: 400,
-                  },
+                  text: task.description,
+                  spacing: { before: 100 },
                 }),
               );
-            });
-          }
-        });
-      }
+            }
 
-      // Tâches terminées
-      if (doneTasks.length > 0) {
-        tasksParagraphs.push(
-          new Paragraph({
-            text: "Terminées",
-            heading: HeadingLevel.HEADING_2,
-            spacing: { before: 300 },
-          }),
-        );
+            // Sous-tâches
+            const subtasks = getSubtasks(task.id);
+            if (subtasks.length > 0) {
+              subtasks.forEach(subtask => {
+                tasksParagraphs.push(
+                  new Paragraph({
+                    children: [
+                      new TextRun("- "),
+                      new TextRun(subtask.title),
+                      new TextRun(" ("),
+                      new TextRun(renderTaskStatusLabel(subtask.status)),
+                      new TextRun(")"),
+                    ],
+                    indent: {
+                      left: 400,
+                    },
+                  }),
+                );
+              });
+            }
+          });
+        }
 
-        doneTasks.forEach(task => {
+        // Tâches terminées
+        if (doneTasks.length > 0) {
           tasksParagraphs.push(
             new Paragraph({
-              children: [
-                new TextRun({ text: task.title, bold: true }),
-              ],
-              spacing: { before: 200 },
-            }),
-            new Paragraph({
-              children: [
-                new TextRun({ text: "Date d'échéance: ", bold: true }),
-                new TextRun(formatDate(task.due_date)),
-              ],
+              text: "Terminées",
+              heading: HeadingLevel.HEADING_2,
+              spacing: { before: 300 },
             }),
           );
 
-          if (task.description) {
+          doneTasks.forEach(task => {
             tasksParagraphs.push(
               new Paragraph({
-                text: task.description,
-                spacing: { before: 100 },
+                children: [
+                  new TextRun({ text: task.title, bold: true }),
+                ],
+                spacing: { before: 200 },
+              }),
+              new Paragraph({
+                children: [
+                  new TextRun({ text: "Date d'échéance: ", bold: true }),
+                  new TextRun(formatDate(task.due_date)),
+                ],
               }),
             );
-          }
 
-          // Sous-tâches
-          const subtasks = getSubtasks(task.id);
-          if (subtasks.length > 0) {
-            subtasks.forEach(subtask => {
+            if (task.description) {
               tasksParagraphs.push(
                 new Paragraph({
-                  children: [
-                    new TextRun("- "),
-                    new TextRun(subtask.title),
-                    new TextRun(" ("),
-                    new TextRun(renderTaskStatusLabel(subtask.status)),
-                    new TextRun(")"),
-                  ],
-                  indent: {
-                    left: 400,
-                  },
+                  text: task.description,
+                  spacing: { before: 100 },
                 }),
               );
-            });
-          }
-        });
+            }
+
+            // Sous-tâches
+            const subtasks = getSubtasks(task.id);
+            if (subtasks.length > 0) {
+              subtasks.forEach(subtask => {
+                tasksParagraphs.push(
+                  new Paragraph({
+                    children: [
+                      new TextRun("- "),
+                      new TextRun(subtask.title),
+                      new TextRun(" ("),
+                      new TextRun(renderTaskStatusLabel(subtask.status)),
+                      new TextRun(")"),
+                    ],
+                    indent: {
+                      left: 400,
+                    },
+                  }),
+                );
+              });
+            }
+          });
+        }
       }
+
+      // Création du document en combinant toutes les sections
+      // REMARQUE: Nous créons un document qui inclut tous nos paragraphes ET le tableau des risques
+      const doc = new Document({
+        sections: [
+          {
+            children: [
+              ...titleParagraphs,
+              ...generalInfoParagraphs,
+              ...framingParagraphs,
+              // Pour la section des risques, on ajoute le titre
+              ...risksParagraphs,
+              // Puis on ajoute le tableau des risques
+              risksTable,
+              // Et les paragraphes liés aux plans d'atténuation 
+              ...children.filter(p => p.heading?.level === HeadingLevel.HEADING_2 || !p.heading),
+              // Enfin on ajoute toutes les tâches
+              ...tasksParagraphs
+            ]
+          }
+        ]
+      });
+
+      // Générer le blob
+      const buffer = await Packer.toBlob(doc);
+      
+      // Sauvegarder le fichier
+      saveAs(buffer, `Note_Cadrage_${projectData.project.title.replace(/\s+/g, '_')}.docx`);
+      
+      return Promise.resolve();
     }
-
-    // Création du document en combinant toutes les sections
+    
+    // Cas où il n'y a pas de risques, on crée le document avec les paragraphes normaux
     const doc = new Document({
       sections: [
         {
-          properties: {},
           children: [
             ...titleParagraphs,
             ...generalInfoParagraphs,
             ...framingParagraphs,
             ...risksParagraphs,
-            ...tasksParagraphs,
           ],
         },
       ],
