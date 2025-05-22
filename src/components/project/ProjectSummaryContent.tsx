@@ -43,28 +43,67 @@ export const ProjectSummaryContent = ({
 
   return (
     <div className="space-y-6">
+      {/* En-tête du projet avec les informations principales */}
       <div className="bg-white rounded-lg shadow-sm overflow-hidden">
         <div className="p-6">
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
-            <div className="flex items-center mb-4 md:mb-0 space-x-2">
-              <StatusIcon status={project.status as ProjectStatus} />
-              <h1 className="text-2xl font-bold">{project.title}</h1>
+          <div className="flex flex-col space-y-2 mb-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-2">
+                <StatusIcon status={project.status as ProjectStatus} />
+                <h1 className="text-2xl font-bold">{project.title}</h1>
+              </div>
+              <ProjectSummaryActions 
+                project={project}
+                risks={risks}
+                tasks={tasks}
+              />
             </div>
-            
-            <ProjectSummaryActions 
-              project={project}
-              risks={risks}
-              tasks={tasks}
-            />
+            <p className="text-gray-600">{project.description}</p>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-4">
+            <div>
+              <span className="text-sm text-muted-foreground">Chef de projet</span>
+              <p className="font-medium">{project.project_manager || "-"}</p>
+            </div>
+            <div>
+              <span className="text-sm text-muted-foreground">Avancement</span>
+              <p className="font-medium">{project.completion || 0}%</p>
+            </div>
+            <div>
+              <span className="text-sm text-muted-foreground">Progression</span>
+              <p className="font-medium">
+                {lastReview?.progress === "better" ? "En amélioration" : 
+                 lastReview?.progress === "stable" ? "Stable" : 
+                 lastReview?.progress === "worse" ? "En dégradation" : "-"}
+              </p>
+            </div>
+            <div>
+              <span className="text-sm text-muted-foreground">Période</span>
+              <p className="font-medium">
+                {project.start_date && project.end_date ? 
+                  `${new Date(project.start_date).toLocaleDateString("fr-FR")} - ${new Date(project.end_date).toLocaleDateString("fr-FR")}` : 
+                  "-"}
+              </p>
+            </div>
+            <div>
+              <span className="text-sm text-muted-foreground">Dernière revue</span>
+              <p className="font-medium">
+                {lastReview?.created_at ? 
+                  new Date(lastReview.created_at).toLocaleDateString("fr-FR") : 
+                  "-"}
+              </p>
+            </div>
           </div>
 
-          <p className="text-gray-600 mb-6">{project.description}</p>
-
-          <ProjectMetrics 
-            progress={lastReview?.progress as ProgressStatus}
-            completion={project.completion || 0}
-            lastReviewDate={project.last_review_date || null}
-          />
+          <div className="mt-6">
+            <p className="text-sm text-muted-foreground mb-1">État d'avancement</p>
+            <ProjectMetrics 
+              progress={lastReview?.progress as ProgressStatus}
+              completion={project.completion || 0}
+              lastReviewDate={project.last_review_date || null}
+            />
+          </div>
         </div>
       </div>
 
