@@ -64,130 +64,124 @@ const renderTaskStatusLabel = (status: string): string => {
  */
 export const generateProjectFramingWord = async (projectData: ProjectData): Promise<void> => {
   try {
-    // Création du document
-    const doc = new Document({
-      sections: [{
-        properties: {},
+    // Création des paragraphes de la page de titre
+    const titleParagraphs = [
+      new Paragraph({
+        text: "Note de cadrage",
+        heading: HeadingLevel.TITLE,
+        alignment: AlignmentType.CENTER,
+        spacing: {
+          before: 3000,
+          after: 400,
+        },
+      }),
+      new Paragraph({
+        text: projectData.project.title,
+        heading: HeadingLevel.HEADING_1,
+        alignment: AlignmentType.CENTER,
+        spacing: {
+          after: 800,
+        },
+      }),
+      new Paragraph({
         children: [
-          // Page de titre
-          new Paragraph({
-            text: "Note de cadrage",
-            heading: HeadingLevel.TITLE,
-            alignment: AlignmentType.CENTER,
-            spacing: {
-              before: 3000,
-              after: 400,
-            },
-          }),
-          new Paragraph({
-            text: projectData.project.title,
-            heading: HeadingLevel.HEADING_1,
-            alignment: AlignmentType.CENTER,
-            spacing: {
-              after: 800,
-            },
-          }),
-          new Paragraph({
-            children: [
-              new TextRun({ text: "Code projet : ", bold: true }),
-              new TextRun(projectData.project.code || "Non défini"),
-            ],
-            spacing: { after: 200 },
-          }),
-          new Paragraph({
-            children: [
-              new TextRun({ text: "Chef de projet : ", bold: true }),
-              new TextRun(projectData.project.project_manager_name || projectData.project.project_manager || "Non défini"),
-            ],
-            spacing: { after: 200 },
-          }),
-          new Paragraph({
-            children: [
-              new TextRun({ text: "État : ", bold: true }),
-              new TextRun(lifecycleStatusLabels[projectData.project.lifecycle_status as ProjectLifecycleStatus] || "Non défini"),
-            ],
-            spacing: { after: 200 },
-          }),
-          new Paragraph({
-            children: [
-              new TextRun({ text: "Date de début : ", bold: true }),
-              new TextRun(formatDate(projectData.project.start_date)),
-            ],
-            spacing: { after: 200 },
-          }),
-          new Paragraph({
-            children: [
-              new TextRun({ text: "Date de fin prévue : ", bold: true }),
-              new TextRun(formatDate(projectData.project.end_date)),
-            ],
-            spacing: { after: 200 },
-          }),
-          new Paragraph({
-            children: [
-              new TextRun({ text: "Organisation : ", bold: true }),
-              new TextRun([projectData.project.pole_name, projectData.project.direction_name, projectData.project.service_name].filter(Boolean).join(" > ")),
-            ],
-            spacing: { after: 200 },
-          }),
-          new Paragraph({
-            text: `Document généré le ${format(new Date(), 'dd MMMM yyyy', { locale: fr })}`,
-            alignment: AlignmentType.CENTER,
-            spacing: { before: 800 },
-          }),
-          // Saut de page
-          new Paragraph({
-            text: "",
-            pageBreakBefore: true,
-          }),
-          
-          // Section d'informations générales
-          new Paragraph({
-            text: "Informations générales",
-            heading: HeadingLevel.HEADING_1,
-          }),
-          new Paragraph({
-            text: projectData.project.description || "Aucune description disponible.",
-          }),
-          new Paragraph({
-            children: [
-              new TextRun({ text: "Priorité : ", bold: true }),
-              new TextRun(projectData.project.priority || "Non définie"),
-            ],
-            spacing: { after: 100 },
-          }),
-          new Paragraph({
-            children: [
-              new TextRun({ text: "Avancement : ", bold: true }),
-              new TextRun(`${projectData.project.completion}%`),
-            ],
-            spacing: { after: 100 },
-          }),
-          new Paragraph({
-            children: [
-              new TextRun({ text: "Dernière revue : ", bold: true }),
-              new TextRun(formatDate(projectData.project.last_review_date)),
-            ],
-            spacing: { after: 100 },
-          }),
-          
-          // Section de cadrage
-          new Paragraph({
-            text: "Cadrage du projet",
-            heading: HeadingLevel.HEADING_1,
-            spacing: { before: 400 },
-          }),
-        ]
-      }]
-    });
+          new TextRun({ text: "Code projet : ", bold: true }),
+          new TextRun(projectData.project.code || "Non défini"),
+        ],
+        spacing: { after: 200 },
+      }),
+      new Paragraph({
+        children: [
+          new TextRun({ text: "Chef de projet : ", bold: true }),
+          new TextRun(projectData.project.project_manager_name || projectData.project.project_manager || "Non défini"),
+        ],
+        spacing: { after: 200 },
+      }),
+      new Paragraph({
+        children: [
+          new TextRun({ text: "État : ", bold: true }),
+          new TextRun(lifecycleStatusLabels[projectData.project.lifecycle_status as ProjectLifecycleStatus] || "Non défini"),
+        ],
+        spacing: { after: 200 },
+      }),
+      new Paragraph({
+        children: [
+          new TextRun({ text: "Date de début : ", bold: true }),
+          new TextRun(formatDate(projectData.project.start_date)),
+        ],
+        spacing: { after: 200 },
+      }),
+      new Paragraph({
+        children: [
+          new TextRun({ text: "Date de fin prévue : ", bold: true }),
+          new TextRun(formatDate(projectData.project.end_date)),
+        ],
+        spacing: { after: 200 },
+      }),
+      new Paragraph({
+        children: [
+          new TextRun({ text: "Organisation : ", bold: true }),
+          new TextRun([projectData.project.pole_name, projectData.project.direction_name, projectData.project.service_name].filter(Boolean).join(" > ")),
+        ],
+        spacing: { after: 200 },
+      }),
+      new Paragraph({
+        text: `Document généré le ${format(new Date(), 'dd MMMM yyyy', { locale: fr })}`,
+        alignment: AlignmentType.CENTER,
+        spacing: { before: 800 },
+      }),
+      // Saut de page
+      new Paragraph({
+        text: "",
+        pageBreakBefore: true,
+      })
+    ];
+    
+    // Informations générales
+    const generalInfoParagraphs = [
+      new Paragraph({
+        text: "Informations générales",
+        heading: HeadingLevel.HEADING_1,
+      }),
+      new Paragraph({
+        text: projectData.project.description || "Aucune description disponible.",
+      }),
+      new Paragraph({
+        children: [
+          new TextRun({ text: "Priorité : ", bold: true }),
+          new TextRun(projectData.project.priority || "Non définie"),
+        ],
+        spacing: { after: 100 },
+      }),
+      new Paragraph({
+        children: [
+          new TextRun({ text: "Avancement : ", bold: true }),
+          new TextRun(`${projectData.project.completion}%`),
+        ],
+        spacing: { after: 100 },
+      }),
+      new Paragraph({
+        children: [
+          new TextRun({ text: "Dernière revue : ", bold: true }),
+          new TextRun(formatDate(projectData.project.last_review_date)),
+        ],
+        spacing: { after: 100 },
+      }),
+    ];
+    
+    // Section de cadrage
+    const framingParagraphs = [
+      new Paragraph({
+        text: "Cadrage du projet",
+        heading: HeadingLevel.HEADING_1,
+        spacing: { before: 400 },
+      })
+    ];
 
-    // Ajouter le contenu de cadrage
     if (projectData.framing) {
-      // Récupérer la section (il n'y en a qu'une)
-      const section = doc.sections[0];
-      
       // Contexte
       if (projectData.framing.context) {
-        section.children.push(
+        framingParagraphs.push(
           new Paragraph({
             text: "Contexte",
             heading: HeadingLevel.HEADING_2,
@@ -201,7 +195,7 @@ export const generateProjectFramingWord = async (projectData: ProjectData): Prom
 
       // Objectifs
       if (projectData.framing.objectives) {
-        section.children.push(
+        framingParagraphs.push(
           new Paragraph({
             text: "Objectifs",
             heading: HeadingLevel.HEADING_2,
@@ -215,7 +209,7 @@ export const generateProjectFramingWord = async (projectData: ProjectData): Prom
 
       // Parties prenantes
       if (projectData.framing.stakeholders) {
-        section.children.push(
+        framingParagraphs.push(
           new Paragraph({
             text: "Parties prenantes",
             heading: HeadingLevel.HEADING_2,
@@ -229,7 +223,7 @@ export const generateProjectFramingWord = async (projectData: ProjectData): Prom
 
       // Gouvernance
       if (projectData.framing.governance) {
-        section.children.push(
+        framingParagraphs.push(
           new Paragraph({
             text: "Gouvernance",
             heading: HeadingLevel.HEADING_2,
@@ -243,7 +237,7 @@ export const generateProjectFramingWord = async (projectData: ProjectData): Prom
 
       // Calendrier
       if (projectData.framing.timeline) {
-        section.children.push(
+        framingParagraphs.push(
           new Paragraph({
             text: "Calendrier",
             heading: HeadingLevel.HEADING_2,
@@ -257,7 +251,7 @@ export const generateProjectFramingWord = async (projectData: ProjectData): Prom
 
       // Livrables
       if (projectData.framing.deliverables) {
-        section.children.push(
+        framingParagraphs.push(
           new Paragraph({
             text: "Livrables",
             heading: HeadingLevel.HEADING_2,
@@ -269,28 +263,31 @@ export const generateProjectFramingWord = async (projectData: ProjectData): Prom
         );
       }
     } else {
-      doc.sections[0].children.push(
+      framingParagraphs.push(
         new Paragraph({
           text: "Aucune information de cadrage disponible.",
         }),
       );
     }
 
-    // Ajouter un saut de page avant la section des risques
-    doc.sections[0].children.push(
+    // Saut de page avant la section des risques
+    framingParagraphs.push(
       new Paragraph({
         text: "",
         pageBreakBefore: true,
-      }),
+      })
+    );
+    
+    // Section des risques
+    const risksParagraphs = [
       new Paragraph({
         text: "Risques identifiés",
         heading: HeadingLevel.HEADING_1,
       })
-    );
+    ];
 
-    // Section des risques
     if (projectData.risks.length === 0) {
-      doc.sections[0].children.push(
+      risksParagraphs.push(
         new Paragraph({
           text: "Aucun risque identifié pour ce projet.",
         }),
@@ -387,11 +384,11 @@ export const generateProjectFramingWord = async (projectData: ProjectData): Prom
         ],
       });
       
-      doc.sections[0].children.push(risksTable);
+      risksParagraphs.push(risksTable);
 
       // Plans d'atténuation
       if (projectData.risks.some(risk => risk.mitigation_plan)) {
-        doc.sections[0].children.push(
+        risksParagraphs.push(
           new Paragraph({
             text: "Plans d'atténuation",
             heading: HeadingLevel.HEADING_2,
@@ -402,7 +399,7 @@ export const generateProjectFramingWord = async (projectData: ProjectData): Prom
         projectData.risks
           .filter(risk => risk.mitigation_plan)
           .forEach(risk => {
-            doc.sections[0].children.push(
+            risksParagraphs.push(
               new Paragraph({
                 children: [
                   new TextRun({ text: risk.description, bold: true }),
@@ -417,21 +414,24 @@ export const generateProjectFramingWord = async (projectData: ProjectData): Prom
       }
     }
 
-    // Ajouter un saut de page avant la section des tâches
-    doc.sections[0].children.push(
+    // Saut de page avant la section des tâches
+    risksParagraphs.push(
       new Paragraph({
         text: "",
         pageBreakBefore: true,
-      }),
+      })
+    );
+    
+    // Section des tâches
+    const tasksParagraphs = [
       new Paragraph({
         text: "Tâches principales",
         heading: HeadingLevel.HEADING_1,
       })
-    );
+    ];
 
-    // Section des tâches
     if (projectData.tasks.length === 0) {
-      doc.sections[0].children.push(
+      tasksParagraphs.push(
         new Paragraph({
           text: "Aucune tâche définie pour ce projet.",
         }),
@@ -449,7 +449,7 @@ export const generateProjectFramingWord = async (projectData: ProjectData): Prom
 
       // Tâches à faire
       if (todoTasks.length > 0) {
-        doc.sections[0].children.push(
+        tasksParagraphs.push(
           new Paragraph({
             text: "À faire",
             heading: HeadingLevel.HEADING_2,
@@ -458,7 +458,7 @@ export const generateProjectFramingWord = async (projectData: ProjectData): Prom
         );
 
         todoTasks.forEach(task => {
-          doc.sections[0].children.push(
+          tasksParagraphs.push(
             new Paragraph({
               children: [
                 new TextRun({ text: task.title, bold: true }),
@@ -474,7 +474,7 @@ export const generateProjectFramingWord = async (projectData: ProjectData): Prom
           );
 
           if (task.description) {
-            doc.sections[0].children.push(
+            tasksParagraphs.push(
               new Paragraph({
                 text: task.description,
                 spacing: { before: 100 },
@@ -486,7 +486,7 @@ export const generateProjectFramingWord = async (projectData: ProjectData): Prom
           const subtasks = getSubtasks(task.id);
           if (subtasks.length > 0) {
             subtasks.forEach(subtask => {
-              doc.sections[0].children.push(
+              tasksParagraphs.push(
                 new Paragraph({
                   children: [
                     new TextRun("- "),
@@ -507,7 +507,7 @@ export const generateProjectFramingWord = async (projectData: ProjectData): Prom
 
       // Tâches en cours
       if (inProgressTasks.length > 0) {
-        doc.sections[0].children.push(
+        tasksParagraphs.push(
           new Paragraph({
             text: "En cours",
             heading: HeadingLevel.HEADING_2,
@@ -516,7 +516,7 @@ export const generateProjectFramingWord = async (projectData: ProjectData): Prom
         );
 
         inProgressTasks.forEach(task => {
-          doc.sections[0].children.push(
+          tasksParagraphs.push(
             new Paragraph({
               children: [
                 new TextRun({ text: task.title, bold: true }),
@@ -532,7 +532,7 @@ export const generateProjectFramingWord = async (projectData: ProjectData): Prom
           );
 
           if (task.description) {
-            doc.sections[0].children.push(
+            tasksParagraphs.push(
               new Paragraph({
                 text: task.description,
                 spacing: { before: 100 },
@@ -544,7 +544,7 @@ export const generateProjectFramingWord = async (projectData: ProjectData): Prom
           const subtasks = getSubtasks(task.id);
           if (subtasks.length > 0) {
             subtasks.forEach(subtask => {
-              doc.sections[0].children.push(
+              tasksParagraphs.push(
                 new Paragraph({
                   children: [
                     new TextRun("- "),
@@ -565,7 +565,7 @@ export const generateProjectFramingWord = async (projectData: ProjectData): Prom
 
       // Tâches terminées
       if (doneTasks.length > 0) {
-        doc.sections[0].children.push(
+        tasksParagraphs.push(
           new Paragraph({
             text: "Terminées",
             heading: HeadingLevel.HEADING_2,
@@ -574,7 +574,7 @@ export const generateProjectFramingWord = async (projectData: ProjectData): Prom
         );
 
         doneTasks.forEach(task => {
-          doc.sections[0].children.push(
+          tasksParagraphs.push(
             new Paragraph({
               children: [
                 new TextRun({ text: task.title, bold: true }),
@@ -590,7 +590,7 @@ export const generateProjectFramingWord = async (projectData: ProjectData): Prom
           );
 
           if (task.description) {
-            doc.sections[0].children.push(
+            tasksParagraphs.push(
               new Paragraph({
                 text: task.description,
                 spacing: { before: 100 },
@@ -602,7 +602,7 @@ export const generateProjectFramingWord = async (projectData: ProjectData): Prom
           const subtasks = getSubtasks(task.id);
           if (subtasks.length > 0) {
             subtasks.forEach(subtask => {
-              doc.sections[0].children.push(
+              tasksParagraphs.push(
                 new Paragraph({
                   children: [
                     new TextRun("- "),
@@ -621,6 +621,22 @@ export const generateProjectFramingWord = async (projectData: ProjectData): Prom
         });
       }
     }
+
+    // Création du document en combinant toutes les sections
+    const doc = new Document({
+      sections: [
+        {
+          properties: {},
+          children: [
+            ...titleParagraphs,
+            ...generalInfoParagraphs,
+            ...framingParagraphs,
+            ...risksParagraphs,
+            ...tasksParagraphs,
+          ],
+        },
+      ],
+    });
 
     // Générer le blob
     const buffer = await Packer.toBlob(doc);
