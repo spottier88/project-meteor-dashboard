@@ -7,7 +7,7 @@ import { RiskSummary } from "@/components/RiskSummary";
 import { LastReview } from "@/components/LastReview";
 import ProjectSummaryActions from "./ProjectSummaryActions";
 import { TeamManagement } from "./TeamManagement";
-import { Tab, Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { RiskList } from "@/components/RiskList";
 import { TaskList } from "@/components/TaskList";
 
@@ -110,4 +110,3 @@ export const ProjectSummaryContent = ({
     </div>
   );
 };
-
