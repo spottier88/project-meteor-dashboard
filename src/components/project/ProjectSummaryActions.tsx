@@ -1,4 +1,3 @@
-
 /**
  * @component ProjectSummaryActions
  * @description Actions disponibles sur la vue de résumé d'un projet.
@@ -15,7 +14,7 @@ import { ProjectData as PPTXProjectData } from "@/components/pptx/types";
 import { ProjectStatus, ProgressStatus, ProjectLifecycleStatus } from "@/types/project";
 import { RiskProbability, RiskSeverity, RiskStatus } from "@/types/risk";
 import { useDetailedProjectsData, ProjectData } from "@/hooks/use-detailed-projects-data";
-import { Presentation, FileText, FileWord } from "lucide-react";
+import { Presentation, FileText, File } from "lucide-react";
 import { generateProjectFramingPDF } from "@/components/framing/ProjectFramingExport";
 import { generateProjectFramingWord } from "@/components/framing/ProjectFramingWordExport";
 
@@ -201,7 +200,7 @@ const ProjectSummaryActions = ({ project, risks = [], tasks = [] }: ProjectSumma
         variant="outline"
         className="flex items-center"
       >
-        <FileWord className="h-4 w-4 mr-2" />
+        <File className="h-4 w-4 mr-2" />
         {isExportingWord ? "Génération..." : "Note Word"}
       </Button>
     </div>
