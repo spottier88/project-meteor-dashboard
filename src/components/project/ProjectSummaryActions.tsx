@@ -15,8 +15,9 @@ import { ProjectData as PPTXProjectData } from "@/components/pptx/types";
 import { ProjectStatus, ProgressStatus, ProjectLifecycleStatus } from "@/types/project";
 import { RiskProbability, RiskSeverity, RiskStatus } from "@/types/risk";
 import { useDetailedProjectsData, ProjectData } from "@/hooks/use-detailed-projects-data";
-import { Presentation, FileText } from "lucide-react";
+import { Presentation, FileText, FileWord } from "lucide-react";
 import { generateProjectFramingPDF } from "@/components/framing/ProjectFramingExport";
+import { generateProjectFramingWord } from "@/components/framing/ProjectFramingWordExport";
 
 interface ProjectSummaryActionsProps {
   project: any;
@@ -28,6 +29,7 @@ const ProjectSummaryActions = ({ project, risks = [], tasks = [] }: ProjectSumma
   const { toast } = useToast();
   const [isExporting, setIsExporting] = useState(false);
   const [isExportingPDF, setIsExportingPDF] = useState(false);
+  const [isExportingWord, setIsExportingWord] = useState(false);
 
   const fetchDetailedProject = async (projectId: string): Promise<ProjectData | null> => {
     try {
@@ -148,11 +150,37 @@ const ProjectSummaryActions = ({ project, risks = [], tasks = [] }: ProjectSumma
     }
   };
 
+  const handleExportFramingWord = async () => {
+    try {
+      setIsExportingWord(true);
+
+      const detailedProjectData = await fetchDetailedProject(project.id);
+      if (!detailedProjectData) return;
+
+      // Générer le document Word avec les données détaillées du projet
+      await generateProjectFramingWord(detailedProjectData);
+      
+      toast({
+        title: "Export réussi",
+        description: "La note de cadrage Word a été générée avec succès.",
+      });
+    } catch (error) {
+      console.error("Error exporting to Word:", error);
+      toast({
+        title: "Erreur",
+        description: "Une erreur est survenue lors de l'export Word.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsExportingWord(false);
+    }
+  };
+
   return (
     <div className="flex space-x-4">
       <Button 
         onClick={handleExportPPTX}
-        disabled={isExporting || isExportingPDF}
+        disabled={isExporting || isExportingPDF || isExportingWord}
         className="flex items-center"
       >
         <Presentation className="h-4 w-4 mr-2" />
@@ -160,12 +188,21 @@ const ProjectSummaryActions = ({ project, risks = [], tasks = [] }: ProjectSumma
       </Button>
       <Button
         onClick={handleExportFramingPDF}
-        disabled={isExporting || isExportingPDF}
+        disabled={isExporting || isExportingPDF || isExportingWord}
         variant="outline"
         className="flex items-center"
       >
         <FileText className="h-4 w-4 mr-2" />
-        {isExportingPDF ? "Génération..." : "Note de cadrage PDF"}
+        {isExportingPDF ? "Génération..." : "Note PDF"}
+      </Button>
+      <Button
+        onClick={handleExportFramingWord}
+        disabled={isExporting || isExportingPDF || isExportingWord}
+        variant="outline"
+        className="flex items-center"
+      >
+        <FileWord className="h-4 w-4 mr-2" />
+        {isExportingWord ? "Génération..." : "Note Word"}
       </Button>
     </div>
   );
