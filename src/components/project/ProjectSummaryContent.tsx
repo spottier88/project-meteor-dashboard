@@ -6,6 +6,10 @@ import { TaskSummary } from "@/components/TaskSummary";
 import { RiskSummary } from "@/components/RiskSummary";
 import { LastReview } from "@/components/LastReview";
 import ProjectSummaryActions from "./ProjectSummaryActions";
+import { TeamManagement } from "./TeamManagement";
+import { Tab, Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { RiskList } from "@/components/RiskList";
+import { TaskList } from "@/components/TaskList";
 
 interface ProjectSummaryContentProps {
   project: any;
@@ -26,6 +30,8 @@ export const ProjectSummaryContent = ({
   isAdmin,
   canEdit,
 }: ProjectSummaryContentProps) => {
+  const projectId = project.id;
+
   return (
     <div className="space-y-6">
       <div className="bg-white rounded-lg shadow-sm overflow-hidden">
@@ -57,10 +63,51 @@ export const ProjectSummaryContent = ({
         <LastReview review={lastReview} />
 
         <div className="space-y-6">
-          <TaskSummary projectId={project.id} />
-          <RiskSummary projectId={project.id} />
+          <TaskSummary projectId={projectId} />
+          <RiskSummary projectId={projectId} />
         </div>
       </div>
+
+      <Tabs defaultValue="tasks" className="w-full">
+        <TabsList className="grid grid-cols-3 w-full max-w-md">
+          <TabsTrigger value="tasks">Tâches</TabsTrigger>
+          <TabsTrigger value="risks">Risques</TabsTrigger>
+          <TabsTrigger value="team">Équipe</TabsTrigger>
+        </TabsList>
+        <TabsContent value="tasks">
+          <div className="bg-white rounded-lg shadow-sm overflow-hidden p-6">
+            <TaskList 
+              projectId={projectId}
+              canEdit={canEdit || false}
+              isProjectManager={isProjectManager || false}
+              isAdmin={isAdmin || false}
+            />
+          </div>
+        </TabsContent>
+        <TabsContent value="risks">
+          <div className="bg-white rounded-lg shadow-sm overflow-hidden p-6">
+            <RiskList 
+              projectId={projectId}
+              projectTitle={project.title}
+              canEdit={canEdit || false}
+              isProjectManager={isProjectManager || false}
+              isAdmin={isAdmin || false}
+            />
+          </div>
+        </TabsContent>
+        <TabsContent value="team">
+          <div className="bg-white rounded-lg shadow-sm overflow-hidden p-6">
+            <TeamManagement
+              projectId={projectId}
+              canEdit={canEdit || false}
+              isProjectManager={isProjectManager || false}
+              isAdmin={isAdmin || false}
+              canManageTeam={isProjectManager || isAdmin || false}
+            />
+          </div>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };
+
