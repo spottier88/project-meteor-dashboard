@@ -32,7 +32,7 @@ export const ProjectSummaryContent = ({
         <div className="p-6">
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
             <div className="flex items-center mb-4 md:mb-0 space-x-2">
-              <StatusIcon status={project.status as ProjectStatus} size={20} />
+              <StatusIcon status={project.status as ProjectStatus} />
               <h1 className="text-2xl font-bold">{project.title}</h1>
             </div>
             
@@ -46,18 +46,19 @@ export const ProjectSummaryContent = ({
           <p className="text-gray-600 mb-6">{project.description}</p>
 
           <ProjectMetrics 
-            project={project}
-            lastReviewProgress={lastReview?.progress as ProgressStatus}
+            progress={lastReview?.progress as ProgressStatus}
+            completion={project.completion || 0}
+            lastReviewDate={project.last_review_date || null}
           />
         </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <LastReview review={lastReview} projectId={project.id} />
+        <LastReview review={lastReview} />
 
         <div className="space-y-6">
-          <TaskSummary tasks={tasks} projectId={project.id} />
-          <RiskSummary risks={risks} projectId={project.id} />
+          <TaskSummary projectId={project.id} />
+          <RiskSummary projectId={project.id} />
         </div>
       </div>
     </div>
