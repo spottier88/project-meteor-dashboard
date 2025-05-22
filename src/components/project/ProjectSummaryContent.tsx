@@ -41,6 +41,9 @@ export const ProjectSummaryContent = ({
     impact: project.innovation_score?.impact || 0,
   };
 
+  // Utilisation de l'avancement provenant de la dernière revue si disponible, sinon utiliser l'avancement du projet
+  const completionPercentage = lastReview?.completion ?? project.completion ?? 0;
+
   return (
     <div className="space-y-6">
       {/* En-tête du projet avec les informations principales */}
@@ -68,7 +71,7 @@ export const ProjectSummaryContent = ({
             </div>
             <div>
               <span className="text-sm text-muted-foreground">Avancement</span>
-              <p className="font-medium">{project.completion || 0}%</p>
+              <p className="font-medium">{completionPercentage}%</p>
             </div>
             <div>
               <span className="text-sm text-muted-foreground">Progression</span>
@@ -100,7 +103,7 @@ export const ProjectSummaryContent = ({
             <p className="text-sm text-muted-foreground mb-1">État d'avancement</p>
             <ProjectMetrics 
               progress={lastReview?.progress as ProgressStatus}
-              completion={project.completion || 0}
+              completion={completionPercentage}
               lastReviewDate={project.last_review_date || null}
             />
           </div>
