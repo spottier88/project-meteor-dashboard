@@ -10,6 +10,9 @@ import { TeamManagement } from "./TeamManagement";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { RiskList } from "@/components/RiskList";
 import { TaskList } from "@/components/TaskList";
+import { InnovationRadarChart } from "@/components/innovation/InnovationRadarChart";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { AlertTriangle } from "lucide-react";
 
 interface ProjectSummaryContentProps {
   project: any;
@@ -31,6 +34,15 @@ export const ProjectSummaryContent = ({
   canEdit,
 }: ProjectSummaryContentProps) => {
   const projectId = project.id;
+
+  // Données d'innovation du projet (reconstituées depuis les données du projet)
+  const innovationData = {
+    novateur: project.innovation_score?.novateur || 0,
+    usager: project.innovation_score?.usager || 0,
+    ouverture: project.innovation_score?.ouverture || 0,
+    agilite: project.innovation_score?.agilite || 0,
+    impact: project.innovation_score?.impact || 0,
+  };
 
   return (
     <div className="space-y-6">
@@ -59,13 +71,48 @@ export const ProjectSummaryContent = ({
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <LastReview review={lastReview} />
 
-        <div className="space-y-6">
-          <TaskSummary projectId={projectId} />
-          <RiskSummary projectId={projectId} />
-        </div>
+        {/* Carte du diagramme d'innovation */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              Innovation
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <InnovationRadarChart data={innovationData} size={220} />
+          </CardContent>
+        </Card>
+
+        {/* Carte des risques */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5" />
+              Risques
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {risks && risks.length > 0 ? (
+              <div className="space-y-2">
+                {risks.slice(0, 3).map((risk) => (
+                  <div key={risk.id} className="text-sm">
+                    {risk.description}
+                  </div>
+                ))}
+                {risks.length > 3 && (
+                  <p className="text-xs text-muted-foreground">
+                    Et {risks.length - 3} autre{risks.length - 3 > 1 ? "s" : ""} risque{risks.length - 3 > 1 ? "s" : ""}...
+                  </p>
+                )}
+              </div>
+            ) : (
+              <p className="text-muted-foreground">Aucun risque identifié pour ce projet.</p>
+            )}
+          </CardContent>
+        </Card>
       </div>
 
       <Tabs defaultValue="tasks" className="w-full">

@@ -1,3 +1,4 @@
+
 /**
  * @component InnovationRadarChart
  * @description Graphique radar visualisant le score d'innovation d'un projet.
