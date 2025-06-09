@@ -1,5 +1,6 @@
 
 import { supabase } from "@/integrations/supabase/client";
+import { logger } from "@/utils/logger";
 
 /**
  * Crée des tâches dans un projet à partir d'un modèle de projet
@@ -28,12 +29,12 @@ export const createTasksFromTemplate = async (
     }
     
     if (!templateTasks || templateTasks.length === 0) {
-      console.log("Aucune tâche trouvée dans le modèle");
+      logger.debug("Aucune tâche trouvée dans le modèle");
       return true; // Pas d'erreur, juste aucune tâche à créer
     }
-    
-    console.log(`Création de ${templateTasks.length} tâches pour le projet ${projectId}`);
-    console.log("Date de début du projet fournie:", projectStartDate);
+
+    logger.debug(`Création de ${templateTasks.length} tâches pour le projet ${projectId}`);
+    logger.debug("Date de début du projet fournie:", projectStartDate);
     
     // Déterminer la date de départ pour les tâches
     // Si projectStartDate est fourni, l'utiliser, sinon utiliser la date du jour
@@ -41,7 +42,7 @@ export const createTasksFromTemplate = async (
       ? new Date(projectStartDate) 
       : new Date();
     
-    console.log("Date de départ utilisée:", startDateObj.toISOString());
+    logger.debug("Date de départ utilisée:", startDateObj.toISOString());
     
     // 2. Mapper les anciens IDs de tâches vers les nouveaux pour gérer les tâches parentes
     const taskIdMap = new Map<string, string>();
@@ -78,7 +79,7 @@ export const createTasksFromTemplate = async (
       
       // Stocker la correspondance des IDs
       taskIdMap.set(task.id, newTask.id);
-      console.log(`Tâche principale créée: ${task.title} (${newTask.id})`);
+      logger.debug(`Tâche principale créée: ${task.title} (${newTask.id})`);
     }
     
     // 4. Créer ensuite les sous-tâches
@@ -119,7 +120,7 @@ export const createTasksFromTemplate = async (
         continue;
       }
       
-      console.log(`Sous-tâche créée: ${task.title} (${newTask.id}) - parent: ${parentTaskId}`);
+      logger.debug(`Sous-tâche créée: ${task.title} (${newTask.id}) - parent: ${parentTaskId}`);
     }
     
     return true;

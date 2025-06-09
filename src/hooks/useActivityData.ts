@@ -5,6 +5,7 @@ import { useUser } from '@supabase/auth-helpers-react';
 import { Database } from "@/integrations/supabase/types";
 import { addDays, format, isSameDay } from "date-fns";
 import { fr } from "date-fns/locale";
+import { logger } from "@/utils/logger";
 
 interface Activity {
   start_time: string;
@@ -39,7 +40,7 @@ export const useActivityData = (
   const { data: activities, isLoading, error } = useQuery({
     queryKey: ['activities', isTeamView, period, projectId, activityType, periodStart.toISOString(), selectedUserId],
     queryFn: async () => {
-      console.log("[useActivityData] Fetching activities with params:", {
+      logger.debug("[useActivityData] Fetching activities with params:", {
         isTeamView,
         period,
         projectId,
@@ -92,7 +93,7 @@ export const useActivityData = (
         throw error;
       }
 
-      console.log("[useActivityData] Fetched activities:", data);
+      logger.debug("[useActivityData] Fetched activities:", data);
       return data;
     },
     enabled: !!user,

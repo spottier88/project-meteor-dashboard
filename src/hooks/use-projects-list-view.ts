@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useUser } from "@supabase/auth-helpers-react";
 import { ProjectStatus, ProgressStatus, ProjectLifecycleStatus, ForEntityType, Project, ProjectWithExtendedData } from "@/types/project";
 import { MonitoringLevel } from "@/types/monitoring";
+import { logger } from "@/utils/logger";
 
 export interface ProjectListItem {
   id: string;
@@ -67,7 +68,7 @@ export const useProjectsListView = (enabled = true) => {
       if (!user?.id) return [];
       
       try {
-        console.log("Récupération des données de projets optimisées en une seule requête");
+        logger.debug("Récupération des données de projets optimisées en une seule requête");
         
         const { data, error } = await supabase
           .rpc('get_accessible_projects_list_view', {
@@ -80,7 +81,7 @@ export const useProjectsListView = (enabled = true) => {
         }
 
         if (!data) {
-          console.log("Aucune donnée de projets récupérée");
+          logger.debug("Aucune donnée de projets récupérée");
           return [];
         }
 
@@ -120,7 +121,7 @@ export const useProjectsListView = (enabled = true) => {
             }))
           : [];
         
-        console.log(`${projects.length} projets récupérés avec succès via la vue optimisée`);
+        logger.debug(`${projects.length} projets récupérés avec succès via la vue optimisée`);
         return projects;
       } catch (error) {
         console.error("Erreur dans useProjectsListView:", error);

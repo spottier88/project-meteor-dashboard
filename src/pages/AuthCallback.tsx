@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
+import { logger } from "@/utils/logger";
 
 // Fonction pour nettoyer les cookies Supabase
 const clearSupabaseCookies = () => {
@@ -31,7 +32,7 @@ const AuthCallback = () => {
   useEffect(() => {
     const handleAuthCallback = async () => {
       try {
-        console.log("Traitement du callback d'authentification");
+        logger.debug("Traitement du callback d'authentification", "auth");
         
         // Récupère les paramètres de l'URL
         const hashParams = new URLSearchParams(window.location.hash.substring(1));
@@ -47,7 +48,7 @@ const AuthCallback = () => {
                         );
         
         if (isReset) {
-          console.log("Mode réinitialisation de mot de passe détecté");
+          logger.debug("Mode réinitialisation de mot de passe détecté", "auth");
           setIsResetMode(true);
           return; // Ne pas poursuivre le traitement normal
         }
@@ -66,12 +67,12 @@ const AuthCallback = () => {
         }
 
         if (!data.session) {
-          console.log("Aucune session trouvée dans le callback");
+          logger.debug("Aucune session trouvée dans le callback", "auth");
           throw new Error("No session found");
         }
 
         // Authentification réussie
-        console.log("Authentification réussie via callback");
+        logger.debug("Authentification réussie via callback", "auth");
         toast({
           title: "Connexion réussie",
           description: "Vous allez être redirigé vers la page d'accueil",
@@ -85,7 +86,7 @@ const AuthCallback = () => {
         
         // En cas d'erreur, nettoyer les cookies Supabase et se déconnecter
         try {
-          console.log("Tentative de déconnexion suite à une erreur d'authentification");
+          logger.debug("Tentative de déconnexion suite à une erreur d'authentification", "auth");
           await supabase.auth.signOut();
           clearSupabaseCookies();
           
@@ -100,7 +101,7 @@ const AuthCallback = () => {
 
         // En cas d'erreur, redirection vers la page de login après un court délai
         setTimeout(() => {
-          console.log("Redirection vers /login depuis AuthCallback suite à une erreur");
+          logger.debug("Redirection vers /login depuis AuthCallback suite à une erreur", "auth");
           window.location.href = "/login";
         }, 2000);
       }
