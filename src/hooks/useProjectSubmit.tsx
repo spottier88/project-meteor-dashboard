@@ -3,6 +3,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
 import { ProjectFormState } from "./useProjectFormState";
 import { createTasksFromTemplate } from "../utils/templateTasks";
+import { logger } from "@/utils/logger";
 
 interface UseProjectSubmitProps {
   project?: any;
@@ -78,10 +79,17 @@ export const useProjectSubmit = ({
       
       // Si un modèle a été sélectionné et qu'il s'agit d'un nouveau projet, créer les tâches
       if (formState.templateId && result && result.id) {
-        console.log("Création des tâches à partir du modèle:", formState.templateId, "pour le projet:", result.id);
+        logger.debug(
+          "Création des tâches à partir du modèle:",
+          formState.templateId,
+          "pour le projet:",
+          result.id
+        );
         // Nous passons explicitement formState.startDate pour utiliser la date saisie par l'utilisateur
-        const startDateString = formState.startDate ? formState.startDate.toISOString().split('T')[0] : undefined;
-        console.log("Date de début utilisée pour les tâches:", startDateString);
+        const startDateString = formState.startDate
+          ? formState.startDate.toISOString().split('T')[0]
+          : undefined;
+        logger.debug("Date de début utilisée pour les tâches:", startDateString);
         
         const tasksCreated = await createTasksFromTemplate(formState.templateId, result.id, startDateString);
         
@@ -92,7 +100,12 @@ export const useProjectSubmit = ({
           });
         }
       } else {
-        console.log("Pas de création de tâches - templateId:", formState.templateId, "project:", result?.id);
+        logger.debug(
+          "Pas de création de tâches - templateId:",
+          formState.templateId,
+          "project:",
+          result?.id
+        );
       }
       
       // Invalider toutes les requêtes liées aux projets pour forcer un rafraîchissement

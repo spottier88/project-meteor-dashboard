@@ -5,6 +5,7 @@ import { GanttViewButtons } from './GanttViewButtons';
 import { GanttExportButtons } from './GanttExportButtons';
 import { GanttLegend } from './GanttLegend';
 import { GanttTask, GanttLink, ProjectGanttViewProps } from './types';
+import { logger } from '@/utils/logger';
 
 export const ProjectGanttView = ({ projects }: ProjectGanttViewProps) => {
   const [mode, setMode] = React.useState<'week' | 'month' | 'year'>('month');
@@ -197,7 +198,7 @@ export const ProjectGanttView = ({ projects }: ProjectGanttViewProps) => {
             data={tasks}
             links={links}
             mode={mode}
-            onSelectItem={(item) => console.log("Item clicked:", item)}
+            onSelectItem={(item) => logger.debug("Item clicked:", item)}
             itemHeight={50}
             rowHeight={45}
             taskHeight={40}
