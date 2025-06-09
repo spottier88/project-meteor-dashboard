@@ -2,6 +2,7 @@
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { Toaster } from "@/components/ui/toaster";
 import Index from "./pages/Index";
+import ProjectsList from "./pages/ProjectsList";
 import Login from "./pages/Login";
 import AuthCallback from "./pages/AuthCallback";
 import { TaskManagement } from "./pages/TaskManagement";
@@ -66,6 +67,14 @@ export const AppRoutes = () => {
             element={
               <ProtectedRoute>
                 <Index />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/projects"
+            element={
+              <ProtectedRoute>
+                <ProjectsList />
               </ProtectedRoute>
             }
           />
