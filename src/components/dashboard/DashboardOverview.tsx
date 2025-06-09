@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { useProjectsListView } from "@/hooks/use-projects-list-view";
 import { usePermissionsContext } from "@/contexts/PermissionsContext";
-import { FolderOpen, TrendingUp, AlertTriangle, CheckCircle, Plus } from "lucide-react";
+import { FolderOpen, TrendingUp, AlertTriangle, CheckCircle } from "lucide-react";
 
 interface DashboardOverviewProps {
   onNewProject: () => void;
@@ -34,7 +34,7 @@ export const DashboardOverview = ({ onNewProject, onViewAllProjects }: Dashboard
   return (
     <div className="space-y-6">
       {/* Statistiques principales */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Projets</CardTitle>
@@ -71,18 +71,6 @@ export const DashboardOverview = ({ onNewProject, onViewAllProjects }: Dashboard
             <p className="text-xs text-muted-foreground">
               {totalProjects > 0 ? Math.round((completedProjects.length / totalProjects) * 100) : 0}% du total
             </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Actions rapides</CardTitle>
-            <Plus className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent className="space-y-2">
-            <Button onClick={onNewProject} size="sm" className="w-full">
-              Nouveau projet
-            </Button>
           </CardContent>
         </Card>
       </div>
