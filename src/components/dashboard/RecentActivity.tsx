@@ -25,8 +25,8 @@ export const RecentActivity = () => {
   // Projets récemment créés ou mis à jour
   const recentActivity = projects
     .sort((a, b) => {
-      const dateA = new Date(a.last_review_date || a.updated_at || 0);
-      const dateB = new Date(b.last_review_date || b.updated_at || 0);
+      const dateA = new Date(a.last_review_date || a.review_created_at || 0);
+      const dateB = new Date(b.last_review_date || b.review_created_at || 0);
       return dateB.getTime() - dateA.getTime();
     })
     .slice(0, 5);
