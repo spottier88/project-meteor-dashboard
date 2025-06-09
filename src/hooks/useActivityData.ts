@@ -1,4 +1,3 @@
-
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useUser } from '@supabase/auth-helpers-react';
@@ -93,7 +92,7 @@ export const useActivityData = (
         throw error;
       }
 
-      logger.debug("[useActivityData] Fetched activities count:", data?.length || 0);
+      logger.debug(`[useActivityData] Fetched activities count: ${data?.length || 0}`);
       return data;
     },
     enabled: !!user,

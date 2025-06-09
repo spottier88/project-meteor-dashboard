@@ -48,7 +48,7 @@ export const TeamActivityFilters = ({
         throw error;
       }
 
-      logger.debug("[TeamActivityFilters] Fetched users count:", data?.length || 0);
+      logger.debug(`[TeamActivityFilters] Fetched users count: ${data?.length || 0}`);
       return data;
     },
     enabled: !!user?.id,
@@ -72,7 +72,7 @@ export const TeamActivityFilters = ({
         throw error;
       }
 
-      logger.debug("[TeamActivityFilters] Fetched projects count:", data?.length || 0);
+      logger.debug(`[TeamActivityFilters] Fetched projects count: ${data?.length || 0}`);
       return data;
     },
     enabled: !!user?.id,

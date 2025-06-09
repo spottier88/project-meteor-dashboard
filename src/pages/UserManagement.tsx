@@ -89,7 +89,7 @@ export const UserManagement = () => {
       if (error) throw error;
       
       const assignmentSet = new Set(data.map(assignment => assignment.user_id));
-      logger.debug("Manager assignments:", assignmentSet);
+      logger.debug(`Manager assignments: ${assignmentSet.size} assignments found`);
       return assignmentSet;
     },
   });
