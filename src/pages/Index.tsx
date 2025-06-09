@@ -1,21 +1,22 @@
-import { useState, useEffect } from "react";
+
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { DashboardHeader } from "@/components/DashboardHeader";
 import { UserInfo } from "@/components/UserInfo";
-import { ViewMode } from "@/components/ViewToggle";
-import { MonitoringLevel } from "@/types/monitoring";
-import { ProjectLifecycleStatus, ForEntityType } from "@/types/project";
-import { ProjectFilters } from "@/components/project/ProjectFilters";
-import { ProjectList } from "@/components/project/ProjectList";
 import { ProjectModals } from "@/components/project/ProjectModals";
 import { usePermissionsContext } from "@/contexts/PermissionsContext";
 import { useProjectsListView } from "@/hooks/use-projects-list-view";
 import { useProjectFormHandlers } from "@/hooks/useProjectFormHandlers";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
+import { DashboardOverview } from "@/components/dashboard/DashboardOverview";
+import { QuickActions } from "@/components/dashboard/QuickActions";
+import { RecentActivity } from "@/components/dashboard/RecentActivity";
+import { Button } from "@/components/ui/button";
+import { LayoutGrid } from "lucide-react";
 
 const Index = () => {
   const navigate = useNavigate();
-  const { isLoading: isPermissionsLoading, isError: isPermissionsError, userProfile } = usePermissionsContext();
+  const { isLoading: isPermissionsLoading, isError: isPermissionsError } = usePermissionsContext();
 
   const [isProjectFormOpen, setIsProjectFormOpen] = useState(false);
   const [isProjectSelectionOpen, setIsProjectSelectionOpen] = useState(false);
@@ -27,149 +28,12 @@ const Index = () => {
   } | null>(null);
 
   const { handleProjectFormSubmit } = useProjectFormHandlers(selectedProject);
-  
-  const [searchQuery, setSearchQuery] = useState(() => {
-    return localStorage.getItem("projectSearchQuery") || "";
-  });
-  const [view, setView] = useState<ViewMode>(() => {
-    return (localStorage.getItem("projectViewMode") as ViewMode) || "grid";
-  });
-  const [monitoringLevel, setMonitoringLevel] = useState<MonitoringLevel | 'all'>(() => {
-    return (localStorage.getItem("projectMonitoringLevel") as MonitoringLevel | 'all') || 'all';
-  });
-  const [lifecycleStatus, setLifecycleStatus] = useState<ProjectLifecycleStatus | 'all'>(() => {
-    return (localStorage.getItem("projectLifecycleStatus") as ProjectLifecycleStatus | 'all') || 'all';
-  });
-  const [showMyProjectsOnly, setShowMyProjectsOnly] = useState(() => {
-    return localStorage.getItem("showMyProjectsOnly") === "true";
-  });
-  
-  const [poleId, setPoleId] = useState<string>(() => {
-    return localStorage.getItem("projectPoleId") || "all";
-  });
-  const [directionId, setDirectionId] = useState<string>(() => {
-    return localStorage.getItem("projectDirectionId") || "all";
-  });
-  const [serviceId, setServiceId] = useState<string>(() => {
-    return localStorage.getItem("projectServiceId") || "all";
-  });
-
-  useEffect(() => {
-    localStorage.setItem("projectViewMode", view);
-  }, [view]);
-
-  useEffect(() => {
-    localStorage.setItem("projectSearchQuery", searchQuery);
-  }, [searchQuery]);
-
-  useEffect(() => {
-    localStorage.setItem("projectMonitoringLevel", monitoringLevel);
-  }, [monitoringLevel]);
-
-  useEffect(() => {
-    localStorage.setItem("projectLifecycleStatus", lifecycleStatus);
-  }, [lifecycleStatus]);
-
-  useEffect(() => {
-    localStorage.setItem("showMyProjectsOnly", showMyProjectsOnly.toString());
-  }, [showMyProjectsOnly]);
-  
-  useEffect(() => {
-    localStorage.setItem("projectPoleId", poleId);
-  }, [poleId]);
-  
-  useEffect(() => {
-    localStorage.setItem("projectDirectionId", directionId);
-  }, [directionId]);
-  
-  useEffect(() => {
-    localStorage.setItem("projectServiceId", serviceId);
-  }, [serviceId]);
-
-  // Utilisation du hook optimisé
   const { data: projects, isLoading: isProjectsLoading, refetch: refetchProjects } = useProjectsListView();
-
-  const [accessibleProjectIds, setAccessibleProjectIds] = useState<string[]>([]);
-
-  const handleFilteredProjectsChange = (projectIds: string[]) => {
-    setAccessibleProjectIds(projectIds);
-  };
-
-  const filteredProjects = projects?.filter(project => {
-    if (lifecycleStatus !== 'all' && project.lifecycle_status !== lifecycleStatus) {
-      return false;
-    }
-
-    if (monitoringLevel !== 'all') {
-      if (monitoringLevel === 'none') {
-        const hasNoMonitoring = !project.monitoring_level || 
-                              project.monitoring_level === 'none';
-        return hasNoMonitoring;
-      }
-
-      if (!project.monitoring_level) {
-        return false;
-      }
-      
-      const levelMatch = project.monitoring_level === monitoringLevel;
-      return levelMatch;
-    }
-
-    if (showMyProjectsOnly && userProfile) {
-      if (project.project_manager !== userProfile.email) {
-        return false;
-      }
-    }
-    
-    if (poleId !== "all") {
-      if (poleId === "none") {
-        if (project.pole_id !== null) return false;
-      } else {
-        if (project.pole_id !== poleId) return false;
-      }
-    }
-    
-    if (directionId !== "all") {
-      if (directionId === "none") {
-        if (project.direction_id !== null) return false;
-      } else {
-        if (project.direction_id !== directionId) return false;
-      }
-    }
-    
-    if (serviceId !== "all") {
-      if (serviceId === "none") {
-        if (project.service_id !== null) return false;
-      } else {
-        if (project.service_id !== serviceId) return false;
-      }
-    }
-
-    if (searchQuery) {
-      const query = searchQuery.toLowerCase();
-      const matchesTitle = project.title?.toLowerCase().includes(query);
-      const matchesManager = project.project_manager?.toLowerCase().includes(query);
-      const matchesManagerName = project.project_manager_name?.toLowerCase().includes(query);
-      
-      return matchesTitle || matchesManager || matchesManagerName;
-    }
-
-    return true;
-  }) || [];
-
-  const handleEditProject = (projectId: string) => {
-    const project = projects?.find(p => p.id === projectId);
-    if (project) {
-      setSelectedProject(project);
-      setIsProjectFormOpen(true);
-    }
-  };
 
   const handleProjectFormClose = () => {
     setIsProjectFormOpen(false);
     setSelectedProject(null);
   };
-
 
   const handleNewReview = () => {
     setIsProjectSelectionOpen(true);
@@ -190,12 +54,8 @@ const Index = () => {
     refetchProjects();
   };
 
-  const handleViewHistory = (projectId: string, projectTitle: string) => {
-    navigate(`/reviews/${projectId}`);
-  };
-
-  const handleNewFrameworkNote = () => {
-    setIsProjectSelectionOpen(true);
+  const handleViewAllProjects = () => {
+    navigate("/projects");
   };
 
   if (isPermissionsLoading || isProjectsLoading) {
@@ -216,41 +76,42 @@ const Index = () => {
   return (
     <div className="container mx-auto py-8">
       <UserInfo />
-      <DashboardHeader
-        onNewProject={() => setIsProjectFormOpen(true)}
-        onNewReview={handleNewReview}
-        onNewFrameworkNote={handleNewFrameworkNote}
-      />
+      
+      {/* En-tête simplifié */}
+      <div className="mb-8">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight">Tableau de bord</h1>
+            <p className="text-muted-foreground">
+              Vue d'ensemble de vos projets et activités
+            </p>
+          </div>
+          <Button onClick={handleViewAllProjects} variant="outline">
+            <LayoutGrid className="h-4 w-4 mr-2" />
+            Vue détaillée
+          </Button>
+        </div>
+      </div>
 
-      <ProjectFilters
-        searchQuery={searchQuery}
-        onSearchChange={setSearchQuery}
-        lifecycleStatus={lifecycleStatus}
-        onLifecycleStatusChange={setLifecycleStatus}
-        monitoringLevel={monitoringLevel}
-        onMonitoringLevelChange={setMonitoringLevel}
-        showMyProjectsOnly={showMyProjectsOnly}
-        onMyProjectsToggle={setShowMyProjectsOnly}
-        filteredProjectIds={accessibleProjectIds}
-        poleId={poleId}
-        onPoleChange={setPoleId}
-        directionId={directionId}
-        onDirectionChange={setDirectionId}
-        serviceId={serviceId}
-        onServiceChange={setServiceId}
-      />
+      {/* Contenu principal */}
+      <div className="space-y-8">
+        {/* Vue d'ensemble */}
+        <DashboardOverview 
+          onNewProject={() => setIsProjectFormOpen(true)}
+          onViewAllProjects={handleViewAllProjects}
+        />
 
-      <ProjectList
-        view={view}
-        onViewChange={setView}
-        projects={filteredProjects}
-        onProjectEdit={handleEditProject}
-        onProjectReview={handleProjectSelect}
-        onViewHistory={handleViewHistory}
-        onProjectDeleted={refetchProjects}
-        onFilteredProjectsChange={handleFilteredProjectsChange}
-      />
+        {/* Actions rapides */}
+        <QuickActions 
+          onNewProject={() => setIsProjectFormOpen(true)}
+          onNewReview={handleNewReview}
+        />
 
+        {/* Activité récente */}
+        <RecentActivity />
+      </div>
+
+      {/* Modales existantes */}
       <ProjectModals
         isProjectFormOpen={isProjectFormOpen}
         onProjectFormClose={handleProjectFormClose}
