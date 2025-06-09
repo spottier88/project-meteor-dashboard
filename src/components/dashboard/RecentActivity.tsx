@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { useProjectsListView } from "@/hooks/use-projects-list-view";
 import { Clock, Eye, AlertTriangle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { lifecycleStatusLabels } from "@/types/project";
 
 export const RecentActivity = () => {
   const { data: projects = [] } = useProjectsListView();
@@ -103,7 +104,7 @@ export const RecentActivity = () => {
                     </p>
                     <div className="flex items-center gap-2">
                       <Badge variant="outline" className="text-xs">
-                        {project.lifecycle_status}
+                        {lifecycleStatusLabels[project.lifecycle_status]}
                       </Badge>
                       <span className="text-xs text-muted-foreground">
                         {project.completion}%
