@@ -42,7 +42,7 @@ export const AssigneeSelector = ({
         `AssigneeSelector: ${projectMembers.length} membres disponibles`,
         projectMembers.map(
           (m) => `${m.profiles.first_name} ${m.profiles.last_name} (${m.profiles.email})`
-        )
+        ).join(', ')
       );
     }
   }, [projectMembers]);

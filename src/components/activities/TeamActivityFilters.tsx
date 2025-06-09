@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useQuery } from "@tanstack/react-query";
@@ -49,7 +48,7 @@ export const TeamActivityFilters = ({
         throw error;
       }
 
-      logger.debug("[TeamActivityFilters] Fetched users:", data);
+      logger.debug("[TeamActivityFilters] Fetched users count:", data?.length || 0);
       return data;
     },
     enabled: !!user?.id,
@@ -73,7 +72,7 @@ export const TeamActivityFilters = ({
         throw error;
       }
 
-      logger.debug("[TeamActivityFilters] Fetched projects:", data);
+      logger.debug("[TeamActivityFilters] Fetched projects count:", data?.length || 0);
       return data;
     },
     enabled: !!user?.id,

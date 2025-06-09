@@ -40,7 +40,7 @@ export const useActivityData = (
   const { data: activities, isLoading, error } = useQuery({
     queryKey: ['activities', isTeamView, period, projectId, activityType, periodStart.toISOString(), selectedUserId],
     queryFn: async () => {
-      logger.debug("[useActivityData] Fetching activities with params:", {
+      logger.debug("[useActivityData] Fetching activities with params:", JSON.stringify({
         isTeamView,
         period,
         projectId,
@@ -48,7 +48,7 @@ export const useActivityData = (
         startDate: periodStart.toISOString(),
         endDate: periodEnd.toISOString(),
         selectedUserId
-      });
+      }));
 
       let query = supabase
         .from('activities')
@@ -93,7 +93,7 @@ export const useActivityData = (
         throw error;
       }
 
-      logger.debug("[useActivityData] Fetched activities:", data);
+      logger.debug("[useActivityData] Fetched activities count:", data?.length || 0);
       return data;
     },
     enabled: !!user,

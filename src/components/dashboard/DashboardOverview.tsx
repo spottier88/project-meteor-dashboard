@@ -69,7 +69,7 @@ export const DashboardOverview = ({ onNewProject, onViewAllProjects }: Dashboard
           <CardContent>
             <div className="text-2xl font-bold">{completedProjects.length}</div>
             <p className="text-xs text-muted-foreground">
-              {Math.round((completedProjects.length / totalProjects) * 100)}% du total
+              {totalProjects > 0 ? Math.round((completedProjects.length / totalProjects) * 100) : 0}% du total
             </p>
           </CardContent>
         </Card>
@@ -148,9 +148,9 @@ export const DashboardOverview = ({ onNewProject, onViewAllProjects }: Dashboard
                   </div>
                 </div>
                 <div>
-                  <div className="text-muted-foreground">Réalisation</div>
+                  <div className="text-muted-foreground">En cours</div>
                   <div className="font-medium">
-                    {projects.filter(p => p.lifecycle_status === 'implementation').length}
+                    {projects.filter(p => p.lifecycle_status === 'in_progress').length}
                   </div>
                 </div>
               </div>
