@@ -32,47 +32,62 @@ const settingsSchema = z.object({
 type SettingsFormValues = z.infer<typeof settingsSchema>;
 
 const fetchSettings = async () => {
-  const { data: msGraphSettings, error: msGraphError } = await supabase
+  const msGraphQuery = supabase
     .from("application_settings")
     .select("*")
     .eq("type", "microsoft_graph");
-
-  if (msGraphError) throw msGraphError;
-
-  const { data: openaiSettings, error: openaiError } = await supabase
+  const openaiQuery = supabase
     .from("application_settings")
     .select("*")
     .eq("type", "openai");
-
-  if (openaiError) throw openaiError;
-  
-  const { data: documentationSettings, error: documentationError } = await supabase
+  const documentationQuery = supabase
     .from("application_settings")
     .select("*")
     .eq("type", "documentation");
 
-  if (documentationError) throw documentationError;
+  const [
+    { data: msGraphSettings, error: msGraphError },
+    { data: openaiSettings, error: openaiError },
+    { data: documentationSettings, error: documentationError },
+  ] = await Promise.all([msGraphQuery, openaiQuery, documentationQuery]);
 
-  const msGraphFormattedSettings = msGraphSettings.reduce((acc: { [key: string]: string }, setting) => {
-    acc[setting.key === "client_id" ? "clientId" : "tenantId"] = setting.value;
-    return acc;
-  }, {});
+  if (msGraphError || openaiError || documentationError) {
+    throw msGraphError || openaiError || documentationError;
+  }
 
-  const openaiFormattedSettings = openaiSettings.reduce((acc: { [key: string]: string }, setting) => {
-    if (setting.key === "api_key") {
-      acc["openaiApiKey"] = setting.value;
-    }
-    return acc;
-  }, {});
-  
-  const documentationFormattedSettings = documentationSettings.reduce((acc: { [key: string]: string }, setting) => {
-    if (setting.key === "documentation_url") {
-      acc["documentationUrl"] = setting.value;
-    }
-    return acc;
-  }, {});
+  const msGraphFormattedSettings = (msGraphSettings || []).reduce(
+    (acc: { [key: string]: string }, setting) => {
+      acc[setting.key === "client_id" ? "clientId" : "tenantId"] = setting.value;
+      return acc;
+    },
+    {}
+  );
 
-  return { ...msGraphFormattedSettings, ...openaiFormattedSettings, ...documentationFormattedSettings };
+  const openaiFormattedSettings = (openaiSettings || []).reduce(
+    (acc: { [key: string]: string }, setting) => {
+      if (setting.key === "api_key") {
+        acc["openaiApiKey"] = setting.value;
+      }
+      return acc;
+    },
+    {}
+  );
+
+  const documentationFormattedSettings = (documentationSettings || []).reduce(
+    (acc: { [key: string]: string }, setting) => {
+      if (setting.key === "documentation_url") {
+        acc["documentationUrl"] = setting.value;
+      }
+      return acc;
+    },
+    {}
+  );
+
+  return {
+    ...msGraphFormattedSettings,
+    ...openaiFormattedSettings,
+    ...documentationFormattedSettings,
+  };
 };
 
 export const GeneralSettings = () => {
