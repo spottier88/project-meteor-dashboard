@@ -1,21 +1,16 @@
 
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { DashboardHeader } from "@/components/DashboardHeader";
 import { UserInfo } from "@/components/UserInfo";
 import { ProjectModals } from "@/components/project/ProjectModals";
 import { usePermissionsContext } from "@/contexts/PermissionsContext";
 import { useProjectsListView } from "@/hooks/use-projects-list-view";
 import { useProjectFormHandlers } from "@/hooks/useProjectFormHandlers";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
-import { DashboardOverview } from "@/components/dashboard/DashboardOverview";
-import { QuickActions } from "@/components/dashboard/QuickActions";
-import { RecentActivity } from "@/components/dashboard/RecentActivity";
-import { Button } from "@/components/ui/button";
-import { LayoutGrid } from "lucide-react";
+import { CompactDashboard } from "@/components/dashboard/CompactDashboard";
+import { StreamlinedQuickActions } from "@/components/dashboard/StreamlinedQuickActions";
+import { PriorityProjects } from "@/components/dashboard/PriorityProjects";
 
 const Index = () => {
-  const navigate = useNavigate();
   const { isLoading: isPermissionsLoading, isError: isPermissionsError } = usePermissionsContext();
 
   const [isProjectFormOpen, setIsProjectFormOpen] = useState(false);
@@ -54,10 +49,6 @@ const Index = () => {
     refetchProjects();
   };
 
-  const handleViewAllProjects = () => {
-    navigate("/projects");
-  };
-
   if (isPermissionsLoading || isProjectsLoading) {
     return <LoadingSpinner />;
   }
@@ -74,42 +65,28 @@ const Index = () => {
   }
 
   return (
-    <div className="container mx-auto py-8">
+    <div className="container mx-auto py-6 space-y-6">
       <UserInfo />
       
-      {/* En-tête simplifié */}
-      <div className="mb-8">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight">Tableau de bord</h1>
-            <p className="text-muted-foreground">
-              Vue d'ensemble de vos projets et activités
-            </p>
-          </div>
-          <Button onClick={handleViewAllProjects} variant="outline">
-            <LayoutGrid className="h-4 w-4 mr-2" />
-            Vue détaillée
-          </Button>
-        </div>
+      {/* En-tête simple */}
+      <div className="mb-6">
+        <h1 className="text-3xl font-bold tracking-tight">Tableau de bord</h1>
+        <p className="text-muted-foreground">
+          Gérez vos projets et suivez leur avancement
+        </p>
       </div>
 
-      {/* Contenu principal */}
-      <div className="space-y-8">
-        {/* Vue d'ensemble */}
-        <DashboardOverview 
-          onNewProject={() => setIsProjectFormOpen(true)}
-          onViewAllProjects={handleViewAllProjects}
-        />
+      {/* Dashboard compact */}
+      <CompactDashboard onNewProject={() => setIsProjectFormOpen(true)} />
 
-        {/* Actions rapides */}
-        <QuickActions 
-          onNewProject={() => setIsProjectFormOpen(true)}
-          onNewReview={handleNewReview}
-        />
+      {/* Actions rapides simplifiées */}
+      <StreamlinedQuickActions 
+        onNewProject={() => setIsProjectFormOpen(true)}
+        onNewReview={handleNewReview}
+      />
 
-        {/* Activité récente */}
-        <RecentActivity />
-      </div>
+      {/* Projets prioritaires */}
+      <PriorityProjects />
 
       {/* Modales existantes */}
       <ProjectModals
