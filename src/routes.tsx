@@ -3,10 +3,11 @@ import {
   BrowserRouter as Router,
   Route,
   Routes,
+  Navigate,
 } from "react-router-dom";
 import Login from "@/pages/Login";
 import Index from "@/pages/Index";
-import { TeamActivities as Activities } from "@/pages/TeamActivities";
+import { TeamActivities } from "@/pages/TeamActivities";
 import { TaskManagement as Tasks } from "@/pages/TaskManagement";
 import { RiskManagement as Risks } from "@/pages/RiskManagement";
 import { ProjectFraming as Framing } from "@/pages/ProjectFraming";
@@ -14,7 +15,6 @@ import { ProjectTeamManagement as Team } from "@/pages/ProjectTeamManagement";
 import ProjectsList from "@/pages/ProjectsList";
 import { ProjectSummary as ProjectDetails } from "@/pages/ProjectSummary";
 import { MyTasks } from "@/pages/MyTasks";
-import { TeamActivities } from "@/pages/TeamActivities";
 import { AdminDashboard as Admin } from "@/pages/AdminDashboard";
 import { UserManagement as Users } from "@/pages/UserManagement";
 import { NotificationManagement } from "@/pages/NotificationManagement";
@@ -48,7 +48,7 @@ export function AppRoutes() {
               path="/activities"
               element={
                 <ProtectedRoute>
-                  <Activities />
+                  <TeamActivities />
                 </ProtectedRoute>
               }
             />
@@ -180,6 +180,8 @@ export function AppRoutes() {
                 </ProtectedRoute>
               }
             />
+            {/* Route de fallback pour rediriger vers la page d'accueil */}
+            <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </PermissionsProvider>
       </SessionContextProvider>
