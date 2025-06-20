@@ -1457,7 +1457,13 @@ export type Database = {
       setting_type: "microsoft_graph" | "openai" | "documentation"
       task_status: "todo" | "in_progress" | "done"
       user_hierarchy_level: "pole" | "direction" | "service"
-      user_role: "admin" | "chef_projet" | "manager" | "membre" | "time_tracker"
+      user_role:
+        | "admin"
+        | "chef_projet"
+        | "manager"
+        | "membre"
+        | "time_tracker"
+        | "portfolio_manager"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1600,7 +1606,14 @@ export const Constants = {
       setting_type: ["microsoft_graph", "openai", "documentation"],
       task_status: ["todo", "in_progress", "done"],
       user_hierarchy_level: ["pole", "direction", "service"],
-      user_role: ["admin", "chef_projet", "manager", "membre", "time_tracker"],
+      user_role: [
+        "admin",
+        "chef_projet",
+        "manager",
+        "membre",
+        "time_tracker",
+        "portfolio_manager",
+      ],
     },
   },
 } as const
