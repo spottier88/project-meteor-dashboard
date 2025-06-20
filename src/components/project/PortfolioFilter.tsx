@@ -26,6 +26,14 @@ export const PortfolioFilter = ({
 
   const { data: portfolios, isLoading } = usePortfolios(user?.id);
 
+  const handlePortfolioChange = (value: string) => {
+    if (value === "all") {
+      onPortfolioChange(undefined);
+    } else {
+      onPortfolioChange(value);
+    }
+  };
+
   if (isLoading || !portfolios || portfolios.length === 0) {
     return null;
   }
@@ -35,7 +43,7 @@ export const PortfolioFilter = ({
       <Label htmlFor="portfolio-filter">Filtrer par portefeuille</Label>
       <Select
         value={selectedPortfolioId || "all"}
-        onValueChange={(value) => onPortfolioChange(value === "all" ? undefined : value)}
+        onValueChange={handlePortfolioChange}
       >
         <SelectTrigger id="portfolio-filter" className="w-[200px]">
           <SelectValue placeholder="Tous les portefeuilles" />

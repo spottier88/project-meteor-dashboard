@@ -43,16 +43,40 @@ export const PoleDirectionServiceFilter = ({
   const filteredDirections = directions.filter(d => d.poleId === selectedPoleId);
   const filteredServices = services.filter(s => s.directionId === selectedDirectionId);
 
+  const handlePoleChange = (value: string) => {
+    if (value === "all") {
+      onPoleChange(undefined);
+    } else {
+      onPoleChange(value);
+    }
+  };
+
+  const handleDirectionChange = (value: string) => {
+    if (value === "all") {
+      onDirectionChange(undefined);
+    } else {
+      onDirectionChange(value);
+    }
+  };
+
+  const handleServiceChange = (value: string) => {
+    if (value === "all") {
+      onServiceChange(undefined);
+    } else {
+      onServiceChange(value);
+    }
+  };
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
       <div>
         <Label htmlFor="pole">Pôle</Label>
-        <Select value={selectedPoleId || ""} onValueChange={(value) => onPoleChange(value || undefined)}>
+        <Select value={selectedPoleId || "all"} onValueChange={handlePoleChange}>
           <SelectTrigger id="pole">
             <SelectValue placeholder="Tous les pôles" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">Tous les pôles</SelectItem>
+            <SelectItem value="all">Tous les pôles</SelectItem>
             <SelectItem value="none">Sans pôle</SelectItem>
             {poles.map((pole) => (
               <SelectItem key={pole.id} value={pole.id}>
@@ -66,15 +90,15 @@ export const PoleDirectionServiceFilter = ({
       <div>
         <Label htmlFor="direction">Direction</Label>
         <Select 
-          value={selectedDirectionId || ""} 
-          onValueChange={(value) => onDirectionChange(value || undefined)}
+          value={selectedDirectionId || "all"} 
+          onValueChange={handleDirectionChange}
           disabled={!selectedPoleId}
         >
           <SelectTrigger id="direction">
             <SelectValue placeholder="Toutes les directions" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">Toutes les directions</SelectItem>
+            <SelectItem value="all">Toutes les directions</SelectItem>
             <SelectItem value="none">Sans direction</SelectItem>
             {filteredDirections.map((direction) => (
               <SelectItem key={direction.id} value={direction.id}>
@@ -88,15 +112,15 @@ export const PoleDirectionServiceFilter = ({
       <div>
         <Label htmlFor="service">Service</Label>
         <Select 
-          value={selectedServiceId || ""} 
-          onValueChange={(value) => onServiceChange(value || undefined)}
+          value={selectedServiceId || "all"} 
+          onValueChange={handleServiceChange}
           disabled={!selectedDirectionId}
         >
           <SelectTrigger id="service">
             <SelectValue placeholder="Tous les services" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">Tous les services</SelectItem>
+            <SelectItem value="all">Tous les services</SelectItem>
             <SelectItem value="none">Sans service</SelectItem>
             {filteredServices.map((service) => (
               <SelectItem key={service.id} value={service.id}>
