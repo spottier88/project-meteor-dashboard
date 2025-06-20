@@ -13,52 +13,66 @@ export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   useEffect(() => {
-    // Vérifier la session existante au chargement
-    const checkSession = async () => {
+    let mounted = true;
+
+    const checkAuth = async () => {
       try {
         const { data: { session } } = await supabase.auth.getSession();
-        setIsAuthenticated(!!session);
+        
+        if (mounted) {
+          if (session) {
+            setIsAuthenticated(true);
+          } else {
+            setIsAuthenticated(false);
+            navigate("/login", { replace: true });
+          }
+          setIsLoading(false);
+        }
       } catch (error) {
-        console.error("Erreur lors de la vérification de session:", error);
-        setIsAuthenticated(false);
-      } finally {
-        setIsLoading(false);
+        console.error("Erreur lors de la vérification d'authentification:", error);
+        if (mounted) {
+          setIsAuthenticated(false);
+          setIsLoading(false);
+          navigate("/login", { replace: true });
+        }
       }
     };
 
-    checkSession();
+    checkAuth();
 
-    // Écouter les changements d'état d'authentification
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      setIsAuthenticated(!!session);
-      setIsLoading(false);
+      if (!mounted) return;
       
-      if (!session) {
-        navigate("/login");
+      if (session) {
+        setIsAuthenticated(true);
+      } else {
+        setIsAuthenticated(false);
+        navigate("/login", { replace: true });
       }
+      setIsLoading(false);
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
   }, [navigate]);
 
-  // Vérifier les droits admin après que l'authentification soit établie
+  // Vérifier les droits admin pour les routes admin
   useEffect(() => {
-    if (!isLoading && isAuthenticated) {
+    if (isAuthenticated && !isLoading) {
       const isAdminRoute = pathname.startsWith("/admin");
       if (isAdminRoute && !isAdmin) {
-        navigate("/");
+        navigate("/", { replace: true });
       }
     }
-  }, [pathname, isAdmin, navigate, isLoading, isAuthenticated]);
+  }, [pathname, isAdmin, navigate, isAuthenticated, isLoading]);
 
-  // Afficher le spinner pendant le chargement
   if (isLoading) {
     return <LoadingSpinner />;
   }
 
-  // Rediriger vers login si non authentifié
   if (!isAuthenticated) {
-    navigate("/login");
     return <LoadingSpinner />;
   }
 

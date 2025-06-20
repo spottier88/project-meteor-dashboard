@@ -1,4 +1,3 @@
-
 import {
   BrowserRouter as Router,
   Route,
@@ -33,6 +32,8 @@ export function AppRoutes() {
         <Routes>
           <Route path="/login" element={<Login />} />
           <Route path="/auth/callback" element={<AuthCallback />} />
+          
+          {/* Routes protégées */}
           <Route
             path="/"
             element={
@@ -177,7 +178,8 @@ export function AppRoutes() {
               </ProtectedRoute>
             }
           />
-          {/* Route de fallback pour rediriger vers la page de login */}
+          
+          {/* Redirection par défaut vers login */}
           <Route path="*" element={<Navigate to="/login" replace />} />
         </Routes>
       </PermissionsProvider>
