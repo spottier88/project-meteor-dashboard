@@ -54,6 +54,24 @@ export const ProjectFilters = ({
     onServiceChange("all");
   };
 
+  // Convertir les valeurs undefined en "all" pour l'affichage
+  const displayPoleId = poleId || "all";
+  const displayDirectionId = directionId || "all";
+  const displayServiceId = serviceId || "all";
+
+  // Gestionnaires pour convertir "all" en undefined quand nécessaire
+  const handlePoleFilterChange = (value: string | undefined) => {
+    onPoleChange(value || "all");
+  };
+
+  const handleDirectionFilterChange = (value: string | undefined) => {
+    onDirectionChange(value || "all");
+  };
+
+  const handleServiceFilterChange = (value: string | undefined) => {
+    onServiceChange(value || "all");
+  };
+
   return (
     <Card className="mb-6">
       <CardHeader>
@@ -118,12 +136,12 @@ export const ProjectFilters = ({
         </div>
 
         <PoleDirectionServiceFilter
-          selectedPoleId={poleId === "all" ? undefined : poleId}
-          selectedDirectionId={directionId === "all" ? undefined : directionId}
-          selectedServiceId={serviceId === "all" ? undefined : serviceId}
-          onPoleChange={(id) => onPoleChange(id || "all")}
-          onDirectionChange={(id) => onDirectionChange(id || "all")}
-          onServiceChange={(id) => onServiceChange(id || "all")}
+          selectedPoleId={displayPoleId === "all" ? undefined : displayPoleId}
+          selectedDirectionId={displayDirectionId === "all" ? undefined : displayDirectionId}
+          selectedServiceId={displayServiceId === "all" ? undefined : displayServiceId}
+          onPoleChange={handlePoleFilterChange}
+          onDirectionChange={handleDirectionFilterChange}
+          onServiceChange={handleServiceFilterChange}
         />
 
         <Button variant="outline" onClick={handleResetFilters} className="w-full">
