@@ -26,6 +26,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { PermissionsProvider } from "@/contexts/PermissionsContext";
 import PortfolioManagement from "@/pages/PortfolioManagement";
 import { ReviewHistory as Reviews } from "@/components/ReviewHistory";
+import AuthCallback from "@/pages/AuthCallback";
 
 export function AppRoutes() {
   return (
@@ -34,6 +35,7 @@ export function AppRoutes() {
         <PermissionsProvider>
           <Routes>
             <Route path="/login" element={<Login />} />
+            <Route path="/auth/callback" element={<AuthCallback />} />
             <Route
               path="/"
               element={
