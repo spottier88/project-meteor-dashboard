@@ -4,7 +4,7 @@ import {
   Route,
   Routes,
 } from "react-router-dom";
-import { Login as Home } from "@/pages/Login";
+import Login from "@/pages/Login";
 import Index from "@/pages/Index";
 import { TeamActivities as Activities } from "@/pages/TeamActivities";
 import { TaskManagement as Tasks } from "@/pages/TaskManagement";
@@ -30,7 +30,7 @@ export function AppRoutes() {
       <SessionContextProvider supabaseClient={supabase}>
         <PermissionsProvider>
           <Routes>
-            <Route path="/login" element={<Home />} />
+            <Route path="/login" element={<Login />} />
             <Route
               path="/"
               element={
