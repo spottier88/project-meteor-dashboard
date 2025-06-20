@@ -11,7 +11,8 @@ import {
   BarChart3, 
   Settings,
   BookOpen,
-  AlertTriangle
+  AlertTriangle,
+  FolderKanban
 } from "lucide-react";
 
 interface QuickActionsProps {
@@ -39,6 +40,14 @@ export const QuickActions = ({ onNewProject, onNewReview }: QuickActionsProps) =
       action: onNewReview,
       color: "bg-green-500",
       show: true
+    },
+    {
+      title: "Portefeuilles",
+      description: "Gérer les portefeuilles de projets",
+      icon: FolderKanban,
+      action: () => navigate("/portfolios"),
+      color: "bg-violet-500",
+      show: isAdmin || hasRole('portfolio_manager')
     },
     {
       title: "Mes tâches",

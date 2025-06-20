@@ -1,228 +1,174 @@
-
-import { useState, useEffect } from "react";
-import { Input } from "@/components/ui/input";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { ProjectStatus, ProgressStatus, ProjectLifecycleStatus } from "@/types/project";
+import { PoleDirectionServiceFilter } from "./PoleDirectionServiceFilter";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
-import { MonitoringFilter } from "@/components/monitoring/MonitoringFilter";
-import { LifecycleStatusFilter } from "@/components/project/LifecycleStatusFilter";
-import { MyProjectsToggle } from "@/components/MyProjectsToggle";
-import { AddFilteredToCartButton } from "@/components/cart/AddFilteredToCartButton";
-import { OrganizationFilters } from "@/components/project/OrganizationFilters";
-import { MonitoringLevel } from "@/types/monitoring";
-import { ProjectLifecycleStatus, lifecycleStatusLabels } from "@/types/project";
-import { RotateCcw, Filter, ChevronDown, ChevronUp } from "lucide-react";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { Badge } from "@/components/ui/badge";
-import { cn } from "@/lib/utils";
+import { useEffect } from "react";
+import { PortfolioFilter } from "./PortfolioFilter";
+
+export interface ProjectFiltersState {
+  status?: ProjectStatus;
+  progress?: ProgressStatus;
+  lifecycleStatus?: ProjectLifecycleStatus;
+  suivi_dgs?: boolean;
+  selectedPoleId?: string;
+  selectedDirectionId?: string;
+  selectedServiceId?: string;
+  portfolioId?: string;
+}
 
 interface ProjectFiltersProps {
-  searchQuery: string;
-  onSearchChange: (value: string) => void;
-  lifecycleStatus: ProjectLifecycleStatus | 'all';
-  onLifecycleStatusChange: (status: ProjectLifecycleStatus | 'all') => void;
-  monitoringLevel: MonitoringLevel | 'all';
-  onMonitoringLevelChange: (level: MonitoringLevel | 'all') => void;
-  showMyProjectsOnly: boolean;
-  onMyProjectsToggle: (checked: boolean) => void;
-  filteredProjectIds: string[];
-  poleId: string;
-  onPoleChange: (value: string) => void;
-  directionId: string;
-  onDirectionChange: (value: string) => void;
-  serviceId: string;
-  onServiceChange: (value: string) => void;
+  filters: ProjectFiltersState;
+  onFiltersChange: (filters: ProjectFiltersState) => void;
+  showMyProjects: boolean;
+  onShowMyProjectsChange: (show: boolean) => void;
 }
 
 export const ProjectFilters = ({
-  searchQuery,
-  onSearchChange,
-  lifecycleStatus,
-  onLifecycleStatusChange,
-  monitoringLevel,
-  onMonitoringLevelChange,
-  showMyProjectsOnly,
-  onMyProjectsToggle,
-  filteredProjectIds,
-  poleId,
-  onPoleChange,
-  directionId,
-  onDirectionChange,
-  serviceId,
-  onServiceChange,
+  filters,
+  onFiltersChange,
+  showMyProjects,
+  onShowMyProjectsChange,
 }: ProjectFiltersProps) => {
-  // État pour savoir si le panneau de filtres est ouvert ou fermé
-  const [isOpen, setIsOpen] = useState(() => {
-    return localStorage.getItem("filtersOpen") === "true" || false;
-  });
-
-  // Sauvegarde de l'état d'ouverture dans localStorage
-  useEffect(() => {
-    localStorage.setItem("filtersOpen", isOpen.toString());
-  }, [isOpen]);
-
-  const handleResetFilters = () => {
-    onSearchChange('');
-    onLifecycleStatusChange('all');
-    onMonitoringLevelChange('all');
-    onMyProjectsToggle(false);
-    onPoleChange('all');
-    onDirectionChange('all');
-    onServiceChange('all');
+  const handleStatusChange = (status: ProjectStatus | undefined) => {
+    onFiltersChange({ ...filters, status });
   };
 
-  // Compte le nombre de filtres actifs
-  const activeFiltersCount = [
-    searchQuery !== '',
-    lifecycleStatus !== 'all',
-    monitoringLevel !== 'all',
-    showMyProjectsOnly,
-    poleId !== 'all',
-    directionId !== 'all',
-    serviceId !== 'all'
-  ].filter(Boolean).length;
+  const handleProgressChange = (progress: ProgressStatus | undefined) => {
+    onFiltersChange({ ...filters, progress });
+  };
+
+  const handleLifecycleStatusChange = (lifecycleStatus: ProjectLifecycleStatus | undefined) => {
+    onFiltersChange({ ...filters, lifecycleStatus });
+  };
+
+  const handleSuiviDGSChange = (checked: boolean) => {
+    onFiltersChange({ ...filters, suivi_dgs: checked });
+  };
+
+  const handlePoleChange = (poleId: string | undefined) => {
+    onFiltersChange({
+      ...filters,
+      selectedPoleId: poleId,
+      selectedDirectionId: undefined,
+      selectedServiceId: undefined,
+    });
+  };
+
+  const handleDirectionChange = (directionId: string | undefined) => {
+    onFiltersChange({
+      ...filters,
+      selectedDirectionId: directionId,
+      selectedServiceId: undefined,
+    });
+  };
+
+  const handleServiceChange = (serviceId: string | undefined) => {
+    onFiltersChange({ ...filters, selectedServiceId: serviceId });
+  };
+
+  useEffect(() => {
+    // Reset direction and service when pole changes
+    if (!filters.selectedPoleId) {
+      onFiltersChange({ ...filters, selectedDirectionId: undefined, selectedServiceId: undefined });
+    }
+    // Reset service when direction changes
+    if (!filters.selectedDirectionId) {
+      onFiltersChange({ ...filters, selectedServiceId: undefined });
+    }
+  }, [filters.selectedPoleId, filters.selectedDirectionId, onFiltersChange, filters]);
+
+  const handlePortfolioChange = (portfolioId: string | undefined) => {
+    onFiltersChange({ ...filters, portfolioId });
+  };
 
   return (
-    <div className="mb-6">
-      <Collapsible open={isOpen} onOpenChange={setIsOpen} className="w-full">
-        <div className="flex items-center justify-between bg-gray-50 p-3 rounded-lg border border-gray-200">
-          <div className="flex items-center gap-2">
-            <CollapsibleTrigger asChild>
-              <Button variant="outline" size="sm" className="gap-1 h-8">
-                <Filter className="h-4 w-4" />
-                Filtres
-                {isOpen ? (
-                  <ChevronUp className="h-3 w-3 opacity-50" />
-                ) : (
-                  <ChevronDown className="h-3 w-3 opacity-50" />
-                )}
-              </Button>
-            </CollapsibleTrigger>
-            
-            {/* Affichage des filtres actifs sous forme de badges */}
-            <div className="flex flex-wrap gap-1 ml-2">
-              {activeFiltersCount > 0 ? (
-                <>
-                  {searchQuery && (
-                    <Badge variant="secondary" className="px-2 py-1 text-xs">
-                      Recherche: {searchQuery}
-                    </Badge>
-                  )}
-                  {lifecycleStatus !== 'all' && (
-                    <Badge variant="secondary" className="px-2 py-1 text-xs">
-                      Statut: {lifecycleStatusLabels[lifecycleStatus]}
-                    </Badge>
-                  )}
-                  {monitoringLevel !== 'all' && (
-                    <Badge variant="secondary" className="px-2 py-1 text-xs">
-                      Suivi: {monitoringLevel === 'none' ? 'Non suivi' : monitoringLevel}
-                    </Badge>
-                  )}
-                  {showMyProjectsOnly && (
-                    <Badge variant="secondary" className="px-2 py-1 text-xs">
-                      Mes projets
-                    </Badge>
-                  )}
-                  {poleId !== 'all' && (
-                    <Badge variant="secondary" className="px-2 py-1 text-xs">
-                      Pôle: {poleId === 'none' ? 'Aucun' : 'Sélectionné'}
-                    </Badge>
-                  )}
-                  {directionId !== 'all' && (
-                    <Badge variant="secondary" className="px-2 py-1 text-xs">
-                      Direction: {directionId === 'none' ? 'Aucune' : 'Sélectionnée'}
-                    </Badge>
-                  )}
-                  {serviceId !== 'all' && (
-                    <Badge variant="secondary" className="px-2 py-1 text-xs">
-                      Service: {serviceId === 'none' ? 'Aucun' : 'Sélectionné'}
-                    </Badge>
-                  )}
-                </>
-              ) : (
-                <span className="text-sm text-muted-foreground">Aucun filtre actif</span>
-              )}
-            </div>
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-lg">Filtres</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <Label htmlFor="status">Statut</Label>
+            <Select value={filters.status || ""} onValueChange={(value) => handleStatusChange(value as ProjectStatus)}>
+              <SelectTrigger id="status">
+                <SelectValue placeholder="Tous les statuts" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="">Tous les statuts</SelectItem>
+                <SelectItem value="sunny">Ensoleillé</SelectItem>
+                <SelectItem value="cloudy">Nuageux</SelectItem>
+                <SelectItem value="stormy">Orageux</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
-          
+
+          <div>
+            <Label htmlFor="progress">Progrès</Label>
+            <Select value={filters.progress || ""} onValueChange={(value) => handleProgressChange(value as ProgressStatus)}>
+              <SelectTrigger id="progress">
+                <SelectValue placeholder="Tous les progrès" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="">Tous les progrès</SelectItem>
+                <SelectItem value="better">Amélioration</SelectItem>
+                <SelectItem value="stable">Stable</SelectItem>
+                <SelectItem value="worse">Détérioration</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div>
+            <Label htmlFor="lifecycleStatus">État du cycle de vie</Label>
+            <Select value={filters.lifecycleStatus || ""} onValueChange={(value) => handleLifecycleStatusChange(value as ProjectLifecycleStatus)}>
+              <SelectTrigger id="lifecycleStatus">
+                <SelectValue placeholder="Tous les états" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="">Tous les états</SelectItem>
+                <SelectItem value="study">À l'étude</SelectItem>
+                <SelectItem value="validated">Validé</SelectItem>
+                <SelectItem value="in_progress">En cours</SelectItem>
+                <SelectItem value="completed">Terminé</SelectItem>
+                <SelectItem value="suspended">Suspendu</SelectItem>
+                <SelectItem value="abandoned">Abandonné</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
           <div className="flex items-center space-x-2">
-            {activeFiltersCount > 0 && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleResetFilters}
-                className="h-8"
-              >
-                <RotateCcw className="h-3 w-3 mr-1" />
-                Réinitialiser
-              </Button>
-            )}
-            <AddFilteredToCartButton projectIds={filteredProjectIds} className="h-8" />
+            <Checkbox
+              id="suivi_dgs"
+              checked={filters.suivi_dgs || false}
+              onCheckedChange={(checked) => handleSuiviDGSChange(!!checked)}
+            />
+            <Label htmlFor="suivi_dgs" className="text-sm font-normal">
+              Suivi DGS
+            </Label>
           </div>
         </div>
+
+        <PoleDirectionServiceFilter
+          selectedPoleId={filters.selectedPoleId}
+          selectedDirectionId={filters.selectedDirectionId}
+          selectedServiceId={filters.selectedServiceId}
+          onPoleChange={handlePoleChange}
+          onDirectionChange={handleDirectionChange}
+          onServiceChange={handleServiceChange}
+        />
         
-        <CollapsibleContent className={cn(
-          "space-y-6 bg-gray-50 p-4 rounded-b-lg border-x border-b border-gray-200",
-          !isOpen && "rounded-none"
-        )}>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {/* Search Field */}
-            <div className="space-y-2">
-              <Label htmlFor="search" className="text-sm font-medium">
-                Recherche
-              </Label>
-              <Input
-                id="search"
-                type="text"
-                placeholder="Projet ou chef de projet..."
-                value={searchQuery}
-                onChange={(e) => onSearchChange(e.target.value)}
-              />
-            </div>
+        <PortfolioFilter
+          selectedPortfolioId={filters.portfolioId}
+          onPortfolioChange={handlePortfolioChange}
+        />
 
-            {/* Lifecycle Status Filter */}
-            <div>
-              <LifecycleStatusFilter
-                selectedStatus={lifecycleStatus}
-                onStatusChange={onLifecycleStatusChange}
-              />
-            </div>
-
-            {/* Monitoring Level Filter */}
-            <div>
-              <Label className="text-sm font-medium mb-2 block">
-                Niveau de suivi
-              </Label>
-              <MonitoringFilter
-                selectedLevel={monitoringLevel}
-                onLevelChange={onMonitoringLevelChange}
-              />
-            </div>
-
-            {/* My Projects Toggle */}
-            <div className="flex items-end">
-              <MyProjectsToggle
-                showMyProjectsOnly={showMyProjectsOnly}
-                onToggle={onMyProjectsToggle}
-              />
-            </div>
-          </div>
-
-          {/* Filtres organisationnels */}
-          <div className="pt-4 border-t border-gray-200">
-            <Label className="text-sm font-medium mb-2 block">
-              Filtres organisationnels
-            </Label>
-            <OrganizationFilters
-              poleId={poleId}
-              setPoleId={onPoleChange}
-              directionId={directionId}
-              setDirectionId={onDirectionChange}
-              serviceId={serviceId}
-              setServiceId={onServiceChange}
-            />
-          </div>
-        </CollapsibleContent>
-      </Collapsible>
-    </div>
+        <Button variant="outline" onClick={() => onFiltersChange({})} className="w-full">
+          Réinitialiser les filtres
+        </Button>
+      </CardContent>
+    </Card>
   );
 };
