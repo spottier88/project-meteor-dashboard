@@ -1,7 +1,8 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
+import { Plus, Home } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { usePortfolios, useCreatePortfolio, useUpdatePortfolio, useDeletePortfolio } from "@/hooks/usePortfolios";
 import { PortfolioCard } from "@/components/portfolio/PortfolioCard";
 import { PortfolioForm } from "@/components/portfolio/PortfolioForm";
@@ -12,6 +13,7 @@ import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 
 export default function PortfolioManagement() {
+  const navigate = useNavigate();
   const [showForm, setShowForm] = useState(false);
   const [editingPortfolio, setEditingPortfolio] = useState<Portfolio | null>(null);
   const [selectedPortfolio, setSelectedPortfolio] = useState<Portfolio | null>(null);
@@ -100,11 +102,21 @@ export default function PortfolioManagement() {
   return (
     <div className="container mx-auto py-8 space-y-6">
       <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold">Gestion des Portefeuilles</h1>
-          <p className="text-gray-600 mt-2">
-            Gérez vos portefeuilles de projets et suivez leur avancement
-          </p>
+        <div className="flex items-center gap-4">
+          <Button
+            variant="outline"
+            onClick={() => navigate("/")}
+            className="flex items-center gap-2"
+          >
+            <Home className="h-4 w-4" />
+            Accueil
+          </Button>
+          <div>
+            <h1 className="text-3xl font-bold">Gestion des Portefeuilles</h1>
+            <p className="text-gray-600 mt-2">
+              Gérez vos portefeuilles de projets et suivez leur avancement
+            </p>
+          </div>
         </div>
         
         {canCreatePortfolio && (
