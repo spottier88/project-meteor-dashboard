@@ -1,10 +1,10 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ProjectLifecycleStatus } from "@/types/project";
 import { PoleDirectionServiceFilter } from "./PoleDirectionServiceFilter";
+import { PortfolioFilter } from "./PortfolioFilter";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -29,6 +29,8 @@ interface CollapsibleProjectFiltersProps {
   onDirectionChange: (directionId: string) => void;
   serviceId: string;
   onServiceChange: (serviceId: string) => void;
+  portfolioId?: string;
+  onPortfolioChange?: (portfolioId: string) => void;
 }
 
 export const CollapsibleProjectFilters = ({
@@ -46,6 +48,8 @@ export const CollapsibleProjectFilters = ({
   onDirectionChange,
   serviceId,
   onServiceChange,
+  portfolioId,
+  onPortfolioChange,
 }: CollapsibleProjectFiltersProps) => {
   // État pour l'ouverture/fermeture avec persistance localStorage
   const [isOpen, setIsOpen] = useState(() => {
@@ -64,6 +68,9 @@ export const CollapsibleProjectFilters = ({
     onPoleChange("all");
     onDirectionChange("all");
     onServiceChange("all");
+    if (onPortfolioChange) {
+      onPortfolioChange("all");
+    }
   };
 
   // Convertir les valeurs undefined en "all" pour l'affichage
@@ -137,6 +144,10 @@ export const CollapsibleProjectFilters = ({
     if (serviceId !== 'all') {
       active.push({ key: 'service', label: `Service sélectionné`, value: serviceId });
     }
+
+    if (portfolioId && portfolioId !== 'all') {
+      active.push({ key: 'portfolio', label: `Portefeuille sélectionné`, value: portfolioId });
+    }
     
     return active;
   };
@@ -167,6 +178,11 @@ export const CollapsibleProjectFilters = ({
         break;
       case 'service':
         onServiceChange("all");
+        break;
+      case 'portfolio':
+        if (onPortfolioChange) {
+          onPortfolioChange("all");
+        }
         break;
     }
   };
@@ -292,6 +308,13 @@ export const CollapsibleProjectFilters = ({
               onDirectionChange={handleDirectionFilterChange}
               onServiceChange={handleServiceFilterChange}
             />
+
+            {onPortfolioChange && (
+              <PortfolioFilter
+                selectedPortfolioId={portfolioId}
+                onPortfolioChange={(id) => onPortfolioChange(id || "all")}
+              />
+            )}
 
             <div className="flex gap-2">
               <Button variant="outline" onClick={handleResetFilters} className="flex-1">

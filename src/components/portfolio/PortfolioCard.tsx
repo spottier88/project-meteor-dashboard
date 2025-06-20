@@ -4,13 +4,14 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Portfolio } from "@/types/portfolio";
-import { Edit, Trash2, FolderOpen } from "lucide-react";
+import { Edit, Trash2, FolderOpen, Settings } from "lucide-react";
 
 interface PortfolioCardProps {
   portfolio: Portfolio;
   onEdit: (portfolio: Portfolio) => void;
   onDelete: (portfolioId: string) => void;
   onViewProjects: (portfolio: Portfolio) => void;
+  onManageProjects: (portfolio: Portfolio) => void;
   canManage: boolean;
 }
 
@@ -19,6 +20,7 @@ export const PortfolioCard = ({
   onEdit, 
   onDelete, 
   onViewProjects, 
+  onManageProjects,
   canManage 
 }: PortfolioCardProps) => {
   const getStatusColor = (status: string) => {
@@ -103,29 +105,43 @@ export const PortfolioCard = ({
             className="flex-1"
           >
             <FolderOpen className="h-4 w-4 mr-2" />
-            Projets
+            Voir
           </Button>
           
           {canManage && (
-            <>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => onEdit(portfolio)}
-              >
-                <Edit className="h-4 w-4" />
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => onDelete(portfolio.id)}
-                className="text-red-600 hover:text-red-700"
-              >
-                <Trash2 className="h-4 w-4" />
-              </Button>
-            </>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => onManageProjects(portfolio)}
+              className="flex-1"
+            >
+              <Settings className="h-4 w-4 mr-2" />
+              Gérer
+            </Button>
           )}
         </div>
+        
+        {canManage && (
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => onEdit(portfolio)}
+              className="flex-1"
+            >
+              <Edit className="h-4 w-4 mr-2" />
+              Modifier
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => onDelete(portfolio.id)}
+              className="text-red-600 hover:text-red-700"
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          </div>
+        )}
       </CardContent>
     </Card>
   );

@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Plus, Home } from "lucide-react";
@@ -7,6 +6,7 @@ import { usePortfolios, useCreatePortfolio, useUpdatePortfolio, useDeletePortfol
 import { PortfolioCard } from "@/components/portfolio/PortfolioCard";
 import { PortfolioForm } from "@/components/portfolio/PortfolioForm";
 import { PortfolioProjectsDialog } from "@/components/portfolio/PortfolioProjectsDialog";
+import { PortfolioProjectManagementDialog } from "@/components/portfolio/PortfolioProjectManagementDialog";
 import { Portfolio, CreatePortfolioData } from "@/types/portfolio";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
@@ -16,8 +16,10 @@ export default function PortfolioManagement() {
   const navigate = useNavigate();
   const [showForm, setShowForm] = useState(false);
   const [editingPortfolio, setEditingPortfolio] = useState<Portfolio | null>(null);
-  const [selectedPortfolio, setSelectedPortfolio] = useState<Portfolio | null>(null);
+  const [selectedPortfolioForView, setSelectedPortfolioForView] = useState<Portfolio | null>(null);
+  const [selectedPortfolioForManagement, setSelectedPortfolioForManagement] = useState<Portfolio | null>(null);
   const [showProjects, setShowProjects] = useState(false);
+  const [showManagement, setShowManagement] = useState(false);
 
   // Récupérer l'utilisateur actuel
   const { data: user } = useQuery({
@@ -82,8 +84,13 @@ export default function PortfolioManagement() {
   };
 
   const handleViewProjects = (portfolio: Portfolio) => {
-    setSelectedPortfolio(portfolio);
+    setSelectedPortfolioForView(portfolio);
     setShowProjects(true);
+  };
+
+  const handleManageProjects = (portfolio: Portfolio) => {
+    setSelectedPortfolioForManagement(portfolio);
+    setShowManagement(true);
   };
 
   const handleCloseForm = () => {
@@ -144,7 +151,8 @@ export default function PortfolioManagement() {
               onEdit={handleEdit}
               onDelete={handleDelete}
               onViewProjects={handleViewProjects}
-              canManage={canCreatePortfolio} // Simplification : même permissions pour créer et gérer
+              onManageProjects={handleManageProjects}
+              canManage={canCreatePortfolio}
             />
           ))}
         </div>
@@ -171,7 +179,13 @@ export default function PortfolioManagement() {
       <PortfolioProjectsDialog
         open={showProjects}
         onClose={() => setShowProjects(false)}
-        portfolio={selectedPortfolio}
+        portfolio={selectedPortfolioForView}
+      />
+
+      <PortfolioProjectManagementDialog
+        open={showManagement}
+        onClose={() => setShowManagement(false)}
+        portfolio={selectedPortfolioForManagement}
       />
     </div>
   );
