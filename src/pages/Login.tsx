@@ -1,4 +1,3 @@
-
 import { Auth } from "@supabase/auth-ui-react";
 import { ThemeSupa } from "@supabase/auth-ui-shared";
 import { supabase } from "@/integrations/supabase/client";
@@ -31,7 +30,7 @@ const Login = () => {
   const [isMagicLink, setIsMagicLink] = useState(true);
   const [isPasswordReset, setIsPasswordReset] = useState(false);
 
-  // Gestionnaire d'état d'authentification simplifié
+  // Gestionnaire d'état d'authentification - SIMPLIFIÉ
   useEffect(() => {
     const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
       console.log("Login - Auth event:", event, !!session);
@@ -41,16 +40,16 @@ const Login = () => {
         return;
       }
       
+      // Ne pas rediriger ici - laisser AuthGuard gérer la redirection
       if (event === 'SIGNED_IN' && session) {
-        console.log("Login - Redirection vers /");
-        navigate("/", { replace: true });
+        console.log("Login - Utilisateur connecté, AuthGuard va gérer la redirection");
       }
     });
 
     return () => {
       authListener.subscription.unsubscribe();
     };
-  }, [navigate]);
+  }, []);
 
   // 🔹 Connexion avec Magic Link
   const handleMagicLink = async (e) => {

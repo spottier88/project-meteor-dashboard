@@ -1,5 +1,6 @@
 
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 
@@ -9,6 +10,7 @@ interface AuthGuardProps {
 }
 
 export const AuthGuard = ({ children, fallback }: AuthGuardProps) => {
+  const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
@@ -25,6 +27,11 @@ export const AuthGuard = ({ children, fallback }: AuthGuardProps) => {
             setIsAuthenticated(false);
           } else {
             setIsAuthenticated(!!session);
+            
+            // Si connecté et sur une page d'auth, rediriger vers l'accueil
+            if (session && (window.location.pathname === '/login' || window.location.pathname === '/auth/callback')) {
+              navigate("/", { replace: true });
+            }
           }
           setIsLoading(false);
         }
@@ -50,9 +57,12 @@ export const AuthGuard = ({ children, fallback }: AuthGuardProps) => {
         if (event === 'SIGNED_OUT') {
           setIsAuthenticated(false);
           setIsLoading(false);
+          navigate("/login", { replace: true });
         } else if (event === 'SIGNED_IN') {
           setIsAuthenticated(true);
           setIsLoading(false);
+          // Rediriger vers l'accueil après connexion réussie
+          navigate("/", { replace: true });
         } else if (event === 'TOKEN_REFRESHED') {
           setIsAuthenticated(!!session);
           setIsLoading(false);
@@ -67,7 +77,7 @@ export const AuthGuard = ({ children, fallback }: AuthGuardProps) => {
       mounted = false;
       subscription.unsubscribe();
     };
-  }, []);
+  }, [navigate]);
 
   if (isLoading) {
     return <LoadingSpinner />;
