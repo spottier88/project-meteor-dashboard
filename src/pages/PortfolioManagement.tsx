@@ -153,7 +153,7 @@ export default function PortfolioManagement() {
         onClose={handleCloseForm}
         onSubmit={editingPortfolio ? handleUpdatePortfolio : handleCreatePortfolio}
         portfolio={editingPortfolio}
-        isLoading={createMutation.isPending || updateMutation.isPending}
+        isLoading={createMutation.isLoading || updateMutation.isLoading}
       />
 
       <PortfolioProjectsDialog

@@ -41,7 +41,13 @@ export const PortfolioProjectsDialog = ({
         .eq("portfolio_id", portfolio.id);
 
       if (error) throw error;
-      return data as ProjectWithExtendedData[];
+      
+      // Transformer les données pour correspondre au type ProjectWithExtendedData
+      return (data || []).map(project => ({
+        ...project,
+        completion: 0, // Valeur par défaut
+        lastReviewDate: null // Valeur par défaut
+      })) as ProjectWithExtendedData[];
     },
     enabled: !!portfolio?.id && open,
   });
@@ -69,7 +75,7 @@ export const PortfolioProjectsDialog = ({
                     <div className="flex gap-2">
                       {project.status && (
                         <div className="flex items-center gap-1">
-                          <StatusIcon status={project.status} size="sm" />
+                          <StatusIcon status={project.status} />
                         </div>
                       )}
                       <Badge variant="outline">
