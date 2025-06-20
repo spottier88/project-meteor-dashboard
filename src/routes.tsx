@@ -17,6 +17,9 @@ import { MyTasks } from "@/pages/MyTasks";
 import { TeamActivities } from "@/pages/TeamActivities";
 import { AdminDashboard as Admin } from "@/pages/AdminDashboard";
 import { UserManagement as Users } from "@/pages/UserManagement";
+import { NotificationManagement } from "@/pages/NotificationManagement";
+import { ActivityTypeManagementPage } from "@/pages/ActivityTypeManagement";
+import { OrganizationManagement } from "@/pages/OrganizationManagement";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { SessionContextProvider } from "@supabase/auth-helpers-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -108,6 +111,38 @@ export function AppRoutes() {
               element={
                 <ProtectedRoute>
                   <Admin />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/users"
+              element={
+                <ProtectedRoute>
+                  <Users />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/notifications"
+              element={
+                <ProtectedRoute>
+                  <NotificationManagement />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/activity-types"
+              element={
+                <ProtectedRoute>
+                  <ActivityTypeManagementPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/organization"
+              element={
+                <ProtectedRoute>
+                  <OrganizationManagement />
                 </ProtectedRoute>
               }
             />
