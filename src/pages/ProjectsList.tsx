@@ -1,10 +1,11 @@
+
 import { useState, useEffect } from "react";
 import { DashboardHeader } from "@/components/DashboardHeader";
 import { UserInfo } from "@/components/UserInfo";
 import { ViewMode } from "@/components/ViewToggle";
 import { MonitoringLevel } from "@/types/monitoring";
 import { ProjectLifecycleStatus } from "@/types/project";
-import { ProjectFilters } from "@/components/project/ProjectFilters";
+import { CollapsibleProjectFilters } from "@/components/project/CollapsibleProjectFilters";
 import { ProjectList } from "@/components/project/ProjectList";
 import { ProjectModals } from "@/components/project/ProjectModals";
 import { usePermissionsContext } from "@/contexts/PermissionsContext";
@@ -237,7 +238,7 @@ const ProjectsList = () => {
         />
       </div>
 
-      <ProjectFilters
+      <CollapsibleProjectFilters
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
         lifecycleStatus={lifecycleStatus}
