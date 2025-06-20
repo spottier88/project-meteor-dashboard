@@ -1,10 +1,9 @@
-
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useProjectsListView } from "@/hooks/use-projects-list-view";
 import { useNavigate } from "react-router-dom";
-import { AlertTriangle, Eye, Calendar, Clock } from "lucide-react";
+import { AlertTriangle, Eye, Calendar, Clock, CheckCircle } from "lucide-react";
 import { lifecycleStatusLabels } from "@/types/project";
 
 export const PriorityProjects = () => {
