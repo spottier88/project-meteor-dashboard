@@ -1,3 +1,4 @@
+
 import {
   BrowserRouter as Router,
   Route,
@@ -19,6 +20,9 @@ import { UserManagement as Users } from "@/pages/UserManagement";
 import { NotificationManagement } from "@/pages/NotificationManagement";
 import { ActivityTypeManagementPage } from "@/pages/ActivityTypeManagement";
 import { OrganizationManagement } from "@/pages/OrganizationManagement";
+import { ProjectTemplateManagement } from "@/pages/ProjectTemplateManagement";
+import { AIPromptManagement } from "@/pages/AIPromptManagement";
+import { AdminSettings } from "@/pages/AdminSettings";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { PermissionsProvider } from "@/contexts/PermissionsContext";
 import { AuthGuard } from "@/components/auth/AuthGuard";
@@ -198,6 +202,30 @@ export function AppRoutes() {
                 element={
                   <ProtectedRoute>
                     <OrganizationManagement />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/templates"
+                element={
+                  <ProtectedRoute>
+                    <ProjectTemplateManagement />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/ai-prompts"
+                element={
+                  <ProtectedRoute>
+                    <AIPromptManagement />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/settings"
+                element={
+                  <ProtectedRoute>
+                    <AdminSettings />
                   </ProtectedRoute>
                 }
               />
