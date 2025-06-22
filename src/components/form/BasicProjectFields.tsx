@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { UserProfile } from "@/types/user";
-import { DatePicker } from "./DatePicker";
+import { DateInputField } from "./DateInputField";
 import { ProjectLifecycleStatus } from "@/types/project";
 
 interface BasicProjectFieldsProps {
@@ -104,13 +104,13 @@ export const BasicProjectFields = ({
       </div>
 
       <div className="grid grid-cols-2 gap-4">
-        <DatePicker
+        <DateInputField
           date={startDate}
           onDateChange={setStartDate}
           label="Date de début"
           placeholder="Sélectionner une date"
         />
-        <DatePicker
+        <DateInputField
           date={endDate}
           onDateChange={setEndDate}
           label="Date de fin"
