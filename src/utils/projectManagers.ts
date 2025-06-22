@@ -27,14 +27,32 @@ export const getProjectManagers = async (
       // Fallback basé sur les rôles utilisateur
       console.log("Falling back to role-based query for project managers");
       
-      const isAdmin = userRoles?.some(ur => ur.role === 'admin') || false;
-      const isManager = userRoles?.some(ur => ur.role === 'manager') || false;
-      const isChefProjet = userRoles?.some(ur => ur.role === 'chef_projet') || false;
+      const isAdmin = userRoles?.some(ur => ur === 'admin') || false;
+      const isManager = userRoles?.some(ur => ur === 'manager') || false;
+      const isChefProjet = userRoles?.some(ur => ur === 'chef_projet') || false;
       
       console.log("Role check - isAdmin:", isAdmin, "isManager:", isManager, "isChefProjet:", isChefProjet);
       
       if (isAdmin) {
         // Admin : tous les chefs de projet
+        // D'abord récupérer les IDs des chefs de projet
+        const { data: userRoleIds, error: userRoleError } = await supabase
+          .from('user_roles')
+          .select('user_id')
+          .eq('role', 'chef_projet');
+
+        if (userRoleError) {
+          console.error("Error fetching user role IDs:", userRoleError);
+          return [];
+        }
+
+        const userIds = userRoleIds?.map(ur => ur.user_id).filter(Boolean) || [];
+        
+        if (userIds.length === 0) {
+          console.log("No chef_projet users found");
+          return [];
+        }
+
         const { data: adminData, error: adminError } = await supabase
           .from('profiles')
           .select(`
@@ -44,12 +62,7 @@ export const getProjectManagers = async (
             last_name,
             created_at
           `)
-          .in('id', 
-            supabase
-              .from('user_roles')
-              .select('user_id')
-              .eq('role', 'chef_projet')
-          );
+          .in('id', userIds);
 
         if (adminError) {
           console.error("Admin fallback query failed:", adminError);
@@ -64,6 +77,24 @@ export const getProjectManagers = async (
         // Cette logique devrait être implémentée selon votre structure hiérarchique
         console.log("Manager fallback - implementing hierarchy-based access");
         
+        // D'abord récupérer les IDs des chefs de projet
+        const { data: userRoleIds, error: userRoleError } = await supabase
+          .from('user_roles')
+          .select('user_id')
+          .eq('role', 'chef_projet');
+
+        if (userRoleError) {
+          console.error("Error fetching user role IDs:", userRoleError);
+          return [];
+        }
+
+        const userIds = userRoleIds?.map(ur => ur.user_id).filter(Boolean) || [];
+        
+        if (userIds.length === 0) {
+          console.log("No chef_projet users found");
+          return [];
+        }
+
         const { data: managerData, error: managerError } = await supabase
           .from('profiles')
           .select(`
@@ -73,12 +104,7 @@ export const getProjectManagers = async (
             last_name,
             created_at
           `)
-          .in('id', 
-            supabase
-              .from('user_roles')
-              .select('user_id')
-              .eq('role', 'chef_projet')
-          );
+          .in('id', userIds);
 
         if (managerError) {
           console.error("Manager fallback query failed:", managerError);
