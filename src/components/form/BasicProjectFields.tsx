@@ -1,3 +1,4 @@
+
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -82,11 +83,11 @@ export const BasicProjectFields = ({
           </SelectTrigger>
           <SelectContent>
             {projectManagers === undefined ? (
-              <SelectItem value="" disabled>
+              <SelectItem value="loading" disabled>
                 Chargement des chefs de projet...
               </SelectItem>
             ) : projectManagers.length === 0 ? (
-              <SelectItem value="" disabled>
+              <SelectItem value="empty" disabled>
                 Aucun chef de projet disponible
               </SelectItem>
             ) : (
