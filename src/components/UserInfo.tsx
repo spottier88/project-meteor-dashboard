@@ -8,7 +8,6 @@
  */
 
 import { useState, useEffect } from "react";
-import { useSupabaseClient, useUser } from "@supabase/auth-helpers-react";
 import { Button } from "./ui/button";
 import { useNavigate } from "react-router-dom";
 import { LogOut, Settings, AlertCircle } from "lucide-react";
@@ -20,6 +19,8 @@ import { UserNotificationsDropdown } from "./notifications/UserNotificationsDrop
 import { RequiredNotificationDialog } from "./notifications/RequiredNotificationDialog";
 import { HelpButton } from "@/components/help/HelpButton";
 import { Badge } from "@/components/ui/badge";
+import { useAuthContext } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
 
 const clearSupabaseCookies = () => {
   const cookies = document.cookie.split(";");
@@ -35,8 +36,7 @@ const clearSupabaseCookies = () => {
 };
 
 export const UserInfo = () => {
-  const user = useUser();
-  const supabase = useSupabaseClient();
+  const { user } = useAuthContext();
   const navigate = useNavigate();
   const { toast } = useToast();
   const queryClient = useQueryClient();

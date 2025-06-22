@@ -14,7 +14,7 @@ export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
     // Réduire le délai d'attente pour les permissions
     const timer = setTimeout(() => {
       setIsLoading(false);
-    }, 50);
+    }, 100); // Augmenté légèrement pour laisser le temps aux hooks
 
     return () => clearTimeout(timer);
   }, []);

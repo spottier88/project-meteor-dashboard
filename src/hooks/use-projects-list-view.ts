@@ -1,7 +1,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useUser } from "@supabase/auth-helpers-react";
+import { useAuthContext } from "@/contexts/AuthContext";
 import { ProjectStatus, ProgressStatus, ProjectLifecycleStatus, ForEntityType, Project, ProjectWithExtendedData } from "@/types/project";
 import { MonitoringLevel } from "@/types/monitoring";
 import { logger } from "@/utils/logger";
@@ -60,7 +60,7 @@ export const convertToProject = (item: ProjectListItem): Project => {
 };
 
 export const useProjectsListView = (enabled = true) => {
-  const user = useUser();
+  const { user } = useAuthContext();
 
   return useQuery({
     queryKey: ["projectsListView", user?.id],
