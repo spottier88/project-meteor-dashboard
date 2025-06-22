@@ -13,7 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { Notification } from "@/types/notification";
-import { useUser } from "@supabase/auth-helpers-react";
+import { useAuthContext } from "@/contexts/AuthContext";
 
 interface FeedbackResponseFormProps {
   feedback: Notification;
@@ -30,7 +30,7 @@ export function FeedbackResponseForm({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const user = useUser();
+  const { user } = useAuthContext();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

@@ -1,9 +1,11 @@
+
 import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuthContext } from "@/contexts/AuthContext";
 import { RiskSelectors, RiskProbability, RiskSeverity, RiskStatus } from "./risk/RiskSelectors";
 
 interface RiskFormProps {
@@ -23,6 +25,7 @@ interface RiskFormProps {
 
 export const RiskForm = ({ isOpen, onClose, onSubmit, projectId, risk }: RiskFormProps) => {
   const { toast } = useToast();
+  const { user } = useAuthContext();
   const [description, setDescription] = useState("");
   const [probability, setProbability] = useState<RiskProbability>("medium");
   const [severity, setSeverity] = useState<RiskSeverity>("medium");
@@ -51,6 +54,15 @@ export const RiskForm = ({ isOpen, onClose, onSubmit, projectId, risk }: RiskFor
   }, [isOpen]);
 
   const handleSubmit = async () => {
+    if (!user) {
+      toast({
+        title: "Erreur",
+        description: "Vous devez être connecté pour effectuer cette action",
+        variant: "destructive",
+      });
+      return;
+    }
+
     if (!description.trim()) {
       toast({
         title: "Erreur",

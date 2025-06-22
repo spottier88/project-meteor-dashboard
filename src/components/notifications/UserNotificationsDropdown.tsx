@@ -1,6 +1,5 @@
 
 import { useState } from "react";
-import { useUser } from "@supabase/auth-helpers-react";
 import { Bell, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -23,9 +22,10 @@ import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { Notification } from "@/types/notification";
 import { useToast } from "@/components/ui/use-toast";
+import { useAuthContext } from "@/contexts/AuthContext";
 
 export const UserNotificationsDropdown = () => {
-  const user = useUser();
+  const { user } = useAuthContext();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [unreadCount, setUnreadCount] = useState(0);
