@@ -32,13 +32,19 @@ export function PermissionsProvider({ children }: { children: React.ReactNode })
   const user = useUser();
   const session = useSession();
   const [accessibleOrganizations, setAccessibleOrganizations] = useState<AccessibleOrganizations | null>(null);
-  const [isLoadingOrganizations, setIsLoadingOrganizations] = useState(true);
+  const [isLoadingOrganizations, setIsLoadingOrganizations] = useState(false);
+
+  console.log("[PermissionsProvider] Render avec:", { 
+    hasUser: !!user?.id, 
+    hasSession: !!session,
+    userEmail: user?.email 
+  });
 
   const { data: userRoles, isLoading: isLoadingRoles, isError: isRolesError } = useQuery({
     queryKey: ['userRoles', user?.id, session?.access_token] as const,
     queryFn: async () => {
       if (!user?.id) {
-        // console.log("[PermissionsProvider] No user ID available");
+        console.log("[PermissionsProvider] No user ID available");
         return [];
       }
       const { data, error } = await supabase
@@ -51,6 +57,7 @@ export function PermissionsProvider({ children }: { children: React.ReactNode })
         throw error;
       }
       const roles = data.map(ur => ur.role as UserRole);
+      console.log("[PermissionsProvider] Roles récupérés:", roles);
       return roles;
     },
     enabled: !!user?.id && !!session,
@@ -120,60 +127,45 @@ export function PermissionsProvider({ children }: { children: React.ReactNode })
     }
 
     loadAccessibleOrganizations();
-  }, [user?.id, isAdmin, isManager, isLoading, isError, userRoles]); // Ajout de userRoles comme dépendance
+  }, [user?.id, isAdmin, isManager, isLoading, isError, userRoles]);
 
-  // useEffect(() => {
-    // console.log("[PermissionsProvider] State update:", {
-    //   userId: user?.id,
-    //   userEmail: userProfile?.email,
-    //   userRoles,
-    //   highestRole,
-    //   isAdmin,
-    //   isManager,
-    //   isProjectManager,
-    //   isMember,
-    //   isTimeTracker,
-    //   isLoading,
-    //   isError,
-    //   sessionStatus: !!session,
-    //   accessibleOrganizations: {
-    //     poles: accessibleOrganizations?.poles?.length || 0,
-    //     directions: accessibleOrganizations?.directions?.length || 0,
-    //     services: accessibleOrganizations?.services?.length || 0
-    //   }
-    // });
-  // }, [user?.id, userProfile, userRoles, highestRole, isAdmin, isManager, isProjectManager, isMember, isTimeTracker, isLoading, isError, session, accessibleOrganizations]);
+  console.log("[PermissionsProvider] État final:", {
+    userId: user?.id,
+    hasSession: !!session,
+    userRoles,
+    isAdmin,
+    isLoading,
+    isError,
+    willRenderChildren: !!session
+  });
 
+  // CORRECTION: Ne jamais retourner null si une session existe
+  // Même en cas d'erreur ou de chargement, on fournit un contexte valide
   if (!session) {
+    console.log("[PermissionsProvider] Pas de session, pas de rendu");
     return null;
   }
 
-  if (isLoading) {
-    return null;
-  }
-
-  if (isError) {
-    console.error("[PermissionsProvider] Error loading permissions");
-    return null;
-  }
+  // Toujours fournir un contexte valide quand il y a une session
+  const contextValue: PermissionsState = {
+    userRoles: userRoles || [],
+    userProfile,
+    isAdmin,
+    isManager,
+    isProjectManager,
+    isMember,
+    isTimeTracker,
+    highestRole,
+    hasRole,
+    isLoading,
+    isError,
+    accessibleOrganizations,
+    canAccessAllOrganizations,
+    isLoadingOrganizations
+  };
 
   return (
-    <PermissionsContext.Provider value={{
-      userRoles,
-      userProfile,
-      isAdmin,
-      isManager,
-      isProjectManager,
-      isMember,
-      isTimeTracker,
-      highestRole,
-      hasRole,
-      isLoading,
-      isError,
-      accessibleOrganizations,
-      canAccessAllOrganizations,
-      isLoadingOrganizations
-    }}>
+    <PermissionsContext.Provider value={contextValue}>
       {children}
     </PermissionsContext.Provider>
   );

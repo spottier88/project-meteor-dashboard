@@ -11,7 +11,9 @@ import { StreamlinedQuickActions } from "@/components/dashboard/StreamlinedQuick
 import { PriorityProjects } from "@/components/dashboard/PriorityProjects";
 
 const Index = () => {
-  const { isLoading: isPermissionsLoading, isError: isPermissionsError } = usePermissionsContext();
+  const { isLoading: isPermissionsLoading } = usePermissionsContext();
+
+  console.log("[Index] Rendu avec isPermissionsLoading:", isPermissionsLoading);
 
   const [isProjectFormOpen, setIsProjectFormOpen] = useState(false);
   const [isProjectSelectionOpen, setIsProjectSelectionOpen] = useState(false);
@@ -49,26 +51,21 @@ const Index = () => {
     refetchProjects();
   };
 
-  if (isPermissionsLoading || isProjectsLoading) {
-    return <LoadingSpinner />;
-  }
-
-  if (isPermissionsError) {
-    return (
-      <div className="flex justify-center items-center h-screen">
-        <div className="text-red-600">
-          Une erreur s'est produite lors du chargement des permissions.
-          Veuillez rafraîchir la page.
-        </div>
-      </div>
-    );
-  }
+  // CORRECTION: Affichage progressif au lieu de bloquer complètement
+  // Seuls les projets peuvent ne pas être chargés au début
+  const shouldShowProjects = !isProjectsLoading;
+  
+  console.log("[Index] État de rendu:", {
+    isPermissionsLoading,
+    isProjectsLoading,
+    shouldShowProjects
+  });
 
   return (
     <div className="container mx-auto py-6 space-y-6">
       <UserInfo />
       
-      {/* En-tête simple */}
+      {/* En-tête simple - toujours visible */}
       <div className="mb-6">
         <h1 className="text-3xl font-bold tracking-tight">Tableau de bord</h1>
         <p className="text-muted-foreground">
@@ -76,17 +73,23 @@ const Index = () => {
         </p>
       </div>
 
-      {/* Dashboard compact */}
+      {/* Dashboard compact - toujours visible */}
       <CompactDashboard onNewProject={() => setIsProjectFormOpen(true)} />
 
-      {/* Actions rapides simplifiées */}
+      {/* Actions rapides simplifiées - toujours visibles */}
       <StreamlinedQuickActions 
         onNewProject={() => setIsProjectFormOpen(true)}
         onNewReview={handleNewReview}
       />
 
-      {/* Projets prioritaires */}
-      <PriorityProjects />
+      {/* Projets prioritaires - avec gestion du chargement */}
+      {isProjectsLoading ? (
+        <div className="flex justify-center py-8">
+          <LoadingSpinner />
+        </div>
+      ) : (
+        <PriorityProjects />
+      )}
 
       {/* Modales existantes */}
       <ProjectModals
