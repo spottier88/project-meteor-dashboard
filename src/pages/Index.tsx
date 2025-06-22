@@ -10,6 +10,10 @@ import { CompactDashboard } from "@/components/dashboard/CompactDashboard";
 import { StreamlinedQuickActions } from "@/components/dashboard/StreamlinedQuickActions";
 import { PriorityProjects } from "@/components/dashboard/PriorityProjects";
 
+/**
+ * Page d'accueil optimisée pour un affichage progressif
+ * Affiche le contenu de base immédiatement, puis charge les données en arrière-plan
+ */
 const Index = () => {
   const { isLoading: isPermissionsLoading } = usePermissionsContext();
 
@@ -27,6 +31,9 @@ const Index = () => {
   const { handleProjectFormSubmit } = useProjectFormHandlers(selectedProject);
   const { data: projects, isLoading: isProjectsLoading, refetch: refetchProjects } = useProjectsListView();
 
+  /**
+   * Gestionnaires d'événements pour les modales
+   */
   const handleProjectFormClose = () => {
     setIsProjectFormOpen(false);
     setSelectedProject(null);
@@ -51,21 +58,18 @@ const Index = () => {
     refetchProjects();
   };
 
-  // CORRECTION: Affichage progressif au lieu de bloquer complètement
-  // Seuls les projets peuvent ne pas être chargés au début
-  const shouldShowProjects = !isProjectsLoading;
-  
   console.log("[Index] État de rendu:", {
     isPermissionsLoading,
     isProjectsLoading,
-    shouldShowProjects
+    hasProjects: !!projects
   });
 
   return (
     <div className="container mx-auto py-6 space-y-6">
+      {/* Informations utilisateur - affichage immédiat */}
       <UserInfo />
       
-      {/* En-tête simple - toujours visible */}
+      {/* En-tête - toujours visible immédiatement */}
       <div className="mb-6">
         <h1 className="text-3xl font-bold tracking-tight">Tableau de bord</h1>
         <p className="text-muted-foreground">
@@ -73,16 +77,16 @@ const Index = () => {
         </p>
       </div>
 
-      {/* Dashboard compact - toujours visible */}
+      {/* Dashboard compact - affichage immédiat avec état de chargement si nécessaire */}
       <CompactDashboard onNewProject={() => setIsProjectFormOpen(true)} />
 
-      {/* Actions rapides simplifiées - toujours visibles */}
+      {/* Actions rapides - toujours visibles immédiatement */}
       <StreamlinedQuickActions 
         onNewProject={() => setIsProjectFormOpen(true)}
         onNewReview={handleNewReview}
       />
 
-      {/* Projets prioritaires - avec gestion du chargement */}
+      {/* Projets prioritaires - avec gestion intelligente du chargement */}
       {isProjectsLoading ? (
         <div className="flex justify-center py-8">
           <LoadingSpinner />
@@ -91,7 +95,7 @@ const Index = () => {
         <PriorityProjects />
       )}
 
-      {/* Modales existantes */}
+      {/* Modales - gestion indépendante du chargement principal */}
       <ProjectModals
         isProjectFormOpen={isProjectFormOpen}
         onProjectFormClose={handleProjectFormClose}

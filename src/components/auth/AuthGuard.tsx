@@ -1,92 +1,60 @@
 
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
+import { useAuthContext } from "@/contexts/AuthContext";
 
 interface AuthGuardProps {
   children: React.ReactNode;
   fallback: React.ReactNode;
 }
 
+/**
+ * Garde d'authentification optimisé
+ * Utilise le contexte d'authentification partagé pour éviter les vérifications doubles
+ * Gère les redirections de manière fluide
+ */
 export const AuthGuard = ({ children, fallback }: AuthGuardProps) => {
   const navigate = useNavigate();
-  const [isLoading, setIsLoading] = useState(true);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const { isAuthenticated, isLoading, isInitialized } = useAuthContext();
+  const [hasRedirected, setHasRedirected] = useState(false);
+
+  console.log("[AuthGuard] État:", { 
+    isAuthenticated, 
+    isLoading, 
+    isInitialized,
+    currentPath: window.location.pathname 
+  });
 
   useEffect(() => {
-    let mounted = true;
+    // Attendre que l'état d'authentification soit initialisé
+    if (!isInitialized) {
+      return;
+    }
 
-    const checkAuth = async () => {
-      try {
-        const { data: { session }, error } = await supabase.auth.getSession();
-        
-        if (mounted) {
-          if (error) {
-            console.error("Erreur lors de la vérification de session:", error);
-            setIsAuthenticated(false);
-          } else {
-            setIsAuthenticated(!!session);
-            console.log("Session initiale:", !!session, "Route:", window.location.pathname);
-            
-            // Si connecté et sur une page d'auth, rediriger vers l'accueil
-            if (session && (window.location.pathname === '/login' || window.location.pathname === '/auth/callback')) {
-              console.log("Redirection vers / depuis:", window.location.pathname);
-              navigate("/", { replace: true });
-            }
-          }
-          setIsLoading(false);
-        }
-      } catch (error) {
-        console.error("Erreur inattendue lors de la vérification d'authentification:", error);
-        if (mounted) {
-          setIsAuthenticated(false);
-          setIsLoading(false);
-        }
-      }
-    };
+    const currentPath = window.location.pathname;
+    
+    // Si l'utilisateur est connecté et sur une page d'auth, rediriger vers l'accueil
+    if (isAuthenticated && (currentPath === '/login' || currentPath === '/auth/callback') && !hasRedirected) {
+      console.log("[AuthGuard] Redirection utilisateur connecté vers /");
+      setHasRedirected(true);
+      navigate("/", { replace: true });
+    }
+  }, [isAuthenticated, isInitialized, navigate, hasRedirected]);
 
-    // Vérifier la session existante
-    checkAuth();
-
-    // Écouter les changements d'état d'authentification
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        if (!mounted) return;
-        
-        console.log("Auth state change:", event, !!session, "Route:", window.location.pathname);
-        
-        if (event === 'SIGNED_OUT') {
-          setIsAuthenticated(false);
-          setIsLoading(false);
-          navigate("/login", { replace: true });
-        } else if (event === 'SIGNED_IN') {
-          setIsAuthenticated(true);
-          setIsLoading(false);
-          // Rediriger vers l'accueil après connexion réussie seulement si on est sur login
-          if (window.location.pathname === '/login' || window.location.pathname === '/auth/callback') {
-            console.log("Redirection post-connexion vers /");
-            navigate("/", { replace: true });
-          }
-        } else if (event === 'TOKEN_REFRESHED') {
-          setIsAuthenticated(!!session);
-          setIsLoading(false);
-        } else {
-          setIsAuthenticated(!!session);
-          setIsLoading(false);
-        }
-      }
-    );
-
-    return () => {
-      mounted = false;
-      subscription.unsubscribe();
-    };
-  }, [navigate]);
-
-  if (isLoading) {
+  // Afficher le spinner pendant l'initialisation
+  if (!isInitialized || isLoading) {
+    console.log("[AuthGuard] Affichage du spinner de chargement");
     return <LoadingSpinner />;
   }
 
-  return isAuthenticated ? <>{children}</> : <>{fallback}</>;
+  // Afficher le contenu approprié selon l'état d'authentification
+  const shouldShowChildren = isAuthenticated;
+  
+  console.log("[AuthGuard] Décision d'affichage:", { 
+    shouldShowChildren, 
+    isAuthenticated 
+  });
+
+  return shouldShowChildren ? <>{children}</> : <>{fallback}</>;
 };
