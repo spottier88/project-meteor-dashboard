@@ -1,6 +1,5 @@
 import { Dialog, DialogContent, DialogFooter } from "@/components/ui/dialog";
 import { useQuery } from "@tanstack/react-query";
-import { useUser } from "@supabase/auth-helpers-react";
 import { ProjectFormHeader } from "./form/ProjectFormHeader";
 import { ProjectFormContent } from "./form/ProjectFormContent";
 import { ProjectFormNavigation } from "./form/ProjectFormNavigation";
@@ -14,6 +13,7 @@ import { useProjectPermissions } from "@/hooks/useProjectPermissions";
 import { ProfileForm } from "./profile/ProfileForm";
 import { UserProfile } from "@/types/user";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuthContext } from "@/contexts/AuthContext";
 
 interface ProjectFormProps {
   isOpen: boolean;
@@ -23,7 +23,7 @@ interface ProjectFormProps {
 }
 
 export const ProjectForm = ({ isOpen, onClose, onSubmit, project }: ProjectFormProps) => {
-  const user = useUser();
+  const { user } = useAuthContext();
   const formState = useProjectFormState(isOpen, project);
   const validation = useProjectFormValidation();
   const { canEdit, canCreate, canEditOrganization, accessibleOrganizations } = useProjectPermissions(project?.id || "");
@@ -53,12 +53,17 @@ export const ProjectForm = ({ isOpen, onClose, onSubmit, project }: ProjectFormP
     enabled: !!user?.id,
   });
 
-  const { data: projectManagers } = useQuery({
-    queryKey: ["projectManagers", user?.id, validation.userRoles],
+  // Simplified project managers query - always fetch when form is open and user is available
+  const { data: projectManagers, isLoading: projectManagersLoading } = useQuery({
+    queryKey: ["projectManagers", user?.id],
     queryFn: async () => {
-      return getProjectManagers(user?.id, validation.userRoles?.map(ur => ur.role));
+      if (!user?.id) return [];
+      console.log("Fetching project managers for user:", user.id);
+      const managers = await getProjectManagers(user.id, validation.userRoles?.map(ur => ur.role));
+      console.log("Project managers fetched:", managers);
+      return managers;
     },
-    enabled: isOpen && !!user?.id && !!validation.userRoles,
+    enabled: isOpen && !!user?.id,
   });
 
   const { 
