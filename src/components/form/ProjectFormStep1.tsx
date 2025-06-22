@@ -47,6 +47,9 @@ export const ProjectFormStep1 = ({
   setOwnerId,
   projectManagers
 }: ProjectFormStep1Props) => {
+  // Ajouter un log pour vérifier les données reçues
+  console.log("ProjectFormStep1 - projectManagers:", projectManagers);
+  
   return (
     <div className="space-y-6">
       <div className="grid gap-4">
