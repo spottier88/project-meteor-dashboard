@@ -128,27 +128,45 @@ export const useProjectSubmit = ({
         for_entity_id: formState.forEntityId,
       };
 
+      console.log("Soumission des données du projet:", projectData);
+
       // Soumettre les données du projet principal
       const result = await onSubmit(projectData);
       
-      if (!result || !result.id) {
-        throw new Error("Erreur lors de la création/mise à jour du projet");
+      console.log("Résultat de onSubmit:", result);
+      
+      // Vérifier que nous avons un résultat valide avec un ID
+      let projectId = null;
+      
+      if (result && typeof result === 'object') {
+        // Si result est un objet, chercher l'ID
+        projectId = result.id || result[0]?.id;
+      } else if (project?.id) {
+        // Si c'est une mise à jour, utiliser l'ID du projet existant
+        projectId = project.id;
       }
+      
+      if (!projectId) {
+        console.error("Impossible de récupérer l'ID du projet. Résultat:", result);
+        throw new Error("Impossible de récupérer l'ID du projet après la création/mise à jour");
+      }
+
+      console.log("ID du projet récupéré:", projectId);
 
       // Enregistrer les données annexes dans les tables spécialisées
       await Promise.all([
-        saveFramingData(result.id),
-        saveInnovationData(result.id),
-        saveMonitoringData(result.id)
+        saveFramingData(projectId),
+        saveInnovationData(projectId),
+        saveMonitoringData(projectId)
       ]);
       
       // Si un modèle a été sélectionné et qu'il s'agit d'un nouveau projet, créer les tâches
-      if (formState.templateId && result && result.id) {
+      if (formState.templateId && projectId) {
         logger.debug(
           "Création des tâches à partir du modèle:",
           formState.templateId,
           "pour le projet:",
-          result.id
+          projectId
         );
         // Nous passons explicitement formState.startDate pour utiliser la date saisie par l'utilisateur
         const startDateString = formState.startDate
@@ -156,7 +174,7 @@ export const useProjectSubmit = ({
           : undefined;
         logger.debug("Date de début utilisée pour les tâches:", startDateString);
         
-        const tasksCreated = await createTasksFromTemplate(formState.templateId, result.id, startDateString);
+        const tasksCreated = await createTasksFromTemplate(formState.templateId, projectId, startDateString);
         
         if (tasksCreated) {
           toast({
@@ -169,7 +187,7 @@ export const useProjectSubmit = ({
           "Pas de création de tâches - templateId:",
           formState.templateId,
           "project:",
-          result?.id
+          projectId
         );
       }
       
