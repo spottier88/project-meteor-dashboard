@@ -1,55 +1,36 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { ActivityType } from "@/types/activity";
-import { useUserActivityTypePermissions } from "./useUserActivityTypePermissions";
-import { useSession } from "@supabase/auth-helpers-react";
+import { useAuthContext } from "@/contexts/AuthContext";
 
-export const useActivityTypes = (activeOnly: boolean = true, respectPermissions: boolean = true) => {
-  const session = useSession();
-  const { permittedTypes, isLoading: isLoadingPermissions } = useUserActivityTypePermissions();
-  const isAdmin = session?.user?.id ? session.user.app_metadata?.claims_admin : false;
+interface ActivityType {
+  id: string;
+  code: string;
+  label: string;
+  is_active: boolean;
+  created_at: string;
+}
 
-  // Pour garantir la compatibilité avec React Query, nous utilisons toujours useQuery
-  // même lorsque nous retournons les types filtrés
-  const { data: allTypes, isLoading: isLoadingAllTypes } = useQuery({
-    queryKey: ["activity-types", activeOnly],
+export const useActivityTypes = () => {
+  const { user } = useAuthContext();
+  
+  return useQuery<ActivityType[]>({
+    queryKey: ["activity-types", user?.id],
     queryFn: async () => {
-      let query = supabase
+      const { data, error } = await supabase
         .from("activity_types")
         .select("*")
-        .order("display_order", { ascending: true });
-      
-      if (activeOnly) {
-        query = query.eq("is_active", true);
-      }
-      
-      const { data, error } = await query;
+        .eq("is_active", true)
+        .order("label");
       
       if (error) {
-        console.error("Error fetching activity types:", error);
+        console.error("Erreur lors de la récupération des types d'activité:", error);
         throw error;
       }
       
-      return data as ActivityType[];
+      return data;
     },
-    refetchOnWindowFocus: false,
+    enabled: !!user?.id,
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
-
-  // Si on respecte les permissions et que l'utilisateur n'est pas admin
-  if (respectPermissions && !isAdmin && permittedTypes) {
-    return {
-      data: permittedTypes,
-      isLoading: isLoadingPermissions || isLoadingAllTypes,
-      error: null
-    };
-  }
-
-  // Sinon, on renvoie tous les types d'activités (comportement original)
-  return {
-    data: allTypes || [],
-    isLoading: isLoadingAllTypes,
-    error: null
-  };
 };

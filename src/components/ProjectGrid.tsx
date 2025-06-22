@@ -2,13 +2,13 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import { ProjectCard } from "./ProjectCard";
 import { ProjectStatus, ProgressStatus, ProjectLifecycleStatus } from "@/types/project";
-import { useUser } from "@supabase/auth-helpers-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useManagerProjectAccess } from "@/hooks/use-manager-project-access";
 import { usePermissionsContext } from "@/contexts/PermissionsContext";
 import { ProjectListItem } from '@/hooks/use-projects-list-view';
 import { ProjectPagination } from "./project/ProjectPagination";
+import { useAuthContext } from "@/contexts/AuthContext";
 
 interface ProjectGridProps {
   projects: ProjectListItem[];
@@ -31,7 +31,7 @@ export const ProjectGrid = ({
   pageSize,
   onPageChange,
 }: ProjectGridProps) => {
-  const user = useUser();
+  const { user } = useAuthContext();
   const [isPermissionsLoaded, setIsPermissionsLoaded] = useState(false);
   const { userProfile, isAdmin, isManager, isProjectManager, isMember, highestRole, isLoading } = usePermissionsContext();
   

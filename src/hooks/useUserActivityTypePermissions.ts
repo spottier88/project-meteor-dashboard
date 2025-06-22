@@ -1,71 +1,54 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useSession } from "@supabase/auth-helpers-react";
-import { ActivityType } from "@/types/activity";
+import { useAuthContext } from "@/contexts/AuthContext";
 
-/**
- * Hook pour récupérer les types d'activités auxquels l'utilisateur a accès
- * selon ses affectations hiérarchiques
- */
+interface ActivityTypePermission {
+  activity_type_code: string;
+  entity_type: string;
+  entity_id: string;
+}
+
 export const useUserActivityTypePermissions = () => {
-  const session = useSession();
-  const userId = session?.user?.id;
-
-  // Récupérer tous les types d'activités
-  const { data: allActivityTypes, isLoading: isLoadingAllTypes } = useQuery({
-    queryKey: ["all-activity-types"],
+  const { user } = useAuthContext();
+  
+  return useQuery({
+    queryKey: ["user-activity-type-permissions", user?.id],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("activity_types")
-        .select("*")
-        .eq("is_active", true)
-        .order("display_order", { ascending: true });
+      if (!user?.id) return [];
       
-      if (error) {
-        console.error("Error fetching activity types:", error);
-        throw error;
+      // Récupérer toutes les permissions de types d'activité
+      const { data: allPermissions, error: permissionsError } = await supabase
+        .from("activity_type_permissions")
+        .select("*");
+
+      if (permissionsError) {
+        console.error("Erreur lors de la récupération des permissions:", permissionsError);
+        throw permissionsError;
       }
-      
-      return data as ActivityType[];
-    },
-  });
 
-  // Vérifier quels types d'activités l'utilisateur peut utiliser
-  const { data: permittedTypes, isLoading } = useQuery({
-    queryKey: ["permitted-activity-types", userId],
-    queryFn: async () => {
-      if (!userId) return [];
-      
-      if (!allActivityTypes || allActivityTypes.length === 0) return [];
+      // Récupérer les affectations hiérarchiques de l'utilisateur
+      const { data: userAssignments, error: assignmentsError } = await supabase
+        .from("user_hierarchy_assignments")
+        .select("entity_type, entity_id")
+        .eq("user_id", user.id);
 
-      // Pour chaque type d'activité, vérifier si l'utilisateur peut l'utiliser
-      const permissionChecks = await Promise.all(
-        allActivityTypes.map(async (type) => {
-          const { data, error } = await supabase
-            .rpc("can_use_activity_type", {
-              p_user_id: userId,
-              p_activity_type_code: type.code,
-            });
+      if (assignmentsError) {
+        console.error("Erreur lors de la récupération des affectations:", assignmentsError);
+        throw assignmentsError;
+      }
 
-          if (error) {
-            console.error(`Error checking permission for ${type.code}:`, error);
-            return null;
-          }
-
-          return data ? type : null;
-        })
+      // Filtrer les permissions selon les affectations de l'utilisateur
+      const userPermissions = allPermissions.filter(permission => 
+        userAssignments.some(assignment => 
+          assignment.entity_type === permission.entity_type && 
+          assignment.entity_id === permission.entity_id
+        )
       );
 
-      // Filtrer les types null et retourner les types autorisés
-      return permissionChecks.filter(Boolean) as ActivityType[];
+      return userPermissions.map(p => p.activity_type_code);
     },
-    enabled: !!userId && !!allActivityTypes && allActivityTypes.length > 0,
+    enabled: !!user?.id,
+    staleTime: 5 * 60 * 1000, // 5 minutes
   });
-
-  return {
-    permittedTypes: permittedTypes || [],
-    isLoading: isLoading || isLoadingAllTypes,
-    isAdmin: session?.user ? !!session.user.app_metadata?.claims_admin : false,
-  };
 };

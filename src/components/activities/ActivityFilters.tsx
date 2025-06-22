@@ -7,8 +7,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { usePermissionsContext } from "@/contexts/PermissionsContext";
-import { useUser } from "@supabase/auth-helpers-react";
 import { useActivityTypes } from '@/hooks/useActivityTypes';
+import { useAuthContext } from "@/contexts/AuthContext";
 
 interface ActivityFiltersProps {
   period: string;
@@ -32,7 +32,7 @@ export const ActivityFilters = ({
   setSelectedUserId
 }: ActivityFiltersProps) => {
   const { isAdmin, isManager } = usePermissionsContext();
-  const user = useUser();
+  const { user } = useAuthContext();
   const { data: activityTypes } = useActivityTypes();
 
   const { data: projects } = useQuery({

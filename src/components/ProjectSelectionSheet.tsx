@@ -5,11 +5,11 @@ import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { StatusIcon } from "./project/StatusIcon";
 import { Project, ProjectStatus } from "@/types/project";
-import { useUser } from "@supabase/auth-helpers-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { UserRoleData } from "@/types/user";
 import { ProjectListItem } from "@/hooks/use-projects-list-view";
+import { useAuthContext } from "@/contexts/AuthContext";
 
 interface ProjectWithStatus {
   id: string;
@@ -35,7 +35,7 @@ export const ProjectSelectionSheet = ({
   onProjectSelect,
 }: ProjectSelectionSheetProps) => {
   const [searchTerm, setSearchTerm] = useState("");
-  const user = useUser();
+  const { user } = useAuthContext();
 
   const { data: userRoles } = useQuery({
     queryKey: ["userRoles", user?.id],

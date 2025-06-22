@@ -7,7 +7,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Trash2 } from "lucide-react";
-import { useUser } from '@supabase/auth-helpers-react';
+import { useAuthContext } from "@/contexts/AuthContext";
 
 interface Activity {
   id: string;
@@ -35,7 +35,7 @@ interface ActivityListProps {
 }
 
 export const ActivityList = ({ dailyActivities, onDelete, showDeleteButton = false }: ActivityListProps) => {
-  const user = useUser();
+  const { user } = useAuthContext();
   
   // Récupérer tous les types d'activités
   const { data: activityTypes } = useQuery({

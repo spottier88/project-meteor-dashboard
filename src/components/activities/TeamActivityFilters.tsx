@@ -1,10 +1,11 @@
+
 import React from 'react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useUser } from '@supabase/auth-helpers-react';
 import { useActivityTypes } from '@/hooks/useActivityTypes';
 import { logger } from '@/utils/logger';
+import { useAuthContext } from "@/contexts/AuthContext";
 
 interface TeamActivityFiltersProps {
   period: string;
@@ -27,7 +28,7 @@ export const TeamActivityFilters = ({
   selectedUserId,
   setSelectedUserId,
 }: TeamActivityFiltersProps) => {
-  const user = useUser();
+  const { user } = useAuthContext();
   const { data: activityTypes } = useActivityTypes();
 
   // Récupérer la liste des utilisateurs en utilisant la nouvelle fonction
