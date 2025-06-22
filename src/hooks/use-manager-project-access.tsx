@@ -1,9 +1,10 @@
+
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useUser } from "@supabase/auth-helpers-react";
+import { useAuthContext } from "@/contexts/AuthContext";
 
 export const useManagerProjectAccess = (projectIds: string[]) => {
-  const user = useUser();
+  const { user } = useAuthContext();
 
   return useQuery({
     queryKey: ["projectAccess", projectIds, user?.id],

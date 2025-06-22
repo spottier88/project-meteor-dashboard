@@ -1,6 +1,7 @@
+
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useUser } from '@supabase/auth-helpers-react';
+import { useAuthContext } from "@/contexts/AuthContext";
 import { Database } from "@/integrations/supabase/types";
 import { addDays, format, isSameDay } from "date-fns";
 import { fr } from "date-fns/locale";
@@ -34,7 +35,7 @@ export const useActivityData = (
   periodEnd: Date,
   selectedUserId: string
 ) => {
-  const user = useUser();
+  const { user } = useAuthContext();
 
   const { data: activities, isLoading, error } = useQuery({
     queryKey: ['activities', isTeamView, period, projectId, activityType, periodStart.toISOString(), selectedUserId],
