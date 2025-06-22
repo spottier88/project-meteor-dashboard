@@ -14,6 +14,7 @@ import { ProfileForm } from "./profile/ProfileForm";
 import { UserProfile } from "@/types/user";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuthContext } from "@/contexts/AuthContext";
+import { usePermissionsContext } from "@/contexts/PermissionsContext";
 
 interface ProjectFormProps {
   isOpen: boolean;
@@ -24,6 +25,7 @@ interface ProjectFormProps {
 
 export const ProjectForm = ({ isOpen, onClose, onSubmit, project }: ProjectFormProps) => {
   const { user } = useAuthContext();
+  const { userRoles } = usePermissionsContext();
   const formState = useProjectFormState(isOpen, project);
   const validation = useProjectFormValidation();
   const { canEdit, canCreate, canEditOrganization, accessibleOrganizations } = useProjectPermissions(project?.id || "");
@@ -53,17 +55,29 @@ export const ProjectForm = ({ isOpen, onClose, onSubmit, project }: ProjectFormP
     enabled: !!user?.id,
   });
 
-  // Simplified project managers query - always fetch when form is open and user is available
-  const { data: projectManagers, isLoading: projectManagersLoading } = useQuery({
-    queryKey: ["projectManagers", user?.id],
+  // Requête pour récupérer les chefs de projet avec gestion des rôles
+  const { data: projectManagers, isLoading: projectManagersLoading, error: projectManagersError } = useQuery({
+    queryKey: ["projectManagers", user?.id, userRoles],
     queryFn: async () => {
-      if (!user?.id) return [];
-      console.log("Fetching project managers for user:", user.id);
-      const managers = await getProjectManagers(user.id, validation.userRoles?.map(ur => ur.role));
-      console.log("Project managers fetched:", managers);
+      if (!user?.id) {
+        console.log("No user ID available for project managers query");
+        return [];
+      }
+      console.log("Fetching project managers for user:", user.id, "with roles:", userRoles);
+      const managers = await getProjectManagers(user.id, userRoles);
+      console.log("Project managers fetched:", managers?.length, "managers");
       return managers;
     },
     enabled: isOpen && !!user?.id,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  });
+
+  // Log pour déboguer
+  console.log("ProjectForm - projectManagers state:", {
+    isLoading: projectManagersLoading,
+    error: projectManagersError,
+    data: projectManagers,
+    userRoles: userRoles
   });
 
   const { 

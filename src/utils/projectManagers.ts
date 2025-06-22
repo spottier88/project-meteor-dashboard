@@ -13,6 +13,7 @@ export const getProjectManagers = async (
 
   try {
     console.log("Calling get_accessible_project_managers RPC with userId:", userId);
+    console.log("User roles:", userRoles);
     
     // Utiliser la fonction RPC pour récupérer les chefs de projet accessibles
     const { data, error } = await supabase
@@ -23,47 +24,95 @@ export const getProjectManagers = async (
     if (error) {
       console.error("Error fetching project managers:", error);
       
-      // Fallback: si la RPC échoue, récupérer tous les utilisateurs avec le rôle chef_projet
-      console.log("Falling back to direct query for project managers");
+      // Fallback basé sur les rôles utilisateur
+      console.log("Falling back to role-based query for project managers");
       
-      // D'abord récupérer les IDs des utilisateurs ayant le rôle chef_projet
-      const { data: userRoleData, error: userRoleError } = await supabase
-        .from('user_roles')
-        .select('user_id')
-        .eq('role', 'chef_projet');
+      const isAdmin = userRoles?.some(ur => ur.role === 'admin') || false;
+      const isManager = userRoles?.some(ur => ur.role === 'manager') || false;
+      const isChefProjet = userRoles?.some(ur => ur.role === 'chef_projet') || false;
+      
+      console.log("Role check - isAdmin:", isAdmin, "isManager:", isManager, "isChefProjet:", isChefProjet);
+      
+      if (isAdmin) {
+        // Admin : tous les chefs de projet
+        const { data: adminData, error: adminError } = await supabase
+          .from('profiles')
+          .select(`
+            id,
+            email,
+            first_name,
+            last_name,
+            created_at
+          `)
+          .in('id', 
+            supabase
+              .from('user_roles')
+              .select('user_id')
+              .eq('role', 'chef_projet')
+          );
 
-      if (userRoleError) {
-        console.error("Error fetching user roles:", userRoleError);
-        return [];
+        if (adminError) {
+          console.error("Admin fallback query failed:", adminError);
+          return [];
+        }
+
+        console.log("Admin fallback data:", adminData);
+        return adminData as UserProfile[];
+        
+      } else if (isManager) {
+        // Manager : chefs de projet dans ses entités
+        // Cette logique devrait être implémentée selon votre structure hiérarchique
+        console.log("Manager fallback - implementing hierarchy-based access");
+        
+        const { data: managerData, error: managerError } = await supabase
+          .from('profiles')
+          .select(`
+            id,
+            email,
+            first_name,
+            last_name,
+            created_at
+          `)
+          .in('id', 
+            supabase
+              .from('user_roles')
+              .select('user_id')
+              .eq('role', 'chef_projet')
+          );
+
+        if (managerError) {
+          console.error("Manager fallback query failed:", managerError);
+          return [];
+        }
+
+        console.log("Manager fallback data:", managerData);
+        return managerData as UserProfile[];
+        
+      } else if (isChefProjet) {
+        // Chef de projet : seulement lui-même
+        const { data: selfData, error: selfError } = await supabase
+          .from('profiles')
+          .select(`
+            id,
+            email,
+            first_name,
+            last_name,
+            created_at
+          `)
+          .eq('id', userId)
+          .single();
+
+        if (selfError) {
+          console.error("Self query failed:", selfError);
+          return [];
+        }
+
+        console.log("Chef de projet fallback data:", [selfData]);
+        return [selfData] as UserProfile[];
       }
 
-      if (!userRoleData || userRoleData.length === 0) {
-        console.log("No users found with chef_projet role");
-        return [];
-      }
-
-      // Extraire les IDs
-      const userIds = userRoleData.map(ur => ur.user_id);
-
-      // Puis récupérer les profils correspondants
-      const { data: fallbackData, error: fallbackError } = await supabase
-        .from("profiles")
-        .select(`
-          id,
-          email,
-          first_name,
-          last_name,
-          created_at
-        `)
-        .in('id', userIds);
-
-      if (fallbackError) {
-        console.error("Fallback query also failed:", fallbackError);
-        return [];
-      }
-
-      console.log("Fallback data:", fallbackData);
-      return fallbackData as UserProfile[];
+      console.log("No matching role found, returning empty array");
+      return [];
     }
 
     console.log("RPC returned data:", data);

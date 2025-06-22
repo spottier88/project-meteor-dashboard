@@ -1,4 +1,3 @@
-
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -47,9 +46,11 @@ export const BasicProjectFields = ({
   projectManagers
 }: BasicProjectFieldsProps) => {
   
-  // Ajouter un log pour vérifier les données dans BasicProjectFields
-  console.log("BasicProjectFields - projectManagers received:", projectManagers);
-  console.log("BasicProjectFields - projectManagers length:", projectManagers?.length);
+  console.log("BasicProjectFields render - projectManagers:", {
+    available: !!projectManagers,
+    count: projectManagers?.length || 0,
+    data: projectManagers
+  });
   
   return (
     <>
@@ -80,7 +81,15 @@ export const BasicProjectFields = ({
             <SelectValue placeholder="Sélectionnez un chef de projet" />
           </SelectTrigger>
           <SelectContent>
-            {projectManagers && projectManagers.length > 0 ? (
+            {projectManagers === undefined ? (
+              <SelectItem value="" disabled>
+                Chargement des chefs de projet...
+              </SelectItem>
+            ) : projectManagers.length === 0 ? (
+              <SelectItem value="" disabled>
+                Aucun chef de projet disponible
+              </SelectItem>
+            ) : (
               projectManagers.map((manager) => (
                 <SelectItem key={manager.id} value={manager.email || ""}>
                   {manager.first_name && manager.last_name 
@@ -88,10 +97,6 @@ export const BasicProjectFields = ({
                     : manager.email}
                 </SelectItem>
               ))
-            ) : (
-              <SelectItem value="" disabled>
-                {projectManagers === undefined ? "Chargement..." : "Aucun chef de projet disponible"}
-              </SelectItem>
             )}
           </SelectContent>
         </Select>
