@@ -7,31 +7,35 @@ import { LoadingSpinner } from "@/components/ui/loading-spinner";
 export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const navigate = useNavigate();
   const pathname = window.location.pathname;
-  const { isAdmin } = usePermissionsContext();
+  const { isAdmin, isLoading: isPermissionsLoading } = usePermissionsContext();
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Simuler un délai pour laisser le temps aux permissions de se charger
+    // Réduire le délai d'attente pour les permissions
     const timer = setTimeout(() => {
       setIsLoading(false);
-    }, 100);
+    }, 50);
 
     return () => clearTimeout(timer);
   }, []);
 
-  // Vérifier les droits admin pour les routes admin
+  // Vérifier les droits admin pour les routes admin uniquement
   useEffect(() => {
-    if (!isLoading) {
+    if (!isLoading && !isPermissionsLoading) {
       const isAdminRoute = pathname.startsWith("/admin");
       if (isAdminRoute && !isAdmin) {
         navigate("/", { replace: true });
       }
     }
-  }, [pathname, isAdmin, navigate, isLoading]);
+  }, [pathname, isAdmin, navigate, isLoading, isPermissionsLoading]);
 
-  if (isLoading) {
+  // Ne pas bloquer l'affichage pour les routes non-admin
+  const isAdminRoute = pathname.startsWith("/admin");
+  
+  if (isAdminRoute && (isLoading || isPermissionsLoading)) {
     return <LoadingSpinner />;
   }
 
+  // Pour les routes non-admin, afficher directement le contenu
   return <>{children}</>;
 };

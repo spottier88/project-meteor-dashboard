@@ -27,9 +27,11 @@ export const AuthGuard = ({ children, fallback }: AuthGuardProps) => {
             setIsAuthenticated(false);
           } else {
             setIsAuthenticated(!!session);
+            console.log("Session initiale:", !!session, "Route:", window.location.pathname);
             
             // Si connecté et sur une page d'auth, rediriger vers l'accueil
             if (session && (window.location.pathname === '/login' || window.location.pathname === '/auth/callback')) {
+              console.log("Redirection vers / depuis:", window.location.pathname);
               navigate("/", { replace: true });
             }
           }
@@ -52,7 +54,7 @@ export const AuthGuard = ({ children, fallback }: AuthGuardProps) => {
       async (event, session) => {
         if (!mounted) return;
         
-        console.log("Auth state change:", event, !!session);
+        console.log("Auth state change:", event, !!session, "Route:", window.location.pathname);
         
         if (event === 'SIGNED_OUT') {
           setIsAuthenticated(false);
@@ -61,8 +63,11 @@ export const AuthGuard = ({ children, fallback }: AuthGuardProps) => {
         } else if (event === 'SIGNED_IN') {
           setIsAuthenticated(true);
           setIsLoading(false);
-          // Rediriger vers l'accueil après connexion réussie
-          navigate("/", { replace: true });
+          // Rediriger vers l'accueil après connexion réussie seulement si on est sur login
+          if (window.location.pathname === '/login' || window.location.pathname === '/auth/callback') {
+            console.log("Redirection post-connexion vers /");
+            navigate("/", { replace: true });
+          }
         } else if (event === 'TOKEN_REFRESHED') {
           setIsAuthenticated(!!session);
           setIsLoading(false);
