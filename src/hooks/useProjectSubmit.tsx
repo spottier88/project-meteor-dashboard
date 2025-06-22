@@ -49,10 +49,10 @@ export const useProjectSubmit = ({
         monitoringLevel: formState.monitoringLevel,
         monitoringEntityId: getMonitoringEntityId(formState.monitoringLevel),
         owner_id: formState.ownerId || null,
-        // Assignation basée sur l'organisation du chef de projet
-        poleId: pole?.id || null,
-        directionId: direction?.id || null,
-        serviceId: service?.id || null,
+        // Assignation basée sur l'organisation du chef de projet - utiliser les bons noms de colonnes
+        pole_id: pole?.id || null,
+        direction_id: direction?.id || null,
+        service_id: service?.id || null,
         lifecycleStatus: formState.lifecycleStatus,
         for_entity_type: formState.forEntityType,
         for_entity_id: formState.forEntityId,
