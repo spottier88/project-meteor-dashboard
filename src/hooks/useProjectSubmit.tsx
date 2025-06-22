@@ -41,7 +41,7 @@ export const useProjectSubmit = ({
       });
 
     if (error) {
-      logger.error("Erreur lors de l'enregistrement des données de cadrage:", error);
+      logger.error("Erreur lors de l'enregistrement des données de cadrage:", error.message);
       throw error;
     }
   };
@@ -64,7 +64,7 @@ export const useProjectSubmit = ({
       });
 
     if (error) {
-      logger.error("Erreur lors de l'enregistrement des scores d'innovation:", error);
+      logger.error("Erreur lors de l'enregistrement des scores d'innovation:", error.message);
       throw error;
     }
   };
@@ -99,7 +99,7 @@ export const useProjectSubmit = ({
       });
 
     if (error) {
-      logger.error("Erreur lors de l'enregistrement des données de monitoring:", error);
+      logger.error("Erreur lors de l'enregistrement des données de monitoring:", error.message);
       throw error;
     }
   };
