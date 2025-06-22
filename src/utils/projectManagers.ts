@@ -25,6 +25,27 @@ export const getProjectManagers = async (
       
       // Fallback: si la RPC échoue, récupérer tous les utilisateurs avec le rôle chef_projet
       console.log("Falling back to direct query for project managers");
+      
+      // D'abord récupérer les IDs des utilisateurs ayant le rôle chef_projet
+      const { data: userRoleData, error: userRoleError } = await supabase
+        .from('user_roles')
+        .select('user_id')
+        .eq('role', 'chef_projet');
+
+      if (userRoleError) {
+        console.error("Error fetching user roles:", userRoleError);
+        return [];
+      }
+
+      if (!userRoleData || userRoleData.length === 0) {
+        console.log("No users found with chef_projet role");
+        return [];
+      }
+
+      // Extraire les IDs
+      const userIds = userRoleData.map(ur => ur.user_id);
+
+      // Puis récupérer les profils correspondants
       const { data: fallbackData, error: fallbackError } = await supabase
         .from("profiles")
         .select(`
@@ -34,12 +55,7 @@ export const getProjectManagers = async (
           last_name,
           created_at
         `)
-        .in('id', 
-          supabase
-            .from('user_roles')
-            .select('user_id')
-            .eq('role', 'chef_projet')
-        );
+        .in('id', userIds);
 
       if (fallbackError) {
         console.error("Fallback query also failed:", fallbackError);
