@@ -155,6 +155,9 @@ export const useProjectFormHandlers = (selectedProject?: any) => {
         });
       }
 
+      // Retourner l'ID du projet pour que useProjectSubmit puisse l'utiliser
+      return { id: projectId };
+
     } catch (error) {
       console.error("Erreur lors de la soumission du projet:", error);
       toast({
@@ -162,6 +165,7 @@ export const useProjectFormHandlers = (selectedProject?: any) => {
         description: "Une erreur est survenue lors de la sauvegarde",
         variant: "destructive",
       });
+      throw error;
     } finally {
       setIsSubmitting(false);
     }

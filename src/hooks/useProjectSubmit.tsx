@@ -128,30 +128,23 @@ export const useProjectSubmit = ({
         for_entity_id: formState.forEntityId,
       };
 
-      console.log("Soumission des données du projet:", projectData);
-
       // Soumettre les données du projet principal
       const result = await onSubmit(projectData);
       
-      console.log("Résultat de onSubmit:", result);
+      // Récupérer l'ID du projet de manière simplifiée
+      let projectId: string | null = null;
       
-      // Vérifier que nous avons un résultat valide avec un ID
-      let projectId = null;
-      
-      if (result && typeof result === 'object') {
-        // Si result est un objet, chercher l'ID
-        projectId = result.id || result[0]?.id;
+      if (result && result.id) {
+        // Cas normal : l'ID est directement dans result.id
+        projectId = result.id;
       } else if (project?.id) {
-        // Si c'est une mise à jour, utiliser l'ID du projet existant
+        // Cas de mise à jour : utiliser l'ID du projet existant
         projectId = project.id;
       }
       
       if (!projectId) {
-        console.error("Impossible de récupérer l'ID du projet. Résultat:", result);
         throw new Error("Impossible de récupérer l'ID du projet après la création/mise à jour");
       }
-
-      console.log("ID du projet récupéré:", projectId);
 
       // Enregistrer les données annexes dans les tables spécialisées
       await Promise.all([
