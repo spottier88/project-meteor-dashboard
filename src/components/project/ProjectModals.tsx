@@ -10,7 +10,6 @@ import { ProjectForm } from "@/components/ProjectForm";
 import { ProjectSelectionSheet } from "@/components/ProjectSelectionSheet";
 import { ReviewSheet } from "@/components/review/ReviewSheet";
 import { Project } from "@/types/project";
-import { ProjectListItem } from "@/hooks/use-projects-list-view";
 
 interface ProjectModalsProps {
   isProjectFormOpen: boolean;
@@ -20,7 +19,6 @@ interface ProjectModalsProps {
   isProjectSelectionOpen: boolean;
   onProjectSelectionClose: () => void;
   onProjectSelect: (id: string, title: string) => void;
-  projects: ProjectListItem[] | Project[];
   isReviewSheetOpen: boolean;
   onReviewClose: () => void;
   selectedProjectForReview: { id: string; title: string; } | null;
@@ -39,7 +37,6 @@ export const ProjectModals = ({
   isProjectSelectionOpen,
   onProjectSelectionClose,
   onProjectSelect,
-  projects,
   isReviewSheetOpen,
   onReviewClose,
   selectedProjectForReview,
@@ -56,7 +53,6 @@ export const ProjectModals = ({
       />
 
       <ProjectSelectionSheet
-        projects={projects}
         isOpen={isProjectSelectionOpen}
         onClose={onProjectSelectionClose}
         onProjectSelect={onProjectSelect}

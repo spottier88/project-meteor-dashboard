@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
 export const useReviewAccess = (projectId: string) => {
-  const { isAdmin, isManager, userProfile } = usePermissionsContext();
+  const { isAdmin, userProfile } = usePermissionsContext();
   
   const { data: projectAccess } = useQuery({
     queryKey: ["projectReviewAccess", projectId, userProfile?.id],
@@ -40,12 +40,11 @@ export const useReviewAccess = (projectId: string) => {
     enabled: !!userProfile?.id && !!projectId,
   });
   
-  // Seuls les admins et chefs de projet (principaux ou secondaires) peuvent créer des revues
-  // Les managers n'ont plus ce droit
+  // Règles de revue : admins + chefs de projet (principaux ou secondaires) uniquement
+  // Les managers n'ont PAS le droit de créer des revues (sauf s'ils sont aussi chef de projet)
   const canCreateReview = isAdmin || projectAccess?.isProjectManager || projectAccess?.isSecondaryProjectManager;
   
-  // Nouvelle propriété pour contrôler qui peut supprimer des revues
-  // Les managers ne peuvent pas supprimer de revues
+  // Même logique pour la suppression des revues
   const canDeleteReview = isAdmin || projectAccess?.isProjectManager || projectAccess?.isSecondaryProjectManager;
 
   return {

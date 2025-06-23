@@ -4,12 +4,8 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sh
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { StatusIcon } from "./project/StatusIcon";
-import { Project, ProjectStatus } from "@/types/project";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import { UserRoleData } from "@/types/user";
-import { ProjectListItem } from "@/hooks/use-projects-list-view";
-import { useAuthContext } from "@/contexts/AuthContext";
+import { ProjectStatus } from "@/types/project";
+import { useReviewableProjects } from "@/hooks/useReviewableProjects";
 
 interface ProjectWithStatus {
   id: string;
@@ -22,69 +18,28 @@ interface ProjectWithStatus {
 }
 
 interface ProjectSelectionSheetProps {
-  projects: (Project | ProjectListItem)[];
   isOpen: boolean;
   onClose: () => void;
   onProjectSelect: (id: string, title: string) => void;
 }
 
 export const ProjectSelectionSheet = ({
-  projects,
   isOpen,
   onClose,
   onProjectSelect,
 }: ProjectSelectionSheetProps) => {
   const [searchTerm, setSearchTerm] = useState("");
-  const { user } = useAuthContext();
+  
+  // Utiliser le nouveau hook pour récupérer uniquement les projets reviewables
+  const { data: reviewableProjects = [], isLoading } = useReviewableProjects();
 
-  const { data: userRoles } = useQuery({
-    queryKey: ["userRoles", user?.id],
-    queryFn: async () => {
-      if (!user?.id) return null;
-      const { data, error } = await supabase
-        .from("user_roles")
-        .select("*")
-        .eq("user_id", user.id);
-
-      if (error) throw error;
-      return data as UserRoleData[];
-    },
-    enabled: !!user?.id,
-  });
-
-  // Récupérer les projets où l'utilisateur est chef de projet secondaire
-  const { data: secondaryManagedProjects } = useQuery({
-    queryKey: ["secondaryManagedProjects", user?.id],
-    queryFn: async () => {
-      if (!user?.id) return [];
-      const { data, error } = await supabase
-        .from("project_members")
-        .select("project_id")
-        .eq("user_id", user.id)
-        .eq("role", "secondary_manager");
-      
-      if (error) throw error;
-      return data?.map(item => item.project_id) || [];
-    },
-    enabled: !!user?.id,
-  });
-
-  const isAdmin = userRoles?.some(role => role.role === "admin");
-
-  // Filter projects based on user role and search term
-  const filteredProjects = projects.filter((project) => {
+  // Filtrage côté client uniquement pour la recherche textuelle
+  const filteredProjects = reviewableProjects.filter((project) => {
     const matchesSearch = 
       project.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
       (project.project_manager?.toLowerCase() || "").includes(searchTerm.toLowerCase());
 
-    // If admin, show all projects that match search
-    if (isAdmin) return matchesSearch;
-
-    // Pour les non-admins, montrer les projets où ils sont chef de projet principal OU secondaire
-    return matchesSearch && (
-      project.project_manager === user?.email || 
-      secondaryManagedProjects?.includes(project.id)
-    );
+    return matchesSearch;
   });
 
   const getReviewDate = (project: ProjectWithStatus): string | null => {
@@ -96,6 +51,21 @@ export const ProjectSelectionSheet = ({
     // Utiliser weather en priorité ou status si weather n'est pas disponible
     return project.weather || project.status || null;
   };
+
+  if (isLoading) {
+    return (
+      <Sheet open={isOpen} onOpenChange={onClose}>
+        <SheetContent className="w-full sm:max-w-xl overflow-y-auto">
+          <SheetHeader>
+            <SheetTitle>Sélectionner un projet</SheetTitle>
+          </SheetHeader>
+          <div className="mt-6 flex justify-center items-center h-48">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+          </div>
+        </SheetContent>
+      </Sheet>
+    );
+  }
 
   return (
     <Sheet open={isOpen} onOpenChange={onClose}>
@@ -135,10 +105,12 @@ export const ProjectSelectionSheet = ({
                     <TableCell>{getReviewDate(project)}</TableCell>
                   </TableRow>
                 ))}
-                {filteredProjects.length === 0 && (
+                {filteredProjects.length === 0 && !isLoading && (
                   <TableRow>
                     <TableCell colSpan={4} className="text-center py-4 text-muted-foreground">
-                      Aucun projet trouvé
+                      {reviewableProjects.length === 0 
+                        ? "Aucun projet disponible pour les revues" 
+                        : "Aucun projet trouvé"}
                     </TableCell>
                   </TableRow>
                 )}

@@ -1506,6 +1506,17 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: Json
       }
+      get_reviewable_projects: {
+        Args: { p_user_id: string }
+        Returns: {
+          id: string
+          title: string
+          project_manager: string
+          status: Database["public"]["Enums"]["project_status"]
+          weather: Database["public"]["Enums"]["project_status"]
+          last_review_date: string
+        }[]
+      }
       get_team_view_projects: {
         Args: { p_user_id: string }
         Returns: {
