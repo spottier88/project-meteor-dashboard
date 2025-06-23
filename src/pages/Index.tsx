@@ -104,7 +104,6 @@ const Index = () => {
         isProjectSelectionOpen={isProjectSelectionOpen}
         onProjectSelectionClose={() => setIsProjectSelectionOpen(false)}
         onProjectSelect={handleProjectSelect}
-        projects={projects || []}
         isReviewSheetOpen={isReviewSheetOpen}
         onReviewClose={handleReviewClose}
         selectedProjectForReview={selectedProjectForReview}

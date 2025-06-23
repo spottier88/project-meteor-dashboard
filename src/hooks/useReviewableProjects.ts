@@ -2,13 +2,14 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuthContext } from "@/contexts/AuthContext";
+import { ProjectStatus } from "@/types/project";
 
 interface ReviewableProject {
   id: string;
   title: string;
   project_manager?: string;
-  status?: string | null;
-  weather?: string | null;
+  status?: ProjectStatus | null;
+  weather?: ProjectStatus | null;
   last_review_date?: string | null;
   lastReviewDate?: string | null;
 }

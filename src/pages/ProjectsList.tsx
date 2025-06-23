@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { DashboardHeader } from "@/components/DashboardHeader";
 import { UserInfo } from "@/components/UserInfo";
@@ -275,7 +274,6 @@ const ProjectsList = () => {
         isProjectSelectionOpen={isProjectSelectionOpen}
         onProjectSelectionClose={() => setIsProjectSelectionOpen(false)}
         onProjectSelect={handleProjectSelect}
-        projects={projects || []}
         isReviewSheetOpen={isReviewSheetOpen}
         onReviewClose={handleReviewClose}
         selectedProjectForReview={selectedProjectForReview}
