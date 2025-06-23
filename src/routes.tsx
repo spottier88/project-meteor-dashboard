@@ -8,6 +8,7 @@ import {
 import Login from "@/pages/Login";
 import Index from "@/pages/Index";
 import { TeamActivities } from "@/pages/TeamActivities";
+import { ActivityManagement } from "@/components/activities/ActivityManagement";
 import { TaskManagement as Tasks } from "@/pages/TaskManagement";
 import { RiskManagement as Risks } from "@/pages/RiskManagement";
 import { ProjectFraming as Framing } from "@/pages/ProjectFraming";
@@ -61,7 +62,7 @@ export function AppRoutes() {
                 path="/activities"
                 element={
                   <ProtectedRoute>
-                    <TeamActivities />
+                    <ActivityManagement />
                   </ProtectedRoute>
                 }
               />
