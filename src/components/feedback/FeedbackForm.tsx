@@ -1,6 +1,5 @@
 
 import { useState, useEffect } from "react";
-import { useUser } from "@supabase/auth-helpers-react";
 import { useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import {
@@ -25,6 +24,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import { UserRole } from "@/types/user";
 import { ProjectSelectionTable } from "@/components/ProjectSelectionTable";
+import { useAuthContext } from "@/contexts/AuthContext";
 
 interface FeedbackFormData {
   type: "bug" | "evolution" | "role_change" | "project_deletion";
@@ -41,9 +41,15 @@ interface FeedbackFormProps {
 
 export function FeedbackForm({ onSuccess, onCancel }: FeedbackFormProps) {
   const { toast } = useToast();
-  const user = useUser();
+  const { user } = useAuthContext();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedProjectIds, setSelectedProjectIds] = useState<string[]>([]);
+
+  console.log("[FeedbackForm] État d'authentification:", { 
+    hasUser: !!user, 
+    userId: user?.id,
+    userEmail: user?.email 
+  });
 
   const form = useForm<FeedbackFormData>({
     defaultValues: {
@@ -67,14 +73,14 @@ export function FeedbackForm({ onSuccess, onCancel }: FeedbackFormProps) {
   const { data: managedProjects } = useQuery({
     queryKey: ["managedProjects", user?.id],
     queryFn: async () => {
-      if (!user) return [];
+      if (!user?.id) return [];
       
       const { data } = await supabase
         .rpc('get_team_view_projects', { p_user_id: user.id });
       
       return data || [];
     },
-    enabled: !!user && selectedType === "project_deletion",
+    enabled: !!user?.id && selectedType === "project_deletion",
   });
 
   const getTitlePlaceholder = () => {
@@ -121,7 +127,14 @@ export function FeedbackForm({ onSuccess, onCancel }: FeedbackFormProps) {
   }, [selectedType]);
 
   const onSubmit = async (data: FeedbackFormData) => {
-    if (!user) {
+    console.log("[FeedbackForm] Début de soumission:", { 
+      hasUser: !!user, 
+      userId: user?.id,
+      userEmail: user?.email 
+    });
+
+    if (!user?.id) {
+      console.error("[FeedbackForm] Aucun utilisateur connecté ou ID utilisateur manquant");
       toast({
         title: "Erreur",
         description: "Vous devez être connecté pour soumettre un retour",
@@ -159,6 +172,8 @@ export function FeedbackForm({ onSuccess, onCancel }: FeedbackFormProps) {
           break;
       }
 
+      console.log("[FeedbackForm] Création de la notification avec l'utilisateur:", user.id);
+
       // Création de la notification
       const { data: notification, error: notificationError } = await supabase
         .from("notifications")
@@ -173,7 +188,12 @@ export function FeedbackForm({ onSuccess, onCancel }: FeedbackFormProps) {
         .select()
         .single();
 
-      if (notificationError) throw notificationError;
+      if (notificationError) {
+        console.error("[FeedbackForm] Erreur lors de la création de la notification:", notificationError);
+        throw notificationError;
+      }
+
+      console.log("[FeedbackForm] Notification créée avec succès:", notification.id);
 
       // Création de la cible de notification (administrateurs)
       const { data: target, error: targetError } = await supabase
@@ -185,7 +205,10 @@ export function FeedbackForm({ onSuccess, onCancel }: FeedbackFormProps) {
         .select()
         .single();
 
-      if (targetError) throw targetError;
+      if (targetError) {
+        console.error("[FeedbackForm] Erreur lors de la création de la cible:", targetError);
+        throw targetError;
+      }
 
       // Récupération des administrateurs
       const { data: admins, error: adminsError } = await supabase
@@ -193,7 +216,12 @@ export function FeedbackForm({ onSuccess, onCancel }: FeedbackFormProps) {
         .select("user_id")
         .eq("role", "admin");
 
-      if (adminsError) throw adminsError;
+      if (adminsError) {
+        console.error("[FeedbackForm] Erreur lors de la récupération des admins:", adminsError);
+        throw adminsError;
+      }
+
+      console.log("[FeedbackForm] Administrateurs trouvés:", admins?.length || 0);
 
       // Création des liens notification-utilisateur pour chaque admin
       const adminNotifications = admins.map((admin) => ({
@@ -205,7 +233,10 @@ export function FeedbackForm({ onSuccess, onCancel }: FeedbackFormProps) {
         .from("user_notifications")
         .insert(adminNotifications);
 
-      if (userNotificationsError) throw userNotificationsError;
+      if (userNotificationsError) {
+        console.error("[FeedbackForm] Erreur lors de la création des notifications utilisateur:", userNotificationsError);
+        throw userNotificationsError;
+      }
 
       // Création des liens target-utilisateur pour chaque admin
       const targetUsers = admins.map((admin) => ({
@@ -217,7 +248,12 @@ export function FeedbackForm({ onSuccess, onCancel }: FeedbackFormProps) {
         .from("notification_target_users")
         .insert(targetUsers);
 
-      if (targetUsersError) throw targetUsersError;
+      if (targetUsersError) {
+        console.error("[FeedbackForm] Erreur lors de la création des liens target-user:", targetUsersError);
+        throw targetUsersError;
+      }
+
+      console.log("[FeedbackForm] Demande envoyée avec succès");
 
       toast({
         title: "Demande envoyée",
@@ -226,7 +262,7 @@ export function FeedbackForm({ onSuccess, onCancel }: FeedbackFormProps) {
       
       onSuccess();
     } catch (error) {
-      console.error("Erreur lors de la soumission du retour:", error);
+      console.error("[FeedbackForm] Erreur lors de la soumission du retour:", error);
       toast({
         title: "Erreur",
         description: "Une erreur est survenue lors de l'envoi de la demande",
