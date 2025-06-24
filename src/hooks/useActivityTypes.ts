@@ -10,6 +10,12 @@ export const useActivityTypes = (includeInactive: boolean = false, checkPermissi
   return useQuery<ActivityType[]>({
     queryKey: ["activity-types", user?.id, includeInactive, checkPermissions],
     queryFn: async () => {
+      console.log("[useActivityTypes] Début de la récupération des types d'activité", {
+        userId: user?.id,
+        includeInactive,
+        checkPermissions
+      });
+
       let query = supabase
         .from("activity_types")
         .select("*")
@@ -26,60 +32,39 @@ export const useActivityTypes = (includeInactive: boolean = false, checkPermissi
         console.error("Erreur lors de la récupération des types d'activité:", error);
         throw error;
       }
+
+      console.log(`[useActivityTypes] Types d'activité récupérés: ${data?.length || 0}`);
       
-      // Si on doit vérifier les permissions, filtrer selon les droits de l'utilisateur
+      // Si on doit vérifier les permissions et que l'utilisateur est connecté
       if (checkPermissions && user?.id) {
-        // Récupérer les permissions de l'utilisateur
-        const { data: userAssignments, error: assignmentsError } = await supabase
-          .from("user_hierarchy_assignments")
-          .select("entity_type, entity_id")
-          .eq("user_id", user.id);
-
-        if (assignmentsError) {
-          console.error("Erreur lors de la récupération des affectations:", assignmentsError);
-          // En cas d'erreur, retourner tous les types (fallback)
-          return data?.map(type => ({
-            id: type.id,
-            code: type.code,
-            label: type.label,
-            color: type.color || '#808080',
-            is_active: type.is_active,
-            display_order: type.display_order || 0
-          })) || [];
-        }
-
-        // Récupérer toutes les permissions de types d'activité
-        const { data: allPermissions, error: permissionsError } = await supabase
-          .from("activity_type_permissions")
-          .select("*");
-
-        if (permissionsError) {
-          console.error("Erreur lors de la récupération des permissions:", permissionsError);
-          // En cas d'erreur, retourner tous les types (fallback)
-          return data?.map(type => ({
-            id: type.id,
-            code: type.code,
-            label: type.label,
-            color: type.color || '#808080',
-            is_active: type.is_active,
-            display_order: type.display_order || 0
-          })) || [];
-        }
-
-        // Filtrer les permissions selon les affectations de l'utilisateur
-        const userPermissions = allPermissions?.filter(permission => 
-          userAssignments?.some(assignment => 
-            assignment.entity_type === permission.entity_type && 
-            assignment.entity_id === permission.entity_id
-          )
-        ) || [];
-
-        const allowedTypeCodes = userPermissions.map(p => p.activity_type_code);
+        console.log("[useActivityTypes] Vérification des permissions pour l'utilisateur:", user.id);
         
-        // Filtrer les types d'activité selon les permissions
-        const filteredData = data?.filter(type => 
-          allowedTypeCodes.includes(type.code)
-        ) || [];
+        // Filtrer les types d'activité selon les permissions via la fonction RPC
+        const filteredData = [];
+        
+        for (const type of data || []) {
+          console.log(`[useActivityTypes] Vérification des permissions pour le type: ${type.code}`);
+          
+          // Utiliser la fonction RPC can_use_activity_type pour vérifier les permissions
+          const { data: canUse, error: permissionError } = await supabase
+            .rpc('can_use_activity_type', {
+              p_user_id: user.id,
+              p_activity_type_code: type.code
+            });
+
+          if (permissionError) {
+            console.error(`[useActivityTypes] Erreur lors de la vérification des permissions pour ${type.code}:`, permissionError);
+            // En cas d'erreur, on inclut le type par défaut pour éviter de bloquer l'utilisateur
+            filteredData.push(type);
+          } else if (canUse) {
+            console.log(`[useActivityTypes] Permission accordée pour le type: ${type.code}`);
+            filteredData.push(type);
+          } else {
+            console.log(`[useActivityTypes] Permission refusée pour le type: ${type.code}`);
+          }
+        }
+        
+        console.log(`[useActivityTypes] Types d'activité autorisés: ${filteredData.length}`);
         
         return filteredData.map(type => ({
           id: type.id,
@@ -92,7 +77,7 @@ export const useActivityTypes = (includeInactive: boolean = false, checkPermissi
       }
       
       // Transformer les données pour correspondre au type ActivityType
-      return data?.map(type => ({
+      const result = data?.map(type => ({
         id: type.id,
         code: type.code,
         label: type.label,
@@ -100,6 +85,9 @@ export const useActivityTypes = (includeInactive: boolean = false, checkPermissi
         is_active: type.is_active,
         display_order: type.display_order || 0
       })) || [];
+
+      console.log(`[useActivityTypes] Types d'activité retournés: ${result.length}`);
+      return result;
     },
     enabled: !!user?.id,
     staleTime: 5 * 60 * 1000, // 5 minutes
