@@ -31,6 +31,7 @@ import PortfolioManagement from "@/pages/PortfolioManagement";
 import { ReviewHistory as Reviews } from "@/components/ReviewHistory";
 import AuthCallback from "@/pages/AuthCallback";
 import { AuthProvider } from "@/contexts/AuthContext";
+import { FeedbackButton } from "@/components/feedback/FeedbackButton";
 
 export function AppRoutes() {
   return (
@@ -234,6 +235,9 @@ export function AppRoutes() {
               {/* Route de fallback */}
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
+            
+            {/* Bouton de feedback disponible sur toutes les pages authentifiées */}
+            <FeedbackButton />
           </PermissionsProvider>
         </AuthGuard>
       </AuthProvider>

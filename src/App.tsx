@@ -3,7 +3,6 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { AppRoutes } from "./routes";
 import { Toaster } from "@/components/ui/toaster";
-import { FeedbackButton } from "@/components/feedback/FeedbackButton";
 
 // Configurez le client de requête pour React Query
 const queryClient = new QueryClient({
@@ -19,7 +18,6 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <AppRoutes />
-      <FeedbackButton />
       <Toaster />
     </QueryClientProvider>
   );
