@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
@@ -12,6 +13,7 @@ import { Badge } from "@/components/ui/badge";
 import { MonitoringLevel } from "@/types/monitoring";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { ChevronDown, X, Filter } from "lucide-react";
+import { AddFilteredToCartButton } from "@/components/cart/AddFilteredToCartButton";
 
 interface CollapsibleProjectFiltersProps {
   searchQuery: string;
@@ -42,6 +44,7 @@ export const CollapsibleProjectFilters = ({
   onMonitoringLevelChange,
   showMyProjectsOnly,
   onMyProjectsToggle,
+  filteredProjectIds,
   poleId,
   onPoleChange,
   directionId,
@@ -154,6 +157,7 @@ export const CollapsibleProjectFilters = ({
 
   const activeFilters = getActiveFilters();
   const hasActiveFilters = activeFilters.length > 0;
+  const filteredProjectsCount = filteredProjectIds.length;
 
   // Fonction pour supprimer un filtre individuel
   const removeFilter = (filterKey: string) => {
@@ -201,8 +205,19 @@ export const CollapsibleProjectFilters = ({
                     {activeFilters.length}
                   </Badge>
                 )}
+                {/* Affichage du nombre de projets filtrés */}
+                <Badge variant="outline" className="ml-2">
+                  {filteredProjectsCount} projet{filteredProjectsCount > 1 ? 's' : ''}
+                </Badge>
               </div>
-              <ChevronDown className={`h-4 w-4 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
+              <div className="flex items-center gap-2">
+                {/* Bouton d'ajout au panier - visible même quand fermé */}
+                <AddFilteredToCartButton
+                  projectIds={filteredProjectIds}
+                  className="text-xs"
+                />
+                <ChevronDown className={`h-4 w-4 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
+              </div>
             </Button>
           </CollapsibleTrigger>
           
@@ -316,10 +331,14 @@ export const CollapsibleProjectFilters = ({
               />
             )}
 
-            <div className="flex gap-2">
+            <div className="flex gap-2 pt-2 border-t">
               <Button variant="outline" onClick={handleResetFilters} className="flex-1">
                 Réinitialiser les filtres
               </Button>
+              <AddFilteredToCartButton
+                projectIds={filteredProjectIds}
+                className="flex-1"
+              />
               <Button 
                 variant="ghost" 
                 onClick={() => setIsOpen(false)}
