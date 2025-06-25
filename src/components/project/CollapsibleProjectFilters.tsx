@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
@@ -11,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { MonitoringLevel } from "@/types/monitoring";
+import { MonitoringLevelFilter } from "@/components/monitoring/MonitoringLevelFilter";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { ChevronDown, X, Filter } from "lucide-react";
 import { AddFilteredToCartButton } from "@/components/cart/AddFilteredToCartButton";
@@ -22,6 +22,8 @@ interface CollapsibleProjectFiltersProps {
   onLifecycleStatusChange: (status: ProjectLifecycleStatus | 'all') => void;
   monitoringLevel: MonitoringLevel | 'all';
   onMonitoringLevelChange: (level: MonitoringLevel | 'all') => void;
+  monitoringEntityId?: string;
+  onMonitoringEntityChange?: (entityId: string) => void;
   showMyProjectsOnly: boolean;
   onMyProjectsToggle: (show: boolean) => void;
   filteredProjectIds: string[];
@@ -42,6 +44,8 @@ export const CollapsibleProjectFilters = ({
   onLifecycleStatusChange,
   monitoringLevel,
   onMonitoringLevelChange,
+  monitoringEntityId,
+  onMonitoringEntityChange,
   showMyProjectsOnly,
   onMyProjectsToggle,
   filteredProjectIds,
@@ -67,6 +71,9 @@ export const CollapsibleProjectFilters = ({
     onSearchChange("");
     onLifecycleStatusChange('all');
     onMonitoringLevelChange('all');
+    if (onMonitoringEntityChange) {
+      onMonitoringEntityChange('all');
+    }
     onMyProjectsToggle(false);
     onPoleChange("all");
     onDirectionChange("all");
@@ -121,9 +128,9 @@ export const CollapsibleProjectFilters = ({
     if (monitoringLevel !== 'all') {
       const levelLabels = {
         none: "Aucun suivi",
-        low: "Faible",
-        medium: "Moyen",
-        high: "Élevé"
+        dgs: "Suivi DGS",
+        pole: "Suivi Pôle",
+        direction: "Suivi Direction"
       };
       active.push({ 
         key: 'monitoring', 
@@ -170,6 +177,9 @@ export const CollapsibleProjectFilters = ({
         break;
       case 'monitoring':
         onMonitoringLevelChange('all');
+        if (onMonitoringEntityChange) {
+          onMonitoringEntityChange('all');
+        }
         break;
       case 'myProjects':
         onMyProjectsToggle(false);
@@ -251,7 +261,7 @@ export const CollapsibleProjectFilters = ({
           {/* Résumé compact quand fermé */}
           {!isOpen && hasActiveFilters && (
             <div className="text-sm text-muted-foreground mt-2">
-              {activeFilters.length} filtre{activeFilters.length > 1 ? 's' : ''} actif{activeFilters.length > 1 ? 's' : ''}
+              {activeFilters.length} filtre{activeFilters.length > 1 ? 's' : ''}
             </div>
           )}
         </CardHeader>
@@ -288,19 +298,12 @@ export const CollapsibleProjectFilters = ({
               </div>
 
               <div>
-                <Label htmlFor="monitoringLevel">Niveau de suivi</Label>
-                <Select value={monitoringLevel} onValueChange={onMonitoringLevelChange}>
-                  <SelectTrigger id="monitoringLevel">
-                    <SelectValue placeholder="Tous les niveaux" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Tous les niveaux</SelectItem>
-                    <SelectItem value="none">Aucun suivi</SelectItem>
-                    <SelectItem value="low">Faible</SelectItem>
-                    <SelectItem value="medium">Moyen</SelectItem>
-                    <SelectItem value="high">Élevé</SelectItem>
-                  </SelectContent>
-                </Select>
+                <MonitoringLevelFilter
+                  selectedLevel={monitoringLevel}
+                  selectedEntityId={monitoringEntityId}
+                  onLevelChange={onMonitoringLevelChange}
+                  onEntityChange={onMonitoringEntityChange || (() => {})}
+                />
               </div>
             </div>
 

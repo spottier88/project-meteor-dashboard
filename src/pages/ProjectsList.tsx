@@ -40,6 +40,9 @@ const ProjectsList = () => {
   const [monitoringLevel, setMonitoringLevel] = useState<MonitoringLevel | 'all'>(() => {
     return (localStorage.getItem("projectMonitoringLevel") as MonitoringLevel | 'all') || 'all';
   });
+  const [monitoringEntityId, setMonitoringEntityId] = useState<string>(() => {
+    return localStorage.getItem("projectMonitoringEntityId") || "all";
+  });
   const [lifecycleStatus, setLifecycleStatus] = useState<ProjectLifecycleStatus | 'all'>(() => {
     return (localStorage.getItem("projectLifecycleStatus") as ProjectLifecycleStatus | 'all') || 'all';
   });
@@ -69,6 +72,10 @@ const ProjectsList = () => {
   useEffect(() => {
     localStorage.setItem("projectMonitoringLevel", monitoringLevel);
   }, [monitoringLevel]);
+
+  useEffect(() => {
+    localStorage.setItem("projectMonitoringEntityId", monitoringEntityId);
+  }, [monitoringEntityId]);
 
   useEffect(() => {
     localStorage.setItem("projectLifecycleStatus", lifecycleStatus);
@@ -157,6 +164,14 @@ const ProjectsList = () => {
       }
       
       const levelMatch = project.monitoring_level === monitoringLevel;
+      
+      // Si un niveau spécifique est sélectionné (pôle ou direction), vérifier l'entité
+      if (levelMatch && (monitoringLevel === 'pole' || monitoringLevel === 'direction')) {
+        if (monitoringEntityId !== 'all') {
+          return project.monitoring_entity_id === monitoringEntityId;
+        }
+      }
+      
       return levelMatch;
     }
 
@@ -244,6 +259,8 @@ const ProjectsList = () => {
         onLifecycleStatusChange={setLifecycleStatus}
         monitoringLevel={monitoringLevel}
         onMonitoringLevelChange={setMonitoringLevel}
+        monitoringEntityId={monitoringEntityId}
+        onMonitoringEntityChange={setMonitoringEntityId}
         showMyProjectsOnly={showMyProjectsOnly}
         onMyProjectsToggle={setShowMyProjectsOnly}
         filteredProjectIds={accessibleProjectIds}

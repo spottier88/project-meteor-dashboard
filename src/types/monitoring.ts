@@ -1,3 +1,4 @@
+
 export type MonitoringLevel = 'none' | 'dgs' | 'pole' | 'direction';
 
 export interface ProjectMonitoring {
