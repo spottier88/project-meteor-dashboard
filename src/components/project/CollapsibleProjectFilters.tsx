@@ -1,9 +1,10 @@
+
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ProjectLifecycleStatus } from "@/types/project";
-import { PoleDirectionServiceFilter } from "./PoleDirectionServiceFilter";
+import { OrganizationFilters } from "./OrganizationFilters";
 import { PortfolioFilter } from "./PortfolioFilter";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
@@ -81,24 +82,6 @@ export const CollapsibleProjectFilters = ({
     if (onPortfolioChange) {
       onPortfolioChange("all");
     }
-  };
-
-  // Convertir les valeurs undefined en "all" pour l'affichage
-  const displayPoleId = poleId || "all";
-  const displayDirectionId = directionId || "all";
-  const displayServiceId = serviceId || "all";
-
-  // Gestionnaires pour convertir "all" en undefined quand nécessaire
-  const handlePoleFilterChange = (value: string | undefined) => {
-    onPoleChange(value || "all");
-  };
-
-  const handleDirectionFilterChange = (value: string | undefined) => {
-    onDirectionChange(value || "all");
-  };
-
-  const handleServiceFilterChange = (value: string | undefined) => {
-    onServiceChange(value || "all");
   };
 
   // Fonction pour détecter les filtres actifs
@@ -318,13 +301,13 @@ export const CollapsibleProjectFilters = ({
               </Label>
             </div>
 
-            <PoleDirectionServiceFilter
-              selectedPoleId={displayPoleId === "all" ? undefined : displayPoleId}
-              selectedDirectionId={displayDirectionId === "all" ? undefined : displayDirectionId}
-              selectedServiceId={displayServiceId === "all" ? undefined : displayServiceId}
-              onPoleChange={handlePoleFilterChange}
-              onDirectionChange={handleDirectionFilterChange}
-              onServiceChange={handleServiceFilterChange}
+            <OrganizationFilters
+              poleId={poleId}
+              setPoleId={onPoleChange}
+              directionId={directionId}
+              setDirectionId={onDirectionChange}
+              serviceId={serviceId}
+              setServiceId={onServiceChange}
             />
 
             {onPortfolioChange && (
