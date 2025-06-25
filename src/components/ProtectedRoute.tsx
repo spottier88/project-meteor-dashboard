@@ -1,41 +1,27 @@
-
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
 import { usePermissionsContext } from "@/contexts/PermissionsContext";
-import { LoadingSpinner } from "@/components/ui/loading-spinner";
 
 export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const navigate = useNavigate();
   const pathname = window.location.pathname;
-  const { isAdmin, isLoading: isPermissionsLoading } = usePermissionsContext();
-  const [isLoading, setIsLoading] = useState(true);
+  const { isAdmin } = usePermissionsContext();
 
   useEffect(() => {
-    // Réduire le délai d'attente pour les permissions
-    const timer = setTimeout(() => {
-      setIsLoading(false);
-    }, 100); // Augmenté légèrement pour laisser le temps aux hooks
-
-    return () => clearTimeout(timer);
-  }, []);
-
-  // Vérifier les droits admin pour les routes admin uniquement
-  useEffect(() => {
-    if (!isLoading && !isPermissionsLoading) {
-      const isAdminRoute = pathname.startsWith("/admin");
-      if (isAdminRoute && !isAdmin) {
-        navigate("/", { replace: true });
+    supabase.auth.onAuthStateChange((event, session) => {
+      if (!session) {
+        navigate("/login");
       }
+    });
+  }, [navigate]);
+
+  useEffect(() => {
+    const isAdminRoute = pathname.startsWith("/admin");
+    if (isAdminRoute && !isAdmin) {
+      navigate("/");
     }
-  }, [pathname, isAdmin, navigate, isLoading, isPermissionsLoading]);
+  }, [pathname, isAdmin, navigate]);
 
-  // Ne pas bloquer l'affichage pour les routes non-admin
-  const isAdminRoute = pathname.startsWith("/admin");
-  
-  if (isAdminRoute && (isLoading || isPermissionsLoading)) {
-    return <LoadingSpinner />;
-  }
-
-  // Pour les routes non-admin, afficher directement le contenu
   return <>{children}</>;
 };

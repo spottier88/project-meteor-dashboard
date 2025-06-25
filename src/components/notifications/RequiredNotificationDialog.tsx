@@ -1,10 +1,10 @@
 
 import { useEffect, useState } from "react";
+import { useUser } from "@supabase/auth-helpers-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Notification } from "@/types/notification";
 import { useToast } from "@/components/ui/use-toast";
-import { useAuthContext } from "@/contexts/AuthContext";
 import {
   Dialog,
   DialogContent,
@@ -21,7 +21,7 @@ import { logger } from "@/utils/logger";
 export function RequiredNotificationDialog() {
   const [open, setOpen] = useState(false);
   const [currentNotificationIndex, setCurrentNotificationIndex] = useState(0);
-  const { user } = useAuthContext();
+  const user = useUser();
   const { toast } = useToast();
   const queryClient = useQueryClient();
 

@@ -1,11 +1,10 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuthContext } from "@/contexts/AuthContext";
+import { useUser } from '@supabase/auth-helpers-react';
 import { Database } from "@/integrations/supabase/types";
 import { addDays, format, isSameDay } from "date-fns";
 import { fr } from "date-fns/locale";
-import { logger } from "@/utils/logger";
 
 interface Activity {
   start_time: string;
@@ -35,12 +34,12 @@ export const useActivityData = (
   periodEnd: Date,
   selectedUserId: string
 ) => {
-  const { user } = useAuthContext();
+  const user = useUser();
 
   const { data: activities, isLoading, error } = useQuery({
     queryKey: ['activities', isTeamView, period, projectId, activityType, periodStart.toISOString(), selectedUserId],
     queryFn: async () => {
-      logger.debug("[useActivityData] Fetching activities with params:", JSON.stringify({
+      console.log("[useActivityData] Fetching activities with params:", {
         isTeamView,
         period,
         projectId,
@@ -48,7 +47,7 @@ export const useActivityData = (
         startDate: periodStart.toISOString(),
         endDate: periodEnd.toISOString(),
         selectedUserId
-      }));
+      });
 
       let query = supabase
         .from('activities')
@@ -93,7 +92,7 @@ export const useActivityData = (
         throw error;
       }
 
-      logger.debug(`[useActivityData] Fetched activities count: ${data?.length || 0}`);
+      console.log("[useActivityData] Fetched activities:", data);
       return data;
     },
     enabled: !!user,

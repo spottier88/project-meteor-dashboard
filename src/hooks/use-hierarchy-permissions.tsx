@@ -1,10 +1,9 @@
-
-import { useAuthContext } from "@/contexts/AuthContext";
+import { useUser } from "@supabase/auth-helpers-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
 export const useHierarchyPermissions = (projectId: string) => {
-  const { user } = useAuthContext();
+  const user = useUser();
 
   const { data: canAccess, isLoading } = useQuery({
     queryKey: ["projectAccess", projectId, user?.id],

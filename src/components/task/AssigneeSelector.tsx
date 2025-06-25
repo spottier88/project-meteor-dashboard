@@ -3,7 +3,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useEffect } from "react";
-import { logger } from "@/utils/logger";
 
 interface AssigneeSelectorProps {
   assignee: string;
@@ -38,12 +37,8 @@ export const AssigneeSelector = ({
   // Afficher un message de debug dans la console
   useEffect(() => {
     if (projectMembers) {
-      logger.debug(
-        `AssigneeSelector: ${projectMembers.length} membres disponibles`,
-        projectMembers.map(
-          (m) => `${m.profiles.first_name} ${m.profiles.last_name} (${m.profiles.email})`
-        ).join(', ')
-      );
+      console.log(`AssigneeSelector: ${projectMembers.length} membres disponibles`, 
+        projectMembers.map(m => `${m.profiles.first_name} ${m.profiles.last_name} (${m.profiles.email})`));
     }
   }, [projectMembers]);
 

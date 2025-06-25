@@ -1,11 +1,10 @@
-
-import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { UserProfile } from "@/types/user";
+import { Label } from "@/components/ui/label";
 import { DateInputField } from "./DateInputField";
-import { ProjectLifecycleStatus } from "@/types/project";
+import { ProjectLifecycleStatus, lifecycleStatusLabels } from "@/types/project";
 
 interface BasicProjectFieldsProps {
   title: string;
@@ -23,7 +22,7 @@ interface BasicProjectFieldsProps {
   lifecycleStatus: ProjectLifecycleStatus;
   setLifecycleStatus: (value: ProjectLifecycleStatus) => void;
   isAdmin: boolean;
-  isManager: boolean;
+  isManager?: boolean;
   projectManagers?: UserProfile[];
 }
 
@@ -43,30 +42,29 @@ export const BasicProjectFields = ({
   lifecycleStatus,
   setLifecycleStatus,
   isAdmin,
-  isManager,
-  projectManagers
+  isManager = false,
+  projectManagers,
 }: BasicProjectFieldsProps) => {
-  
-  console.log("BasicProjectFields render - projectManagers:", {
-    available: !!projectManagers,
-    count: projectManagers?.length || 0,
-    data: projectManagers
-  });
-  
+  const canEditProjectManager = Boolean(isAdmin) || Boolean(isManager);
+
   return (
-    <>
+    <div className="space-y-4">
       <div className="grid gap-2">
-        <Label htmlFor="title">Titre du projet *</Label>
+        <label htmlFor="title" className="text-sm font-medium">
+          Titre *
+        </label>
         <Input
           id="title"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
-          placeholder="Entrez le titre du projet"
+          placeholder="Nom du projet"
         />
       </div>
 
       <div className="grid gap-2">
-        <Label htmlFor="description">Description</Label>
+        <label htmlFor="description" className="text-sm font-medium">
+          Description
+        </label>
         <Textarea
           id="description"
           value={description}
@@ -76,81 +74,82 @@ export const BasicProjectFields = ({
       </div>
 
       <div className="grid gap-2">
-        <Label htmlFor="projectManager">Chef de projet *</Label>
-        <Select value={projectManager} onValueChange={setProjectManager}>
+        <label htmlFor="lifecycle-status" className="text-sm font-medium">
+          Statut
+        </label>
+        <Select value={lifecycleStatus} onValueChange={setLifecycleStatus}>
           <SelectTrigger>
-            <SelectValue placeholder="Sélectionnez un chef de projet" />
+            <SelectValue placeholder="Sélectionner un statut" />
           </SelectTrigger>
           <SelectContent>
-            {projectManagers === undefined ? (
-              <SelectItem value="loading" disabled>
-                Chargement des chefs de projet...
+            {Object.entries(lifecycleStatusLabels).map(([value, label]) => (
+              <SelectItem key={value} value={value}>
+                {label}
               </SelectItem>
-            ) : projectManagers.length === 0 ? (
-              <SelectItem value="empty" disabled>
-                Aucun chef de projet disponible
-              </SelectItem>
-            ) : (
-              projectManagers.map((manager) => (
-                <SelectItem key={manager.id} value={manager.email || ""}>
-                  {manager.first_name && manager.last_name 
-                    ? `${manager.first_name} ${manager.last_name}` 
-                    : manager.email}
-                </SelectItem>
-              ))
-            )}
+            ))}
           </SelectContent>
         </Select>
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid gap-2">
+        <label htmlFor="project-manager" className="text-sm font-medium">
+          Chef de projet *
+        </label>
+        {canEditProjectManager && projectManagers ? (
+          <Select value={projectManager} onValueChange={setProjectManager}>
+            <SelectTrigger>
+              <SelectValue placeholder="Sélectionner un chef de projet" />
+            </SelectTrigger>
+            <SelectContent>
+              {projectManagers.map((manager) => (
+                <SelectItem key={manager.id} value={manager.email || ""}>
+                  {manager.first_name && manager.last_name
+                    ? `${manager.first_name} ${manager.last_name} (${manager.email})`
+                    : manager.email}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        ) : (
+          <Input
+            id="project-manager"
+            value={projectManager}
+            onChange={(e) => setProjectManager(e.target.value)}
+            readOnly={!canEditProjectManager}
+            className={!canEditProjectManager ? "bg-gray-100" : ""}
+          />
+        )}
+      </div>
+
+      <div className="grid gap-4 sm:grid-cols-2">
         <DateInputField
+          label="Date de début"
           date={startDate}
           onDateChange={setStartDate}
-          label="Date de début"
-          placeholder="Sélectionner une date"
         />
         <DateInputField
+          label="Date de fin"
           date={endDate}
           onDateChange={setEndDate}
-          label="Date de fin"
-          placeholder="Sélectionner une date"
           minDate={startDate}
         />
       </div>
 
       <div className="grid gap-2">
-        <Label htmlFor="priority">Priorité</Label>
+        <label htmlFor="priority" className="text-sm font-medium">
+          Priorité
+        </label>
         <Select value={priority} onValueChange={setPriority}>
           <SelectTrigger>
-            <SelectValue placeholder="Sélectionnez une priorité" />
+            <SelectValue placeholder="Sélectionner une priorité" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="low">Faible</SelectItem>
+            <SelectItem value="high">Haute</SelectItem>
             <SelectItem value="medium">Moyenne</SelectItem>
-            <SelectItem value="high">Élevée</SelectItem>
-            <SelectItem value="critical">Critique</SelectItem>
+            <SelectItem value="low">Basse</SelectItem>
           </SelectContent>
         </Select>
       </div>
-
-      <div className="grid gap-2">
-        <Label htmlFor="lifecycleStatus">Statut du cycle de vie</Label>
-        <Select value={lifecycleStatus} onValueChange={(value) => setLifecycleStatus(value as ProjectLifecycleStatus)}>
-          <SelectTrigger>
-            <SelectValue placeholder="Sélectionnez un statut" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="idea">Idée</SelectItem>
-            <SelectItem value="conception">Conception</SelectItem>
-            <SelectItem value="development">Développement</SelectItem>
-            <SelectItem value="testing">Test</SelectItem>
-            <SelectItem value="deployment">Déploiement</SelectItem>
-            <SelectItem value="maintenance">Maintenance</SelectItem>
-            <SelectItem value="archived">Archivé</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-    </>
+    </div>
   );
 };

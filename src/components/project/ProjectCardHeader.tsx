@@ -11,7 +11,6 @@ import { ProjectActions } from "./ProjectActions";
 import { StatusIcon } from "./StatusIcon";
 import { ProjectStatus } from "@/types/project";
 import { cn } from "@/lib/utils";
-import { Badge } from "@/components/ui/badge";
 
 interface ProjectCardHeaderProps {
   title: string;
@@ -24,7 +23,6 @@ interface ProjectCardHeaderProps {
   canManageTeam?: boolean;
   isAdmin?: boolean;
   additionalActions?: React.ReactNode;
-  portfolioName?: string;
 }
 
 export const ProjectCardHeader = ({
@@ -38,22 +36,14 @@ export const ProjectCardHeader = ({
   canManageTeam,
   isAdmin,
   additionalActions,
-  portfolioName,
 }: ProjectCardHeaderProps) => {
   return (
     <CardHeader className={cn(
       "flex flex-row items-center justify-between space-y-0 pb-2 pt-4",
     )}>
-      <div className="flex items-center space-x-2 min-w-0 flex-1">
+      <div className="flex items-center space-x-2">
         <StatusIcon status={status} className="h-6 w-6 shrink-0" />
-        <div className="min-w-0 flex-1">
-          <h2 className="text-xl font-semibold truncate">{title}</h2>
-          {portfolioName && (
-            <Badge variant="secondary" className="text-xs mt-1">
-              {portfolioName}
-            </Badge>
-          )}
-        </div>
+        <h2 className="text-xl font-semibold truncate max-w-[240px] md:max-w-xs">{title}</h2>
       </div>
       <div className="flex items-center space-x-2 shrink-0">
         {additionalActions}

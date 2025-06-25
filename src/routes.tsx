@@ -1,246 +1,231 @@
 
-import {
-  BrowserRouter as Router,
-  Route,
-  Routes,
-  Navigate,
-} from "react-router-dom";
-import Login from "@/pages/Login";
-import Index from "@/pages/Index";
-import { TeamActivities } from "@/pages/TeamActivities";
-import { ActivityManagement } from "@/components/activities/ActivityManagement";
-import { TaskManagement as Tasks } from "@/pages/TaskManagement";
-import { RiskManagement as Risks } from "@/pages/RiskManagement";
-import { ProjectFraming as Framing } from "@/pages/ProjectFraming";
-import { ProjectTeamManagement as Team } from "@/pages/ProjectTeamManagement";
-import ProjectsList from "@/pages/ProjectsList";
-import { ProjectSummary as ProjectDetails } from "@/pages/ProjectSummary";
-import { MyTasks } from "@/pages/MyTasks";
-import { AdminDashboard as Admin } from "@/pages/AdminDashboard";
-import { UserManagement as Users } from "@/pages/UserManagement";
-import { NotificationManagement } from "@/pages/NotificationManagement";
-import { ActivityTypeManagementPage } from "@/pages/ActivityTypeManagement";
-import { OrganizationManagement } from "@/pages/OrganizationManagement";
-import { ProjectTemplateManagement } from "@/pages/ProjectTemplateManagement";
-import { AIPromptManagement } from "@/pages/AIPromptManagement";
-import { AdminSettings } from "@/pages/AdminSettings";
-import { ProtectedRoute } from "@/components/ProtectedRoute";
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { Toaster } from "@/components/ui/toaster";
+import Index from "./pages/Index";
+import Login from "./pages/Login";
+import AuthCallback from "./pages/AuthCallback";
+import { TaskManagement } from "./pages/TaskManagement";
+import { ProjectSummary } from "./pages/ProjectSummary";
+import { RiskManagement } from "./pages/RiskManagement";
+import { UserManagement } from "./pages/UserManagement";
+import { AdminDashboard } from "./pages/AdminDashboard";
+import { ProjectTemplateManagement } from "./pages/ProjectTemplateManagement";
+import { ProjectTemplateDetails } from "./pages/ProjectTemplateDetails";
+import { OrganizationManagement } from "./pages/OrganizationManagement";
+import { NotificationManagement } from "./pages/NotificationManagement";
+import { SessionContextProvider, useSession } from "@supabase/auth-helpers-react";
+import { supabase } from "@/integrations/supabase/client";
+import { ProtectedRoute } from "./components/ProtectedRoute";
+import { ReviewHistory } from "./components/ReviewHistory";
+import { ManagerAssignments } from "./pages/ManagerAssignments";
+import { ProjectTeamManagement } from "./pages/ProjectTeamManagement";
 import { PermissionsProvider } from "@/contexts/PermissionsContext";
-import { AuthGuard } from "@/components/auth/AuthGuard";
-import PortfolioManagement from "@/pages/PortfolioManagement";
-import { ReviewHistory as Reviews } from "@/components/ReviewHistory";
-import AuthCallback from "@/pages/AuthCallback";
-import { AuthProvider } from "@/contexts/AuthContext";
 import { FeedbackButton } from "@/components/feedback/FeedbackButton";
+import { useEffect } from "react";
+import { useToast } from "./components/ui/use-toast";
+import { ActivityManagement } from "@/components/activities/ActivityManagement";
+import { TeamActivities } from "./pages/TeamActivities";
+import { GeneralSettings } from "@/components/admin/GeneralSettings";
+import { ActivityTypeManagementPage } from "./pages/ActivityTypeManagement";
+import { AIPromptManagement } from "./pages/AIPromptManagement";
+import { logger } from "./utils/logger";
+import { ProjectFraming } from "./pages/ProjectFraming";
+import { MyTasks } from "./pages/MyTasks";
 
-export function AppRoutes() {
+export const AppRoutes = () => {
+  const session = useSession();
+  const { toast } = useToast();
+
+  useEffect(() => {
+    logger.debug(
+      `Session state: isAuthenticated=${!!session}, user=${session?.user?.email || 'none'}, timestamp=${new Date().toISOString()}`,
+      "auth"
+    );
+  }, [session]);
+
+  if (!session) {
+    return (
+      <Router>
+        <Routes>
+          <Route path="/login" element={<Login />} />
+          <Route path="/auth/callback" element={<AuthCallback />} />
+          <Route path="*" element={<Login />} />
+        </Routes>
+      </Router>
+    );
+  }
+
   return (
-    <Router>
-      <AuthProvider>
-        <AuthGuard 
-          fallback={
-            <Routes>
-              <Route path="/login" element={<Login />} />
-              <Route path="/auth/callback" element={<AuthCallback />} />
-              <Route path="*" element={<Navigate to="/login" replace />} />
-            </Routes>
-          }
-        >
-          <PermissionsProvider>
-            <Routes>
-              {/* Page d'accueil */}
-              <Route
-                path="/"
-                element={
-                  <ProtectedRoute>
-                    <Index />
-                  </ProtectedRoute>
-                }
-              />
-              
-              {/* Routes des activités */}
-              <Route
-                path="/activities"
-                element={
-                  <ProtectedRoute>
-                    <ActivityManagement />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/team-activities"
-                element={
-                  <ProtectedRoute>
-                    <TeamActivities />
-                  </ProtectedRoute>
-                }
-              />
-              
-              {/* Routes des projets */}
-              <Route
-                path="/projects"
-                element={
-                  <ProtectedRoute>
-                    <ProjectsList />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/projects/:projectId"
-                element={
-                  <ProtectedRoute>
-                    <ProjectDetails />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/projects/:projectId/team"
-                element={
-                  <ProtectedRoute>
-                    <Team />
-                  </ProtectedRoute>
-                }
-              />
-              
-              {/* Routes des tâches et risques */}
-              <Route
-                path="/tasks/:projectId"
-                element={
-                  <ProtectedRoute>
-                    <Tasks />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/risks/:projectId"
-                element={
-                  <ProtectedRoute>
-                    <Risks />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/my-tasks"
-                element={
-                  <ProtectedRoute>
-                    <MyTasks />
-                  </ProtectedRoute>
-                }
-              />
-              
-              {/* Routes de cadrage et revues */}
-              <Route
-                path="/framing/:projectId"
-                element={
-                  <ProtectedRoute>
-                    <Framing />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/reviews/:projectId"
-                element={
-                  <ProtectedRoute>
-                    <Reviews />
-                  </ProtectedRoute>
-                }
-              />
-              
-              {/* Routes de gestion des utilisateurs */}
-              <Route
-                path="/users"
-                element={
-                  <ProtectedRoute>
-                    <Users />
-                  </ProtectedRoute>
-                }
-              />
-              
-              {/* Routes de portefeuilles */}
-              <Route
-                path="/portfolios"
-                element={
-                  <ProtectedRoute>
-                    <PortfolioManagement />
-                  </ProtectedRoute>
-                }
-              />
-              
-              {/* Routes d'administration */}
-              <Route
-                path="/admin"
-                element={
-                  <ProtectedRoute>
-                    <Admin />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/admin/users"
-                element={
-                  <ProtectedRoute>
-                    <Users />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/admin/notifications"
-                element={
-                  <ProtectedRoute>
-                    <NotificationManagement />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/admin/activity-types"
-                element={
-                  <ProtectedRoute>
-                    <ActivityTypeManagementPage />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/admin/organization"
-                element={
-                  <ProtectedRoute>
-                    <OrganizationManagement />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/admin/templates"
-                element={
-                  <ProtectedRoute>
-                    <ProjectTemplateManagement />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/admin/ai-prompts"
-                element={
-                  <ProtectedRoute>
-                    <AIPromptManagement />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/admin/settings"
-                element={
-                  <ProtectedRoute>
-                    <AdminSettings />
-                  </ProtectedRoute>
-                }
-              />
-              
-              {/* Route de fallback */}
-              <Route path="*" element={<Navigate to="/" replace />} />
-            </Routes>
-            
-            {/* Bouton de feedback disponible sur toutes les pages authentifiées */}
-            <FeedbackButton />
-          </PermissionsProvider>
-        </AuthGuard>
-      </AuthProvider>
-    </Router>
+    <PermissionsProvider>
+      <Router>
+        <Routes>
+          <Route path="/login" element={<Login />} />
+          <Route path="/auth/callback" element={<AuthCallback />} />
+          <Route
+            path="/"
+            element={
+              <ProtectedRoute>
+                <Index />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/activities"
+            element={
+              <ProtectedRoute>
+                <ActivityManagement />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/team-activities"
+            element={
+              <ProtectedRoute>
+                <TeamActivities />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/my-tasks"
+            element={
+              <ProtectedRoute>
+                <MyTasks />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin"
+            element={
+              <ProtectedRoute>
+                <AdminDashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/users"
+            element={
+              <ProtectedRoute>
+                <UserManagement />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/notifications"
+            element={
+              <ProtectedRoute>
+                <NotificationManagement />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/users/:userId/assignments"
+            element={
+              <ProtectedRoute>
+                <ManagerAssignments />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/organization"
+            element={
+              <ProtectedRoute>
+                <OrganizationManagement />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/activity-types"
+            element={
+              <ProtectedRoute>
+                <ActivityTypeManagementPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/settings"
+            element={
+              <ProtectedRoute>
+                <GeneralSettings />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/ai-prompts"
+            element={
+              <ProtectedRoute>
+                <AIPromptManagement />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/templates"
+            element={
+              <ProtectedRoute>
+                <ProjectTemplateManagement />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/templates/:templateId"
+            element={
+              <ProtectedRoute>
+                <ProjectTemplateDetails />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/tasks/:projectId"
+            element={
+              <ProtectedRoute>
+                <TaskManagement />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/projects/:projectId"
+            element={
+              <ProtectedRoute>
+                <ProjectSummary />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/projects/:projectId/team"
+            element={
+              <ProtectedRoute>
+                <ProjectTeamManagement />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/risks/:projectId"
+            element={
+              <ProtectedRoute>
+                <RiskManagement />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/reviews/:projectId"
+            element={
+              <ProtectedRoute>
+                <ReviewHistory />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/framing/:projectId"
+            element={
+              <ProtectedRoute>
+                <ProjectFraming />
+              </ProtectedRoute>
+            }
+          />
+        </Routes>
+        <FeedbackButton />
+      </Router>
+      <Toaster />
+    </PermissionsProvider>
   );
-}
+};

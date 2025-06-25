@@ -31,7 +31,6 @@ export interface Project {
   for_entity_type?: ForEntityType;
   for_entity_id?: string;
   weather?: ProjectStatus | null;
-  portfolio_id?: string;
 }
 
 // Interface qui étend Project avec les propriétés additionnelles de ProjectListItem

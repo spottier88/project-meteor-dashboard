@@ -144,16 +144,6 @@ export const UserFormFields = ({
               Suivi des activités
             </Label>
           </div>
-          <div className="flex items-center space-x-2">
-            <Checkbox
-              id="portfolio_manager"
-              checked={roles.includes("portfolio_manager")}
-              onCheckedChange={() => handleRoleToggle("portfolio_manager")}
-            />
-            <Label htmlFor="portfolio_manager" className="font-normal">
-              Gestionnaire de portefeuille
-            </Label>
-          </div>
         </div>
       </div>
     </div>

@@ -3,8 +3,6 @@ import { useToast } from "@/components/ui/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
 import { ProjectFormState } from "./useProjectFormState";
 import { createTasksFromTemplate } from "../utils/templateTasks";
-import { logger } from "@/utils/logger";
-import { supabase } from "@/integrations/supabase/client";
 
 interface UseProjectSubmitProps {
   project?: any;
@@ -22,152 +20,70 @@ export const useProjectSubmit = ({
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  // Fonction pour enregistrer les données de cadrage
-  const saveFramingData = async (projectId: string) => {
-    const framingData = {
-      project_id: projectId,
-      context: formState.context,
-      stakeholders: formState.stakeholders,
-      governance: formState.governance,
-      objectives: formState.objectives,
-      timeline: formState.timeline,
-      deliverables: formState.deliverables,
-    };
-
-    const { error } = await supabase
-      .from("project_framing")
-      .upsert(framingData, {
-        onConflict: 'project_id'
-      });
-
-    if (error) {
-      logger.error("Erreur lors de l'enregistrement des données de cadrage:", error.message);
-      throw error;
-    }
-  };
-
-  // Fonction pour enregistrer les scores d'innovation
-  const saveInnovationData = async (projectId: string) => {
-    const innovationData = {
-      project_id: projectId,
-      novateur: formState.novateur,
-      usager: formState.usager,
-      ouverture: formState.ouverture,
-      agilite: formState.agilite,
-      impact: formState.impact,
-    };
-
-    const { error } = await supabase
-      .from("project_innovation_scores")
-      .upsert(innovationData, {
-        onConflict: 'project_id'
-      });
-
-    if (error) {
-      logger.error("Erreur lors de l'enregistrement des scores d'innovation:", error.message);
-      throw error;
-    }
-  };
-
-  // Fonction pour enregistrer les données de monitoring
-  const saveMonitoringData = async (projectId: string) => {
-    // Déterminer les IDs des entités organisationnelles à partir de l'organisation du chef de projet
-    const { pole, direction, service } = formState.projectManagerOrganization;
-    
-    // Fonction pour obtenir l'ID de l'entité de suivi en fonction du niveau
-    function getMonitoringEntityId(level: string) {
-      switch (level) {
-        case 'pole':
-          return pole?.id || null;
-        case 'direction':
-          return direction?.id || null;
-        default:
-          return null;
-      }
-    }
-
-    const monitoringData = {
-      project_id: projectId,
-      monitoring_level: formState.monitoringLevel,
-      monitoring_entity_id: getMonitoringEntityId(formState.monitoringLevel),
-    };
-
-    const { error } = await supabase
-      .from("project_monitoring")
-      .upsert(monitoringData, {
-        onConflict: 'project_id'
-      });
-
-    if (error) {
-      logger.error("Erreur lors de l'enregistrement des données de monitoring:", error.message);
-      throw error;
-    }
-  };
-
   const submitProject = async () => {
     formState.setIsSubmitting(true);
     try {
       // Déterminer les IDs des entités organisationnelles à partir de l'organisation du chef de projet
       const { pole, direction, service } = formState.projectManagerOrganization;
+      
+      // Fonction pour obtenir l'ID de l'entité de suivi en fonction du niveau
+      function getMonitoringEntityId(level: string) {
+        switch (level) {
+          case 'pole':
+            return pole?.id || null;
+          case 'direction':
+            return direction?.id || null;
+          default:
+            return null;
+        }
+      }
 
-      // Données principales du projet (table projects uniquement)
       const projectData = {
         title: formState.title,
         description: formState.description,
-        project_manager: formState.projectManager,
-        start_date: formState.startDate?.toISOString().split('T')[0],
-        end_date: formState.endDate?.toISOString().split('T')[0],
+        projectManager: formState.projectManager,
+        startDate: formState.startDate,
+        endDate: formState.endDate,
         priority: formState.priority,
+        monitoringLevel: formState.monitoringLevel,
+        monitoringEntityId: getMonitoringEntityId(formState.monitoringLevel),
         owner_id: formState.ownerId || null,
-        // Assignation basée sur l'organisation du chef de projet - utiliser les bons noms de colonnes
-        pole_id: pole?.id || null,
-        direction_id: direction?.id || null,
-        service_id: service?.id || null,
-        lifecycle_status: formState.lifecycleStatus,
+        // Assignation basée sur l'organisation du chef de projet
+        poleId: pole?.id || null,
+        directionId: direction?.id || null,
+        serviceId: service?.id || null,
+        lifecycleStatus: formState.lifecycleStatus,
         for_entity_type: formState.forEntityType,
         for_entity_id: formState.forEntityId,
+        innovation: {
+          novateur: formState.novateur,
+          usager: formState.usager,
+          ouverture: formState.ouverture,
+          agilite: formState.agilite,
+          impact: formState.impact,
+        },
+        framing: {
+          context: formState.context,
+          stakeholders: formState.stakeholders,
+          governance: formState.governance,
+          objectives: formState.objectives,
+          timeline: formState.timeline,
+          deliverables: formState.deliverables,
+        },
+        templateId: formState.templateId
       };
 
-      // Soumettre les données du projet principal
+      // Soumettre les données du projet
       const result = await onSubmit(projectData);
       
-      // Récupérer l'ID du projet de manière simplifiée
-      let projectId: string | null = null;
-      
-      if (result && result.id) {
-        // Cas normal : l'ID est directement dans result.id
-        projectId = result.id;
-      } else if (project?.id) {
-        // Cas de mise à jour : utiliser l'ID du projet existant
-        projectId = project.id;
-      }
-      
-      if (!projectId) {
-        throw new Error("Impossible de récupérer l'ID du projet après la création/mise à jour");
-      }
-
-      // Enregistrer les données annexes dans les tables spécialisées
-      await Promise.all([
-        saveFramingData(projectId),
-        saveInnovationData(projectId),
-        saveMonitoringData(projectId)
-      ]);
-      
       // Si un modèle a été sélectionné et qu'il s'agit d'un nouveau projet, créer les tâches
-      if (formState.templateId && projectId) {
-        logger.debug(
-          "Création des tâches à partir du modèle:",
-          formState.templateId,
-          "pour le projet:",
-          projectId
-        );
+      if (formState.templateId && result && result.id) {
+        console.log("Création des tâches à partir du modèle:", formState.templateId, "pour le projet:", result.id);
         // Nous passons explicitement formState.startDate pour utiliser la date saisie par l'utilisateur
-        const startDateString = formState.startDate
-          ? formState.startDate.toISOString().split('T')[0]
-          : undefined;
-        logger.debug("Date de début utilisée pour les tâches:", startDateString);
+        const startDateString = formState.startDate ? formState.startDate.toISOString().split('T')[0] : undefined;
+        console.log("Date de début utilisée pour les tâches:", startDateString);
         
-        const tasksCreated = await createTasksFromTemplate(formState.templateId, projectId, startDateString);
+        const tasksCreated = await createTasksFromTemplate(formState.templateId, result.id, startDateString);
         
         if (tasksCreated) {
           toast({
@@ -176,12 +92,7 @@ export const useProjectSubmit = ({
           });
         }
       } else {
-        logger.debug(
-          "Pas de création de tâches - templateId:",
-          formState.templateId,
-          "project:",
-          projectId
-        );
+        console.log("Pas de création de tâches - templateId:", formState.templateId, "project:", result?.id);
       }
       
       // Invalider toutes les requêtes liées aux projets pour forcer un rafraîchissement

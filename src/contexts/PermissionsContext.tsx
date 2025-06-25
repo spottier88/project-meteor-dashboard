@@ -2,9 +2,9 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { useUser, useSession } from '@supabase/auth-helpers-react';
 import { UserRole, AccessibleOrganizations } from '@/types/user';
 import { getUserAccessibleOrganizations } from '@/utils/organizationAccess';
-import { useAuthContext } from './AuthContext';
 
 interface PermissionsState {
   userRoles: UserRole[] | undefined;
@@ -28,30 +28,17 @@ const PermissionsContext = createContext<PermissionsState | undefined>(undefined
 
 const roleHierarchy: UserRole[] = ['admin', 'manager', 'chef_projet', 'membre', 'time_tracker'];
 
-/**
- * Provider des permissions utilisateur
- * Utilise le contexte d'authentification partagé pour éviter les race conditions
- * Ne retourne jamais null pour éviter les blocages d'interface
- */
 export function PermissionsProvider({ children }: { children: React.ReactNode }) {
-  const { user, session, isAuthenticated, isInitialized } = useAuthContext();
+  const user = useUser();
+  const session = useSession();
   const [accessibleOrganizations, setAccessibleOrganizations] = useState<AccessibleOrganizations | null>(null);
-  const [isLoadingOrganizations, setIsLoadingOrganizations] = useState(false);
+  const [isLoadingOrganizations, setIsLoadingOrganizations] = useState(true);
 
-  console.log("[PermissionsProvider] État auth contexte:", { 
-    hasUser: !!user?.id, 
-    hasSession: !!session,
-    isAuthenticated,
-    isInitialized,
-    userEmail: user?.email 
-  });
-
-  // Requête pour récupérer les rôles utilisateur
   const { data: userRoles, isLoading: isLoadingRoles, isError: isRolesError } = useQuery({
     queryKey: ['userRoles', user?.id, session?.access_token] as const,
     queryFn: async () => {
       if (!user?.id) {
-        console.log("[PermissionsProvider] No user ID available");
+        // console.log("[PermissionsProvider] No user ID available");
         return [];
       }
       const { data, error } = await supabase
@@ -64,13 +51,11 @@ export function PermissionsProvider({ children }: { children: React.ReactNode })
         throw error;
       }
       const roles = data.map(ur => ur.role as UserRole);
-      console.log("[PermissionsProvider] Roles récupérés:", roles);
       return roles;
     },
-    enabled: !!user?.id && !!session && isAuthenticated,
+    enabled: !!user?.id && !!session,
   });
 
-  // Requête pour récupérer le profil utilisateur
   const { data: userProfile, isLoading: isLoadingProfile, isError: isProfileError } = useQuery({
     queryKey: ['userProfile', user?.id, session?.access_token] as const,
     queryFn: async () => {
@@ -89,12 +74,9 @@ export function PermissionsProvider({ children }: { children: React.ReactNode })
       }
       return data;
     },
-    enabled: !!user?.id && !!session && isAuthenticated,
+    enabled: !!user?.id && !!session,
   });
 
-  /**
-   * Détermine le rôle le plus élevé dans la hiérarchie
-   */
   const getHighestRole = (roles: UserRole[]): UserRole | null => {
     if (!roles || roles.length === 0) return null;
     for (const hierarchyRole of roleHierarchy) {
@@ -105,15 +87,12 @@ export function PermissionsProvider({ children }: { children: React.ReactNode })
     return null;
   };
 
-  /**
-   * Vérifie si l'utilisateur possède un rôle spécifique
-   */
   const hasRole = (role: UserRole): boolean => {
     if (!userRoles || userRoles.length === 0) return false;
-    return userRoles.includes(role);
+    const hasRequestedRole = userRoles.includes(role);
+    return hasRequestedRole;
   };
 
-  // Calcul des permissions basées sur les rôles
   const highestRole = userRoles && userRoles.length > 0 ? getHighestRole(userRoles) : null;
   const isAdmin = hasRole('admin');
   const isManager = hasRole('manager');
@@ -124,13 +103,10 @@ export function PermissionsProvider({ children }: { children: React.ReactNode })
   const isError = isRolesError || isProfileError;
   const canAccessAllOrganizations = isAdmin;
 
-  /**
-   * Chargement des organizations accessibles
-   * Se fait en arrière-plan pour ne pas bloquer l'affichage
-   */
+  // Chargement des organisations accessibles
   useEffect(() => {
     async function loadAccessibleOrganizations() {
-      if (user?.id && !isLoading && !isError && isAuthenticated) {
+      if (user?.id && !isLoading && !isError) {
         setIsLoadingOrganizations(true);
         try {
           const organizations = await getUserAccessibleOrganizations(user.id, isAdmin, isManager);
@@ -144,43 +120,60 @@ export function PermissionsProvider({ children }: { children: React.ReactNode })
     }
 
     loadAccessibleOrganizations();
-  }, [user?.id, isAdmin, isManager, isLoading, isError, userRoles, isAuthenticated]);
+  }, [user?.id, isAdmin, isManager, isLoading, isError, userRoles]); // Ajout de userRoles comme dépendance
 
-  console.log("[PermissionsProvider] État final:", {
-    userId: user?.id,
-    isAuthenticated,
-    isInitialized,
-    userRoles,
-    isAdmin,
-    isLoading,
-    isError,
-    willProvideContext: true // Toujours vrai maintenant
-  });
+  // useEffect(() => {
+    // console.log("[PermissionsProvider] State update:", {
+    //   userId: user?.id,
+    //   userEmail: userProfile?.email,
+    //   userRoles,
+    //   highestRole,
+    //   isAdmin,
+    //   isManager,
+    //   isProjectManager,
+    //   isMember,
+    //   isTimeTracker,
+    //   isLoading,
+    //   isError,
+    //   sessionStatus: !!session,
+    //   accessibleOrganizations: {
+    //     poles: accessibleOrganizations?.poles?.length || 0,
+    //     directions: accessibleOrganizations?.directions?.length || 0,
+    //     services: accessibleOrganizations?.services?.length || 0
+    //   }
+    // });
+  // }, [user?.id, userProfile, userRoles, highestRole, isAdmin, isManager, isProjectManager, isMember, isTimeTracker, isLoading, isError, session, accessibleOrganizations]);
 
-  /**
-   * CORRECTION CRITIQUE: 
-   * Toujours fournir un contexte valide, même en cas de chargement ou d'erreur
-   * Cela évite les pages blanches et permet un affichage progressif
-   */
-  const contextValue: PermissionsState = {
-    userRoles: userRoles || [],
-    userProfile,
-    isAdmin,
-    isManager,
-    isProjectManager,
-    isMember,
-    isTimeTracker,
-    highestRole,
-    hasRole,
-    isLoading,
-    isError,
-    accessibleOrganizations,
-    canAccessAllOrganizations,
-    isLoadingOrganizations
-  };
+  if (!session) {
+    return null;
+  }
+
+  if (isLoading) {
+    return null;
+  }
+
+  if (isError) {
+    console.error("[PermissionsProvider] Error loading permissions");
+    return null;
+  }
 
   return (
-    <PermissionsContext.Provider value={contextValue}>
+    <PermissionsContext.Provider value={{
+      userRoles,
+      userProfile,
+      isAdmin,
+      isManager,
+      isProjectManager,
+      isMember,
+      isTimeTracker,
+      highestRole,
+      hasRole,
+      isLoading,
+      isError,
+      accessibleOrganizations,
+      canAccessAllOrganizations,
+      isLoadingOrganizations
+    }}>
       {children}
     </PermissionsContext.Provider>
   );

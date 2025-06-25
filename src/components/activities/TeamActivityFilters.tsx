@@ -3,9 +3,8 @@ import React from 'react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useUser } from '@supabase/auth-helpers-react';
 import { useActivityTypes } from '@/hooks/useActivityTypes';
-import { logger } from '@/utils/logger';
-import { useAuthContext } from "@/contexts/AuthContext";
 
 interface TeamActivityFiltersProps {
   period: string;
@@ -28,7 +27,7 @@ export const TeamActivityFilters = ({
   selectedUserId,
   setSelectedUserId,
 }: TeamActivityFiltersProps) => {
-  const { user } = useAuthContext();
+  const user = useUser();
   const { data: activityTypes } = useActivityTypes();
 
   // Récupérer la liste des utilisateurs en utilisant la nouvelle fonction
@@ -37,7 +36,7 @@ export const TeamActivityFilters = ({
     queryFn: async () => {
       if (!user?.id) return [];
       
-      logger.debug("[TeamActivityFilters] Fetching team view users for user:", user.id);
+      console.log("[TeamActivityFilters] Fetching team view users for user:", user.id);
       
       const { data, error } = await supabase
         .rpc('get_team_view_users', {
@@ -49,7 +48,7 @@ export const TeamActivityFilters = ({
         throw error;
       }
 
-      logger.debug(`[TeamActivityFilters] Fetched users count: ${data?.length || 0}`);
+      console.log("[TeamActivityFilters] Fetched users:", data);
       return data;
     },
     enabled: !!user?.id,
@@ -61,7 +60,7 @@ export const TeamActivityFilters = ({
     queryFn: async () => {
       if (!user?.id) return [];
       
-      logger.debug("[TeamActivityFilters] Fetching team view projects for user:", user.id);
+      console.log("[TeamActivityFilters] Fetching team view projects for user:", user.id);
       
       const { data, error } = await supabase
         .rpc('get_team_view_projects', {
@@ -73,7 +72,7 @@ export const TeamActivityFilters = ({
         throw error;
       }
 
-      logger.debug(`[TeamActivityFilters] Fetched projects count: ${data?.length || 0}`);
+      console.log("[TeamActivityFilters] Fetched projects:", data);
       return data;
     },
     enabled: !!user?.id,

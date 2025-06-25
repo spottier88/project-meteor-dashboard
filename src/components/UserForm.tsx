@@ -15,7 +15,6 @@ import { UserRole } from "@/types/user";
 import { HierarchyAssignmentFields } from "./form/HierarchyAssignmentFields";
 import { HierarchyAssignment } from "@/types/user";
 import { useQueryClient } from "@tanstack/react-query";
-import { useAuthContext } from "@/contexts/AuthContext";
 
 interface UserFormProps {
   isOpen: boolean;
@@ -32,7 +31,6 @@ interface UserFormProps {
 
 export const UserForm = ({ isOpen, onClose, onSubmit, user }: UserFormProps) => {
   const { toast } = useToast();
-  const { user: currentUser } = useAuthContext();
   const queryClient = useQueryClient();
   const [firstName, setFirstName] = useState(user?.first_name || "");
   const [lastName, setLastName] = useState(user?.last_name || "");
@@ -95,15 +93,6 @@ export const UserForm = ({ isOpen, onClose, onSubmit, user }: UserFormProps) => 
   }, [user]);
 
   const handleSubmit = async () => {
-    if (!currentUser) {
-      toast({
-        title: "Erreur",
-        description: "Vous devez être connecté pour effectuer cette action",
-        variant: "destructive",
-      });
-      return;
-    }
-
     if (!email || !firstName || !lastName) {
       toast({
         title: "Erreur",

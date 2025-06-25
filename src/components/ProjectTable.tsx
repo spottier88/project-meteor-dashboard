@@ -2,6 +2,7 @@
 import React from 'react';
 import { Table, TableBody } from "@/components/ui/table";
 import { ProjectStatus, ProgressStatus, ProjectLifecycleStatus } from "@/types/project";
+import { useUser } from "@supabase/auth-helpers-react";
 import { ProjectTableHeader } from "./project/ProjectTableHeader";
 import { ProjectTableRow } from "./project/ProjectTableRow";
 import { useQuery } from "@tanstack/react-query";
@@ -11,7 +12,6 @@ import { useManagerProjectAccess } from "@/hooks/use-manager-project-access";
 import { usePermissionsContext } from "@/contexts/PermissionsContext";
 import { ProjectListItem } from "@/hooks/use-projects-list-view";
 import { ProjectPagination } from "./project/ProjectPagination";
-import { useAuthContext } from "@/contexts/AuthContext";
 
 interface ProjectTableProps {
   projects: ProjectListItem[];
@@ -35,7 +35,7 @@ export const ProjectTable = ({
   pageSize,
   onPageChange,
 }: ProjectTableProps) => {
-  const { user } = useAuthContext();
+  const user = useUser();
   const { userProfile, userRoles, isAdmin, isLoading } = usePermissionsContext();
   const [sortKey, setSortKey] = React.useState<string | null>(null);
   const [sortDirection, setSortDirection] = React.useState<SortDirection>(null);

@@ -8,7 +8,6 @@ import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { ActivityType } from "@/types/activity";
 import { Switch } from "@/components/ui/switch";
-import { useAuthContext } from "@/contexts/AuthContext";
 
 interface ActivityTypeFormProps {
   isOpen: boolean;
@@ -19,7 +18,6 @@ interface ActivityTypeFormProps {
 
 export const ActivityTypeForm = ({ isOpen, onClose, onSubmit, activityType }: ActivityTypeFormProps) => {
   const { toast } = useToast();
-  const { user } = useAuthContext();
   const [code, setCode] = useState("");
   const [label, setLabel] = useState("");
   const [color, setColor] = useState("#808080");
@@ -79,15 +77,6 @@ export const ActivityTypeForm = ({ isOpen, onClose, onSubmit, activityType }: Ac
   };
 
   const handleSubmit = async () => {
-    if (!user) {
-      toast({
-        title: "Erreur",
-        description: "Vous devez être connecté pour effectuer cette action",
-        variant: "destructive",
-      });
-      return;
-    }
-
     if (!validateForm()) {
       return;
     }

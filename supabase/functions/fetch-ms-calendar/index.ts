@@ -2,13 +2,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1'
 
-const logger = {
-  debug: (...args: any[]) => console.debug(...args),
-  info: (...args: any[]) => console.info(...args),
-  warn: (...args: any[]) => console.warn(...args),
-  error: (...args: any[]) => console.error(...args),
-}
-
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
@@ -44,7 +37,7 @@ async function fetchAllEvents(accessToken: string, startDate: string, endDate: s
   // URL initiale pour la première page de résultats
   let url = `https://graph.microsoft.com/v1.0/me/calendarView?startDateTime=${startDate}&endDateTime=${endDate}&$select=subject,start,end,body`;
   
-  logger.info(`🔍 Début de la récupération des événements du ${startDate} au ${endDate}`);
+  console.log(`🔍 Début de la récupération des événements du ${startDate} au ${endDate}`);
   
   do {
     // Utiliser l'URL de base pour la première requête ou nextLink pour les pages suivantes
@@ -65,7 +58,7 @@ async function fetchAllEvents(accessToken: string, startDate: string, endDate: s
     
     // Ajouter les événements de cette page au tableau final
     if (data.value && Array.isArray(data.value)) {
-      logger.debug(`✅ Récupération de ${data.value.length} événements supplémentaires`);
+      console.log(`✅ Récupération de ${data.value.length} événements supplémentaires`);
       events.push(...data.value);
     }
     
@@ -75,11 +68,11 @@ async function fetchAllEvents(accessToken: string, startDate: string, endDate: s
     // Si oui, utiliser cette URL pour la prochaine itération
     if (nextLink) {
       url = nextLink;
-      logger.debug(`🔄 Chargement de la page suivante...`);
+      console.log(`🔄 Chargement de la page suivante...`);
     }
   } while (nextLink);
   
-  logger.info(`🎉 Récupération terminée: ${events.length} événements au total`);
+  console.log(`🎉 Récupération terminée: ${events.length} événements au total`);
   return events;
 }
 
@@ -96,7 +89,7 @@ serve(async (req) => {
       throw new Error("Paramètres manquants")
     }
 
-    logger.info(`🔍 Récupération des événements du ${startDate} au ${endDate}`)
+    console.log(`🔍 Récupération des événements du ${startDate} au ${endDate}`)
 
     // Formater les dates pour Microsoft Graph
     const start = new Date(startDate).toISOString();
@@ -129,7 +122,7 @@ serve(async (req) => {
       };
     });
 
-    logger.info(`✅ ${events.length} événements récupérés au total`);
+    console.log(`✅ ${events.length} événements récupérés au total`);
 
     return new Response(
       JSON.stringify({ events }),

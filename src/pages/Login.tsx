@@ -1,7 +1,8 @@
+
 import { Auth } from "@supabase/auth-ui-react";
 import { ThemeSupa } from "@supabase/auth-ui-shared";
 import { supabase } from "@/integrations/supabase/client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/components/ui/use-toast";
 
@@ -28,28 +29,100 @@ const Login = () => {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
   const [isMagicLink, setIsMagicLink] = useState(true);
+  const [isCheckingSession, setIsCheckingSession] = useState(true);
   const [isPasswordReset, setIsPasswordReset] = useState(false);
+  const initialCheckDone = useRef(false);
 
-  // Gestionnaire d'état d'authentification - SIMPLIFIÉ
+  // Fonction simplifiée pour déconnecter l'utilisateur sans boucle
+  const performLogout = async () => {
+    try {
+      // console.log("Déconnexion simple effectuée");
+      await supabase.auth.signOut({ scope: 'local' });
+      clearSupabaseCookies();
+    } catch (error) {
+      console.error("Erreur lors de la déconnexion simple:", error);
+      clearSupabaseCookies();
+    }
+  };
+
+  // Vérification de session simplifiée - une seule fois au chargement
+  useEffect(() => {
+    const checkSession = async () => {
+      if (initialCheckDone.current) return;
+      
+      try {
+        // console.log("Vérification de session au démarrage");
+        setIsCheckingSession(true);
+        
+        // Récupérer la session actuelle
+        const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+        
+        if (sessionError) {
+          console.error("Erreur lors de la vérification de session:", sessionError);
+          setIsCheckingSession(false);
+          initialCheckDone.current = true;
+          return;
+        }
+
+        // Si session active et valide
+        if (sessionData?.session) {
+          // console.log("Session active détectée, redirection vers la page principale");
+          navigate("/");
+        } else {
+          // console.log("Aucune session active détectée");
+          setIsCheckingSession(false);
+        }
+      } catch (error) {
+        console.error("Erreur inattendue lors de la vérification de session:", error);
+      } finally {
+        setIsCheckingSession(false);
+        initialCheckDone.current = true;
+      }
+    };
+
+    checkSession();
+  }, [navigate]);
+
+  // Gestionnaire d'état d'authentification modifié pour gérer PASSWORD_RECOVERY
   useEffect(() => {
     const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log("Login - Auth event:", event, !!session);
+      // console.log("Événement d'authentification:", event);
       
+      // Gérer l'événement PASSWORD_RECOVERY
       if (event === 'PASSWORD_RECOVERY') {
+        // console.log("Événement PASSWORD_RECOVERY détecté, redirection vers le formulaire de réinitialisation");
+        // Rediriger vers la page de callback avec le paramètre reset=true
         window.location.href = '/auth/callback?reset=true';
         return;
       }
       
-      // Ne pas rediriger ici - laisser AuthGuard gérer la redirection
+      if (event === 'SIGNED_OUT') {
+        // console.log("Événement SIGNED_OUT détecté");
+        // Réinitialiser l'état local sans déclencher de nouvelle déconnexion
+        setEmail("");
+        setPassword("");
+        setLoading(false);
+        setMessage("");
+        setIsCheckingSession(false);
+        initialCheckDone.current = true;
+        
+        // Assurer que nous sommes sur la page de login
+        if (window.location.pathname !== '/login') {
+          window.location.href = '/login';
+        }
+        return;
+      }
+
       if (event === 'SIGNED_IN' && session) {
-        console.log("Login - Utilisateur connecté, AuthGuard va gérer la redirection");
+        // console.log("Événement SIGNED_IN détecté, redirection vers /");
+        navigate("/");
       }
     });
 
     return () => {
       authListener.subscription.unsubscribe();
     };
-  }, []);
+  }, [navigate]);
 
   // 🔹 Connexion avec Magic Link
   const handleMagicLink = async (e) => {
@@ -89,6 +162,7 @@ const Login = () => {
 
     if (error) {
       setMessage("Erreur : " + error.message);
+      // En cas d'erreur de connexion, nettoyer les cookies potentiellement problématiques
       clearSupabaseCookies();
     }
   };
@@ -137,19 +211,25 @@ const Login = () => {
 
   // Déconnexion manuelle et nettoyage complet
   const handleManualReset = async () => {
-    try {
-      await supabase.auth.signOut({ scope: 'local' });
-      clearSupabaseCookies();
-      toast({
-        title: "Session réinitialisée",
-        description: "Toutes les données de session ont été supprimées",
-      });
-      setMessage("Session réinitialisée avec succès.");
-    } catch (error) {
-      console.error("Erreur lors de la réinitialisation:", error);
-      clearSupabaseCookies();
-    }
+    await performLogout();
+    toast({
+      title: "Session réinitialisée",
+      description: "Toutes les données de session ont été supprimées",
+    });
+    setMessage("Session réinitialisée avec succès.");
   };
+
+  if (isCheckingSession) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="max-w-md w-full space-y-8 p-8 bg-white rounded-lg shadow">
+          <div className="text-center">
+            <h2 className="text-3xl font-bold text-gray-900">Vérification de la session...</h2>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50">

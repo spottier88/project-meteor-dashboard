@@ -1,5 +1,6 @@
 import { Dialog, DialogContent, DialogFooter } from "@/components/ui/dialog";
 import { useQuery } from "@tanstack/react-query";
+import { useUser } from "@supabase/auth-helpers-react";
 import { ProjectFormHeader } from "./form/ProjectFormHeader";
 import { ProjectFormContent } from "./form/ProjectFormContent";
 import { ProjectFormNavigation } from "./form/ProjectFormNavigation";
@@ -13,8 +14,6 @@ import { useProjectPermissions } from "@/hooks/useProjectPermissions";
 import { ProfileForm } from "./profile/ProfileForm";
 import { UserProfile } from "@/types/user";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuthContext } from "@/contexts/AuthContext";
-import { usePermissionsContext } from "@/contexts/PermissionsContext";
 
 interface ProjectFormProps {
   isOpen: boolean;
@@ -24,8 +23,7 @@ interface ProjectFormProps {
 }
 
 export const ProjectForm = ({ isOpen, onClose, onSubmit, project }: ProjectFormProps) => {
-  const { user } = useAuthContext();
-  const { userRoles } = usePermissionsContext();
+  const user = useUser();
   const formState = useProjectFormState(isOpen, project);
   const validation = useProjectFormValidation();
   const { canEdit, canCreate, canEditOrganization, accessibleOrganizations } = useProjectPermissions(project?.id || "");
@@ -55,29 +53,12 @@ export const ProjectForm = ({ isOpen, onClose, onSubmit, project }: ProjectFormP
     enabled: !!user?.id,
   });
 
-  // Requête pour récupérer les chefs de projet avec gestion des rôles
-  const { data: projectManagers, isLoading: projectManagersLoading, error: projectManagersError } = useQuery({
-    queryKey: ["projectManagers", user?.id, userRoles],
+  const { data: projectManagers } = useQuery({
+    queryKey: ["projectManagers", user?.id, validation.userRoles],
     queryFn: async () => {
-      if (!user?.id) {
-        console.log("No user ID available for project managers query");
-        return [];
-      }
-      console.log("Fetching project managers for user:", user.id, "with roles:", userRoles);
-      const managers = await getProjectManagers(user.id, userRoles);
-      console.log("Project managers fetched:", managers?.length, "managers");
-      return managers;
+      return getProjectManagers(user?.id, validation.userRoles?.map(ur => ur.role));
     },
-    enabled: isOpen && !!user?.id,
-    staleTime: 5 * 60 * 1000, // 5 minutes
-  });
-
-  // Log pour déboguer
-  console.log("ProjectForm - projectManagers state:", {
-    isLoading: projectManagersLoading,
-    error: projectManagersError,
-    data: projectManagers,
-    userRoles: userRoles
+    enabled: isOpen && !!user?.id && !!validation.userRoles,
   });
 
   const { 

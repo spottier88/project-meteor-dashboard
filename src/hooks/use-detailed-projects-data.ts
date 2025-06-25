@@ -5,7 +5,6 @@ import { Json } from "@/integrations/supabase/types";
 import { format } from "date-fns";
 import { ProjectStatus, ProgressStatus, ProjectLifecycleStatus } from "@/types/project";
 import { RiskProbability, RiskSeverity, RiskStatus } from "@/types/risk";
-import { logger } from "@/utils/logger";
 
 export type ProjectData = {
   project: {
@@ -76,7 +75,7 @@ export const useDetailedProjectsData = (projectIds: string[], enabled: boolean =
       if (!projectIds || projectIds.length === 0) return [];
 
       try {
-        logger.debug(`Récupération des données pour ${projectIds.length} projets en une seule requête`);
+        console.log(`Récupération des données pour ${projectIds.length} projets en une seule requête`);
         
         // Utiliser la fonction PostgreSQL pour récupérer les données en une seule requête
         const { data, error } = await supabase
@@ -90,13 +89,13 @@ export const useDetailedProjectsData = (projectIds: string[], enabled: boolean =
         }
 
         if (!data) {
-          logger.debug("Aucune donnée récupérée");
+          console.log("Aucune donnée récupérée");
           return [];
         }
 
         // Vérifier si data est un tableau et qu'il contient des éléments
         if (!Array.isArray(data) || data.length === 0) {
-          logger.debug("Les données récupérées ne sont pas au format attendu ou sont vides");
+          console.log("Les données récupérées ne sont pas au format attendu ou sont vides");
           return [];
         }
 
@@ -149,7 +148,7 @@ export const useDetailedProjectsData = (projectIds: string[], enabled: boolean =
           return typedItem as ProjectData;
         });
         
-        logger.debug(`${projectsData.length} projets récupérés avec succès`);
+        console.log(`${projectsData.length} projets récupérés avec succès`);
         return projectsData;
       } catch (error) {
         console.error("Erreur dans useDetailedProjectsData:", error);

@@ -16,7 +16,6 @@ import { UserForm } from "@/components/UserForm";
 import { InviteUserForm } from "@/components/admin/InviteUserForm";
 import { useToast } from "@/components/ui/use-toast";
 import { Input } from "@/components/ui/input";
-import { logger } from "@/utils/logger";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -89,7 +88,7 @@ export const UserManagement = () => {
       if (error) throw error;
       
       const assignmentSet = new Set(data.map(assignment => assignment.user_id));
-      logger.debug(`Manager assignments: ${assignmentSet.size} assignments found`);
+      console.log("Manager assignments:", assignmentSet);
       return assignmentSet;
     },
   });
@@ -118,7 +117,7 @@ export const UserManagement = () => {
         const hasAssignment = hasManagerRole ? managerAssignments?.has(profile.id) || false : false;
         
         if (hasManagerRole) {
-          logger.debug(`User ${profile.email} has manager role. Has assignment: ${hasAssignment}`);
+          console.log(`User ${profile.email} has manager role. Has assignment: ${hasAssignment}`);
         }
 
         return {

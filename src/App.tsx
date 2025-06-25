@@ -1,8 +1,8 @@
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { SessionContextProvider } from "@supabase/auth-helpers-react";
 import { supabase } from "@/integrations/supabase/client";
 import { AppRoutes } from "./routes";
-import { Toaster } from "@/components/ui/toaster";
 
 // Configurez le client de requête pour React Query
 const queryClient = new QueryClient({
@@ -17,8 +17,9 @@ const queryClient = new QueryClient({
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <AppRoutes />
-      <Toaster />
+      <SessionContextProvider supabaseClient={supabase}>
+        <AppRoutes />
+      </SessionContextProvider>
     </QueryClientProvider>
   );
 }

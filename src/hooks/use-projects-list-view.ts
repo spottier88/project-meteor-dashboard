@@ -1,10 +1,9 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuthContext } from "@/contexts/AuthContext";
+import { useUser } from "@supabase/auth-helpers-react";
 import { ProjectStatus, ProgressStatus, ProjectLifecycleStatus, ForEntityType, Project, ProjectWithExtendedData } from "@/types/project";
 import { MonitoringLevel } from "@/types/monitoring";
-import { logger } from "@/utils/logger";
 
 export interface ProjectListItem {
   id: string;
@@ -60,7 +59,7 @@ export const convertToProject = (item: ProjectListItem): Project => {
 };
 
 export const useProjectsListView = (enabled = true) => {
-  const { user } = useAuthContext();
+  const user = useUser();
 
   return useQuery({
     queryKey: ["projectsListView", user?.id],
@@ -68,7 +67,7 @@ export const useProjectsListView = (enabled = true) => {
       if (!user?.id) return [];
       
       try {
-        logger.debug("Récupération des données de projets optimisées en une seule requête");
+        console.log("Récupération des données de projets optimisées en une seule requête");
         
         const { data, error } = await supabase
           .rpc('get_accessible_projects_list_view', {
@@ -81,7 +80,7 @@ export const useProjectsListView = (enabled = true) => {
         }
 
         if (!data) {
-          logger.debug("Aucune donnée de projets récupérée");
+          console.log("Aucune donnée de projets récupérée");
           return [];
         }
 
@@ -121,7 +120,7 @@ export const useProjectsListView = (enabled = true) => {
             }))
           : [];
         
-        logger.debug(`${projects.length} projets récupérés avec succès via la vue optimisée`);
+        console.log(`${projects.length} projets récupérés avec succès via la vue optimisée`);
         return projects;
       } catch (error) {
         console.error("Erreur dans useProjectsListView:", error);

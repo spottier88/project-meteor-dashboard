@@ -1,6 +1,7 @@
 
 import { useState } from "react";
 import { useForm } from "react-hook-form";
+import { useUser } from "@supabase/auth-helpers-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/components/ui/use-toast";
 import { Button } from "@/components/ui/button";
@@ -25,7 +26,6 @@ import { NotificationType } from "@/types/notification";
 import { supabase } from "@/integrations/supabase/client";
 import { DatePickerField } from "@/components/form/DatePickerField";
 import { Checkbox } from "@/components/ui/checkbox";
-import { useAuthContext } from "@/contexts/AuthContext";
 
 interface NotificationFormData {
   title: string;
@@ -42,7 +42,7 @@ interface NotificationFormProps {
 
 export function NotificationForm({ onSuccess, onCancel }: NotificationFormProps) {
   const { toast } = useToast();
-  const { user } = useAuthContext();
+  const user = useUser();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const queryClient = useQueryClient();
 

@@ -7,7 +7,6 @@ import { useForm } from "react-hook-form";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useAuthContext } from "@/contexts/AuthContext";
 import { ReviewForm } from "@/components/review/types";
 import { ReviewFormFields } from "@/components/review/ReviewFormFields";
 import { ReviewActionFields } from "@/components/review/ReviewActionFields";
@@ -33,7 +32,6 @@ export const ReviewSheet = ({
   existingReview,
 }: ReviewSheetProps) => {
   const { toast } = useToast();
-  const { user } = useAuthContext();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const queryClient = useQueryClient();
 
@@ -69,15 +67,6 @@ export const ReviewSheet = ({
   });
 
   const onSubmit = async (data: ReviewForm) => {
-    if (!user) {
-      toast({
-        title: "Erreur",
-        description: "Vous devez être connecté pour effectuer cette action",
-        variant: "destructive",
-      });
-      return;
-    }
-
     setIsSubmitting(true);
     try {
       // Insert the review

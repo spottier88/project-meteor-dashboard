@@ -559,38 +559,6 @@ export type Database = {
         }
         Relationships: []
       }
-      portfolio_managers: {
-        Row: {
-          created_at: string | null
-          id: string
-          portfolio_id: string | null
-          role: string | null
-          user_id: string
-        }
-        Insert: {
-          created_at?: string | null
-          id?: string
-          portfolio_id?: string | null
-          role?: string | null
-          user_id: string
-        }
-        Update: {
-          created_at?: string | null
-          id?: string
-          portfolio_id?: string | null
-          role?: string | null
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "portfolio_managers_portfolio_id_fkey"
-            columns: ["portfolio_id"]
-            isOneToOne: false
-            referencedRelation: "project_portfolios"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       profiles: {
         Row: {
           created_at: string | null
@@ -803,48 +771,6 @@ export type Database = {
           },
         ]
       }
-      project_portfolios: {
-        Row: {
-          budget_total: number | null
-          created_at: string | null
-          created_by: string
-          description: string | null
-          end_date: string | null
-          id: string
-          name: string
-          start_date: string | null
-          status: string | null
-          strategic_objectives: string | null
-          updated_at: string | null
-        }
-        Insert: {
-          budget_total?: number | null
-          created_at?: string | null
-          created_by: string
-          description?: string | null
-          end_date?: string | null
-          id?: string
-          name: string
-          start_date?: string | null
-          status?: string | null
-          strategic_objectives?: string | null
-          updated_at?: string | null
-        }
-        Update: {
-          budget_total?: number | null
-          created_at?: string | null
-          created_by?: string
-          description?: string | null
-          end_date?: string | null
-          id?: string
-          name?: string
-          start_date?: string | null
-          status?: string | null
-          strategic_objectives?: string | null
-          updated_at?: string | null
-        }
-        Relationships: []
-      }
       project_template_tasks: {
         Row: {
           created_at: string
@@ -943,7 +869,6 @@ export type Database = {
           owner_id: string | null
           path_id: string | null
           pole_id: string | null
-          portfolio_id: string | null
           priority: string | null
           progress: Database["public"]["Enums"]["progress_status"] | null
           project_manager: string | null
@@ -967,7 +892,6 @@ export type Database = {
           owner_id?: string | null
           path_id?: string | null
           pole_id?: string | null
-          portfolio_id?: string | null
           priority?: string | null
           progress?: Database["public"]["Enums"]["progress_status"] | null
           project_manager?: string | null
@@ -991,7 +915,6 @@ export type Database = {
           owner_id?: string | null
           path_id?: string | null
           pole_id?: string | null
-          portfolio_id?: string | null
           priority?: string | null
           progress?: Database["public"]["Enums"]["progress_status"] | null
           project_manager?: string | null
@@ -1029,13 +952,6 @@ export type Database = {
             columns: ["pole_id"]
             isOneToOne: false
             referencedRelation: "poles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "projects_portfolio_id_fkey"
-            columns: ["portfolio_id"]
-            isOneToOne: false
-            referencedRelation: "project_portfolios"
             referencedColumns: ["id"]
           },
           {
@@ -1400,10 +1316,6 @@ export type Database = {
         Args: { p_user_id: string; p_project_id: string }
         Returns: boolean
       }
-      can_manage_portfolio: {
-        Args: { p_user_id: string; p_portfolio_id: string }
-        Returns: boolean
-      }
       can_manage_project: {
         Args: { p_user_id: string; p_project_id: string }
         Returns: boolean
@@ -1435,10 +1347,6 @@ export type Database = {
         Args: { p_user_id: string; p_activity_type_code: string }
         Returns: boolean
       }
-      can_view_portfolio: {
-        Args: { p_user_id: string; p_portfolio_id: string }
-        Returns: boolean
-      }
       can_view_project_members: {
         Args: { p_user_id: string; p_project_id: string }
         Returns: boolean
@@ -1446,25 +1354,6 @@ export type Database = {
       generate_project_code: {
         Args: { project_uuid: string }
         Returns: string
-      }
-      get_accessible_portfolios: {
-        Args: { p_user_id: string }
-        Returns: {
-          id: string
-          name: string
-          description: string
-          strategic_objectives: string
-          budget_total: number
-          start_date: string
-          end_date: string
-          status: string
-          created_by: string
-          created_at: string
-          updated_at: string
-          project_count: number
-          completed_projects: number
-          average_completion: number
-        }[]
       }
       get_accessible_project_managers: {
         Args: { p_user_id: string }
@@ -1505,17 +1394,6 @@ export type Database = {
       get_projects_list_view: {
         Args: Record<PropertyKey, never>
         Returns: Json
-      }
-      get_reviewable_projects: {
-        Args: { p_user_id: string }
-        Returns: {
-          id: string
-          title: string
-          project_manager: string
-          status: Database["public"]["Enums"]["project_status"]
-          weather: Database["public"]["Enums"]["project_status"]
-          last_review_date: string
-        }[]
       }
       get_team_view_projects: {
         Args: { p_user_id: string }
@@ -1579,13 +1457,7 @@ export type Database = {
       setting_type: "microsoft_graph" | "openai" | "documentation"
       task_status: "todo" | "in_progress" | "done"
       user_hierarchy_level: "pole" | "direction" | "service"
-      user_role:
-        | "admin"
-        | "chef_projet"
-        | "manager"
-        | "membre"
-        | "time_tracker"
-        | "portfolio_manager"
+      user_role: "admin" | "chef_projet" | "manager" | "membre" | "time_tracker"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1728,14 +1600,7 @@ export const Constants = {
       setting_type: ["microsoft_graph", "openai", "documentation"],
       task_status: ["todo", "in_progress", "done"],
       user_hierarchy_level: ["pole", "direction", "service"],
-      user_role: [
-        "admin",
-        "chef_projet",
-        "manager",
-        "membre",
-        "time_tracker",
-        "portfolio_manager",
-      ],
+      user_role: ["admin", "chef_projet", "manager", "membre", "time_tracker"],
     },
   },
 } as const
