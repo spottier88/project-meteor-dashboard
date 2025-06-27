@@ -9,7 +9,7 @@ export const useTeamManagement = (projectId: string) => {
 
   // Récupération des informations du projet
   const { data: project } = useQuery({
-    queryKey: ["project", projectId],
+    queryKey: ["teamProjectManager", projectId],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("projects")
