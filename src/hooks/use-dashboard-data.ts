@@ -38,7 +38,7 @@ export const useDashboardData = () => {
       }
 
       // Récupérer les projets accessibles via la fonction RPC existante
-      const { data: projects, error } = await supabase
+      const { data: projectsData, error } = await supabase
         .rpc('get_accessible_projects_list_view', {
           p_user_id: user.id
         });
@@ -48,7 +48,8 @@ export const useDashboardData = () => {
         throw error;
       }
 
-      const projectsArray = projects || [];
+      // S'assurer que nous avons un tableau
+      const projects = Array.isArray(projectsData) ? projectsData : [];
       
       // Calculer les statistiques
       let asManager = 0;
@@ -56,7 +57,7 @@ export const useDashboardData = () => {
       const byWeather: Record<string, number> = {};
       const byLifecycle: Record<string, number> = {};
 
-      projectsArray.forEach((project: any) => {
+      projects.forEach((project: any) => {
         // Compter par rôle
         if (project.project_manager === userProfile.email) {
           asManager++;
@@ -74,7 +75,7 @@ export const useDashboardData = () => {
       });
 
       return {
-        total: projectsArray.length,
+        total: projects.length,
         asManager,
         asMember,
         withAlerts: 0, // Sera calculé par le hook d'alertes

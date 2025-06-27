@@ -66,7 +66,7 @@ export const AlertsSection = () => {
           {alerts.map((alert) => (
             <div key={alert.project.id} className="flex items-center justify-between p-3 border rounded-lg">
               <div className="flex items-center gap-3">
-                <StatusIcon status={alert.project.status} className="h-5 w-5" />
+                <StatusIcon status={alert.project.status as any} className="h-5 w-5" />
                 <div>
                   <h4 className="font-medium">{alert.project.title}</h4>
                   <div className="flex gap-2 mt-1">

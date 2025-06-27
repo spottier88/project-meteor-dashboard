@@ -32,7 +32,7 @@ export const useProjectAlerts = () => {
       if (!user?.id) return [];
 
       // Récupérer les projets avec leurs dernières revues
-      const { data: projects, error } = await supabase
+      const { data: projectsData, error } = await supabase
         .rpc('get_accessible_projects_list_view', {
           p_user_id: user.id
         });
@@ -42,12 +42,13 @@ export const useProjectAlerts = () => {
         throw error;
       }
 
-      const projectsArray = projects || [];
+      // S'assurer que nous avons un tableau
+      const projects = Array.isArray(projectsData) ? projectsData : [];
       const alerts: ProjectAlert[] = [];
       const threeMonthsAgo = new Date();
       threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
 
-      for (const project of projectsArray) {
+      for (const project of projects) {
         const reasons: AlertReason[] = [];
 
         // Vérifier la dernière revue
