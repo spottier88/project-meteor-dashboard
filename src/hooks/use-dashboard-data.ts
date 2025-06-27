@@ -48,8 +48,8 @@ export const useDashboardData = () => {
         throw error;
       }
 
-      // S'assurer que nous avons un tableau
-      const projects = Array.isArray(projectsData) ? projectsData : [];
+      // S'assurer que nous avons un tableau et typer correctement les données
+      const projects = Array.isArray(projectsData) ? projectsData as any[] : [];
       
       // Calculer les statistiques
       let asManager = 0;

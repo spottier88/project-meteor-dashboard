@@ -56,7 +56,9 @@ export const ProjectForm = ({ isOpen, onClose, onSubmit, project }: ProjectFormP
   const { data: projectManagers } = useQuery({
     queryKey: ["projectManagers", user?.id, validation.userRoles],
     queryFn: async () => {
-      return getProjectManagers(user?.id, validation.userRoles?.map(ur => ur.role));
+      // Filtrer pour exclure 'portfolio_manager' qui n'existe pas dans UserRole
+      const validRoles = validation.userRoles?.map(ur => ur.role).filter(role => role !== 'portfolio_manager');
+      return getProjectManagers(user?.id, validRoles);
     },
     enabled: isOpen && !!user?.id && !!validation.userRoles,
   });

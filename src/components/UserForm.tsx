@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import {
   Dialog,
@@ -123,11 +124,11 @@ export const UserForm = ({ isOpen, onClose, onSubmit, user }: UserFormProps) => 
 
         if (getRolesError) throw getRolesError;
 
-        const currentRoleSet = new Set(currentRoles.map(r => r.role));
+        const currentRoleSet = new Set(currentRoles.map(r => r.role as UserRole));
         const newRoleSet = new Set(roles);
 
         const rolesToRemove = currentRoles
-          .map(r => r.role)
+          .map(r => r.role as UserRole)
           .filter(role => !newRoleSet.has(role));
 
         const rolesToAdd = roles.filter(role => !currentRoleSet.has(role));
