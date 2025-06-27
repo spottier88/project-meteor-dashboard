@@ -10,7 +10,7 @@
 import { Button } from "@/components/ui/button";
 import { TableRow, TableCell } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { User, ShieldCheck, CrownIcon, Trash2 } from "lucide-react";
+import { User, ShieldCheck, CrownIcon, Trash2, AlertTriangle } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -39,6 +39,22 @@ export const TeamMemberRow = ({
   onPromote,
   onDemote,
 }: TeamMemberProps) => {
+  // Vérification de l'ID du membre
+  const hasValidId = member?.id && member.id !== 'undefined' && member.id !== 'null';
+  
+  // Log de débogage pour identifier les problèmes
+  if (!hasValidId) {
+    console.error("TeamMemberRow: Member without valid ID:", member);
+  }
+
+  const handleAction = (action: () => void, actionName: string) => {
+    if (!hasValidId) {
+      console.error(`Cannot perform ${actionName}: Invalid member ID`, member);
+      return;
+    }
+    action();
+  };
+
   return (
     <TableRow>
       <TableCell>
@@ -69,34 +85,54 @@ export const TeamMemberRow = ({
       </TableCell>
       {canManageTeam && (
         <TableCell>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="sm">
-                Actions
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              {!isProjectManager && !isSecondaryManager && (
-                <DropdownMenuItem onClick={() => onPromote(member.id, userRoles)}>
-                  Promouvoir chef de projet secondaire
-                </DropdownMenuItem>
-              )}
-              {!isProjectManager && isSecondaryManager && (
-                <DropdownMenuItem onClick={() => onDemote(member.id)}>
-                  Rétrograder au rôle de membre
-                </DropdownMenuItem>
-              )}
-              {!isProjectManager && (
-                <DropdownMenuItem 
-                  onClick={() => onDelete(member.id, member.profiles?.email)}
-                  className="text-destructive"
-                >
-                  <Trash2 className="h-4 w-4 mr-2" />
-                  Retirer de l'équipe
-                </DropdownMenuItem>
-              )}
-            </DropdownMenuContent>
-          </DropdownMenu>
+          {!hasValidId ? (
+            <Badge variant="destructive" className="flex items-center">
+              <AlertTriangle className="h-3 w-3 mr-1" />
+              Erreur ID
+            </Badge>
+          ) : (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="sm">
+                  Actions
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                {!isProjectManager && !isSecondaryManager && (
+                  <DropdownMenuItem 
+                    onClick={() => handleAction(
+                      () => onPromote(member.id, userRoles),
+                      'promotion'
+                    )}
+                  >
+                    Promouvoir chef de projet secondaire
+                  </DropdownMenuItem>
+                )}
+                {!isProjectManager && isSecondaryManager && (
+                  <DropdownMenuItem 
+                    onClick={() => handleAction(
+                      () => onDemote(member.id),
+                      'demotion'
+                    )}
+                  >
+                    Rétrograder au rôle de membre
+                  </DropdownMenuItem>
+                )}
+                {!isProjectManager && (
+                  <DropdownMenuItem 
+                    onClick={() => handleAction(
+                      () => onDelete(member.id, member.profiles?.email),
+                      'deletion'
+                    )}
+                    className="text-destructive"
+                  >
+                    <Trash2 className="h-4 w-4 mr-2" />
+                    Retirer de l'équipe
+                  </DropdownMenuItem>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
         </TableCell>
       )}
     </TableRow>
