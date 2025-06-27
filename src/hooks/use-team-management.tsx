@@ -46,41 +46,25 @@ export const useTeamManagement = (projectId: string) => {
 
       if (error) throw error;
       
-      // Amélioration de la transformation des données avec vérifications
-      const transformedMembers = data.map(member => {
-        console.log("Transforming member:", member); // Log de débogage
-        
-        if (!member.id) {
-          console.error("Member without ID found:", member);
+      return data.map(member => ({
+        ...member,
+        profiles: {
+          ...member.profiles,
+          roles: Array.isArray(member.profiles.user_roles) 
+            ? member.profiles.user_roles.map((ur: any) => ur.role) 
+            : []
         }
-        
-        return {
-          id: member.id, // S'assurer que l'ID est préservé
-          role: member.role,
-          project_id: member.project_id,
-          profiles: {
-            ...member.profiles,
-            roles: Array.isArray(member.profiles?.user_roles) 
-              ? member.profiles.user_roles.map((ur: any) => ur.role) 
-              : []
-          }
-        };
-      });
-      
-      console.log("Transformed members:", transformedMembers); // Log de débogage
-      return transformedMembers;
+      }));
     },
   });
 
   // Mutation pour supprimer un membre
   const deleteMutation = useMutation({
     mutationFn: async (memberId: string) => {
-      // Vérification renforcée que l'ID est valide
-      if (!memberId || memberId === 'undefined' || memberId === 'null') {
-        throw new Error("ID du membre non défini ou invalide");
+      // Vérification préalable que l'ID est valide
+      if (!memberId) {
+        throw new Error("ID du membre non défini");
       }
-      
-      console.log("Deleting member with ID:", memberId); // Log de débogage
       
       const { error } = await supabase
         .from("project_members")
@@ -109,12 +93,12 @@ export const useTeamManagement = (projectId: string) => {
   // Mutation pour mettre à jour le rôle d'un membre
   const updateRoleMutation = useMutation({
     mutationFn: async ({ memberId, role }: { memberId: string, role: string }) => {
-      // Vérification renforcée que l'ID est valide
-      if (!memberId || memberId === 'undefined' || memberId === 'null') {
-        throw new Error("ID du membre non défini ou invalide");
+      // Vérification préalable que l'ID est valide
+      if (!memberId) {
+        throw new Error("ID du membre non défini");
       }
       
-      console.log(`Updating member ${memberId} in project ${projectId} to role ${role}`); // Log de débogage
+      // console.log(`Updating member ${memberId} in project ${projectId} to role ${role}`);
       
       // Vérifier d'abord si l'enregistrement existe
       const { data: checkData, error: checkError } = await supabase
@@ -124,7 +108,7 @@ export const useTeamManagement = (projectId: string) => {
         .eq("project_id", projectId)
         .single();
       
-      console.log("Check result:", checkData, checkError); // Log de débogage
+      // console.log("Check result:", checkData, checkError);
       
       if (checkError) {
         console.error("Error checking member existence:", checkError);
@@ -147,7 +131,7 @@ export const useTeamManagement = (projectId: string) => {
         throw error;
       }
       
-      console.log("Update response:", data); // Log de débogage
+      // console.log("Update response:", data);
       return data;
     },
     onSuccess: () => {
@@ -167,11 +151,10 @@ export const useTeamManagement = (projectId: string) => {
     },
   });
 
-  // Fonction pour supprimer un membre avec vérifications renforcées
+  // Fonction pour supprimer un membre
   const handleDelete = (memberId: string, email?: string) => {
     // Vérification que l'ID est valide
-    if (!memberId || memberId === 'undefined' || memberId === 'null') {
-      console.error("Invalid member ID for deletion:", memberId);
+    if (!memberId || memberId === 'undefined') {
       toast({
         variant: "destructive",
         title: "Erreur",
@@ -194,19 +177,8 @@ export const useTeamManagement = (projectId: string) => {
     }
   };
 
-  // Fonction pour promouvoir un membre en chef de projet secondaire avec vérifications renforcées
+  // Fonction pour promouvoir un membre en chef de projet secondaire
   const handlePromoteToSecondaryManager = (memberId: string, roles: string[], isAdmin: boolean) => {
-    // Vérification que l'ID est valide
-    if (!memberId || memberId === 'undefined' || memberId === 'null') {
-      console.error("Invalid member ID for promotion:", memberId);
-      toast({
-        variant: "destructive",
-        title: "Erreur",
-        description: "Impossible de promouvoir ce membre : identifiant invalide.",
-      });
-      return;
-    }
-
     // Pour les admins, on supprime la vérification des rôles
     if (isAdmin) {
       updateRoleMutation.mutate({ memberId, role: 'secondary_manager' });
@@ -226,19 +198,8 @@ export const useTeamManagement = (projectId: string) => {
     updateRoleMutation.mutate({ memberId, role: 'secondary_manager' });
   };
 
-  // Fonction pour rétrograder un chef de projet secondaire en membre avec vérifications renforcées
+  // Fonction pour rétrograder un chef de projet secondaire en membre
   const handleDemoteToMember = (memberId: string) => {
-    // Vérification que l'ID est valide
-    if (!memberId || memberId === 'undefined' || memberId === 'null') {
-      console.error("Invalid member ID for demotion:", memberId);
-      toast({
-        variant: "destructive",
-        title: "Erreur",
-        description: "Impossible de rétrograder ce membre : identifiant invalide.",
-      });
-      return;
-    }
-
     updateRoleMutation.mutate({ memberId, role: 'member' });
   };
 
