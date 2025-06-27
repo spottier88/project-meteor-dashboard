@@ -22,7 +22,8 @@ interface StatusIconProps {
 }
 
 export const StatusIcon = ({ status, className }: StatusIconProps) => {
-  if (!status) {
+  // Si le statut est null, undefined, ou une chaîne non reconnue, afficher l'icône par défaut
+  if (!status || !statusIcons[status as keyof typeof statusIcons]) {
     return (
       <Hourglass
         className={cn("w-6 h-6 text-muted-foreground", className)}

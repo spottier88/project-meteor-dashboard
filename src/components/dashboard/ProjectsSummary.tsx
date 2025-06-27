@@ -31,6 +31,20 @@ export const ProjectsSummary = () => {
     );
   }
 
+  // Fonction helper pour obtenir le label d'un statut météo
+  const getWeatherLabel = (weather: string) => {
+    switch (weather) {
+      case 'sunny':
+        return 'Beau temps';
+      case 'cloudy':
+        return 'Nuageux';
+      case 'stormy':
+        return 'Orageux';
+      default:
+        return 'Non évalué';
+    }
+  };
+
   return (
     <Card>
       <CardHeader>
@@ -63,11 +77,8 @@ export const ProjectsSummary = () => {
           <div className="flex flex-wrap gap-2">
             {Object.entries(summary.byWeather).map(([weather, count]) => (
               <Badge key={weather} variant="outline" className="flex items-center gap-1">
-                <StatusIcon status={weather as any} className="h-3 w-3" />
-                {weather === 'sunny' && 'Beau temps'}
-                {weather === 'cloudy' && 'Nuageux'}
-                {weather === 'stormy' && 'Orageux'}
-                {weather === 'null' && 'Non évalué'}
+                <StatusIcon status={weather === 'sunny' || weather === 'cloudy' || weather === 'stormy' ? weather : null} className="h-3 w-3" />
+                {getWeatherLabel(weather)}
                 <span className="ml-1">({count})</span>
               </Badge>
             ))}
@@ -80,7 +91,7 @@ export const ProjectsSummary = () => {
           <div className="flex flex-wrap gap-2">
             {Object.entries(summary.byLifecycle).map(([lifecycle, count]) => (
               <Badge key={lifecycle} variant="secondary">
-                {lifecycleStatusLabels[lifecycle as keyof typeof lifecycleStatusLabels]}
+                {lifecycleStatusLabels[lifecycle as keyof typeof lifecycleStatusLabels] || lifecycle}
                 <span className="ml-1">({count})</span>
               </Badge>
             ))}
