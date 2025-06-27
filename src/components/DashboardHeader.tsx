@@ -34,12 +34,17 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
   const { cartItems } = useProjectCart();
   const [isCartOpen, setIsCartOpen] = useState(false);
 
+  // Déterminer si nous sommes sur la page des projets ou sur le dashboard
+  const isOnProjectsPage = window.location.pathname === '/projects';
+
   return (
     <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
       <div className="border-b w-full">
         <div className="flex h-16 items-center px-4 container">
           <div className="flex items-center flex-1">
-            <h1 className="text-3xl font-bold mr-8">Tableau de bord</h1>
+            <h1 className="text-3xl font-bold mr-8">
+              {isOnProjectsPage ? 'Tous les projets' : 'Tableau de bord'}
+            </h1>
             
             {(isTimeTracker || isAdmin) && (
               <NavigationMenu>
