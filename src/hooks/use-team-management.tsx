@@ -1,4 +1,3 @@
-
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
@@ -52,21 +51,14 @@ export const useTeamManagement = (projectId: string) => {
         .filter(member => {
           // Filtrer les membres sans ID valide
           if (!member.id) {
-            console.warn("Membre sans ID trouvé:", member);
+            console.warn("Membre sans ID project_members trouvé:", member);
             return false;
           }
           return true;
         })
         .map(member => {
-          // Debug temporaire pour vérifier la structure
-          console.log("Structure du membre:", {
-            memberId: member.id,
-            userId: member.user_id,
-            role: member.role,
-            profilesData: member.profiles
-          });
-
-          return {
+          // S'assurer que l'ID du project_member est bien présent
+          const memberData = {
             id: member.id, // ID du project_member (crucial pour les mutations)
             user_id: member.user_id,
             role: member.role,
@@ -81,9 +73,18 @@ export const useTeamManagement = (projectId: string) => {
                 : []
             } : null
           };
+
+          // Log pour vérifier que l'ID est bien présent
+          console.log("Membre transformé avec ID:", {
+            project_member_id: memberData.id,
+            user_id: memberData.user_id,
+            email: memberData.profiles?.email
+          });
+
+          return memberData;
         });
 
-      console.log("Données transformées:", transformedData);
+      console.log("Données finales transformées:", transformedData);
       return transformedData;
     },
   });

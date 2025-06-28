@@ -10,7 +10,7 @@
 import { Button } from "@/components/ui/button";
 import { TableRow, TableCell } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { User, ShieldCheck, CrownIcon, Trash2, AlertTriangle } from "lucide-react";
+import { User, ShieldCheck, CrownIcon, Trash2 } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -41,11 +41,6 @@ export const TeamMemberRow = ({
 }: TeamMemberProps) => {
   // Vérification de la validité de l'ID du membre
   const hasValidId = member.id && member.id !== 'undefined' && member.id !== 'null';
-  
-  // Debug temporaire
-  if (!hasValidId) {
-    console.warn("Membre avec ID invalide détecté:", member);
-  }
 
   return (
     <TableRow>
@@ -77,41 +72,34 @@ export const TeamMemberRow = ({
       </TableCell>
       {canManageTeam && (
         <TableCell>
-          {!hasValidId ? (
-            <div className="flex items-center text-amber-600 text-sm">
-              <AlertTriangle className="h-4 w-4 mr-1" />
-              Données incomplètes
-            </div>
-          ) : (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="sm">
-                  Actions
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                {!isProjectManager && !isSecondaryManager && (
-                  <DropdownMenuItem onClick={() => onPromote(member.id, userRoles)}>
-                    Promouvoir chef de projet secondaire
-                  </DropdownMenuItem>
-                )}
-                {!isProjectManager && isSecondaryManager && (
-                  <DropdownMenuItem onClick={() => onDemote(member.id)}>
-                    Rétrograder au rôle de membre
-                  </DropdownMenuItem>
-                )}
-                {!isProjectManager && (
-                  <DropdownMenuItem 
-                    onClick={() => onDelete(member.id, member.profiles?.email)}
-                    className="text-destructive"
-                  >
-                    <Trash2 className="h-4 w-4 mr-2" />
-                    Retirer de l'équipe
-                  </DropdownMenuItem>
-                )}
-              </DropdownMenuContent>
-            </DropdownMenu>
-          )}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="sm" disabled={!hasValidId}>
+                Actions
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              {!isProjectManager && !isSecondaryManager && (
+                <DropdownMenuItem onClick={() => onPromote(member.id, userRoles)}>
+                  Promouvoir chef de projet secondaire
+                </DropdownMenuItem>
+              )}
+              {!isProjectManager && isSecondaryManager && (
+                <DropdownMenuItem onClick={() => onDemote(member.id)}>
+                  Rétrograder au rôle de membre
+                </DropdownMenuItem>
+              )}
+              {!isProjectManager && (
+                <DropdownMenuItem 
+                  onClick={() => onDelete(member.id, member.profiles?.email)}
+                  className="text-destructive"
+                >
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  Retirer de l'équipe
+                </DropdownMenuItem>
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
         </TableCell>
       )}
     </TableRow>
