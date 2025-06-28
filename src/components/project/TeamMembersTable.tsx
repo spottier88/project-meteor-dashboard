@@ -45,14 +45,17 @@ export const TeamMembersTable = ({
         </TableRow>
       </TableHeader>
       <TableBody>
-        {members?.map((member) => {
+        {members?.map((member, index) => {
           const isProjectManager = member.profiles?.email === project?.project_manager;
           const isSecondaryManager = member.role === 'secondary_manager';
           const userRoles = member.profiles?.roles || [];
           
+          // Utiliser une clé composite pour éviter les doublons et les clés manquantes
+          const uniqueKey = member.id || `${member.user_id || 'unknown'}-${index}`;
+          
           return (
             <TeamMemberRow
-              key={member.id}
+              key={uniqueKey}
               member={member}
               isProjectManager={isProjectManager}
               isSecondaryManager={isSecondaryManager}
