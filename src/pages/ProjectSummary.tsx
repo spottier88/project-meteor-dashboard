@@ -1,4 +1,3 @@
-
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -15,7 +14,7 @@ export const ProjectSummary = () => {
   const navigate = useNavigate();
   const [isTaskFormOpen, setIsTaskFormOpen] = useState(false);
   const { toast } = useToast();
-  const { canEdit, isProjectManager, isAdmin } = useProjectPermissions(projectId || "");
+  const { canEdit, isProjectManager, isAdmin, canManageTeam } = useProjectPermissions(projectId || "");
 
   const { data: project, isError: projectError } = useQuery({
     queryKey: ["project", projectId],
@@ -132,6 +131,7 @@ export const ProjectSummary = () => {
         isProjectManager={isProjectManager}
         isAdmin={isAdmin}
         canEdit={canEdit}
+        canManageTeam={canManageTeam}
       />
 
       <TaskForm

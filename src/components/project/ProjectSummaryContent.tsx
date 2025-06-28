@@ -1,4 +1,3 @@
-
 import { ProjectStatus, ProgressStatus } from "@/types/project";
 import { StatusIcon } from "./StatusIcon";
 import { ProjectMetrics } from "./ProjectMetrics";
@@ -19,6 +18,7 @@ interface ProjectSummaryContentProps {
   isProjectManager?: boolean;
   isAdmin?: boolean;
   canEdit?: boolean;
+  canManageTeam?: boolean;
 }
 
 export const ProjectSummaryContent = ({
@@ -29,6 +29,7 @@ export const ProjectSummaryContent = ({
   isProjectManager,
   isAdmin,
   canEdit,
+  canManageTeam,
 }: ProjectSummaryContentProps) => {
   const projectId = project.id;
 
@@ -160,7 +161,7 @@ export const ProjectSummaryContent = ({
               canEdit={canEdit || false}
               isProjectManager={isProjectManager || false}
               isAdmin={isAdmin || false}
-              canManageTeam={isProjectManager || isAdmin || false}
+              canManageTeam={canManageTeam || false}
             />
           </div>
         </TabsContent>
