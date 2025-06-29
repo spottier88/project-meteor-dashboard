@@ -1,4 +1,5 @@
 
+
 /**
  * @component TeamManagement
  * @description Gestion de l'équipe d'un projet.
@@ -41,6 +42,17 @@ export const TeamManagement = ({
     handlePromoteToSecondaryManager,
     handleDemoteToMember
   } = useTeamManagement(projectId);
+
+  // Log de diagnostic pour comparer les contextes
+  console.log("🔍 TeamManagement - Diagnostic du contexte:", {
+    projectId,
+    canEdit,
+    isProjectManager,
+    isAdmin,
+    canManageTeam,
+    membersCount: members?.length || 0,
+    component: "TeamManagement"
+  });
 
   // Wrapper pour passer les paramètres nécessaires
   const onPromoteMember = (memberId: string, roles: string[]) => {

@@ -1,4 +1,5 @@
 
+
 /**
  * @component TeamMemberRow
  * @description Ligne du tableau pour un membre d'équipe projet.
@@ -42,6 +43,26 @@ export const TeamMemberRow = ({
   // Vérification de la validité de l'ID du membre
   const hasValidId = member.id && member.id !== 'undefined' && member.id !== 'null';
 
+  // Logs de diagnostic pour identifier les différences
+  console.log("🔍 TeamMemberRow - Diagnostic du membre:", {
+    memberId: member.id,
+    hasValidId,
+    canManageTeam,
+    memberEmail: member.profiles?.email,
+    isProjectManager,
+    isSecondaryManager,
+    userRoles,
+    memberData: member
+  });
+
+  // Log spécifique pour le bouton Actions
+  console.log("🎯 TeamMemberRow - État du bouton Actions:", {
+    canManageTeam,
+    hasValidId,
+    buttonDisabled: !hasValidId,
+    shouldShowActions: canManageTeam
+  });
+
   return (
     <TableRow>
       <TableCell>
@@ -74,8 +95,13 @@ export const TeamMemberRow = ({
         <TableCell>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="sm" disabled={!hasValidId}>
-                Actions
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                disabled={!hasValidId}
+                style={!hasValidId ? { backgroundColor: '#f3f4f6', cursor: 'not-allowed' } : {}}
+              >
+                Actions {!hasValidId && "(ID manquant)"}
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">

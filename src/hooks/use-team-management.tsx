@@ -1,3 +1,4 @@
+
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
@@ -25,6 +26,8 @@ export const useTeamManagement = (projectId: string) => {
   const { data: members } = useQuery({
     queryKey: ["projectMembers", projectId],
     queryFn: async () => {
+      console.log("🔍 useTeamManagement - Récupération des membres pour le projet:", projectId);
+      
       const { data, error } = await supabase
         .from("project_members")
         .select(`
@@ -44,14 +47,19 @@ export const useTeamManagement = (projectId: string) => {
         `)
         .eq("project_id", projectId);
 
-      if (error) throw error;
+      if (error) {
+        console.error("❌ useTeamManagement - Erreur lors de la récupération des membres:", error);
+        throw error;
+      }
+      
+      console.log("📊 useTeamManagement - Données brutes reçues:", data);
       
       // Transformation des données avec validation de l'ID
       const transformedData = data
         .filter(member => {
           // Filtrer les membres sans ID valide
           if (!member.id) {
-            console.warn("Membre sans ID project_members trouvé:", member);
+            console.warn("⚠️ useTeamManagement - Membre sans ID project_members trouvé:", member);
             return false;
           }
           return true;
@@ -75,16 +83,19 @@ export const useTeamManagement = (projectId: string) => {
           };
 
           // Log pour vérifier que l'ID est bien présent
-          console.log("Membre transformé avec ID:", {
+          console.log("✅ useTeamManagement - Membre transformé:", {
             project_member_id: memberData.id,
             user_id: memberData.user_id,
-            email: memberData.profiles?.email
+            email: memberData.profiles?.email,
+            hasValidId: !!memberData.id && memberData.id !== 'undefined' && memberData.id !== 'null'
           });
 
           return memberData;
         });
 
-      console.log("Données finales transformées:", transformedData);
+      console.log("🎯 useTeamManagement - Données finales transformées:", transformedData);
+      console.log("📈 useTeamManagement - Nombre de membres valides:", transformedData.length);
+      
       return transformedData;
     },
   });
