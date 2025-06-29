@@ -28,35 +28,25 @@ export const ProjectSummaryContent = ({
   lastReview,
   risks,
   tasks,
-  isProjectManager,
-  isAdmin,
-  canEdit,
-  canManageTeam,
 }: ProjectSummaryContentProps) => {
   const projectId = project.id;
 
-  // S'assurer que les permissions sont chargées de manière cohérente
+  // Charger les permissions de manière centralisée et attendre qu'elles soient disponibles
   const projectPermissions = useProjectPermissions(projectId);
 
-  // Log de diagnostic pour comparer les permissions
-  console.log("🔍 ProjectSummaryContent - Comparaison des permissions:", {
-    propsPermissions: { isProjectManager, isAdmin, canEdit, canManageTeam },
-    hookPermissions: {
-      isProjectManager: projectPermissions.isProjectManager,
-      isAdmin: projectPermissions.isAdmin,
-      canEdit: projectPermissions.canEdit,
-      canManageTeam: projectPermissions.canManageTeam
-    },
+  console.log("🔍 ProjectSummaryContent - Permissions centralisées:", {
     projectId,
+    permissions: projectPermissions,
+    isLoading: !projectPermissions,
     component: "ProjectSummaryContent"
   });
 
-  // Utiliser les permissions du hook si disponibles, sinon fallback sur les props
+  // Utiliser uniquement les permissions du hook central
   const effectivePermissions = {
-    canEdit: projectPermissions.canEdit ?? canEdit ?? false,
-    isProjectManager: projectPermissions.isProjectManager ?? isProjectManager ?? false,
-    isAdmin: projectPermissions.isAdmin ?? isAdmin ?? false,
-    canManageTeam: projectPermissions.canManageTeam ?? canManageTeam ?? false,
+    canEdit: projectPermissions.canEdit,
+    isProjectManager: projectPermissions.isProjectManager,
+    isAdmin: projectPermissions.isAdmin,
+    canManageTeam: projectPermissions.canManageTeam,
   };
 
   // Données d'innovation du projet (reconstituées depuis les données du projet)
