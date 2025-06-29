@@ -1,5 +1,4 @@
 
-
 /**
  * @component TeamManagement
  * @description Gestion de l'équipe d'un projet.
@@ -23,6 +22,9 @@ export interface TeamManagementProps {
   isProjectManager: boolean;
   isAdmin: boolean;
   canManageTeam: boolean;
+  // Nouvelles props pour les données préchargées
+  preloadedProject?: any;
+  preloadedMembers?: any[];
 }
 
 export const TeamManagement = ({
@@ -31,6 +33,8 @@ export const TeamManagement = ({
   isProjectManager,
   isAdmin,
   canManageTeam,
+  preloadedProject,
+  preloadedMembers,
 }: TeamManagementProps) => {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isInviteFormOpen, setIsInviteFormOpen] = useState(false);
@@ -41,7 +45,7 @@ export const TeamManagement = ({
     handleDelete,
     handlePromoteToSecondaryManager,
     handleDemoteToMember
-  } = useTeamManagement(projectId);
+  } = useTeamManagement(projectId, preloadedProject, preloadedMembers);
 
   // Log de diagnostic pour comparer les contextes
   console.log("🔍 TeamManagement - Diagnostic du contexte:", {
@@ -51,6 +55,7 @@ export const TeamManagement = ({
     isAdmin,
     canManageTeam,
     membersCount: members?.length || 0,
+    preloadedMembersCount: preloadedMembers?.length || 0,
     component: "TeamManagement"
   });
 

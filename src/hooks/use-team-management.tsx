@@ -1,10 +1,9 @@
-
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
 import { useProjectPermissions } from "@/hooks/useProjectPermissions";
 
-export const useTeamManagement = (projectId: string) => {
+export const useTeamManagement = (projectId: string, preloadedProject?: any, preloadedMembers?: any[]) => {
   const queryClient = useQueryClient();
   const { toast } = useToast();
   
@@ -14,10 +13,12 @@ export const useTeamManagement = (projectId: string) => {
   console.log("🔍 useTeamManagement - Permissions reçues:", {
     projectId,
     permissions,
+    hasPreloadedData: !!preloadedMembers,
+    preloadedMembersCount: preloadedMembers?.length || 0,
     component: "useTeamManagement"
   });
 
-  // Récupération des informations du projet
+  // Récupération des informations du projet (utiliser les données préchargées si disponibles)
   const { data: project } = useQuery({
     queryKey: ["teamProjectManager", projectId],
     queryFn: async () => {
@@ -31,11 +32,11 @@ export const useTeamManagement = (projectId: string) => {
       return data;
     },
     staleTime: 300000, // 5 minutes
-    enabled: !!projectId,
+    enabled: !!projectId && !preloadedProject, // Ne pas charger si on a déjà les données
+    initialData: preloadedProject, // Utiliser les données préchargées
   });
 
-  // Récupération des membres du projet avec des alias clairs
-  // IMPORTANT: Ne charger les membres que si les permissions sont disponibles
+  // Récupération des membres du projet (utiliser les données préchargées si disponibles)
   const { data: members } = useQuery({
     queryKey: ["projectMembers", projectId],
     queryFn: async () => {
@@ -127,9 +128,10 @@ export const useTeamManagement = (projectId: string) => {
       
       return transformedData;
     },
-    // CRITIQUE: Ne charger les membres que si les permissions sont disponibles
-    enabled: !!projectId && !!permissions && (permissions.canManageTeam || permissions.canEdit || permissions.isAdmin),
-    staleTime: 300000, // 5 minutes - cohérent avec les autres requêtes
+    // Ne charger que si les permissions sont disponibles ET qu'on n'a pas de données préchargées
+    enabled: !!projectId && !!permissions && (permissions.canManageTeam || permissions.canEdit || permissions.isAdmin) && !preloadedMembers,
+    staleTime: 300000, // 5 minutes
+    initialData: preloadedMembers, // Utiliser les données préchargées
   });
 
   // Mutation pour supprimer un membre
