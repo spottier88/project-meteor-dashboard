@@ -1,3 +1,4 @@
+
 import { ProjectStatus, ProgressStatus } from "@/types/project";
 import { StatusIcon } from "./StatusIcon";
 import { ProjectMetrics } from "./ProjectMetrics";
@@ -9,6 +10,7 @@ import { RiskList } from "@/components/RiskList";
 import { TaskList } from "@/components/TaskList";
 import { InnovationRadarChart } from "@/components/innovation/InnovationRadarChart";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useProjectPermissions } from "@/hooks/useProjectPermissions";
 
 interface ProjectSummaryContentProps {
   project: any;
@@ -32,6 +34,30 @@ export const ProjectSummaryContent = ({
   canManageTeam,
 }: ProjectSummaryContentProps) => {
   const projectId = project.id;
+
+  // S'assurer que les permissions sont chargées de manière cohérente
+  const projectPermissions = useProjectPermissions(projectId);
+
+  // Log de diagnostic pour comparer les permissions
+  console.log("🔍 ProjectSummaryContent - Comparaison des permissions:", {
+    propsPermissions: { isProjectManager, isAdmin, canEdit, canManageTeam },
+    hookPermissions: {
+      isProjectManager: projectPermissions.isProjectManager,
+      isAdmin: projectPermissions.isAdmin,
+      canEdit: projectPermissions.canEdit,
+      canManageTeam: projectPermissions.canManageTeam
+    },
+    projectId,
+    component: "ProjectSummaryContent"
+  });
+
+  // Utiliser les permissions du hook si disponibles, sinon fallback sur les props
+  const effectivePermissions = {
+    canEdit: projectPermissions.canEdit ?? canEdit ?? false,
+    isProjectManager: projectPermissions.isProjectManager ?? isProjectManager ?? false,
+    isAdmin: projectPermissions.isAdmin ?? isAdmin ?? false,
+    canManageTeam: projectPermissions.canManageTeam ?? canManageTeam ?? false,
+  };
 
   // Données d'innovation du projet (reconstituées depuis les données du projet)
   const innovationData = {
@@ -137,9 +163,9 @@ export const ProjectSummaryContent = ({
           <div className="bg-white rounded-lg shadow-sm overflow-hidden p-6">
             <TaskList 
               projectId={projectId}
-              canEdit={canEdit || false}
-              isProjectManager={isProjectManager || false}
-              isAdmin={isAdmin || false}
+              canEdit={effectivePermissions.canEdit}
+              isProjectManager={effectivePermissions.isProjectManager}
+              isAdmin={effectivePermissions.isAdmin}
             />
           </div>
         </TabsContent>
@@ -148,9 +174,9 @@ export const ProjectSummaryContent = ({
             <RiskList 
               projectId={projectId}
               projectTitle={project.title}
-              canEdit={canEdit || false}
-              isProjectManager={isProjectManager || false}
-              isAdmin={isAdmin || false}
+              canEdit={effectivePermissions.canEdit}
+              isProjectManager={effectivePermissions.isProjectManager}
+              isAdmin={effectivePermissions.isAdmin}
             />
           </div>
         </TabsContent>
@@ -158,10 +184,10 @@ export const ProjectSummaryContent = ({
           <div className="bg-white rounded-lg shadow-sm overflow-hidden p-6">
             <TeamManagement
               projectId={projectId}
-              canEdit={canEdit || false}
-              isProjectManager={isProjectManager || false}
-              isAdmin={isAdmin || false}
-              canManageTeam={canManageTeam || false}
+              canEdit={effectivePermissions.canEdit}
+              isProjectManager={effectivePermissions.isProjectManager}
+              isAdmin={effectivePermissions.isAdmin}
+              canManageTeam={effectivePermissions.canManageTeam}
             />
           </div>
         </TabsContent>

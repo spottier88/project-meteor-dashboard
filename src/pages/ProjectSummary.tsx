@@ -1,3 +1,4 @@
+
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -14,7 +15,15 @@ export const ProjectSummary = () => {
   const navigate = useNavigate();
   const [isTaskFormOpen, setIsTaskFormOpen] = useState(false);
   const { toast } = useToast();
-  const { canEdit, isProjectManager, isAdmin, canManageTeam } = useProjectPermissions(projectId || "");
+  
+  // Charger les permissions en premier pour s'assurer qu'elles sont disponibles
+  const permissions = useProjectPermissions(projectId || "");
+  
+  console.log("🔍 ProjectSummary - Permissions chargées:", {
+    projectId,
+    permissions,
+    component: "ProjectSummary"
+  });
 
   const { data: project, isError: projectError } = useQuery({
     queryKey: ["project", projectId],
@@ -128,10 +137,10 @@ export const ProjectSummary = () => {
         lastReview={lastReview}
         risks={risks || []}
         tasks={tasks || []}
-        isProjectManager={isProjectManager}
-        isAdmin={isAdmin}
-        canEdit={canEdit}
-        canManageTeam={canManageTeam}
+        isProjectManager={permissions.isProjectManager}
+        isAdmin={permissions.isAdmin}
+        canEdit={permissions.canEdit}
+        canManageTeam={permissions.canManageTeam}
       />
 
       <TaskForm

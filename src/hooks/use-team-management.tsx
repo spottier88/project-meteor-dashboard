@@ -1,4 +1,5 @@
 
+
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
@@ -20,6 +21,7 @@ export const useTeamManagement = (projectId: string) => {
       if (error) throw error;
       return data;
     },
+    staleTime: 300000, // 5 minutes
   });
 
   // Récupération des membres du projet avec des alias clairs
@@ -98,6 +100,9 @@ export const useTeamManagement = (projectId: string) => {
       
       return transformedData;
     },
+    // Dépendre explicitement du projet pour s'assurer de l'ordre de chargement
+    enabled: !!projectId,
+    staleTime: 300000, // 5 minutes - cohérent avec les autres requêtes
   });
 
   // Mutation pour supprimer un membre
