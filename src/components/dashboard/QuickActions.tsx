@@ -8,27 +8,28 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { usePermissionsContext } from "@/contexts/PermissionsContext";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { 
   Plus, 
   History, 
   CheckSquare, 
   Activity, 
-  Users, 
   Settings 
 } from "lucide-react";
 
-export const QuickActions = () => {
-  const navigate = useNavigate();
-  const { isAdmin, isTimeTracker } = usePermissionsContext();
+interface QuickActionsProps {
+  onNewProject?: () => void;
+  onNewReview?: () => void;
+}
 
-  const handleNewProject = () => {
-    navigate("/projects", { state: { openProjectForm: true } });
-  };
+export const QuickActions = ({ onNewProject, onNewReview }: QuickActionsProps) => {
+  const { isAdmin, isTimeTracker, isProjectManager, hasRole } = usePermissionsContext();
 
-  const handleNewReview = () => {
-    navigate("/projects", { state: { openReviewSelection: true } });
-  };
+  // Permissions pour créer un projet
+  const canCreateProject = isAdmin || isProjectManager || hasRole('chef_projet');
+  
+  // Permissions pour faire une revue
+  const canCreateReview = isAdmin || isProjectManager || hasRole('chef_projet');
 
   return (
     <Card>
@@ -37,29 +38,33 @@ export const QuickActions = () => {
       </CardHeader>
       <CardContent className="space-y-3">
         {/* Actions principales */}
-        <Button 
-          onClick={handleNewProject} 
-          className="w-full justify-start" 
-          size="sm"
-        >
-          <Plus className="h-4 w-4 mr-2" />
-          Nouveau projet
-        </Button>
+        {canCreateProject && (
+          <Button 
+            onClick={onNewProject} 
+            variant="green"
+            className="w-full justify-start" 
+            size="sm"
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            Nouveau projet
+          </Button>
+        )}
 
-        <Button 
-          onClick={handleNewReview} 
-          variant="outline" 
-          className="w-full justify-start" 
-          size="sm"
-        >
-          <History className="h-4 w-4 mr-2" />
-          Nouvelle revue
-        </Button>
+        {canCreateReview && (
+          <Button 
+            onClick={onNewReview} 
+            className="w-full justify-start bg-blue-600 text-white hover:bg-blue-700" 
+            size="sm"
+          >
+            <History className="h-4 w-4 mr-2" />
+            Nouvelle revue
+          </Button>
+        )}
 
         <Link to="/my-tasks" className="block">
           <Button 
             variant="outline" 
-            className="w-full justify-start" 
+            className="w-full justify-start hover:bg-orange-50 hover:border-orange-200" 
             size="sm"
           >
             <CheckSquare className="h-4 w-4 mr-2" />
@@ -72,7 +77,7 @@ export const QuickActions = () => {
           <Link to="/activities" className="block">
             <Button 
               variant="outline" 
-              className="w-full justify-start" 
+              className="w-full justify-start hover:bg-purple-50 hover:border-purple-200" 
               size="sm"
             >
               <Activity className="h-4 w-4 mr-2" />
@@ -82,29 +87,16 @@ export const QuickActions = () => {
         )}
 
         {isAdmin && (
-          <>
-            <Link to="/admin/users" className="block">
-              <Button 
-                variant="outline" 
-                className="w-full justify-start" 
-                size="sm"
-              >
-                <Users className="h-4 w-4 mr-2" />
-                Gestion utilisateurs
-              </Button>
-            </Link>
-
-            <Link to="/admin" className="block">
-              <Button 
-                variant="outline" 
-                className="w-full justify-start" 
-                size="sm"
-              >
-                <Settings className="h-4 w-4 mr-2" />
-                Administration
-              </Button>
-            </Link>
-          </>
+          <Link to="/admin" className="block">
+            <Button 
+              variant="outline" 
+              className="w-full justify-start hover:bg-gray-50 hover:border-gray-300" 
+              size="sm"
+            >
+              <Settings className="h-4 w-4 mr-2" />
+              Administration
+            </Button>
+          </Link>
         )}
       </CardContent>
     </Card>

@@ -5,11 +5,64 @@ import { QuickActions } from "@/components/dashboard/QuickActions";
 import { AlertsSection } from "@/components/dashboard/AlertsSection";
 import { UserInfo } from "@/components/UserInfo";
 import { Button } from "@/components/ui/button";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { List } from "lucide-react";
+import { useState } from "react";
+import { ProjectModals } from "@/components/project/ProjectModals";
+import { useProjectsListView } from "@/hooks/use-projects-list-view";
 
 const Dashboard = () => {
+  const navigate = useNavigate();
   const { isLoading: isPermissionsLoading, isError: isPermissionsError } = usePermissionsContext();
+  
+  // États pour les modals
+  const [isProjectFormOpen, setIsProjectFormOpen] = useState(false);
+  const [isProjectSelectionOpen, setIsProjectSelectionOpen] = useState(false);
+  const [isReviewSheetOpen, setIsReviewSheetOpen] = useState(false);
+  const [selectedProject, setSelectedProject] = useState<any>(null);
+  const [selectedProjectForReview, setSelectedProjectForReview] = useState<{
+    id: string;
+    title: string;
+  } | null>(null);
+
+  // Hook pour récupérer les projets (nécessaire pour les modals)
+  const { data: projects, refetch: refetchProjects } = useProjectsListView();
+
+  const handleNewProject = () => {
+    setSelectedProject(null);
+    setIsProjectFormOpen(true);
+  };
+
+  const handleNewReview = () => {
+    setIsProjectSelectionOpen(true);
+  };
+
+  const handleProjectSelect = (projectId: string, projectTitle: string) => {
+    setSelectedProjectForReview({ id: projectId, title: projectTitle });
+    setIsProjectSelectionOpen(false);
+    setIsReviewSheetOpen(true);
+  };
+
+  const handleProjectFormClose = () => {
+    setIsProjectFormOpen(false);
+    setSelectedProject(null);
+  };
+
+  const handleReviewClose = () => {
+    setIsReviewSheetOpen(false);
+    setSelectedProjectForReview(null);
+  };
+
+  const handleReviewSubmitted = () => {
+    refetchProjects();
+  };
+
+  // Fonction placeholder pour la soumission du projet
+  const handleProjectFormSubmit = async (projectData: any) => {
+    // Cette fonction devrait être implémentée selon la logique du projet
+    console.log("Project data:", projectData);
+    return { id: "new-project-id" };
+  };
 
   if (isPermissionsLoading) {
     return (
@@ -52,7 +105,10 @@ const Dashboard = () => {
 
         {/* Zone d'actions rapides */}
         <div>
-          <QuickActions />
+          <QuickActions 
+            onNewProject={handleNewProject}
+            onNewReview={handleNewReview}
+          />
         </div>
       </div>
 
@@ -60,6 +116,22 @@ const Dashboard = () => {
       <div className="mt-6">
         <AlertsSection />
       </div>
+
+      {/* Modals */}
+      <ProjectModals
+        isProjectFormOpen={isProjectFormOpen}
+        onProjectFormClose={handleProjectFormClose}
+        onProjectFormSubmit={handleProjectFormSubmit}
+        selectedProject={selectedProject}
+        isProjectSelectionOpen={isProjectSelectionOpen}
+        onProjectSelectionClose={() => setIsProjectSelectionOpen(false)}
+        onProjectSelect={handleProjectSelect}
+        projects={projects || []}
+        isReviewSheetOpen={isReviewSheetOpen}
+        onReviewClose={handleReviewClose}
+        selectedProjectForReview={selectedProjectForReview}
+        onReviewSubmitted={handleReviewSubmitted}
+      />
     </div>
   );
 };
