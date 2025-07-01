@@ -18,41 +18,40 @@ import { useTeamManagement } from "@/hooks/use-team-management";
 
 export interface TeamManagementProps {
   projectId: string;
-  canEdit: boolean;
-  isProjectManager: boolean;
-  isAdmin: boolean;
-  canManageTeam: boolean;
+  permissions: {
+    canEdit: boolean;
+    isProjectManager: boolean;
+    isAdmin: boolean;
+    canManageTeam: boolean;
+  };
 }
 
 export const TeamManagement = ({
   projectId,
-  canEdit,
-  isProjectManager,
-  isAdmin,
-  canManageTeam,
+  permissions,
 }: TeamManagementProps) => {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isInviteFormOpen, setIsInviteFormOpen] = useState(false);
   
-  // Utilisation simplifiée du hook sans données préchargées
+  // Utiliser le hook avec les permissions passées en paramètre
   const {
     project,
     members,
     handleDelete,
     handlePromoteToSecondaryManager,
     handleDemoteToMember
-  } = useTeamManagement(projectId);
+  } = useTeamManagement(projectId, permissions);
 
   // Wrapper pour passer les paramètres nécessaires
   const onPromoteMember = (memberId: string, roles: string[]) => {
-    handlePromoteToSecondaryManager(memberId, roles, isAdmin);
+    handlePromoteToSecondaryManager(memberId, roles, permissions.isAdmin);
   };
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-bold">Équipe projet</h2>
-        {canManageTeam && (
+        {permissions.canManageTeam && (
           <div className="flex space-x-2">
             <Button onClick={() => setIsFormOpen(true)}>
               <Plus className="h-4 w-4 mr-2" />
@@ -71,7 +70,7 @@ export const TeamManagement = ({
           <TeamMembersTable
             members={members}
             project={project}
-            canManageTeam={canManageTeam}
+            canManageTeam={permissions.canManageTeam}
             onDeleteMember={handleDelete}
             onPromoteMember={onPromoteMember}
             onDemoteMember={handleDemoteToMember}
@@ -89,8 +88,8 @@ export const TeamManagement = ({
         isOpen={isInviteFormOpen}
         onClose={() => setIsInviteFormOpen(false)}
         projectId={projectId}
-        isProjectManager={isProjectManager}
-        isAdmin={isAdmin}
+        isProjectManager={permissions.isProjectManager}
+        isAdmin={permissions.isAdmin}
       />
     </div>
   );

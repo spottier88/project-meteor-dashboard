@@ -1,4 +1,3 @@
-
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -10,6 +9,7 @@ import { ProjectSummaryContent } from "@/components/project/ProjectSummaryConten
 import { ProjectForm } from "@/components/ProjectForm";
 import { ReviewSheet } from "@/components/review/ReviewSheet";
 import { useToast } from "@/components/ui/use-toast";
+import { useProjectPermissions } from "@/hooks/useProjectPermissions";
 
 export const ProjectSummary = () => {
   const { projectId } = useParams<{ projectId: string }>();
@@ -18,6 +18,9 @@ export const ProjectSummary = () => {
   const [isProjectFormOpen, setIsProjectFormOpen] = useState(false);
   const [isReviewSheetOpen, setIsReviewSheetOpen] = useState(false);
   const { toast } = useToast();
+
+  // Centraliser le chargement des permissions au niveau parent
+  const projectPermissions = useProjectPermissions(projectId || "");
 
   const { data: project, isError: projectError, refetch: refetchProject } = useQuery({
     queryKey: ["project", projectId],
@@ -282,6 +285,7 @@ export const ProjectSummary = () => {
         tasks={tasks || []}
         onEditProject={handleEditProject}
         onCreateReview={handleCreateReview}
+        permissions={projectPermissions}
       />
 
       <TaskForm

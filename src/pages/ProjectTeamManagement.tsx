@@ -13,7 +13,9 @@ export const ProjectTeamManagement = () => {
   const { projectId } = useParams<{ projectId: string }>();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { canEdit, isProjectManager, isAdmin, canManageTeam } = useProjectPermissions(projectId || "");
+  
+  // Centraliser le chargement des permissions ici aussi
+  const projectPermissions = useProjectPermissions(projectId || "");
 
   const { data: project } = useQuery({
     queryKey: ["project", projectId],
@@ -56,7 +58,7 @@ export const ProjectTeamManagement = () => {
     return <div>Chargement...</div>;
   }
 
-  if (!canManageTeam) {
+  if (!projectPermissions.canManageTeam) {
     navigate("/");
     return null;
   }
@@ -77,8 +79,8 @@ export const ProjectTeamManagement = () => {
         description={project.description}
         project_manager={project.project_manager}
         id={project.id}
-        isProjectManager={isProjectManager}
-        isAdmin={isAdmin}
+        isProjectManager={projectPermissions.isProjectManager}
+        isAdmin={projectPermissions.isAdmin}
         start_date={project.start_date}
         end_date={project.end_date}
       />
@@ -86,10 +88,12 @@ export const ProjectTeamManagement = () => {
       <div className="mt-8">
         <TeamManagement 
           projectId={projectId || ""} 
-          canEdit={canEdit}
-          isProjectManager={isProjectManager}
-          isAdmin={isAdmin}
-          canManageTeam={canManageTeam}
+          permissions={{
+            canEdit: projectPermissions.canEdit,
+            isProjectManager: projectPermissions.isProjectManager,
+            isAdmin: projectPermissions.isAdmin,
+            canManageTeam: projectPermissions.canManageTeam,
+          }}
         />
       </div>
     </div>

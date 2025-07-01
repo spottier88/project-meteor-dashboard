@@ -2,14 +2,16 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
-import { useProjectPermissions } from "@/hooks/useProjectPermissions";
 
-export const useTeamManagement = (projectId: string) => {
+interface Permissions {
+  canManageTeam: boolean;
+  canEdit: boolean;
+  isAdmin: boolean;
+}
+
+export const useTeamManagement = (projectId: string, permissions: Permissions) => {
   const queryClient = useQueryClient();
   const { toast } = useToast();
-  
-  // Charger les permissions une seule fois
-  const permissions = useProjectPermissions(projectId);
 
   // Récupération des informations du projet
   const { data: project } = useQuery({
@@ -25,13 +27,15 @@ export const useTeamManagement = (projectId: string) => {
       return data;
     },
     staleTime: 300000, // 5 minutes
-    enabled: !!projectId,
+    enabled: !!projectId && permissions.canManageTeam,
   });
 
   // Récupération des membres du projet avec une logique simplifiée
   const { data: members } = useQuery({
     queryKey: ["projectMembers", projectId],
     queryFn: async () => {
+      console.log("🔄 Chargement des membres pour le projet:", projectId);
+      
       const { data, error } = await supabase
         .from("project_members")
         .select(`
@@ -52,8 +56,11 @@ export const useTeamManagement = (projectId: string) => {
         .eq("project_id", projectId);
 
       if (error) {
+        console.error("❌ Erreur lors du chargement des membres:", error);
         throw error;
       }
+      
+      console.log("📊 Données brutes des membres:", data);
       
       // Transformation des données avec validation stricte de l'ID
       const transformedData = data
@@ -64,6 +71,10 @@ export const useTeamManagement = (projectId: string) => {
                             member.id.length > 0 &&
                             member.id !== 'undefined' && 
                             member.id !== 'null';
+          
+          if (!hasValidId) {
+            console.warn("⚠️ Membre avec ID invalide filtré:", member);
+          }
           
           return hasValidId;
         })
@@ -83,10 +94,11 @@ export const useTeamManagement = (projectId: string) => {
           } : null
         }));
 
+      console.log("✅ Membres transformés:", transformedData);
       return transformedData;
     },
     // Charger seulement si les permissions le permettent
-    enabled: !!projectId && !!permissions && (permissions.canManageTeam || permissions.canEdit || permissions.isAdmin),
+    enabled: !!projectId && (permissions.canManageTeam || permissions.canEdit || permissions.isAdmin),
     staleTime: 300000, // 5 minutes
   });
 
@@ -117,6 +129,7 @@ export const useTeamManagement = (projectId: string) => {
       });
     },
     onError: (error) => {
+      console.error("❌ Erreur suppression membre:", error);
       toast({
         variant: "destructive",
         title: "Erreur",
@@ -141,6 +154,8 @@ export const useTeamManagement = (projectId: string) => {
         throw new Error("Rôle non défini ou invalide");
       }
       
+      console.log("🔄 Mise à jour du rôle pour le membre:", { memberId, role, projectId });
+      
       // Vérifier d'abord si l'enregistrement existe
       const { data: checkData, error: checkError } = await supabase
         .from("project_members")
@@ -150,6 +165,7 @@ export const useTeamManagement = (projectId: string) => {
         .single();
       
       if (checkError) {
+        console.error("❌ Erreur vérification membre:", checkError);
         throw checkError;
       }
       
@@ -166,9 +182,11 @@ export const useTeamManagement = (projectId: string) => {
         .select();
 
       if (error) {
+        console.error("❌ Erreur mise à jour rôle:", error);
         throw error;
       }
       
+      console.log("✅ Rôle mis à jour avec succès:", data);
       return data;
     },
     onSuccess: () => {
@@ -179,6 +197,7 @@ export const useTeamManagement = (projectId: string) => {
       });
     },
     onError: (error) => {
+      console.error("❌ Erreur mutation rôle:", error);
       toast({
         variant: "destructive",
         title: "Erreur",
@@ -189,12 +208,15 @@ export const useTeamManagement = (projectId: string) => {
 
   // Fonction pour supprimer un membre avec validation stricte
   const handleDelete = (memberId: string, email?: string) => {
+    console.log("🗑️ Tentative de suppression du membre:", { memberId, email });
+    
     // Vérification stricte de l'ID
     if (!memberId || 
         typeof memberId !== 'string' ||
         memberId.length === 0 ||
         memberId === 'undefined' || 
         memberId === 'null') {
+      console.error("❌ ID membre invalide pour suppression:", memberId);
       toast({
         variant: "destructive",
         title: "Erreur",
@@ -219,12 +241,15 @@ export const useTeamManagement = (projectId: string) => {
 
   // Fonction pour promouvoir un membre en chef de projet secondaire
   const handlePromoteToSecondaryManager = (memberId: string, roles: string[], isAdmin: boolean) => {
+    console.log("⬆️ Tentative de promotion du membre:", { memberId, roles, isAdmin });
+    
     // Vérification stricte de l'ID
     if (!memberId || 
         typeof memberId !== 'string' ||
         memberId.length === 0 ||
         memberId === 'undefined' || 
         memberId === 'null') {
+      console.error("❌ ID membre invalide pour promotion:", memberId);
       toast({
         variant: "destructive",
         title: "Erreur",
@@ -254,12 +279,15 @@ export const useTeamManagement = (projectId: string) => {
 
   // Fonction pour rétrograder un chef de projet secondaire en membre
   const handleDemoteToMember = (memberId: string) => {
+    console.log("⬇️ Tentative de rétrogradation du membre:", memberId);
+    
     // Vérification stricte de l'ID
     if (!memberId || 
         typeof memberId !== 'string' ||
         memberId.length === 0 ||
         memberId === 'undefined' || 
         memberId === 'null') {
+      console.error("❌ ID membre invalide pour rétrogradation:", memberId);
       toast({
         variant: "destructive",
         title: "Erreur",

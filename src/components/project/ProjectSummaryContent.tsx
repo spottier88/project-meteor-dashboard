@@ -10,7 +10,6 @@ import { RiskList } from "@/components/RiskList";
 import { TaskList } from "@/components/TaskList";
 import { InnovationRadarChart } from "@/components/innovation/InnovationRadarChart";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { useProjectPermissions } from "@/hooks/useProjectPermissions";
 
 interface ProjectSummaryContentProps {
   project: any;
@@ -19,6 +18,13 @@ interface ProjectSummaryContentProps {
   tasks: any[];
   onEditProject?: () => void;
   onCreateReview?: () => void;
+  permissions: {
+    canEdit: boolean;
+    isProjectManager: boolean;
+    isAdmin: boolean;
+    canManageTeam: boolean;
+    canManageRisks: boolean;
+  };
 }
 
 export const ProjectSummaryContent = ({
@@ -28,19 +34,9 @@ export const ProjectSummaryContent = ({
   tasks,
   onEditProject,
   onCreateReview,
+  permissions,
 }: ProjectSummaryContentProps) => {
   const projectId = project.id;
-
-  // Charger les permissions de manière centralisée une seule fois
-  const projectPermissions = useProjectPermissions(projectId);
-
-  // Utiliser uniquement les permissions du hook central
-  const effectivePermissions = {
-    canEdit: projectPermissions.canEdit,
-    isProjectManager: projectPermissions.isProjectManager,
-    isAdmin: projectPermissions.isAdmin,
-    canManageTeam: projectPermissions.canManageTeam,
-  };
 
   // Données d'innovation du projet (reconstituées depuis les données du projet)
   const innovationData = {
@@ -148,9 +144,9 @@ export const ProjectSummaryContent = ({
           <div className="bg-white rounded-lg shadow-sm overflow-hidden p-6">
             <TaskList 
               projectId={projectId}
-              canEdit={effectivePermissions.canEdit}
-              isProjectManager={effectivePermissions.isProjectManager}
-              isAdmin={effectivePermissions.isAdmin}
+              canEdit={permissions.canEdit}
+              isProjectManager={permissions.isProjectManager}
+              isAdmin={permissions.isAdmin}
             />
           </div>
         </TabsContent>
@@ -159,9 +155,9 @@ export const ProjectSummaryContent = ({
             <RiskList 
               projectId={projectId}
               projectTitle={project.title}
-              canEdit={effectivePermissions.canEdit}
-              isProjectManager={effectivePermissions.isProjectManager}
-              isAdmin={effectivePermissions.isAdmin}
+              canEdit={permissions.canEdit}
+              isProjectManager={permissions.isProjectManager}
+              isAdmin={permissions.isAdmin}
             />
           </div>
         </TabsContent>
@@ -169,10 +165,7 @@ export const ProjectSummaryContent = ({
           <div className="bg-white rounded-lg shadow-sm overflow-hidden p-6">
             <TeamManagement
               projectId={projectId}
-              canEdit={effectivePermissions.canEdit}
-              isProjectManager={effectivePermissions.isProjectManager}
-              isAdmin={effectivePermissions.isAdmin}
-              canManageTeam={effectivePermissions.canManageTeam}
+              permissions={permissions}
             />
           </div>
         </TabsContent>
