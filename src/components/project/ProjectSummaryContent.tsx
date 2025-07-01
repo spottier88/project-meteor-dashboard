@@ -1,3 +1,4 @@
+
 import { ProjectStatus, ProgressStatus } from "@/types/project";
 import { StatusIcon } from "./StatusIcon";
 import { ProjectMetrics } from "./ProjectMetrics";
@@ -35,13 +36,6 @@ export const ProjectSummaryContent = ({
   // Charger les permissions de manière centralisée
   const projectPermissions = useProjectPermissions(projectId);
 
-  console.log("🔍 ProjectSummaryContent - Permissions centralisées:", {
-    projectId,
-    permissions: projectPermissions,
-    isLoading: !projectPermissions,
-    component: "ProjectSummaryContent"
-  });
-
   // Précharger les données de l'équipe directement ici
   const { data: teamProject } = useQuery({
     queryKey: ["teamProjectManager", projectId],
@@ -63,8 +57,6 @@ export const ProjectSummaryContent = ({
   const { data: teamMembers } = useQuery({
     queryKey: ["projectMembers", projectId],
     queryFn: async () => {
-      console.log("🔍 ProjectSummaryContent - Début de la récupération des membres pour le projet:", projectId);
-      
       const { data, error } = await supabase
         .from("project_members")
         .select(`
@@ -85,11 +77,8 @@ export const ProjectSummaryContent = ({
         .eq("project_id", projectId);
 
       if (error) {
-        console.error("❌ ProjectSummaryContent - Erreur lors de la récupération des membres:", error);
         throw error;
       }
-      
-      console.log("📊 ProjectSummaryContent - Données brutes reçues:", data);
       
       // Transformation des données avec validation renforcée de l'ID
       const transformedData = data
@@ -101,15 +90,7 @@ export const ProjectSummaryContent = ({
                             typeof member.id === 'string' &&
                             member.id.length > 0;
           
-          if (!hasValidId) {
-            console.warn("⚠️ ProjectSummaryContent - Membre avec ID invalide filtré:", {
-              member,
-              id: member.id,
-              type: typeof member.id
-            });
-            return false;
-          }
-          return true;
+          return hasValidId;
         })
         .map(member => {
           // S'assurer que l'ID du project_member est bien présent et valide
@@ -129,26 +110,9 @@ export const ProjectSummaryContent = ({
             } : null
           };
 
-          // Log détaillé pour vérifier que l'ID est bien présent
-          console.log("✅ ProjectSummaryContent - Membre transformé avec validation:", {
-            project_member_id: memberData.id,
-            user_id: memberData.user_id,
-            email: memberData.profiles?.email,
-            hasValidId: !!memberData.id && 
-                       memberData.id !== 'undefined' && 
-                       memberData.id !== 'null' &&
-                       typeof memberData.id === 'string' &&
-                       memberData.id.length > 0,
-            idType: typeof memberData.id,
-            idLength: memberData.id?.length || 0
-          });
-
           return memberData;
         });
 
-      console.log("🎯 ProjectSummaryContent - Données finales transformées:", transformedData);
-      console.log("📈 ProjectSummaryContent - Nombre de membres valides:", transformedData.length);
-      
       return transformedData;
     },
     // Charger les membres seulement si les permissions sont disponibles

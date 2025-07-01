@@ -1,3 +1,4 @@
+
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -17,11 +18,6 @@ export const ProjectSummary = () => {
   const [isProjectFormOpen, setIsProjectFormOpen] = useState(false);
   const [isReviewSheetOpen, setIsReviewSheetOpen] = useState(false);
   const { toast } = useToast();
-
-  console.log("🔍 ProjectSummary - Initialisation:", {
-    projectId,
-    component: "ProjectSummary"
-  });
 
   const { data: project, isError: projectError, refetch: refetchProject } = useQuery({
     queryKey: ["project", projectId],
@@ -151,8 +147,6 @@ export const ProjectSummary = () => {
     }
 
     try {
-      console.log("🔄 ProjectSummary - Mise à jour du projet:", projectData);
-      
       // Effectuer la mise à jour en base de données
       const { error } = await supabase
         .from("projects")
@@ -174,7 +168,6 @@ export const ProjectSummary = () => {
         .eq("id", projectId);
 
       if (error) {
-        console.error("❌ ProjectSummary - Erreur lors de la mise à jour:", error);
         toast({
           variant: "destructive",
           title: "Erreur",
@@ -246,8 +239,6 @@ export const ProjectSummary = () => {
         }
       }
 
-      console.log("✅ ProjectSummary - Projet mis à jour avec succès");
-      
       toast({
         title: "Succès",
         description: "Le projet a été mis à jour avec succès",
@@ -259,7 +250,6 @@ export const ProjectSummary = () => {
       return { id: projectId };
 
     } catch (error) {
-      console.error("❌ ProjectSummary - Erreur générale:", error);
       toast({
         variant: "destructive",
         title: "Erreur",

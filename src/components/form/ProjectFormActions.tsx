@@ -124,7 +124,6 @@ export const ProjectFormActions = ({
           .eq("id", project.id);
 
         if (projectError) {
-          console.error("Erreur lors de la mise à jour du projet:", projectError);
           toast({
             title: "Erreur",
             description: "Impossible de mettre à jour le projet. Vérifiez vos permissions.",
@@ -144,7 +143,6 @@ export const ProjectFormActions = ({
           });
 
         if (monitoringError) {
-          console.error("Erreur monitoring:", monitoringError);
           toast({
             title: "Avertissement",
             description: "Le projet a été mis à jour mais le monitoring n'a pas pu être configuré",
@@ -165,7 +163,6 @@ export const ProjectFormActions = ({
           .single();
 
         if (projectError) {
-          console.error("Erreur lors de la création du projet:", projectError);
           toast({
             title: "Erreur",
             description: "Impossible de créer le projet: " + projectError.message,
@@ -183,7 +180,6 @@ export const ProjectFormActions = ({
           });
 
         if (monitoringError) {
-          console.error("Erreur monitoring:", monitoringError);
           toast({
             title: "Avertissement",
             description: "Le projet a été créé mais le monitoring n'a pas pu être configuré",
@@ -199,7 +195,6 @@ export const ProjectFormActions = ({
       onSubmit();
       onClose();
     } catch (error: any) {
-      console.error("Erreur générale:", error);
       toast({
         title: "Erreur",
         description: error.message || "Une erreur est survenue",

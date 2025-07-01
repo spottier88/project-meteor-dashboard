@@ -47,18 +47,6 @@ export const TeamManagement = ({
     handleDemoteToMember
   } = useTeamManagement(projectId, preloadedProject, preloadedMembers);
 
-  // Log de diagnostic pour comparer les contextes
-  console.log("🔍 TeamManagement - Diagnostic du contexte:", {
-    projectId,
-    canEdit,
-    isProjectManager,
-    isAdmin,
-    canManageTeam,
-    membersCount: members?.length || 0,
-    preloadedMembersCount: preloadedMembers?.length || 0,
-    component: "TeamManagement"
-  });
-
   // Wrapper pour passer les paramètres nécessaires
   const onPromoteMember = (memberId: string, roles: string[]) => {
     handlePromoteToSecondaryManager(memberId, roles, isAdmin);
