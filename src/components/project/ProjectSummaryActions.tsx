@@ -179,8 +179,8 @@ const ProjectSummaryActions = ({
       {canCreateReview && (
         <Button 
           onClick={onCreateReview}
-          variant="green"
-          className="flex items-center"
+          className="w-full justify-start bg-blue-600 text-white hover:bg-blue-700" 
+          size="sm"
         >
           <Calendar className="h-4 w-4 mr-2" />
           Nouvelle revue
