@@ -1,4 +1,3 @@
-
 import { ProjectStatus, ProgressStatus } from "@/types/project";
 import { StatusIcon } from "./StatusIcon";
 import { ProjectMetrics } from "./ProjectMetrics";
@@ -19,11 +18,8 @@ interface ProjectSummaryContentProps {
   lastReview: any;
   risks: any[];
   tasks: any[];
-  isProjectManager?: boolean;
-  isAdmin?: boolean;
-  canEdit?: boolean;
-  canManageTeam?: boolean;
   onEditProject?: () => void;
+  onCreateReview?: () => void;
 }
 
 export const ProjectSummaryContent = ({
@@ -32,6 +28,7 @@ export const ProjectSummaryContent = ({
   risks,
   tasks,
   onEditProject,
+  onCreateReview,
 }: ProjectSummaryContentProps) => {
   const projectId = project.id;
 
@@ -195,6 +192,7 @@ export const ProjectSummaryContent = ({
                 risks={risks}
                 tasks={tasks}
                 onEditProject={onEditProject}
+                onCreateReview={onCreateReview}
               />
             </div>
             <p className="text-gray-600">{project.description}</p>

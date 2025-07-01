@@ -7,6 +7,7 @@ import { useState } from "react";
 import { TaskForm } from "@/components/task/TaskForm";
 import { ProjectSummaryContent } from "@/components/project/ProjectSummaryContent";
 import { ProjectForm } from "@/components/ProjectForm";
+import { ReviewSheet } from "@/components/review/ReviewSheet";
 import { useToast } from "@/components/ui/use-toast";
 
 export const ProjectSummary = () => {
@@ -14,6 +15,7 @@ export const ProjectSummary = () => {
   const navigate = useNavigate();
   const [isTaskFormOpen, setIsTaskFormOpen] = useState(false);
   const [isProjectFormOpen, setIsProjectFormOpen] = useState(false);
+  const [isReviewSheetOpen, setIsReviewSheetOpen] = useState(false);
   const { toast } = useToast();
 
   console.log("🔍 ProjectSummary - Initialisation:", {
@@ -59,7 +61,7 @@ export const ProjectSummary = () => {
     enabled: !!projectId,
   });
 
-  const { data: lastReview } = useQuery({
+  const { data: lastReview, refetch: refetchLastReview } = useQuery({
     queryKey: ["lastReview", projectId],
     queryFn: async () => {
       if (!projectId) return null;
@@ -118,6 +120,24 @@ export const ProjectSummary = () => {
 
   const handleProjectFormClose = () => {
     setIsProjectFormOpen(false);
+  };
+
+  const handleCreateReview = () => {
+    setIsReviewSheetOpen(true);
+  };
+
+  const handleReviewClose = () => {
+    setIsReviewSheetOpen(false);
+  };
+
+  const handleReviewSubmitted = async () => {
+    // Rafraîchir les données après création de la revue
+    await refetchProject();
+    await refetchLastReview();
+    toast({
+      title: "Revue créée",
+      description: "La revue a été créée avec succès",
+    });
   };
 
   const handleProjectFormSubmit = async (projectData: any) => {
@@ -271,6 +291,7 @@ export const ProjectSummary = () => {
         risks={risks || []}
         tasks={tasks || []}
         onEditProject={handleEditProject}
+        onCreateReview={handleCreateReview}
       />
 
       <TaskForm
@@ -285,6 +306,16 @@ export const ProjectSummary = () => {
         onSubmit={handleProjectFormSubmit}
         project={project}
       />
+
+      {project && (
+        <ReviewSheet
+          projectId={project.id}
+          projectTitle={project.title}
+          isOpen={isReviewSheetOpen}
+          onClose={handleReviewClose}
+          onReviewSubmitted={handleReviewSubmitted}
+        />
+      )}
     </div>
   );
 };

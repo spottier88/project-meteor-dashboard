@@ -1,10 +1,9 @@
-
 /**
  * @component ProjectSummaryActions
  * @description Actions disponibles sur la vue de résumé d'un projet.
  * Permet d'exporter les informations du projet au format PPTX ou PDF (note de cadrage)
  * en combinant les données du projet, des revues, des risques et des tâches.
- * Inclut également un bouton pour éditer le projet.
+ * Inclut également un bouton pour éditer le projet et créer une revue.
  */
 
 import { useState } from "react";
@@ -16,24 +15,35 @@ import { ProjectData as PPTXProjectData } from "@/components/pptx/types";
 import { ProjectStatus, ProgressStatus, ProjectLifecycleStatus } from "@/types/project";
 import { RiskProbability, RiskSeverity, RiskStatus } from "@/types/risk";
 import { useDetailedProjectsData, ProjectData } from "@/hooks/use-detailed-projects-data";
-import { Presentation, FileText, Edit } from "lucide-react";
+import { Presentation, FileText, Edit, Calendar } from "lucide-react";
 import { generateProjectFramingPDF } from "@/components/framing/ProjectFramingExport";
 import { useProjectPermissions } from "@/hooks/useProjectPermissions";
+import { useReviewAccess } from "@/hooks/use-review-access";
 
 interface ProjectSummaryActionsProps {
   project: any;
   risks?: any[];
   tasks?: any[];
   onEditProject?: () => void;
+  onCreateReview?: () => void;
 }
 
-const ProjectSummaryActions = ({ project, risks = [], tasks = [], onEditProject }: ProjectSummaryActionsProps) => {
+const ProjectSummaryActions = ({ 
+  project, 
+  risks = [], 
+  tasks = [], 
+  onEditProject,
+  onCreateReview 
+}: ProjectSummaryActionsProps) => {
   const { toast } = useToast();
   const [isExporting, setIsExporting] = useState(false);
   const [isExportingPDF, setIsExportingPDF] = useState(false);
   
   // Vérifier les permissions pour l'édition
   const { canEdit } = useProjectPermissions(project?.id);
+  
+  // Vérifier les permissions pour créer une revue
+  const { canCreateReview } = useReviewAccess(project?.id);
 
   const fetchDetailedProject = async (projectId: string): Promise<ProjectData | null> => {
     try {
@@ -164,6 +174,16 @@ const ProjectSummaryActions = ({ project, risks = [], tasks = [], onEditProject 
         >
           <Edit className="h-4 w-4 mr-2" />
           Modifier
+        </Button>
+      )}
+      {canCreateReview && (
+        <Button 
+          onClick={onCreateReview}
+          variant="green"
+          className="flex items-center"
+        >
+          <Calendar className="h-4 w-4 mr-2" />
+          Nouvelle revue
         </Button>
       )}
       <Button 
