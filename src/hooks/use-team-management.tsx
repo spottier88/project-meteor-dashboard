@@ -1,24 +1,17 @@
+
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
 import { useProjectPermissions } from "@/hooks/useProjectPermissions";
 
-export const useTeamManagement = (projectId: string, preloadedProject?: any, preloadedMembers?: any[]) => {
+export const useTeamManagement = (projectId: string) => {
   const queryClient = useQueryClient();
   const { toast } = useToast();
   
-  // S'assurer que les permissions sont chargées avant de charger les membres
+  // Charger les permissions une seule fois
   const permissions = useProjectPermissions(projectId);
 
-  console.log("🔍 useTeamManagement - Permissions reçues:", {
-    projectId,
-    permissions,
-    hasPreloadedData: !!preloadedMembers,
-    preloadedMembersCount: preloadedMembers?.length || 0,
-    component: "useTeamManagement"
-  });
-
-  // Récupération des informations du projet (utiliser les données préchargées si disponibles)
+  // Récupération des informations du projet
   const { data: project } = useQuery({
     queryKey: ["teamProjectManager", projectId],
     queryFn: async () => {
@@ -32,16 +25,13 @@ export const useTeamManagement = (projectId: string, preloadedProject?: any, pre
       return data;
     },
     staleTime: 300000, // 5 minutes
-    enabled: !!projectId && !preloadedProject, // Ne pas charger si on a déjà les données
-    initialData: preloadedProject, // Utiliser les données préchargées
+    enabled: !!projectId,
   });
 
-  // Récupération des membres du projet (utiliser les données préchargées si disponibles)
+  // Récupération des membres du projet avec une logique simplifiée
   const { data: members } = useQuery({
     queryKey: ["projectMembers", projectId],
     queryFn: async () => {
-      console.log("🔍 useTeamManagement - Début de la récupération des membres pour le projet:", projectId);
-      
       const { data, error } = await supabase
         .from("project_members")
         .select(`
@@ -62,97 +52,55 @@ export const useTeamManagement = (projectId: string, preloadedProject?: any, pre
         .eq("project_id", projectId);
 
       if (error) {
-        console.error("❌ useTeamManagement - Erreur lors de la récupération des membres:", error);
         throw error;
       }
       
-      console.log("📊 useTeamManagement - Données brutes reçues:", data);
-      
-      // Transformation des données avec validation renforcée de l'ID
+      // Transformation des données avec validation stricte de l'ID
       const transformedData = data
         .filter(member => {
-          // Filtrer les membres sans ID valide de manière plus stricte
+          // Filtrer les membres sans ID valide
           const hasValidId = member.id && 
-                            member.id !== 'undefined' && 
-                            member.id !== 'null' && 
                             typeof member.id === 'string' &&
-                            member.id.length > 0;
+                            member.id.length > 0 &&
+                            member.id !== 'undefined' && 
+                            member.id !== 'null';
           
-          if (!hasValidId) {
-            console.warn("⚠️ useTeamManagement - Membre avec ID invalide filtré:", {
-              member,
-              id: member.id,
-              type: typeof member.id
-            });
-            return false;
-          }
-          return true;
+          return hasValidId;
         })
-        .map(member => {
-          // S'assurer que l'ID du project_member est bien présent et valide
-          const memberData = {
-            id: member.id, // ID du project_member (crucial pour les mutations)
-            user_id: member.user_id,
-            role: member.role,
-            project_id: member.project_id,
-            profiles: member.profiles ? {
-              id: member.profiles.id,
-              email: member.profiles.email,
-              first_name: member.profiles.first_name,
-              last_name: member.profiles.last_name,
-              roles: Array.isArray(member.profiles.user_roles) 
-                ? member.profiles.user_roles.map((ur: any) => ur.role) 
-                : []
-            } : null
-          };
+        .map(member => ({
+          id: member.id, // ID du project_member (crucial pour les mutations)
+          user_id: member.user_id,
+          role: member.role,
+          project_id: member.project_id,
+          profiles: member.profiles ? {
+            id: member.profiles.id,
+            email: member.profiles.email,
+            first_name: member.profiles.first_name,
+            last_name: member.profiles.last_name,
+            roles: Array.isArray(member.profiles.user_roles) 
+              ? member.profiles.user_roles.map((ur: any) => ur.role) 
+              : []
+          } : null
+        }));
 
-          // Log détaillé pour vérifier que l'ID est bien présent
-          console.log("✅ useTeamManagement - Membre transformé avec validation:", {
-            project_member_id: memberData.id,
-            user_id: memberData.user_id,
-            email: memberData.profiles?.email,
-            hasValidId: !!memberData.id && 
-                       memberData.id !== 'undefined' && 
-                       memberData.id !== 'null' &&
-                       typeof memberData.id === 'string' &&
-                       memberData.id.length > 0,
-            idType: typeof memberData.id,
-            idLength: memberData.id?.length || 0
-          });
-
-          return memberData;
-        });
-
-      console.log("🎯 useTeamManagement - Données finales transformées:", transformedData);
-      console.log("📈 useTeamManagement - Nombre de membres valides:", transformedData.length);
-      
       return transformedData;
     },
-    // Toujours charger une version fraîche lorsque les permissions le permettent
-    // Les données préchargées servent uniquement d'état initial pour un affichage rapide
+    // Charger seulement si les permissions le permettent
     enabled: !!projectId && !!permissions && (permissions.canManageTeam || permissions.canEdit || permissions.isAdmin),
     staleTime: 300000, // 5 minutes
-    initialData: preloadedMembers,
   });
 
   // Mutation pour supprimer un membre
   const deleteMutation = useMutation({
     mutationFn: async (memberId: string) => {
-      // Vérification préalable renforcée que l'ID est valide
+      // Vérification stricte de l'ID
       if (!memberId || 
-          memberId === 'undefined' || 
-          memberId === 'null' ||
           typeof memberId !== 'string' ||
-          memberId.length === 0) {
-        console.error("❌ useTeamManagement - ID du membre invalide pour suppression:", {
-          memberId,
-          type: typeof memberId,
-          length: memberId?.length || 0
-        });
+          memberId.length === 0 ||
+          memberId === 'undefined' || 
+          memberId === 'null') {
         throw new Error("ID du membre non défini ou invalide");
       }
-      
-      console.log("🗑️ useTeamManagement - Suppression du membre avec ID:", memberId);
       
       const { error } = await supabase
         .from("project_members")
@@ -169,7 +117,6 @@ export const useTeamManagement = (projectId: string, preloadedProject?: any, pre
       });
     },
     onError: (error) => {
-      console.error("❌ useTeamManagement - Erreur lors de la suppression:", error);
       toast({
         variant: "destructive",
         title: "Erreur",
@@ -181,26 +128,18 @@ export const useTeamManagement = (projectId: string, preloadedProject?: any, pre
   // Mutation pour mettre à jour le rôle d'un membre
   const updateRoleMutation = useMutation({
     mutationFn: async ({ memberId, role }: { memberId: string, role: string }) => {
-      // Vérifications préalables renforcées
+      // Vérifications strictes
       if (!memberId || 
-          memberId === 'undefined' || 
-          memberId === 'null' ||
           typeof memberId !== 'string' ||
-          memberId.length === 0) {
-        console.error("❌ useTeamManagement - ID du membre invalide pour mise à jour:", {
-          memberId,
-          type: typeof memberId,
-          length: memberId?.length || 0
-        });
+          memberId.length === 0 ||
+          memberId === 'undefined' || 
+          memberId === 'null') {
         throw new Error("ID du membre non défini ou invalide");
       }
       
       if (!role || typeof role !== 'string') {
-        console.error("❌ useTeamManagement - Rôle invalide pour la mise à jour:", role);
         throw new Error("Rôle non défini ou invalide");
       }
-      
-      console.log(`🔄 useTeamManagement - Mise à jour du membre ${memberId} vers le rôle ${role}`);
       
       // Vérifier d'abord si l'enregistrement existe
       const { data: checkData, error: checkError } = await supabase
@@ -211,7 +150,6 @@ export const useTeamManagement = (projectId: string, preloadedProject?: any, pre
         .single();
       
       if (checkError) {
-        console.error("❌ useTeamManagement - Erreur lors de la vérification de l'existence du membre:", checkError);
         throw checkError;
       }
       
@@ -228,11 +166,9 @@ export const useTeamManagement = (projectId: string, preloadedProject?: any, pre
         .select();
 
       if (error) {
-        console.error("❌ useTeamManagement - Erreur Supabase lors de la mise à jour:", error);
         throw error;
       }
       
-      console.log("✅ useTeamManagement - Réponse de la mise à jour:", data);
       return data;
     },
     onSuccess: () => {
@@ -243,7 +179,6 @@ export const useTeamManagement = (projectId: string, preloadedProject?: any, pre
       });
     },
     onError: (error) => {
-      console.error("❌ useTeamManagement - Erreur lors de la mise à jour du rôle:", error);
       toast({
         variant: "destructive",
         title: "Erreur",
@@ -252,19 +187,14 @@ export const useTeamManagement = (projectId: string, preloadedProject?: any, pre
     },
   });
 
-  // Fonction pour supprimer un membre avec validation renforcée
+  // Fonction pour supprimer un membre avec validation stricte
   const handleDelete = (memberId: string, email?: string) => {
-    // Vérification renforcée que l'ID est valide
+    // Vérification stricte de l'ID
     if (!memberId || 
-        memberId === 'undefined' || 
-        memberId === 'null' ||
         typeof memberId !== 'string' ||
-        memberId.length === 0) {
-      console.error("❌ useTeamManagement - Tentative de suppression avec ID invalide:", {
-        memberId,
-        type: typeof memberId,
-        length: memberId?.length || 0
-      });
+        memberId.length === 0 ||
+        memberId === 'undefined' || 
+        memberId === 'null') {
       toast({
         variant: "destructive",
         title: "Erreur",
@@ -287,19 +217,14 @@ export const useTeamManagement = (projectId: string, preloadedProject?: any, pre
     }
   };
 
-  // Fonction pour promouvoir un membre en chef de projet secondaire avec validation renforcée
+  // Fonction pour promouvoir un membre en chef de projet secondaire
   const handlePromoteToSecondaryManager = (memberId: string, roles: string[], isAdmin: boolean) => {
-    // Vérification renforcée de l'ID avant traitement
+    // Vérification stricte de l'ID
     if (!memberId || 
-        memberId === 'undefined' || 
-        memberId === 'null' ||
         typeof memberId !== 'string' ||
-        memberId.length === 0) {
-      console.error("❌ useTeamManagement - Tentative de promotion avec ID invalide:", {
-        memberId,
-        type: typeof memberId,
-        length: memberId?.length || 0
-      });
+        memberId.length === 0 ||
+        memberId === 'undefined' || 
+        memberId === 'null') {
       toast({
         variant: "destructive",
         title: "Erreur",
@@ -327,19 +252,14 @@ export const useTeamManagement = (projectId: string, preloadedProject?: any, pre
     updateRoleMutation.mutate({ memberId, role: 'secondary_manager' });
   };
 
-  // Fonction pour rétrograder un chef de projet secondaire en membre avec validation renforcée
+  // Fonction pour rétrograder un chef de projet secondaire en membre
   const handleDemoteToMember = (memberId: string) => {
-    // Vérification renforcée de l'ID avant traitement
+    // Vérification stricte de l'ID
     if (!memberId || 
-        memberId === 'undefined' || 
-        memberId === 'null' ||
         typeof memberId !== 'string' ||
-        memberId.length === 0) {
-      console.error("❌ useTeamManagement - Tentative de rétrogradation avec ID invalide:", {
-        memberId,
-        type: typeof memberId,
-        length: memberId?.length || 0
-      });
+        memberId.length === 0 ||
+        memberId === 'undefined' || 
+        memberId === 'null') {
       toast({
         variant: "destructive",
         title: "Erreur",

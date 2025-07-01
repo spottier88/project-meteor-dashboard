@@ -1,5 +1,4 @@
 
-
 /**
  * @component TeamMemberRow
  * @description Ligne du tableau pour un membre d'équipe projet.
@@ -40,28 +39,12 @@ export const TeamMemberRow = ({
   onPromote,
   onDemote,
 }: TeamMemberProps) => {
-  // Vérification de la validité de l'ID du membre
-  const hasValidId = member.id && member.id !== 'undefined' && member.id !== 'null';
-
-  // Logs de diagnostic pour identifier les différences
-  console.log("🔍 TeamMemberRow - Diagnostic du membre:", {
-    memberId: member.id,
-    hasValidId,
-    canManageTeam,
-    memberEmail: member.profiles?.email,
-    isProjectManager,
-    isSecondaryManager,
-    userRoles,
-    memberData: member
-  });
-
-  // Log spécifique pour le bouton Actions
-  console.log("🎯 TeamMemberRow - État du bouton Actions:", {
-    canManageTeam,
-    hasValidId,
-    buttonDisabled: !hasValidId,
-    shouldShowActions: canManageTeam
-  });
+  // Vérification stricte de la validité de l'ID du membre
+  const hasValidId = member.id && 
+                    typeof member.id === 'string' &&
+                    member.id.length > 0 &&
+                    member.id !== 'undefined' && 
+                    member.id !== 'null';
 
   return (
     <TableRow>
@@ -99,9 +82,9 @@ export const TeamMemberRow = ({
                 variant="ghost" 
                 size="sm" 
                 disabled={!hasValidId}
-                style={!hasValidId ? { backgroundColor: '#f3f4f6', cursor: 'not-allowed' } : {}}
+                className={!hasValidId ? "opacity-50 cursor-not-allowed" : ""}
               >
-                Actions {!hasValidId && "(ID manquant)"}
+                Actions
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">

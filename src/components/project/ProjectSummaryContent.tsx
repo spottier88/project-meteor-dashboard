@@ -11,8 +11,6 @@ import { TaskList } from "@/components/TaskList";
 import { InnovationRadarChart } from "@/components/innovation/InnovationRadarChart";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useProjectPermissions } from "@/hooks/useProjectPermissions";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
 
 interface ProjectSummaryContentProps {
   project: any;
@@ -33,92 +31,8 @@ export const ProjectSummaryContent = ({
 }: ProjectSummaryContentProps) => {
   const projectId = project.id;
 
-  // Charger les permissions de manière centralisée
+  // Charger les permissions de manière centralisée une seule fois
   const projectPermissions = useProjectPermissions(projectId);
-
-  // Précharger les données de l'équipe directement ici
-  const { data: teamProject } = useQuery({
-    queryKey: ["teamProjectManager", projectId],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("projects")
-        .select("project_manager")
-        .eq("id", projectId)
-        .maybeSingle();
-
-      if (error) throw error;
-      return data;
-    },
-    staleTime: 300000, // 5 minutes
-    enabled: !!projectId,
-  });
-
-  // Précharger les membres de l'équipe
-  const { data: teamMembers } = useQuery({
-    queryKey: ["projectMembers", projectId],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("project_members")
-        .select(`
-          id,
-          role,
-          project_id,
-          user_id,
-          profiles:user_id (
-            id,
-            email,
-            first_name,
-            last_name,
-            user_roles (
-              role
-            )
-          )
-        `)
-        .eq("project_id", projectId);
-
-      if (error) {
-        throw error;
-      }
-      
-      // Transformation des données avec validation renforcée de l'ID
-      const transformedData = data
-        .filter(member => {
-          // Filtrer les membres sans ID valide de manière plus stricte
-          const hasValidId = member.id && 
-                            member.id !== 'undefined' && 
-                            member.id !== 'null' && 
-                            typeof member.id === 'string' &&
-                            member.id.length > 0;
-          
-          return hasValidId;
-        })
-        .map(member => {
-          // S'assurer que l'ID du project_member est bien présent et valide
-          const memberData = {
-            id: member.id, // ID du project_member (crucial pour les mutations)
-            user_id: member.user_id,
-            role: member.role,
-            project_id: member.project_id,
-            profiles: member.profiles ? {
-              id: member.profiles.id,
-              email: member.profiles.email,
-              first_name: member.profiles.first_name,
-              last_name: member.profiles.last_name,
-              roles: Array.isArray(member.profiles.user_roles) 
-                ? member.profiles.user_roles.map((ur: any) => ur.role) 
-                : []
-            } : null
-          };
-
-          return memberData;
-        });
-
-      return transformedData;
-    },
-    // Charger les membres seulement si les permissions sont disponibles
-    enabled: !!projectId && !!projectPermissions && (projectPermissions.canManageTeam || projectPermissions.canEdit || projectPermissions.isAdmin),
-    staleTime: 300000, // 5 minutes
-  });
 
   // Utiliser uniquement les permissions du hook central
   const effectivePermissions = {
@@ -126,7 +40,6 @@ export const ProjectSummaryContent = ({
     isProjectManager: projectPermissions.isProjectManager,
     isAdmin: projectPermissions.isAdmin,
     canManageTeam: projectPermissions.canManageTeam,
-
   };
 
   // Données d'innovation du projet (reconstituées depuis les données du projet)
@@ -260,9 +173,6 @@ export const ProjectSummaryContent = ({
               isProjectManager={effectivePermissions.isProjectManager}
               isAdmin={effectivePermissions.isAdmin}
               canManageTeam={effectivePermissions.canManageTeam}
-              // Passer les données préchargées
-              preloadedProject={teamProject}
-              preloadedMembers={teamMembers}
             />
           </div>
         </TabsContent>

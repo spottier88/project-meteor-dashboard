@@ -22,9 +22,6 @@ export interface TeamManagementProps {
   isProjectManager: boolean;
   isAdmin: boolean;
   canManageTeam: boolean;
-  // Nouvelles props pour les données préchargées
-  preloadedProject?: any;
-  preloadedMembers?: any[];
 }
 
 export const TeamManagement = ({
@@ -33,19 +30,18 @@ export const TeamManagement = ({
   isProjectManager,
   isAdmin,
   canManageTeam,
-  preloadedProject,
-  preloadedMembers,
 }: TeamManagementProps) => {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isInviteFormOpen, setIsInviteFormOpen] = useState(false);
   
+  // Utilisation simplifiée du hook sans données préchargées
   const {
     project,
     members,
     handleDelete,
     handlePromoteToSecondaryManager,
     handleDemoteToMember
-  } = useTeamManagement(projectId, preloadedProject, preloadedMembers);
+  } = useTeamManagement(projectId);
 
   // Wrapper pour passer les paramètres nécessaires
   const onPromoteMember = (memberId: string, roles: string[]) => {
