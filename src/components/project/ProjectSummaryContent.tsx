@@ -126,9 +126,7 @@ export const ProjectSummaryContent = ({
     isProjectManager: projectPermissions.isProjectManager,
     isAdmin: projectPermissions.isAdmin,
     canManageTeam: projectPermissions.canManageTeam,
-     // Passer les données préchargéesAdd commentMore actions
-    preloadedProject={teamProject}
-    preloadedMembers={teamMembers}
+
   };
 
   // Données d'innovation du projet (reconstituées depuis les données du projet)
