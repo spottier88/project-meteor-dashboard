@@ -128,10 +128,11 @@ export const useTeamManagement = (projectId: string, preloadedProject?: any, pre
       
       return transformedData;
     },
-    // Ne charger que si les permissions sont disponibles ET qu'on n'a pas de données préchargées
-    enabled: !!projectId && !!permissions && (permissions.canManageTeam || permissions.canEdit || permissions.isAdmin) && !preloadedMembers,
+    // Toujours charger une version fraîche lorsque les permissions le permettent
+    // Les données préchargées servent uniquement d'état initial pour un affichage rapide
+    enabled: !!projectId && !!permissions && (permissions.canManageTeam || permissions.canEdit || permissions.isAdmin),
     staleTime: 300000, // 5 minutes
-    initialData: preloadedMembers, // Utiliser les données préchargées
+    initialData: preloadedMembers,
   });
 
   // Mutation pour supprimer un membre
