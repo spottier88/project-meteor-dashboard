@@ -4,6 +4,7 @@
  * @description Actions disponibles sur la vue de résumé d'un projet.
  * Permet d'exporter les informations du projet au format PPTX ou PDF (note de cadrage)
  * en combinant les données du projet, des revues, des risques et des tâches.
+ * Inclut également un bouton pour éditer le projet.
  */
 
 import { useState } from "react";
@@ -15,19 +16,24 @@ import { ProjectData as PPTXProjectData } from "@/components/pptx/types";
 import { ProjectStatus, ProgressStatus, ProjectLifecycleStatus } from "@/types/project";
 import { RiskProbability, RiskSeverity, RiskStatus } from "@/types/risk";
 import { useDetailedProjectsData, ProjectData } from "@/hooks/use-detailed-projects-data";
-import { Presentation, FileText } from "lucide-react";
+import { Presentation, FileText, Edit } from "lucide-react";
 import { generateProjectFramingPDF } from "@/components/framing/ProjectFramingExport";
+import { useProjectPermissions } from "@/hooks/useProjectPermissions";
 
 interface ProjectSummaryActionsProps {
   project: any;
   risks?: any[];
   tasks?: any[];
+  onEditProject?: () => void;
 }
 
-const ProjectSummaryActions = ({ project, risks = [], tasks = [] }: ProjectSummaryActionsProps) => {
+const ProjectSummaryActions = ({ project, risks = [], tasks = [], onEditProject }: ProjectSummaryActionsProps) => {
   const { toast } = useToast();
   const [isExporting, setIsExporting] = useState(false);
   const [isExportingPDF, setIsExportingPDF] = useState(false);
+  
+  // Vérifier les permissions pour l'édition
+  const { canEdit } = useProjectPermissions(project?.id);
 
   const fetchDetailedProject = async (projectId: string): Promise<ProjectData | null> => {
     try {
@@ -150,6 +156,16 @@ const ProjectSummaryActions = ({ project, risks = [], tasks = [] }: ProjectSumma
 
   return (
     <div className="flex space-x-4">
+      {canEdit && (
+        <Button 
+          onClick={onEditProject}
+          variant="outline"
+          className="flex items-center"
+        >
+          <Edit className="h-4 w-4 mr-2" />
+          Modifier
+        </Button>
+      )}
       <Button 
         onClick={handleExportPPTX}
         disabled={isExporting || isExportingPDF}

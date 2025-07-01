@@ -23,6 +23,7 @@ interface ProjectSummaryContentProps {
   isAdmin?: boolean;
   canEdit?: boolean;
   canManageTeam?: boolean;
+  onEditProject?: () => void;
 }
 
 export const ProjectSummaryContent = ({
@@ -30,6 +31,7 @@ export const ProjectSummaryContent = ({
   lastReview,
   risks,
   tasks,
+  onEditProject,
 }: ProjectSummaryContentProps) => {
   const projectId = project.id;
 
@@ -192,6 +194,7 @@ export const ProjectSummaryContent = ({
                 project={project}
                 risks={risks}
                 tasks={tasks}
+                onEditProject={onEditProject}
               />
             </div>
             <p className="text-gray-600">{project.description}</p>

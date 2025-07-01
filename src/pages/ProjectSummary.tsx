@@ -1,4 +1,3 @@
-
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -7,12 +6,14 @@ import { ArrowLeft } from "lucide-react";
 import { useState } from "react";
 import { TaskForm } from "@/components/task/TaskForm";
 import { ProjectSummaryContent } from "@/components/project/ProjectSummaryContent";
+import { ProjectForm } from "@/components/ProjectForm";
 import { useToast } from "@/components/ui/use-toast";
 
 export const ProjectSummary = () => {
   const { projectId } = useParams<{ projectId: string }>();
   const navigate = useNavigate();
   const [isTaskFormOpen, setIsTaskFormOpen] = useState(false);
+  const [isProjectFormOpen, setIsProjectFormOpen] = useState(false);
   const { toast } = useToast();
 
   console.log("🔍 ProjectSummary - Initialisation:", {
@@ -20,7 +21,7 @@ export const ProjectSummary = () => {
     component: "ProjectSummary"
   });
 
-  const { data: project, isError: projectError } = useQuery({
+  const { data: project, isError: projectError, refetch: refetchProject } = useQuery({
     queryKey: ["project", projectId],
     queryFn: async () => {
       if (!projectId) {
@@ -111,6 +112,20 @@ export const ProjectSummary = () => {
     enabled: !!projectId,
   });
 
+  const handleEditProject = () => {
+    setIsProjectFormOpen(true);
+  };
+
+  const handleProjectFormClose = () => {
+    setIsProjectFormOpen(false);
+  };
+
+  const handleProjectFormSubmit = async (projectData: any) => {
+    // Rafraîchir les données du projet après modification
+    await refetchProject();
+    return { id: projectId };
+  };
+
   if (!project || projectError) {
     return null;
   }
@@ -132,12 +147,20 @@ export const ProjectSummary = () => {
         lastReview={lastReview}
         risks={risks || []}
         tasks={tasks || []}
+        onEditProject={handleEditProject}
       />
 
       <TaskForm
         isOpen={isTaskFormOpen}
         onClose={() => setIsTaskFormOpen(false)}
         projectId={projectId || ""}
+      />
+
+      <ProjectForm
+        isOpen={isProjectFormOpen}
+        onClose={handleProjectFormClose}
+        onSubmit={handleProjectFormSubmit}
+        project={project}
       />
     </div>
   );
