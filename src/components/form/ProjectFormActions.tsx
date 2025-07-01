@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
@@ -48,6 +49,7 @@ export const ProjectFormActions = ({
   const [isProcessing, setIsProcessing] = useState(false);
 
   const handleSubmit = async () => {
+    // Validation des champs obligatoires
     if (!formData.title.trim()) {
       toast({
         title: "Erreur",
@@ -101,15 +103,31 @@ export const ProjectFormActions = ({
       };
 
       if (project?.id) {
+        // Vérification des permissions pour la modification
+        const { data: canEdit } = await supabase.rpc('can_manage_project', {
+          p_user_id: user.id,
+          p_project_id: project.id
+        });
+
+        if (!canEdit && !isAdmin) {
+          toast({
+            title: "Erreur",
+            description: "Vous n'avez pas les droits nécessaires pour modifier ce projet",
+            variant: "destructive",
+          });
+          return;
+        }
+
         const { error: projectError } = await supabase
           .from("projects")
           .update(projectData)
           .eq("id", project.id);
 
         if (projectError) {
+          console.error("Erreur lors de la mise à jour du projet:", projectError);
           toast({
             title: "Erreur",
-            description: "Vous n'avez pas les droits nécessaires pour modifier ce projet",
+            description: "Impossible de mettre à jour le projet. Vérifiez vos permissions.",
             variant: "destructive",
           });
           return;
@@ -126,12 +144,12 @@ export const ProjectFormActions = ({
           });
 
         if (monitoringError) {
+          console.error("Erreur monitoring:", monitoringError);
           toast({
-            title: "Erreur",
-            description: monitoringError.message,
+            title: "Avertissement",
+            description: "Le projet a été mis à jour mais le monitoring n'a pas pu être configuré",
             variant: "destructive",
           });
-          return;
         }
 
         toast({
@@ -139,6 +157,7 @@ export const ProjectFormActions = ({
           description: "Le projet a été mis à jour",
         });
       } else {
+        // Création d'un nouveau projet
         const { data: newProject, error: projectError } = await supabase
           .from("projects")
           .insert(projectData)
@@ -146,9 +165,10 @@ export const ProjectFormActions = ({
           .single();
 
         if (projectError) {
+          console.error("Erreur lors de la création du projet:", projectError);
           toast({
             title: "Erreur",
-            description: projectError.message,
+            description: "Impossible de créer le projet: " + projectError.message,
             variant: "destructive",
           });
           return;
@@ -163,12 +183,11 @@ export const ProjectFormActions = ({
           });
 
         if (monitoringError) {
+          console.error("Erreur monitoring:", monitoringError);
           toast({
-            title: "Erreur",
-            description: monitoringError.message,
-            variant: "destructive",
+            title: "Avertissement",
+            description: "Le projet a été créé mais le monitoring n'a pas pu être configuré",
           });
-          return;
         }
 
         toast({
@@ -180,6 +199,7 @@ export const ProjectFormActions = ({
       onSubmit();
       onClose();
     } catch (error: any) {
+      console.error("Erreur générale:", error);
       toast({
         title: "Erreur",
         description: error.message || "Une erreur est survenue",
