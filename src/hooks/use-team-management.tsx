@@ -37,7 +37,7 @@ export const useTeamManagement = (projectId: string, permissions: Permissions) =
     enabled: !!projectId, // Condition simplifiée - on charge toujours si on a un projectId
   });
 
-  // Récupération des membres du projet avec une logique simplifiée
+  // Récupération des membres du projet avec diagnostic approfondi
   const { data: members } = useQuery({
     queryKey: ["projectMembers", projectId],
     queryFn: async () => {
@@ -69,39 +69,47 @@ export const useTeamManagement = (projectId: string, permissions: Permissions) =
       
       console.log("📊 Données brutes des membres:", data);
       
-      // Transformation des données avec validation stricte de l'ID
-      const transformedData = data
-        .filter(member => {
-          // Filtrer les membres sans ID valide
-          const hasValidId = member.id && 
-                            typeof member.id === 'string' &&
-                            member.id.length > 0 &&
-                            member.id !== 'undefined' && 
-                            member.id !== 'null';
-          
-          if (!hasValidId) {
-            console.warn("⚠️ Membre avec ID invalide filtré:", member);
-          }
-          
-          return hasValidId;
-        })
-        .map(member => ({
-          id: member.id, // ID du project_member (crucial pour les mutations)
+      // Diagnostic détaillé de chaque membre
+      data?.forEach((member, index) => {
+        console.log(`🔍 Membre ${index}:`, {
+          id: member.id,
+          id_type: typeof member.id,
+          id_length: member.id?.length,
           user_id: member.user_id,
-          role: member.role,
-          project_id: member.project_id,
-          profiles: member.profiles ? {
-            id: member.profiles.id,
-            email: member.profiles.email,
-            first_name: member.profiles.first_name,
-            last_name: member.profiles.last_name,
-            roles: Array.isArray(member.profiles.user_roles) 
-              ? member.profiles.user_roles.map((ur: any) => ur.role) 
-              : []
-          } : null
-        }));
+          email: member.profiles?.email,
+          has_profiles: !!member.profiles
+        });
+      });
+      
+      // Transformation des données avec validation moins stricte pour diagnostic
+      const transformedData = data
+        .map(member => {
+          const transformedMember = {
+            id: member.id, // ID du project_member (crucial pour les mutations)
+            user_id: member.user_id,
+            role: member.role,
+            project_id: member.project_id,
+            profiles: member.profiles ? {
+              id: member.profiles.id,
+              email: member.profiles.email,
+              first_name: member.profiles.first_name,
+              last_name: member.profiles.last_name,
+              roles: Array.isArray(member.profiles.user_roles) 
+                ? member.profiles.user_roles.map((ur: any) => ur.role) 
+                : []
+            } : null
+          };
+          
+          console.log(`✅ Membre transformé ${member.profiles?.email}:`, {
+            originalId: member.id,
+            transformedId: transformedMember.id,
+            hasValidId: !!transformedMember.id
+          });
+          
+          return transformedMember;
+        });
 
-      console.log("✅ Membres transformés:", transformedData);
+      console.log("✅ Membres transformés final:", transformedData);
       return transformedData;
     },
     // Condition plus permissive - on charge toujours si on a un projectId

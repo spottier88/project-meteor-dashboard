@@ -39,12 +39,20 @@ export const TeamMemberRow = ({
   onPromote,
   onDemote,
 }: TeamMemberProps) => {
-  // Vérification stricte de la validité de l'ID du membre
+  // Vérification stricte de la validité de l'ID du membre avec diagnostic
   const hasValidId = member.id && 
                     typeof member.id === 'string' &&
                     member.id.length > 0 &&
                     member.id !== 'undefined' && 
                     member.id !== 'null';
+
+  // Log de diagnostic pour identifier le problème
+  console.log(`🔍 TeamMemberRow - Validation ID pour ${member.profiles?.email}:`, {
+    id: member.id,
+    id_type: typeof member.id,
+    id_valid: hasValidId,
+    member_object: member
+  });
 
   return (
     <TableRow>
@@ -83,8 +91,10 @@ export const TeamMemberRow = ({
                 size="sm" 
                 disabled={!hasValidId}
                 className={!hasValidId ? "opacity-50 cursor-not-allowed" : ""}
+                title={!hasValidId ? "ID du membre non disponible - impossible d'effectuer des actions" : "Actions sur le membre"}
               >
                 Actions
+                {!hasValidId && <span className="ml-1 text-xs text-red-500">(!)</span>}
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">

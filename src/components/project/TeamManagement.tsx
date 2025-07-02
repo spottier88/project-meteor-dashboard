@@ -47,11 +47,12 @@ export const TeamManagement = ({
     handlePromoteToSecondaryManager(memberId, roles, permissions.isAdmin);
   };
 
-  console.log("🔍 TeamManagement - État des données:", {
+  // Log de diagnostic simplifié pour le debug des IDs
+  console.log("🔍 TeamManagement - État final:", {
     projectId,
-    permissions,
     membersCount: members?.length || 0,
-    members: members?.map(m => ({ id: m.id, email: m.profiles?.email }))
+    membersWithValidIds: members?.filter(m => m.id && m.id !== 'undefined').length || 0,
+    canManageTeam: permissions.canManageTeam
   });
 
   return (
