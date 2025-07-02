@@ -47,6 +47,13 @@ export const TeamManagement = ({
     handlePromoteToSecondaryManager(memberId, roles, permissions.isAdmin);
   };
 
+  console.log("🔍 TeamManagement - État des données:", {
+    projectId,
+    permissions,
+    membersCount: members?.length || 0,
+    members: members?.map(m => ({ id: m.id, email: m.profiles?.email }))
+  });
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">

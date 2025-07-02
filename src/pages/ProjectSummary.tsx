@@ -1,3 +1,4 @@
+
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -19,8 +20,14 @@ export const ProjectSummary = () => {
   const [isReviewSheetOpen, setIsReviewSheetOpen] = useState(false);
   const { toast } = useToast();
 
-  // Centraliser le chargement des permissions au niveau parent
+  // Centraliser le chargement des permissions au niveau parent avec un état stable
   const projectPermissions = useProjectPermissions(projectId || "");
+  
+  console.log("🔍 ProjectSummary - Permissions chargées:", {
+    projectId,
+    permissions: projectPermissions,
+    canManageTeam: projectPermissions.canManageTeam
+  });
 
   const { data: project, isError: projectError, refetch: refetchProject } = useQuery({
     queryKey: ["project", projectId],

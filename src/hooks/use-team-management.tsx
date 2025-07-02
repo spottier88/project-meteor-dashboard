@@ -1,4 +1,11 @@
 
+/**
+ * @hook useTeamManagement
+ * @description Hook pour la gestion de l'équipe d'un projet.
+ * Gère le chargement des membres, les actions de suppression, promotion et rétrogradation.
+ * Les permissions sont passées en paramètre pour éviter les conditions de course.
+ */
+
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
@@ -27,7 +34,7 @@ export const useTeamManagement = (projectId: string, permissions: Permissions) =
       return data;
     },
     staleTime: 300000, // 5 minutes
-    enabled: !!projectId && permissions.canManageTeam,
+    enabled: !!projectId, // Condition simplifiée - on charge toujours si on a un projectId
   });
 
   // Récupération des membres du projet avec une logique simplifiée
@@ -97,8 +104,9 @@ export const useTeamManagement = (projectId: string, permissions: Permissions) =
       console.log("✅ Membres transformés:", transformedData);
       return transformedData;
     },
-    // Charger seulement si les permissions le permettent
-    enabled: !!projectId && (permissions.canManageTeam || permissions.canEdit || permissions.isAdmin),
+    // Condition plus permissive - on charge toujours si on a un projectId
+    // Les actions seront contrôlées au niveau UI selon les permissions
+    enabled: !!projectId,
     staleTime: 300000, // 5 minutes
   });
 
