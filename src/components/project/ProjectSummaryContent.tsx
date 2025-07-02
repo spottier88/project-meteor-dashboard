@@ -25,6 +25,13 @@ interface ProjectSummaryContentProps {
     canManageTeam: boolean;
     canManageRisks: boolean;
   };
+  teamManagement?: {
+    project: any;
+    members: any[];
+    handleDelete: (id: string, email?: string) => void;
+    handlePromoteToSecondaryManager: (id: string, roles: string[], isAdmin: boolean) => void;
+    handleDemoteToMember: (id: string) => void;
+  };
 }
 
 export const ProjectSummaryContent = ({
@@ -35,6 +42,7 @@ export const ProjectSummaryContent = ({
   onEditProject,
   onCreateReview,
   permissions,
+  teamManagement,
 }: ProjectSummaryContentProps) => {
   const projectId = project.id;
 
@@ -163,10 +171,28 @@ export const ProjectSummaryContent = ({
         </TabsContent>
         <TabsContent value="team">
           <div className="bg-white rounded-lg shadow-sm overflow-hidden p-6">
-            <TeamManagement
-              projectId={projectId}
-              permissions={permissions}
-            />
+            {teamManagement ? (
+              <div className="space-y-6">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-2xl font-bold">Équipe projet</h2>
+                  {permissions.canManageTeam && (
+                    <div className="flex space-x-2">
+                      {/* Les boutons d'ajout seront gérés par TeamMembersTable */}
+                    </div>
+                  )}
+                </div>
+                <TeamManagement
+                  projectId={projectId}
+                  permissions={permissions}
+                  preloadedData={teamManagement}
+                />
+              </div>
+            ) : (
+              <TeamManagement
+                projectId={projectId}
+                permissions={permissions}
+              />
+            )}
           </div>
         </TabsContent>
       </Tabs>

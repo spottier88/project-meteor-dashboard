@@ -10,6 +10,7 @@ import { ProjectForm } from "@/components/ProjectForm";
 import { ReviewSheet } from "@/components/review/ReviewSheet";
 import { useToast } from "@/components/ui/use-toast";
 import { useProjectPermissions } from "@/hooks/useProjectPermissions";
+import { useTeamManagement } from "@/hooks/use-team-management";
 
 export const ProjectSummary = () => {
   const { projectId } = useParams<{ projectId: string }>();
@@ -21,6 +22,9 @@ export const ProjectSummary = () => {
 
   // Centraliser le chargement des permissions au niveau parent avec un état stable
   const projectPermissions = useProjectPermissions(projectId || "");
+
+  // Précharger les données des membres pour éviter les problèmes de cache
+  const teamManagement = useTeamManagement(projectId || "", projectPermissions);
 
   const { data: project, isError: projectError, refetch: refetchProject } = useQuery({
     queryKey: ["project", projectId],
@@ -286,6 +290,7 @@ export const ProjectSummary = () => {
         onEditProject={handleEditProject}
         onCreateReview={handleCreateReview}
         permissions={projectPermissions}
+        teamManagement={teamManagement}
       />
 
       <TaskForm

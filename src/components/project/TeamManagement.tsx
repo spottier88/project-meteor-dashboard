@@ -24,36 +24,39 @@ export interface TeamManagementProps {
     isAdmin: boolean;
     canManageTeam: boolean;
   };
+  preloadedData?: {
+    project: any;
+    members: any[];
+    handleDelete: (id: string, email?: string) => void;
+    handlePromoteToSecondaryManager: (id: string, roles: string[], isAdmin: boolean) => void;
+    handleDemoteToMember: (id: string) => void;
+  };
 }
 
 export const TeamManagement = ({
   projectId,
   permissions,
+  preloadedData,
 }: TeamManagementProps) => {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isInviteFormOpen, setIsInviteFormOpen] = useState(false);
   
-  // Utiliser le hook avec les permissions passées en paramètre
+  // Utiliser les données préchargées si disponibles, sinon charger via le hook
+  const hookData = useTeamManagement(projectId, permissions, !preloadedData);
+  
+  const teamData = preloadedData || hookData;
   const {
     project,
     members,
     handleDelete,
     handlePromoteToSecondaryManager,
     handleDemoteToMember
-  } = useTeamManagement(projectId, permissions);
+  } = teamData;
 
   // Wrapper pour passer les paramètres nécessaires
   const onPromoteMember = (memberId: string, roles: string[]) => {
     handlePromoteToSecondaryManager(memberId, roles, permissions.isAdmin);
   };
-
-  // Log de diagnostic simplifié pour le debug des IDs
-  console.log("🔍 TeamManagement - État final:", {
-    projectId,
-    membersCount: members?.length || 0,
-    membersWithValidIds: members?.filter(m => m.id && m.id !== 'undefined').length || 0,
-    canManageTeam: permissions.canManageTeam
-  });
 
   return (
     <div className="space-y-6">

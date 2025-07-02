@@ -39,20 +39,12 @@ export const TeamMemberRow = ({
   onPromote,
   onDemote,
 }: TeamMemberProps) => {
-  // Vérification stricte de la validité de l'ID du membre avec diagnostic
+  // Vérification stricte de la validité de l'ID du membre
   const hasValidId = member.id && 
                     typeof member.id === 'string' &&
                     member.id.length > 0 &&
                     member.id !== 'undefined' && 
                     member.id !== 'null';
-
-  // Log de diagnostic pour identifier le problème
-  console.log(`🔍 TeamMemberRow - Validation ID pour ${member.profiles?.email}:`, {
-    id: member.id,
-    id_type: typeof member.id,
-    id_valid: hasValidId,
-    member_object: member
-  });
 
   return (
     <TableRow>
