@@ -3,6 +3,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
 import { ProjectFormState } from "./useProjectFormState";
 import { createTasksFromTemplate } from "../utils/templateTasks";
+import { supabase } from "@/integrations/supabase/client";
 
 interface UseProjectSubmitProps {
   project?: any;
@@ -41,58 +42,150 @@ export const useProjectSubmit = ({
       const projectData = {
         title: formState.title,
         description: formState.description,
-        projectManager: formState.projectManager,
-        startDate: formState.startDate,
-        endDate: formState.endDate,
+        project_manager: formState.projectManager,
+        start_date: formState.startDate?.toISOString().split('T')[0],
+        end_date: formState.endDate?.toISOString().split('T')[0],
         priority: formState.priority,
-        monitoringLevel: formState.monitoringLevel,
-        monitoringEntityId: getMonitoringEntityId(formState.monitoringLevel),
         owner_id: formState.ownerId || null,
         // Assignation basée sur l'organisation du chef de projet
-        poleId: pole?.id || null,
-        directionId: direction?.id || null,
-        serviceId: service?.id || null,
-        lifecycleStatus: formState.lifecycleStatus,
+        pole_id: pole?.id === "none" ? null : pole?.id || null,
+        direction_id: direction?.id === "none" ? null : direction?.id || null,
+        service_id: service?.id === "none" ? null : service?.id || null,
+        lifecycle_status: formState.lifecycleStatus,
         for_entity_type: formState.forEntityType,
         for_entity_id: formState.forEntityId,
-        innovation: {
-          novateur: formState.novateur,
-          usager: formState.usager,
-          ouverture: formState.ouverture,
-          agilite: formState.agilite,
-          impact: formState.impact,
-        },
-        framing: {
-          context: formState.context,
-          stakeholders: formState.stakeholders,
-          governance: formState.governance,
-          objectives: formState.objectives,
-          timeline: formState.timeline,
-          deliverables: formState.deliverables,
-        },
-        templateId: formState.templateId
       };
 
-      // Soumettre les données du projet
-      const result = await onSubmit(projectData);
-      
-      // Si un modèle a été sélectionné et qu'il s'agit d'un nouveau projet, créer les tâches
-      if (formState.templateId && result && result.id) {
-        console.log("Création des tâches à partir du modèle:", formState.templateId, "pour le projet:", result.id);
-        // Nous passons explicitement formState.startDate pour utiliser la date saisie par l'utilisateur
-        const startDateString = formState.startDate ? formState.startDate.toISOString().split('T')[0] : undefined;
-        console.log("Date de début utilisée pour les tâches:", startDateString);
-        
-        const tasksCreated = await createTasksFromTemplate(formState.templateId, result.id, startDateString);
-        
-        if (tasksCreated) {
-          toast({
-            title: "Tâches créées",
-            description: "Les tâches ont été créées à partir du modèle.",
-          });
+      // Si c'est une mise à jour de projet existant
+      if (project?.id) {
+        // Mettre à jour le projet principal
+        const { error: projectError } = await supabase
+          .from("projects")
+          .update(projectData)
+          .eq("id", project.id);
+
+        if (projectError) {
+          throw projectError;
         }
+
+        // Gestion des données de cadrage si présentes
+        if (formState.context || formState.objectives || formState.governance || 
+            formState.deliverables || formState.stakeholders || formState.timeline) {
+          
+          const { error: framingError } = await supabase
+            .from("project_framing")
+            .upsert({
+              project_id: project.id,
+              context: formState.context,
+              objectives: formState.objectives,
+              governance: formState.governance,
+              deliverables: formState.deliverables,
+              stakeholders: formState.stakeholders,
+              timeline: formState.timeline,
+            }, {
+              onConflict: 'project_id'
+            });
+
+          if (framingError) {
+            console.error("❌ ProjectSubmit - Erreur cadrage:", framingError);
+          }
+        }
+
+        // Gestion des scores d'innovation si présents
+        if (formState.novateur !== undefined || formState.usager !== undefined || 
+            formState.ouverture !== undefined || formState.agilite !== undefined || 
+            formState.impact !== undefined) {
+          
+          const { error: innovationError } = await supabase
+            .from("project_innovation_scores")
+            .upsert({
+              project_id: project.id,
+              novateur: formState.novateur || 0,
+              usager: formState.usager || 0,
+              ouverture: formState.ouverture || 0,
+              agilite: formState.agilite || 0,
+              impact: formState.impact || 0,
+            }, {
+              onConflict: 'project_id'
+            });
+
+          if (innovationError) {
+            console.error("❌ ProjectSubmit - Erreur innovation:", innovationError);
+          }
+        }
+
+        // Gestion du monitoring si présent
+        if (formState.monitoringLevel && formState.monitoringEntityId) {
+          const { error: monitoringError } = await supabase
+            .from("project_monitoring")
+            .upsert({
+              project_id: project.id,
+              monitoring_level: formState.monitoringLevel,
+              monitoring_entity_id: getMonitoringEntityId(formState.monitoringLevel),
+            }, {
+              onConflict: 'project_id'
+            });
+
+          if (monitoringError) {
+            console.error("❌ ProjectSubmit - Erreur monitoring:", monitoringError);
+          }
+        }
+
+        // Invalider les caches spécifiques au projet
+        await queryClient.invalidateQueries({ queryKey: ["project", project.id] });
+        await queryClient.invalidateQueries({ queryKey: ["projectInnovationScores", project.id] });
+        
       } else {
-        console.log("Pas de création de tâches - templateId:", formState.templateId, "project:", result?.id);
+        // Création d'un nouveau projet - utiliser la logique existante
+        const result = await onSubmit({
+          title: formState.title,
+          description: formState.description,
+          projectManager: formState.projectManager,
+          startDate: formState.startDate,
+          endDate: formState.endDate,
+          priority: formState.priority,
+          monitoringLevel: formState.monitoringLevel,
+          monitoringEntityId: getMonitoringEntityId(formState.monitoringLevel),
+          owner_id: formState.ownerId || null,
+          poleId: pole?.id || null,
+          directionId: direction?.id || null,
+          serviceId: service?.id || null,
+          lifecycleStatus: formState.lifecycleStatus,
+          for_entity_type: formState.forEntityType,
+          for_entity_id: formState.forEntityId,
+          innovation: {
+            novateur: formState.novateur,
+            usager: formState.usager,
+            ouverture: formState.ouverture,
+            agilite: formState.agilite,
+            impact: formState.impact,
+          },
+          framing: {
+            context: formState.context,
+            stakeholders: formState.stakeholders,
+            governance: formState.governance,
+            objectives: formState.objectives,
+            timeline: formState.timeline,
+            deliverables: formState.deliverables,
+          },
+          templateId: formState.templateId
+        });
+        
+        // Si un modèle a été sélectionné et qu'il s'agit d'un nouveau projet, créer les tâches
+        if (formState.templateId && result && result.id) {
+          console.log("Création des tâches à partir du modèle:", formState.templateId, "pour le projet:", result.id);
+          const startDateString = formState.startDate ? formState.startDate.toISOString().split('T')[0] : undefined;
+          console.log("Date de début utilisée pour les tâches:", startDateString);
+          
+          const tasksCreated = await createTasksFromTemplate(formState.templateId, result.id, startDateString);
+          
+          if (tasksCreated) {
+            toast({
+              title: "Tâches créées",
+              description: "Les tâches ont été créées à partir du modèle.",
+            });
+          }
+        }
       }
       
       // Invalider toutes les requêtes liées aux projets pour forcer un rafraîchissement

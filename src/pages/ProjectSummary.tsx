@@ -12,6 +12,8 @@ import { useToast } from "@/components/ui/use-toast";
 import { useProjectPermissions } from "@/hooks/useProjectPermissions";
 import { useTeamManagement } from "@/hooks/use-team-management";
 import { useProjectInnovationScores } from "@/hooks/useProjectInnovationScores";
+import { useProjectSubmit } from "@/hooks/useProjectSubmit";
+import { useProjectFormState } from "@/components/form/useProjectFormState";
 
 export const ProjectSummary = () => {
   const { projectId } = useParams<{ projectId: string }>();
@@ -29,6 +31,9 @@ export const ProjectSummary = () => {
 
   // Charger les scores d'innovation séparément
   const { data: innovationScores } = useProjectInnovationScores(projectId || "");
+
+  // État du formulaire pour l'utilisation avec useProjectSubmit
+  const formState = useProjectFormState(false, null);
 
   const { data: project, isError: projectError, refetch: refetchProject } = useQuery({
     queryKey: ["project", projectId],
@@ -121,6 +126,20 @@ export const ProjectSummary = () => {
     enabled: !!projectId,
   });
 
+  // Utiliser le hook useProjectSubmit pour gérer l'enregistrement
+  const { submitProject } = useProjectSubmit({ 
+    project, 
+    onSubmit: async (projectData: any) => {
+      // La logique d'enregistrement est maintenant gérée par useProjectSubmit
+      // Nous retournons simplement l'ID du projet pour la compatibilité
+      return { id: projectId };
+    }, 
+    onClose: () => {
+      setIsProjectFormOpen(false);
+    }, 
+    formState 
+  });
+
   const handleEditProject = () => {
     setIsProjectFormOpen(true);
   };
@@ -158,97 +177,8 @@ export const ProjectSummary = () => {
     }
 
     try {
-      // Effectuer la mise à jour en base de données
-      const { error } = await supabase
-        .from("projects")
-        .update({
-          title: projectData.title,
-          description: projectData.description,
-          project_manager: projectData.project_manager,
-          start_date: projectData.start_date,
-          end_date: projectData.end_date,
-          priority: projectData.priority,
-          lifecycle_status: projectData.lifecycle_status,
-          owner_id: projectData.owner_id,
-          pole_id: projectData.pole_id === "none" ? null : projectData.pole_id,
-          direction_id: projectData.direction_id === "none" ? null : projectData.direction_id,
-          service_id: projectData.service_id === "none" ? null : projectData.service_id,
-          for_entity_type: projectData.for_entity_type,
-          for_entity_id: projectData.for_entity_id,
-        })
-        .eq("id", projectId);
-
-      if (error) {
-        toast({
-          variant: "destructive",
-          title: "Erreur",
-          description: "Impossible de mettre à jour le projet",
-        });
-        throw error;
-      }
-
-      // Gestion des données de cadrage si présentes
-      if (projectData.context || projectData.objectives || projectData.governance || 
-          projectData.deliverables || projectData.stakeholders || projectData.timeline) {
-        
-        const { error: framingError } = await supabase
-          .from("project_framing")
-          .upsert({
-            project_id: projectId,
-            context: projectData.context,
-            objectives: projectData.objectives,
-            governance: projectData.governance,
-            deliverables: projectData.deliverables,
-            stakeholders: projectData.stakeholders,
-            timeline: projectData.timeline,
-          }, {
-            onConflict: 'project_id'
-          });
-
-        if (framingError) {
-          console.error("❌ ProjectSummary - Erreur cadrage:", framingError);
-        }
-      }
-
-      // Gestion des scores d'innovation si présents
-      if (projectData.novateur !== undefined || projectData.usager !== undefined || 
-          projectData.ouverture !== undefined || projectData.agilite !== undefined || 
-          projectData.impact !== undefined) {
-        
-        const { error: innovationError } = await supabase
-          .from("project_innovation_scores")
-          .upsert({
-            project_id: projectId,
-            novateur: projectData.novateur || 0,
-            usager: projectData.usager || 0,
-            ouverture: projectData.ouverture || 0,
-            agilite: projectData.agilite || 0,
-            impact: projectData.impact || 0,
-          }, {
-            onConflict: 'project_id'
-          });
-
-        if (innovationError) {
-          console.error("❌ ProjectSummary - Erreur innovation:", innovationError);
-        }
-      }
-
-      // Gestion du monitoring si présent
-      if (projectData.monitoringLevel && projectData.monitoringEntityId) {
-        const { error: monitoringError } = await supabase
-          .from("project_monitoring")
-          .upsert({
-            project_id: projectId,
-            monitoring_level: projectData.monitoringLevel,
-            monitoring_entity_id: projectData.monitoringEntityId,
-          }, {
-            onConflict: 'project_id'
-          });
-
-        if (monitoringError) {
-          console.error("❌ ProjectSummary - Erreur monitoring:", monitoringError);
-        }
-      }
+      // Utiliser le hook useProjectSubmit qui gère correctement tous les éléments connexes
+      await submitProject();
 
       toast({
         title: "Succès",
