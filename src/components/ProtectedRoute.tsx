@@ -1,3 +1,4 @@
+
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -11,10 +12,12 @@ export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   useEffect(() => {
     supabase.auth.onAuthStateChange((event, session) => {
       if (!session) {
+        // Sauvegarder l'URL actuelle avant la redirection vers login
+        localStorage.setItem('redirectAfterLogin', pathname);
         navigate("/login");
       }
     });
-  }, [navigate]);
+  }, [navigate, pathname]);
 
   useEffect(() => {
     const isAdminRoute = pathname.startsWith("/admin");

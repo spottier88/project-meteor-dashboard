@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -27,6 +26,17 @@ const AuthCallback = () => {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
+
+  // Fonction pour gérer la redirection après authentification
+  const handlePostAuthRedirect = () => {
+    const redirectUrl = localStorage.getItem('redirectAfterLogin');
+    if (redirectUrl && redirectUrl !== '/login') {
+      localStorage.removeItem('redirectAfterLogin');
+      navigate(redirectUrl);
+    } else {
+      navigate("/");
+    }
+  };
 
   useEffect(() => {
     const handleAuthCallback = async () => {
@@ -77,8 +87,8 @@ const AuthCallback = () => {
           description: "Vous allez être redirigé vers la page d'accueil",
         });
 
-        // Redirection vers la page principale
-        navigate("/");
+        // Redirection vers la page principale ou l'URL sauvegardée
+        handlePostAuthRedirect();
       } catch (err) {
         console.error("Erreur dans le callback d'authentification:", err);
         setError(err instanceof Error ? err.message : "Une erreur est survenue lors de l'authentification");
@@ -145,9 +155,9 @@ const AuthCallback = () => {
         description: "Votre mot de passe a été modifié avec succès",
       });
       
-      // Laisser un peu de temps pour voir le message de succès
+      // Laisser un peu de temps pour voir le message de succès puis rediriger
       setTimeout(() => {
-        navigate("/");
+        handlePostAuthRedirect();
       }, 1500);
       
     } catch (err) {

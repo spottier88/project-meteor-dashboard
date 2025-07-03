@@ -1,4 +1,3 @@
-
 import { Auth } from "@supabase/auth-ui-react";
 import { ThemeSupa } from "@supabase/auth-ui-shared";
 import { supabase } from "@/integrations/supabase/client";
@@ -45,6 +44,17 @@ const Login = () => {
     }
   };
 
+  // Fonction pour gérer la redirection après connexion
+  const handlePostLoginRedirect = () => {
+    const redirectUrl = localStorage.getItem('redirectAfterLogin');
+    if (redirectUrl && redirectUrl !== '/login') {
+      localStorage.removeItem('redirectAfterLogin');
+      navigate(redirectUrl);
+    } else {
+      navigate("/");
+    }
+  };
+
   // Vérification de session simplifiée - une seule fois au chargement
   useEffect(() => {
     const checkSession = async () => {
@@ -67,7 +77,7 @@ const Login = () => {
         // Si session active et valide
         if (sessionData?.session) {
           // console.log("Session active détectée, redirection vers la page principale");
-          navigate("/");
+          handlePostLoginRedirect();
         } else {
           // console.log("Aucune session active détectée");
           setIsCheckingSession(false);
@@ -114,8 +124,8 @@ const Login = () => {
       }
 
       if (event === 'SIGNED_IN' && session) {
-        // console.log("Événement SIGNED_IN détecté, redirection vers /");
-        navigate("/");
+        // console.log("Événement SIGNED_IN détecté, redirection avec URL sauvegardée");
+        handlePostLoginRedirect();
       }
     });
 
