@@ -1,3 +1,4 @@
+
 import { Auth } from "@supabase/auth-ui-react";
 import { ThemeSupa } from "@supabase/auth-ui-shared";
 import { supabase } from "@/integrations/supabase/client";
@@ -47,10 +48,14 @@ const Login = () => {
   // Fonction pour gérer la redirection après connexion
   const handlePostLoginRedirect = () => {
     const redirectUrl = localStorage.getItem('redirectAfterLogin');
-    if (redirectUrl && redirectUrl !== '/login') {
+    console.log('URL de redirection récupérée:', redirectUrl);
+    
+    if (redirectUrl && redirectUrl !== '/login' && redirectUrl !== '/auth/callback') {
       localStorage.removeItem('redirectAfterLogin');
+      console.log('Redirection vers:', redirectUrl);
       navigate(redirectUrl);
     } else {
+      console.log('Redirection vers la page d\'accueil');
       navigate("/");
     }
   };
@@ -61,7 +66,7 @@ const Login = () => {
       if (initialCheckDone.current) return;
       
       try {
-        // console.log("Vérification de session au démarrage");
+        console.log("Vérification de session au démarrage");
         setIsCheckingSession(true);
         
         // Récupérer la session actuelle
@@ -76,10 +81,10 @@ const Login = () => {
 
         // Si session active et valide
         if (sessionData?.session) {
-          // console.log("Session active détectée, redirection vers la page principale");
+          console.log("Session active détectée, redirection avec URL sauvegardée");
           handlePostLoginRedirect();
         } else {
-          // console.log("Aucune session active détectée");
+          console.log("Aucune session active détectée");
           setIsCheckingSession(false);
         }
       } catch (error) {
@@ -96,18 +101,18 @@ const Login = () => {
   // Gestionnaire d'état d'authentification modifié pour gérer PASSWORD_RECOVERY
   useEffect(() => {
     const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
-      // console.log("Événement d'authentification:", event);
+      console.log("Événement d'authentification:", event);
       
       // Gérer l'événement PASSWORD_RECOVERY
       if (event === 'PASSWORD_RECOVERY') {
-        // console.log("Événement PASSWORD_RECOVERY détecté, redirection vers le formulaire de réinitialisation");
+        console.log("Événement PASSWORD_RECOVERY détecté, redirection vers le formulaire de réinitialisation");
         // Rediriger vers la page de callback avec le paramètre reset=true
         window.location.href = '/auth/callback?reset=true';
         return;
       }
       
       if (event === 'SIGNED_OUT') {
-        // console.log("Événement SIGNED_OUT détecté");
+        console.log("Événement SIGNED_OUT détecté");
         // Réinitialiser l'état local sans déclencher de nouvelle déconnexion
         setEmail("");
         setPassword("");
@@ -124,8 +129,11 @@ const Login = () => {
       }
 
       if (event === 'SIGNED_IN' && session) {
-        // console.log("Événement SIGNED_IN détecté, redirection avec URL sauvegardée");
-        handlePostLoginRedirect();
+        console.log("Événement SIGNED_IN détecté, redirection avec URL sauvegardée");
+        // Ajouter un petit délai pour s'assurer que tout est bien initialisé
+        setTimeout(() => {
+          handlePostLoginRedirect();
+        }, 100);
       }
     });
 
@@ -407,3 +415,4 @@ const Login = () => {
 };
 
 export default Login;
+
