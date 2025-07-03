@@ -14,7 +14,8 @@ import {
   History, 
   CheckSquare, 
   Activity, 
-  Settings 
+  Settings,
+  Users
 } from "lucide-react";
 
 interface QuickActionsProps {
@@ -23,13 +24,16 @@ interface QuickActionsProps {
 }
 
 export const QuickActions = ({ onNewProject, onNewReview }: QuickActionsProps) => {
-  const { isAdmin, isTimeTracker, isProjectManager, hasRole } = usePermissionsContext();
+  const { isAdmin, isTimeTracker, isProjectManager, isManager, hasRole } = usePermissionsContext();
 
   // Permissions pour créer un projet
   const canCreateProject = isAdmin || isProjectManager || hasRole('chef_projet');
   
   // Permissions pour faire une revue
   const canCreateReview = isAdmin || isProjectManager || hasRole('chef_projet');
+
+  // Permissions pour accéder aux activités d'équipe
+  const canViewTeamActivities = isAdmin || isManager || hasRole('chef_projet');
 
   return (
     <Card>
@@ -82,6 +86,19 @@ export const QuickActions = ({ onNewProject, onNewReview }: QuickActionsProps) =
             >
               <Activity className="h-4 w-4 mr-2" />
               Mes activités
+            </Button>
+          </Link>
+        )}
+
+        {canViewTeamActivities && (
+          <Link to="/team-activities" className="block">
+            <Button 
+              variant="outline" 
+              className="w-full justify-start hover:bg-teal-50 hover:border-teal-200" 
+              size="sm"
+            >
+              <Users className="h-4 w-4 mr-2" />
+              Activités d'équipe
             </Button>
           </Link>
         )}
