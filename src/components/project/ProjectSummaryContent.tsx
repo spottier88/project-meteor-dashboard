@@ -16,6 +16,13 @@ interface ProjectSummaryContentProps {
   lastReview: any;
   risks: any[];
   tasks: any[];
+  innovationScores?: {
+    novateur: number;
+    usager: number;
+    ouverture: number;
+    agilite: number;
+    impact: number;
+  };
   onEditProject?: () => void;
   onCreateReview?: () => void;
   permissions: {
@@ -39,6 +46,7 @@ export const ProjectSummaryContent = ({
   lastReview,
   risks,
   tasks,
+  innovationScores,
   onEditProject,
   onCreateReview,
   permissions,
@@ -46,13 +54,13 @@ export const ProjectSummaryContent = ({
 }: ProjectSummaryContentProps) => {
   const projectId = project.id;
 
-  // Données d'innovation du projet (reconstituées depuis les données du projet)
-  const innovationData = {
-    novateur: project.innovation_score?.novateur || 0,
-    usager: project.innovation_score?.usager || 0,
-    ouverture: project.innovation_score?.ouverture || 0,
-    agilite: project.innovation_score?.agilite || 0,
-    impact: project.innovation_score?.impact || 0,
+  // Utiliser les scores d'innovation passés en prop avec des valeurs par défaut
+  const innovationData = innovationScores || {
+    novateur: 0,
+    usager: 0,
+    ouverture: 0,
+    agilite: 0,
+    impact: 0,
   };
 
   // Utilisation de l'avancement provenant de la dernière revue si disponible, sinon utiliser l'avancement du projet

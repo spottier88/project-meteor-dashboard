@@ -11,6 +11,7 @@ import { ReviewSheet } from "@/components/review/ReviewSheet";
 import { useToast } from "@/components/ui/use-toast";
 import { useProjectPermissions } from "@/hooks/useProjectPermissions";
 import { useTeamManagement } from "@/hooks/use-team-management";
+import { useProjectInnovationScores } from "@/hooks/useProjectInnovationScores";
 
 export const ProjectSummary = () => {
   const { projectId } = useParams<{ projectId: string }>();
@@ -25,6 +26,9 @@ export const ProjectSummary = () => {
 
   // Précharger les données des membres pour éviter les problèmes de cache
   const teamManagement = useTeamManagement(projectId || "", projectPermissions);
+
+  // Charger les scores d'innovation séparément
+  const { data: innovationScores } = useProjectInnovationScores(projectId || "");
 
   const { data: project, isError: projectError, refetch: refetchProject } = useQuery({
     queryKey: ["project", projectId],
@@ -287,6 +291,7 @@ export const ProjectSummary = () => {
         lastReview={lastReview}
         risks={risks || []}
         tasks={tasks || []}
+        innovationScores={innovationScores}
         onEditProject={handleEditProject}
         onCreateReview={handleCreateReview}
         permissions={projectPermissions}
