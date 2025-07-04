@@ -1,184 +1,171 @@
 
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { CalendarDays, User, Building2, AlertTriangle } from "lucide-react";
-import { format } from "date-fns";
-import { fr } from "date-fns/locale";  
-import { ProjectCardHeader } from "./project/ProjectCardHeader";
-import { StatusIcon } from "./project/StatusIcon";
-import { useProjectNavigation } from "@/hooks/useProjectNavigation";
+import { Card, CardContent } from "@/components/ui/card";
+import { TaskSummary } from "./TaskSummary";
 import { useNavigate } from "react-router-dom";
-import { ProjectStatus } from "@/types/project";
+import { ProjectCardHeader } from "./project/ProjectCardHeader";
+import { ProjectMetrics } from "./project/ProjectMetrics";
+import { AddToCartButton } from "./cart/AddToCartButton";
+import { ProjectStatus, ProgressStatus, ProjectLifecycleStatus, ForEntityType } from "@/types/project";
+import { LifecycleStatusBadge } from "./project/LifecycleStatusBadge";
+import { useProjectPermissions } from "@/hooks/useProjectPermissions";
+import { cn } from "@/lib/utils";
 
 interface ProjectCardProps {
-  project: {
-    id: string;
-    title: string;
-    description?: string;
-    status?: string;
-    weather?: string;
-    progress?: string;
-    completion?: number;
-    last_review_date?: string;
-    project_manager?: string;
-    project_manager_name?: string;
-    pole_name?: string;
-    direction_name?: string;
-    service_name?: string;
-    priority?: string;
-    lifecycle_status?: string;
-    suivi_dgs?: boolean;
-  };
-  onEdit?: (projectId: string) => void;
+  title: string;
+  description?: string;
+  status: ProjectStatus | null;
+  progress: ProgressStatus | null;
+  completion: number;
+  last_review_date: string | null;
+  review_created_at: string | null;
+  review_progress: ProgressStatus | null;
+  id: string;
+  project_manager?: string;
+  owner_id?: string;
+  pole_id?: string;
+  direction_id?: string;
+  service_id?: string;
+  pole_name?: string;
+  direction_name?: string;
+  service_name?: string;
+  lifecycle_status: ProjectLifecycleStatus;
+  for_entity_type?: ForEntityType;
+  for_entity_id?: string;
+  onReview: (id: string, title: string) => void;
+  onEdit: (id: string) => void;
+  onViewHistory: (id: string, title: string) => void;
 }
 
-export const ProjectCard = ({ project, onEdit }: ProjectCardProps) => {
+export const ProjectCard = ({
+  title,
+  description,
+  status,
+  progress,
+  completion,
+  last_review_date,
+  review_created_at,
+  review_progress,
+  id,
+  project_manager,
+  owner_id,
+  pole_id,
+  direction_id,
+  service_id,
+  pole_name,
+  direction_name,
+  service_name,
+  lifecycle_status,
+  for_entity_type,
+  for_entity_id,
+  onEdit,
+  onViewHistory,
+  onReview,
+}: ProjectCardProps) => {
   const navigate = useNavigate();
-  const { navigateToProject } = useProjectNavigation();
+  const { canEdit, isMember, isProjectManager, isAdmin, canManageTeam, isSecondaryProjectManager } = useProjectPermissions(id);
 
-  const handleCardClick = (e: React.MouseEvent) => {
-    // Éviter la navigation si on clique sur des boutons d'action
-    if ((e.target as HTMLElement).closest('button')) {
-      return;
-    }
-    navigateToProject(project.id, navigate);
+  const getProjectManagerDisplay = () => {
+    if (!project_manager) return "-";
+    return project_manager;
   };
 
-  const getOrganizationDisplay = () => {
-    const parts = [];
-    if (project.pole_name) parts.push(project.pole_name);
-    if (project.direction_name) parts.push(project.direction_name);
-    if (project.service_name) parts.push(project.service_name);
-    return parts.join(" > ");
-  };
-
-  const getPriorityColor = (priority?: string) => {
-    switch (priority?.toLowerCase()) {
-      case 'haute':
-      case 'high':
-        return 'destructive';
-      case 'moyenne':
-      case 'medium':
-        return 'secondary';
-      case 'basse':
-      case 'low':
-        return 'outline';
-      default:
-        return 'secondary';
-    }
-  };
-
-  const getLifecycleLabel = (status?: string) => {
+  const getStatusColorClass = (status: ProjectLifecycleStatus): string => {
     switch (status) {
-      case 'study': return 'Étude';
-      case 'development': return 'Développement';
-      case 'production': return 'Production';
-      case 'maintenance': return 'Maintenance';
-      case 'archived': return 'Archivé';
-      default: return status;
+      case "study":
+        return "bg-gray-500";
+      case "validated":
+        return "bg-blue-500";
+      case "in_progress":
+        return "bg-green-500";
+      case "completed":
+        return "bg-purple-500";
+      case "suspended":
+        return "bg-orange-500";
+      case "abandoned":
+        return "bg-red-500";
+      default:
+        return "bg-gray-300";
     }
   };
 
-  // Fonction pour convertir le weather en ProjectStatus
-  const getProjectStatus = (weather?: string): ProjectStatus | null => {
-    if (!weather) return null;
-    if (weather === 'sunny' || weather === 'cloudy' || weather === 'stormy') {
-      return weather as ProjectStatus;
-    }
-    return null;
-  };
+  // Utiliser la date issue de la dernière revue en priorité
+  const reviewDate = review_created_at || last_review_date;
+  // Utiliser le progressStatus issu de la dernière revue en priorité
+  const progressStatus = review_progress || progress;
 
   return (
-    <Card 
-      className="h-full cursor-pointer hover:shadow-md transition-shadow"
-      onClick={handleCardClick}
-    >
-      <CardHeader className="pb-3">
-        <div className="flex items-center justify-between space-y-0">
-          <div className="flex items-center space-x-2">
-            <StatusIcon status={getProjectStatus(project.weather)} className="h-6 w-6 shrink-0" />
-            <h2 className="text-xl font-semibold truncate max-w-[240px] md:max-w-xs">{project.title}</h2>
-          </div>
-          {onEdit && (
-            <div className="flex items-center space-x-2 shrink-0">
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onEdit(project.id);
-                }}
-                className="p-2 hover:bg-gray-100 rounded"
-              >
-                ⋮
-              </button>
+    <Card className="w-full transition-all duration-300 hover:shadow-lg animate-fade-in overflow-hidden flex flex-col relative">
+      <div className={cn("h-2 w-full", getStatusColorClass(lifecycle_status))} />
+      
+      <ProjectCardHeader
+        title={title}
+        status={status || null}
+        onEdit={onEdit}
+        onViewHistory={onViewHistory}
+        id={id}
+        canEdit={canEdit}
+        isMember={isMember}
+        canManageTeam={canManageTeam}
+        isAdmin={isAdmin}
+        additionalActions={
+          <AddToCartButton projectId={id} projectTitle={title} />
+        }
+      />
+      <CardContent>
+        <div className="grid gap-4">
+          <div className="flex items-center justify-between">
+            <LifecycleStatusBadge status={lifecycle_status} />
+            <div className="flex gap-2">
+              {isProjectManager && (
+                <span className="text-xs bg-blue-800 text-white px-2 py-1 rounded">
+                  Chef de projet
+                </span>
+              )}
+              {canEdit && !isProjectManager && (
+                <span className="text-xs bg-purple-600 text-white px-2 py-1 rounded">
+                  Manager
+                </span>
+              )}
+              {isSecondaryProjectManager && (
+                <span className="text-xs bg-purple-200 text-purple-800 px-2 py-1 rounded">
+                  Chef de projet secondaire
+                </span>
+              )}
+              {isMember && !isProjectManager && !isSecondaryProjectManager && !canEdit && (
+                <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
+                  Membre du projet
+                </span>
+              )}
             </div>
+          </div>
+          {description && (
+            <p className="text-sm text-muted-foreground">{description}</p>
           )}
+          <div className="text-sm text-muted-foreground">
+            Chef de projet : {getProjectManagerDisplay()}
+          </div>
+          {(pole_name || direction_name || service_name) && (
+            <p className="text-sm text-muted-foreground">
+              {service_name ? `Service: ${service_name}` : 
+               direction_name ? `Direction: ${direction_name}` : 
+               pole_name ? `Pôle: ${pole_name}` : ""}
+            </p>
+          )}
+          <div 
+            className="cursor-pointer"
+            onClick={() => navigate(`/projects/${id}`)}
+          >
+            <ProjectMetrics
+              progress={progressStatus || null}
+              completion={completion || 0}
+              lastReviewDate={reviewDate || null}
+            />
+          </div>
+          <TaskSummary projectId={id} />
         </div>
-      </CardHeader>
-      <CardContent className="space-y-3">
-        {project.description && (
-          <p className="text-sm text-muted-foreground line-clamp-2">
-            {project.description}
-          </p>
-        )}
-
-        <div className="flex items-center gap-2 flex-wrap">
-          {project.weather && (
-            <div className="flex items-center gap-1">
-              <StatusIcon status={getProjectStatus(project.weather)} />
-              <span className="text-xs text-muted-foreground">
-                {project.weather}
-              </span>
-            </div>
-          )}
-          
-          {project.completion !== undefined && (
-            <Badge variant="outline" className="text-xs">
-              {project.completion}% terminé
-            </Badge>
-          )}
-          
-          {project.priority && (
-            <Badge variant={getPriorityColor(project.priority)} className="text-xs">
-              {project.priority}
-            </Badge>
-          )}
-          
-          {project.lifecycle_status && (
-            <Badge variant="secondary" className="text-xs">
-              {getLifecycleLabel(project.lifecycle_status)}
-            </Badge>
-          )}
-
-          {project.suivi_dgs && (
-            <Badge variant="default" className="text-xs bg-blue-500">
-              Suivi DGS
-            </Badge>
-          )}
-        </div>
-
-        {project.project_manager_name && (
-          <div className="flex items-center gap-2 text-xs text-muted-foreground">
-            <User className="h-3 w-3" />
-            <span>{project.project_manager_name}</span>
-          </div>
-        )}
-
-        {getOrganizationDisplay() && (
-          <div className="flex items-center gap-2 text-xs text-muted-foreground">
-            <Building2 className="h-3 w-3" />
-            <span>{getOrganizationDisplay()}</span>
-          </div>
-        )}
-
-        {project.last_review_date && (
-          <div className="flex items-center gap-2 text-xs text-muted-foreground">
-            <CalendarDays className="h-3 w-3" />
-            <span>
-              Dernière revue : {format(new Date(project.last_review_date), "dd/MM/yyyy", { locale: fr })}
-            </span>
-          </div>
-        )}
       </CardContent>
     </Card>
   );
 };
+
+export default ProjectCard;

@@ -1,156 +1,174 @@
-
 import { TableCell, TableRow } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
-import { format } from "date-fns";
-import { fr } from "date-fns/locale";
-import { StatusIcon } from "./StatusIcon";
 import { ProjectActions } from "./ProjectActions";
 import { OrganizationCell } from "./OrganizationCell";
-import { useProjectNavigation } from "@/hooks/useProjectNavigation";
+import { StatusIcon } from "./StatusIcon";
 import { useNavigate } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { useUser } from "@supabase/auth-helpers-react";
+import { LifecycleStatusBadge } from "./LifecycleStatusBadge";
+import { ProjectLifecycleStatus, ProjectStatus } from "@/types/project";
+import { AddToCartButton } from "../cart/AddToCartButton";
+import { MonitoringBadge } from "../monitoring/MonitoringBadge";
 
-interface ProjectTableRowProps {
-  project: any;
-  onEdit?: (projectId: string) => void;
-  onDelete?: (projectId: string) => void;
-  onInvite?: (projectId: string) => void;
-  permissions?: {
-    canEdit?: boolean;
-    canDelete?: boolean;
-    canInvite?: boolean;
-  };
+interface Project {
+  id: string;
+  title: string;
+  status: string | null;
+  progress: string | null;
+  completion: number;
+  lastReviewDate: string | null;
+  project_manager?: string;
+  owner_id?: string;
+  pole_id?: string;
+  direction_id?: string;
+  service_id?: string;
+  suivi_dgs?: boolean;
+  lifecycle_status: ProjectLifecycleStatus;
+  weather?: ProjectStatus | null;
 }
 
-export const ProjectTableRow = ({ 
-  project, 
-  onEdit, 
-  onDelete, 
-  onInvite,
-  permissions = {}
+interface ProjectTableRowProps {
+  project: Project;
+  onProjectEdit: (id: string) => void;
+  onViewHistory: (id: string, title: string) => void;
+  onProjectDeleted: () => void;
+}
+
+export const ProjectTableRow = ({
+  project,
+  onProjectEdit,
+  onViewHistory,
+  onProjectDeleted,
 }: ProjectTableRowProps) => {
   const navigate = useNavigate();
-  const { navigateToProject } = useProjectNavigation();
+  const user = useUser();
 
-  const handleRowClick = (e: React.MouseEvent) => {
-    // Éviter la navigation si on clique sur des boutons d'action
-    if ((e.target as HTMLElement).closest('button') || (e.target as HTMLElement).closest('[role="button"]')) {
-      return;
-    }
-    navigateToProject(project.id, navigate);
-  };
+  const { data: userProfile } = useQuery({
+    queryKey: ["projectManagerProfile", project.project_manager],
+    queryFn: async () => {
+      if (!project.project_manager) return null;
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("email", project.project_manager)
+        .maybeSingle();
 
-  const getPriorityColor = (priority?: string) => {
-    switch (priority?.toLowerCase()) {
-      case 'haute':
-      case 'high':
-        return 'destructive';
-      case 'moyenne':
-      case 'medium':
-        return 'secondary';
-      case 'basse':
-      case 'low':
-        return 'outline';
-      default:
-        return 'secondary';
-    }
-  };
+      if (error) {
+        console.error("Error fetching project manager profile:", error);
+        return null;
+      }
+      return data;
+    },
+    enabled: !!project.project_manager,
+  });
 
-  const getLifecycleLabel = (status?: string) => {
-    switch (status) {
-      case 'study': return 'Étude';
-      case 'development': return 'Développement';
-      case 'production': return 'Production';
-      case 'maintenance': return 'Maintenance';
-      case 'archived': return 'Archivé';
-      default: return status;
+  const { data: userRoles } = useQuery({
+    queryKey: ["userRoles", user?.id],
+    queryFn: async () => {
+      if (!user?.id) return null;
+      const { data, error } = await supabase
+        .from("user_roles")
+        .select("*")
+        .eq("user_id", user.id);
+
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!user?.id,
+  });
+
+  const { data: isMember } = useQuery({
+    queryKey: ["projectMember", project.id],
+    queryFn: async () => {
+      if (!user?.id) return false;
+      const { data, error } = await supabase
+        .from("project_members")
+        .select("*")
+        .eq("project_id", project.id)
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      if (error) {
+        console.error("Error checking project membership:", error);
+        return false;
+      }
+
+      return !!data;
+    },
+    enabled: !!user?.id,
+  });
+
+  const { data: latestReview } = useQuery({
+    queryKey: ["projects", project.id, "latest-review"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("latest_reviews")
+        .select("*")
+        .eq("project_id", project.id)
+        .maybeSingle();
+        
+      if (error) {
+        console.error("Error fetching latest review:", error);
+        return null;
+      }
+      
+      return data;
+    },
+    enabled: !!project.id,
+  });
+
+  const getProjectManagerDisplay = () => {
+    if (!project.project_manager) return "-";
+    if (userProfile?.first_name && userProfile?.last_name) {
+      return `${userProfile.first_name} ${userProfile.last_name}`;
     }
+    return project.project_manager;
   };
 
   return (
-    <TableRow 
-      className="cursor-pointer hover:bg-muted/50" 
-      onClick={handleRowClick}
+    <TableRow
+      className="cursor-pointer hover:bg-muted/50"
+      onClick={() => navigate(`/projects/${project.id}`)}
     >
-      <TableCell className="font-medium">
-        <div>
-          <div className="font-semibold">{project.title}</div>
-          {project.description && (
-            <div className="text-sm text-muted-foreground line-clamp-1">
-              {project.description}
-            </div>
-          )}
-        </div>
-      </TableCell>
-      
+      <TableCell className="font-medium">{project.title}</TableCell>
+      <TableCell>{getProjectManagerDisplay()}</TableCell>
       <TableCell>
-        {project.weather && (
-          <div className="flex items-center gap-2">
-            <StatusIcon status={project.weather} />
-            <span className="text-sm">{project.weather}</span>
-          </div>
-        )}
-      </TableCell>
-      
-      <TableCell>
-        {project.completion !== undefined ? (
-          <Badge variant="outline">
-            {project.completion}%
-          </Badge>
-        ) : (
-          <span className="text-muted-foreground">-</span>
-        )}
-      </TableCell>
-      
-      <TableCell>
-        <OrganizationCell 
+        <OrganizationCell
           poleId={project.pole_id}
           directionId={project.direction_id}
           serviceId={project.service_id}
         />
       </TableCell>
-      
       <TableCell>
-        <div className="space-y-1">
-          {project.priority && (
-            <Badge variant={getPriorityColor(project.priority)} className="text-xs">
-              {project.priority}
-            </Badge>
-          )}
-          {project.lifecycle_status && (
-            <Badge variant="secondary" className="text-xs">
-              {getLifecycleLabel(project.lifecycle_status)}
-            </Badge>
-          )}
-          {project.suivi_dgs && (
-            <Badge variant="default" className="text-xs bg-blue-500">
-              Suivi DGS
-            </Badge>
-          )}
+        <StatusIcon status={latestReview?.weather || null} />
+      </TableCell>
+      <TableCell>
+        <LifecycleStatusBadge status={project.lifecycle_status} />
+      </TableCell>
+      <TableCell>{latestReview?.completion || 0}%</TableCell>
+      <TableCell>
+        {latestReview?.created_at
+          ? new Date(latestReview.created_at).toLocaleDateString()
+          : "-"}
+      </TableCell>
+      <TableCell>
+        <MonitoringBadge projectId={project.id} />
+      </TableCell>
+      <TableCell>
+        <div className="flex justify-end items-center gap-1" onClick={(e) => e.stopPropagation()}>
+          <AddToCartButton projectId={project.id} projectTitle={project.title} />
+          <ProjectActions
+            projectId={project.id}
+            projectTitle={project.title}
+            onEdit={onProjectEdit}
+            onViewHistory={onViewHistory}
+            onProjectDeleted={onProjectDeleted}
+            owner_id={project.owner_id}
+            project_manager={project.project_manager}
+            isMember={isMember}
+          />
         </div>
-      </TableCell>
-      
-      <TableCell>
-        {project.project_manager_name || project.project_manager || (
-          <span className="text-muted-foreground">Non assigné</span>
-        )}
-      </TableCell>
-      
-      <TableCell>
-        {project.last_review_date ? (
-          format(new Date(project.last_review_date), "dd/MM/yyyy", { locale: fr })
-        ) : (
-          <span className="text-muted-foreground">Jamais</span>
-        )}
-      </TableCell>
-      
-      <TableCell>
-        <ProjectActions
-          projectId={project.id}
-          projectTitle={project.title}
-          onEdit={onEdit}
-          onViewHistory={() => {}}
-          permissions={permissions}
-        />
       </TableCell>
     </TableRow>
   );
