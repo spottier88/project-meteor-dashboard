@@ -1,7 +1,6 @@
 
 import { Card, CardContent } from "@/components/ui/card";
 import { TaskSummary } from "./TaskSummary";
-import { useNavigate } from "react-router-dom";
 import { ProjectCardHeader } from "./project/ProjectCardHeader";
 import { ProjectMetrics } from "./project/ProjectMetrics";
 import { AddToCartButton } from "./cart/AddToCartButton";
@@ -9,6 +8,7 @@ import { ProjectStatus, ProgressStatus, ProjectLifecycleStatus, ForEntityType } 
 import { LifecycleStatusBadge } from "./project/LifecycleStatusBadge";
 import { useProjectPermissions } from "@/hooks/useProjectPermissions";
 import { cn } from "@/lib/utils";
+import { useProjectNavigation } from "@/hooks/useProjectNavigation";
 
 interface ProjectCardProps {
   title: string;
@@ -61,8 +61,8 @@ export const ProjectCard = ({
   onViewHistory,
   onReview,
 }: ProjectCardProps) => {
-  const navigate = useNavigate();
   const { canEdit, isMember, isProjectManager, isAdmin, canManageTeam, isSecondaryProjectManager } = useProjectPermissions(id);
+  const { navigateToProject } = useProjectNavigation();
 
   const getProjectManagerDisplay = () => {
     if (!project_manager) return "-";
@@ -93,8 +93,20 @@ export const ProjectCard = ({
   // Utiliser le progressStatus issu de la dernière revue en priorité
   const progressStatus = review_progress || progress;
 
+  const handleCardClick = (event: React.MouseEvent) => {
+    // Empêcher la navigation si on clique sur les boutons d'action
+    if ((event.target as HTMLElement).closest('[data-no-navigate]')) {
+      return;
+    }
+    
+    navigateToProject(id, event);
+  };
+
   return (
-    <Card className="w-full transition-all duration-300 hover:shadow-lg animate-fade-in overflow-hidden flex flex-col relative">
+    <Card 
+      className="w-full transition-all duration-300 hover:shadow-lg animate-fade-in overflow-hidden flex flex-col relative cursor-pointer"
+      onClick={handleCardClick}
+    >
       <div className={cn("h-2 w-full", getStatusColorClass(lifecycle_status))} />
       
       <ProjectCardHeader
@@ -108,7 +120,9 @@ export const ProjectCard = ({
         canManageTeam={canManageTeam}
         isAdmin={isAdmin}
         additionalActions={
-          <AddToCartButton projectId={id} projectTitle={title} />
+          <div data-no-navigate>
+            <AddToCartButton projectId={id} projectTitle={title} />
+          </div>
         }
       />
       <CardContent>
@@ -151,16 +165,11 @@ export const ProjectCard = ({
                pole_name ? `Pôle: ${pole_name}` : ""}
             </p>
           )}
-          <div 
-            className="cursor-pointer"
-            onClick={() => navigate(`/projects/${id}`)}
-          >
-            <ProjectMetrics
-              progress={progressStatus || null}
-              completion={completion || 0}
-              lastReviewDate={reviewDate || null}
-            />
-          </div>
+          <ProjectMetrics
+            progress={progressStatus || null}
+            completion={completion || 0}
+            lastReviewDate={reviewDate || null}
+          />
           <TaskSummary projectId={id} />
         </div>
       </CardContent>

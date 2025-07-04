@@ -2,7 +2,6 @@ import { TableCell, TableRow } from "@/components/ui/table";
 import { ProjectActions } from "./ProjectActions";
 import { OrganizationCell } from "./OrganizationCell";
 import { StatusIcon } from "./StatusIcon";
-import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useUser } from "@supabase/auth-helpers-react";
@@ -10,6 +9,7 @@ import { LifecycleStatusBadge } from "./LifecycleStatusBadge";
 import { ProjectLifecycleStatus, ProjectStatus } from "@/types/project";
 import { AddToCartButton } from "../cart/AddToCartButton";
 import { MonitoringBadge } from "../monitoring/MonitoringBadge";
+import { useProjectNavigation } from "@/hooks/useProjectNavigation";
 
 interface Project {
   id: string;
@@ -41,8 +41,8 @@ export const ProjectTableRow = ({
   onViewHistory,
   onProjectDeleted,
 }: ProjectTableRowProps) => {
-  const navigate = useNavigate();
   const user = useUser();
+  const { navigateToProject } = useProjectNavigation();
 
   const { data: userProfile } = useQuery({
     queryKey: ["projectManagerProfile", project.project_manager],
@@ -126,10 +126,19 @@ export const ProjectTableRow = ({
     return project.project_manager;
   };
 
+  const handleRowClick = (event: React.MouseEvent) => {
+    // Empêcher la navigation si on clique sur les boutons d'action
+    if ((event.target as HTMLElement).closest('[data-no-navigate]')) {
+      return;
+    }
+    
+    navigateToProject(project.id, event);
+  };
+
   return (
     <TableRow
       className="cursor-pointer hover:bg-muted/50"
-      onClick={() => navigate(`/projects/${project.id}`)}
+      onClick={handleRowClick}
     >
       <TableCell className="font-medium">{project.title}</TableCell>
       <TableCell>{getProjectManagerDisplay()}</TableCell>
@@ -156,7 +165,7 @@ export const ProjectTableRow = ({
         <MonitoringBadge projectId={project.id} />
       </TableCell>
       <TableCell>
-        <div className="flex justify-end items-center gap-1" onClick={(e) => e.stopPropagation()}>
+        <div className="flex justify-end items-center gap-1" data-no-navigate>
           <AddToCartButton projectId={project.id} projectTitle={project.title} />
           <ProjectActions
             projectId={project.id}
