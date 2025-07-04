@@ -8,6 +8,7 @@ import { ProjectCardHeader } from "./project/ProjectCardHeader";
 import { StatusIcon } from "./project/StatusIcon";
 import { useProjectNavigation } from "@/hooks/useProjectNavigation";
 import { useNavigate } from "react-router-dom";
+import { ProjectStatus } from "@/types/project";
 
 interface ProjectCardProps {
   project: {
@@ -78,16 +79,40 @@ export const ProjectCard = ({ project, onEdit }: ProjectCardProps) => {
     }
   };
 
+  // Fonction pour convertir le weather en ProjectStatus
+  const getProjectStatus = (weather?: string): ProjectStatus | null => {
+    if (!weather) return null;
+    if (weather === 'sunny' || weather === 'cloudy' || weather === 'stormy') {
+      return weather as ProjectStatus;
+    }
+    return null;
+  };
+
   return (
     <Card 
       className="h-full cursor-pointer hover:shadow-md transition-shadow"
       onClick={handleCardClick}
     >
       <CardHeader className="pb-3">
-        <ProjectCardHeader 
-          project={project} 
-          onEdit={onEdit}
-        />
+        <div className="flex items-center justify-between space-y-0">
+          <div className="flex items-center space-x-2">
+            <StatusIcon status={getProjectStatus(project.weather)} className="h-6 w-6 shrink-0" />
+            <h2 className="text-xl font-semibold truncate max-w-[240px] md:max-w-xs">{project.title}</h2>
+          </div>
+          {onEdit && (
+            <div className="flex items-center space-x-2 shrink-0">
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onEdit(project.id);
+                }}
+                className="p-2 hover:bg-gray-100 rounded"
+              >
+                ⋮
+              </button>
+            </div>
+          )}
+        </div>
       </CardHeader>
       <CardContent className="space-y-3">
         {project.description && (
@@ -99,7 +124,7 @@ export const ProjectCard = ({ project, onEdit }: ProjectCardProps) => {
         <div className="flex items-center gap-2 flex-wrap">
           {project.weather && (
             <div className="flex items-center gap-1">
-              <StatusIcon status={project.weather} />
+              <StatusIcon status={getProjectStatus(project.weather)} />
               <span className="text-xs text-muted-foreground">
                 {project.weather}
               </span>

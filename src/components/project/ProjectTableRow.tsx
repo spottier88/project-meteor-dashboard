@@ -102,7 +102,11 @@ export const ProjectTableRow = ({
       </TableCell>
       
       <TableCell>
-        <OrganizationCell project={project} />
+        <OrganizationCell 
+          poleId={project.pole_id}
+          directionId={project.direction_id}
+          serviceId={project.service_id}
+        />
       </TableCell>
       
       <TableCell>
@@ -142,9 +146,9 @@ export const ProjectTableRow = ({
       <TableCell>
         <ProjectActions
           projectId={project.id}
+          projectTitle={project.title}
           onEdit={onEdit}
-          onDelete={onDelete}
-          onInvite={onInvite}
+          onViewHistory={() => {}}
           permissions={permissions}
         />
       </TableCell>
