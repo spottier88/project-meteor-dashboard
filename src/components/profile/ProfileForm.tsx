@@ -9,7 +9,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { UserProfile } from "@/types/user";
 import { Badge } from "@/components/ui/badge";
@@ -19,6 +19,7 @@ import { EntityType } from "@/types/user";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { UserHierarchyAssignmentForm } from "./UserHierarchyAssignmentForm";
 import { ManagerEntitiesList } from "./ManagerEntitiesList";
+import { UserPreferencesForm } from "./UserPreferencesForm";
 
 interface ProfileFormProps {
   isOpen: boolean;
@@ -184,9 +185,10 @@ export const ProfileForm = ({ isOpen, onClose, profile }: ProfileFormProps) => {
         </DialogHeader>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className={`grid ${isManager ? 'grid-cols-3' : 'grid-cols-2'} w-full`}>
+          <TabsList className={`grid ${isManager ? 'grid-cols-4' : 'grid-cols-3'} w-full`}>
             <TabsTrigger value="profile">Informations</TabsTrigger>
             <TabsTrigger value="assignment">Affectation</TabsTrigger>
+            <TabsTrigger value="preferences">Préférences</TabsTrigger>
             {isManager && (
               <TabsTrigger value="management">Gestion</TabsTrigger>
             )}
@@ -268,6 +270,17 @@ export const ProfileForm = ({ isOpen, onClose, profile }: ProfileFormProps) => {
                   onUpdate={handleAssignmentUpdate}
                 />
               )}
+            </div>
+          </TabsContent>
+
+          <TabsContent value="preferences" className="mt-4">
+            <div className="mb-4">
+              <h3 className="text-sm font-medium mb-2">Mes préférences</h3>
+              <p className="text-sm text-muted-foreground mb-4">
+                Configurez votre expérience d'utilisation de l'application selon vos préférences.
+              </p>
+              
+              <UserPreferencesForm />
             </div>
           </TabsContent>
           
