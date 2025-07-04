@@ -179,126 +179,128 @@ export const ProfileForm = ({ isOpen, onClose, profile }: ProfileFormProps) => {
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Mon profil</DialogTitle>
         </DialogHeader>
 
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className={`grid ${isManager ? 'grid-cols-4' : 'grid-cols-3'} w-full`}>
-            <TabsTrigger value="profile">Informations</TabsTrigger>
-            <TabsTrigger value="assignment">Affectation</TabsTrigger>
-            <TabsTrigger value="preferences">Préférences</TabsTrigger>
-            {isManager && (
-              <TabsTrigger value="management">Gestion</TabsTrigger>
-            )}
-          </TabsList>
-          
-          <TabsContent value="profile" className="space-y-4 mt-4">
-            <div className="grid gap-2">
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                value={profile?.email || ""}
-                readOnly
-                className="bg-gray-100"
-              />
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="firstName">Prénom</Label>
-              <Input
-                id="firstName"
-                value={firstName}
-                onChange={(e) => setFirstName(e.target.value)}
-              />
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="lastName">Nom</Label>
-              <Input
-                id="lastName"
-                value={lastName}
-                onChange={(e) => setLastName(e.target.value)}
-              />
-            </div>
-
-            <Separator className="my-4" />
+        <div className="w-full">
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+            <TabsList className={`grid w-full ${isManager ? 'grid-cols-4' : 'grid-cols-3'}`}>
+              <TabsTrigger value="profile" className="text-sm">Informations</TabsTrigger>
+              <TabsTrigger value="assignment" className="text-sm">Affectation</TabsTrigger>
+              <TabsTrigger value="preferences" className="text-sm">Préférences</TabsTrigger>
+              {isManager && (
+                <TabsTrigger value="management" className="text-sm">Gestion</TabsTrigger>
+              )}
+            </TabsList>
             
-            <div className="grid gap-2">
-              <Label>Rôles</Label>
-              <div className="flex flex-wrap gap-2">
-                {userRoles?.map((role) => (
-                  <Badge key={role.id} variant="secondary">
-                    {getRoleLabel(role.role)}
-                  </Badge>
-                ))}
-              </div>
-            </div>
-          </TabsContent>
-          
-          <TabsContent value="assignment" className="mt-4">
-            <div className="mb-4">
-              <h3 className="text-sm font-medium mb-2">Gérer mon affectation hiérarchique</h3>
-              <p className="text-sm text-muted-foreground mb-4">
-                Votre affectation hiérarchique détermine où vos projets apparaîtront dans l'organisation 
-                et peut influer sur certaines fonctionnalités de l'application.
-              </p>
-              
-              {hierarchyAssignments && hierarchyAssignments.length > 0 && (
-                <div className="mb-4 p-3 bg-secondary/20 rounded-md">
-                  <h4 className="text-sm font-medium mb-2">Affectation actuelle</h4>
-                  <div className="space-y-2">
-                    {hierarchyAssignments.map((assignment) => (
-                      <div key={assignment.id} className="flex items-center gap-2">
-                        <Badge variant="outline">
-                          {assignment.entity_type === 'pole' ? 'Pôle' : 
-                           assignment.entity_type === 'direction' ? 'Direction' : 
-                           assignment.entity_type === 'service' ? 'Service' : 
-                           assignment.entity_type}
-                        </Badge>
-                        <span className="text-sm text-muted-foreground">
-                          {assignment.entity_name}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-              
-              {profile && (
-                <UserHierarchyAssignmentForm 
-                  userId={profile.id} 
-                  onUpdate={handleAssignmentUpdate}
+            <TabsContent value="profile" className="space-y-4 mt-6">
+              <div className="grid gap-2">
+                <Label htmlFor="email">Email</Label>
+                <Input
+                  id="email"
+                  value={profile?.email || ""}
+                  readOnly
+                  className="bg-gray-100"
                 />
-              )}
-            </div>
-          </TabsContent>
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="firstName">Prénom</Label>
+                <Input
+                  id="firstName"
+                  value={firstName}
+                  onChange={(e) => setFirstName(e.target.value)}
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="lastName">Nom</Label>
+                <Input
+                  id="lastName"
+                  value={lastName}
+                  onChange={(e) => setLastName(e.target.value)}
+                />
+              </div>
 
-          <TabsContent value="preferences" className="mt-4">
-            <div className="mb-4">
-              <h3 className="text-sm font-medium mb-2">Mes préférences</h3>
-              <p className="text-sm text-muted-foreground mb-4">
-                Configurez votre expérience d'utilisation de l'application selon vos préférences.
-              </p>
+              <Separator className="my-4" />
               
-              <UserPreferencesForm />
-            </div>
-          </TabsContent>
-          
-          {isManager && (
-            <TabsContent value="management" className="mt-4">
+              <div className="grid gap-2">
+                <Label>Rôles</Label>
+                <div className="flex flex-wrap gap-2">
+                  {userRoles?.map((role) => (
+                    <Badge key={role.id} variant="secondary">
+                      {getRoleLabel(role.role)}
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+            </TabsContent>
+            
+            <TabsContent value="assignment" className="mt-6">
               <div className="mb-4">
-                <h3 className="text-sm font-medium mb-2">Mes attributions de gestion</h3>
+                <h3 className="text-sm font-medium mb-2">Gérer mon affectation hiérarchique</h3>
                 <p className="text-sm text-muted-foreground mb-4">
-                  Vous avez le rôle de manager et êtes responsable des entités suivantes dans l'organisation.
+                  Votre affectation hiérarchique détermine où vos projets apparaîtront dans l'organisation 
+                  et peut influer sur certaines fonctionnalités de l'application.
                 </p>
                 
+                {hierarchyAssignments && hierarchyAssignments.length > 0 && (
+                  <div className="mb-4 p-3 bg-secondary/20 rounded-md">
+                    <h4 className="text-sm font-medium mb-2">Affectation actuelle</h4>
+                    <div className="space-y-2">
+                      {hierarchyAssignments.map((assignment) => (
+                        <div key={assignment.id} className="flex items-center gap-2">
+                          <Badge variant="outline">
+                            {assignment.entity_type === 'pole' ? 'Pôle' : 
+                             assignment.entity_type === 'direction' ? 'Direction' : 
+                             assignment.entity_type === 'service' ? 'Service' : 
+                             assignment.entity_type}
+                          </Badge>
+                          <span className="text-sm text-muted-foreground">
+                            {assignment.entity_name}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                
                 {profile && (
-                  <ManagerEntitiesList userId={profile.id} />
+                  <UserHierarchyAssignmentForm 
+                    userId={profile.id} 
+                    onUpdate={handleAssignmentUpdate}
+                  />
                 )}
               </div>
             </TabsContent>
-          )}
-        </Tabs>
+
+            <TabsContent value="preferences" className="mt-6">
+              <div className="mb-4">
+                <h3 className="text-sm font-medium mb-2">Mes préférences</h3>
+                <p className="text-sm text-muted-foreground mb-4">
+                  Configurez votre expérience d'utilisation de l'application selon vos préférences.
+                </p>
+                
+                <UserPreferencesForm />
+              </div>
+            </TabsContent>
+            
+            {isManager && (
+              <TabsContent value="management" className="mt-6">
+                <div className="mb-4">
+                  <h3 className="text-sm font-medium mb-2">Mes attributions de gestion</h3>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    Vous avez le rôle de manager et êtes responsable des entités suivantes dans l'organisation.
+                  </p>
+                  
+                  {profile && (
+                    <ManagerEntitiesList userId={profile.id} />
+                  )}
+                </div>
+              </TabsContent>
+            )}
+          </Tabs>
+        </div>
 
         <DialogFooter>
           <Button variant="outline" onClick={onClose}>

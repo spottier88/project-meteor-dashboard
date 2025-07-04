@@ -67,18 +67,21 @@ export const useUserPreferences = () => {
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
 
-  // Mutation pour mettre à jour les préférences
+  // Mutation pour mettre à jour les préférences avec upsert
   const updatePreferencesMutation = useMutation({
     mutationFn: async (updates: Partial<UserPreferencesInput>) => {
       if (!user?.id) {
         throw new Error("Utilisateur non authentifié");
       }
 
+      // Utiliser upsert pour éviter les doublons
       const { data, error } = await supabase
         .from("user_preferences")
         .upsert({
           user_id: user.id,
           ...updates
+        }, {
+          onConflict: 'user_id'
         })
         .select()
         .single();
