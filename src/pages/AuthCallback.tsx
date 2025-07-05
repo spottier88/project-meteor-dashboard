@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
-import { checkNewTabNavigation, cleanupNewTabNavigation } from "@/utils/newTabNavigation";
+import { performPostAuthRedirect, cleanupOldNavigationData } from "@/utils/redirectionUtils";
 
 // Fonction pour nettoyer les cookies Supabase
 const clearSupabaseCookies = () => {
@@ -28,34 +28,13 @@ const AuthCallback = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  // Fonction pour gérer la redirection après authentification
-  const handlePostAuthRedirect = () => {
-    // Vérifier d'abord si c'est une navigation en nouvel onglet
-    const newTabData = checkNewTabNavigation();
-    
-    if (newTabData) {
-      console.log('Redirection vers le projet depuis un nouvel onglet:', newTabData.projectId);
-      cleanupNewTabNavigation();
-      navigate(newTabData.targetUrl);
-      return;
-    }
-    
-    // Sinon, utiliser la logique normale de redirection
-    const redirectUrl = localStorage.getItem('redirectAfterLogin');
-    if (redirectUrl && redirectUrl !== '/login') {
-      console.log('URL de redirection récupérée:', redirectUrl);
-      localStorage.removeItem('redirectAfterLogin');
-      navigate(redirectUrl);
-    } else {
-      console.log('Redirection vers la page d\'accueil');
-      navigate("/");
-    }
-  };
-
   useEffect(() => {
     const handleAuthCallback = async () => {
       try {
         console.log("Traitement du callback d'authentification");
+        
+        // Nettoyer les anciennes données de navigation
+        cleanupOldNavigationData();
         
         // Récupère les paramètres de l'URL
         const hashParams = new URLSearchParams(window.location.hash.substring(1));
@@ -102,7 +81,7 @@ const AuthCallback = () => {
         });
 
         // Redirection vers la page principale ou l'URL sauvegardée
-        handlePostAuthRedirect();
+        performPostAuthRedirect(navigate);
       } catch (err) {
         console.error("Erreur dans le callback d'authentification:", err);
         setError(err instanceof Error ? err.message : "Une erreur est survenue lors de l'authentification");
@@ -171,7 +150,7 @@ const AuthCallback = () => {
       
       // Laisser un peu de temps pour voir le message de succès puis rediriger
       setTimeout(() => {
-        handlePostAuthRedirect();
+        performPostAuthRedirect(navigate);
       }, 1500);
       
     } catch (err) {

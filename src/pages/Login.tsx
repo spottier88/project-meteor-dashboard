@@ -1,10 +1,10 @@
-
 import { Auth } from "@supabase/auth-ui-react";
 import { ThemeSupa } from "@supabase/auth-ui-shared";
 import { supabase } from "@/integrations/supabase/client";
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/components/ui/use-toast";
+import { setRedirectUrl, performPostAuthRedirect, cleanupOldNavigationData } from "@/utils/redirectionUtils";
 
 // Fonction pour nettoyer explicitement les cookies Supabase
 const clearSupabaseCookies = () => {
@@ -45,21 +45,6 @@ const Login = () => {
     }
   };
 
-  // Fonction pour gérer la redirection après connexion
-  const handlePostLoginRedirect = () => {
-    const redirectUrl = localStorage.getItem('redirectAfterLogin');
-    console.log('URL de redirection récupérée:', redirectUrl);
-    
-    if (redirectUrl && redirectUrl !== '/login' && redirectUrl !== '/auth/callback') {
-      localStorage.removeItem('redirectAfterLogin');
-      console.log('Redirection vers:', redirectUrl);
-      navigate(redirectUrl);
-    } else {
-      console.log('Redirection vers la page d\'accueil');
-      navigate("/");
-    }
-  };
-
   // Vérification de session simplifiée - une seule fois au chargement
   useEffect(() => {
     const checkSession = async () => {
@@ -68,6 +53,9 @@ const Login = () => {
       try {
         console.log("Vérification de session au démarrage");
         setIsCheckingSession(true);
+        
+        // Nettoyer les anciennes données de navigation
+        cleanupOldNavigationData();
         
         // Récupérer la session actuelle
         const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
@@ -82,7 +70,7 @@ const Login = () => {
         // Si session active et valide
         if (sessionData?.session) {
           console.log("Session active détectée, redirection avec URL sauvegardée");
-          handlePostLoginRedirect();
+          performPostAuthRedirect(navigate);
         } else {
           console.log("Aucune session active détectée");
           setIsCheckingSession(false);
@@ -132,7 +120,7 @@ const Login = () => {
         console.log("Événement SIGNED_IN détecté, redirection avec URL sauvegardée");
         // Ajouter un petit délai pour s'assurer que tout est bien initialisé
         setTimeout(() => {
-          handlePostLoginRedirect();
+          performPostAuthRedirect(navigate);
         }, 100);
       }
     });
@@ -147,6 +135,12 @@ const Login = () => {
     e.preventDefault();
     setLoading(true);
     setMessage("");
+
+    // Sauvegarder l'URL actuelle si ce n'est pas /login
+    const currentPath = window.location.pathname;
+    if (currentPath !== '/login' && currentPath !== '/auth/callback') {
+      setRedirectUrl(currentPath);
+    }
 
     const { error } = await supabase.auth.signInWithOtp({
       email,
@@ -170,6 +164,12 @@ const Login = () => {
     e.preventDefault();
     setLoading(true);
     setMessage("");
+
+    // Sauvegarder l'URL actuelle si ce n'est pas /login
+    const currentPath = window.location.pathname;
+    if (currentPath !== '/login' && currentPath !== '/auth/callback') {
+      setRedirectUrl(currentPath);
+    }
 
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
@@ -415,4 +415,3 @@ const Login = () => {
 };
 
 export default Login;
-
