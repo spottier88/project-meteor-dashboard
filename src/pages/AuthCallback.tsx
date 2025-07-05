@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
+import { checkNewTabNavigation, cleanupNewTabNavigation } from "@/utils/newTabNavigation";
 
 // Fonction pour nettoyer les cookies Supabase
 const clearSupabaseCookies = () => {
@@ -29,11 +30,24 @@ const AuthCallback = () => {
 
   // Fonction pour gérer la redirection après authentification
   const handlePostAuthRedirect = () => {
+    // Vérifier d'abord si c'est une navigation en nouvel onglet
+    const newTabData = checkNewTabNavigation();
+    
+    if (newTabData) {
+      console.log('Redirection vers le projet depuis un nouvel onglet:', newTabData.projectId);
+      cleanupNewTabNavigation();
+      navigate(newTabData.targetUrl);
+      return;
+    }
+    
+    // Sinon, utiliser la logique normale de redirection
     const redirectUrl = localStorage.getItem('redirectAfterLogin');
     if (redirectUrl && redirectUrl !== '/login') {
+      console.log('URL de redirection récupérée:', redirectUrl);
       localStorage.removeItem('redirectAfterLogin');
       navigate(redirectUrl);
     } else {
+      console.log('Redirection vers la page d\'accueil');
       navigate("/");
     }
   };

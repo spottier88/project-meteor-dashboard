@@ -1,9 +1,9 @@
 
-
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { usePermissionsContext } from "@/contexts/PermissionsContext";
+import { checkNewTabNavigation, cleanupNewTabNavigation, cleanupOldNavigationData } from "@/utils/newTabNavigation";
 
 export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const navigate = useNavigate();
@@ -13,16 +13,29 @@ export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
 
   useEffect(() => {
     const checkInitialSession = async () => {
+      // Nettoyer les anciennes données de navigation
+      cleanupOldNavigationData();
+      
+      // Vérifier si c'est une navigation en nouvel onglet
+      const newTabData = checkNewTabNavigation();
+      
       const { data: { session } } = await supabase.auth.getSession();
       
       if (!session) {
-        // Sauvegarder l'URL seulement si l'utilisateur n'est pas authentifié
-        // et que ce n'est pas déjà la page de login
-        if (pathname !== '/login' && pathname !== '/auth/callback') {
+        // Si pas de session et que c'est une navigation normale (pas un nouvel onglet)
+        if (!newTabData && pathname !== '/login' && pathname !== '/auth/callback') {
           console.log('Sauvegarde de l\'URL pour redirection:', pathname);
           localStorage.setItem('redirectAfterLogin', pathname);
         }
         navigate("/login");
+      } else {
+        // Session valide
+        if (newTabData) {
+          // Si c'est un nouvel onglet, nettoyer les paramètres et rester sur la page cible
+          console.log('Navigation en nouvel onglet détectée pour le projet:', newTabData.projectId);
+          cleanupNewTabNavigation();
+          // La page est déjà la bonne grâce à l'URL construite dans useProjectNavigation
+        }
       }
       setSessionChecked(true);
     };
@@ -35,7 +48,9 @@ export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
       // Ne rediriger que si la session initiale a déjà été vérifiée
       // et éviter les redirections multiples
       if (sessionChecked && !session && pathname !== '/login' && pathname !== '/auth/callback') {
-        if (pathname !== '/login' && pathname !== '/auth/callback') {
+        // Vérifier si ce n'est pas une navigation en nouvel onglet avant de sauvegarder l'URL
+        const newTabData = checkNewTabNavigation();
+        if (!newTabData && pathname !== '/login' && pathname !== '/auth/callback') {
           console.log('Sauvegarde de l\'URL pour redirection (auth state change):', pathname);
           localStorage.setItem('redirectAfterLogin', pathname);
         }
@@ -55,4 +70,3 @@ export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
 
   return <>{children}</>;
 };
-
