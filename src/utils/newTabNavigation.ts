@@ -1,7 +1,7 @@
 
 /**
  * @utils newTabNavigation
- * @description Utilitaires pour gérer la navigation en nouveaux onglets
+ * @description Utilitaires pour gérer la navigation en nouveaux onglets avec synchronisation de session
  */
 
 interface NewTabNavigationData {
@@ -82,5 +82,29 @@ export const cleanupOldNavigationData = () => {
         sessionStorage.removeItem(key);
       }
     }
+  });
+};
+
+/**
+ * Attend la synchronisation de session entre onglets
+ */
+export const waitForSessionSync = (timeout: number = 3000): Promise<boolean> => {
+  return new Promise((resolve) => {
+    const checkSession = async () => {
+      const { supabase } = await import("@/integrations/supabase/client");
+      const { data: { session } } = await supabase.auth.getSession();
+      return !!session;
+    };
+    
+    const startTime = Date.now();
+    
+    const intervalCheck = setInterval(async () => {
+      const hasSession = await checkSession();
+      
+      if (hasSession || (Date.now() - startTime) > timeout) {
+        clearInterval(intervalCheck);
+        resolve(hasSession);
+      }
+    }, 200); // Vérifier toutes les 200ms
   });
 };

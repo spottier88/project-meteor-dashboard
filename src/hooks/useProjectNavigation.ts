@@ -19,16 +19,22 @@ export const useProjectNavigation = () => {
       const projectUrl = `/projects/${projectId}`;
 
       if (openInNewTab) {
-        // Marquer dans sessionStorage que nous ouvrons un projet spécifique
-        const newTabKey = `project_navigation_${Date.now()}`;
-        sessionStorage.setItem(newTabKey, JSON.stringify({
+        // Créer une clé unique pour cette navigation
+        const newTabKey = `project_navigation_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+        
+        // Stocker les données de navigation dans sessionStorage
+        const navigationData = {
           projectId,
           targetUrl: projectUrl,
           timestamp: Date.now()
-        }));
+        };
+        
+        sessionStorage.setItem(newTabKey, JSON.stringify(navigationData));
         
         // Construire l'URL complète avec le paramètre pour identifier la navigation en nouvel onglet
         const fullUrl = `${window.location.origin}${projectUrl}?newTab=${newTabKey}`;
+        
+        console.log('Ouverture du projet dans un nouvel onglet:', projectId);
         
         // Ouvrir dans un nouvel onglet avec l'URL complète
         const newWindow = window.open(fullUrl, '_blank');
@@ -38,6 +44,8 @@ export const useProjectNavigation = () => {
           console.warn('Le navigateur a bloqué l\'ouverture du nouvel onglet');
           // Fallback : navigation normale
           navigate(projectUrl);
+          // Nettoyer les données stockées
+          sessionStorage.removeItem(newTabKey);
         }
         
         // Empêcher la navigation par défaut si c'est un clic
