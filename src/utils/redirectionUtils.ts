@@ -11,7 +11,7 @@ interface NewTabNavigationData {
 }
 
 /**
- * Vérifie et récupère l'URL de redirection à utiliser
+ * Vérifie et récupère l'URL de redirection à utiliser SANS nettoyer les données
  * Priorité : navigation nouvel onglet > redirection normale
  */
 export const getRedirectUrl = (): string | null => {
@@ -36,12 +36,12 @@ export const getRedirectUrl = (): string | null => {
             console.log('[redirectionUtils] URL de redirection nouvel onglet:', data.targetUrl);
             return data.targetUrl;
           } else {
-            console.warn('[redirectionUtils] Données nouvel onglet expirées, suppression');
-            sessionStorage.removeItem(newTabKey);
+            console.warn('[redirectionUtils] Données nouvel onglet expirées');
+            return null;
           }
         } catch (error) {
           console.error('[redirectionUtils] Erreur parsing données nouvel onglet:', error);
-          sessionStorage.removeItem(newTabKey);
+          return null;
         }
       }
     }
@@ -88,26 +88,46 @@ export const clearRedirectUrl = () => {
 };
 
 /**
- * Effectue la redirection post-authentification
+ * Nettoie les données de navigation nouvel onglet après utilisation
+ */
+export const clearNewTabRedirection = () => {
+  try {
+    const urlParams = new URLSearchParams(window.location.search);
+    const newTabKey = urlParams.get('newTab');
+    
+    if (newTabKey) {
+      sessionStorage.removeItem(newTabKey);
+      console.log('[redirectionUtils] Données nouvel onglet supprimées:', newTabKey);
+      
+      // Nettoyer l'URL sans recharger la page
+      const cleanUrl = window.location.pathname;
+      window.history.replaceState({}, '', cleanUrl);
+      console.log('[redirectionUtils] URL nettoyée');
+    }
+  } catch (error) {
+    console.error('[redirectionUtils] Erreur lors du nettoyage nouvel onglet:', error);
+  }
+};
+
+/**
+ * Effectue la redirection post-authentification avec nettoyage approprié
  */
 export const performPostAuthRedirect = (navigate: (url: string) => void) => {
   const redirectUrl = getRedirectUrl();
   
   if (redirectUrl) {
-    // Nettoyer les données de redirection
-    clearRedirectUrl();
+    console.log('[redirectionUtils] Redirection vers:', redirectUrl);
     
-    // Nettoyer les données de navigation nouvel onglet si présentes
+    // Nettoyer les données appropriées selon le type de redirection
     const urlParams = new URLSearchParams(window.location.search);
-    const newTabKey = urlParams.get('newTab');
-    if (newTabKey) {
-      sessionStorage.removeItem(newTabKey);
-      // Nettoyer l'URL sans recharger la page
-      const cleanUrl = window.location.pathname;
-      window.history.replaceState({}, '', cleanUrl);
+    if (urlParams.get('newTab')) {
+      // C'est une navigation nouvel onglet, nettoyer ces données
+      clearNewTabRedirection();
+    } else {
+      // C'est une redirection normale, nettoyer ces données
+      clearRedirectUrl();
     }
     
-    console.log('[redirectionUtils] Redirection vers:', redirectUrl);
     navigate(redirectUrl);
   } else {
     console.log('[redirectionUtils] Redirection vers la page d\'accueil');
