@@ -32,6 +32,7 @@ const Login = () => {
   const [isCheckingSession, setIsCheckingSession] = useState(true);
   const [isPasswordReset, setIsPasswordReset] = useState(false);
   const initialCheckDone = useRef(false);
+  const redirectionHandled = useRef(false); // Nouveau flag pour éviter les doubles redirections
 
   // Fonction simplifiée pour déconnecter l'utilisateur sans boucle
   const performLogout = async () => {
@@ -70,6 +71,7 @@ const Login = () => {
         // Si session active et valide
         if (sessionData?.session) {
           console.log("Session active détectée, redirection avec URL sauvegardée");
+          redirectionHandled.current = true; // Marquer que la redirection est gérée
           performPostAuthRedirect(navigate);
         } else {
           console.log("Aucune session active détectée");
@@ -86,7 +88,7 @@ const Login = () => {
     checkSession();
   }, [navigate]);
 
-  // Gestionnaire d'état d'authentification modifié pour gérer PASSWORD_RECOVERY
+  // Gestionnaire d'état d'authentification modifié pour éviter les doubles redirections
   useEffect(() => {
     const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
       console.log("Événement d'authentification:", event);
@@ -108,6 +110,7 @@ const Login = () => {
         setMessage("");
         setIsCheckingSession(false);
         initialCheckDone.current = true;
+        redirectionHandled.current = false; // Réinitialiser le flag
         
         // Assurer que nous sommes sur la page de login
         if (window.location.pathname !== '/login') {
@@ -116,8 +119,16 @@ const Login = () => {
         return;
       }
 
-      if (event === 'SIGNED_IN' && session) {
-        console.log("Événement SIGNED_IN détecté, redirection avec URL sauvegardée");
+      // Pour SIGNED_IN et INITIAL_SESSION, vérifier si la redirection n'a pas déjà été gérée
+      if ((event === 'SIGNED_IN' || event === 'INITIAL_SESSION') && session) {
+        // Si la redirection a déjà été gérée par useEffect, ne rien faire
+        if (redirectionHandled.current) {
+          console.log("Redirection déjà gérée, ignorer l'événement:", event);
+          return;
+        }
+        
+        console.log("Événement", event, "détecté, redirection avec URL sauvegardée");
+        redirectionHandled.current = true; // Marquer que la redirection est gérée
         // Ajouter un petit délai pour s'assurer que tout est bien initialisé
         setTimeout(() => {
           performPostAuthRedirect(navigate);
