@@ -29,7 +29,7 @@ export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
         }
         navigate("/login");
       } else {
-        console.log('[ProtectedRoute] Session trouvée');
+        console.log('[ProtectedRoute] Session trouvée, utilisateur authentifié');
       }
       
       setSessionChecked(true);
@@ -44,15 +44,17 @@ export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       console.log('[ProtectedRoute] Événement auth:', event, 'Session:', !!session);
       
-      // Ne rediriger que si la session initiale a déjà été vérifiée
-      if (sessionChecked && !session && pathname !== '/login' && pathname !== '/auth/callback') {
-        console.log('[ProtectedRoute] Perte de session, redirection vers login');
+      // Ne rediriger vers login que si :
+      // 1. La session initiale a déjà été vérifiée
+      // 2. Il n'y a pas de session
+      // 3. Nous ne sommes pas déjà sur une page d'authentification
+      // 4. L'événement est SIGNED_OUT (déconnexion explicite)
+      if (sessionChecked && !session && pathname !== '/login' && pathname !== '/auth/callback' && event === 'SIGNED_OUT') {
+        console.log('[ProtectedRoute] Perte de session (SIGNED_OUT), redirection vers login');
         
         // Sauvegarder l'URL actuelle pour redirection après reconnexion
-        if (pathname !== '/login' && pathname !== '/auth/callback') {
-          console.log('[ProtectedRoute] Sauvegarde URL pour redirection (auth state change):', pathname);
-          setRedirectUrl(pathname);
-        }
+        console.log('[ProtectedRoute] Sauvegarde URL pour redirection (auth state change):', pathname);
+        setRedirectUrl(pathname);
         navigate("/login");
       }
     });
