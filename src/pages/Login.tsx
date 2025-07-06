@@ -70,9 +70,13 @@ const Login = () => {
 
         // Si session active et valide
         if (sessionData?.session) {
-          console.log("Session active détectée, redirection avec URL sauvegardée");
-          redirectionHandled.current = true; // Marquer que la redirection est gérée
-          performPostAuthRedirect(navigate);
+          if (!redirectionHandled.current) {
+            console.log("Session active détectée, redirection avec URL sauvegardée");
+            redirectionHandled.current = true; // Marquer que la redirection est gérée
+            performPostAuthRedirect(navigate);
+          } else {
+            console.log("Session active détectée mais redirection déjà gérée");
+          }
         } else {
           console.log("Aucune session active détectée");
           setIsCheckingSession(false);
