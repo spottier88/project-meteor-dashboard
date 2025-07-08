@@ -1,10 +1,10 @@
-
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Search, Filter } from "lucide-react";
+import { Plus, Search, Filter, ArrowLeft } from "lucide-react";
+import { Link } from "react-router-dom";
 import { PortfolioCard } from "@/components/portfolio/PortfolioCard";
 import { PortfolioForm } from "@/components/portfolio/PortfolioForm";
 import { usePortfolios, useDeletePortfolio } from "@/hooks/usePortfolios";
@@ -86,6 +86,16 @@ const PortfolioManagement = () => {
 
   return (
     <div className="container mx-auto py-8">
+      {/* Bouton de retour à l'accueil */}
+      <div className="mb-6">
+        <Link to="/">
+          <Button variant="ghost" className="gap-2 text-muted-foreground hover:text-foreground">
+            <ArrowLeft className="h-4 w-4" />
+            Retour à l'accueil
+          </Button>
+        </Link>
+      </div>
+
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
         <div>
           <h1 className="text-3xl font-bold">Gestion des portefeuilles</h1>
