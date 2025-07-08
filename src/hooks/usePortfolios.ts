@@ -1,4 +1,3 @@
-
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
@@ -8,41 +7,65 @@ export const usePortfolios = () => {
   return useQuery({
     queryKey: ["portfolios"],
     queryFn: async () => {
-      const { data, error } = await supabase
+      // Récupérer d'abord tous les portefeuilles
+      const { data: portfolios, error } = await supabase
         .from("project_portfolios")
-        .select(`
-          *,
-          projects!inner(id)
-        `)
+        .select("*")
         .order("created_at", { ascending: false });
 
       if (error) throw error;
 
       // Calculer les statistiques pour chaque portefeuille
       const portfoliosWithStats: PortfolioWithStats[] = await Promise.all(
-        data.map(async (portfolio) => {
-          // Récupérer les projets du portefeuille avec leurs statistiques
-          const { data: projects, error: projectsError } = await supabase
+        portfolios.map(async (portfolio) => {
+          // Récupérer le nombre de projets du portefeuille
+          const { count: projectCount, error: countError } = await supabase
+            .from("projects")
+            .select("*", { count: 'exact', head: true })
+            .eq("portfolio_id", portfolio.id);
+
+          if (countError) {
+            console.error("Erreur lors du comptage des projets:", countError);
+          }
+
+          // Récupérer les projets avec leurs dernières revues pour calculer la completion moyenne
+          const { data: projectsWithReviews, error: projectsError } = await supabase
             .from("projects")
             .select(`
               id,
-              latest_reviews!inner(completion)
+              latest_reviews(completion)
             `)
             .eq("portfolio_id", portfolio.id);
 
           if (projectsError) {
-            console.error("Erreur lors de la récupération des projets:", projectsError);
+            console.error("Erreur lors de la récupération des projets avec revues:", projectsError);
           }
 
-          const projectCount = projects?.length || 0;
-          const totalCompletion = projects?.reduce((sum, project) => {
-            return sum + (project.latest_reviews?.[0]?.completion || 0);
-          }, 0) || 0;
-          const averageCompletion = projectCount > 0 ? Math.round(totalCompletion / projectCount) : 0;
+          const totalProjects = projectCount || 0;
+          let totalCompletion = 0;
+          let projectsWithCompletion = 0;
+
+          if (projectsWithReviews) {
+            projectsWithReviews.forEach(project => {
+              // latest_reviews est un tableau, on prend le premier élément s'il existe
+              const latestReview = Array.isArray(project.latest_reviews) 
+                ? project.latest_reviews[0] 
+                : project.latest_reviews;
+              
+              if (latestReview && latestReview.completion !== null) {
+                totalCompletion += latestReview.completion;
+                projectsWithCompletion++;
+              }
+            });
+          }
+
+          const averageCompletion = projectsWithCompletion > 0 
+            ? Math.round(totalCompletion / projectsWithCompletion) 
+            : 0;
 
           return {
             ...portfolio,
-            project_count: projectCount,
+            project_count: totalProjects,
             total_completion: totalCompletion,
             average_completion: averageCompletion,
           };
