@@ -15,6 +15,7 @@ import { ProjectTemplateManagement } from "./pages/ProjectTemplateManagement";
 import { ProjectTemplateDetails } from "./pages/ProjectTemplateDetails";
 import { OrganizationManagement } from "./pages/OrganizationManagement";
 import { NotificationManagement } from "./pages/NotificationManagement";
+import PortfolioManagement from "./pages/PortfolioManagement";
 import { SessionContextProvider, useSession } from "@supabase/auth-helpers-react";
 import { supabase } from "@/integrations/supabase/client";
 import { ProtectedRoute } from "./components/ProtectedRoute";
@@ -76,6 +77,14 @@ export const AppRoutes = () => {
             element={
               <ProtectedRoute>
                 <Index />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/portfolios"
+            element={
+              <ProtectedRoute>
+                <PortfolioManagement />
               </ProtectedRoute>
             }
           />

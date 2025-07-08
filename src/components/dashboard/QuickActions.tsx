@@ -15,7 +15,8 @@ import {
   CheckSquare, 
   Activity, 
   Settings,
-  Users
+  Users,
+  Briefcase
 } from "lucide-react";
 
 interface QuickActionsProps {
@@ -34,6 +35,9 @@ export const QuickActions = ({ onNewProject, onNewReview }: QuickActionsProps) =
 
   // Permissions pour accéder aux activités d'équipe
   const canViewTeamActivities = isAdmin || isManager || hasRole('chef_projet');
+
+  // Permissions pour gérer les portefeuilles
+  const canManagePortfolios = isAdmin || hasRole('portfolio_manager');
 
   return (
     <Card>
@@ -77,6 +81,19 @@ export const QuickActions = ({ onNewProject, onNewReview }: QuickActionsProps) =
         </Link>
 
         {/* Actions spécifiques aux rôles */}
+        {canManagePortfolios && (
+          <Link to="/portfolios" className="block">
+            <Button 
+              variant="outline" 
+              className="w-full justify-start hover:bg-purple-50 hover:border-purple-200" 
+              size="sm"
+            >
+              <Briefcase className="h-4 w-4 mr-2" />
+              Mes portefeuilles
+            </Button>
+          </Link>
+        )}
+
         {(isTimeTracker || isAdmin) && (
           <Link to="/activities" className="block">
             <Button 
