@@ -39,6 +39,8 @@ const getRoleLabel = (role: string): string => {
       return "Membre";
     case "time_tracker":
       return "Suivi des activités";
+    case "portfolio_manager":
+      return "Gestionnaire de portefeuille";
     default:
       return role;
   }
