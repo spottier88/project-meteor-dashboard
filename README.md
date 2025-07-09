@@ -1,4 +1,31 @@
-# Welcome to your Lovable project
+# Bienvenue sur le projet METEOR (pour Météo Projet)
+
+Cette application est une gestion de projet simplifiée permettant de :
+- saisir un projet
+- suivre l'avancement des tâches
+- établir la liste des risques
+- réaliser des revues de projet périodiques
+- Suivre les activités d'utilisateurs
+- Gérer des portefeuilles de projet
+- gérer un panier de projet afin de pouvoir facilement exporter des données au format XLS ou PPTX.
+
+L'application dispose de plusieurs rôles pour les utilisateurs :
+- Administrateur : il a tous les droits dans l'application
+- Chef de projet : il peut créer des projets, les modifier (dans toutes ses composantes) dés lors qu'il en est le chef de projet
+- Manager : il peut voir et gérer les projets affectés à l'organisation à laquelle il est affecté comme manager
+- Suivi d'activités : l'utilisateur peut gérer ses activités (ajout, modification, import)
+- Gestionnaire de portefeuille : peut ajouter, modifier ses portefeuilles de projets. ajout de projet et consultation des statistiques sur le portefeuille.
+
+Ce projet est exclusivement développé avec la plateforme lovable (via IA) et une base de données POSTGRES acessible via supabase (en mode autohébergée)
+
+## Les technologies utilisées par ce projet sont ?
+
+- Vite
+- TypeScript
+- React
+- shadcn-ui
+- Tailwind CSS
+- supabase (pour la base de données, RLS, APi)
 
 ## Project info
 
@@ -7,6 +34,11 @@
 ## How can I edit this code?
 
 There are several ways of editing your application.
+
+
+## Déploiement du projet ?
+
+Publication du dockerHub après chaque commit valide.
 
 **Use Lovable**
 
@@ -50,22 +82,6 @@ npm run dev
 - Click on "New codespace" to launch a new Codespace environment.
 - Edit files directly within the Codespace and commit and push your changes once you're done.
 
-## What technologies are used for this project?
 
-This project is built with .
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
 
-## How can I deploy this project?
-
-publication du dockerHub
-
-Simply open [Lovable](https://lovable.dev/projects/43774b00-8c33-4464-90db-40c5bcf5157e) and click on Share -> Publish.
-
-## I want to use a custom domain - is that possible?
-
-We don't support custom domains (yet). If you want to deploy your project under your own domain then we recommend using Netlify. Visit our docs for more details: [Custom domains](https://docs.lovable.dev/tips-tricks/custom-domain/)
