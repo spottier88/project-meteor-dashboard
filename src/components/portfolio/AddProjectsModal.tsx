@@ -66,7 +66,8 @@ export const AddProjectsModal = ({
   const { data: availableProjects, isLoading } = useQuery({
     queryKey: ["availableProjects", portfolioId],
     queryFn: async () => {
-      const { data, error } = await supabase
+      // Construire la requête de base
+      let query = supabase
         .from("projects")
         .select(`
           id,
@@ -81,8 +82,14 @@ export const AddProjectsModal = ({
           directions:direction_id(name),
           services:service_id(name)
         `)
-        .is("portfolio_id", null)
-        .not("id", "in", `(${excludeProjectIds.join(",") || "''"})`);
+        .is("portfolio_id", null);
+
+      // Appliquer le filtre NOT IN seulement si excludeProjectIds n'est pas vide
+      if (excludeProjectIds && excludeProjectIds.length > 0) {
+        query = query.not("id", "in", `(${excludeProjectIds.join(",")})`);
+      }
+
+      const { data, error } = await query;
 
       if (error) throw error;
 
