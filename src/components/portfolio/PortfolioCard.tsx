@@ -1,9 +1,9 @@
-
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { PortfolioWithStats } from "@/types/portfolio";
 import { Edit, Trash2, FolderOpen, Calendar, Euro } from "lucide-react";
+import { Link } from "react-router-dom";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 
@@ -94,15 +94,16 @@ export const PortfolioCard = ({ portfolio, onEdit, onDelete, onView }: Portfolio
 
         {/* Actions */}
         <div className="flex gap-2 pt-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => onView(portfolio.id)}
-            className="flex-1"
-          >
-            <FolderOpen className="h-4 w-4 mr-1" />
-            Voir
-          </Button>
+          <Link to={`/portfolios/${portfolio.id}`} className="flex-1">
+            <Button
+              variant="outline"
+              size="sm"
+              className="w-full"
+            >
+              <FolderOpen className="h-4 w-4 mr-1" />
+              Voir
+            </Button>
+          </Link>
           <Button
             variant="outline"
             size="sm"
