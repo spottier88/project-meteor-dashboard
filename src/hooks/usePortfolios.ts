@@ -28,35 +28,39 @@ export const usePortfolios = () => {
             console.error("Erreur lors du comptage des projets:", countError);
           }
 
-          // Récupérer les projets avec leurs dernières revues pour calculer la completion moyenne
-          const { data: projectsWithReviews, error: projectsError } = await supabase
+          // Récupérer les projets pour calculer la completion moyenne
+          const { data: projects, error: projectsError } = await supabase
             .from("projects")
-            .select(`
-              id,
-              latest_reviews(completion)
-            `)
+            .select("id")
             .eq("portfolio_id", portfolio.id);
 
           if (projectsError) {
-            console.error("Erreur lors de la récupération des projets avec revues:", projectsError);
+            console.error("Erreur lors de la récupération des projets:", projectsError);
           }
 
           const totalProjects = projectCount || 0;
           let totalCompletion = 0;
           let projectsWithCompletion = 0;
 
-          if (projectsWithReviews) {
-            projectsWithReviews.forEach(project => {
-              // latest_reviews est un tableau, on prend le premier élément s'il existe
-              const latestReview = Array.isArray(project.latest_reviews) 
-                ? project.latest_reviews[0] 
-                : project.latest_reviews;
-              
-              if (latestReview && latestReview.completion !== null) {
-                totalCompletion += latestReview.completion;
-                projectsWithCompletion++;
-              }
-            });
+          // Récupérer les dernières revues pour chaque projet
+          if (projects && projects.length > 0) {
+            const projectIds = projects.map(p => p.id);
+            
+            const { data: reviews, error: reviewsError } = await supabase
+              .from("latest_reviews")
+              .select("completion")
+              .in("project_id", projectIds);
+
+            if (reviewsError) {
+              console.error("Erreur lors de la récupération des revues:", reviewsError);
+            } else if (reviews) {
+              reviews.forEach(review => {
+                if (review.completion !== null) {
+                  totalCompletion += review.completion;
+                  projectsWithCompletion++;
+                }
+              });
+            }
           }
 
           const averageCompletion = projectsWithCompletion > 0 
