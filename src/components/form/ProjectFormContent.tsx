@@ -1,4 +1,3 @@
-
 import { ProjectFormStep1 } from "./ProjectFormStep1";
 import { ProjectFormStep2 } from "./ProjectFormStep2";
 import { ProjectFormStep3 } from "./ProjectFormStep3";
@@ -46,6 +45,8 @@ export const ProjectFormContent = ({
             setPriority={formState.setPriority}
             lifecycleStatus={formState.lifecycleStatus}
             setLifecycleStatus={formState.setLifecycleStatus}
+            portfolioId={formState.portfolioId}
+            setPortfolioId={formState.setPortfolioId}
             isAdmin={isAdmin}
             isManager={isManager}
             ownerId={formState.ownerId}
