@@ -141,9 +141,9 @@ export const AddPortfolioManagerForm = ({ portfolioId, isOpen, onClose }: AddPor
             </Button>
             <Button 
               type="submit" 
-              disabled={!selectedUserId || addManager.isPending}
+              disabled={!selectedUserId || addManager.isLoading}
             >
-              {addManager.isPending ? "Ajout..." : "Ajouter"}
+              {addManager.isLoading ? "Ajout..." : "Ajouter"}
             </Button>
           </div>
         </form>

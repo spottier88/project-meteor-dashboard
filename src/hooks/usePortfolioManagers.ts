@@ -28,7 +28,7 @@ export const usePortfolioManagers = (portfolioId: string) => {
           portfolio_id,
           role,
           created_at,
-          user_profile:profiles!portfolio_managers_user_id_fkey(
+          profiles!portfolio_managers_user_id_fkey(
             email,
             first_name,
             last_name
@@ -37,7 +37,12 @@ export const usePortfolioManagers = (portfolioId: string) => {
         .eq("portfolio_id", portfolioId);
 
       if (error) throw error;
-      return data as PortfolioManager[];
+      
+      // Transformer les données pour correspondre à l'interface
+      return data.map(item => ({
+        ...item,
+        user_profile: item.profiles
+      })) as PortfolioManager[];
     },
     enabled: !!portfolioId,
   });
