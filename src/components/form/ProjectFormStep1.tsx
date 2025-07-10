@@ -19,6 +19,8 @@ export interface ProjectFormStep1Props {
   setPriority: (value: string) => void;
   lifecycleStatus: ProjectLifecycleStatus;
   setLifecycleStatus: (value: ProjectLifecycleStatus) => void;
+  portfolioId: string | undefined;
+  setPortfolioId: (value: string | undefined) => void;
   isAdmin: boolean;
   isManager: boolean;
   ownerId: string;
@@ -41,6 +43,8 @@ export const ProjectFormStep1 = ({
   setPriority,
   lifecycleStatus,
   setLifecycleStatus,
+  portfolioId,
+  setPortfolioId,
   isAdmin,
   isManager,
   ownerId,
@@ -65,6 +69,8 @@ export const ProjectFormStep1 = ({
           setPriority={setPriority}
           lifecycleStatus={lifecycleStatus}
           setLifecycleStatus={setLifecycleStatus}
+          portfolioId={portfolioId}
+          setPortfolioId={setPortfolioId}
           isAdmin={isAdmin}
           isManager={isManager}
           projectManagers={projectManagers}

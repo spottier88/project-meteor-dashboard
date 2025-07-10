@@ -33,7 +33,10 @@ export const usePortfolios = () => {
         },
         (payload) => {
           // Si un projet change de portefeuille, invalider les données
-          if (payload.old?.portfolio_id || payload.new?.portfolio_id) {
+          const newRecord = payload.new as any;
+          const oldRecord = payload.old as any;
+          
+          if (newRecord?.portfolio_id || oldRecord?.portfolio_id) {
             queryClient.invalidateQueries({ queryKey: ["portfolios"] });
           }
         }

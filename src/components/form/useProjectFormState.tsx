@@ -68,6 +68,8 @@ export interface ProjectFormState {
   setForEntityId: (value: string | undefined) => void;
   templateId: string | undefined;
   setTemplateId: (value: string | undefined) => void;
+  portfolioId: string | undefined;
+  setPortfolioId: (value: string | undefined) => void;
 }
 
 export const useProjectFormState = (isOpen: boolean, project?: any) => {
@@ -104,6 +106,7 @@ export const useProjectFormState = (isOpen: boolean, project?: any) => {
   const [forEntityType, setForEntityType] = useState<ForEntityType>(null);
   const [forEntityId, setForEntityId] = useState<string | undefined>(undefined);
   const [templateId, setTemplateId] = useState<string | undefined>(undefined);
+  const [portfolioId, setPortfolioId] = useState<string | undefined>(undefined);
 
   const user = useUser();
 
@@ -269,11 +272,12 @@ export const useProjectFormState = (isOpen: boolean, project?: any) => {
         
         setForEntityType(null);
         setForEntityId(undefined);
+        setTemplateId(undefined);
+        setPortfolioId(undefined);
 
         if (user?.email) {
           setProjectManager(user.email);
           setOwnerId(user.id);
-          // Charger l'organisation du chef de projet initial (l'utilisateur connecté)
           await loadProjectManagerOrganization(user.email);
         }
 
@@ -289,8 +293,8 @@ export const useProjectFormState = (isOpen: boolean, project?: any) => {
           setForEntityType(project.for_entity_type as ForEntityType || null);
           setForEntityId(project.for_entity_id || undefined);
           setTemplateId(project.template_id);
+          setPortfolioId(project.portfolio_id || undefined);
 
-          // Charger l'organisation du chef de projet existant
           await loadProjectManagerOrganization(project.project_manager);
 
           try {
@@ -372,7 +376,7 @@ export const useProjectFormState = (isOpen: boolean, project?: any) => {
     monitoringLevel, monitoringEntityId, 
     novateur, usager, ouverture, agilite, impact, lifecycleStatus,
     context, stakeholders, governance, objectives, timeline, deliverables,
-    forEntityType, forEntityId, templateId
+    forEntityType, forEntityId, templateId, portfolioId
   ]);
 
   const resetHasUnsavedChanges = () => {
@@ -442,6 +446,8 @@ export const useProjectFormState = (isOpen: boolean, project?: any) => {
     forEntityId,
     setForEntityId,
     templateId,
-    setTemplateId
+    setTemplateId,
+    portfolioId,
+    setPortfolioId
   };
 };
