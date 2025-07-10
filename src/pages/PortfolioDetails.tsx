@@ -3,11 +3,13 @@ import { useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Calendar, Euro, Users, TrendingUp } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ArrowLeft, Calendar, Euro, Users, TrendingUp, Settings } from "lucide-react";
 import { usePortfolioDetails } from "@/hooks/usePortfolioDetails";
 import { usePortfolioPermissions } from "@/hooks/usePortfolioPermissions";
 import { PortfolioCharts } from "@/components/portfolio/PortfolioCharts";
 import { PortfolioProjectsTable } from "@/components/portfolio/PortfolioProjectsTable";
+import { PortfolioManagersTable } from "@/components/portfolio/PortfolioManagersTable";
 import { AddProjectsModal } from "@/components/portfolio/AddProjectsModal";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
@@ -186,25 +188,54 @@ const PortfolioDetails = () => {
         )}
       </div>
 
-      {/* Graphiques de synthèse */}
-      <div className="mb-8">
-        <h2 className="text-2xl font-bold mb-6">Vue d'ensemble</h2>
-        <PortfolioCharts
-          statusStats={portfolio.statusStats}
-          lifecycleStats={portfolio.lifecycleStats}
-          averageCompletion={portfolio.average_completion}
-          projectCount={portfolio.project_count}
-        />
-      </div>
+      {/* Contenu principal avec onglets */}
+      <Tabs defaultValue="overview" className="space-y-6">
+        <TabsList className="grid w-full grid-cols-3">
+          <TabsTrigger value="overview" className="gap-2">
+            <TrendingUp className="h-4 w-4" />
+            Vue d'ensemble
+          </TabsTrigger>
+          <TabsTrigger value="projects" className="gap-2">
+            <Users className="h-4 w-4" />
+            Projets
+          </TabsTrigger>
+          {canManagePortfolios && (
+            <TabsTrigger value="managers" className="gap-2">
+              <Settings className="h-4 w-4" />
+              Gestionnaires
+            </TabsTrigger>
+          )}
+        </TabsList>
 
-      {/* Liste des projets */}
-      <div>
-        <PortfolioProjectsTable
-          projects={portfolio.projects}
-          portfolioId={portfolio.id}
-          onAddProjects={() => setIsAddProjectsModalOpen(true)}
-        />
-      </div>
+        <TabsContent value="overview" className="space-y-6">
+          <div>
+            <h2 className="text-2xl font-bold mb-6">Vue d'ensemble</h2>
+            <PortfolioCharts
+              statusStats={portfolio.statusStats}
+              lifecycleStats={portfolio.lifecycleStats}
+              averageCompletion={portfolio.average_completion}
+              projectCount={portfolio.project_count}
+            />
+          </div>
+        </TabsContent>
+
+        <TabsContent value="projects" className="space-y-6">
+          <PortfolioProjectsTable
+            projects={portfolio.projects}
+            portfolioId={portfolio.id}
+            onAddProjects={() => setIsAddProjectsModalOpen(true)}
+          />
+        </TabsContent>
+
+        {canManagePortfolios && (
+          <TabsContent value="managers" className="space-y-6">
+            <PortfolioManagersTable
+              portfolioId={portfolio.id}
+              portfolioOwnerId={portfolio.created_by}
+            />
+          </TabsContent>
+        )}
+      </Tabs>
 
       {/* Modal d'ajout de projets */}
       {canManagePortfolios && (

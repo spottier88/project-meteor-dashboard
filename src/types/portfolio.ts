@@ -28,3 +28,25 @@ export interface PortfolioFormData {
   end_date?: string;
   status?: string;
 }
+
+export interface PortfolioManager {
+  id: string;
+  user_id: string;
+  portfolio_id: string;
+  role: string;
+  created_at: string;
+  user_profile?: {
+    email: string;
+    first_name: string | null;
+    last_name: string | null;
+  };
+}
+
+export interface PortfolioPermissions {
+  canManage: boolean;
+  canView: boolean;
+  canAddProjects: boolean;
+  canRemoveProjects: boolean;
+  canManageMembers: boolean;
+  role: 'owner' | 'manager' | 'viewer' | null;
+}
