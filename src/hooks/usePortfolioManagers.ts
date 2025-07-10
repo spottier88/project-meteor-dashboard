@@ -20,29 +20,41 @@ export const usePortfolioManagers = (portfolioId: string) => {
   return useQuery({
     queryKey: ["portfolio-managers", portfolioId],
     queryFn: async () => {
-      const { data, error } = await supabase
+      // Récupérer les gestionnaires du portefeuille
+      const { data: managersData, error: managersError } = await supabase
         .from("portfolio_managers")
-        .select(`
-          id,
-          user_id,
-          portfolio_id,
-          role,
-          created_at,
-          profiles!portfolio_managers_user_id_fkey(
-            email,
-            first_name,
-            last_name
-          )
-        `)
+        .select("*")
         .eq("portfolio_id", portfolioId);
 
-      if (error) throw error;
-      
-      // Transformer les données pour correspondre à l'interface
-      return data.map(item => ({
-        ...item,
-        user_profile: item.profiles
-      })) as PortfolioManager[];
+      if (managersError) throw managersError;
+
+      if (!managersData || managersData.length === 0) {
+        return [];
+      }
+
+      // Récupérer les profils des utilisateurs
+      const userIds = managersData.map(manager => manager.user_id);
+      const { data: profilesData, error: profilesError } = await supabase
+        .from("profiles")
+        .select("id, email, first_name, last_name")
+        .in("id", userIds);
+
+      if (profilesError) throw profilesError;
+
+      // Combiner les données
+      const managersWithProfiles = managersData.map(manager => {
+        const profile = profilesData?.find(p => p.id === manager.user_id);
+        return {
+          ...manager,
+          user_profile: {
+            email: profile?.email || '',
+            first_name: profile?.first_name || null,
+            last_name: profile?.last_name || null,
+          }
+        };
+      });
+
+      return managersWithProfiles as PortfolioManager[];
     },
     enabled: !!portfolioId,
   });
