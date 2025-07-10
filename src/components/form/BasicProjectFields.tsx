@@ -1,4 +1,3 @@
-
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -105,14 +104,14 @@ export const BasicProjectFields = ({
           Portefeuille
         </label>
         <Select 
-          value={portfolioId || ""} 
-          onValueChange={(value) => setPortfolioId(value || undefined)}
+          value={portfolioId || "none"} 
+          onValueChange={(value) => setPortfolioId(value === "none" ? undefined : value)}
         >
           <SelectTrigger>
             <SelectValue placeholder="Sélectionner un portefeuille (optionnel)" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">Aucun portefeuille</SelectItem>
+            <SelectItem value="none">Aucun portefeuille</SelectItem>
             {portfoliosLoading ? (
               <SelectItem value="loading" disabled>Chargement...</SelectItem>
             ) : (
