@@ -1429,6 +1429,10 @@ export type Database = {
         Args: { p_user_id: string; p_project_id: string }
         Returns: boolean
       }
+      can_assign_to_portfolio: {
+        Args: { p_user_id: string; p_portfolio_id: string }
+        Returns: boolean
+      }
       can_manage_portfolio: {
         Args: { p_user_id: string; p_portfolio_id: string }
         Returns: boolean
@@ -1580,6 +1584,10 @@ export type Database = {
           id: string
           email: string
         }[]
+      }
+      update_portfolio_stats: {
+        Args: { p_portfolio_id: string }
+        Returns: undefined
       }
     }
     Enums: {

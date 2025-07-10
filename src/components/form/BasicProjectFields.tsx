@@ -1,3 +1,4 @@
+
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -5,6 +6,7 @@ import { UserProfile } from "@/types/user";
 import { Label } from "@/components/ui/label";
 import { DateInputField } from "./DateInputField";
 import { ProjectLifecycleStatus, lifecycleStatusLabels } from "@/types/project";
+import { useAccessiblePortfolios } from "@/hooks/useAccessiblePortfolios";
 
 interface BasicProjectFieldsProps {
   title: string;
@@ -21,6 +23,8 @@ interface BasicProjectFieldsProps {
   setPriority: (value: string) => void;
   lifecycleStatus: ProjectLifecycleStatus;
   setLifecycleStatus: (value: ProjectLifecycleStatus) => void;
+  portfolioId: string | undefined;
+  setPortfolioId: (value: string | undefined) => void;
   isAdmin: boolean;
   isManager?: boolean;
   projectManagers?: UserProfile[];
@@ -41,11 +45,16 @@ export const BasicProjectFields = ({
   setPriority,
   lifecycleStatus,
   setLifecycleStatus,
+  portfolioId,
+  setPortfolioId,
   isAdmin,
   isManager = false,
   projectManagers,
 }: BasicProjectFieldsProps) => {
   const canEditProjectManager = Boolean(isAdmin) || Boolean(isManager);
+  
+  // Récupérer les portefeuilles accessibles
+  const { data: accessiblePortfolios, isLoading: portfoliosLoading } = useAccessiblePortfolios();
 
   return (
     <div className="space-y-4">
@@ -87,6 +96,35 @@ export const BasicProjectFields = ({
                 {label}
               </SelectItem>
             ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div className="grid gap-2">
+        <label htmlFor="portfolio" className="text-sm font-medium">
+          Portefeuille
+        </label>
+        <Select 
+          value={portfolioId || ""} 
+          onValueChange={(value) => setPortfolioId(value || undefined)}
+        >
+          <SelectTrigger>
+            <SelectValue placeholder="Sélectionner un portefeuille (optionnel)" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="">Aucun portefeuille</SelectItem>
+            {portfoliosLoading ? (
+              <SelectItem value="loading" disabled>Chargement...</SelectItem>
+            ) : (
+              accessiblePortfolios?.map((portfolio) => (
+                <SelectItem key={portfolio.id} value={portfolio.id}>
+                  {portfolio.name}
+                  {portfolio.status && portfolio.status !== 'actif' && (
+                    <span className="text-muted-foreground ml-2">({portfolio.status})</span>
+                  )}
+                </SelectItem>
+              ))
+            )}
           </SelectContent>
         </Select>
       </div>

@@ -1,9 +1,50 @@
+
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
 import { Portfolio, PortfolioWithStats, PortfolioFormData } from "@/types/portfolio";
+import { useEffect } from "react";
 
 export const usePortfolios = () => {
+  const queryClient = useQueryClient();
+
+  // Configuration de la synchronisation en temps réel
+  useEffect(() => {
+    const channel = supabase
+      .channel('portfolio-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'project_portfolios'
+        },
+        () => {
+          // Invalider et refetch les données des portefeuilles
+          queryClient.invalidateQueries({ queryKey: ["portfolios"] });
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'projects'
+        },
+        (payload) => {
+          // Si un projet change de portefeuille, invalider les données
+          if (payload.old?.portfolio_id || payload.new?.portfolio_id) {
+            queryClient.invalidateQueries({ queryKey: ["portfolios"] });
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [queryClient]);
+
   return useQuery({
     queryKey: ["portfolios"],
     queryFn: async () => {
@@ -15,62 +56,42 @@ export const usePortfolios = () => {
 
       if (error) throw error;
 
-      // Calculer les statistiques pour chaque portefeuille
+      // Calculer les statistiques pour chaque portefeuille de manière optimisée
       const portfoliosWithStats: PortfolioWithStats[] = await Promise.all(
         portfolios.map(async (portfolio) => {
-          // Récupérer le nombre de projets du portefeuille
-          const { count: projectCount, error: countError } = await supabase
+          // Utiliser une seule requête pour récupérer les statistiques
+          const { data: projectStats, error: statsError } = await supabase
             .from("projects")
-            .select("*", { count: 'exact', head: true })
+            .select("id, lifecycle_status")
             .eq("portfolio_id", portfolio.id);
 
-          if (countError) {
-            console.error("Erreur lors du comptage des projets:", countError);
+          if (statsError) {
+            console.error("Erreur lors de la récupération des statistiques:", statsError);
           }
 
-          // Récupérer les projets pour calculer la completion moyenne
-          const { data: projects, error: projectsError } = await supabase
-            .from("projects")
-            .select("id")
-            .eq("portfolio_id", portfolio.id);
+          const totalProjects = projectStats?.length || 0;
+          const completedProjects = projectStats?.filter(p => p.lifecycle_status === 'completed').length || 0;
 
-          if (projectsError) {
-            console.error("Erreur lors de la récupération des projets:", projectsError);
-          }
-
-          const totalProjects = projectCount || 0;
-          let totalCompletion = 0;
-          let projectsWithCompletion = 0;
-
-          // Récupérer les dernières revues pour chaque projet
-          if (projects && projects.length > 0) {
-            const projectIds = projects.map(p => p.id);
-            
+          // Récupérer les complétions des projets en une seule requête
+          let averageCompletion = 0;
+          if (totalProjects > 0) {
+            const projectIds = projectStats?.map(p => p.id) || [];
             const { data: reviews, error: reviewsError } = await supabase
               .from("latest_reviews")
               .select("completion")
-              .in("project_id", projectIds);
+              .in("project_id", projectIds)
+              .not("completion", "is", null);
 
-            if (reviewsError) {
-              console.error("Erreur lors de la récupération des revues:", reviewsError);
-            } else if (reviews) {
-              reviews.forEach(review => {
-                if (review.completion !== null) {
-                  totalCompletion += review.completion;
-                  projectsWithCompletion++;
-                }
-              });
+            if (!reviewsError && reviews && reviews.length > 0) {
+              const totalCompletion = reviews.reduce((sum, review) => sum + (review.completion || 0), 0);
+              averageCompletion = Math.round(totalCompletion / reviews.length);
             }
           }
-
-          const averageCompletion = projectsWithCompletion > 0 
-            ? Math.round(totalCompletion / projectsWithCompletion) 
-            : 0;
 
           return {
             ...portfolio,
             project_count: totalProjects,
-            total_completion: totalCompletion,
+            total_completion: completedProjects,
             average_completion: averageCompletion,
           };
         })
@@ -78,6 +99,8 @@ export const usePortfolios = () => {
 
       return portfoliosWithStats;
     },
+    staleTime: 60000, // 1 minute - réduire pour plus de réactivité
+    cacheTime: 300000, // 5 minutes
   });
 };
 
