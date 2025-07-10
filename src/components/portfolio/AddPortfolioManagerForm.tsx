@@ -105,9 +105,9 @@ export const AddPortfolioManagerForm = ({ portfolioId, isOpen, onClose }: AddPor
               </SelectTrigger>
               <SelectContent>
                 {loadingUsers ? (
-                  <SelectItem value="" disabled>Chargement...</SelectItem>
+                  <SelectItem value="loading" disabled>Chargement...</SelectItem>
                 ) : eligibleUsers?.length === 0 ? (
-                  <SelectItem value="" disabled>Aucun utilisateur disponible</SelectItem>
+                  <SelectItem value="no-users" disabled>Aucun utilisateur disponible</SelectItem>
                 ) : (
                   eligibleUsers?.map((user) => (
                     <SelectItem key={user.id} value={user.id}>
@@ -141,7 +141,7 @@ export const AddPortfolioManagerForm = ({ portfolioId, isOpen, onClose }: AddPor
             </Button>
             <Button 
               type="submit" 
-              disabled={!selectedUserId || addManager.isLoading}
+              disabled={!selectedUserId || addManager.isLoading || selectedUserId === "loading" || selectedUserId === "no-users"}
             >
               {addManager.isLoading ? "Ajout..." : "Ajouter"}
             </Button>
