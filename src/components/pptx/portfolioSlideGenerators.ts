@@ -38,7 +38,7 @@ interface PortfolioData {
 }
 
 /**
- * Génère une slide de titre pour le portefeuille
+ * Génère une slide de titre pour le portefeuille avec indicateurs visuels
  */
 export const generatePortfolioTitleSlide = (pptx: pptxgen, portfolioData: PortfolioData) => {
   const slide = pptx.addSlide({ masterName: "MAIN_MASTER" });
@@ -73,15 +73,61 @@ export const generatePortfolioTitleSlide = (pptx: pptxgen, portfolioData: Portfo
     }
   );
 
+  // Barre de progression visuelle pour l'avancement moyen
+  const progressBarWidth = 6;
+  const progressFillWidth = (portfolioData.average_completion / 100) * progressBarWidth;
+  
+  // Fond de la barre de progression
+  slide.addShape(pptx.ShapeType.rect, {
+    x: 2,
+    y: 4.5,
+    w: progressBarWidth,
+    h: 0.3,
+    fill: { color: "E5E5E5" },
+    line: { color: pptxColors.muted, width: 1 }
+  });
+  
+  // Remplissage de la barre de progression
+  if (progressFillWidth > 0) {
+    const progressColor = portfolioData.average_completion >= 75 ? "22C55E" : 
+                         portfolioData.average_completion >= 50 ? "F59E0B" : "EF4444";
+    slide.addShape(pptx.ShapeType.rect, {
+      x: 2,
+      y: 4.5,
+      w: progressFillWidth,
+      h: 0.3,
+      fill: { color: progressColor },
+      line: { width: 0 }
+    });
+  }
+
+  // Indicateurs météo visuels
+  const totalProjects = portfolioData.project_count;
+  if (totalProjects > 0) {
+    const sunnyPercent = Math.round((portfolioData.statusStats.sunny / totalProjects) * 100);
+    const cloudyPercent = Math.round((portfolioData.statusStats.cloudy / totalProjects) * 100);
+    const stormyPercent = Math.round((portfolioData.statusStats.stormy / totalProjects) * 100);
+
+    // Icônes météo avec pourcentages
+    slide.addText("☀️", { x: 2.5, y: 5.2, w: 1, h: 0.8, fontSize: 24, align: "center" });
+    slide.addText(`${sunnyPercent}%`, { x: 2.3, y: 5.8, w: 1.4, h: 0.4, fontSize: 12, align: "center", color: "22C55E" });
+
+    slide.addText("☁️", { x: 4.5, y: 5.2, w: 1, h: 0.8, fontSize: 24, align: "center" });
+    slide.addText(`${cloudyPercent}%`, { x: 4.3, y: 5.8, w: 1.4, h: 0.4, fontSize: 12, align: "center", color: "F59E0B" });
+
+    slide.addText("⛈️", { x: 6.5, y: 5.2, w: 1, h: 0.8, fontSize: 24, align: "center" });
+    slide.addText(`${stormyPercent}%`, { x: 6.3, y: 5.8, w: 1.4, h: 0.4, fontSize: 12, align: "center", color: "EF4444" });
+  }
+
   // Description si disponible
   if (portfolioData.description) {
     slide.addText(
       portfolioData.description,
       {
         x: 1,
-        y: 4.5,
+        y: 6.5,
         w: 8,
-        h: 1.5,
+        h: 1,
         fontSize: 14,
         color: pptxColors.text,
         align: "center",
@@ -180,7 +226,7 @@ export const generatePortfolioOverviewSlide = (pptx: pptxgen, portfolioData: Por
 };
 
 /**
- * Génère une slide avec les statistiques du portefeuille
+ * Génère une slide avec les statistiques visuelles du portefeuille
  */
 export const generatePortfolioStatisticsSlide = (pptx: pptxgen, portfolioData: PortfolioData) => {
   const slide = pptx.addSlide({ masterName: "MAIN_MASTER" });
@@ -197,7 +243,7 @@ export const generatePortfolioStatisticsSlide = (pptx: pptxgen, portfolioData: P
     }
   );
 
-  // Statistiques par statut
+  // Graphique en barres pour les statuts météo
   slide.addText(
     "Répartition par statut météo",
     {
@@ -211,41 +257,52 @@ export const generatePortfolioStatisticsSlide = (pptx: pptxgen, portfolioData: P
     }
   );
 
-  const statusData = [
-    [
-      { text: "Statut", options: { bold: true } },
-      { text: "Projets", options: { bold: true } },
-      { text: "%", options: { bold: true } }
-    ],
-    [
-      { text: "Ensoleillé", options: {} },
-      { text: portfolioData.statusStats.sunny.toString(), options: {} },
-      { text: `${Math.round((portfolioData.statusStats.sunny / portfolioData.project_count) * 100)}%`, options: {} }
-    ],
-    [
-      { text: "Nuageux", options: {} },
-      { text: portfolioData.statusStats.cloudy.toString(), options: {} },
-      { text: `${Math.round((portfolioData.statusStats.cloudy / portfolioData.project_count) * 100)}%`, options: {} }
-    ],
-    [
-      { text: "Orageux", options: {} },
-      { text: portfolioData.statusStats.stormy.toString(), options: {} },
-      { text: `${Math.round((portfolioData.statusStats.stormy / portfolioData.project_count) * 100)}%`, options: {} }
-    ]
-  ];
+  // Données pour le graphique en barres des statuts
+  const maxStatusValue = Math.max(portfolioData.statusStats.sunny, portfolioData.statusStats.cloudy, portfolioData.statusStats.stormy);
+  const barMaxWidth = 3;
+  const barHeight = 0.4;
+  const barSpacing = 0.6;
 
-  slide.addTable(statusData, {
-    x: 0.5,
-    y: 2.6,
-    w: 4,
-    h: 2,
-    fontSize: 10,
-    border: { type: "solid", color: pptxColors.muted, pt: 1 },
-    fill: { color: "FFFFFF" },
-    color: pptxColors.text
+  // Barre Ensoleillé
+  const sunnyWidth = maxStatusValue > 0 ? (portfolioData.statusStats.sunny / maxStatusValue) * barMaxWidth : 0;
+  slide.addText("☀️", { x: 0.5, y: 2.8, w: 0.4, h: 0.4, fontSize: 16, align: "center" });
+  slide.addShape(pptx.ShapeType.rect, {
+    x: 1,
+    y: 2.8,
+    w: sunnyWidth,
+    h: barHeight,
+    fill: { color: "22C55E" },
+    line: { width: 0 }
   });
+  slide.addText(portfolioData.statusStats.sunny.toString(), { x: 1 + sunnyWidth + 0.1, y: 2.8, w: 0.5, h: 0.4, fontSize: 10, valign: "middle" });
 
-  // Statistiques par cycle de vie
+  // Barre Nuageux
+  const cloudyWidth = maxStatusValue > 0 ? (portfolioData.statusStats.cloudy / maxStatusValue) * barMaxWidth : 0;
+  slide.addText("☁️", { x: 0.5, y: 2.8 + barSpacing, w: 0.4, h: 0.4, fontSize: 16, align: "center" });
+  slide.addShape(pptx.ShapeType.rect, {
+    x: 1,
+    y: 2.8 + barSpacing,
+    w: cloudyWidth,
+    h: barHeight,
+    fill: { color: "F59E0B" },
+    line: { width: 0 }
+  });
+  slide.addText(portfolioData.statusStats.cloudy.toString(), { x: 1 + cloudyWidth + 0.1, y: 2.8 + barSpacing, w: 0.5, h: 0.4, fontSize: 10, valign: "middle" });
+
+  // Barre Orageux
+  const stormyWidth = maxStatusValue > 0 ? (portfolioData.statusStats.stormy / maxStatusValue) * barMaxWidth : 0;
+  slide.addText("⛈️", { x: 0.5, y: 2.8 + (barSpacing * 2), w: 0.4, h: 0.4, fontSize: 16, align: "center" });
+  slide.addShape(pptx.ShapeType.rect, {
+    x: 1,
+    y: 2.8 + (barSpacing * 2),
+    w: stormyWidth,
+    h: barHeight,
+    fill: { color: "EF4444" },
+    line: { width: 0 }
+  });
+  slide.addText(portfolioData.statusStats.stormy.toString(), { x: 1 + stormyWidth + 0.1, y: 2.8 + (barSpacing * 2), w: 0.5, h: 0.4, fontSize: 10, valign: "middle" });
+
+  // Diagramme circulaire visuel pour le cycle de vie
   slide.addText(
     "Répartition par cycle de vie",
     {
@@ -259,58 +316,84 @@ export const generatePortfolioStatisticsSlide = (pptx: pptxgen, portfolioData: P
     }
   );
 
+  // Données du cycle de vie avec représentation visuelle
   const lifecycleData = [
-    [
-      { text: "Cycle de vie", options: { bold: true } },
-      { text: "Projets", options: { bold: true } },
-      { text: "%", options: { bold: true } }
-    ],
-    [
-      { text: "À l'étude", options: {} },
-      { text: portfolioData.lifecycleStats.study.toString(), options: {} },
-      { text: `${Math.round((portfolioData.lifecycleStats.study / portfolioData.project_count) * 100)}%`, options: {} }
-    ],
-    [
-      { text: "Validé", options: {} },
-      { text: portfolioData.lifecycleStats.validated.toString(), options: {} },
-      { text: `${Math.round((portfolioData.lifecycleStats.validated / portfolioData.project_count) * 100)}%`, options: {} }
-    ],
-    [
-      { text: "En cours", options: {} },
-      { text: portfolioData.lifecycleStats.in_progress.toString(), options: {} },
-      { text: `${Math.round((portfolioData.lifecycleStats.in_progress / portfolioData.project_count) * 100)}%`, options: {} }
-    ],
-    [
-      { text: "Terminé", options: {} },
-      { text: portfolioData.lifecycleStats.completed.toString(), options: {} },
-      { text: `${Math.round((portfolioData.lifecycleStats.completed / portfolioData.project_count) * 100)}%`, options: {} }
-    ],
-    [
-      { text: "Suspendu", options: {} },
-      { text: portfolioData.lifecycleStats.suspended.toString(), options: {} },
-      { text: `${Math.round((portfolioData.lifecycleStats.suspended / portfolioData.project_count) * 100)}%`, options: {} }
-    ],
-    [
-      { text: "Abandonné", options: {} },
-      { text: portfolioData.lifecycleStats.abandoned.toString(), options: {} },
-      { text: `${Math.round((portfolioData.lifecycleStats.abandoned / portfolioData.project_count) * 100)}%`, options: {} }
-    ]
+    { label: "À l'étude", value: portfolioData.lifecycleStats.study, color: "94A3B8", emoji: "🔍" },
+    { label: "Validé", value: portfolioData.lifecycleStats.validated, color: "3B82F6", emoji: "✅" },
+    { label: "En cours", value: portfolioData.lifecycleStats.in_progress, color: "F59E0B", emoji: "🚧" },
+    { label: "Terminé", value: portfolioData.lifecycleStats.completed, color: "22C55E", emoji: "🏁" },
+    { label: "Suspendu", value: portfolioData.lifecycleStats.suspended, color: "F97316", emoji: "⏸️" },
+    { label: "Abandonné", value: portfolioData.lifecycleStats.abandoned, color: "EF4444", emoji: "❌" }
   ];
 
-  slide.addTable(lifecycleData, {
-    x: 5,
-    y: 2.6,
-    w: 4.5,
-    h: 3,
-    fontSize: 10,
-    border: { type: "solid", color: pptxColors.muted, pt: 1 },
-    fill: { color: "FFFFFF" },
-    color: pptxColors.text
+  let yPos = 2.8;
+  lifecycleData.forEach((item, index) => {
+    if (item.value > 0) {
+      const percentage = Math.round((item.value / portfolioData.project_count) * 100);
+      const barWidth = (item.value / portfolioData.project_count) * 3.5;
+      
+      // Emoji + Label
+      slide.addText(item.emoji, { x: 5, y: yPos, w: 0.3, h: 0.3, fontSize: 12, align: "center" });
+      slide.addText(item.label, { x: 5.4, y: yPos, w: 1.2, h: 0.3, fontSize: 9, valign: "middle" });
+      
+      // Barre colorée
+      slide.addShape(pptx.ShapeType.rect, {
+        x: 6.7,
+        y: yPos,
+        w: barWidth,
+        h: 0.25,
+        fill: { color: item.color },
+        line: { width: 0 }
+      });
+      
+      // Valeur et pourcentage
+      slide.addText(`${item.value} (${percentage}%)`, { 
+        x: 6.7 + barWidth + 0.1, 
+        y: yPos, 
+        w: 1, 
+        h: 0.3, 
+        fontSize: 8, 
+        valign: "middle" 
+      });
+      
+      yPos += 0.4;
+    }
+  });
+
+  // Indicateur global de santé du portefeuille
+  const healthScore = portfolioData.statusStats.sunny / portfolioData.project_count;
+  const healthColor = healthScore >= 0.7 ? "22C55E" : healthScore >= 0.4 ? "F59E0B" : "EF4444";
+  const healthEmoji = healthScore >= 0.7 ? "😊" : healthScore >= 0.4 ? "😐" : "😟";
+  
+  slide.addText(
+    "Santé globale du portefeuille",
+    {
+      x: 0.5,
+      y: 6,
+      w: 9,
+      h: 0.4,
+      fontSize: 12,
+      bold: true,
+      color: pptxColors.text,
+      align: "center"
+    }
+  );
+
+  slide.addText(healthEmoji, { x: 4, y: 6.5, w: 1, h: 0.8, fontSize: 32, align: "center" });
+  slide.addText(`${Math.round(healthScore * 100)}% de projets en bonne santé`, { 
+    x: 2, 
+    y: 7.2, 
+    w: 6, 
+    h: 0.4, 
+    fontSize: 14, 
+    align: "center", 
+    color: healthColor,
+    bold: true 
   });
 };
 
 /**
- * Génère une slide avec la liste des projets du portefeuille
+ * Génère une slide avec la liste colorée des projets du portefeuille
  */
 export const generatePortfolioProjectsSlide = (pptx: pptxgen, portfolioData: PortfolioData) => {
   const slide = pptx.addSlide({ masterName: "MAIN_MASTER" });
@@ -327,34 +410,61 @@ export const generatePortfolioProjectsSlide = (pptx: pptxgen, portfolioData: Por
     }
   );
 
-  // Données des projets (limiter à 15 projets pour tenir sur la slide)
-  const projectsToShow = portfolioData.projects.slice(0, 15);
+  // Données des projets (limiter à 12 projets pour tenir sur la slide avec le design amélioré)
+  const projectsToShow = portfolioData.projects.slice(0, 12);
   
-  const projectsData = [
-    [
-      { text: "Projet", options: { bold: true } },
-      { text: "Chef de projet", options: { bold: true } },
-      { text: "Statut", options: { bold: true } },
-      { text: "Cycle de vie", options: { bold: true } }
-    ],
-    ...projectsToShow.map(project => [
-      { text: project.title.length > 30 ? project.title.substring(0, 30) + "..." : project.title, options: {} },
-      { text: project.project_manager || "Non assigné", options: {} },
-      { text: project.status === 'sunny' ? '☀️' : project.status === 'cloudy' ? '☁️' : project.status === 'stormy' ? '⛈️' : '-', options: {} },
-      { text: project.lifecycle_status === 'study' ? 'Étude' :
+  // En-têtes du tableau
+  const headers = [
+    { text: "Projet", options: { bold: true, fill: { color: "F3F4F6" } } },
+    { text: "Chef de projet", options: { bold: true, fill: { color: "F3F4F6" } } },
+    { text: "Météo", options: { bold: true, fill: { color: "F3F4F6" } } },
+    { text: "Cycle de vie", options: { bold: true, fill: { color: "F3F4F6" } } },
+    { text: "Avancement", options: { bold: true, fill: { color: "F3F4F6" } } }
+  ];
+
+  const projectRows = projectsToShow.map(project => {
+    const completion = project.completion || 0;
+    const completionColor = completion >= 75 ? "22C55E" : completion >= 50 ? "F59E0B" : "EF4444";
+    
+    return [
+      { 
+        text: project.title.length > 20 ? project.title.substring(0, 20) + "..." : project.title, 
+        options: {} 
+      },
+      { 
+        text: project.project_manager || "Non assigné", 
+        options: {} 
+      },
+      { 
+        text: project.status === 'sunny' ? '☀️' : project.status === 'cloudy' ? '☁️' : project.status === 'stormy' ? '⛈️' : '-', 
+        options: { align: "center" } 
+      },
+      { 
+        text: project.lifecycle_status === 'study' ? 'Étude' :
                project.lifecycle_status === 'validated' ? 'Validé' :
                project.lifecycle_status === 'in_progress' ? 'En cours' :
                project.lifecycle_status === 'completed' ? 'Terminé' :
                project.lifecycle_status === 'suspended' ? 'Suspendu' :
-               project.lifecycle_status === 'abandoned' ? 'Abandonné' : '-', options: {} }
-    ])
-  ];
+               project.lifecycle_status === 'abandoned' ? 'Abandonné' : '-', 
+        options: {} 
+      },
+      { 
+        text: `${completion}%`, 
+        options: { 
+          color: completionColor,
+          bold: completion >= 75
+        } 
+      }
+    ];
+  });
 
-  slide.addTable(projectsData, {
+  const tableData = [headers, ...projectRows];
+
+  slide.addTable(tableData, {
     x: 0.5,
     y: 2,
     w: 9,
-    h: 5,
+    h: 4.5,
     fontSize: 9,
     border: { type: "solid", color: pptxColors.muted, pt: 1 },
     fill: { color: "FFFFFF" },
@@ -362,12 +472,12 @@ export const generatePortfolioProjectsSlide = (pptx: pptxgen, portfolioData: Por
   });
 
   // Note si plus de projets que ce qui est affiché
-  if (portfolioData.projects.length > 15) {
+  if (portfolioData.projects.length > 12) {
     slide.addText(
-      `Note: Seuls les 15 premiers projets sont affichés (${portfolioData.projects.length} projets au total)`,
+      `Note: Seuls les 12 premiers projets sont affichés (${portfolioData.projects.length} projets au total)`,
       {
         x: 0.5,
-        y: 7.2,
+        y: 6.8,
         w: 9,
         h: 0.3,
         fontSize: 8,
@@ -376,6 +486,17 @@ export const generatePortfolioProjectsSlide = (pptx: pptxgen, portfolioData: Por
       }
     );
   }
+
+  // Légende des icônes météo
+  slide.addText("Légende:", { x: 0.5, y: 7.2, w: 1, h: 0.3, fontSize: 8, bold: true });
+  slide.addText("☀️ Ensoleillé  ☁️ Nuageux  ⛈️ Orageux", { 
+    x: 1.5, 
+    y: 7.2, 
+    w: 4, 
+    h: 0.3, 
+    fontSize: 8, 
+    color: pptxColors.muted 
+  });
 };
 
 /**
