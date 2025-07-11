@@ -1,4 +1,3 @@
-
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
@@ -36,11 +35,36 @@ export const usePortfolioDetails = (portfolioId: string) => {
 
       if (projectsError) throw projectsError;
 
+      // Récupérer les données de completion depuis latest_reviews pour chaque projet
+      const { data: reviewsData, error: reviewsError } = await supabase
+        .from("latest_reviews")
+        .select("project_id, completion")
+        .in("project_id", projects.map(p => p.id));
+
+      if (reviewsError) throw reviewsError;
+
+      // Créer un map des completions par projet
+      const completionMap = new Map(reviewsData?.map(r => [r.project_id, r.completion]) || []);
+
+      // Enrichir les projets avec leurs données de completion
+      const enrichedProjects = projects.map(project => ({
+        ...project,
+        completion: completionMap.get(project.id) || 0
+      }));
+
       // Calculer les statistiques
       let totalCompletion = 0;
       let projectsWithCompletion = 0;
       let totalBudget = portfolio.budget_total || 0;
       let budgetConsumed = 0; // À implémenter selon la logique métier
+
+      // Calculer l'avancement moyen basé sur les données de completion
+      enrichedProjects.forEach(project => {
+        if (project.completion !== null && project.completion !== undefined) {
+          totalCompletion += project.completion;
+          projectsWithCompletion++;
+        }
+      });
 
       // Statistiques par statut
       const statusStats = {
@@ -58,7 +82,7 @@ export const usePortfolioDetails = (portfolioId: string) => {
         abandoned: 0
       };
 
-      projects.forEach(project => {
+      enrichedProjects.forEach(project => {
         if (project.status) {
           statusStats[project.status as keyof typeof statusStats]++;
         }
@@ -68,16 +92,16 @@ export const usePortfolioDetails = (portfolioId: string) => {
       });
 
       const portfolioWithStats: PortfolioWithStats & { 
-        projects: typeof projects;
+        projects: typeof enrichedProjects;
         statusStats: typeof statusStats;
         lifecycleStats: typeof lifecycleStats;
         budgetConsumed: number;
       } = {
         ...portfolio,
-        project_count: projects.length,
+        project_count: enrichedProjects.length,
         total_completion: totalCompletion,
         average_completion: projectsWithCompletion > 0 ? Math.round(totalCompletion / projectsWithCompletion) : 0,
-        projects,
+        projects: enrichedProjects,
         statusStats,
         lifecycleStats,
         budgetConsumed

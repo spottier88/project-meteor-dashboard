@@ -48,6 +48,7 @@ interface Project {
   lifecycle_status: ProjectLifecycleStatus;
   priority: string | null;
   created_at: string | null;
+  completion: number; // Ajout de la propriété completion
 }
 
 interface PortfolioProjectsTableProps {
@@ -81,7 +82,6 @@ export const PortfolioProjectsTable = ({
     return matchesSearch && matchesStatus && matchesLifecycle;
   });
 
-  // Tri des projets
   const sortedProjects = [...filteredProjects].sort((a, b) => {
     if (!sortKey || !sortDirection) return 0;
     
@@ -201,6 +201,13 @@ export const PortfolioProjectsTable = ({
               <TableHead>Statut</TableHead>
               <TableHead>Cycle de vie</TableHead>
               <SortableHeader
+                label="Avancement"
+                sortKey="completion"
+                currentSort={sortKey}
+                currentDirection={sortDirection}
+                onSort={handleSort}
+              />
+              <SortableHeader
                 label="Priorité"
                 sortKey="priority"
                 currentSort={sortKey}
@@ -227,7 +234,7 @@ export const PortfolioProjectsTable = ({
           <TableBody>
             {sortedProjects.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
+                <TableCell colSpan={9} className="text-center py-8 text-muted-foreground">
                   {projects.length === 0 
                     ? "Aucun projet dans ce portefeuille" 
                     : "Aucun projet ne correspond aux filtres"}
@@ -250,6 +257,17 @@ export const PortfolioProjectsTable = ({
                   </TableCell>
                   <TableCell>
                     <LifecycleStatusBadge status={project.lifecycle_status} />
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex items-center gap-2">
+                      <div className="w-16 bg-gray-200 rounded-full h-2">
+                        <div 
+                          className="bg-blue-600 h-2 rounded-full transition-all" 
+                          style={{ width: `${Math.min(project.completion || 0, 100)}%` }}
+                        ></div>
+                      </div>
+                      <span className="text-sm font-medium">{project.completion || 0}%</span>
+                    </div>
                   </TableCell>
                   <TableCell>
                     {project.priority ? (

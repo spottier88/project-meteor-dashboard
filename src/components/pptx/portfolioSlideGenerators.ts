@@ -1,4 +1,3 @@
-
 /**
  * @file portfolioSlideGenerators.ts
  * @description Générateurs de slides PowerPoint spécifiques aux portefeuilles.
@@ -37,9 +36,6 @@ interface PortfolioData {
   };
 }
 
-/**
- * Génère une slide de titre pour le portefeuille avec indicateurs visuels
- */
 export const generatePortfolioTitleSlide = (pptx: pptxgen, portfolioData: PortfolioData) => {
   const slide = pptx.addSlide({ masterName: "MAIN_MASTER" });
   
@@ -137,9 +133,6 @@ export const generatePortfolioTitleSlide = (pptx: pptxgen, portfolioData: Portfo
   }
 };
 
-/**
- * Génère une slide avec les informations générales du portefeuille
- */
 export const generatePortfolioOverviewSlide = (pptx: pptxgen, portfolioData: PortfolioData) => {
   const slide = pptx.addSlide({ masterName: "MAIN_MASTER" });
   
@@ -225,9 +218,6 @@ export const generatePortfolioOverviewSlide = (pptx: pptxgen, portfolioData: Por
   }
 };
 
-/**
- * Génère une slide avec les statistiques visuelles du portefeuille
- */
 export const generatePortfolioStatisticsSlide = (pptx: pptxgen, portfolioData: PortfolioData) => {
   const slide = pptx.addSlide({ masterName: "MAIN_MASTER" });
   
@@ -393,7 +383,7 @@ export const generatePortfolioStatisticsSlide = (pptx: pptxgen, portfolioData: P
 };
 
 /**
- * Génère une slide avec la liste colorée des projets du portefeuille
+ * Génère une slide avec la liste colorée des projets du portefeuille - Correction pour utiliser completion
  */
 export const generatePortfolioProjectsSlide = (pptx: pptxgen, portfolioData: PortfolioData) => {
   const slide = pptx.addSlide({ masterName: "MAIN_MASTER" });
@@ -426,7 +416,7 @@ export const generatePortfolioProjectsSlide = (pptx: pptxgen, portfolioData: Por
 
   // Ajouter les lignes de projets
   projectsToShow.forEach(project => {
-    const completion = project.completion || 0;
+    const completion = project.completion || 0; // Utilisation de completion au lieu de progress
     const completionColor = completion >= 75 ? "22C55E" : completion >= 50 ? "F59E0B" : "EF4444";
     
     tableData.push([

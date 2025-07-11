@@ -88,7 +88,7 @@ export const generatePortfolioExcel = async (portfolioData: PortfolioData) => {
   const statsSheet = XLSX.utils.aoa_to_sheet(statusData);
   XLSX.utils.book_append_sheet(workbook, statsSheet, 'Statistiques');
 
-  // Feuille 3: Liste détaillée des projets
+  // Feuille 3: Liste détaillée des projets - Correction pour utiliser completion au lieu de progress
   const projectsHeader = [
     'Projet',
     'Chef de projet',
@@ -97,7 +97,7 @@ export const generatePortfolioExcel = async (portfolioData: PortfolioData) => {
     'Priorité',
     'Date de début',
     'Date de fin',
-    'Avancement'
+    'Avancement (%)'
   ];
 
   const projectsData = [projectsHeader, ...portfolioData.projects.map(project => [
@@ -117,7 +117,7 @@ export const generatePortfolioExcel = async (portfolioData: PortfolioData) => {
     project.priority === 'low' ? 'Basse' : 'Non définie',
     project.start_date ? format(new Date(project.start_date), 'dd/MM/yyyy', { locale: fr }) : 'Non définie',
     project.end_date ? format(new Date(project.end_date), 'dd/MM/yyyy', { locale: fr }) : 'Non définie',
-    project.progress || 'Non défini'
+    project.completion || 0 // Utilisation de completion au lieu de progress
   ])];
 
   const projectsSheet = XLSX.utils.aoa_to_sheet(projectsData);
