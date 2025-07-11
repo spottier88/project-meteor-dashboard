@@ -413,20 +413,23 @@ export const generatePortfolioProjectsSlide = (pptx: pptxgen, portfolioData: Por
   // Données des projets (limiter à 12 projets pour tenir sur la slide avec le design amélioré)
   const projectsToShow = portfolioData.projects.slice(0, 12);
   
-  // En-têtes du tableau
-  const headers = [
-    { text: "Projet", options: { bold: true, fill: { color: "F3F4F6" } } },
-    { text: "Chef de projet", options: { bold: true, fill: { color: "F3F4F6" } } },
-    { text: "Météo", options: { bold: true, fill: { color: "F3F4F6" } } },
-    { text: "Cycle de vie", options: { bold: true, fill: { color: "F3F4F6" } } },
-    { text: "Avancement", options: { bold: true, fill: { color: "F3F4F6" } } }
+  // En-têtes du tableau avec format corrigé
+  const tableData: any[][] = [
+    [
+      { text: "Projet", options: { bold: true, fill: { color: "F3F4F6" } } },
+      { text: "Chef de projet", options: { bold: true, fill: { color: "F3F4F6" } } },
+      { text: "Météo", options: { bold: true, fill: { color: "F3F4F6" } } },
+      { text: "Cycle de vie", options: { bold: true, fill: { color: "F3F4F6" } } },
+      { text: "Avancement", options: { bold: true, fill: { color: "F3F4F6" } } }
+    ]
   ];
 
-  const projectRows = projectsToShow.map(project => {
+  // Ajouter les lignes de projets
+  projectsToShow.forEach(project => {
     const completion = project.completion || 0;
     const completionColor = completion >= 75 ? "22C55E" : completion >= 50 ? "F59E0B" : "EF4444";
     
-    return [
+    tableData.push([
       { 
         text: project.title.length > 20 ? project.title.substring(0, 20) + "..." : project.title, 
         options: {} 
@@ -437,7 +440,7 @@ export const generatePortfolioProjectsSlide = (pptx: pptxgen, portfolioData: Por
       },
       { 
         text: project.status === 'sunny' ? '☀️' : project.status === 'cloudy' ? '☁️' : project.status === 'stormy' ? '⛈️' : '-', 
-        options: { align: "center" } 
+        options: {} 
       },
       { 
         text: project.lifecycle_status === 'study' ? 'Étude' :
@@ -455,10 +458,8 @@ export const generatePortfolioProjectsSlide = (pptx: pptxgen, portfolioData: Por
           bold: completion >= 75
         } 
       }
-    ];
+    ]);
   });
-
-  const tableData = [headers, ...projectRows];
 
   slide.addTable(tableData, {
     x: 0.5,
