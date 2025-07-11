@@ -30,10 +30,10 @@ import {
 import { StatusIcon } from "@/components/project/StatusIcon";
 import { LifecycleStatusBadge } from "@/components/project/LifecycleStatusBadge";
 import { Search, Eye, Trash2, Plus } from "lucide-react";
-import { Link } from "react-router-dom";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { useRemoveProjectFromPortfolio } from "@/hooks/usePortfolioDetails";
+import { useProjectNavigation } from "@/hooks/useProjectNavigation";
 import { ProjectStatus, ProjectLifecycleStatus } from "@/types/project";
 import { SortableHeader, SortDirection } from "@/components/ui/sortable-header";
 
@@ -62,6 +62,7 @@ export const PortfolioProjectsTable = ({
   onAddProjects 
 }: PortfolioProjectsTableProps) => {
   const removeProject = useRemoveProjectFromPortfolio();
+  const { navigateToProject } = useProjectNavigation();
   
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
@@ -115,6 +116,11 @@ export const PortfolioProjectsTable = ({
       await removeProject.mutateAsync({ projectId: projectToRemove });
       setProjectToRemove(null);
     }
+  };
+
+  const handleProjectClick = (projectId: string, event: React.MouseEvent) => {
+    event.preventDefault();
+    navigateToProject(projectId, event);
   };
 
   return (
@@ -231,12 +237,12 @@ export const PortfolioProjectsTable = ({
               sortedProjects.map((project) => (
                 <TableRow key={project.id}>
                   <TableCell className="font-medium">
-                    <Link 
-                      to={`/projects/${project.id}`}
-                      className="hover:underline text-primary"
+                    <button 
+                      onClick={(e) => handleProjectClick(project.id, e)}
+                      className="hover:underline text-primary text-left w-full"
                     >
                       {project.title}
-                    </Link>
+                    </button>
                   </TableCell>
                   <TableCell>{project.project_manager || "-"}</TableCell>
                   <TableCell>
@@ -273,11 +279,13 @@ export const PortfolioProjectsTable = ({
                   </TableCell>
                   <TableCell className="text-right">
                     <div className="flex gap-2 justify-end">
-                      <Link to={`/projects/${project.id}`}>
-                        <Button variant="outline" size="sm">
-                          <Eye className="h-4 w-4" />
-                        </Button>
-                      </Link>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={(e) => handleProjectClick(project.id, e)}
+                      >
+                        <Eye className="h-4 w-4" />
+                      </Button>
                       <Button
                         variant="outline"
                         size="sm"
