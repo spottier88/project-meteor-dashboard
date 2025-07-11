@@ -109,15 +109,36 @@ export const generatePortfolioOverviewSlide = (pptx: pptxgen, portfolioData: Por
     }
   );
 
-  // Informations générales en tableau
+  // Informations générales en tableau - Format corrigé pour pptxgenjs
   const tableData = [
-    ["Nom du portefeuille", portfolioData.name],
-    ["Statut", portfolioData.status || "Non défini"],
-    ["Nombre de projets", portfolioData.project_count.toString()],
-    ["Avancement moyen", `${portfolioData.average_completion}%`],
-    ["Budget total", portfolioData.budget_total ? `${portfolioData.budget_total.toLocaleString('fr-FR')} €` : "Non défini"],
-    ["Date de début", portfolioData.start_date ? format(new Date(portfolioData.start_date), 'dd/MM/yyyy', { locale: fr }) : "Non définie"],
-    ["Date de fin", portfolioData.end_date ? format(new Date(portfolioData.end_date), 'dd/MM/yyyy', { locale: fr }) : "Non définie"]
+    [
+      { text: "Nom du portefeuille", options: { bold: true } },
+      { text: portfolioData.name, options: {} }
+    ],
+    [
+      { text: "Statut", options: { bold: true } },
+      { text: portfolioData.status || "Non défini", options: {} }
+    ],
+    [
+      { text: "Nombre de projets", options: { bold: true } },
+      { text: portfolioData.project_count.toString(), options: {} }
+    ],
+    [
+      { text: "Avancement moyen", options: { bold: true } },
+      { text: `${portfolioData.average_completion}%`, options: {} }
+    ],
+    [
+      { text: "Budget total", options: { bold: true } },
+      { text: portfolioData.budget_total ? `${portfolioData.budget_total.toLocaleString('fr-FR')} €` : "Non défini", options: {} }
+    ],
+    [
+      { text: "Date de début", options: { bold: true } },
+      { text: portfolioData.start_date ? format(new Date(portfolioData.start_date), 'dd/MM/yyyy', { locale: fr }) : "Non définie", options: {} }
+    ],
+    [
+      { text: "Date de fin", options: { bold: true } },
+      { text: portfolioData.end_date ? format(new Date(portfolioData.end_date), 'dd/MM/yyyy', { locale: fr }) : "Non définie", options: {} }
+    ]
   ];
 
   slide.addTable(tableData, {
@@ -191,10 +212,26 @@ export const generatePortfolioStatisticsSlide = (pptx: pptxgen, portfolioData: P
   );
 
   const statusData = [
-    ["Statut", "Projets", "%"],
-    ["Ensoleillé", portfolioData.statusStats.sunny.toString(), `${Math.round((portfolioData.statusStats.sunny / portfolioData.project_count) * 100)}%`],
-    ["Nuageux", portfolioData.statusStats.cloudy.toString(), `${Math.round((portfolioData.statusStats.cloudy / portfolioData.project_count) * 100)}%`],
-    ["Orageux", portfolioData.statusStats.stormy.toString(), `${Math.round((portfolioData.statusStats.stormy / portfolioData.project_count) * 100)}%`]
+    [
+      { text: "Statut", options: { bold: true } },
+      { text: "Projets", options: { bold: true } },
+      { text: "%", options: { bold: true } }
+    ],
+    [
+      { text: "Ensoleillé", options: {} },
+      { text: portfolioData.statusStats.sunny.toString(), options: {} },
+      { text: `${Math.round((portfolioData.statusStats.sunny / portfolioData.project_count) * 100)}%`, options: {} }
+    ],
+    [
+      { text: "Nuageux", options: {} },
+      { text: portfolioData.statusStats.cloudy.toString(), options: {} },
+      { text: `${Math.round((portfolioData.statusStats.cloudy / portfolioData.project_count) * 100)}%`, options: {} }
+    ],
+    [
+      { text: "Orageux", options: {} },
+      { text: portfolioData.statusStats.stormy.toString(), options: {} },
+      { text: `${Math.round((portfolioData.statusStats.stormy / portfolioData.project_count) * 100)}%`, options: {} }
+    ]
   ];
 
   slide.addTable(statusData, {
@@ -223,13 +260,41 @@ export const generatePortfolioStatisticsSlide = (pptx: pptxgen, portfolioData: P
   );
 
   const lifecycleData = [
-    ["Cycle de vie", "Projets", "%"],
-    ["À l'étude", portfolioData.lifecycleStats.study.toString(), `${Math.round((portfolioData.lifecycleStats.study / portfolioData.project_count) * 100)}%`],
-    ["Validé", portfolioData.lifecycleStats.validated.toString(), `${Math.round((portfolioData.lifecycleStats.validated / portfolioData.project_count) * 100)}%`],
-    ["En cours", portfolioData.lifecycleStats.in_progress.toString(), `${Math.round((portfolioData.lifecycleStats.in_progress / portfolioData.project_count) * 100)}%`],
-    ["Terminé", portfolioData.lifecycleStats.completed.toString(), `${Math.round((portfolioData.lifecycleStats.completed / portfolioData.project_count) * 100)}%`],
-    ["Suspendu", portfolioData.lifecycleStats.suspended.toString(), `${Math.round((portfolioData.lifecycleStats.suspended / portfolioData.project_count) * 100)}%`],
-    ["Abandonné", portfolioData.lifecycleStats.abandoned.toString(), `${Math.round((portfolioData.lifecycleStats.abandoned / portfolioData.project_count) * 100)}%`]
+    [
+      { text: "Cycle de vie", options: { bold: true } },
+      { text: "Projets", options: { bold: true } },
+      { text: "%", options: { bold: true } }
+    ],
+    [
+      { text: "À l'étude", options: {} },
+      { text: portfolioData.lifecycleStats.study.toString(), options: {} },
+      { text: `${Math.round((portfolioData.lifecycleStats.study / portfolioData.project_count) * 100)}%`, options: {} }
+    ],
+    [
+      { text: "Validé", options: {} },
+      { text: portfolioData.lifecycleStats.validated.toString(), options: {} },
+      { text: `${Math.round((portfolioData.lifecycleStats.validated / portfolioData.project_count) * 100)}%`, options: {} }
+    ],
+    [
+      { text: "En cours", options: {} },
+      { text: portfolioData.lifecycleStats.in_progress.toString(), options: {} },
+      { text: `${Math.round((portfolioData.lifecycleStats.in_progress / portfolioData.project_count) * 100)}%`, options: {} }
+    ],
+    [
+      { text: "Terminé", options: {} },
+      { text: portfolioData.lifecycleStats.completed.toString(), options: {} },
+      { text: `${Math.round((portfolioData.lifecycleStats.completed / portfolioData.project_count) * 100)}%`, options: {} }
+    ],
+    [
+      { text: "Suspendu", options: {} },
+      { text: portfolioData.lifecycleStats.suspended.toString(), options: {} },
+      { text: `${Math.round((portfolioData.lifecycleStats.suspended / portfolioData.project_count) * 100)}%`, options: {} }
+    ],
+    [
+      { text: "Abandonné", options: {} },
+      { text: portfolioData.lifecycleStats.abandoned.toString(), options: {} },
+      { text: `${Math.round((portfolioData.lifecycleStats.abandoned / portfolioData.project_count) * 100)}%`, options: {} }
+    ]
   ];
 
   slide.addTable(lifecycleData, {
@@ -262,23 +327,26 @@ export const generatePortfolioProjectsSlide = (pptx: pptxgen, portfolioData: Por
     }
   );
 
-  // En-tête du tableau
-  const projectsHeader = ["Projet", "Chef de projet", "Statut", "Cycle de vie"];
-  
   // Données des projets (limiter à 15 projets pour tenir sur la slide)
   const projectsToShow = portfolioData.projects.slice(0, 15);
+  
   const projectsData = [
-    projectsHeader,
+    [
+      { text: "Projet", options: { bold: true } },
+      { text: "Chef de projet", options: { bold: true } },
+      { text: "Statut", options: { bold: true } },
+      { text: "Cycle de vie", options: { bold: true } }
+    ],
     ...projectsToShow.map(project => [
-      project.title.length > 30 ? project.title.substring(0, 30) + "..." : project.title,
-      project.project_manager || "Non assigné",
-      project.status === 'sunny' ? '☀️' : project.status === 'cloudy' ? '☁️' : project.status === 'stormy' ? '⛈️' : '-',
-      project.lifecycle_status === 'study' ? 'Étude' :
-      project.lifecycle_status === 'validated' ? 'Validé' :
-      project.lifecycle_status === 'in_progress' ? 'En cours' :
-      project.lifecycle_status === 'completed' ? 'Terminé' :
-      project.lifecycle_status === 'suspended' ? 'Suspendu' :
-      project.lifecycle_status === 'abandoned' ? 'Abandonné' : '-'
+      { text: project.title.length > 30 ? project.title.substring(0, 30) + "..." : project.title, options: {} },
+      { text: project.project_manager || "Non assigné", options: {} },
+      { text: project.status === 'sunny' ? '☀️' : project.status === 'cloudy' ? '☁️' : project.status === 'stormy' ? '⛈️' : '-', options: {} },
+      { text: project.lifecycle_status === 'study' ? 'Étude' :
+               project.lifecycle_status === 'validated' ? 'Validé' :
+               project.lifecycle_status === 'in_progress' ? 'En cours' :
+               project.lifecycle_status === 'completed' ? 'Terminé' :
+               project.lifecycle_status === 'suspended' ? 'Suspendu' :
+               project.lifecycle_status === 'abandoned' ? 'Abandonné' : '-', options: {} }
     ])
   ];
 
