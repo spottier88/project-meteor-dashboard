@@ -1,4 +1,3 @@
-
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
@@ -62,7 +61,7 @@ export const usePortfolios = () => {
       // Calculer les statistiques pour chaque portefeuille de manière optimisée
       const portfoliosWithStats: PortfolioWithStats[] = await Promise.all(
         portfolios.map(async (portfolio) => {
-          // Utiliser une seule requête pour récupérer les statistiques
+          // Récupérer tous les projets du portefeuille
           const { data: projectStats, error: statsError } = await supabase
             .from("projects")
             .select("id, lifecycle_status")
@@ -75,19 +74,28 @@ export const usePortfolios = () => {
           const totalProjects = projectStats?.length || 0;
           const completedProjects = projectStats?.filter(p => p.lifecycle_status === 'completed').length || 0;
 
-          // Récupérer les complétions des projets en une seule requête
+          // Récupérer les complétions de TOUS les projets du portefeuille
           let averageCompletion = 0;
           if (totalProjects > 0) {
             const projectIds = projectStats?.map(p => p.id) || [];
             const { data: reviews, error: reviewsError } = await supabase
               .from("latest_reviews")
-              .select("completion")
-              .in("project_id", projectIds)
-              .not("completion", "is", null);
+              .select("project_id, completion")
+              .in("project_id", projectIds);
 
-            if (!reviewsError && reviews && reviews.length > 0) {
-              const totalCompletion = reviews.reduce((sum, review) => sum + (review.completion || 0), 0);
-              averageCompletion = Math.round(totalCompletion / reviews.length);
+            if (!reviewsError && reviews) {
+              // Créer un map des completions par projet
+              const completionMap = new Map(reviews.map(r => [r.project_id, r.completion || 0]));
+              
+              // Calculer la moyenne en incluant TOUS les projets
+              // Les projets sans revues ont une completion de 0
+              let totalCompletion = 0;
+              projectIds.forEach(projectId => {
+                totalCompletion += completionMap.get(projectId) || 0;
+              });
+              
+              // Utiliser le nombre total de projets comme dénominateur
+              averageCompletion = Math.round(totalCompletion / totalProjects);
             }
           }
 
