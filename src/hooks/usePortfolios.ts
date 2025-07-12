@@ -121,16 +121,29 @@ export const useCreatePortfolio = () => {
 
   return useMutation({
     mutationFn: async (data: PortfolioFormData) => {
+      // Vérifier d'abord que l'utilisateur est authentifié
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      
+      if (userError || !user) {
+        throw new Error("Vous devez être connecté pour créer un portefeuille");
+      }
+
+      console.log("Creating portfolio with user:", user.id);
+      
       const { data: result, error } = await supabase
         .from("project_portfolios")
         .insert([{
           ...data,
-          created_by: (await supabase.auth.getUser()).data.user?.id || "",
+          created_by: user.id,
         }])
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error("Erreur lors de la création du portefeuille:", error);
+        throw error;
+      }
+      
       return result;
     },
     onSuccess: () => {
@@ -140,11 +153,21 @@ export const useCreatePortfolio = () => {
         description: "Le portefeuille a été créé avec succès",
       });
     },
-    onError: (error) => {
+    onError: (error: any) => {
       console.error("Erreur lors de la création du portefeuille:", error);
+      
+      let errorMessage = "Une erreur est survenue lors de la création du portefeuille";
+      
+      // Messages d'erreur plus spécifiques selon le type d'erreur
+      if (error.code === '42501') {
+        errorMessage = "Vous n'avez pas les permissions nécessaires pour créer un portefeuille";
+      } else if (error.message?.includes("authentifié")) {
+        errorMessage = error.message;
+      }
+      
       toast({
         title: "Erreur",
-        description: "Une erreur est survenue lors de la création du portefeuille",
+        description: errorMessage,
         variant: "destructive",
       });
     },
