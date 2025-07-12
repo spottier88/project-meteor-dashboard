@@ -1,3 +1,4 @@
+
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
@@ -121,14 +122,14 @@ export const useCreatePortfolio = () => {
 
   return useMutation({
     mutationFn: async (data: PortfolioFormData) => {
-      // Vérifier d'abord que l'utilisateur est authentifié
+      // Vérifier que l'utilisateur est authentifié
       const { data: { user }, error: userError } = await supabase.auth.getUser();
       
       if (userError || !user) {
         throw new Error("Vous devez être connecté pour créer un portefeuille");
       }
 
-      console.log("Creating portfolio with user:", user.id);
+      console.log("Création du portefeuille avec utilisateur:", user.id);
       
       const { data: result, error } = await supabase
         .from("project_portfolios")
@@ -158,11 +159,13 @@ export const useCreatePortfolio = () => {
       
       let errorMessage = "Une erreur est survenue lors de la création du portefeuille";
       
-      // Messages d'erreur plus spécifiques selon le type d'erreur
+      // Messages d'erreur spécifiques
       if (error.code === '42501') {
         errorMessage = "Vous n'avez pas les permissions nécessaires pour créer un portefeuille";
       } else if (error.message?.includes("authentifié")) {
         errorMessage = error.message;
+      } else if (error.message?.includes("violates row-level security")) {
+        errorMessage = "Permissions insuffisantes pour créer un portefeuille";
       }
       
       toast({

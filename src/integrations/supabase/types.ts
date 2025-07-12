@@ -1433,7 +1433,7 @@ export type Database = {
         Args: { p_user_id: string; p_portfolio_id: string }
         Returns: boolean
       }
-      can_manage_portfolio: {
+      can_manage_portfolio_simple: {
         Args: { p_user_id: string; p_portfolio_id: string }
         Returns: boolean
       }
@@ -1466,10 +1466,6 @@ export type Database = {
       }
       can_use_activity_type: {
         Args: { p_user_id: string; p_activity_type_code: string }
-        Returns: boolean
-      }
-      can_view_portfolio: {
-        Args: { p_user_id: string; p_portfolio_id: string }
         Returns: boolean
       }
       can_view_project_members: {
@@ -1584,6 +1580,10 @@ export type Database = {
           id: string
           email: string
         }[]
+      }
+      is_portfolio_owner: {
+        Args: { p_user_id: string; p_portfolio_id: string }
+        Returns: boolean
       }
       update_portfolio_stats: {
         Args: { p_portfolio_id: string }

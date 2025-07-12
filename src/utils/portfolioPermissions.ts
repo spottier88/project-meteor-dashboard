@@ -2,7 +2,7 @@
 import { supabase } from "@/integrations/supabase/client";
 
 /**
- * Utilitaire pour vérifier les permissions des portefeuilles côté client
+ * Utilitaires pour vérifier les permissions des portefeuilles côté client
  * Ces fonctions complètent les politiques RLS côté serveur
  */
 
@@ -24,9 +24,9 @@ export const checkUserCanManagePortfolio = async (
 ): Promise<boolean> => {
   if (!userId || !portfolioId) return false;
 
-  // Utiliser la fonction RLS can_manage_portfolio
+  // Utiliser la fonction RLS can_manage_portfolio_simple
   const { data, error } = await supabase
-    .rpc('can_manage_portfolio', {
+    .rpc('can_manage_portfolio_simple', {
       p_user_id: userId,
       p_portfolio_id: portfolioId
     });
@@ -45,17 +45,18 @@ export const checkUserCanViewPortfolio = async (
 ): Promise<boolean> => {
   if (!userId || !portfolioId) return false;
 
-  // Utiliser la fonction RLS can_view_portfolio
+  // Pour la visualisation, on peut simplement essayer de récupérer le portefeuille
+  // Les politiques RLS s'occuperont de filtrer automatiquement
   const { data, error } = await supabase
-    .rpc('can_view_portfolio', {
-      p_user_id: userId,
-      p_portfolio_id: portfolioId
-    });
+    .from("project_portfolios")
+    .select("id")
+    .eq("id", portfolioId)
+    .single();
 
   if (error) {
     console.error("Erreur lors de la vérification des permissions de visualisation:", error);
     return false;
   }
 
-  return data || false;
+  return !!data;
 };
