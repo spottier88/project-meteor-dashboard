@@ -3,7 +3,7 @@
  * @component DashboardHeader
  * @description En-tête principal du tableau de bord de l'application.
  * Affiche le titre de la page, la navigation principale et les indicateurs 
- * (tâches, panier de projets). S'adapte en fonction des permissions de 
+ * (panier de projets). S'adapte en fonction des permissions de 
  * l'utilisateur connecté.
  */
 
@@ -14,7 +14,6 @@ import { usePermissionsContext } from '@/contexts/PermissionsContext';
 import { useProjectCart } from '@/hooks/use-project-cart';
 import { CartButton } from '@/components/cart/CartButton';
 import { ProjectCart } from '@/components/cart/ProjectCart';
-import { TasksIndicator } from '@/components/task/TasksIndicator';
 import { ArrowLeft } from 'lucide-react';
 
 interface DashboardHeaderProps {
@@ -55,8 +54,6 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
           </div>
 
           <div className="flex items-center gap-2 ml-auto">
-            <TasksIndicator />
-          
             <div onClick={() => setIsCartOpen(true)}>
               <CartButton />
             </div>

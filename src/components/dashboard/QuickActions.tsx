@@ -7,8 +7,10 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { usePermissionsContext } from "@/contexts/PermissionsContext";
 import { Link } from "react-router-dom";
+import { useMyTasks } from "@/hooks/use-my-tasks";
 import { 
   Plus, 
   History, 
@@ -26,6 +28,7 @@ interface QuickActionsProps {
 
 export const QuickActions = ({ onNewProject, onNewReview }: QuickActionsProps) => {
   const { isAdmin, isTimeTracker, isProjectManager, isManager, hasRole } = usePermissionsContext();
+  const { data: overdueTasks, isLoading } = useMyTasks(true);
 
   // Permissions pour créer un projet
   const canCreateProject = isAdmin || isProjectManager || hasRole('chef_projet');
@@ -38,6 +41,8 @@ export const QuickActions = ({ onNewProject, onNewReview }: QuickActionsProps) =
 
   // Permissions pour gérer les portefeuilles
   const canManagePortfolios = isAdmin || hasRole('portfolio_manager');
+
+  const overdueCount = overdueTasks?.length || 0;
 
   return (
     <Card>
@@ -72,11 +77,19 @@ export const QuickActions = ({ onNewProject, onNewReview }: QuickActionsProps) =
         <Link to="/my-tasks" className="block">
           <Button 
             variant="outline" 
-            className="w-full justify-start hover:bg-orange-50 hover:border-orange-200" 
+            className="w-full justify-start hover:bg-orange-50 hover:border-orange-200 relative" 
             size="sm"
           >
             <CheckSquare className="h-4 w-4 mr-2" />
             Mes tâches
+            {!isLoading && overdueCount > 0 && (
+              <Badge 
+                variant="destructive" 
+                className="absolute -top-1 -right-1 px-1.5 min-w-[20px] h-5 flex items-center justify-center rounded-full text-xs"
+              >
+                {overdueCount}
+              </Badge>
+            )}
           </Button>
         </Link>
 
