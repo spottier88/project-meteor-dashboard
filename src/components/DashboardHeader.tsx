@@ -1,10 +1,9 @@
-
 /**
  * @component DashboardHeader
  * @description En-tête principal du tableau de bord de l'application.
- * Affiche le titre de la page, la navigation principale, les boutons d'action
- * (création de projet, de revue) et les indicateurs (tâches, panier de projets).
- * S'adapte en fonction des permissions de l'utilisateur connecté.
+ * Affiche le titre de la page, la navigation principale et les indicateurs 
+ * (tâches, panier de projets). S'adapte en fonction des permissions de 
+ * l'utilisateur connecté.
  */
 
 import React, { useState } from 'react';
@@ -12,7 +11,6 @@ import { Button } from "@/components/ui/button";
 import { NavigationMenu, NavigationMenuItem, NavigationMenuLink, NavigationMenuList } from "@/components/ui/navigation-menu";
 import { Link, useNavigate } from "react-router-dom";
 import { usePermissionsContext } from '@/contexts/PermissionsContext';
-import { ShoppingCart, History, Plus } from 'lucide-react';
 import { useProjectCart } from '@/hooks/use-project-cart';
 import { CartButton } from '@/components/cart/CartButton';
 import { ProjectCart } from '@/components/cart/ProjectCart';
@@ -84,15 +82,6 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
             <div onClick={() => setIsCartOpen(true)}>
               <CartButton />
             </div>
-            
-            <Button onClick={onNewReview} variant="outline" size="sm">
-              <History className="h-4 w-4 mr-2" />
-              Nouvelle revue
-            </Button>
-            <Button onClick={onNewProject} size="sm">
-              <Plus className="h-4 w-4 mr-2" />
-              Nouveau projet
-            </Button>
           </div>
         </div>
       </div>
