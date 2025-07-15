@@ -1,9 +1,9 @@
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { TaskForm } from "@/components/task/TaskForm";
 import { ProjectSummaryContent } from "@/components/project/ProjectSummaryContent";
 import { ProjectForm } from "@/components/ProjectForm";
@@ -18,10 +18,28 @@ import { useProjectFormState } from "@/components/form/useProjectFormState";
 export const ProjectSummary = () => {
   const { projectId } = useParams<{ projectId: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
   const [isTaskFormOpen, setIsTaskFormOpen] = useState(false);
   const [isProjectFormOpen, setIsProjectFormOpen] = useState(false);
   const [isReviewSheetOpen, setIsReviewSheetOpen] = useState(false);
+  const [previousPath, setPreviousPath] = useState<string>("/");
   const { toast } = useToast();
+
+  // Déterminer la page précédente basée sur l'état de navigation ou le referrer
+  useEffect(() => {
+    // Si nous avons un état de navigation avec une page précédente
+    if (location.state?.from) {
+      setPreviousPath(location.state.from);
+    } else {
+      // Sinon, essayer de détecter si nous venons de la page des projets
+      const referrer = document.referrer;
+      if (referrer && referrer.includes('/projects')) {
+        setPreviousPath('/projects');
+      } else {
+        setPreviousPath('/');
+      }
+    }
+  }, [location.state]);
 
   // Centraliser le chargement des permissions au niveau parent avec un état stable
   const projectPermissions = useProjectPermissions(projectId || "");
@@ -200,6 +218,14 @@ export const ProjectSummary = () => {
     }
   };
 
+  const handleBackNavigation = () => {
+    navigate(previousPath);
+  };
+
+  const getBackButtonText = () => {
+    return previousPath === '/projects' ? 'Retour aux projets' : 'Retour à l\'accueil';
+  };
+
   if (!project || projectError) {
     return null;
   }
@@ -209,10 +235,10 @@ export const ProjectSummary = () => {
       <div className="flex items-center justify-between">
         <Button
           variant="ghost"
-          onClick={() => navigate("/")}
+          onClick={handleBackNavigation}
         >
           <ArrowLeft className="h-4 w-4 mr-2" />
-          Retour à l'accueil
+          {getBackButtonText()}
         </Button>
       </div>
 
