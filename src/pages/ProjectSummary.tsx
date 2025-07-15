@@ -1,3 +1,4 @@
+
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -22,24 +23,7 @@ export const ProjectSummary = () => {
   const [isTaskFormOpen, setIsTaskFormOpen] = useState(false);
   const [isProjectFormOpen, setIsProjectFormOpen] = useState(false);
   const [isReviewSheetOpen, setIsReviewSheetOpen] = useState(false);
-  const [previousPath, setPreviousPath] = useState<string>("/");
   const { toast } = useToast();
-
-  // Déterminer la page précédente basée sur l'état de navigation ou le referrer
-  useEffect(() => {
-    // Si nous avons un état de navigation avec une page précédente
-    if (location.state?.from) {
-      setPreviousPath(location.state.from);
-    } else {
-      // Sinon, essayer de détecter si nous venons de la page des projets
-      const referrer = document.referrer;
-      if (referrer && referrer.includes('/projects')) {
-        setPreviousPath('/projects');
-      } else {
-        setPreviousPath('/');
-      }
-    }
-  }, [location.state]);
 
   // Centraliser le chargement des permissions au niveau parent avec un état stable
   const projectPermissions = useProjectPermissions(projectId || "");
@@ -219,11 +203,36 @@ export const ProjectSummary = () => {
   };
 
   const handleBackNavigation = () => {
-    navigate(previousPath);
+    // Si nous avons un état de navigation avec une page précédente
+    if (location.state?.from) {
+      navigate(location.state.from);
+    } else {
+      // Sinon, utiliser l'historique du navigateur pour revenir en arrière
+      navigate(-1);
+    }
   };
 
   const getBackButtonText = () => {
-    return previousPath === '/projects' ? 'Retour aux projets' : 'Retour à l\'accueil';
+    // Déterminer le texte basé sur l'état de navigation ou l'URL actuelle
+    if (location.state?.from) {
+      if (location.state.from === '/projects') {
+        return 'Retour aux projets';
+      } else if (location.state.from.startsWith('/portfolios')) {
+        return 'Retour au portefeuille';
+      }
+    }
+    
+    // Vérifier l'URL de référence si pas d'état de navigation
+    const referrer = document.referrer;
+    if (referrer) {
+      if (referrer.includes('/projects') && !referrer.includes('/portfolios')) {
+        return 'Retour aux projets';
+      } else if (referrer.includes('/portfolios')) {
+        return 'Retour au portefeuille';
+      }
+    }
+    
+    return 'Retour à la page précédente';
   };
 
   if (!project || projectError) {
