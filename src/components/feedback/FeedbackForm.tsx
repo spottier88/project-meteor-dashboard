@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useUser } from "@supabase/auth-helpers-react";
 import { useForm } from "react-hook-form";
@@ -55,11 +54,11 @@ export function FeedbackForm({ onSuccess, onCancel }: FeedbackFormProps) {
 
   const selectedType = form.watch("type");
 
-  // Récupérer les rôles disponibles
+  // Récupérer les rôles disponibles - ajout du rôle portfolio_manager
   const { data: availableRoles } = useQuery({
     queryKey: ["availableRoles"],
     queryFn: async () => {
-      return ["chef_projet", "manager", "membre", "time_tracker"] as UserRole[];
+      return ["chef_projet", "manager", "membre", "time_tracker", "portfolio_manager"] as UserRole[];
     },
   });
 
@@ -301,7 +300,8 @@ export function FeedbackForm({ onSuccess, onCancel }: FeedbackFormProps) {
                         {role === "chef_projet" ? "Chef de projet" :
                           role === "manager" ? "Manager" :
                           role === "membre" ? "Membre" :
-                          role === "time_tracker" ? "Suivi des activités" : role}
+                          role === "time_tracker" ? "Suivi des activités" :
+                          role === "portfolio_manager" ? "Gestionnaire de portefeuille" : role}
                       </SelectItem>
                     ))}
                   </SelectContent>
