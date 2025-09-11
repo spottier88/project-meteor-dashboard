@@ -7,9 +7,11 @@ import { useForm } from "react-hook-form";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { ReviewForm } from "@/components/review/types";
+import { ReviewForm, TaskStatusUpdate } from "@/components/review/types";
 import { ReviewFormFields } from "@/components/review/ReviewFormFields";
 import { ReviewActionFields } from "@/components/review/ReviewActionFields";
+import { TaskStatusUpdateSection } from "@/components/review/TaskStatusUpdateSection";
+import { useTaskPermissions } from "@/hooks/use-task-permissions";
 import { Trash2 } from "lucide-react";
 import { DeleteReviewDialog } from "./DeleteReviewDialog";
 
@@ -37,6 +39,10 @@ export const ReviewSheet = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const queryClient = useQueryClient();
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [taskStatusUpdates, setTaskStatusUpdates] = useState<TaskStatusUpdate[]>([]);
+  
+  // Vérifier les permissions pour les tâches
+  const { canCreateTask, canEditTask } = useTaskPermissions(projectId);
 
   // Récupération de la dernière revue pour initialiser l'avancement
   const { data: lastReview } = useQuery({
@@ -101,6 +107,37 @@ export const ReviewSheet = ({
           .insert(actionsToInsert);
 
         if (actionsError) throw actionsError;
+      }
+
+      // Mettre à jour les statuts des tâches si l'utilisateur a les permissions
+      if (canCreateTask && taskStatusUpdates.length > 0) {
+        const tasksToUpdate = taskStatusUpdates.filter(
+          task => task.currentStatus !== task.newStatus
+        );
+
+        if (tasksToUpdate.length > 0) {
+          // Mise à jour des tâches une par une pour gérer les erreurs individuellement
+          const updatePromises = tasksToUpdate.map(task =>
+            supabase
+              .from("tasks")
+              .update({ status: task.newStatus })
+              .eq("id", task.id)
+          );
+
+          const updateResults = await Promise.allSettled(updatePromises);
+          
+          // Vérifier s'il y a eu des erreurs lors des mises à jour
+          const failedUpdates = updateResults.filter(result => result.status === 'rejected');
+          if (failedUpdates.length > 0) {
+            console.warn(`${failedUpdates.length} tâche(s) n'ont pas pu être mises à jour`);
+            // Continuer quand même avec la revue, mais informer l'utilisateur
+            toast({
+              title: "Avertissement",
+              description: `La revue a été créée, mais ${failedUpdates.length} tâche(s) n'ont pas pu être mises à jour.`,
+              variant: "default",
+            });
+          }
+        }
       }
 
       // Update the project's last review date and status
@@ -172,6 +209,13 @@ export const ReviewSheet = ({
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 mt-6">
               <ReviewFormFields form={form} />
               <ReviewActionFields form={form} />
+              
+              {/* Section de mise à jour des tâches */}
+              <TaskStatusUpdateSection
+                projectId={projectId}
+                onTaskStatusesChange={setTaskStatusUpdates}
+                disabled={isSubmitting}
+              />
               
               <div className="flex justify-end space-x-2">
                 <Button type="button" variant="outline" onClick={onClose}>
