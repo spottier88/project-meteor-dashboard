@@ -3,9 +3,11 @@ import { usePermissionsContext } from "@/contexts/PermissionsContext";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useMemo } from "react";
+import { useAdminModeAwareData } from "./useAdminModeAwareData";
 
 export const useProjectPermissions = (projectId: string) => {
-  const { userProfile, isAdmin, accessibleOrganizations } = usePermissionsContext();
+  const { userProfile, accessibleOrganizations } = usePermissionsContext();
+  const { effectiveAdminStatus: isAdmin } = useAdminModeAwareData();
   
   const { data: projectAccess } = useQuery({
     queryKey: ["projectAccess", projectId, userProfile?.id],

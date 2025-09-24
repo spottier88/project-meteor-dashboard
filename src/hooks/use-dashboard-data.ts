@@ -9,6 +9,7 @@ import { useUser } from "@supabase/auth-helpers-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { usePermissionsContext } from "@/contexts/PermissionsContext";
+import { useAdminModeAwareData } from "./useAdminModeAwareData";
 
 interface DashboardSummary {
   total: number;
@@ -22,9 +23,10 @@ interface DashboardSummary {
 export const useDashboardData = () => {
   const user = useUser();
   const { userProfile } = usePermissionsContext();
+  const { adminModeDisabled } = useAdminModeAwareData();
 
   const { data: summary, isLoading } = useQuery({
-    queryKey: ["dashboardSummary", user?.id],
+    queryKey: ["dashboardSummary", user?.id, adminModeDisabled],
     queryFn: async (): Promise<DashboardSummary> => {
       if (!user?.id || !userProfile) {
         return {
@@ -37,10 +39,11 @@ export const useDashboardData = () => {
         };
       }
 
-      // Récupérer les projets accessibles via la fonction RPC existante
+      // Récupérer les projets accessibles via la fonction RPC mise à jour
       const { data: projectsData, error } = await supabase
-        .rpc('get_accessible_projects_list_view', {
-          p_user_id: user.id
+        .rpc('get_accessible_projects_list_view_with_admin_mode', {
+          p_user_id: user.id,
+          p_admin_mode_disabled: adminModeDisabled
         });
 
       if (error) {

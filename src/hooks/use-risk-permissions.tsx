@@ -1,7 +1,9 @@
 import { usePermissionsContext } from "@/contexts/PermissionsContext";
+import { useAdminModeAwareData } from "./useAdminModeAwareData";
 
-export const useRiskPermissions = (projectId: string) => {
-  const { isAdmin, userProfile } = usePermissionsContext();
+export const useRiskPermissions = () => {
+  const { userProfile } = usePermissionsContext();
+  const { effectiveAdminStatus: isAdmin } = useAdminModeAwareData();
   
   return {
     canManageRisks: isAdmin,

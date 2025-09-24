@@ -1,10 +1,12 @@
 
 import { usePermissionsContext } from "@/contexts/PermissionsContext";
+import { useAdminModeAwareData } from "./useAdminModeAwareData";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
-export const useRiskAccess = (projectId: string) => {
-  const { isAdmin, userProfile } = usePermissionsContext();
+export const useRiskAccess = (projectId?: string) => {
+  const { userProfile } = usePermissionsContext();
+  const { effectiveAdminStatus: isAdmin } = useAdminModeAwareData();
   
   const { data: projectAccess } = useQuery({
     queryKey: ["projectAccess", projectId, userProfile?.id],

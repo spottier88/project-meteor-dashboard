@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useEffect, useState } from "react";
 import { OrganizationFieldsSelects } from "../organization/OrganizationFieldsSelects";
 import { usePermissionsContext } from "@/contexts/PermissionsContext";
+import { useAdminModeAwareData } from "@/hooks/useAdminModeAwareData";
 
 interface OrganizationFieldsProps {
   poleId: string;
@@ -31,7 +32,8 @@ export const OrganizationFields = ({
   project,
 }: OrganizationFieldsProps) => {
   const [isInitialized, setIsInitialized] = useState(false);
-  const { canAccessAllOrganizations, accessibleOrganizations, isLoadingOrganizations } = usePermissionsContext();
+  const { accessibleOrganizations, isLoadingOrganizations } = usePermissionsContext();
+  const { effectiveAdminStatus: canAccessAllOrganizations } = useAdminModeAwareData();
 
   // Récupérer les données des pôles - pour les admins ou si on a besoin de tous les pôles
   const { data: allPoles, isLoading: isLoadingAllPoles } = useQuery({

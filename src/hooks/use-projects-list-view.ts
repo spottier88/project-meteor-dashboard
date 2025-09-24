@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useUser } from "@supabase/auth-helpers-react";
 import { ProjectStatus, ProgressStatus, ProjectLifecycleStatus, ForEntityType, Project, ProjectWithExtendedData } from "@/types/project";
 import { MonitoringLevel } from "@/types/monitoring";
+import { useAdminModeAwareData } from "./useAdminModeAwareData";
 
 export interface ProjectListItem {
   id: string;
@@ -60,18 +61,20 @@ export const convertToProject = (item: ProjectListItem): Project => {
 
 export const useProjectsListView = (enabled = true) => {
   const user = useUser();
+  const { adminModeDisabled } = useAdminModeAwareData();
 
   return useQuery({
-    queryKey: ["projectsListView", user?.id],
+    queryKey: ["projectsListView", user?.id, adminModeDisabled],
     queryFn: async () => {
       if (!user?.id) return [];
       
       try {
-        console.log("Récupération des données de projets optimisées en une seule requête");
+        console.log("Récupération des données de projets optimisées avec mode admin:", { adminModeDisabled });
         
         const { data, error } = await supabase
-          .rpc('get_accessible_projects_list_view', {
-            p_user_id: user.id
+          .rpc('get_accessible_projects_list_view_with_admin_mode', {
+            p_user_id: user.id,
+            p_admin_mode_disabled: adminModeDisabled
           });
 
         if (error) {

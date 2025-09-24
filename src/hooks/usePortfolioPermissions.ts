@@ -1,11 +1,13 @@
 
 import { usePermissionsContext } from "@/contexts/PermissionsContext";
+import { useAdminModeAwareData } from "./useAdminModeAwareData";
 import { useUser } from "@supabase/auth-helpers-react";
 import { useQuery } from "@tanstack/react-query";
 import { checkUserCanCreatePortfolio } from "@/utils/portfolioPermissions";
 
 export const usePortfolioPermissions = () => {
-  const { isAdmin, hasRole } = usePermissionsContext();
+  const { hasRole } = usePermissionsContext();
+  const { effectiveAdminStatus: isAdmin } = useAdminModeAwareData();
   const user = useUser();
 
   // Vérifier si l'utilisateur peut créer des portefeuilles
