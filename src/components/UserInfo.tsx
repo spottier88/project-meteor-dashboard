@@ -20,6 +20,8 @@ import { UserNotificationsDropdown } from "./notifications/UserNotificationsDrop
 import { RequiredNotificationDialog } from "./notifications/RequiredNotificationDialog";
 import { HelpButton } from "@/components/help/HelpButton";
 import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/switch";
+import { usePermissionsContext } from "@/contexts/PermissionsContext";
 
 const clearSupabaseCookies = () => {
   const cookies = document.cookie.split(";");
@@ -42,6 +44,7 @@ export const UserInfo = () => {
   const queryClient = useQueryClient();
   const [isProfileFormOpen, setIsProfileFormOpen] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
+  const { hasAdminRole, isAdmin, adminRoleDisabled, toggleAdminRole } = usePermissionsContext();
 
   const { data: profile } = useQuery({
     queryKey: ["profile", user?.id],
@@ -74,7 +77,7 @@ export const UserInfo = () => {
     enabled: !!user?.id,
   });
 
-  const isAdmin = userRoles?.some(role => role.role === "admin");
+  // Supprimé car maintenant géré par le contexte
 
   const handleLogout = async () => {
     try {
@@ -164,7 +167,7 @@ export const UserInfo = () => {
                 : user.email}
             </span>
             <span className="text-xs text-muted-foreground">
-              {isAdmin ? "Administrateur" : "Chef de projet"}
+              {hasAdminRole ? (isAdmin ? "Administrateur" : "Administrateur (désactivé)") : "Chef de projet"}
             </span>
           </div>
           
@@ -181,6 +184,17 @@ export const UserInfo = () => {
         <div className="flex items-center gap-2">
           <UserNotificationsDropdown />
           <HelpButton />
+          
+          {hasAdminRole && (
+            <div className="flex items-center gap-2 px-3 py-1 border rounded-lg bg-background">
+              <span className="text-xs font-medium">Mode admin</span>
+              <Switch
+                checked={!adminRoleDisabled}
+                onCheckedChange={() => toggleAdminRole()}
+              />
+            </div>
+          )}
+          
           {isAdmin && (
             <Button variant="ghost" size="sm" onClick={() => navigate("/admin")}>
               <Settings className="h-4 w-4 mr-2" />

@@ -22,6 +22,10 @@ interface PermissionsState {
   accessibleOrganizations: AccessibleOrganizations | null;
   canAccessAllOrganizations: boolean;
   isLoadingOrganizations: boolean;
+  // Gestion du rôle admin temporaire
+  hasAdminRole: boolean;
+  adminRoleDisabled: boolean;
+  toggleAdminRole: () => void;
 }
 
 const PermissionsContext = createContext<PermissionsState | undefined>(undefined);
@@ -33,6 +37,7 @@ export function PermissionsProvider({ children }: { children: React.ReactNode })
   const session = useSession();
   const [accessibleOrganizations, setAccessibleOrganizations] = useState<AccessibleOrganizations | null>(null);
   const [isLoadingOrganizations, setIsLoadingOrganizations] = useState(true);
+  const [adminRoleDisabled, setAdminRoleDisabled] = useState(false);
 
   const { data: userRoles, isLoading: isLoadingRoles, isError: isRolesError } = useQuery({
     queryKey: ['userRoles', user?.id, session?.access_token] as const,
@@ -94,7 +99,8 @@ export function PermissionsProvider({ children }: { children: React.ReactNode })
   };
 
   const highestRole = userRoles && userRoles.length > 0 ? getHighestRole(userRoles) : null;
-  const isAdmin = hasRole('admin');
+  const hasAdminRole = hasRole('admin');
+  const isAdmin = hasAdminRole && !adminRoleDisabled;
   const isManager = hasRole('manager');
   const isProjectManager = hasRole('chef_projet');
   const isMember = hasRole('membre');
@@ -102,14 +108,18 @@ export function PermissionsProvider({ children }: { children: React.ReactNode })
   const isLoading = isLoadingRoles || isLoadingProfile;
   const isError = isRolesError || isProfileError;
   const canAccessAllOrganizations = isAdmin;
+  
+  const toggleAdminRole = () => {
+    setAdminRoleDisabled(!adminRoleDisabled);
+  };
 
   // Chargement des organisations accessibles
   useEffect(() => {
-    async function loadAccessibleOrganizations() {
+        async function loadAccessibleOrganizations() {
       if (user?.id && !isLoading && !isError) {
         setIsLoadingOrganizations(true);
         try {
-          const organizations = await getUserAccessibleOrganizations(user.id, isAdmin, isManager);
+          const organizations = await getUserAccessibleOrganizations(user.id, hasAdminRole && !adminRoleDisabled, isManager);
           setAccessibleOrganizations(organizations);
         } catch (error) {
           console.error("[PermissionsProvider] Error loading accessible organizations:", error);
@@ -120,7 +130,7 @@ export function PermissionsProvider({ children }: { children: React.ReactNode })
     }
 
     loadAccessibleOrganizations();
-  }, [user?.id, isAdmin, isManager, isLoading, isError, userRoles]); // Ajout de userRoles comme dépendance
+  }, [user?.id, hasAdminRole, adminRoleDisabled, isManager, isLoading, isError, userRoles]); // Ajout de hasAdminRole et adminRoleDisabled comme dépendances
 
   // useEffect(() => {
     // console.log("[PermissionsProvider] State update:", {
@@ -172,7 +182,10 @@ export function PermissionsProvider({ children }: { children: React.ReactNode })
       isError,
       accessibleOrganizations,
       canAccessAllOrganizations,
-      isLoadingOrganizations
+      isLoadingOrganizations,
+      hasAdminRole,
+      adminRoleDisabled,
+      toggleAdminRole
     }}>
       {children}
     </PermissionsContext.Provider>
