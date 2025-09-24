@@ -7,10 +7,10 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instanciate createClient with right options
+  // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "12.2.3 (519615d)"
+    PostgrestVersion: "13.0.4"
   }
   public: {
     Tables: {
@@ -1426,19 +1426,19 @@ export type Database = {
     }
     Functions: {
       can_access_project: {
-        Args: { p_user_id: string; p_project_id: string }
+        Args: { p_project_id: string; p_user_id: string }
         Returns: boolean
       }
       can_assign_to_portfolio: {
-        Args: { p_user_id: string; p_portfolio_id: string }
+        Args: { p_portfolio_id: string; p_user_id: string }
         Returns: boolean
       }
       can_manage_portfolio_simple: {
-        Args: { p_user_id: string; p_portfolio_id: string }
+        Args: { p_portfolio_id: string; p_user_id: string }
         Returns: boolean
       }
       can_manage_project: {
-        Args: { p_user_id: string; p_project_id: string }
+        Args: { p_project_id: string; p_user_id: string }
         Returns: boolean
       }
       can_manage_project_members: {
@@ -1446,30 +1446,30 @@ export type Database = {
         Returns: boolean
       }
       can_manage_project_organization: {
-        Args: { p_user_id: string; p_project_id: string }
+        Args: { p_project_id: string; p_user_id: string }
         Returns: boolean
       }
       can_manage_project_team: {
-        Args: { p_user_id: string; p_project_id: string }
+        Args: { p_project_id: string; p_user_id: string }
         Returns: boolean
       }
       can_manager_access_project: {
-        Args: { p_user_id: string; p_project_id: string }
+        Args: { p_project_id: string; p_user_id: string }
         Returns: boolean
       }
       can_manager_access_projects: {
-        Args: { p_user_id: string; p_project_ids: string[] }
+        Args: { p_project_ids: string[]; p_user_id: string }
         Returns: {
-          project_id: string
           can_access: boolean
+          project_id: string
         }[]
       }
       can_use_activity_type: {
-        Args: { p_user_id: string; p_activity_type_code: string }
+        Args: { p_activity_type_code: string; p_user_id: string }
         Returns: boolean
       }
       can_view_project_members: {
-        Args: { p_user_id: string; p_project_id: string }
+        Args: { p_project_id: string; p_user_id: string }
         Returns: boolean
       }
       generate_project_code: {
@@ -1479,52 +1479,56 @@ export type Database = {
       get_accessible_portfolios: {
         Args: { p_user_id: string }
         Returns: {
+          average_completion: number
+          budget_total: number
+          completed_projects: number
+          created_at: string
+          created_by: string
+          description: string
+          end_date: string
           id: string
           name: string
-          description: string
-          strategic_objectives: string
-          budget_total: number
-          start_date: string
-          end_date: string
-          status: string
-          created_by: string
-          created_at: string
-          updated_at: string
           project_count: number
-          completed_projects: number
-          average_completion: number
+          start_date: string
+          status: string
+          strategic_objectives: string
+          updated_at: string
         }[]
       }
       get_accessible_project_managers: {
         Args: { p_user_id: string }
         Returns: {
-          id: string
+          created_at: string
           email: string
           first_name: string
+          id: string
           last_name: string
-          created_at: string
         }[]
       }
       get_accessible_projects: {
         Args: { p_user_id: string }
         Returns: {
+          completion: number
+          direction_id: string
           id: string
-          title: string
-          status: Database["public"]["Enums"]["project_status"]
-          progress: Database["public"]["Enums"]["progress_status"]
           last_review_date: string
-          project_manager: string
+          lifecycle_status: Database["public"]["Enums"]["project_lifecycle_status"]
           owner_id: string
           pole_id: string
-          direction_id: string
+          progress: Database["public"]["Enums"]["progress_status"]
+          project_manager: string
           service_id: string
-          lifecycle_status: Database["public"]["Enums"]["project_lifecycle_status"]
-          completion: number
+          status: Database["public"]["Enums"]["project_status"]
           suivi_dgs: boolean
+          title: string
         }[]
       }
       get_accessible_projects_list_view: {
         Args: { p_user_id: string }
+        Returns: Json
+      }
+      get_accessible_projects_list_view_with_admin_mode: {
+        Args: { p_admin_mode_disabled?: boolean; p_user_id: string }
         Returns: Json
       }
       get_detailed_projects: {
@@ -1539,50 +1543,50 @@ export type Database = {
         Args: { p_user_id: string }
         Returns: {
           id: string
-          title: string
+          last_review_date: string
           project_manager: string
           status: Database["public"]["Enums"]["project_status"]
+          title: string
           weather: Database["public"]["Enums"]["project_status"]
-          last_review_date: string
         }[]
       }
       get_team_view_projects: {
         Args: { p_user_id: string }
         Returns: {
+          direction_id: string
           id: string
-          title: string
+          pole_id: string
           project_manager: string
           project_manager_id: string
-          pole_id: string
-          direction_id: string
           service_id: string
+          title: string
         }[]
       }
       get_team_view_users: {
         Args: { p_user_id: string }
         Returns: {
-          id: string
           email: string
           first_name: string
+          id: string
           last_name: string
         }[]
       }
       get_users_last_login: {
         Args: Record<PropertyKey, never>
         Returns: {
-          user_id: string
           last_sign_in_at: string
+          user_id: string
         }[]
       }
       get_users_without_profile: {
         Args: Record<PropertyKey, never>
         Returns: {
-          id: string
           email: string
+          id: string
         }[]
       }
       is_portfolio_owner: {
-        Args: { p_user_id: string; p_portfolio_id: string }
+        Args: { p_portfolio_id: string; p_user_id: string }
         Returns: boolean
       }
       update_portfolio_stats: {
