@@ -151,48 +151,76 @@ export const ProjectFormStep4 = ({
   }) => {
     const config = FRAMING_SECTION_MAPPING[section];
     const isSectionGenerating = generatingSection === section;
+    const isOtherSectionGenerating = isGenerating && !isSectionGenerating;
 
     return (
-      <div className="space-y-2">
-        <div className="flex items-center justify-between">
-          <Label htmlFor={id}>{config.label}</Label>
-          <AIGenerateButton
-            onClick={() => handleGenerateSection(section)}
-            isGenerating={isSectionGenerating}
-            iconOnly
-            tooltipText={`Générer "${config.label}" avec l'IA`}
-            disabled={isGenerating}
-            size="sm"
-          />
+      <div className="space-y-2 group">
+        <div className="flex items-center justify-between gap-2">
+          <Label htmlFor={id} className="flex-1">{config.label}</Label>
+          <div className="flex-shrink-0">
+            <AIGenerateButton
+              onClick={() => handleGenerateSection(section)}
+              isGenerating={isSectionGenerating}
+              iconOnly
+              tooltipText={`Générer "${config.label}" avec l'IA`}
+              disabled={isGenerating}
+              size="sm"
+              className={`${
+                isSectionGenerating
+                  ? 'ring-2 ring-primary ring-offset-2'
+                  : ''
+              }`}
+            />
+          </div>
         </div>
-        <Textarea
-          id={id}
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          placeholder={config.placeholder}
-          className="min-h-[100px] transition-all"
-          disabled={isSectionGenerating}
-        />
+        <div className="relative">
+          <Textarea
+            id={id}
+            value={value}
+            onChange={(e) => onChange(e.target.value)}
+            placeholder={config.placeholder}
+            className={`min-h-[100px] transition-all duration-300 ${
+              isSectionGenerating
+                ? 'border-primary shadow-lg animate-pulse'
+                : isOtherSectionGenerating
+                ? 'opacity-50'
+                : 'group-hover:border-muted-foreground/30'
+            } ${value ? 'animate-fade-in' : ''}`}
+            disabled={isSectionGenerating}
+          />
+          {isSectionGenerating && (
+            <div className="absolute top-2 right-2 flex items-center gap-2 text-xs text-muted-foreground bg-background/80 px-2 py-1 rounded-md animate-fade-in">
+              <Sparkles className="h-3 w-3 animate-pulse" />
+              Génération en cours...
+            </div>
+          )}
+        </div>
       </div>
     );
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 animate-fade-in">
       {/* En-tête avec génération globale */}
       <div className="space-y-4">
-        <Alert>
-          <Info className="h-4 w-4" />
-          <AlertDescription>
+        <Alert className="border-primary/20 bg-primary/5">
+          <Info className="h-4 w-4 text-primary" />
+          <AlertDescription className="text-sm">
             Vous pouvez saisir quelques notes pour chaque section, puis utiliser l'IA pour
             générer un texte formel et structuré.
           </AlertDescription>
         </Alert>
 
-        <div className="flex items-center justify-between p-4 border rounded-lg bg-muted/50">
-          <div className="flex items-center gap-2">
-            <Sparkles className="h-5 w-5 text-primary" />
-            <div>
+        <div className={`flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 border rounded-lg transition-all duration-300 ${
+          generatingSection === 'all'
+            ? 'bg-primary/10 border-primary shadow-lg'
+            : 'bg-muted/50 hover:bg-muted/70'
+        }`}>
+          <div className="flex items-start gap-3">
+            <Sparkles className={`h-5 w-5 flex-shrink-0 mt-0.5 ${
+              generatingSection === 'all' ? 'text-primary animate-pulse' : 'text-primary'
+            }`} />
+            <div className="space-y-1">
               <h3 className="font-semibold">Génération IA complète</h3>
               <p className="text-sm text-muted-foreground">
                 Générer toutes les sections en une seule fois
@@ -205,54 +233,72 @@ export const ProjectFormStep4 = ({
             label="Générer toute la note"
             disabled={isGenerating}
             variant="default"
+            className="w-full sm:w-auto"
           />
         </div>
       </div>
 
-      <Separator />
+      <Separator className="my-6" />
 
       {/* Sections de cadrage avec génération individuelle */}
-      <FramingField
-        id="context"
-        section="context"
-        value={context}
-        onChange={setContext}
-      />
+      <div className="space-y-6">
+        <FramingField
+          id="context"
+          section="context"
+          value={context}
+          onChange={setContext}
+        />
 
-      <FramingField
-        id="stakeholders"
-        section="stakeholders"
-        value={stakeholders}
-        onChange={setStakeholders}
-      />
+        <FramingField
+          id="stakeholders"
+          section="stakeholders"
+          value={stakeholders}
+          onChange={setStakeholders}
+        />
 
-      <FramingField
-        id="governance"
-        section="governance"
-        value={governance}
-        onChange={setGovernance}
-      />
+        <FramingField
+          id="governance"
+          section="governance"
+          value={governance}
+          onChange={setGovernance}
+        />
 
-      <FramingField
-        id="objectives"
-        section="objectives"
-        value={objectives}
-        onChange={setObjectives}
-      />
+        <FramingField
+          id="objectives"
+          section="objectives"
+          value={objectives}
+          onChange={setObjectives}
+        />
 
-      <FramingField
-        id="timeline"
-        section="timeline"
-        value={timeline}
-        onChange={setTimeline}
-      />
+        <FramingField
+          id="timeline"
+          section="timeline"
+          value={timeline}
+          onChange={setTimeline}
+        />
 
-      <FramingField
-        id="deliverables"
-        section="deliverables"
-        value={deliverables}
-        onChange={setDeliverables}
-      />
+        <FramingField
+          id="deliverables"
+          section="deliverables"
+          value={deliverables}
+          onChange={setDeliverables}
+        />
+      </div>
+
+      {/* Indicateur de progression pour génération globale */}
+      {generatingSection === 'all' && (
+        <div className="fixed bottom-4 right-4 z-50 animate-slide-in-right">
+          <div className="bg-background border shadow-lg rounded-lg p-4 flex items-center gap-3 max-w-xs">
+            <Sparkles className="h-5 w-5 text-primary animate-pulse" />
+            <div className="flex-1">
+              <p className="font-medium text-sm">Génération en cours</p>
+              <p className="text-xs text-muted-foreground">
+                Génération de toutes les sections...
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

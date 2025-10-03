@@ -78,16 +78,18 @@ export function AIGenerateButton({
       size={size}
       onClick={onClick}
       disabled={disabled || isGenerating}
-      className={className}
+      className={`transition-all duration-200 ${className} ${
+        isGenerating ? 'opacity-70' : 'hover-scale'
+      }`}
     >
       {isGenerating ? (
         <>
           <Loader2 className="h-4 w-4 animate-spin" />
-          {!iconOnly && <span className="ml-2">Génération...</span>}
+          {!iconOnly && <span className="ml-2 animate-fade-in">Génération...</span>}
         </>
       ) : (
         <>
-          <Sparkles className="h-4 w-4" />
+          <Sparkles className="h-4 w-4 transition-transform group-hover:rotate-12" />
           {!iconOnly && <span className="ml-2">{label}</span>}
         </>
       )}
@@ -101,7 +103,7 @@ export function AIGenerateButton({
           <TooltipTrigger asChild>
             {button}
           </TooltipTrigger>
-          <TooltipContent>
+          <TooltipContent side="left" className="animate-scale-in">
             <p>{tooltipText}</p>
           </TooltipContent>
         </Tooltip>
