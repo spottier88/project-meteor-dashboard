@@ -67,7 +67,8 @@ const ProjectSummaryActions = ({
       }
 
       // Parse les données JSON si nécessaire et retourner la première entrée
-      return typeof data[0] === 'string' ? JSON.parse(data[0]) : data[0];
+      const projectData = typeof data[0] === 'string' ? JSON.parse(data[0]) : data[0];
+      return projectData as ProjectData;
     } catch (error) {
       console.error("Erreur lors de la récupération des données du projet:", error);
       throw error;
