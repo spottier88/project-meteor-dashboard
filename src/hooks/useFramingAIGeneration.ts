@@ -6,12 +6,14 @@
 
 import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 import { 
   generateFramingSection, 
   generateAllFramingSections,
   FramingSectionKey,
   ProjectContextForAI 
 } from '@/utils/framingAIHelpers';
+import { FRAMING_SECTION_MAPPING } from '@/utils/framingAIHelpers';
 
 interface UseFramingAIGenerationReturn {
   /**
@@ -62,11 +64,30 @@ export function useFramingAIGeneration(): UseFramingAIGenerationReturn {
     setGeneratingSection(section);
 
     try {
+      // Créer une conversation pour tracer l'utilisation de l'IA
+      const sectionLabel = FRAMING_SECTION_MAPPING[section].label;
+      const conversationTitle = `Génération: ${sectionLabel}${projectContext.title ? ` - ${projectContext.title}` : ''}`;
+      
+      const { data: conversation, error: conversationError } = await supabase
+        .from('ai_conversations')
+        .insert({
+          title: conversationTitle,
+          user_id: (await supabase.auth.getUser()).data.user?.id
+        })
+        .select()
+        .single();
+
+      if (conversationError) {
+        console.error('Erreur lors de la création de la conversation:', conversationError);
+        throw new Error('Impossible de créer la conversation IA');
+      }
+
       const generated = await generateFramingSection(
         section,
         userInput,
         projectContext,
-        projectId
+        projectId,
+        conversation.id
       );
 
       toast({
@@ -105,10 +126,28 @@ export function useFramingAIGeneration(): UseFramingAIGenerationReturn {
     setGeneratingSection('all');
 
     try {
+      // Créer une seule conversation pour toutes les sections
+      const conversationTitle = `Génération complète${projectContext.title ? ` - ${projectContext.title}` : ''}`;
+      
+      const { data: conversation, error: conversationError } = await supabase
+        .from('ai_conversations')
+        .insert({
+          title: conversationTitle,
+          user_id: (await supabase.auth.getUser()).data.user?.id
+        })
+        .select()
+        .single();
+
+      if (conversationError) {
+        console.error('Erreur lors de la création de la conversation:', conversationError);
+        throw new Error('Impossible de créer la conversation IA');
+      }
+
       const generated = await generateAllFramingSections(
         sectionsData,
         projectContext,
-        projectId
+        projectId,
+        conversation.id
       );
 
       toast({

@@ -342,7 +342,7 @@ serve(async (req) => {
       const data = await openaiResponse.json();
       const assistantMessage = data.choices[0].message;
 
-      // Si un ID de conversation est fourni, sauvegarder le message dans la base de données
+      // Si un ID de conversation est fourni, sauvegarder les messages dans la base de données
       if (conversationId) {
         // Vérifier que la conversation appartient à l'utilisateur
         const { data: conversation, error: conversationError } = await supabaseClient
@@ -356,17 +356,39 @@ serve(async (req) => {
           console.error('Erreur lors de la vérification de la conversation:', conversationError);
           // On continue même si erreur pour le stockage de la conversation
         } else {
-          // Sauvegarder le message de l'assistant
-          const { error: insertError } = await supabaseClient
-            .from("ai_messages")
-            .insert({
-              conversation_id: conversationId,
-              role: assistantMessage.role,
-              content: assistantMessage.content,
-            });
+          try {
+            // Sauvegarder le message utilisateur (le dernier message avec role='user')
+            const userMessages = messages.filter(msg => msg.role === 'user');
+            if (userMessages.length > 0) {
+              const lastUserMessage = userMessages[userMessages.length - 1];
+              const { error: userInsertError } = await supabaseClient
+                .from("ai_messages")
+                .insert({
+                  conversation_id: conversationId,
+                  role: 'user',
+                  content: lastUserMessage.content,
+                });
 
-          if (insertError) {
-            console.error('Erreur lors de la sauvegarde du message:', insertError);
+              if (userInsertError) {
+                console.error('Erreur lors de la sauvegarde du message utilisateur:', userInsertError);
+              }
+            }
+
+            // Sauvegarder le message de l'assistant
+            const { error: assistantInsertError } = await supabaseClient
+              .from("ai_messages")
+              .insert({
+                conversation_id: conversationId,
+                role: assistantMessage.role,
+                content: assistantMessage.content,
+              });
+
+            if (assistantInsertError) {
+              console.error('Erreur lors de la sauvegarde du message assistant:', assistantInsertError);
+            }
+          } catch (saveError) {
+            console.error('Erreur lors de la sauvegarde des messages:', saveError);
+            // On continue l'exécution même en cas d'erreur de sauvegarde
           }
         }
       }

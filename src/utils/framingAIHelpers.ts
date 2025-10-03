@@ -88,13 +88,15 @@ export interface ProjectContextForAI {
  * @param userInput - Le texte saisi par l'utilisateur (peut être des notes brèves)
  * @param projectContext - Les informations du projet pour contextualiser
  * @param projectId - L'ID du projet (optionnel, pour récupérer plus d'infos côté serveur)
+ * @param conversationId - L'ID de la conversation IA pour tracer l'utilisation
  * @returns Le texte généré par l'IA
  */
 export async function generateFramingSection(
   section: FramingSectionKey,
   userInput: string,
   projectContext: ProjectContextForAI,
-  projectId?: string
+  projectId?: string,
+  conversationId?: string
 ): Promise<string> {
   const mapping = FRAMING_SECTION_MAPPING[section];
   
@@ -120,6 +122,7 @@ Veuillez générer un texte professionnel et structuré pour la section "${mappi
       messages: [
         { role: 'user', content: userMessage }
       ],
+      conversationId: conversationId,
       promptType: 'framework_note',
       promptSection: mapping.aiSection,
       projectId: projectId,
@@ -146,12 +149,14 @@ Veuillez générer un texte professionnel et structuré pour la section "${mappi
  * @param sectionsData - Objet contenant les données de toutes les sections
  * @param projectContext - Les informations du projet
  * @param projectId - L'ID du projet (optionnel)
+ * @param conversationId - L'ID de la conversation IA pour tracer l'utilisation
  * @returns Un objet avec toutes les sections générées
  */
 export async function generateAllFramingSections(
   sectionsData: Record<FramingSectionKey, string>,
   projectContext: ProjectContextForAI,
-  projectId?: string
+  projectId?: string,
+  conversationId?: string
 ): Promise<Record<FramingSectionKey, string>> {
   // Générer toutes les sections en parallèle
   const sectionKeys = Object.keys(FRAMING_SECTION_MAPPING) as FramingSectionKey[];
@@ -162,7 +167,8 @@ export async function generateAllFramingSections(
         key,
         sectionsData[key],
         projectContext,
-        projectId
+        projectId,
+        conversationId
       );
       return { key, content: generated };
     } catch (error) {
