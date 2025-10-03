@@ -14,6 +14,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Pencil } from "lucide-react";
+import ReactMarkdown from "react-markdown";
 import { FramingSectionEditor } from "./FramingSectionEditor";
 import { useProjectPermissions } from "@/hooks/use-project-permissions";
 
@@ -115,7 +116,9 @@ export const FramingDetails = ({ projectId }: FramingDetailsProps) => {
                 onCancel={() => setEditingSection(null)}
               />
             ) : framing?.[section.key] ? (
-              <div className="whitespace-pre-wrap">{framing[section.key]}</div>
+              <div className="prose prose-sm max-w-none dark:prose-invert">
+                <ReactMarkdown>{framing[section.key]}</ReactMarkdown>
+              </div>
             ) : (
               <p className="text-muted-foreground italic">
                 {canEdit 

@@ -20,6 +20,7 @@ import { fr } from 'date-fns/locale';
 import { ProjectData } from '@/hooks/use-detailed-projects-data';
 import { RiskProbability, RiskSeverity, RiskStatus } from '@/types/risk';
 import { ProjectLifecycleStatus, lifecycleStatusLabels } from '@/types/project';
+import { markdownToPdfComponents } from '@/utils/markdownToPdf';
 
 // Définir les styles pour le PDF
 const styles = StyleSheet.create({
@@ -281,7 +282,7 @@ const FramingSection = ({ framing }: { framing: Record<string, string | null> | 
           <View style={styles.section}>
             <Text style={[styles.sectionTitle, { fontSize: 12 }]}>Contexte</Text>
             <View style={styles.sectionContent}>
-              <Text style={styles.paragraph}>{framing.context}</Text>
+              {markdownToPdfComponents(framing.context)}
             </View>
           </View>
         )}
@@ -290,7 +291,7 @@ const FramingSection = ({ framing }: { framing: Record<string, string | null> | 
           <View style={styles.section}>
             <Text style={[styles.sectionTitle, { fontSize: 12 }]}>Objectifs</Text>
             <View style={styles.sectionContent}>
-              <Text style={styles.paragraph}>{framing.objectives}</Text>
+              {markdownToPdfComponents(framing.objectives)}
             </View>
           </View>
         )}
@@ -299,7 +300,7 @@ const FramingSection = ({ framing }: { framing: Record<string, string | null> | 
           <View style={styles.section}>
             <Text style={[styles.sectionTitle, { fontSize: 12 }]}>Parties prenantes</Text>
             <View style={styles.sectionContent}>
-              <Text style={styles.paragraph}>{framing.stakeholders}</Text>
+              {markdownToPdfComponents(framing.stakeholders)}
             </View>
           </View>
         )}
@@ -308,7 +309,7 @@ const FramingSection = ({ framing }: { framing: Record<string, string | null> | 
           <View style={styles.section}>
             <Text style={[styles.sectionTitle, { fontSize: 12 }]}>Gouvernance</Text>
             <View style={styles.sectionContent}>
-              <Text style={styles.paragraph}>{framing.governance}</Text>
+              {markdownToPdfComponents(framing.governance)}
             </View>
           </View>
         )}
@@ -317,7 +318,7 @@ const FramingSection = ({ framing }: { framing: Record<string, string | null> | 
           <View style={styles.section}>
             <Text style={[styles.sectionTitle, { fontSize: 12 }]}>Calendrier</Text>
             <View style={styles.sectionContent}>
-              <Text style={styles.paragraph}>{framing.timeline}</Text>
+              {markdownToPdfComponents(framing.timeline)}
             </View>
           </View>
         )}
@@ -326,7 +327,7 @@ const FramingSection = ({ framing }: { framing: Record<string, string | null> | 
           <View style={styles.section}>
             <Text style={[styles.sectionTitle, { fontSize: 12 }]}>Livrables</Text>
             <View style={styles.sectionContent}>
-              <Text style={styles.paragraph}>{framing.deliverables}</Text>
+              {markdownToPdfComponents(framing.deliverables)}
             </View>
           </View>
         )}
