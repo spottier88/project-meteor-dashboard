@@ -47,55 +47,62 @@ export const AIMonitoring = () => {
         .from("ai_conversations")
         .select("*", { count: "exact", head: true });
 
-      // Messages par utilisateur
-      const { data: messagesByUser } = await supabase
+      // 1. Récupérer toutes les conversations
+      const { data: conversations } = await supabase
         .from("ai_conversations")
-        .select(`
-          user_id,
-          profiles:user_id (email),
-          ai_messages (id)
-        `);
+        .select("id, user_id, title, created_at")
+        .order("created_at", { ascending: false });
 
-      const userStats = messagesByUser?.reduce((acc, conv) => {
+      // 2. Récupérer tous les messages
+      const { data: allMessages } = await supabase
+        .from("ai_messages")
+        .select("id, conversation_id");
+
+      // 3. Récupérer les profils des utilisateurs uniques
+      const uniqueUserIds = [...new Set(conversations?.map(c => c.user_id) || [])];
+      const { data: profiles } = await supabase
+        .from("profiles")
+        .select("id, email")
+        .in("id", uniqueUserIds);
+
+      // 4. Créer des Maps pour faciliter les recherches
+      const profileMap = new Map(profiles?.map(p => [p.id, p.email]) || []);
+      const messageCountByConversation = new Map<string, number>();
+      allMessages?.forEach(msg => {
+        const count = messageCountByConversation.get(msg.conversation_id) || 0;
+        messageCountByConversation.set(msg.conversation_id, count + 1);
+      });
+
+      // 5. Construire les statistiques par utilisateur
+      const userStatsMap = new Map<string, { user_id: string; user_email: string; count: number }>();
+      conversations?.forEach(conv => {
         const userId = conv.user_id;
-        const userEmail = (conv.profiles as any)?.email || "Inconnu";
-        const messageCount = (conv.ai_messages as any[])?.length || 0;
+        const userEmail = profileMap.get(userId) || "Inconnu";
+        const messageCount = messageCountByConversation.get(conv.id) || 0;
 
-        if (!acc[userId]) {
-          acc[userId] = {
+        if (!userStatsMap.has(userId)) {
+          userStatsMap.set(userId, {
             user_id: userId,
             user_email: userEmail,
             count: 0,
-          };
+          });
         }
-        acc[userId].count += messageCount;
-        return acc;
-      }, {} as Record<string, { user_id: string; user_email: string; count: number }>);
+        const stats = userStatsMap.get(userId)!;
+        stats.count += messageCount;
+      });
 
-      const messagesByUserArray = Object.values(userStats || {}).sort(
+      const messagesByUserArray = Array.from(userStatsMap.values()).sort(
         (a, b) => b.count - a.count
       );
 
-      // Conversations récentes
-      const { data: recentConversations } = await supabase
-        .from("ai_conversations")
-        .select(`
-          id,
-          title,
-          created_at,
-          profiles:user_id (email),
-          ai_messages (id)
-        `)
-        .order("created_at", { ascending: false })
-        .limit(10);
-
-      const recentConversationsFormatted = recentConversations?.map((conv) => ({
+      // 6. Formater les conversations récentes (top 10)
+      const recentConversationsFormatted = conversations?.slice(0, 10).map(conv => ({
         id: conv.id,
         title: conv.title,
-        user_email: (conv.profiles as any)?.email || "Inconnu",
+        user_email: profileMap.get(conv.user_id) || "Inconnu",
         created_at: conv.created_at,
-        message_count: (conv.ai_messages as any[])?.length || 0,
-      }));
+        message_count: messageCountByConversation.get(conv.id) || 0,
+      })) || [];
 
       return {
         total_messages: totalMessages || 0,
