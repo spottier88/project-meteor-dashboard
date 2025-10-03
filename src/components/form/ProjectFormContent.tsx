@@ -95,6 +95,13 @@ export const ProjectFormContent = ({
             setTimeline={formState.setTimeline}
             deliverables={formState.deliverables}
             setDeliverables={formState.setDeliverables}
+            projectTitle={formState.title}
+            projectDescription={formState.description}
+            startDate={formState.startDate}
+            endDate={formState.endDate}
+            projectManager={formState.projectManager}
+            priority={formState.priority}
+            projectId={project?.id}
           />
         );
       case 4:
