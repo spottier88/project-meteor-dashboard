@@ -31,6 +31,7 @@ import { TeamActivities } from "./pages/TeamActivities";
 import { GeneralSettings } from "@/components/admin/GeneralSettings";
 import { ActivityTypeManagementPage } from "./pages/ActivityTypeManagement";
 import { AIPromptManagement } from "./pages/AIPromptManagement";
+import { AIMonitoring } from "./pages/AIMonitoring";
 import { logger } from "./utils/logger";
 import { ProjectFraming } from "./pages/ProjectFraming";
 import { MyTasks } from "./pages/MyTasks";
@@ -181,6 +182,14 @@ export const AppRoutes = () => {
             element={
               <ProtectedRoute>
                 <AIPromptManagement />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/ai-monitoring"
+            element={
+              <ProtectedRoute>
+                <AIMonitoring />
               </ProtectedRoute>
             }
           />
