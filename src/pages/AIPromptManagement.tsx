@@ -53,14 +53,15 @@ type PromptTemplate = {
 };
 
 // Sections prédéfinies pour les notes de cadrage
+// Alignées avec les champs du formulaire ProjectFormStep4
 const FRAMEWORK_NOTE_SECTIONS = [
   { value: "general", label: "Général" },
-  { value: "objectifs", label: "Objectifs" },
   { value: "contexte", label: "Contexte" },
-  { value: "cibles", label: "Cibles" },
-  { value: "resultats_attendus", label: "Résultats attendus" },
-  { value: "risques", label: "Risques" },
-  { value: "enjeux", label: "Enjeux" }
+  { value: "parties_prenantes", label: "Parties prenantes" },
+  { value: "organisation", label: "Gouvernance" },
+  { value: "objectifs", label: "Objectifs" },
+  { value: "planning", label: "Planning prévisionnel" },
+  { value: "livrables", label: "Livrables attendus" }
 ];
 
 // Templates par défaut pour chaque section
@@ -69,12 +70,6 @@ const DEFAULT_TEMPLATES = {
     general: `Vous êtes un assistant spécialisé dans la rédaction de notes de cadrage de projets. Votre mission est de générer une note de cadrage complète et professionnelle en vous basant sur les informations fournies par l'utilisateur.
     
 Veuillez produire une note de cadrage concise, structurée et professionnelle. Utilisez un ton formel et soyez précis dans votre formulation.`,
-    
-    objectifs: `Vous êtes un assistant spécialisé dans la définition d'objectifs pour des projets. 
-En vous basant sur les informations fournies, rédigez une section "Objectifs" claire et concise pour une note de cadrage de projet.
-
-Les objectifs doivent être SMART (Spécifiques, Mesurables, Atteignables, Réalistes, Temporellement définis).
-Incluez des objectifs principaux et secondaires si pertinent.`,
     
     contexte: `Vous êtes un assistant spécialisé dans l'analyse contextuelle de projets.
 En vous basant sur les informations fournies, rédigez une section "Contexte" claire et précise pour une note de cadrage de projet.
@@ -85,42 +80,47 @@ Le contexte doit couvrir:
 - Les contraintes externes connues
 - Les motivations principales du projet`,
     
-    cibles: `Vous êtes un assistant spécialisé dans l'identification des cibles et bénéficiaires de projets.
-En vous basant sur les informations fournies, rédigez une section "Cibles" claire et détaillée pour une note de cadrage de projet.
+    parties_prenantes: `Vous êtes un assistant spécialisé dans l'identification des parties prenantes de projets.
+En vous basant sur les informations fournies, rédigez une section "Parties prenantes" claire et détaillée pour une note de cadrage de projet.
 
 Identifiez et décrivez:
-- Les bénéficiaires directs du projet
-- Les parties prenantes impactées
-- Les utilisateurs finaux et leurs profils
-- Les attentes spécifiques de chaque groupe cible`,
+- Les parties prenantes internes et externes
+- Leur rôle et niveau d'implication dans le projet
+- Leurs attentes et besoins spécifiques
+- Les modes de communication privilégiés`,
     
-    resultats_attendus: `Vous êtes un assistant spécialisé dans la définition des livrables et résultats de projets.
-En vous basant sur les informations fournies, rédigez une section "Résultats attendus" claire et détaillée pour une note de cadrage de projet.
+    organisation: `Vous êtes un assistant spécialisé dans la structuration organisationnelle de projets.
+En vous basant sur les informations fournies, rédigez une section "Gouvernance" claire et précise pour une note de cadrage de projet.
 
-Précisez:
-- Les livrables tangibles du projet
-- Les résultats mesurables attendus
-- Les critères de succès du projet
-- Les indicateurs de performance clés`,
+La gouvernance doit préciser:
+- L'organisation du projet (comités, instances de pilotage)
+- Les rôles et responsabilités des acteurs clés
+- Les processus de décision et d'escalade
+- La fréquence et le format des points de suivi`,
     
-    risques: `Vous êtes un assistant spécialisé dans l'analyse de risques de projets.
-En vous basant sur les informations fournies, rédigez une section "Risques" exhaustive et pertinente pour une note de cadrage de projet.
+    objectifs: `Vous êtes un assistant spécialisé dans la définition d'objectifs pour des projets. 
+En vous basant sur les informations fournies, rédigez une section "Objectifs" claire et concise pour une note de cadrage de projet.
 
-Pour chaque risque identifié, précisez:
-- La nature et la description du risque
-- La probabilité d'occurrence (faible, moyenne, élevée)
-- L'impact potentiel sur le projet
-- Les mesures de mitigation recommandées`,
+Les objectifs doivent être SMART (Spécifiques, Mesurables, Atteignables, Réalistes, Temporellement définis).
+Incluez des objectifs principaux et secondaires si pertinent.`,
     
-    enjeux: `Vous êtes un assistant spécialisé dans l'analyse des enjeux stratégiques des projets.
-En vous basant sur les informations fournies, rédigez une section "Enjeux" pertinente pour une note de cadrage de projet.
+    planning: `Vous êtes un assistant spécialisé dans la planification de projets.
+En vous basant sur les informations fournies, rédigez une section "Planning prévisionnel" claire et structurée pour une note de cadrage de projet.
 
-Couvrez les aspects suivants:
-- Les enjeux stratégiques pour l'organisation
-- Les enjeux organisationnels
-- Les enjeux technologiques si pertinent
-- Les enjeux humains et sociaux
-- Les opportunités associées au projet`
+Le planning doit inclure:
+- Les grandes phases du projet
+- Les jalons et échéances clés
+- Les dépendances entre les phases
+- Les marges de manœuvre et points de contrôle`,
+    
+    livrables: `Vous êtes un assistant spécialisé dans la définition des livrables de projets.
+En vous basant sur les informations fournies, rédigez une section "Livrables attendus" claire et détaillée pour une note de cadrage de projet.
+
+Précisez pour chaque livrable:
+- La description et le contenu du livrable
+- Les critères de qualité et d'acceptation
+- Les dates de livraison prévues
+- Les responsables de production et validation`
   }
 };
 
