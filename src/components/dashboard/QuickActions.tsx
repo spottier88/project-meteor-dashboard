@@ -18,7 +18,8 @@ import {
   Activity, 
   Settings,
   Users,
-  Briefcase
+  Briefcase,
+  List
 } from "lucide-react";
 
 interface QuickActionsProps {
@@ -73,6 +74,17 @@ export const QuickActions = ({ onNewProject, onNewReview }: QuickActionsProps) =
             Nouvelle revue
           </Button>
         )}
+
+        <Link to="/projects" className="block">
+          <Button 
+            variant="outline" 
+            className="w-full justify-start" 
+            size="sm"
+          >
+            <List className="h-4 w-4 mr-2" />
+            Voir tous les projets
+          </Button>
+        </Link>
 
         <Link to="/my-tasks" className="block">
           <Button 

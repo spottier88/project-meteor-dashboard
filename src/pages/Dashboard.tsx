@@ -89,12 +89,6 @@ const Dashboard = () => {
       
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
         <h1 className="text-3xl font-bold">Tableau de bord</h1>
-        <Link to="/projects">
-          <Button variant="outline">
-            <List className="h-4 w-4 mr-2" />
-            Voir tous les projets
-          </Button>
-        </Link>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
