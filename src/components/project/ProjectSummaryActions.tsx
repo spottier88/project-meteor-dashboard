@@ -17,6 +17,8 @@ import { RiskProbability, RiskSeverity, RiskStatus } from "@/types/risk";
 import { useDetailedProjectsData, ProjectData } from "@/hooks/use-detailed-projects-data";
 import { Presentation, FileText, Edit, Calendar } from "lucide-react";
 import { generateProjectFramingPDF } from "@/components/framing/ProjectFramingExport";
+import { generateProjectFramingDOCX } from "@/components/framing/ProjectFramingExportDOCX";
+import { FramingExportDialog } from "@/components/framing/FramingExportDialog";
 import { useProjectPermissions } from "@/hooks/useProjectPermissions";
 import { useReviewAccess } from "@/hooks/use-review-access";
 
@@ -37,7 +39,8 @@ const ProjectSummaryActions = ({
 }: ProjectSummaryActionsProps) => {
   const { toast } = useToast();
   const [isExporting, setIsExporting] = useState(false);
-  const [isExportingPDF, setIsExportingPDF] = useState(false);
+  const [isExportingFraming, setIsExportingFraming] = useState(false);
+  const [showExportDialog, setShowExportDialog] = useState(false);
   
   // Vérifier les permissions pour l'édition
   const { canEdit } = useProjectPermissions(project?.id);
@@ -139,72 +142,88 @@ const ProjectSummaryActions = ({
     }
   };
 
-  const handleExportFramingPDF = async () => {
+  const handleExportFraming = async (format: 'pdf' | 'docx') => {
     try {
-      setIsExportingPDF(true);
+      setIsExportingFraming(true);
 
       const detailedProjectData = await fetchDetailedProject(project.id);
       if (!detailedProjectData) return;
 
-      // Générer le PDF avec les données détaillées du projet
-      await generateProjectFramingPDF(detailedProjectData);
+      // Générer le document selon le format choisi
+      if (format === 'pdf') {
+        await generateProjectFramingPDF(detailedProjectData);
+      } else {
+        await generateProjectFramingDOCX(detailedProjectData);
+      }
       
       toast({
         title: "Export réussi",
-        description: "La note de cadrage PDF a été générée avec succès.",
+        description: `La note de cadrage ${format.toUpperCase()} a été générée avec succès.`,
       });
+      
+      // Fermer le dialogue
+      setShowExportDialog(false);
     } catch (error) {
-      console.error("Error exporting to PDF:", error);
+      console.error(`Error exporting to ${format.toUpperCase()}:`, error);
       toast({
         title: "Erreur",
-        description: "Une erreur est survenue lors de l'export PDF.",
+        description: `Une erreur est survenue lors de l'export ${format.toUpperCase()}.`,
         variant: "destructive",
       });
     } finally {
-      setIsExportingPDF(false);
+      setIsExportingFraming(false);
     }
   };
 
   return (
-    <div className="flex space-x-4">
-      {canEdit && (
+    <>
+      <div className="flex space-x-4">
+        {canEdit && (
+          <Button 
+            onClick={onEditProject}
+            variant="outline"
+            className="flex items-center"
+          >
+            <Edit className="h-4 w-4 mr-2" />
+            Modifier
+          </Button>
+        )}
+        {canCreateReview && (
+          <Button 
+            onClick={onCreateReview}
+            className="w-full justify-start bg-blue-600 text-white hover:bg-blue-700" 
+            size="sm"
+          >
+            <Calendar className="h-4 w-4 mr-2" />
+            Nouvelle revue
+          </Button>
+        )}
         <Button 
-          onClick={onEditProject}
+          onClick={handleExportPPTX}
+          disabled={isExporting || isExportingFraming}
+          className="flex items-center"
+        >
+          <Presentation className="h-4 w-4 mr-2" />
+          {isExporting ? "Exportation..." : "Exporter en PPTX"}
+        </Button>
+        <Button
+          onClick={() => setShowExportDialog(true)}
+          disabled={isExporting || isExportingFraming}
           variant="outline"
           className="flex items-center"
         >
-          <Edit className="h-4 w-4 mr-2" />
-          Modifier
+          <FileText className="h-4 w-4 mr-2" />
+          Note de cadrage
         </Button>
-      )}
-      {canCreateReview && (
-        <Button 
-          onClick={onCreateReview}
-          className="w-full justify-start bg-blue-600 text-white hover:bg-blue-700" 
-          size="sm"
-        >
-          <Calendar className="h-4 w-4 mr-2" />
-          Nouvelle revue
-        </Button>
-      )}
-      <Button 
-        onClick={handleExportPPTX}
-        disabled={isExporting || isExportingPDF}
-        className="flex items-center"
-      >
-        <Presentation className="h-4 w-4 mr-2" />
-        {isExporting ? "Exportation..." : "Exporter en PPTX"}
-      </Button>
-      <Button
-        onClick={handleExportFramingPDF}
-        disabled={isExporting || isExportingPDF}
-        variant="outline"
-        className="flex items-center"
-      >
-        <FileText className="h-4 w-4 mr-2" />
-        {isExportingPDF ? "Génération..." : "Note de cadrage PDF"}
-      </Button>
-    </div>
+      </div>
+
+      <FramingExportDialog
+        open={showExportDialog}
+        onOpenChange={setShowExportDialog}
+        onExport={handleExportFraming}
+        isExporting={isExportingFraming}
+      />
+    </>
   );
 };
 
