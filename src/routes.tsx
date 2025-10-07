@@ -30,6 +30,7 @@ import { ActivityManagement } from "@/components/activities/ActivityManagement";
 import { TeamActivities } from "./pages/TeamActivities";
 import { GeneralSettings } from "@/components/admin/GeneralSettings";
 import { ActivityTypeManagementPage } from "./pages/ActivityTypeManagement";
+import { ActivityPointsSettings } from "@/components/admin/ActivityPointsSettings";
 import { AIPromptManagement } from "./pages/AIPromptManagement";
 import { AIMonitoring } from "./pages/AIMonitoring";
 import { logger } from "./utils/logger";
@@ -166,6 +167,14 @@ export const AppRoutes = () => {
             element={
               <ProtectedRoute>
                 <ActivityTypeManagementPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/activity-points"
+            element={
+              <ProtectedRoute>
+                <ActivityPointsSettings />
               </ProtectedRoute>
             }
           />
