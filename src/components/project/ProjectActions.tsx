@@ -122,15 +122,15 @@ export const ProjectActions = ({
           <DropdownMenuContent align="end">
             {(_canEdit || _isMember) && (
               <>
-                <DropdownMenuItem onClick={() => navigate(`/tasks/${projectId}`)}>
+                <DropdownMenuItem onClick={(e) => { e.stopPropagation(); navigate(`/tasks/${projectId}`); }}>
                   <ListTodo className="mr-2 h-4 w-4" />
                   Gérer les tâches
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => navigate(`/risks/${projectId}`)}>
+                <DropdownMenuItem onClick={(e) => { e.stopPropagation(); navigate(`/risks/${projectId}`); }}>
                   <ShieldAlert className="mr-2 h-4 w-4" />
                   Gérer les risques
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => navigate(`/framing/${projectId}`)}>
+                <DropdownMenuItem onClick={(e) => { e.stopPropagation(); navigate(`/framing/${projectId}`); }}>
                   <FileText className="mr-2 h-4 w-4" />
                   Cadrage du projet
                 </DropdownMenuItem>
@@ -139,7 +139,7 @@ export const ProjectActions = ({
             {_canManageTeam && (
               <>
                 {(_canEdit || _isMember) && <DropdownMenuSeparator />}
-                <DropdownMenuItem onClick={() => navigate(`/projects/${projectId}/team`)}>
+                <DropdownMenuItem onClick={(e) => { e.stopPropagation(); navigate(`/projects/${projectId}/team`); }}>
                   <Users className="mr-2 h-4 w-4" />
                   Gérer l'équipe
                 </DropdownMenuItem>
@@ -149,7 +149,7 @@ export const ProjectActions = ({
               <>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem 
-                  onClick={() => setIsDeleteDialogOpen(true)}
+                  onClick={(e) => { e.stopPropagation(); setIsDeleteDialogOpen(true); }}
                   className="text-destructive"
                 >
                   <Trash2 className="mr-2 h-4 w-4" />
