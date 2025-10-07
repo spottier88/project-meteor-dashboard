@@ -11,9 +11,12 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2, Save, X } from "lucide-react";
+import { AIGenerateButton } from "./AIGenerateButton";
+import { useFramingAIGeneration } from "@/hooks/useFramingAIGeneration";
+import { FramingSectionKey } from "@/utils/framingAIHelpers";
 
 interface FramingSectionEditorProps {
   projectId: string;
@@ -33,6 +36,45 @@ export const FramingSectionEditor = ({
   const [value, setValue] = useState(content || "");
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { generateSection, isGenerating, generatingSection } = useFramingAIGeneration();
+
+  // Récupérer les informations du projet pour le contexte IA
+  const { data: project } = useQuery({
+    queryKey: ["project", projectId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("projects")
+        .select("title, description, start_date, end_date")
+        .eq("id", projectId)
+        .single();
+      
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  // Gestionnaire pour la génération IA
+  const handleGenerateAI = async () => {
+    if (!project) return;
+
+    const projectContext = {
+      title: project.title,
+      description: project.description || "",
+      startDate: project.start_date,
+      endDate: project.end_date,
+    };
+
+    const generated = await generateSection(
+      sectionKey as FramingSectionKey,
+      value, // Contenu actuel comme contexte
+      projectContext,
+      projectId
+    );
+
+    if (generated) {
+      setValue(generated);
+    }
+  };
 
   const { mutate, isLoading } = useMutation({
     mutationFn: async () => {
@@ -82,18 +124,31 @@ export const FramingSectionEditor = ({
 
   return (
     <div className="space-y-4">
-      <Textarea
-        value={value}
-        onChange={(e) => setValue(e.target.value)}
-        placeholder={`Saisissez le contenu pour la section ${sectionTitle}`}
-        className="min-h-[150px]"
-      />
+      <div className="space-y-2">
+        <div className="flex items-center justify-between">
+          <label className="text-sm font-medium">Contenu</label>
+          <AIGenerateButton
+            onClick={handleGenerateAI}
+            isGenerating={isGenerating && generatingSection === sectionKey}
+            disabled={isGenerating || !project}
+            size="sm"
+            tooltipText={`Générer "${sectionTitle}" avec l'IA`}
+          />
+        </div>
+        <Textarea
+          value={value}
+          onChange={(e) => setValue(e.target.value)}
+          placeholder={`Saisissez le contenu pour la section ${sectionTitle}`}
+          className="min-h-[150px]"
+          disabled={isGenerating}
+        />
+      </div>
       <div className="flex justify-end gap-2">
         <Button
           variant="outline"
           size="sm"
           onClick={onCancel}
-          disabled={isLoading}
+          disabled={isLoading || isGenerating}
         >
           <X className="h-4 w-4 mr-1" />
           Annuler
@@ -101,7 +156,7 @@ export const FramingSectionEditor = ({
         <Button
           size="sm"
           onClick={() => mutate()}
-          disabled={isLoading}
+          disabled={isLoading || isGenerating}
         >
           {isLoading ? (
             <Loader2 className="h-4 w-4 mr-1 animate-spin" />
