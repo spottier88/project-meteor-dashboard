@@ -7,7 +7,9 @@ Cette application est une gestion de projet simplifiée permettant de :
 - réaliser des revues de projet périodiques
 - Suivre les activités d'utilisateurs
 - Gérer des portefeuilles de projet
-- gérer un panier de projet afin de pouvoir facilement exporter des données au format XLS ou PPTX.
+- Gérer un panier de projet afin de pouvoir facilement exporter des données au format XLS ou PPTX.
+- Gestion des portefeuilles de projets
+- Note de cadrage assistée par l'IA
 
 L'application dispose de plusieurs rôles pour les utilisateurs :
 - Administrateur : il a tous les droits dans l'application
@@ -18,6 +20,8 @@ L'application dispose de plusieurs rôles pour les utilisateurs :
 
 Ce projet est exclusivement développé avec la plateforme lovable (via IA) et une base de données POSTGRES acessible via supabase (en mode autohébergée)
 
+
+
 ## Les technologies utilisées par ce projet sont ?
 
 - Vite
@@ -25,7 +29,7 @@ Ce projet est exclusivement développé avec la plateforme lovable (via IA) et u
 - React
 - shadcn-ui
 - Tailwind CSS
-- supabase (pour la base de données, RLS, APi)
+- Supabase (pour la base de données, RLS, APi)
 
 ## Project info
 
