@@ -124,9 +124,20 @@ export const DeleteProjectDialog = ({
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel disabled={isDeleting}>Annuler</AlertDialogCancel>
+          <AlertDialogCancel 
+            disabled={isDeleting}
+            onClick={(e) => { e.preventDefault(); e.stopPropagation(); onClose(); }}
+            onPointerDown={(e) => e.stopPropagation()}
+            onMouseDown={(e) => e.stopPropagation()}
+            onMouseUp={(e) => e.stopPropagation()}
+          >
+            Annuler
+          </AlertDialogCancel>
           <AlertDialogAction 
-            onClick={handleDelete} 
+            onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleDelete(); }} 
+            onPointerDown={(e) => e.stopPropagation()}
+            onMouseDown={(e) => e.stopPropagation()}
+            onMouseUp={(e) => e.stopPropagation()}
             disabled={isDeleting}
             className={isDeleting ? "opacity-50 cursor-not-allowed" : ""}
           >
