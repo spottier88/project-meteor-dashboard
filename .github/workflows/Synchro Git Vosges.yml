@@ -1,0 +1,29 @@
+name: Sync to Azure DevOps
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  sync:
+    name: Push to Azure DevOps
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout GitHub repository
+        uses: actions/checkout@v3
+
+      - name: Configure Git
+        run: |
+          git config --global user.name "GitHub Sync Bot"
+          git config --global user.email "sync-bot@example.com"
+
+      - name: Add Azure DevOps remote
+        run: |
+          git remote add azure https://:${{ secrets.AZURE_PAT }}@vosges.visualstudio.com/_git/Meteor
+          git fetch azure || echo "Remote Azure DevOps not initialized yet"
+
+      - name: Push to Azure DevOps
+        run: |
+          git push azure main --force
