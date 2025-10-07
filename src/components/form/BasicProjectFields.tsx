@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { DateInputField } from "./DateInputField";
 import { ProjectLifecycleStatus, lifecycleStatusLabels } from "@/types/project";
 import { useAccessiblePortfolios } from "@/hooks/useAccessiblePortfolios";
+import { ProjectManagerCombobox } from "./ProjectManagerCombobox";
 
 interface BasicProjectFieldsProps {
   title: string;
@@ -133,20 +134,11 @@ export const BasicProjectFields = ({
           Chef de projet *
         </label>
         {canEditProjectManager && projectManagers ? (
-          <Select value={projectManager} onValueChange={setProjectManager}>
-            <SelectTrigger>
-              <SelectValue placeholder="Sélectionner un chef de projet" />
-            </SelectTrigger>
-            <SelectContent>
-              {projectManagers.map((manager) => (
-                <SelectItem key={manager.id} value={manager.email || ""}>
-                  {manager.first_name && manager.last_name
-                    ? `${manager.first_name} ${manager.last_name} (${manager.email})`
-                    : manager.email}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <ProjectManagerCombobox
+            value={projectManager}
+            onChange={setProjectManager}
+            projectManagers={projectManagers}
+          />
         ) : (
           <Input
             id="project-manager"
