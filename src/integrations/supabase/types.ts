@@ -1617,7 +1617,7 @@ export type Database = {
       risk_probability: "low" | "medium" | "high"
       risk_severity: "low" | "medium" | "high"
       risk_status: "open" | "in_progress" | "resolved"
-      setting_type: "microsoft_graph" | "openai" | "documentation"
+      setting_type: "microsoft_graph" | "openai" | "documentation" | "activity"
       task_status: "todo" | "in_progress" | "done"
       user_hierarchy_level: "pole" | "direction" | "service"
       user_role:
@@ -1778,7 +1778,7 @@ export const Constants = {
       risk_probability: ["low", "medium", "high"],
       risk_severity: ["low", "medium", "high"],
       risk_status: ["open", "in_progress", "resolved"],
-      setting_type: ["microsoft_graph", "openai", "documentation"],
+      setting_type: ["microsoft_graph", "openai", "documentation", "activity"],
       task_status: ["todo", "in_progress", "done"],
       user_hierarchy_level: ["pole", "direction", "service"],
       user_role: [
