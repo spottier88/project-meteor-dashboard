@@ -7,7 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 
 interface UseProjectSubmitProps {
   project?: any;
-  onSubmit: (projectData: any) => Promise<any>;
+  onSubmit?: (projectData: any) => Promise<any>;
   onClose: () => void;
   formState: ProjectFormState;
 }
@@ -136,48 +136,83 @@ export const useProjectSubmit = ({
         await queryClient.invalidateQueries({ queryKey: ["projectInnovationScores", project.id] });
         
       } else {
-        // Création d'un nouveau projet - utiliser la logique existante
-        const result = await onSubmit({
-          title: formState.title,
-          description: formState.description,
-          projectManager: formState.projectManager,
-          startDate: formState.startDate,
-          endDate: formState.endDate,
-          priority: formState.priority,
-          monitoringLevel: formState.monitoringLevel,
-          monitoringEntityId: getMonitoringEntityId(formState.monitoringLevel),
-          owner_id: formState.ownerId || null,
-          poleId: pole?.id || null,
-          directionId: direction?.id || null,
-          serviceId: service?.id || null,
-          lifecycleStatus: formState.lifecycleStatus,
-          for_entity_type: formState.forEntityType,
-          for_entity_id: formState.forEntityId,
-          innovation: {
-            novateur: formState.novateur,
-            usager: formState.usager,
-            ouverture: formState.ouverture,
-            agilite: formState.agilite,
-            impact: formState.impact,
-          },
-          framing: {
-            context: formState.context,
-            stakeholders: formState.stakeholders,
-            governance: formState.governance,
-            objectives: formState.objectives,
-            timeline: formState.timeline,
-            deliverables: formState.deliverables,
-          },
-          templateId: formState.templateId
-        });
-        
-        // Si un modèle a été sélectionné et qu'il s'agit d'un nouveau projet, créer les tâches
-        if (formState.templateId && result && result.id) {
-          console.log("Création des tâches à partir du modèle:", formState.templateId, "pour le projet:", result.id);
-          const startDateString = formState.startDate ? formState.startDate.toISOString().split('T')[0] : undefined;
-          console.log("Date de début utilisée pour les tâches:", startDateString);
+        // Création d'un nouveau projet - Logique complète intégrée
+        const { data: newProject, error: projectError } = await supabase
+          .from("projects")
+          .insert(projectData)
+          .select()
+          .single();
+
+        if (projectError) {
+          console.error("❌ ProjectSubmit - Erreur création projet:", projectError);
+          throw projectError;
+        }
+
+        const projectId = newProject.id;
+
+        // Création des scores d'innovation
+        const { error: innovationError } = await supabase
+          .from("project_innovation_scores")
+          .insert({
+            project_id: projectId,
+            novateur: formState.novateur || 0,
+            usager: formState.usager || 0,
+            ouverture: formState.ouverture || 0,
+            agilite: formState.agilite || 0,
+            impact: formState.impact || 0,
+          });
+
+        if (innovationError) {
+          console.error("❌ ProjectSubmit - Erreur création innovation:", innovationError);
+          throw innovationError;
+        }
+
+        // Création du monitoring
+        const { error: monitoringError } = await supabase
+          .from("project_monitoring")
+          .insert({
+            project_id: projectId,
+            monitoring_level: formState.monitoringLevel,
+            monitoring_entity_id: getMonitoringEntityId(formState.monitoringLevel),
+          });
+
+        if (monitoringError) {
+          console.error("❌ ProjectSubmit - Erreur création monitoring:", monitoringError);
+          throw monitoringError;
+        }
+
+        // Gestion du framing si présent
+        if (formState.context || formState.objectives || formState.governance || 
+            formState.deliverables || formState.stakeholders || formState.timeline) {
           
-          const tasksCreated = await createTasksFromTemplate(formState.templateId, result.id, startDateString);
+          const { error: framingError } = await supabase
+            .from("project_framing")
+            .insert({
+              project_id: projectId,
+              context: formState.context,
+              objectives: formState.objectives,
+              governance: formState.governance,
+              deliverables: formState.deliverables,
+              stakeholders: formState.stakeholders,
+              timeline: formState.timeline,
+            });
+
+          if (framingError) {
+            console.error("❌ ProjectSubmit - Erreur création cadrage:", framingError);
+          }
+        }
+        
+        // Appeler onSubmit pour compatibilité et callbacks éventuels
+        if (onSubmit) {
+          await onSubmit(newProject);
+        }
+
+        // Si un modèle a été sélectionné, créer les tâches
+        if (formState.templateId) {
+          console.log("Création des tâches à partir du modèle:", formState.templateId, "pour le projet:", projectId);
+          const startDateString = formState.startDate ? formState.startDate.toISOString().split('T')[0] : undefined;
+          
+          const tasksCreated = await createTasksFromTemplate(formState.templateId, projectId, startDateString);
           
           if (tasksCreated) {
             toast({

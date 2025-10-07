@@ -57,11 +57,12 @@ const Dashboard = () => {
     refetchProjects();
   };
 
-  // Fonction placeholder pour la soumission du projet
+  // Fonction de soumission du projet (callback optionnel)
   const handleProjectFormSubmit = async (projectData: any) => {
-    // Cette fonction devrait être implémentée selon la logique du projet
-    console.log("Project data:", projectData);
-    return { id: "new-project-id" };
+    // La logique complète est gérée dans useProjectSubmit
+    // Cette fonction sert uniquement de callback après la création
+    console.log("Projet créé avec succès:", projectData);
+    return projectData;
   };
 
   if (isPermissionsLoading) {
