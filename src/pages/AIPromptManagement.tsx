@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { ChevronLeft, Plus, Edit, Trash2, Copy, Check, AlertTriangle, Loader2 } from "lucide-react";
+import { ChevronLeft, Plus, Edit, Trash2, Copy, Check, AlertTriangle, Loader2, Download, Filter, CheckCircle2, XCircle, Eye } from "lucide-react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -39,6 +39,8 @@ import { Switch } from "@/components/ui/switch";
 import { logger } from "@/utils/logger";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 // Types
 type PromptTemplate = {
@@ -158,6 +160,8 @@ export const AIPromptManagement = () => {
   const [selectedType, setSelectedType] = useState<string>("");
   const [missingSections, setMissingSections] = useState<string[]>([]);
   const [isCreateDefaultsDialogOpen, setIsCreateDefaultsDialogOpen] = useState(false);
+  const [filterType, setFilterType] = useState<string>("all");
+  const [filterStatus, setFilterStatus] = useState<string>("all");
 
   // Fetch prompt templates
   const { data: templates, isLoading } = useQuery({
@@ -453,11 +457,40 @@ export const AIPromptManagement = () => {
     setIsPreviewOpen(true);
   };
 
-  // Group templates by type and section
+  // Fonction pour exporter tous les templates en JSON
+  const exportTemplates = () => {
+    if (!templates) return;
+    
+    const dataStr = JSON.stringify(templates, null, 2);
+    const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+    
+    const exportFileDefaultName = `templates-ia-${new Date().toISOString().split('T')[0]}.json`;
+    
+    const linkElement = document.createElement('a');
+    linkElement.setAttribute('href', dataUri);
+    linkElement.setAttribute('download', exportFileDefaultName);
+    linkElement.click();
+    
+    toast({
+      title: "Export réussi",
+      description: "Les templates ont été exportés en JSON.",
+    });
+  };
+
+  // Group templates by type and section with filters
   const groupedTemplates = React.useMemo(() => {
     if (!templates) return {};
     
-    return templates.reduce((acc: Record<string, Record<string, PromptTemplate[]>>, template) => {
+    // Filtrer les templates selon les critères
+    const filteredTemplates = templates.filter(template => {
+      const typeMatch = filterType === "all" || template.type === filterType;
+      const statusMatch = filterStatus === "all" || 
+        (filterStatus === "active" && template.is_active) ||
+        (filterStatus === "inactive" && !template.is_active);
+      return typeMatch && statusMatch;
+    });
+    
+    return filteredTemplates.reduce((acc: Record<string, Record<string, PromptTemplate[]>>, template) => {
       if (!acc[template.type]) {
         acc[template.type] = {};
       }
@@ -467,7 +500,7 @@ export const AIPromptManagement = () => {
       acc[template.type][template.section].push(template);
       return acc;
     }, {});
-  }, [templates]);
+  }, [templates, filterType, filterStatus]);
 
   // Handle type change
   const handleTypeChange = (value: string) => {
@@ -500,167 +533,297 @@ export const AIPromptManagement = () => {
   };
 
   return (
-    <div className="container py-6 space-y-6">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" asChild>
-            <Link to="/admin">
-              <ChevronLeft className="h-4 w-4" />
-              Retour à l'administration
-            </Link>
-          </Button>
-          <h1 className="text-2xl font-bold tracking-tight">Gestion des templates IA</h1>
+    <TooltipProvider>
+      <div className="container py-6 space-y-6">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" asChild>
+              <Link to="/admin">
+                <ChevronLeft className="h-4 w-4" />
+                Retour à l'administration
+              </Link>
+            </Button>
+            <h1 className="text-2xl font-bold tracking-tight">Gestion des templates IA</h1>
+          </div>
+          <div className="flex gap-2">
+            {missingSections.length > 0 && (
+              <Button 
+                variant="outline" 
+                onClick={() => setIsCreateDefaultsDialogOpen(true)}
+                className="mr-2"
+              >
+                <AlertTriangle className="h-4 w-4 mr-2 text-warning" />
+                Créer {missingSections.length} template(s) manquant(s)
+              </Button>
+            )}
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button variant="outline" onClick={exportTemplates}>
+                  <Download className="h-4 w-4 mr-2" />
+                  Exporter
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Exporter tous les templates en JSON</p>
+              </TooltipContent>
+            </Tooltip>
+            <Button onClick={() => handleOpenDialog()}>
+              <Plus className="h-4 w-4 mr-2" />
+              Nouveau template
+            </Button>
+          </div>
         </div>
-        <div className="flex gap-2">
-          {missingSections.length > 0 && (
-            <Button 
-              variant="outline" 
-              onClick={() => setIsCreateDefaultsDialogOpen(true)}
-              className="mr-2"
+
+        {missingSections.length > 0 && (
+          <Alert className="border-warning bg-warning/10">
+            <AlertTriangle className="h-4 w-4 text-warning" />
+            <AlertDescription className="space-y-3">
+              <div className="font-semibold">
+                ⚠️ Attention : {missingSections.length} section(s) de note de cadrage sans template actif
+              </div>
+              <div className="space-y-1">
+                <p className="text-sm">Sections manquantes :</p>
+                <ul className="text-sm list-disc pl-5 space-y-0.5">
+                  {missingSections.map(s => {
+                    const section = FRAMEWORK_NOTE_SECTIONS.find(fs => fs.value === s);
+                    return (
+                      <li key={s}>
+                        <span className="font-medium">{section ? section.label : s}</span>
+                        <span className="text-muted-foreground"> (section: "{s}")</span>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </div>
+              <div className="text-sm pt-2 border-t border-warning/30">
+                <strong>Impact :</strong> Les templates de secours seront temporairement utilisés pour ces sections.
+                <br />
+                <strong>Action recommandée :</strong> Créez les templates manquants en cliquant sur le bouton ci-dessus
+                pour garantir une cohérence optimale avec votre contexte métier.
+              </div>
+            </AlertDescription>
+          </Alert>
+        )}
+
+        {/* Filtres */}
+        <div className="flex items-center gap-4 p-4 border rounded-lg bg-card">
+          <div className="flex items-center gap-2">
+            <Filter className="h-4 w-4 text-muted-foreground" />
+            <span className="text-sm font-medium">Filtres :</span>
+          </div>
+          <div className="flex gap-2">
+            <Select value={filterType} onValueChange={setFilterType}>
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="Type" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Tous les types</SelectItem>
+                <SelectItem value="framework_note">Note de cadrage</SelectItem>
+                <SelectItem value="general">Général</SelectItem>
+                <SelectItem value="custom">Personnalisé</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select value={filterStatus} onValueChange={setFilterStatus}>
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="Statut" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Tous les statuts</SelectItem>
+                <SelectItem value="active">Actifs uniquement</SelectItem>
+                <SelectItem value="inactive">Inactifs uniquement</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          {(filterType !== "all" || filterStatus !== "all") && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                setFilterType("all");
+                setFilterStatus("all");
+              }}
             >
-              <AlertTriangle className="h-4 w-4 mr-2 text-amber-500" />
-              Créer {missingSections.length} template(s) manquant(s)
+              Réinitialiser les filtres
             </Button>
           )}
-          <Button onClick={() => handleOpenDialog()}>
-            <Plus className="h-4 w-4 mr-2" />
-            Nouveau template
-          </Button>
         </div>
-      </div>
 
-      {missingSections.length > 0 && (
-        <Alert variant="warning" className="bg-amber-50 border-amber-200 text-amber-800">
-          <AlertTriangle className="h-4 w-4" />
-          <AlertDescription className="space-y-3">
-            <div className="font-semibold">
-              ⚠️ Attention : {missingSections.length} section(s) de note de cadrage sans template actif
-            </div>
-            <div className="space-y-1">
-              <p className="text-sm">Sections manquantes :</p>
-              <ul className="text-sm list-disc pl-5 space-y-0.5">
-                {missingSections.map(s => {
-                  const section = FRAMEWORK_NOTE_SECTIONS.find(fs => fs.value === s);
-                  return (
-                    <li key={s}>
-                      <span className="font-medium">{section ? section.label : s}</span>
-                      <span className="text-amber-700"> (section: "{s}")</span>
-                    </li>
-                  );
-                })}
-              </ul>
-            </div>
-            <div className="text-sm pt-2 border-t border-amber-300">
-              <strong>Impact :</strong> Les templates de secours seront temporairement utilisés pour ces sections.
-              <br />
-              <strong>Action recommandée :</strong> Créez les templates manquants en cliquant sur le bouton ci-dessus
-              pour garantir une cohérence optimale avec votre contexte métier.
-            </div>
-          </AlertDescription>
-        </Alert>
-      )}
-
-      {isLoading ? (
-        <div>Chargement des templates...</div>
-      ) : (
-        <div className="space-y-6">
-          {Object.keys(groupedTemplates).length === 0 ? (
-            <div className="text-center p-8 border rounded-md">
-              <p className="text-muted-foreground">Aucun template défini. Créez votre premier template pour commencer.</p>
-            </div>
-          ) : (
-            Object.entries(groupedTemplates).map(([type, sections]) => (
-              <div key={type} className="space-y-4">
-                <h2 className="text-xl font-semibold flex items-center gap-2">
-                  {type}
-                  {type === "framework_note" && (
-                    <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
-                      Note de cadrage
-                    </Badge>
-                  )}
-                </h2>
-                {Object.entries(sections).map(([section, templatesList]) => (
-                  <div key={`${type}-${section}`} className="border rounded-md p-4 bg-white">
-                    <h3 className="text-lg font-medium mb-3 flex items-center gap-2">
-                      {section}
-                      {type === "framework_note" && FRAMEWORK_NOTE_SECTIONS.find(s => s.value === section) && (
-                        <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
-                          {FRAMEWORK_NOTE_SECTIONS.find(s => s.value === section)?.label}
-                        </Badge>
-                      )}
-                      {type === "framework_note" && !templatesList.some(t => t.is_active) && (
-                        <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200">
-                          Aucun template actif
-                        </Badge>
-                      )}
-                    </h3>
-                    <div className="divide-y">
-                      {templatesList.map((template) => (
-                        <div key={template.id} className="py-3 flex items-center justify-between">
-                          <div className="flex flex-col gap-1">
-                            <div className="flex items-center gap-2">
-                              <span className="font-medium">Version {template.version}</span>
-                              {template.is_active && (
-                                <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
-                                  Actif
-                                </Badge>
-                              )}
-                            </div>
-                            <span className="text-sm text-muted-foreground">
-                              Dernière mise à jour: {new Date(template.updated_at).toLocaleDateString()}
-                            </span>
-                          </div>
-                          <div className="flex gap-2">
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => handleShowPreview(template)}
-                            >
-                              Aperçu
-                            </Button>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => duplicateMutation.mutate(template)}
-                            >
-                              <Copy className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => toggleActiveMutation.mutate({ id: template.id, isActive: !template.is_active })}
-                            >
-                              {template.is_active ? "Désactiver" : "Activer"}
-                            </Button>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => handleOpenDialog(template)}
-                            >
-                              <Edit className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => {
-                                if (window.confirm("Êtes-vous sûr de vouloir supprimer ce template ?")) {
-                                  deleteMutation.mutate(template.id);
-                                }
-                              }}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                ))}
+        {isLoading ? (
+          <div className="flex items-center justify-center p-8">
+            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+          </div>
+        ) : (
+          <div className="space-y-6">
+            {Object.keys(groupedTemplates).length === 0 ? (
+              <div className="text-center p-8 border rounded-lg bg-card">
+                <p className="text-muted-foreground">
+                  {filterType !== "all" || filterStatus !== "all" 
+                    ? "Aucun template ne correspond aux filtres sélectionnés."
+                    : "Aucun template défini. Créez votre premier template pour commencer."}
+                </p>
               </div>
-            ))
-          )}
-        </div>
-      )}
+            ) : (
+              Object.entries(groupedTemplates).map(([type, sections]) => (
+                <div key={type} className="space-y-4">
+                  <h2 className="text-xl font-semibold flex items-center gap-2">
+                    {type}
+                    {type === "framework_note" && (
+                      <Badge variant="secondary">
+                        Note de cadrage
+                      </Badge>
+                    )}
+                  </h2>
+                  {Object.entries(sections).map(([section, templatesList]) => {
+                    const hasActiveTemplate = templatesList.some(t => t.is_active);
+                    const sectionLabel = type === "framework_note" 
+                      ? FRAMEWORK_NOTE_SECTIONS.find(s => s.value === section)?.label 
+                      : null;
+                    
+                    return (
+                      <div key={`${type}-${section}`} className="border rounded-lg p-4 bg-card">
+                        <h3 className="text-lg font-medium mb-3 flex items-center gap-2">
+                          {hasActiveTemplate ? (
+                            <CheckCircle2 className="h-5 w-5 text-success" />
+                          ) : (
+                            <XCircle className="h-5 w-5 text-destructive" />
+                          )}
+                          <span>{section}</span>
+                          {sectionLabel && (
+                            <Badge variant="outline">
+                              {sectionLabel}
+                            </Badge>
+                          )}
+                          {!hasActiveTemplate && (
+                            <Badge variant="destructive">
+                              Aucun template actif
+                            </Badge>
+                          )}
+                          <span className="text-sm text-muted-foreground ml-auto">
+                            {templatesList.length} version(s)
+                          </span>
+                        </h3>
+                        <div className="divide-y divide-border">
+                          {templatesList.map((template) => {
+                            const templateLength = template.template.length;
+                            const isValidLength = templateLength >= 50 && templateLength <= 5000;
+                            
+                            return (
+                              <div key={template.id} className="py-3 flex items-center justify-between">
+                                <div className="flex flex-col gap-1 flex-1">
+                                  <div className="flex items-center gap-2">
+                                    <span className="font-medium">Version {template.version}</span>
+                                    {template.is_active ? (
+                                      <Badge variant="default" className="bg-success">
+                                        <CheckCircle2 className="h-3 w-3 mr-1" />
+                                        Actif
+                                      </Badge>
+                                    ) : (
+                                      <Badge variant="secondary">
+                                        Inactif
+                                      </Badge>
+                                    )}
+                                    <Tooltip>
+                                      <TooltipTrigger>
+                                        <Badge variant={isValidLength ? "outline" : "destructive"} className="cursor-help">
+                                          {templateLength} car.
+                                        </Badge>
+                                      </TooltipTrigger>
+                                      <TooltipContent>
+                                        <p>Longueur recommandée : 50-5000 caractères</p>
+                                      </TooltipContent>
+                                    </Tooltip>
+                                  </div>
+                                  <span className="text-sm text-muted-foreground">
+                                    Mise à jour: {new Date(template.updated_at).toLocaleDateString('fr-FR', {
+                                      year: 'numeric',
+                                      month: 'long',
+                                      day: 'numeric',
+                                      hour: '2-digit',
+                                      minute: '2-digit'
+                                    })}
+                                  </span>
+                                </div>
+                                <div className="flex gap-2">
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => handleShowPreview(template)}
+                                      >
+                                        <Eye className="h-4 w-4" />
+                                      </Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                      <p>Prévisualiser le contenu</p>
+                                    </TooltipContent>
+                                  </Tooltip>
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => duplicateMutation.mutate(template)}
+                                      >
+                                        <Copy className="h-4 w-4" />
+                                      </Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                      <p>Dupliquer ce template</p>
+                                    </TooltipContent>
+                                  </Tooltip>
+                                  <Button
+                                    variant={template.is_active ? "outline" : "default"}
+                                    size="sm"
+                                    onClick={() => toggleActiveMutation.mutate({ id: template.id, isActive: !template.is_active })}
+                                  >
+                                    {template.is_active ? "Désactiver" : "Activer"}
+                                  </Button>
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => handleOpenDialog(template)}
+                                      >
+                                        <Edit className="h-4 w-4" />
+                                      </Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                      <p>Modifier ce template</p>
+                                    </TooltipContent>
+                                  </Tooltip>
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => {
+                                          if (window.confirm("Êtes-vous sûr de vouloir supprimer ce template ?")) {
+                                            deleteMutation.mutate(template.id);
+                                          }
+                                        }}
+                                      >
+                                        <Trash2 className="h-4 w-4" />
+                                      </Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                      <p>Supprimer définitivement</p>
+                                    </TooltipContent>
+                                  </Tooltip>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              ))
+            )}
+          </div>
+        )}
 
       {/* Dialog pour ajouter/éditer un template */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
@@ -751,19 +914,30 @@ export const AIPromptManagement = () => {
               <FormField
                 control={form.control}
                 name="template"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Contenu du template</FormLabel>
-                    <FormControl>
-                      <Textarea
-                        placeholder="Entrez le contenu du template..."
-                        className="h-[300px] font-mono text-sm"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
+                render={({ field }) => {
+                  const length = field.value?.length || 0;
+                  const isValid = length >= 50 && length <= 5000;
+                  
+                  return (
+                    <FormItem>
+                      <FormLabel>Contenu du template</FormLabel>
+                      <FormControl>
+                        <Textarea
+                          placeholder="Entrez le contenu du template..."
+                          className="h-[300px] font-mono text-sm"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormDescription className="flex items-center justify-between">
+                        <span>Décrivez les instructions pour l'IA de manière claire et détaillée.</span>
+                        <Badge variant={isValid ? "outline" : "destructive"}>
+                          {length} / 5000 caractères {length < 50 && "(min. 50)"}
+                        </Badge>
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  );
+                }}
               />
 
               <FormField
@@ -889,6 +1063,7 @@ export const AIPromptManagement = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
+      </div>
+    </TooltipProvider>
   );
 };
