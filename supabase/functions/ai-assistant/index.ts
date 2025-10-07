@@ -209,10 +209,14 @@ serve(async (req) => {
         .eq("is_active", true)
         .order("version", { ascending: false })
         .limit(1)
-        .single();
+        .maybeSingle();
 
-      if (promptError) {
-        console.error(`Erreur lors de la récupération du template de prompt (type: ${promptType}, section: ${promptSection}):`, promptError);
+      if (promptError || !promptTemplate) {
+        if (promptError) {
+          console.error(`Erreur lors de la récupération du template de prompt (type: ${promptType}, section: ${promptSection}):`, promptError);
+        } else {
+          console.log(`Aucun template actif trouvé pour ${promptType}/${promptSection}`);
+        }
         
         // Utilisation du template de secours
         if (fallbackTemplates[promptType] && fallbackTemplates[promptType][promptSection]) {
