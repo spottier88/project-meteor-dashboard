@@ -22,14 +22,9 @@ export const useWeeklyPoints = (userId: string, weekStartDate: Date) => {
         .from("activity_points")
         .select(`
           *,
-          projects:project_id (
+          projects (
             id,
             title
-          ),
-          activity_types:activity_type (
-            code,
-            label,
-            color
           )
         `)
         .eq("user_id", userId)
@@ -37,7 +32,27 @@ export const useWeeklyPoints = (userId: string, weekStartDate: Date) => {
         .order("created_at", { ascending: false });
 
       if (error) throw error;
-      return data as ActivityPoint[];
+
+      // Enrichir avec les types d'activités si nécessaire
+      const enrichedData = await Promise.all(
+        (data || []).map(async (point) => {
+          if (point.activity_type) {
+            const { data: activityTypeData } = await supabase
+              .from("activity_types")
+              .select("code, label, color")
+              .eq("code", point.activity_type)
+              .single();
+            
+            return {
+              ...point,
+              activity_types: activityTypeData,
+            };
+          }
+          return point;
+        })
+      );
+
+      return enrichedData as any[];
     },
     enabled: !!userId,
   });

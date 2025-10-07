@@ -3,13 +3,15 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { WeeklyDashboard } from './WeeklyDashboard';
 import { ActivityEntry } from './ActivityEntry';
+import { WeeklyPointsEntry } from './WeeklyPointsEntry';
 import { Button } from "@/components/ui/button";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Clock, Target } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { usePermissionsContext } from '@/contexts/PermissionsContext';
 import { useToast } from "@/components/ui/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -28,6 +30,7 @@ export const ActivityManagement = () => {
   const queryClient = useQueryClient();
   const [activityToDelete, setActivityToDelete] = useState<any>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [trackingMode, setTrackingMode] = useState<"hours" | "points">("points");
 
   // Vérifier si l'utilisateur peut accéder à cette page
   if (!isAdmin && !isTimeTracker) {
@@ -80,7 +83,6 @@ export const ActivityManagement = () => {
         <div className="flex items-center gap-4">
           <Button
             variant="ghost"
-            className="mb-6"
             onClick={() => navigate("/")}
           >
             <ArrowLeft className="h-4 w-4 mr-2" />
@@ -88,12 +90,37 @@ export const ActivityManagement = () => {
           </Button>
           <h1 className="text-3xl font-bold">Mes activités</h1>
         </div>
-        <ActivityEntry />
       </div>
-      <WeeklyDashboard 
-        onDeleteActivity={setActivityToDelete}
-        showDeleteButton={true}
-      />
+
+      {/* Tabs pour basculer entre les modes */}
+      <Tabs value={trackingMode} onValueChange={(v) => setTrackingMode(v as "hours" | "points")} className="space-y-6">
+        <TabsList className="grid w-full max-w-md mx-auto grid-cols-2">
+          <TabsTrigger value="points" className="flex items-center gap-2">
+            <Target className="h-4 w-4" />
+            Suivi par points
+          </TabsTrigger>
+          <TabsTrigger value="hours" className="flex items-center gap-2">
+            <Clock className="h-4 w-4" />
+            Suivi horaire (ancien)
+          </TabsTrigger>
+        </TabsList>
+
+        {/* Mode Points */}
+        <TabsContent value="points" className="space-y-6">
+          <WeeklyPointsEntry />
+        </TabsContent>
+
+        {/* Mode Heures (ancien système) */}
+        <TabsContent value="hours" className="space-y-6">
+          <div className="flex justify-end mb-4">
+            <ActivityEntry />
+          </div>
+          <WeeklyDashboard 
+            onDeleteActivity={setActivityToDelete}
+            showDeleteButton={true}
+          />
+        </TabsContent>
+      </Tabs>
 
       {/* Dialogue de confirmation de suppression */}
       <AlertDialog open={!!activityToDelete} onOpenChange={(open) => !open && setActivityToDelete(null)}>
