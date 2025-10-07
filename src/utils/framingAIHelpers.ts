@@ -1,36 +1,82 @@
 /**
+ * ====================================================================================================
  * Helpers et configuration pour la génération IA des notes de cadrage
+ * ====================================================================================================
  * 
- * Ce fichier définit le mapping entre les champs du formulaire de projet (Step 4)
- * et les sections des templates IA dans la base de données.
+ * Ce fichier définit le mapping critique entre trois niveaux d'architecture :
+ * 
+ * 1. **Base de données (project_framing)** : Les colonnes de la table
+ *    - context, stakeholders, governance, objectives, timeline, deliverables
+ * 
+ * 2. **Formulaire utilisateur (ProjectFormStep4)** : Les champs du formulaire
+ *    - FramingSectionKey : 'context', 'stakeholders', 'governance', 'objectives', 'timeline', 'deliverables'
+ * 
+ * 3. **Templates IA (ai_prompt_templates)** : Les sections des prompts
+ *    - AITemplateSectionKey : 'contexte', 'parties_prenantes', 'organisation', 'objectifs', 'planning', 'livrables'
+ * 
+ * ====================================================================================================
+ * TABLEAU DE CORRESPONDANCE COMPLET
+ * ====================================================================================================
+ * 
+ * | Colonne DB      | Formulaire (FramingSectionKey) | Template IA (AITemplateSectionKey) | Label Utilisateur        |
+ * |-----------------|--------------------------------|------------------------------------|--------------------------|
+ * | context         | context                        | contexte                           | Contexte du projet       |
+ * | stakeholders    | stakeholders                   | parties_prenantes                  | Parties prenantes        |
+ * | governance      | governance                     | organisation                       | Gouvernance              |
+ * | objectives      | objectives                     | objectifs                          | Objectifs                |
+ * | timeline        | timeline                       | planning                           | Planning prévisionnel    |
+ * | deliverables    | deliverables                   | livrables                          | Livrables attendus       |
+ * 
+ * ====================================================================================================
+ * IMPORTANT : Pour garantir le bon fonctionnement du système
+ * ====================================================================================================
+ * 
+ * - Chaque section du formulaire DOIT avoir un template IA correspondant dans ai_prompt_templates
+ * - Le champ 'section' dans ai_prompt_templates DOIT correspondre exactement à AITemplateSectionKey
+ * - Le template DOIT avoir is_active = true pour être utilisé
+ * - Si un template est manquant, un fallback sera utilisé (défini dans ai-assistant/index.ts)
+ * 
+ * Pour vérifier la cohérence :
+ * - Interface de gestion : /ai-prompt-management
+ * - Un système d'alerte signale les templates manquants
+ * 
+ * ====================================================================================================
  */
 
 import { supabase } from "@/integrations/supabase/client";
 
 /**
  * Type pour les sections de cadrage dans le formulaire
+ * Ces clés correspondent aux colonnes de la table project_framing
  */
 export type FramingSectionKey = 
-  | 'context' 
-  | 'stakeholders' 
-  | 'governance' 
-  | 'objectives' 
-  | 'timeline' 
-  | 'deliverables';
+  | 'context'       // Colonne DB: context
+  | 'stakeholders'  // Colonne DB: stakeholders
+  | 'governance'    // Colonne DB: governance
+  | 'objectives'    // Colonne DB: objectives
+  | 'timeline'      // Colonne DB: timeline
+  | 'deliverables'; // Colonne DB: deliverables
 
 /**
- * Type pour les sections de templates IA
+ * Type pour les sections de templates IA dans ai_prompt_templates
+ * Ces clés correspondent aux valeurs du champ 'section' dans la table ai_prompt_templates
+ * IMPORTANT: Ces noms doivent correspondre exactement aux sections définies dans la base de données
  */
 export type AITemplateSectionKey = 
-  | 'contexte' 
-  | 'parties_prenantes' 
-  | 'organisation' 
-  | 'objectifs' 
-  | 'planning' 
-  | 'livrables';
+  | 'contexte'           // Template pour "Contexte du projet"
+  | 'parties_prenantes'  // Template pour "Parties prenantes"
+  | 'organisation'       // Template pour "Gouvernance" (note: le nom 'organisation' est historique)
+  | 'objectifs'          // Template pour "Objectifs"
+  | 'planning'           // Template pour "Planning prévisionnel"
+  | 'livrables';         // Template pour "Livrables attendus"
 
 /**
  * Configuration du mapping entre les sections du formulaire et les sections IA
+ * 
+ * Ce mapping est au cœur du système de génération IA :
+ * - 'aiSection' : la section du template IA à utiliser (doit exister dans ai_prompt_templates)
+ * - 'label' : le libellé affiché à l'utilisateur
+ * - 'placeholder' : le texte d'aide dans le champ de saisie
  */
 export const FRAMING_SECTION_MAPPING: Record<FramingSectionKey, {
   aiSection: AITemplateSectionKey;

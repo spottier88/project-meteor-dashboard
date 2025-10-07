@@ -52,10 +52,24 @@ type PromptTemplate = {
   updated_at: string;
 };
 
-// Sections prédéfinies pour les notes de cadrage
-// Alignées avec les champs du formulaire ProjectFormStep4
+/**
+ * Sections prédéfinies pour les notes de cadrage
+ * 
+ * IMPORTANT : Ces sections doivent correspondre EXACTEMENT aux valeurs de AITemplateSectionKey
+ * définies dans src/utils/framingAIHelpers.ts
+ * 
+ * Mapping avec la base de données project_framing :
+ * - contexte           → colonne 'context'
+ * - parties_prenantes  → colonne 'stakeholders'
+ * - organisation       → colonne 'governance' (note: le nom 'organisation' est utilisé pour les templates IA)
+ * - objectifs          → colonne 'objectives'
+ * - planning           → colonne 'timeline'
+ * - livrables          → colonne 'deliverables'
+ * 
+ * La section "general" est optionnelle et ne correspond à aucune colonne spécifique
+ */
 const FRAMEWORK_NOTE_SECTIONS = [
-  { value: "general", label: "Général" },
+  { value: "general", label: "Général (optionnel)" },
   { value: "contexte", label: "Contexte" },
   { value: "parties_prenantes", label: "Parties prenantes" },
   { value: "organisation", label: "Gouvernance" },
@@ -518,12 +532,30 @@ export const AIPromptManagement = () => {
       {missingSections.length > 0 && (
         <Alert variant="warning" className="bg-amber-50 border-amber-200 text-amber-800">
           <AlertTriangle className="h-4 w-4" />
-          <AlertDescription>
-            Certaines sections de note de cadrage n'ont pas de template actif ({missingSections.map(s => {
-              const section = FRAMEWORK_NOTE_SECTIONS.find(fs => fs.value === s);
-              return section ? section.label : s;
-            }).join(', ')}). 
-            Les templates de secours seront utilisés pour ces sections.
+          <AlertDescription className="space-y-3">
+            <div className="font-semibold">
+              ⚠️ Attention : {missingSections.length} section(s) de note de cadrage sans template actif
+            </div>
+            <div className="space-y-1">
+              <p className="text-sm">Sections manquantes :</p>
+              <ul className="text-sm list-disc pl-5 space-y-0.5">
+                {missingSections.map(s => {
+                  const section = FRAMEWORK_NOTE_SECTIONS.find(fs => fs.value === s);
+                  return (
+                    <li key={s}>
+                      <span className="font-medium">{section ? section.label : s}</span>
+                      <span className="text-amber-700"> (section: "{s}")</span>
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+            <div className="text-sm pt-2 border-t border-amber-300">
+              <strong>Impact :</strong> Les templates de secours seront temporairement utilisés pour ces sections.
+              <br />
+              <strong>Action recommandée :</strong> Créez les templates manquants en cliquant sur le bouton ci-dessus
+              pour garantir une cohérence optimale avec votre contexte métier.
+            </div>
           </AlertDescription>
         </Alert>
       )}
