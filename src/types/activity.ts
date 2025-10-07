@@ -64,3 +64,23 @@ export interface HierarchyEntity {
   name: string;
   selected?: boolean;
 }
+
+// Interface pour le nouveau système de points hebdomadaires
+export interface ActivityPoint {
+  id: string;
+  user_id: string;
+  project_id?: string;
+  activity_type?: string;
+  points: number;
+  week_start_date: string;
+  description?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+// Interface enrichie avec les détails du projet et type d'activité
+export interface ActivityPointWithDetails extends ActivityPoint {
+  project_title?: string;
+  activity_type_label?: string;
+  activity_type_color?: string;
+}

@@ -72,6 +72,50 @@ export type Database = {
           },
         ]
       }
+      activity_points: {
+        Row: {
+          activity_type: string | null
+          created_at: string
+          description: string | null
+          id: string
+          points: number
+          project_id: string | null
+          updated_at: string
+          user_id: string
+          week_start_date: string
+        }
+        Insert: {
+          activity_type?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          points: number
+          project_id?: string | null
+          updated_at?: string
+          user_id: string
+          week_start_date: string
+        }
+        Update: {
+          activity_type?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          points?: number
+          project_id?: string | null
+          updated_at?: string
+          user_id?: string
+          week_start_date?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "activity_points_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       activity_type_permissions: {
         Row: {
           activity_type_code: string
@@ -1570,6 +1614,10 @@ export type Database = {
           id: string
           last_name: string
         }[]
+      }
+      get_user_weekly_points_total: {
+        Args: { p_user_id: string; p_week_start: string }
+        Returns: number
       }
       get_users_last_login: {
         Args: Record<PropertyKey, never>
