@@ -45,7 +45,7 @@ export const ProjectCardHeader = ({
         <StatusIcon status={status} className="h-6 w-6 shrink-0" />
         <h2 className="text-xl font-semibold truncate max-w-[240px] md:max-w-xs">{title}</h2>
       </div>
-      <div className="flex items-center space-x-2 shrink-0">
+      <div className="flex items-center space-x-2 shrink-0" data-no-navigate>
         {additionalActions}
         <ProjectActions
           projectId={id}
