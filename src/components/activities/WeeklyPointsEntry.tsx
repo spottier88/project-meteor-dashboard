@@ -7,6 +7,7 @@ import { useWeeklyPoints } from "@/hooks/useWeeklyPoints";
 import { useActivityPointsQuota } from "@/hooks/useActivityPointsQuota";
 import { WeeklyPointsDistribution } from "./WeeklyPointsDistribution";
 import { PointsEntryForm } from "./PointsEntryForm";
+import { QuickPointsEntry } from "./QuickPointsEntry";
 import { Badge } from "@/components/ui/badge";
 import { format, addWeeks, subWeeks, startOfWeek } from "date-fns";
 import { fr } from "date-fns/locale";
@@ -67,7 +68,7 @@ export const WeeklyPointsEntry: React.FC = () => {
     setCurrentWeek(startOfWeek(new Date(), { weekStartsOn: 1 }));
   };
 
-  // Gestion de l'ajout de points
+  // Gestion de l'ajout de points via formulaire modal
   const handleAddPoints = (values: any) => {
     addPoints({
       user_id: session?.user?.id || "",
@@ -78,6 +79,18 @@ export const WeeklyPointsEntry: React.FC = () => {
       week_start_date: format(currentWeek, "yyyy-MM-dd"),
     });
     setIsFormOpen(false);
+  };
+
+  // Gestion de l'ajout rapide de points
+  const handleQuickAddPoints = (entry: any) => {
+    addPoints({
+      user_id: session?.user?.id || "",
+      project_id: entry.projectId,
+      activity_type: entry.activityType || null,
+      points: entry.points,
+      description: entry.description || null,
+      week_start_date: format(currentWeek, "yyyy-MM-dd"),
+    });
   };
 
   // Gestion de la suppression
@@ -134,6 +147,18 @@ export const WeeklyPointsEntry: React.FC = () => {
         totalPointsUsed={totalPointsUsed}
         weekStartDate={currentWeek}
       />
+
+      {/* Saisie rapide sur projets récents */}
+      <Card>
+        <CardContent className="pt-6">
+          <QuickPointsEntry
+            onSubmit={handleQuickAddPoints}
+            onOpenFullForm={() => setIsFormOpen(true)}
+            pointsRemaining={pointsRemaining}
+            isSubmitting={isAddingPoints}
+          />
+        </CardContent>
+      </Card>
 
       {/* Liste des points distribués */}
       <Card>
