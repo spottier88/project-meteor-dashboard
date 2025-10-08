@@ -14,6 +14,7 @@ import { WeeklyPointsDistribution } from './WeeklyPointsDistribution';
 import { useWeeklyPointsData, processWeeklyPointsData } from '@/hooks/useWeeklyPointsData';
 import { useWeeklyPointsTotal } from '@/hooks/useWeeklyPoints';
 import { useUser } from '@supabase/auth-helpers-react';
+import { exportWeeklyPointsToExcel } from '@/utils/weeklyPointsExport';
 import {
   Select,
   SelectContent,
@@ -86,6 +87,13 @@ export const IndividualPointsDashboard = () => {
     return `${format(currentWeek, 'd MMM', { locale: fr })} - ${format(weekEnd, 'd MMM yyyy', { locale: fr })}`;
   };
 
+  const handleExportToExcel = () => {
+    if (!points || points.length === 0) return;
+    
+    const userName = user ? `${user.email}` : undefined;
+    exportWeeklyPointsToExcel(points, currentWeek, userName);
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -100,9 +108,9 @@ export const IndividualPointsDashboard = () => {
         <CardHeader>
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <CardTitle>Mon tableau de bord hebdomadaire</CardTitle>
-            <Button variant="outline" size="sm">
+            <Button variant="outline" size="sm" onClick={handleExportToExcel} disabled={!points || points.length === 0}>
               <Download className="h-4 w-4 mr-2" />
-              Exporter
+              Exporter Excel
             </Button>
           </div>
         </CardHeader>

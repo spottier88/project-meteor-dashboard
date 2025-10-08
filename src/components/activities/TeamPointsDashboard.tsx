@@ -12,6 +12,7 @@ import { PointsChart } from './PointsChart';
 import { ProjectPointsChart } from './ProjectPointsChart';
 import { ActivityTypePointsChart } from './ActivityTypePointsChart';
 import { useWeeklyPointsData, processWeeklyPointsData } from '@/hooks/useWeeklyPointsData';
+import { exportTeamWeeklyPointsToExcel, exportUserPointsStats } from '@/utils/weeklyPointsExport';
 import {
   Select,
   SelectContent,
@@ -94,6 +95,16 @@ export const TeamPointsDashboard = () => {
   const totalTeamPoints = points?.reduce((sum, p) => sum + p.points, 0) || 0;
   const uniqueUsers = new Set(points?.map(p => p.user_id)).size;
 
+  const handleExportToExcel = () => {
+    if (!points || points.length === 0) return;
+    exportTeamWeeklyPointsToExcel(points, currentWeek);
+  };
+
+  const handleExportStats = () => {
+    if (!points || points.length === 0) return;
+    exportUserPointsStats(points, currentWeek);
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -111,10 +122,16 @@ export const TeamPointsDashboard = () => {
               <Users className="h-5 w-5" />
               <CardTitle>Tableau de bord de l'équipe</CardTitle>
             </div>
-            <Button variant="outline" size="sm">
-              <Download className="h-4 w-4 mr-2" />
-              Exporter
-            </Button>
+            <div className="flex gap-2">
+              <Button variant="outline" size="sm" onClick={handleExportStats} disabled={!points || points.length === 0}>
+                <Download className="h-4 w-4 mr-2" />
+                Stats utilisateurs
+              </Button>
+              <Button variant="outline" size="sm" onClick={handleExportToExcel} disabled={!points || points.length === 0}>
+                <Download className="h-4 w-4 mr-2" />
+                Exporter Excel
+              </Button>
+            </div>
           </div>
         </CardHeader>
         <CardContent>
