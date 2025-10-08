@@ -138,7 +138,6 @@ export const PointsEntryForm: React.FC<PointsEntryFormProps> = ({
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="">Aucun projet</SelectItem>
                       {projects?.map((project) => (
                         <SelectItem key={project.id} value={project.id}>
                           {project.title}
@@ -168,7 +167,6 @@ export const PointsEntryForm: React.FC<PointsEntryFormProps> = ({
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="">Aucun type</SelectItem>
                       {activityTypes?.map((type) => (
                         <SelectItem key={type.code} value={type.code}>
                           {type.label}
