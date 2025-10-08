@@ -35,12 +35,6 @@ export const useWeeklyPointsData = ({
           projects (
             id,
             title
-          ),
-          profiles!activity_points_user_id_fkey (
-            id,
-            first_name,
-            last_name,
-            email
           )
         `)
         .gte('week_start_date', format(weekStart, 'yyyy-MM-dd'))
@@ -68,17 +62,28 @@ export const useWeeklyPointsData = ({
 
       if (error) throw error;
 
+      // Récupérer les profils des utilisateurs concernés
+      const userIds = [...new Set(data?.map(p => p.user_id) || [])];
+      const { data: profiles } = await supabase
+        .from('profiles')
+        .select('id, first_name, last_name, email')
+        .in('id', userIds);
+
       // Enrichir avec les labels des types d'activités
       const { data: activityTypes } = await supabase
         .from('activity_types')
         .select('code, label, color');
 
-      const enrichedData = data?.map(point => ({
-        ...point,
-        activity_types: point.activity_type 
-          ? activityTypes?.find(at => at.code === point.activity_type)
-          : null
-      }));
+      const enrichedData = data?.map(point => {
+        const profile = profiles?.find(p => p.id === point.user_id);
+        return {
+          ...point,
+          profiles: profile,
+          activity_types: point.activity_type 
+            ? activityTypes?.find(at => at.code === point.activity_type)
+            : null
+        };
+      });
 
       return enrichedData || [];
     }
