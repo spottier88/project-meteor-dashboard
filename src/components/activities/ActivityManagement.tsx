@@ -4,8 +4,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { WeeklyDashboard } from './WeeklyDashboard';
 import { ActivityEntry } from './ActivityEntry';
 import { WeeklyPointsEntry } from './WeeklyPointsEntry';
+import { IndividualPointsDashboard } from './IndividualPointsDashboard';
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Clock, Target } from "lucide-react";
+import { ArrowLeft, Clock, Target, BarChart3 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { usePermissionsContext } from '@/contexts/PermissionsContext';
 import { useToast } from "@/components/ui/use-toast";
@@ -30,7 +31,7 @@ export const ActivityManagement = () => {
   const queryClient = useQueryClient();
   const [activityToDelete, setActivityToDelete] = useState<any>(null);
   const [isDeleting, setIsDeleting] = useState(false);
-  const [trackingMode, setTrackingMode] = useState<"hours" | "points">("points");
+  const [trackingMode, setTrackingMode] = useState<"hours" | "points" | "dashboard">("points");
 
   // Vérifier si l'utilisateur peut accéder à cette page
   if (!isAdmin && !isTimeTracker) {
@@ -93,11 +94,15 @@ export const ActivityManagement = () => {
       </div>
 
       {/* Tabs pour basculer entre les modes */}
-      <Tabs value={trackingMode} onValueChange={(v) => setTrackingMode(v as "hours" | "points")} className="space-y-6">
-        <TabsList className="grid w-full max-w-md mx-auto grid-cols-2">
+      <Tabs value={trackingMode} onValueChange={(v) => setTrackingMode(v as "hours" | "points" | "dashboard")} className="space-y-6">
+        <TabsList className="grid w-full max-w-2xl mx-auto grid-cols-3">
           <TabsTrigger value="points" className="flex items-center gap-2">
             <Target className="h-4 w-4" />
-            Suivi par points
+            Saisie points
+          </TabsTrigger>
+          <TabsTrigger value="dashboard" className="flex items-center gap-2">
+            <BarChart3 className="h-4 w-4" />
+            Tableau de bord
           </TabsTrigger>
           <TabsTrigger value="hours" className="flex items-center gap-2">
             <Clock className="h-4 w-4" />
@@ -105,9 +110,14 @@ export const ActivityManagement = () => {
           </TabsTrigger>
         </TabsList>
 
-        {/* Mode Points */}
+        {/* Mode Saisie de Points */}
         <TabsContent value="points" className="space-y-6">
           <WeeklyPointsEntry />
+        </TabsContent>
+
+        {/* Mode Dashboard Points */}
+        <TabsContent value="dashboard" className="space-y-6">
+          <IndividualPointsDashboard />
         </TabsContent>
 
         {/* Mode Heures (ancien système) */}
