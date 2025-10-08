@@ -8,10 +8,12 @@ import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight, Download, Users } from "lucide-react";
 import { startOfWeek, addWeeks, subWeeks, format } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import { PointsChart } from './PointsChart';
+import { ActivityTypeDistributionChart } from "./ActivityTypeDistributionChart";
+import { WeeklyTrendChart } from "./WeeklyTrendChart";
 import { ProjectPointsChart } from './ProjectPointsChart';
 import { ActivityTypePointsChart } from './ActivityTypePointsChart';
-import { useWeeklyPointsData, processWeeklyPointsData } from '@/hooks/useWeeklyPointsData';
+import { useWeeklyPointsData } from '@/hooks/useWeeklyPointsData';
+import { useWeeklyTrend, processWeeklyTrendData } from "@/hooks/useWeeklyTrend";
 import { exportTeamWeeklyPointsToExcel, exportUserPointsStats } from '@/utils/weeklyPointsExport';
 import {
   Select,
@@ -37,7 +39,17 @@ export const TeamPointsDashboard = () => {
     selectedUserId
   });
 
-  const chartData = processWeeklyPointsData(points || [], currentWeek);
+  // Récupérer les données de tendance sur 6 semaines
+  const { data: trendData, isLoading: isLoadingTrend } = useWeeklyTrend({
+    isTeamView: true,
+    weekStartDate: currentWeek,
+    projectId,
+    activityType,
+    selectedUserId,
+    weeksCount: 6
+  });
+
+  const trendChartData = processWeeklyTrendData(trendData || [], 6, currentWeek);
 
   // Récupérer les utilisateurs de l'équipe
   const { data: teamUsers } = useQuery({
@@ -105,7 +117,7 @@ export const TeamPointsDashboard = () => {
     exportUserPointsStats(points, currentWeek);
   };
 
-  if (isLoading) {
+  if (isLoading || isLoadingTrend) {
     return (
       <div className="flex items-center justify-center h-64">
         <p className="text-lg text-muted-foreground">Chargement des données...</p>
@@ -227,10 +239,25 @@ export const TeamPointsDashboard = () => {
             </p>
           ) : (
             <div className="space-y-6">
-              <PointsChart data={chartData} />
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <ActivityTypePointsChart points={points} />
-                <ProjectPointsChart points={points} />
+              <div>
+                <h3 className="text-lg font-semibold mb-4">Répartition des points de la semaine</h3>
+                <ActivityTypeDistributionChart data={points} />
+              </div>
+
+              <div>
+                <h3 className="text-lg font-semibold mb-4">Évolution sur 6 semaines</h3>
+                <WeeklyTrendChart data={trendChartData} />
+              </div>
+
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div>
+                  <h3 className="text-lg font-semibold mb-4">Détails par type d'activité</h3>
+                  <ActivityTypePointsChart points={points} />
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold mb-4">Détails par projet</h3>
+                  <ProjectPointsChart points={points} />
+                </div>
               </div>
             </div>
           )}
