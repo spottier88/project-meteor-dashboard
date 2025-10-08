@@ -67,17 +67,26 @@ export const PointsEntryForm: React.FC<PointsEntryFormProps> = ({
   const session = useSession();
   const { quota } = useActivityPointsQuota();
 
-  // Récupérer les projets accessibles
-  const { data: projects } = useQuery({
-    queryKey: ["accessibleProjects", session?.user?.id],
+  // Récupérer les projets accessibles via la fonction RPC
+  const { data: projects, isLoading: isLoadingProjects } = useQuery({
+    queryKey: ["accessibleProjectsForPoints", session?.user?.id],
     queryFn: async () => {
+      if (!session?.user?.id) return [];
+
       const { data, error } = await supabase
-        .from("projects")
-        .select("id, title")
-        .order("title");
+        .rpc("get_accessible_projects_list_view_with_admin_mode", {
+          p_user_id: session.user.id,
+          p_admin_mode_disabled: false,
+        });
 
       if (error) throw error;
-      return data;
+      
+      // Extraire seulement l'id et le titre pour le select
+      const projectsData = (data || []) as any[];
+      return projectsData.map((project: any) => ({
+        id: project.id,
+        title: project.title,
+      }));
     },
     enabled: !!session?.user?.id && open,
   });
@@ -134,19 +143,34 @@ export const PointsEntryForm: React.FC<PointsEntryFormProps> = ({
                   <Select onValueChange={field.onChange} value={field.value}>
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue placeholder="Sélectionner un projet" />
+                        <SelectValue placeholder={
+                          isLoadingProjects 
+                            ? "Chargement des projets..." 
+                            : "Sélectionner un projet"
+                        } />
                       </SelectTrigger>
                     </FormControl>
-                    <SelectContent>
-                      {projects?.map((project) => (
-                        <SelectItem key={project.id} value={project.id}>
-                          {project.title}
-                        </SelectItem>
-                      ))}
+                    <SelectContent className="max-h-[300px]">
+                      {isLoadingProjects ? (
+                        <div className="p-2 text-sm text-muted-foreground text-center">
+                          Chargement...
+                        </div>
+                      ) : projects && projects.length > 0 ? (
+                        projects.map((project) => (
+                          <SelectItem key={project.id} value={project.id}>
+                            {project.title}
+                          </SelectItem>
+                        ))
+                      ) : (
+                        <div className="p-2 text-sm text-muted-foreground text-center">
+                          Aucun projet disponible
+                        </div>
+                      )}
                     </SelectContent>
                   </Select>
                   <FormDescription>
                     Facultatif : associez ces points à un projet spécifique
+                    {projects && ` (${projects.length} projet${projects.length > 1 ? 's' : ''} disponible${projects.length > 1 ? 's' : ''})`}
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
