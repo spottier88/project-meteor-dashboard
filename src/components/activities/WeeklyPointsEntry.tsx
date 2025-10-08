@@ -8,6 +8,8 @@ import { useActivityPointsQuota } from "@/hooks/useActivityPointsQuota";
 import { WeeklyPointsDistribution } from "./WeeklyPointsDistribution";
 import { PointsEntryForm } from "./PointsEntryForm";
 import { QuickPointsEntry } from "./QuickPointsEntry";
+import { BulkPointsEntry } from "./BulkPointsEntry";
+import { BulkPointEntry } from "./BulkPointsTable";
 import { Badge } from "@/components/ui/badge";
 import { format, addWeeks, subWeeks, startOfWeek } from "date-fns";
 import { fr } from "date-fns/locale";
@@ -48,6 +50,7 @@ export const WeeklyPointsEntry: React.FC = () => {
     totalPointsUsed,
     isLoading,
     addPoints,
+    addBulkPoints,
     deletePoints,
     isAddingPoints,
     isDeletingPoints,
@@ -91,6 +94,20 @@ export const WeeklyPointsEntry: React.FC = () => {
       description: entry.description || null,
       week_start_date: format(currentWeek, "yyyy-MM-dd"),
     });
+  };
+
+  // Gestion de l'ajout en masse de points
+  const handleBulkSave = async (entries: BulkPointEntry[]) => {
+    const pointsToInsert = entries.map(entry => ({
+      user_id: session?.user?.id || "",
+      project_id: entry.project_id,
+      activity_type: entry.activity_type || null,
+      points: entry.points,
+      description: entry.description || null,
+      week_start_date: format(currentWeek, "yyyy-MM-dd"),
+    }));
+
+    await addBulkPoints(pointsToInsert);
   };
 
   // Gestion de la suppression
@@ -165,13 +182,23 @@ export const WeeklyPointsEntry: React.FC = () => {
         <CardHeader>
           <div className="flex justify-between items-center">
             <CardTitle>Points distribués</CardTitle>
-            <Button
-              onClick={() => setIsFormOpen(true)}
-              disabled={pointsRemaining <= 0}
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              Ajouter des points
-            </Button>
+            <div className="flex gap-2">
+              <BulkPointsEntry
+                weekStartDate={currentWeek}
+                quotaRemaining={pointsRemaining}
+                onSuccess={() => {
+                  // Les données seront rafraîchies automatiquement via invalidateQueries
+                }}
+                onBulkSave={handleBulkSave}
+              />
+              <Button
+                onClick={() => setIsFormOpen(true)}
+                disabled={pointsRemaining <= 0}
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Ajouter des points
+              </Button>
+            </div>
           </div>
         </CardHeader>
         <CardContent>

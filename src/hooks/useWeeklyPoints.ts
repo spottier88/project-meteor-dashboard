@@ -89,6 +89,39 @@ export const useWeeklyPoints = (userId: string, weekStartDate: Date) => {
     },
   });
 
+  // Mutation pour ajouter des points en masse
+  const addBulkPointsMutation = useMutation({
+    mutationFn: async (newPoints: Omit<ActivityPoint, "id" | "created_at" | "updated_at">[]) => {
+      const pointsToInsert = newPoints.map(point => ({
+        ...point,
+        week_start_date: weekStart
+      }));
+
+      const { data, error } = await supabase
+        .from("activity_points")
+        .insert(pointsToInsert)
+        .select();
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["weeklyPoints", userId, weekStart] });
+      toast({
+        title: "Points ajoutés",
+        description: "Vos points ont été enregistrés avec succès.",
+      });
+    },
+    onError: (error) => {
+      console.error("Erreur lors de l'ajout des points:", error);
+      toast({
+        title: "Erreur",
+        description: "Impossible d'ajouter les points.",
+        variant: "destructive",
+      });
+    },
+  });
+
   // Mutation pour mettre à jour des points
   const updatePointsMutation = useMutation({
     mutationFn: async ({ id, updates }: { id: string; updates: Partial<ActivityPoint> }) => {
@@ -152,6 +185,7 @@ export const useWeeklyPoints = (userId: string, weekStartDate: Date) => {
     isLoading,
     error,
     addPoints: addPointsMutation.mutate,
+    addBulkPoints: addBulkPointsMutation.mutateAsync,
     updatePoints: updatePointsMutation.mutate,
     deletePoints: deletePointsMutation.mutate,
     isAddingPoints: addPointsMutation.status === "loading",
