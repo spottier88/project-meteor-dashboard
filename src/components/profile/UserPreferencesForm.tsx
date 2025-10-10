@@ -8,8 +8,9 @@
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useUserPreferences } from "@/hooks/useUserPreferences";
-import { Loader2 } from "lucide-react";
+import { Loader2, Cookie } from "lucide-react";
 
 export const UserPreferencesForm = () => {
   const { preferences, isLoading, updatePreferences, getPreference } = useUserPreferences();
@@ -25,6 +26,10 @@ export const UserPreferencesForm = () => {
 
   const handleToggleNewTab = (checked: boolean) => {
     updatePreferences({ open_projects_in_new_tab: checked });
+  };
+
+  const handleVisualizationModeChange = (value: 'classic' | 'cookies') => {
+    updatePreferences({ points_visualization_mode: value });
   };
 
   return (
@@ -50,6 +55,44 @@ export const UserPreferencesForm = () => {
               onCheckedChange={handleToggleNewTab}
             />
           </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Affichage des points</CardTitle>
+          <CardDescription>
+            Choisissez comment vous souhaitez visualiser vos points d'activité
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <RadioGroup
+            value={getPreference('points_visualization_mode', 'classic')}
+            onValueChange={handleVisualizationModeChange}
+            className="space-y-4"
+          >
+            <div className="flex items-center space-x-3 rounded-lg border p-4 hover:bg-accent/50 transition-colors">
+              <RadioGroupItem value="classic" id="classic" />
+              <Label htmlFor="classic" className="flex-1 cursor-pointer">
+                <div className="font-medium">Mode classique</div>
+                <div className="text-sm text-muted-foreground">
+                  Affichage numérique des points (ex: 42 pts)
+                </div>
+              </Label>
+            </div>
+            
+            <div className="flex items-center space-x-3 rounded-lg border p-4 hover:bg-accent/50 transition-colors">
+              <RadioGroupItem value="cookies" id="cookies" />
+              <Label htmlFor="cookies" className="flex-1 cursor-pointer">
+                <div className="font-medium flex items-center gap-2">
+                  Mode cookies <Cookie className="h-4 w-4" />
+                </div>
+                <div className="text-sm text-muted-foreground">
+                  Visualisation ludique avec des cookies (1 🍪 = 1 point)
+                </div>
+              </Label>
+            </div>
+          </RadioGroup>
         </CardContent>
       </Card>
     </div>

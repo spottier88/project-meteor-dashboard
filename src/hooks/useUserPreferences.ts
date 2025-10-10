@@ -14,12 +14,14 @@ interface UserPreferences {
   id: string;
   user_id: string;
   open_projects_in_new_tab: boolean;
+  points_visualization_mode: 'classic' | 'cookies';
   created_at: string;
   updated_at: string;
 }
 
 interface UserPreferencesInput {
-  open_projects_in_new_tab: boolean;
+  open_projects_in_new_tab?: boolean;
+  points_visualization_mode?: 'classic' | 'cookies';
 }
 
 export const useUserPreferences = () => {
@@ -49,7 +51,8 @@ export const useUserPreferences = () => {
           .from("user_preferences")
           .insert({
             user_id: user.id,
-            open_projects_in_new_tab: false
+            open_projects_in_new_tab: false,
+            points_visualization_mode: 'classic'
           })
           .select()
           .single();

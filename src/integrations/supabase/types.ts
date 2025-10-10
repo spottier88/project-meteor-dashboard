@@ -1390,6 +1390,7 @@ export type Database = {
           created_at: string
           id: string
           open_projects_in_new_tab: boolean
+          points_visualization_mode: string
           updated_at: string
           user_id: string
         }
@@ -1397,6 +1398,7 @@ export type Database = {
           created_at?: string
           id?: string
           open_projects_in_new_tab?: boolean
+          points_visualization_mode?: string
           updated_at?: string
           user_id: string
         }
@@ -1404,6 +1406,7 @@ export type Database = {
           created_at?: string
           id?: string
           open_projects_in_new_tab?: boolean
+          points_visualization_mode?: string
           updated_at?: string
           user_id?: string
         }

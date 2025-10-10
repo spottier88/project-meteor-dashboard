@@ -12,6 +12,7 @@ import { ActivityTypeDistributionChart } from "./ActivityTypeDistributionChart";
 import { WeeklyTrendChart } from "./WeeklyTrendChart";
 import { ProjectPointsChart } from './ProjectPointsChart';
 import { ActivityTypePointsChart } from './ActivityTypePointsChart';
+import { PointsVisualization } from "./PointsVisualization";
 import { useWeeklyPointsData } from '@/hooks/useWeeklyPointsData';
 import { useWeeklyTrend, processWeeklyTrendData } from "@/hooks/useWeeklyTrend";
 import { exportTeamWeeklyPointsToExcel, exportUserPointsStats } from '@/utils/weeklyPointsExport';
@@ -212,7 +213,9 @@ export const TeamPointsDashboard = () => {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
             <Card>
               <CardContent className="pt-6">
-                <div className="text-2xl font-bold">{totalTeamPoints}</div>
+                <div className="text-2xl font-bold">
+                  <PointsVisualization points={totalTeamPoints} size="lg" />
+                </div>
                 <p className="text-xs text-muted-foreground">Points totaux de l'équipe</p>
               </CardContent>
             </Card>
@@ -225,7 +228,10 @@ export const TeamPointsDashboard = () => {
             <Card>
               <CardContent className="pt-6">
                 <div className="text-2xl font-bold">
-                  {uniqueUsers > 0 ? Math.round(totalTeamPoints / uniqueUsers) : 0}
+                  <PointsVisualization 
+                    points={uniqueUsers > 0 ? Math.round(totalTeamPoints / uniqueUsers) : 0} 
+                    size="lg" 
+                  />
                 </div>
                 <p className="text-xs text-muted-foreground">Points moyens par personne</p>
               </CardContent>
