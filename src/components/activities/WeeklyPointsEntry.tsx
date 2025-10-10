@@ -12,6 +12,7 @@ import { BulkPointEntry } from "./BulkPointsTable";
 import { Badge } from "@/components/ui/badge";
 import { format, addWeeks, subWeeks, startOfWeek } from "date-fns";
 import { fr } from "date-fns/locale";
+import { PointsVisualization } from "./PointsVisualization";
 import {
   Table,
   TableBody,
@@ -225,7 +226,7 @@ export const WeeklyPointsEntry: React.FC = () => {
                       )}
                     </TableCell>
                     <TableCell>
-                      <Badge>{point.points} pts</Badge>
+                      <PointsVisualization points={point.points} size="sm" />
                     </TableCell>
                     <TableCell>
                       {point.description || (

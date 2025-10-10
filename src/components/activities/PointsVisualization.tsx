@@ -11,14 +11,16 @@ interface PointsVisualizationProps {
   points: number;
   size?: 'sm' | 'md' | 'lg';
   className?: string;
+  /** Activer l'animation d'apparition progressive */
+  animated?: boolean;
 }
 
-export const PointsVisualization = ({ points, size = 'md', className }: PointsVisualizationProps) => {
+export const PointsVisualization = ({ points, size = 'md', className, animated = true }: PointsVisualizationProps) => {
   const { getPreference } = useUserPreferences();
   const visualizationMode = getPreference('points_visualization_mode', 'classic') as 'classic' | 'cookies';
 
   if (visualizationMode === 'cookies') {
-    return <CookiePoints points={points} size={size} className={className} />;
+    return <CookiePoints points={points} size={size} className={className} animated={animated} />;
   }
 
   return <ClassicPoints points={points} size={size} className={className} />;

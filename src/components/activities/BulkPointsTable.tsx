@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { ActivityType } from "@/types/activity";
+import { PointsVisualization } from "./PointsVisualization";
 
 /**
  * Interface pour une entrée de point en masse
@@ -151,16 +152,16 @@ export const BulkPointsTable: React.FC<BulkPointsTableProps> = ({
         </Table>
       </div>
 
-      {/* Footer avec total et quota */}
-      <div className="flex justify-between items-center p-4 rounded-md border bg-muted/50">
+      {/* Footer avec total et quota - affichage ludique */}
+      <div className="flex justify-between items-center p-4 rounded-md border bg-gradient-to-r from-amber-50 to-orange-50">
         <div className="space-y-1">
           <div className="text-sm font-medium">Total des points saisis</div>
           <div className="text-xs text-muted-foreground">
             Quota hebdomadaire : {quotaRemaining} points restants
           </div>
         </div>
-        <div className="flex items-center gap-2">
-          <span className="text-2xl font-bold">{totalPoints}</span>
+        <div className="flex flex-col items-end gap-2">
+          <PointsVisualization points={totalPoints} size="lg" />
           <Badge variant={quotaExceeded ? "destructive" : totalPoints > quotaRemaining * 0.8 ? "default" : "secondary"}>
             {quotaExceeded
               ? `Dépassement de ${totalPoints - quotaRemaining} pts`
