@@ -21,6 +21,8 @@ import { useRecentProjects } from "@/hooks/useRecentProjects";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
+import { PointsVisualization } from "./PointsVisualization";
+import { useUserPreferences } from "@/hooks/useUserPreferences";
 
 /**
  * Interface pour une ligne de saisie rapide
@@ -52,6 +54,8 @@ export const QuickPointsEntry: React.FC<QuickPointsEntryProps> = ({
 }) => {
   const { data: recentProjects, isLoading } = useRecentProjects();
   const [entries, setEntries] = useState<Map<string, Partial<QuickEntry>>>(new Map());
+  const { getPreference } = useUserPreferences();
+  const useCookieMode = getPreference('points_visualization_mode', 'classic') === 'cookies';
 
   // Récupérer les types d'activités
   const { data: activityTypes } = useQuery({
@@ -175,19 +179,26 @@ export const QuickPointsEntry: React.FC<QuickPointsEntryProps> = ({
                     </div>
                   </TableCell>
                   <TableCell>
-                    <Input
-                      type="number"
-                      min={1}
-                      max={pointsRemaining}
-                      placeholder="0"
-                      value={entry.points || ""}
-                      onChange={(e) =>
-                        updateEntry(project.id, "points", parseInt(e.target.value, 10) || 0)
-                      }
-                      onKeyPress={(e) => handleKeyPress(e, project.id, project.title)}
-                      disabled={isSubmitting || pointsRemaining <= 0}
-                      className="w-20"
-                    />
+                    <div className="flex items-center gap-2">
+                      <Input
+                        type="number"
+                        min={1}
+                        max={pointsRemaining}
+                        placeholder="0"
+                        value={entry.points || ""}
+                        onChange={(e) =>
+                          updateEntry(project.id, "points", parseInt(e.target.value, 10) || 0)
+                        }
+                        onKeyPress={(e) => handleKeyPress(e, project.id, project.title)}
+                        disabled={isSubmitting || pointsRemaining <= 0}
+                        className="w-20"
+                      />
+                      {useCookieMode && entry.points && entry.points > 0 && (
+                        <div className="ml-2">
+                          <PointsVisualization points={entry.points} size="sm" animated={false} />
+                        </div>
+                      )}
+                    </div>
                   </TableCell>
                   <TableCell>
                     <Select

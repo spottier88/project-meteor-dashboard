@@ -33,6 +33,8 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "@supabase/auth-helpers-react";
 import { useActivityPointsQuota } from "@/hooks/useActivityPointsQuota";
+import { CookieSlider } from "./CookieSlider";
+import { useUserPreferences } from "@/hooks/useUserPreferences";
 
 /**
  * Schéma de validation pour l'ajout de points
@@ -66,6 +68,8 @@ export const PointsEntryForm: React.FC<PointsEntryFormProps> = ({
 }) => {
   const session = useSession();
   const { quota } = useActivityPointsQuota();
+  const { getPreference } = useUserPreferences();
+  const useCookieMode = getPreference('points_visualization_mode', 'classic') === 'cookies';
 
   // Récupérer les projets accessibles via la fonction RPC
   const { data: projects, isLoading: isLoadingProjects } = useQuery({
@@ -212,19 +216,32 @@ export const PointsEntryForm: React.FC<PointsEntryFormProps> = ({
               name="points"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Nombre de points *</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="number"
+                  {useCookieMode ? (
+                    <CookieSlider
+                      value={field.value || 1}
+                      onChange={field.onChange}
+                      label="Nombre de points *"
                       min={1}
                       max={Math.min(100, pointsRemaining)}
-                      {...field}
-                      onChange={(e) => field.onChange(parseInt(e.target.value, 10))}
+                      step={1}
                     />
-                  </FormControl>
-                  <FormDescription>
-                    Entre 1 et {Math.min(100, pointsRemaining)} points
-                  </FormDescription>
+                  ) : (
+                    <>
+                      <FormLabel>Nombre de points *</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          min={1}
+                          max={Math.min(100, pointsRemaining)}
+                          {...field}
+                          onChange={(e) => field.onChange(parseInt(e.target.value, 10))}
+                        />
+                      </FormControl>
+                      <FormDescription>
+                        Entre 1 et {Math.min(100, pointsRemaining)} points
+                      </FormDescription>
+                    </>
+                  )}
                   <FormMessage />
                 </FormItem>
               )}
