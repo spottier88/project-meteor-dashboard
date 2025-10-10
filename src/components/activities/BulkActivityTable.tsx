@@ -20,6 +20,8 @@ import {
   SelectValue 
 } from "@/components/ui/select";
 import { Copy, Trash2 } from "lucide-react";
+import { CookieSlider } from "./CookieSlider";
+import { useUserPreferences } from "@/hooks/useUserPreferences";
 
 interface BulkActivityTableProps {
   entries: BulkActivityEntry[];
@@ -38,6 +40,9 @@ export const BulkActivityTable: React.FC<BulkActivityTableProps> = ({
   removeEntry,
   duplicateEntry
 }) => {
+  const { getPreference } = useUserPreferences();
+  const useCookieMode = getPreference('points_visualization_mode', 'classic') === 'cookies';
+
   return (
     <div className="w-full overflow-auto">
       <Table>
@@ -46,7 +51,7 @@ export const BulkActivityTable: React.FC<BulkActivityTableProps> = ({
             <TableHead>Projet</TableHead>
             <TableHead>Type d'activité</TableHead>
             <TableHead>Description</TableHead>
-            <TableHead>Durée (min)</TableHead>
+            <TableHead className="min-w-[250px]">Durée</TableHead>
             <TableHead>Date et heure</TableHead>
             <TableHead className="w-[100px]">Actions</TableHead>
           </TableRow>
@@ -98,12 +103,24 @@ export const BulkActivityTable: React.FC<BulkActivityTableProps> = ({
                 />
               </TableCell>
               <TableCell>
-                <Input
-                  type="number"
-                  min="1"
-                  value={entry.duration_minutes}
-                  onChange={(e) => updateEntry(entry.id, 'duration_minutes', parseInt(e.target.value) || 0)}
-                />
+                {useCookieMode ? (
+                  <div className="py-2">
+                    <CookieSlider
+                      value={entry.duration_minutes || 60}
+                      onChange={(value) => updateEntry(entry.id, 'duration_minutes', value)}
+                      label=""
+                      min={15}
+                      max={240}
+                    />
+                  </div>
+                ) : (
+                  <Input
+                    type="number"
+                    min="1"
+                    value={entry.duration_minutes}
+                    onChange={(e) => updateEntry(entry.id, 'duration_minutes', parseInt(e.target.value) || 0)}
+                  />
+                )}
               </TableCell>
               <TableCell>
                 <Input

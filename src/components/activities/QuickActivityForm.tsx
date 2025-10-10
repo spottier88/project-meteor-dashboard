@@ -34,6 +34,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { CookieSlider } from "./CookieSlider";
+import { useUserPreferences } from "@/hooks/useUserPreferences";
 
 type FormData = {
   activity_type: string;
@@ -49,6 +51,8 @@ const QuickActivityForm = ({ onSuccess }: { onSuccess?: () => void }) => {
   const { data: activityTypes, isLoading: isLoadingTypes } = useActivityTypes(true, true);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [showUnsavedChangesAlert, setShowUnsavedChangesAlert] = useState(false);
+  const { getPreference } = useUserPreferences();
+  const useCookieMode = getPreference('points_visualization_mode', 'classic') === 'cookies';
   
   // Fonction pour demander confirmation avant fermeture
   const requestClose = () => {
@@ -235,18 +239,31 @@ const QuickActivityForm = ({ onSuccess }: { onSuccess?: () => void }) => {
             rules={{ required: "Veuillez saisir une durée" }}
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Durée (minutes)</FormLabel>
-                <FormControl>
-                  <Input 
-                    {...field} 
-                    type="number" 
-                    min="1" 
-                    onChange={(e) => {
-                      field.onChange(e);
+                {useCookieMode ? (
+                  <CookieSlider
+                    value={field.value || 60}
+                    onChange={(value) => {
+                      field.onChange(value);
                       setHasUnsavedChanges(true);
                     }}
+                    label="Durée de l'activité"
                   />
-                </FormControl>
+                ) : (
+                  <>
+                    <FormLabel>Durée (minutes)</FormLabel>
+                    <FormControl>
+                      <Input 
+                        {...field} 
+                        type="number" 
+                        min="1" 
+                        onChange={(e) => {
+                          field.onChange(e);
+                          setHasUnsavedChanges(true);
+                        }}
+                      />
+                    </FormControl>
+                  </>
+                )}
               </FormItem>
             )}
           />
