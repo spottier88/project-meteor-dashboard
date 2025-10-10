@@ -18,6 +18,8 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { ActivityType } from "@/types/activity";
 import { PointsVisualization } from "./PointsVisualization";
+import { PointsCookieSlider } from "./PointsCookieSlider";
+import { useUserPreferences } from "@/hooks/useUserPreferences";
 
 /**
  * Interface pour une entrée de point en masse
@@ -50,6 +52,9 @@ export const BulkPointsTable: React.FC<BulkPointsTableProps> = ({
   updateEntry,
   quotaRemaining,
 }) => {
+  const { getPreference } = useUserPreferences();
+  const useCookieMode = getPreference('points_visualization_mode', 'classic') === 'cookies';
+
   // Calculer le total des points saisis
   const totalPoints = entries.reduce((sum, entry) => sum + (entry.points || 0), 0);
   const quotaExceeded = totalPoints > quotaRemaining;
@@ -62,7 +67,7 @@ export const BulkPointsTable: React.FC<BulkPointsTableProps> = ({
             <TableRow>
               <TableHead className="w-[30%]">Projet</TableHead>
               <TableHead className="w-[20%]">Type d'activité</TableHead>
-              <TableHead className="w-[15%]">Points *</TableHead>
+              <TableHead className={useCookieMode ? "w-[20%]" : "w-[15%]"}>Points *</TableHead>
               <TableHead className="w-[35%]">Description</TableHead>
             </TableRow>
           </TableHeader>
@@ -125,17 +130,29 @@ export const BulkPointsTable: React.FC<BulkPointsTableProps> = ({
                     </Select>
                   </TableCell>
                   <TableCell>
-                    <Input
-                      type="number"
-                      min={0}
-                      max={100}
-                      value={entry.points || ""}
-                      onChange={(e) =>
-                        updateEntry(entry.id, "points", parseInt(e.target.value, 10) || 0)
-                      }
-                      placeholder="0"
-                      className={entry.points > 0 ? "font-medium" : ""}
-                    />
+                    {useCookieMode ? (
+                      <div className="py-2">
+                        <PointsCookieSlider
+                          value={entry.points || 0}
+                          onChange={(value) => updateEntry(entry.id, "points", value)}
+                          label=""
+                          min={0}
+                          max={Math.min(100, quotaRemaining)}
+                        />
+                      </div>
+                    ) : (
+                      <Input
+                        type="number"
+                        min={0}
+                        max={100}
+                        value={entry.points || ""}
+                        onChange={(e) =>
+                          updateEntry(entry.id, "points", parseInt(e.target.value, 10) || 0)
+                        }
+                        placeholder="0"
+                        className={entry.points > 0 ? "font-medium" : ""}
+                      />
+                    )}
                   </TableCell>
                   <TableCell>
                     <Input

@@ -33,7 +33,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "@supabase/auth-helpers-react";
 import { useActivityPointsQuota } from "@/hooks/useActivityPointsQuota";
-import { CookieSlider } from "./CookieSlider";
+import { PointsCookieSlider } from "./PointsCookieSlider";
 import { useUserPreferences } from "@/hooks/useUserPreferences";
 
 /**
@@ -217,13 +217,12 @@ export const PointsEntryForm: React.FC<PointsEntryFormProps> = ({
               render={({ field }) => (
                 <FormItem>
                   {useCookieMode ? (
-                    <CookieSlider
+                    <PointsCookieSlider
                       value={field.value || 1}
                       onChange={field.onChange}
                       label="Nombre de points *"
                       min={1}
                       max={Math.min(100, pointsRemaining)}
-                      step={1}
                     />
                   ) : (
                     <>
