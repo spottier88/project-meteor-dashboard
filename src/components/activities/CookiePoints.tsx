@@ -4,7 +4,6 @@
  * Ratio : 1 cookie = 1 point
  * Animations : apparition progressive, effet de hover, effet de "crunch"
  */
-import { Cookie } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface CookiePointsProps {
@@ -17,9 +16,9 @@ interface CookiePointsProps {
 
 export const CookiePoints = ({ points, size = 'md', className = '', animated = true }: CookiePointsProps) => {
   const sizeConfig = {
-    sm: { icon: 12, maxDisplay: 15 },
-    md: { icon: 16, maxDisplay: 20 },
-    lg: { icon: 20, maxDisplay: 25 }
+    sm: { fontSize: '0.75rem', maxDisplay: 15 },
+    md: { fontSize: '1rem', maxDisplay: 20 },
+    lg: { fontSize: '1.25rem', maxDisplay: 25 }
   };
 
   const config = sizeConfig[size];
@@ -35,25 +34,25 @@ export const CookiePoints = ({ points, size = 'md', className = '', animated = t
         <TooltipTrigger asChild>
           <div className={`inline-flex items-center gap-0.5 flex-wrap ${className}`}>
             {cookies.map((_, index) => (
-              <Cookie
+              <span
                 key={index}
                 className={`
-                  text-amber-600 
+                  inline-block
                   transition-all 
                   duration-300 
                   cursor-pointer
                   hover:scale-125 
                   hover:rotate-12
-                  hover:text-amber-500
                   active:scale-95
                   ${animated ? 'animate-scale-in' : ''}
                 `}
                 style={{
+                  fontSize: config.fontSize,
                   animationDelay: animated ? `${index * 50}ms` : '0ms',
                 }}
-                size={config.icon}
-                fill="currentColor"
-              />
+              >
+                🍪
+              </span>
             ))}
             {hasMore && (
               <span className={`
