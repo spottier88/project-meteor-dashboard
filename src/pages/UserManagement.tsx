@@ -33,7 +33,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 
 interface UserWithRoles extends UserProfile {
   roles: UserRole[];
-  lastLogin?: Date;
+  lastActivity?: Date;
   hasManagerAssignment?: boolean;
 }
 
@@ -68,13 +68,13 @@ export const UserManagement = () => {
   const [sortKey, setSortKey] = useState<string | null>(null);
   const [sortDirection, setSortDirection] = useState<SortDirection>(null);
 
-  const { data: lastLogins } = useQuery({
-    queryKey: ["lastLogins"],
+  const { data: lastActivities } = useQuery({
+    queryKey: ["lastActivities"],
     queryFn: async () => {
-      const { data, error } = await supabase.rpc("get_users_last_login");
+      const { data, error } = await supabase.rpc("get_users_last_activity");
       if (error) throw error;
-      return data.reduce((acc: Record<string, Date>, curr: { user_id: string, last_sign_in_at: string }) => {
-        acc[curr.user_id] = new Date(curr.last_sign_in_at);
+      return data.reduce((acc: Record<string, Date>, curr: { user_id: string, last_activity_at: string }) => {
+        acc[curr.user_id] = new Date(curr.last_activity_at);
         return acc;
       }, {});
     },
@@ -125,14 +125,14 @@ export const UserManagement = () => {
         return {
           ...profile,
           roles: userRoles,
-          lastLogin: lastLogins?.[profile.id],
+          lastActivity: lastActivities?.[profile.id],
           hasManagerAssignment: hasAssignment
         };
       });
       
       return usersWithRoles;
     },
-    enabled: !!lastLogins && !!managerAssignments,
+    enabled: !!lastActivities && !!managerAssignments,
   });
 
   const handleEdit = (user: UserWithRoles) => {
@@ -157,7 +157,7 @@ export const UserManagement = () => {
       });
 
       queryClient.invalidateQueries({ queryKey: ["users"] });
-      queryClient.invalidateQueries({ queryKey: ["lastLogins"] });
+      queryClient.invalidateQueries({ queryKey: ["lastActivities"] });
       queryClient.invalidateQueries({ queryKey: ["managerAssignments"] });
     } catch (error) {
       console.error("Error:", error);
@@ -173,7 +173,7 @@ export const UserManagement = () => {
 
   const handleFormSubmit = () => {
     queryClient.invalidateQueries({ queryKey: ["users"] });
-    queryClient.invalidateQueries({ queryKey: ["lastLogins"] });
+    queryClient.invalidateQueries({ queryKey: ["lastActivities"] });
     queryClient.invalidateQueries({ queryKey: ["managerAssignments"] });
   };
 
@@ -193,8 +193,8 @@ export const UserManagement = () => {
     return <div>Chargement...</div>;
   }
 
-  const formatLastLogin = (date?: Date) => {
-    if (!date) return "Jamais connecté";
+  const formatLastActivity = (date?: Date) => {
+    if (!date) return "Aucune activité";
     return date.toLocaleString("fr-FR", {
       dateStyle: "short",
       timeStyle: "short",
@@ -231,9 +231,9 @@ export const UserManagement = () => {
           valueA = a.roles.join(",");
           valueB = b.roles.join(",");
           break;
-        case "lastLogin":
-          valueA = a.lastLogin ? a.lastLogin.getTime() : 0;
-          valueB = b.lastLogin ? b.lastLogin.getTime() : 0;
+        case "lastActivity":
+          valueA = a.lastActivity ? a.lastActivity.getTime() : 0;
+          valueB = b.lastActivity ? b.lastActivity.getTime() : 0;
           break;
         default:
           valueA = a[sortKey as keyof typeof a] || "";
@@ -321,8 +321,8 @@ export const UserManagement = () => {
               onSort={handleSort}
             />
             <SortableHeader
-              label="Dernière connexion"
-              sortKey="lastLogin"
+              label="Dernière activité"
+              sortKey="lastActivity"
               currentSort={sortKey}
               currentDirection={sortDirection}
               onSort={handleSort}
@@ -368,7 +368,7 @@ export const UserManagement = () => {
                   ))}
                 </div>
               </TableCell>
-              <TableCell>{formatLastLogin(user.lastLogin)}</TableCell>
+              <TableCell>{formatLastActivity(user.lastActivity)}</TableCell>
               <TableCell className="text-right space-x-2">
                 <Button
                   variant="ghost"

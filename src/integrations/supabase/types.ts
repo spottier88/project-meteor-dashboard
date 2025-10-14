@@ -1470,6 +1470,13 @@ export type Database = {
           },
         ]
       }
+      user_last_activity: {
+        Row: {
+          last_activity_at: string | null
+          user_id: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       can_access_project: {
@@ -1621,6 +1628,13 @@ export type Database = {
       get_user_weekly_points_total: {
         Args: { p_user_id: string; p_week_start: string }
         Returns: number
+      }
+      get_users_last_activity: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          last_activity_at: string
+          user_id: string
+        }[]
       }
       get_users_last_login: {
         Args: Record<PropertyKey, never>
