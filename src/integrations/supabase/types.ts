@@ -74,6 +74,7 @@ export type Database = {
       }
       activity_points: {
         Row: {
+          activity_date: string | null
           activity_type: string | null
           created_at: string
           description: string | null
@@ -85,6 +86,7 @@ export type Database = {
           week_start_date: string
         }
         Insert: {
+          activity_date?: string | null
           activity_type?: string | null
           created_at?: string
           description?: string | null
@@ -96,6 +98,7 @@ export type Database = {
           week_start_date: string
         }
         Update: {
+          activity_date?: string | null
           activity_type?: string | null
           created_at?: string
           description?: string | null

@@ -9,6 +9,8 @@ import { WeeklyPointsDistribution } from "./WeeklyPointsDistribution";
 import { PointsEntryForm } from "./PointsEntryForm";
 import { BulkPointsEntry } from "./BulkPointsEntry";
 import { BulkPointEntry } from "./BulkPointsTable";
+import { DailyPointsEntry } from "./DailyPointsEntry";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { format, addWeeks, subWeeks, startOfWeek } from "date-fns";
 import { fr } from "date-fns/locale";
@@ -43,6 +45,7 @@ export const WeeklyPointsEntry: React.FC = () => {
   );
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [pointToDelete, setPointToDelete] = useState<string | null>(null);
+  const [viewMode, setViewMode] = useState<'weekly' | 'daily'>('weekly');
 
   const { quota } = useActivityPointsQuota();
   const {
@@ -154,8 +157,16 @@ export const WeeklyPointsEntry: React.FC = () => {
         weekStartDate={currentWeek}
       />
 
-      {/* Liste des points distribués */}
-      <Card>
+      {/* Toggle entre mode Semaine et Jour */}
+      <Tabs value={viewMode} onValueChange={(v) => setViewMode(v as 'weekly' | 'daily')}>
+        <TabsList className="grid w-full max-w-md mx-auto grid-cols-2">
+          <TabsTrigger value="weekly">Vue Semaine</TabsTrigger>
+          <TabsTrigger value="daily">Vue Quotidienne</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="weekly" className="space-y-6">
+          {/* Liste des points distribués */}
+          <Card>
         <CardHeader>
           <div className="flex justify-between items-center">
             <CardTitle>Points distribués</CardTitle>
@@ -258,7 +269,14 @@ export const WeeklyPointsEntry: React.FC = () => {
         onSubmit={handleAddPoints}
         isSubmitting={isAddingPoints}
         pointsRemaining={pointsRemaining}
+        mode="weekly"
       />
+        </TabsContent>
+
+        <TabsContent value="daily" className="space-y-6">
+          <DailyPointsEntry weekStartDate={currentWeek} />
+        </TabsContent>
+      </Tabs>
 
       {/* Dialogue de confirmation de suppression */}
       <AlertDialog

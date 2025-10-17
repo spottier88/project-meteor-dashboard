@@ -3,6 +3,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
+import { format } from "date-fns";
+import { fr } from "date-fns/locale";
 import {
   Dialog,
   DialogContent,
@@ -54,6 +56,8 @@ interface PointsEntryFormProps {
   onSubmit: (values: PointsEntryFormValues) => void;
   isSubmitting: boolean;
   pointsRemaining: number;
+  selectedDate?: Date | null;
+  mode?: 'weekly' | 'daily';
 }
 
 /**
@@ -65,6 +69,8 @@ export const PointsEntryForm: React.FC<PointsEntryFormProps> = ({
   onSubmit,
   isSubmitting,
   pointsRemaining,
+  selectedDate = null,
+  mode = 'weekly',
 }) => {
   const session = useSession();
   const { quota } = useActivityPointsQuota();
@@ -128,9 +134,15 @@ export const PointsEntryForm: React.FC<PointsEntryFormProps> = ({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
-          <DialogTitle>Ajouter des points</DialogTitle>
+          <DialogTitle>
+            {mode === 'daily' && selectedDate
+              ? `Ajouter des points - ${format(selectedDate, 'dd MMMM yyyy', { locale: fr })}`
+              : 'Ajouter des points'}
+          </DialogTitle>
           <DialogDescription>
-            Distribuez vos points sur un projet. Quota : {quota} points/semaine
+            {mode === 'daily' 
+              ? 'Les points seront ajoutés pour le jour sélectionné'
+              : `Distribuez vos points sur un projet. Quota : ${quota} points/semaine`}
             {pointsRemaining > 0 && ` (${pointsRemaining} restants)`}
           </DialogDescription>
         </DialogHeader>

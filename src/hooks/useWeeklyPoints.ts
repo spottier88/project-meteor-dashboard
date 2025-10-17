@@ -14,7 +14,7 @@ export const useWeeklyPoints = (userId: string, weekStartDate: Date) => {
   const queryClient = useQueryClient();
   const weekStart = format(startOfWeek(weekStartDate, { weekStartsOn: 1 }), "yyyy-MM-dd");
 
-  // Récupérer les points de la semaine
+  // Récupérer les points de la semaine (hebdomadaires et quotidiens)
   const { data: points, isLoading, error } = useQuery({
     queryKey: ["weeklyPoints", userId, weekStart],
     queryFn: async () => {
@@ -29,6 +29,7 @@ export const useWeeklyPoints = (userId: string, weekStartDate: Date) => {
         `)
         .eq("user_id", userId)
         .eq("week_start_date", weekStart)
+        .order("activity_date", { ascending: true, nullsFirst: false })
         .order("created_at", { ascending: false });
 
       if (error) throw error;
