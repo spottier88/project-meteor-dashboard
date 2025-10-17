@@ -40,15 +40,21 @@ import { useUserPreferences } from "@/hooks/useUserPreferences";
 
 /**
  * Schéma de validation pour l'ajout de points
+ * La limite dépend du mode : 2 points en quotidien, 10 en hebdomadaire
  */
-const pointsEntrySchema = z.object({
+const createPointsEntrySchema = (maxPoints: number) => z.object({
   project_id: z.string().optional(),
   activity_type: z.string().optional(),
-  points: z.number().min(1, "Au moins 1 point est requis").max(100, "Maximum 100 points"),
+  points: z.number().min(1, "Au moins 1 point est requis").max(maxPoints, `Maximum ${maxPoints} points`),
   description: z.string().optional(),
 });
 
-type PointsEntryFormValues = z.infer<typeof pointsEntrySchema>;
+type PointsEntryFormValues = {
+  project_id?: string;
+  activity_type?: string;
+  points: number;
+  description?: string;
+};
 
 interface PointsEntryFormProps {
   open: boolean;
@@ -58,6 +64,7 @@ interface PointsEntryFormProps {
   pointsRemaining: number;
   selectedDate?: Date | null;
   mode?: 'weekly' | 'daily';
+  dailyPointsUsed?: number; // Points déjà saisis pour ce jour
 }
 
 /**
@@ -71,11 +78,24 @@ export const PointsEntryForm: React.FC<PointsEntryFormProps> = ({
   pointsRemaining,
   selectedDate = null,
   mode = 'weekly',
+  dailyPointsUsed = 0,
 }) => {
   const session = useSession();
   const { quota } = useActivityPointsQuota();
   const { getPreference } = useUserPreferences();
   const useCookieMode = getPreference('points_visualization_mode', 'classic') === 'cookies';
+
+  // Calculer la limite de points selon le mode
+  const dailyQuota = 2; // Limite quotidienne
+  const weeklyQuota = 10; // Limite hebdomadaire
+  const maxPointsForMode = mode === 'daily' ? dailyQuota : weeklyQuota;
+  
+  // Calculer combien de points peuvent encore être saisis
+  const maxPointsAvailable = mode === 'daily' 
+    ? Math.min(maxPointsForMode - dailyPointsUsed, pointsRemaining)
+    : Math.min(maxPointsForMode, pointsRemaining);
+
+  const pointsEntrySchema = createPointsEntrySchema(maxPointsAvailable);
 
   // Récupérer les projets accessibles via la fonction RPC
   const { data: projects, isLoading: isLoadingProjects } = useQuery({
@@ -125,6 +145,18 @@ export const PointsEntryForm: React.FC<PointsEntryFormProps> = ({
     },
   });
 
+  // Réinitialiser le formulaire quand le mode change ou quand on ouvre
+  React.useEffect(() => {
+    if (open) {
+      form.reset({
+        points: 1,
+        description: "",
+        project_id: undefined,
+        activity_type: undefined,
+      });
+    }
+  }, [open, mode, form]);
+
   const handleSubmit = (values: PointsEntryFormValues) => {
     onSubmit(values);
     form.reset();
@@ -141,9 +173,9 @@ export const PointsEntryForm: React.FC<PointsEntryFormProps> = ({
           </DialogTitle>
           <DialogDescription>
             {mode === 'daily' 
-              ? 'Les points seront ajoutés pour le jour sélectionné'
+              ? `Les points seront ajoutés pour le jour sélectionné. Limite : ${dailyQuota} pts/jour${dailyPointsUsed > 0 ? ` (${dailyPointsUsed} déjà saisis)` : ''}`
               : `Distribuez vos points sur un projet. Quota : ${quota} points/semaine`}
-            {pointsRemaining > 0 && ` (${pointsRemaining} restants)`}
+            {pointsRemaining > 0 && ` - ${pointsRemaining} pts restants cette semaine`}
           </DialogDescription>
         </DialogHeader>
 
@@ -234,7 +266,7 @@ export const PointsEntryForm: React.FC<PointsEntryFormProps> = ({
                       onChange={field.onChange}
                       label="Nombre de points *"
                       min={1}
-                      max={Math.min(100, pointsRemaining)}
+                      max={maxPointsAvailable}
                     />
                   ) : (
                     <>
@@ -243,13 +275,15 @@ export const PointsEntryForm: React.FC<PointsEntryFormProps> = ({
                         <Input
                           type="number"
                           min={1}
-                          max={Math.min(100, pointsRemaining)}
+                          max={maxPointsAvailable}
                           {...field}
                           onChange={(e) => field.onChange(parseInt(e.target.value, 10))}
                         />
                       </FormControl>
                       <FormDescription>
-                        Entre 1 et {Math.min(100, pointsRemaining)} points
+                        {mode === 'daily' 
+                          ? `Entre 1 et ${maxPointsAvailable} points (max ${dailyQuota} pts/jour)`
+                          : `Entre 1 et ${maxPointsAvailable} points`}
                       </FormDescription>
                     </>
                   )}
@@ -286,7 +320,7 @@ export const PointsEntryForm: React.FC<PointsEntryFormProps> = ({
               >
                 Annuler
               </Button>
-              <Button type="submit" disabled={isSubmitting || pointsRemaining <= 0}>
+              <Button type="submit" disabled={isSubmitting || maxPointsAvailable <= 0}>
                 {isSubmitting ? "Enregistrement..." : "Ajouter"}
               </Button>
             </DialogFooter>

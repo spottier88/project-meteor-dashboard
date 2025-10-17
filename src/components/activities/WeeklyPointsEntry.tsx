@@ -270,6 +270,7 @@ export const WeeklyPointsEntry: React.FC = () => {
         isSubmitting={isAddingPoints}
         pointsRemaining={pointsRemaining}
         mode="weekly"
+        dailyPointsUsed={0}
       />
         </TabsContent>
 
