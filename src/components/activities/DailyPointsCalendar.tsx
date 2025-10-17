@@ -22,11 +22,11 @@ export const DailyPointsCalendar: React.FC<DailyPointsCalendarProps> = ({
   const today = new Date();
   const weekStart = startOfWeek(weekStartDate, { weekStartsOn: 1 });
 
-  // Générer les 7 jours de la semaine
-  const days = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
+  // Générer les 5 jours ouvrés (lundi à vendredi)
+  const days = Array.from({ length: 5 }, (_, i) => addDays(weekStart, i));
 
   return (
-    <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3">
+    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
       {days.map((day) => {
         const dayKey = day.toISOString().split("T")[0];
         const points = pointsByDay[dayKey] || 0;
