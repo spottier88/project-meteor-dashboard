@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
 import { useProjectLinks } from "@/hooks/useProjectLinks";
 import { useProjectsListView } from "@/hooks/use-projects-list-view";
 import {
@@ -23,6 +24,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Search } from "lucide-react";
 
 interface LinkProjectDialogProps {
   isOpen: boolean;
@@ -38,12 +40,15 @@ export const LinkProjectDialog = ({
   currentProjectTitle,
 }: LinkProjectDialogProps) => {
   const [selectedMasterProjectId, setSelectedMasterProjectId] = useState<string>("");
+  const [searchTerm, setSearchTerm] = useState<string>("");
   const { data: projects } = useProjectsListView();
   const { linkProjects } = useProjectLinks(currentProjectId);
 
-  // Filtrer les projets : exclure le projet actuel et les projets déjà liés
+  // Filtrer les projets : exclure le projet actuel et appliquer le filtre de recherche
   const availableProjects = projects?.filter(
-    (p: any) => p.id !== currentProjectId
+    (p: any) => 
+      p.id !== currentProjectId && 
+      p.title.toLowerCase().includes(searchTerm.toLowerCase())
   ) || [];
 
   const handleLink = () => {
@@ -66,13 +71,33 @@ export const LinkProjectDialog = ({
       >
         <DialogHeader>
           <DialogTitle>Lier ce projet à un projet existant</DialogTitle>
-          <DialogDescription>
-            Le projet "{currentProjectTitle}" sera lié au projet sélectionné.
-            Toutes les données seront agrégées sur le projet maître.
+          <DialogDescription className="space-y-2">
+            <div>
+              <strong>Projet fils (lié) :</strong> "{currentProjectTitle}"
+            </div>
+            <div>
+              <strong>Projet maître :</strong> Le projet que vous allez sélectionner ci-dessous
+            </div>
+            <div className="text-muted-foreground mt-2">
+              Les données du projet fils seront agrégées et visibles depuis le projet maître.
+            </div>
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4 py-4">
+          <div className="space-y-2">
+            <Label>Rechercher un projet</Label>
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Filtrer par nom de projet..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-9"
+              />
+            </div>
+          </div>
+          
           <div className="space-y-2">
             <Label>Sélectionner le projet maître</Label>
             <Select
@@ -83,11 +108,17 @@ export const LinkProjectDialog = ({
                 <SelectValue placeholder="Choisir un projet..." />
               </SelectTrigger>
               <SelectContent>
-                {availableProjects.map((project: any) => (
-                  <SelectItem key={project.id} value={project.id}>
-                    {project.title}
-                  </SelectItem>
-                ))}
+                {availableProjects.length === 0 ? (
+                  <div className="p-2 text-sm text-muted-foreground text-center">
+                    Aucun projet trouvé
+                  </div>
+                ) : (
+                  availableProjects.map((project: any) => (
+                    <SelectItem key={project.id} value={project.id}>
+                      {project.title}
+                    </SelectItem>
+                  ))
+                )}
               </SelectContent>
             </Select>
           </div>
