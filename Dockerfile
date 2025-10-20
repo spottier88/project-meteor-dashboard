@@ -1,5 +1,6 @@
 # Étape 1 : Construction de l'application
-FROM node:18 AS builder
+#FROM node:18 AS builder
+FROM node:20-bookworm-slim AS builder
 
 # Définir le répertoire de travail
 WORKDIR /app
@@ -8,7 +9,8 @@ WORKDIR /app
 COPY package.json package-lock.json ./
 
 # Installer les dépendances
-RUN npm install --legacy-peer-deps
+#RUN npm install --legacy-peer-deps
+RUN npm ci --legacy-peer-deps
 
 # Copier le reste des fichiers du projet
 COPY . .
