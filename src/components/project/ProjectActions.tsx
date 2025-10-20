@@ -16,11 +16,13 @@ import {
   Trash2, 
   Users, 
   MoreVertical,
-  FileText
+  FileText,
+  Link as LinkIcon
 } from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { DeleteProjectDialog } from "./DeleteProjectDialog";
+import { LinkProjectDialog } from "./LinkProjectDialog";
 import { useProjectPermissions } from "@/hooks/use-project-permissions";
 import {
   DropdownMenu,
@@ -61,6 +63,7 @@ export const ProjectActions = ({
 }: ProjectActionsProps) => {
   const navigate = useNavigate();
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isLinkDialogOpen, setIsLinkDialogOpen] = useState(false);
   
   // Utilisons les permissions passées en props plutôt que de les récupérer à nouveau
   // Si elles ne sont pas fournies, utilisons useProjectPermissions comme fallback
@@ -149,6 +152,15 @@ export const ProjectActions = ({
               <>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem 
+                  onClick={(e) => { 
+                    e.stopPropagation(); 
+                    setIsLinkDialogOpen(true); 
+                  }}
+                >
+                  <LinkIcon className="mr-2 h-4 w-4" />
+                  Lier à un projet
+                </DropdownMenuItem>
+                <DropdownMenuItem 
                   onClick={(e) => { e.stopPropagation(); setIsDeleteDialogOpen(true); }}
                   className="text-destructive"
                 >
@@ -167,6 +179,13 @@ export const ProjectActions = ({
         projectId={projectId}
         projectTitle={projectTitle}
         onProjectDeleted={onProjectDeleted}
+      />
+
+      <LinkProjectDialog
+        isOpen={isLinkDialogOpen}
+        onClose={() => setIsLinkDialogOpen(false)}
+        currentProjectId={projectId}
+        currentProjectTitle={projectTitle}
       />
     </>
   );
