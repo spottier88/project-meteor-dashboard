@@ -58,7 +58,12 @@ export const LinkProjectDialog = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent>
+      <DialogContent 
+        onClick={(e) => e.stopPropagation()}
+        onPointerDown={(e) => e.stopPropagation()}
+        onMouseDown={(e) => e.stopPropagation()}
+        onMouseUp={(e) => e.stopPropagation()}
+      >
         <DialogHeader>
           <DialogTitle>Lier ce projet à un projet existant</DialogTitle>
           <DialogDescription>
@@ -89,11 +94,20 @@ export const LinkProjectDialog = ({
         </div>
 
         <div className="flex justify-end gap-2">
-          <Button variant="outline" onClick={onClose}>
+          <Button 
+            variant="outline" 
+            onClick={(e) => { e.stopPropagation(); onClose(); }}
+            onPointerDown={(e) => e.stopPropagation()}
+            onMouseDown={(e) => e.stopPropagation()}
+            onMouseUp={(e) => e.stopPropagation()}
+          >
             Annuler
           </Button>
           <Button 
-            onClick={handleLink} 
+            onClick={(e) => { e.stopPropagation(); handleLink(); }}
+            onPointerDown={(e) => e.stopPropagation()}
+            onMouseDown={(e) => e.stopPropagation()}
+            onMouseUp={(e) => e.stopPropagation()}
             disabled={!selectedMasterProjectId || linkProjects.isLoading}
           >
             Lier les projets
