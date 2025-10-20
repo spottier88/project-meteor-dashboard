@@ -5,7 +5,7 @@
  */
 
 import { useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { ArrowRight, Link as LinkIcon } from "lucide-react";
 import { useProjectLinks } from "@/hooks/useProjectLinks";
@@ -18,6 +18,8 @@ interface LinkedProjectRedirectProps {
 
 export const LinkedProjectRedirect = ({ projectId }: LinkedProjectRedirectProps) => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const fromMaster = searchParams.get("fromMaster") === "true";
   const { masterProjectId, isLoadingMaster } = useProjectLinks(projectId);
 
   // Récupérer les infos du projet maître
@@ -39,7 +41,8 @@ export const LinkedProjectRedirect = ({ projectId }: LinkedProjectRedirectProps)
   });
 
   useEffect(() => {
-    if (masterProjectId && masterProject) {
+    // Ne pas rediriger si l'utilisateur vient intentionnellement du projet maître
+    if (masterProjectId && masterProject && !fromMaster) {
       // Rediriger automatiquement après 3 secondes
       const timeout = setTimeout(() => {
         navigate(`/projects/${masterProjectId}`, { replace: true });
@@ -47,9 +50,10 @@ export const LinkedProjectRedirect = ({ projectId }: LinkedProjectRedirectProps)
 
       return () => clearTimeout(timeout);
     }
-  }, [masterProjectId, masterProject, navigate]);
+  }, [masterProjectId, masterProject, navigate, fromMaster]);
 
-  if (isLoadingMaster || !masterProjectId) {
+  // Ne pas afficher l'alerte si c'est une navigation intentionnelle depuis le maître
+  if (isLoadingMaster || !masterProjectId || fromMaster) {
     return null;
   }
 
