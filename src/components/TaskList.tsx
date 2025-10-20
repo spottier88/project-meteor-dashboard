@@ -28,6 +28,7 @@ export interface TaskListProps {
   canEdit: boolean;
   isProjectManager: boolean;
   isAdmin: boolean;
+  preloadedTasks?: any[]; // Données pré-chargées optionnelles
 }
 
 export const TaskList = ({
@@ -35,6 +36,7 @@ export const TaskList = ({
   canEdit,
   isProjectManager,
   isAdmin,
+  preloadedTasks,
 }: TaskListProps) => {
   const { toast } = useToast();
   const { isManager } = usePermissionsContext();
@@ -47,7 +49,8 @@ export const TaskList = ({
 
   const { canCreateTask, canEditTask, canDeleteTask } = useTaskPermissions(projectId);
 
-  const { data: tasks, refetch } = useQuery({
+  // Utiliser les données pré-chargées si disponibles, sinon faire la requête
+  const { data: queriedTasks, refetch } = useQuery({
     queryKey: ["tasks", projectId],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -59,7 +62,10 @@ export const TaskList = ({
       if (error) throw error;
       return data;
     },
+    enabled: !preloadedTasks, // Ne charger que si pas de données pré-chargées
   });
+
+  const tasks = preloadedTasks || queriedTasks;
 
   const refreshTasks = () => {
     refetch();

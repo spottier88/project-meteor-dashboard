@@ -163,6 +163,7 @@ export const ProjectSummaryContent = ({
               canEdit={permissions.canEdit}
               isProjectManager={permissions.isProjectManager}
               isAdmin={permissions.isAdmin}
+              preloadedTasks={tasks}
             />
           </div>
         </TabsContent>
@@ -174,6 +175,7 @@ export const ProjectSummaryContent = ({
               canEdit={permissions.canEdit}
               isProjectManager={permissions.isProjectManager}
               isAdmin={permissions.isAdmin}
+              preloadedRisks={risks}
             />
           </div>
         </TabsContent>

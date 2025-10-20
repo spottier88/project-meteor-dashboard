@@ -17,6 +17,7 @@ export interface RiskListProps {
   isProjectManager: boolean;
   isAdmin: boolean;
   onUpdate?: () => void; // Ajout de la propriété onUpdate en option
+  preloadedRisks?: any[]; // Données pré-chargées optionnelles
 }
 
 export const RiskList = ({
@@ -26,13 +27,15 @@ export const RiskList = ({
   isProjectManager,
   isAdmin,
   onUpdate, // Ajout du paramètre onUpdate
+  preloadedRisks,
 }: RiskListProps) => {
   const { toast } = useToast();
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [selectedRisk, setSelectedRisk] = useState<any>(null);
   const { canCreateRisk, canEditRisk, canDeleteRisk } = useRiskAccess(projectId);
 
-  const { data: risks, isLoading, isError, refetch } = useQuery({
+  // Utiliser les données pré-chargées si disponibles, sinon faire la requête
+  const { data: queriedRisks, isLoading, isError, refetch } = useQuery({
     queryKey: ["risks", projectId],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -43,8 +46,10 @@ export const RiskList = ({
       if (error) throw error;
       return data;
     },
-    enabled: !!projectId,
+    enabled: !!projectId && !preloadedRisks, // Ne charger que si pas de données pré-chargées
   });
+
+  const risks = preloadedRisks || queriedRisks;
 
   const handleEdit = (risk: any) => {
     if (canEditRisk) {
