@@ -9,6 +9,7 @@ import { LifecycleStatusBadge } from "./project/LifecycleStatusBadge";
 import { useProjectPermissions } from "@/hooks/useProjectPermissions";
 import { cn } from "@/lib/utils";
 import { useProjectNavigation } from "@/hooks/useProjectNavigation";
+import { ProjectLinkBadge } from "./project/ProjectLinkBadge";
 
 interface ProjectCardProps {
   title: string;
@@ -128,7 +129,10 @@ export const ProjectCard = ({
       <CardContent>
         <div className="grid gap-4">
           <div className="flex items-center justify-between">
-            <LifecycleStatusBadge status={lifecycle_status} />
+            <div className="flex gap-2 items-center">
+              <LifecycleStatusBadge status={lifecycle_status} />
+              <ProjectLinkBadge projectId={id} />
+            </div>
             <div className="flex gap-2">
               {isProjectManager && (
                 <span className="text-xs bg-blue-800 text-white px-2 py-1 rounded">

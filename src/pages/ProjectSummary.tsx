@@ -15,6 +15,10 @@ import { useTeamManagement } from "@/hooks/use-team-management";
 import { useProjectInnovationScores } from "@/hooks/useProjectInnovationScores";
 import { useProjectSubmit } from "@/hooks/useProjectSubmit";
 import { useProjectFormState } from "@/components/form/useProjectFormState";
+import { LinkedProjectRedirect } from "@/components/project/LinkedProjectRedirect";
+import { ProjectLinkBadge } from "@/components/project/ProjectLinkBadge";
+import { LinkedProjectsSection } from "@/components/project/LinkedProjectsSection";
+import { useAggregatedProjectData } from "@/hooks/useAggregatedProjectData";
 
 export const ProjectSummary = () => {
   const { projectId } = useParams<{ projectId: string }>();
@@ -36,6 +40,9 @@ export const ProjectSummary = () => {
 
   // État du formulaire pour l'utilisation avec useProjectSubmit
   const formState = useProjectFormState(false, null);
+
+  // Récupérer les données agrégées pour les projets maîtres
+  const { aggregatedTasks, aggregatedRisks, linkedProjectsCount } = useAggregatedProjectData(projectId || "");
 
   const { data: project, isError: projectError, refetch: refetchProject } = useQuery({
     queryKey: ["project", projectId],
@@ -241,6 +248,9 @@ export const ProjectSummary = () => {
 
   return (
     <div className="container mx-auto py-6 space-y-6">
+      {/* Redirection automatique si projet lié */}
+      <LinkedProjectRedirect projectId={projectId || ""} />
+      
       <div className="flex items-center justify-between">
         <Button
           variant="ghost"
@@ -249,13 +259,22 @@ export const ProjectSummary = () => {
           <ArrowLeft className="h-4 w-4 mr-2" />
           {getBackButtonText()}
         </Button>
+        <ProjectLinkBadge projectId={projectId || ""} />
       </div>
+
+      {/* Section des projets liés (si maître) */}
+      {linkedProjectsCount > 0 && (
+        <LinkedProjectsSection 
+          masterProjectId={projectId || ""} 
+          isAdmin={projectPermissions.isAdmin} 
+        />
+      )}
 
       <ProjectSummaryContent
         project={project}
         lastReview={lastReview}
-        risks={risks || []}
-        tasks={tasks || []}
+        risks={aggregatedRisks || risks || []}
+        tasks={aggregatedTasks || tasks || []}
         innovationScores={innovationScores}
         onEditProject={handleEditProject}
         onCreateReview={handleCreateReview}

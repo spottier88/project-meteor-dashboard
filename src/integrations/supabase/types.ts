@@ -784,6 +784,52 @@ export type Database = {
           },
         ]
       }
+      project_links: {
+        Row: {
+          created_at: string | null
+          created_by: string | null
+          id: string
+          linked_project_id: string
+          master_project_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          linked_project_id: string
+          master_project_id: string
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          linked_project_id?: string
+          master_project_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_links_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_links_linked_project_id_fkey"
+            columns: ["linked_project_id"]
+            isOneToOne: true
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_links_master_project_id_fkey"
+            columns: ["master_project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       project_members: {
         Row: {
           created_at: string | null
@@ -1592,6 +1638,22 @@ export type Database = {
         Args: { p_project_ids: string[] }
         Returns: Json
       }
+      get_linked_projects: {
+        Args: { p_master_project_id: string }
+        Returns: {
+          created_at: string
+          description: string
+          id: string
+          lifecycle_status: Database["public"]["Enums"]["project_lifecycle_status"]
+          project_manager: string
+          status: Database["public"]["Enums"]["project_status"]
+          title: string
+        }[]
+      }
+      get_master_project: {
+        Args: { p_linked_project_id: string }
+        Returns: string
+      }
       get_projects_list_view: {
         Args: Record<PropertyKey, never>
         Returns: Json
@@ -1655,6 +1717,10 @@ export type Database = {
       }
       is_portfolio_owner: {
         Args: { p_portfolio_id: string; p_user_id: string }
+        Returns: boolean
+      }
+      is_project_linked: {
+        Args: { p_project_id: string }
         Returns: boolean
       }
       update_portfolio_stats: {
