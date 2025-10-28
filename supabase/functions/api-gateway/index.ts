@@ -395,9 +395,14 @@ serve(async (req: Request) => {
   try {
     const url = new URL(req.url);
     const rawPath = url.pathname;
-    // Supprime le préfixe de la fonction Edge: /functions/v{n}/{function-name}
-    const cleanedPath = rawPath.replace(/^\/functions\/v\d+\/[^\/]+/, '');
+    // Supprime le préfixe de la fonction Edge: /functions/v{n}/{function-name} OU /api-gateway
+    const cleanedPath = rawPath
+      .replace(/^\/functions\/v\d+\/[^\/]+/, '')
+      .replace(/^\/api-gateway(?=\/|$)/, '');
     endpoint = cleanedPath || '/';
+    
+    // Log de debug pour diagnostiquer le routing
+    console.log('Routing info', { rawPath, cleanedPath: endpoint });
     const params = Object.fromEntries(url.searchParams);
     
     // 1. Extraire le token
