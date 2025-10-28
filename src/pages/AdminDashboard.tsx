@@ -1,5 +1,5 @@
 
-import { Settings, Users, Building2, Bell, Activity, BookOpenText, FileText, BarChart3, Target } from "lucide-react";
+import { Settings, Users, Building2, Bell, Activity, BookOpenText, FileText, BarChart3, Target, Key } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 
@@ -99,6 +99,15 @@ export const AdminDashboard = () => {
         >
           <FileText className="h-8 w-8" />
           <span>Modèles de projet</span>
+        </Button>
+
+        <Button
+          variant="outline"
+          className="h-32 flex flex-col items-center justify-center gap-2"
+          onClick={() => navigate("/admin/api-tokens")}
+        >
+          <Key className="h-8 w-8" />
+          <span>Tokens API</span>
         </Button>
       </div>
     </div>

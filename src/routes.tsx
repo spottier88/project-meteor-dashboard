@@ -36,6 +36,7 @@ import { AIMonitoring } from "./pages/AIMonitoring";
 import { logger } from "./utils/logger";
 import { ProjectFraming } from "./pages/ProjectFraming";
 import { MyTasks } from "./pages/MyTasks";
+import APITokenManagement from "./pages/APITokenManagement";
 
 export const AppRoutes = () => {
   const session = useSession();
@@ -199,6 +200,14 @@ export const AppRoutes = () => {
             element={
               <ProtectedRoute>
                 <AIMonitoring />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/api-tokens"
+            element={
+              <ProtectedRoute>
+                <APITokenManagement />
               </ProtectedRoute>
             }
           />
