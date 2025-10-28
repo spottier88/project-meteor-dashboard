@@ -273,6 +273,97 @@ export type Database = {
         }
         Relationships: []
       }
+      api_logs: {
+        Row: {
+          created_at: string | null
+          endpoint: string
+          id: string
+          ip_address: string | null
+          method: string
+          response_time_ms: number | null
+          status_code: number | null
+          token_id: string | null
+          user_agent: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          endpoint: string
+          id?: string
+          ip_address?: string | null
+          method: string
+          response_time_ms?: number | null
+          status_code?: number | null
+          token_id?: string | null
+          user_agent?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          endpoint?: string
+          id?: string
+          ip_address?: string | null
+          method?: string
+          response_time_ms?: number | null
+          status_code?: number | null
+          token_id?: string | null
+          user_agent?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "api_logs_token_id_fkey"
+            columns: ["token_id"]
+            isOneToOne: false
+            referencedRelation: "api_tokens"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      api_tokens: {
+        Row: {
+          allowed_filters: Json | null
+          created_at: string | null
+          created_by: string | null
+          expires_at: string | null
+          id: string
+          is_active: boolean | null
+          last_used_at: string | null
+          name: string
+          scopes: Json | null
+          token: string
+        }
+        Insert: {
+          allowed_filters?: Json | null
+          created_at?: string | null
+          created_by?: string | null
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          last_used_at?: string | null
+          name: string
+          scopes?: Json | null
+          token: string
+        }
+        Update: {
+          allowed_filters?: Json | null
+          created_at?: string | null
+          created_by?: string | null
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          last_used_at?: string | null
+          name?: string
+          scopes?: Json | null
+          token?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "api_tokens_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       application_settings: {
         Row: {
           created_at: string | null
@@ -1575,10 +1666,7 @@ export type Database = {
         Args: { p_project_id: string; p_user_id: string }
         Returns: boolean
       }
-      generate_project_code: {
-        Args: { project_uuid: string }
-        Returns: string
-      }
+      generate_project_code: { Args: { project_uuid: string }; Returns: string }
       get_accessible_portfolios: {
         Args: { p_user_id: string }
         Returns: {
@@ -1654,10 +1742,7 @@ export type Database = {
         Args: { p_linked_project_id: string }
         Returns: string
       }
-      get_projects_list_view: {
-        Args: Record<PropertyKey, never>
-        Returns: Json
-      }
+      get_projects_list_view: { Args: never; Returns: Json }
       get_reviewable_projects: {
         Args: { p_user_id: string }
         Returns: {
@@ -1695,21 +1780,21 @@ export type Database = {
         Returns: number
       }
       get_users_last_activity: {
-        Args: Record<PropertyKey, never>
+        Args: never
         Returns: {
           last_activity_at: string
           user_id: string
         }[]
       }
       get_users_last_login: {
-        Args: Record<PropertyKey, never>
+        Args: never
         Returns: {
           last_sign_in_at: string
           user_id: string
         }[]
       }
       get_users_without_profile: {
-        Args: Record<PropertyKey, never>
+        Args: never
         Returns: {
           email: string
           id: string
@@ -1719,10 +1804,7 @@ export type Database = {
         Args: { p_portfolio_id: string; p_user_id: string }
         Returns: boolean
       }
-      is_project_linked: {
-        Args: { p_project_id: string }
-        Returns: boolean
-      }
+      is_project_linked: { Args: { p_project_id: string }; Returns: boolean }
       update_portfolio_stats: {
         Args: { p_portfolio_id: string }
         Returns: undefined
