@@ -52,7 +52,7 @@ GET /api/projects
 
 | Paramètre | Type | Description | Exemple |
 |-----------|------|-------------|---------|
-| `status` | string | Filtrer par statut météo | `green`, `orange`, `red` |
+| `status` | string | Filtrer par statut météo | `sunny`, `cloudy`, `stormy` |
 | `lifecycle_status` | string | Filtrer par statut du cycle de vie | `idea`, `planning`, `in_progress`, `on_hold`, `completed`, `cancelled` |
 | `pole_id` | uuid | Filtrer par pôle | `a1b2c3d4-...` |
 | `direction_id` | uuid | Filtrer par direction | `e5f6g7h8-...` |
@@ -65,7 +65,7 @@ GET /api/projects
 **Exemple de requête :**
 
 ```bash
-curl -X GET "https://rgfabywkwllxoqsahrpt.supabase.co/functions/v1/api-gateway/api/projects?status=green&limit=10" \
+curl -X GET "https://rgfabywkwllxoqsahrpt.supabase.co/functions/v1/api-gateway/api/projects?status=sunny&limit=10" \
   -H "X-API-Key: votre_token"
 ```
 
@@ -78,7 +78,7 @@ curl -X GET "https://rgfabywkwllxoqsahrpt.supabase.co/functions/v1/api-gateway/a
       "id": "a1b2c3d4-e5f6-7g8h-9i0j-k1l2m3n4o5p6",
       "title": "Transformation digitale des services",
       "description": "Modernisation des outils numériques",
-      "status": "green",
+      "status": "sunny",
       "lifecycle_status": "in_progress",
       "project_manager": "chef.projet@example.com",
       "project_manager_id": "uuid-du-manager",
@@ -137,7 +137,7 @@ curl -X GET "https://rgfabywkwllxoqsahrpt.supabase.co/functions/v1/api-gateway/a
     "id": "a1b2c3d4-e5f6-7g8h-9i0j-k1l2m3n4o5p6",
     "title": "Transformation digitale des services",
     "description": "Modernisation des outils numériques",
-    "status": "green",
+    "status": "sunny",
     "lifecycle_status": "in_progress",
     "project_manager": "chef.projet@example.com",
     "project_manager_id": "uuid-du-manager",
@@ -163,7 +163,7 @@ curl -X GET "https://rgfabywkwllxoqsahrpt.supabase.co/functions/v1/api-gateway/a
     }
   },
   "last_review": {
-    "weather": "green",
+    "weather": "sunny",
     "progress": "on_track",
     "completion": 65,
     "created_at": "2025-10-20T10:30:00Z",
@@ -413,13 +413,73 @@ Si aucune restriction n'est configurée, le token a accès à toutes les donnée
 
 ---
 
+## 📖 Référence des valeurs énumérées
+
+### Statuts météo (project_status)
+Les statuts météo représentent l'état général du projet :
+
+| Valeur | Signification | Description |
+|--------|---------------|-------------|
+| `sunny` | ☀️ Ensoleillé | Le projet se déroule sans problème majeur |
+| `cloudy` | ⛅ Nuageux | Le projet présente quelques difficultés mineures |
+| `stormy` | ⛈️ Orageux | Le projet rencontre des difficultés importantes |
+
+### Statuts de cycle de vie (lifecycle_status)
+| Valeur | Signification |
+|--------|---------------|
+| `idea` | Idée / Avant-projet |
+| `planning` | Planification |
+| `in_progress` | En cours |
+| `on_hold` | En pause |
+| `completed` | Terminé |
+| `cancelled` | Annulé |
+
+### Statuts de tâches (task_status)
+| Valeur | Signification |
+|--------|---------------|
+| `todo` | À faire |
+| `in_progress` | En cours |
+| `done` | Terminée |
+| `blocked` | Bloquée |
+
+### Statuts de risques (risk_status)
+| Valeur | Signification |
+|--------|---------------|
+| `open` | Ouvert |
+| `in_mitigation` | En atténuation |
+| `closed` | Fermé |
+
+### Probabilité de risque (risk_probability)
+| Valeur | Signification |
+|--------|---------------|
+| `low` | Faible |
+| `medium` | Moyenne |
+| `high` | Élevée |
+
+### Sévérité de risque (risk_severity)
+| Valeur | Signification |
+|--------|---------------|
+| `low` | Faible |
+| `medium` | Moyenne |
+| `high` | Élevée |
+| `critical` | Critique |
+
+### Avancement (progress)
+| Valeur | Signification |
+|--------|---------------|
+| `on_track` | Dans les temps |
+| `at_risk` | À risque |
+| `delayed` | En retard |
+
+---
+
 ## 🚀 Exemples d'utilisation
 
 ### Exemple en cURL
 
 ```bash
-# Récupérer tous les projets en cours avec statut vert
-curl -X GET "https://rgfabywkwllxoqsahrpt.supabase.co/functions/v1/api-gateway/api/projects?lifecycle_status=in_progress&status=green" \
+# Récupérer tous les projets en cours avec statut ensoleillé
+curl -X GET "https://rgfabywkwllxoqsahrpt.supabase.co/functions/v1/api-gateway/api/projects?lifecycle_status=in_progress&status=sunny" \
   -H "X-API-Key: votre_token_api"
 ```
 
