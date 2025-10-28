@@ -1,15 +1,16 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { DashboardHeader } from "@/components/DashboardHeader";
 import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
+import { Plus, Settings } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { APITokenList } from "@/components/api-tokens/APITokenList";
 import { APITokenForm } from "@/components/api-tokens/APITokenForm";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "sonner";
 
 export default function APITokenManagement() {
+  const navigate = useNavigate();
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [createdToken, setCreatedToken] = useState<string | null>(null);
 
@@ -38,14 +39,16 @@ export default function APITokenManagement() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      <DashboardHeader />
-      
-      <main className="container mx-auto px-4 py-8">
-        <div className="flex justify-between items-center mb-8">
+    <div className="container mx-auto py-8 px-4">
+      <div className="mb-8">
+        <Button variant="ghost" onClick={() => navigate("/admin")} className="mb-4">
+          <Settings className="mr-2 h-4 w-4" />
+          Retour à l'administration
+        </Button>
+        <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-foreground">Gestion des Tokens API</h1>
-            <p className="text-muted-foreground mt-2">
+            <h1 className="text-3xl font-bold tracking-tight">Gestion des Tokens API</h1>
+            <p className="text-muted-foreground">
               Créez et gérez les tokens d'accès à l'API Meteor
             </p>
           </div>
@@ -54,6 +57,7 @@ export default function APITokenManagement() {
             Nouveau Token
           </Button>
         </div>
+      </div>
 
         <APITokenList 
           tokens={tokens || []} 
@@ -98,7 +102,6 @@ export default function APITokenManagement() {
             </div>
           </DialogContent>
         </Dialog>
-      </main>
     </div>
   );
 }
