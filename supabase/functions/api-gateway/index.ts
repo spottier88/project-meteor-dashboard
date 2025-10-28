@@ -394,7 +394,10 @@ serve(async (req: Request) => {
   
   try {
     const url = new URL(req.url);
-    endpoint = url.pathname;
+    const rawPath = url.pathname;
+    // Supprime le préfixe de la fonction Edge: /functions/v{n}/{function-name}
+    const cleanedPath = rawPath.replace(/^\/functions\/v\d+\/[^\/]+/, '');
+    endpoint = cleanedPath || '/';
     const params = Object.fromEntries(url.searchParams);
     
     // 1. Extraire le token
@@ -444,7 +447,7 @@ serve(async (req: Request) => {
     const responseTimeMs = Date.now() - startTime;
     
     // 4. Logger l'appel
-    await logApiCall(supabase, tokenId, endpoint, req.method, statusCode, responseTimeMs, req);
+    await logApiCall(supabase, tokenId, rawPath, req.method, statusCode, responseTimeMs, req);
     
     return new Response(
       JSON.stringify(result.data),
