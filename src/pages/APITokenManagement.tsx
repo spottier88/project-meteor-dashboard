@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Plus, Settings } from "lucide-react";
+import { Plus, Settings, Check, Copy } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { APITokenList } from "@/components/api-tokens/APITokenList";
 import { APITokenForm } from "@/components/api-tokens/APITokenForm";
@@ -13,6 +13,7 @@ export default function APITokenManagement() {
   const navigate = useNavigate();
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [createdToken, setCreatedToken] = useState<string | null>(null);
+  const [isCopied, setIsCopied] = useState(false);
 
   const { data: tokens, isLoading, refetch } = useQuery({
     queryKey: ['api-tokens'],
@@ -36,6 +37,14 @@ export default function APITokenManagement() {
 
   const handleCloseCreatedTokenDialog = () => {
     setCreatedToken(null);
+    setIsCopied(false);
+  };
+
+  const handleCopyToken = () => {
+    navigator.clipboard.writeText(createdToken || '');
+    setIsCopied(true);
+    toast.success("Token copié dans le presse-papier");
+    setTimeout(() => setIsCopied(false), 2000);
   };
 
   return (
@@ -91,13 +100,21 @@ export default function APITokenManagement() {
                 <code className="text-sm break-all">{createdToken}</code>
               </div>
               <Button
-                onClick={() => {
-                  navigator.clipboard.writeText(createdToken || '');
-                  toast.success("Token copié dans le presse-papier");
-                }}
+                onClick={handleCopyToken}
                 className="w-full"
+                variant={isCopied ? "green" : "default"}
               >
-                Copier le token
+                {isCopied ? (
+                  <>
+                    <Check className="h-4 w-4 mr-2" />
+                    Token copié !
+                  </>
+                ) : (
+                  <>
+                    <Copy className="h-4 w-4 mr-2" />
+                    Copier le token
+                  </>
+                )}
               </Button>
             </div>
           </DialogContent>
