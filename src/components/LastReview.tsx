@@ -7,6 +7,7 @@ interface LastReviewProps {
     weather: "sunny" | "cloudy" | "stormy";
     progress: "better" | "stable" | "worse";
     comment?: string;
+    difficulties?: string;
     created_at: string;
   } | null;
 }
@@ -67,6 +68,14 @@ export const LastReview = ({ review }: LastReviewProps) => {
         {review.comment && (
           <div className="pt-4 border-t">
             <p className="text-sm text-muted-foreground">{review.comment}</p>
+          </div>
+        )}
+        {review.difficulties && (
+          <div className="pt-4 border-t">
+            <div className="flex items-center gap-2 mb-2">
+              <span className="text-sm font-semibold text-orange-500">Difficultés en cours</span>
+            </div>
+            <p className="text-sm text-muted-foreground whitespace-pre-wrap">{review.difficulties}</p>
           </div>
         )}
       </CardContent>

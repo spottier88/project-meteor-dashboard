@@ -1284,6 +1284,7 @@ export type Database = {
           comment: string | null
           completion: number
           created_at: string | null
+          difficulties: string | null
           id: string
           progress: Database["public"]["Enums"]["progress_status"]
           project_id: string
@@ -1293,6 +1294,7 @@ export type Database = {
           comment?: string | null
           completion?: number
           created_at?: string | null
+          difficulties?: string | null
           id?: string
           progress: Database["public"]["Enums"]["progress_status"]
           project_id: string
@@ -1302,6 +1304,7 @@ export type Database = {
           comment?: string | null
           completion?: number
           created_at?: string | null
+          difficulties?: string | null
           id?: string
           progress?: Database["public"]["Enums"]["progress_status"]
           project_id?: string
@@ -1588,6 +1591,7 @@ export type Database = {
           comment: string | null
           completion: number | null
           created_at: string | null
+          difficulties: string | null
           progress: Database["public"]["Enums"]["progress_status"] | null
           project_id: string | null
           review_id: string | null

@@ -27,6 +27,7 @@ export interface ProjectData {
     weather: "sunny" | "cloudy" | "stormy";
     progress: "better" | "stable" | "worse";
     comment?: string;
+    difficulties?: string;
     created_at: string;
     actions?: Array<{
       description: string;

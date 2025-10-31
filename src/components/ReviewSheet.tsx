@@ -10,6 +10,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ReviewForm } from "@/components/review/types";
 import { ReviewFormFields } from "@/components/review/ReviewFormFields";
 import { ReviewActionFields } from "@/components/review/ReviewActionFields";
+import { ReviewDifficultiesField } from "@/components/review/ReviewDifficultiesField";
 
 interface ReviewSheetProps {
   projectId: string;
@@ -62,6 +63,7 @@ export const ReviewSheet = ({
       progress: "stable",
       completion: lastReview?.completion || 0,
       comment: "",
+      difficulties: "",
       actions: [{ description: "" }],
     },
   });
@@ -78,6 +80,7 @@ export const ReviewSheet = ({
           progress: data.progress,
           completion: data.completion,
           comment: data.comment,
+          difficulties: data.difficulties,
         })
         .select()
         .single();
@@ -143,10 +146,11 @@ export const ReviewSheet = ({
         <SheetHeader>
           <SheetTitle>Nouvelle Revue - {projectTitle}</SheetTitle>
         </SheetHeader>
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 mt-6">
-            <ReviewFormFields form={form} />
-            <ReviewActionFields form={form} />
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 mt-6">
+              <ReviewFormFields form={form} />
+              <ReviewDifficultiesField form={form} />
+              <ReviewActionFields form={form} />
             
             <div className="flex justify-end space-x-2">
               <Button type="button" variant="outline" onClick={onClose}>

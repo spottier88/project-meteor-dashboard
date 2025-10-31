@@ -40,6 +40,7 @@ export type ProjectData = {
     progress: ProgressStatus | null;
     completion: number;
     comment: string | null;
+    difficulties: string | null;
     created_at: string | null;
     actions: Array<{
       id: string;

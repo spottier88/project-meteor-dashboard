@@ -106,6 +106,7 @@ const ProjectSummaryActions = ({
           weather: (detailedProjectData.lastReview?.weather || "cloudy") as ProjectStatus,
           progress: (detailedProjectData.lastReview?.progress || "stable") as ProgressStatus,
           comment: detailedProjectData.lastReview?.comment,
+          difficulties: detailedProjectData.lastReview?.difficulties,
           created_at: detailedProjectData.lastReview?.created_at,
           actions: detailedProjectData.lastReview?.actions || []
         } : undefined,

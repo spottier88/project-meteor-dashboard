@@ -14,6 +14,7 @@ export interface ReviewForm {
   progress: "better" | "stable" | "worse";
   completion: number;
   comment: string;
+  difficulties: string;
   actions: ReviewAction[];
   taskStatusUpdates?: TaskStatusUpdate[];
 }

@@ -95,7 +95,7 @@ const addProjectGrid = (slide: pptxgen.Slide, data: ProjectData) => {
   addGeneralSituationSection(slide, data, grid);
   addTargetEndSection(slide, data, grid);
   addTasksSections(slide, data, grid);
-  addRisksSection(slide, data, grid);
+  addDifficultiesAndActionsSection(slide, data, grid);
 };
 
 const addSituationSection = (slide: pptxgen.Slide, data: ProjectData, grid: any) => {
@@ -179,22 +179,39 @@ const addTasksSections = (slide: pptxgen.Slide, data: ProjectData, grid: any) =>
     grid.x + (columnWidth + spacing) * 2, tasksY, columnWidth, taskBoxHeight, titleHeight);
 };
 
-const addRisksSection = (slide: pptxgen.Slide, data: ProjectData, grid: any) => {
-  const risksY = grid.y + 3.0;
-  const riskBoxHeight = 1.4;
+const addDifficultiesAndActionsSection = (slide: pptxgen.Slide, data: ProjectData, grid: any) => {
+  const sectionY = grid.y + 3.0;
+  const boxHeight = 1.4;
   const titleHeight = 0.3;
   
-  addSection(slide, "RISQUES IDENTIFIÉS", grid.x, risksY, 4.5, riskBoxHeight);
-  addBulletList(slide, data.risks.map(r => r.description), 
-    grid.x + 0.2, risksY + titleHeight, 4.1, riskBoxHeight - titleHeight);
+  // Section Difficultés en cours (remplace Risques identifiés)
+  addSection(slide, "DIFFICULTÉS EN COURS", grid.x, sectionY, 4.5, boxHeight);
+  
+  // Afficher les difficultés si présentes, sinon afficher les risques (rétrocompatibilité)
+  if (data.lastReview?.difficulties) {
+    slide.addText(data.lastReview.difficulties, {
+      x: grid.x + 0.2,
+      y: sectionY + titleHeight,
+      w: 4.1,
+      h: boxHeight - titleHeight,
+      fontSize: 10,
+      color: "363636",
+      valign: "top"
+    });
+  } else {
+    // Fallback sur les risques si pas de difficultés renseignées
+    addBulletList(slide, data.risks.map(r => r.description), 
+      grid.x + 0.2, sectionY + titleHeight, 4.1, boxHeight - titleHeight);
+  }
     
-  addSection(slide, "ACTIONS CORRECTIVES", grid.x + 4.6, risksY, 4.7, riskBoxHeight);
+  // Section Actions correctives (inchangée)
+  addSection(slide, "ACTIONS CORRECTIVES", grid.x + 4.6, sectionY, 4.7, boxHeight);
 
   // Récupérer les descriptions des actions correctives s'il y en a
   const actionDescriptions = data.lastReview?.actions?.map(a => a.description) || [];
   
   addBulletList(slide, actionDescriptions, 
-    grid.x + 4.8, risksY + titleHeight, 4.3, riskBoxHeight - titleHeight);
+    grid.x + 4.8, sectionY + titleHeight, 4.3, boxHeight - titleHeight);
 };
 
 const addSection = (slide: pptxgen.Slide, title: string, x: number, y: number, w: number, h: number) => {
