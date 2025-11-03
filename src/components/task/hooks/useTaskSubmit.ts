@@ -79,9 +79,13 @@ export const useTaskSubmit = ({
         resetForm();
       }
 
-      // Rafraîchir immédiatement les données au lieu d'invalider
-      await queryClient.refetchQueries({ queryKey: ["tasks", projectId] });
-      await queryClient.refetchQueries({ queryKey: ["project-tasks-for-parent", projectId] });
+      // Rafraîchir toutes les queries de tâches (incluant aggregatedTasks pour les projets maîtres)
+      await queryClient.refetchQueries({
+        predicate: (query) =>
+          query.queryKey[0] === "tasks" ||
+          query.queryKey[0] === "aggregatedTasks" ||
+          query.queryKey[0] === "project-tasks-for-parent"
+      });
       
       resetHasUnsavedChanges();
       
