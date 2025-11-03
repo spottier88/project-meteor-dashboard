@@ -24,6 +24,7 @@ import { ManagerAssignments } from "./pages/ManagerAssignments";
 import { ProjectTeamManagement } from "./pages/ProjectTeamManagement";
 import { PermissionsProvider } from "@/contexts/PermissionsContext";
 import { FeedbackButton } from "@/components/feedback/FeedbackButton";
+import { VersionBadge } from "@/components/VersionBadge";
 import { useEffect } from "react";
 import { useToast } from "./components/ui/use-toast";
 import { ActivityManagement } from "@/components/activities/ActivityManagement";
@@ -277,6 +278,7 @@ export const AppRoutes = () => {
           />
         </Routes>
         <FeedbackButton />
+        <VersionBadge />
       </Router>
       <Toaster />
     </PermissionsProvider>
