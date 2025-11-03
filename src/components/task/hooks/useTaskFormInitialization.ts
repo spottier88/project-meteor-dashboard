@@ -45,6 +45,23 @@ export const useTaskFormInitialization = ({ task, projectMembers }: Pick<UseTask
     }
   }, [task, projectMembers]);
 
+  // Fonction pour réinitialiser le formulaire
+  const resetForm = () => {
+    setTitle("");
+    setDescription("");
+    setStatus("todo");
+    setDueDate(undefined);
+    setStartDate(undefined);
+    setAssignee("");
+    setParentTaskId(undefined);
+    
+    if (projectMembers && projectMembers.length > 0) {
+      setAssignmentMode("member");
+    } else {
+      setAssignmentMode("free");
+    }
+  };
+
   return {
     title,
     setTitle,
@@ -61,6 +78,7 @@ export const useTaskFormInitialization = ({ task, projectMembers }: Pick<UseTask
     assignmentMode,
     setAssignmentMode,
     parentTaskId,
-    setParentTaskId
+    setParentTaskId,
+    resetForm
   };
 };

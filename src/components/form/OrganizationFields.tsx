@@ -157,7 +157,13 @@ export const OrganizationFields = ({
   const isLoadingDirections = canAccessAllOrganizations ? isLoadingAllDirections : isLoadingOrganizations;
   
   if (canAccessAllOrganizations) {
-    directions = (allDirections || []).filter(d => poleId !== "none" && d.pole_id === poleId);
+    // Pour les admins : afficher toutes les directions si un pôle est sélectionné
+    // ou toutes les directions si aucun pôle n'est sélectionné (pour permettre la modification)
+    if (poleId && poleId !== "none") {
+      directions = (allDirections || []).filter(d => d.pole_id === poleId);
+    } else {
+      directions = allDirections || [];
+    }
   } else if (accessibleOrganizations && poleDirections) {
     // Filtrer pour ne garder que les directions accessibles
     const accessibleDirectionIds = new Set(accessibleOrganizations.directions.map(d => d.id));
@@ -169,7 +175,13 @@ export const OrganizationFields = ({
   const isLoadingServices = canAccessAllOrganizations ? isLoadingAllServices : isLoadingOrganizations;
   
   if (canAccessAllOrganizations) {
-    services = (allServices || []).filter(s => directionId !== "none" && s.direction_id === directionId);
+    // Pour les admins : afficher tous les services si une direction est sélectionnée
+    // ou tous les services si aucune direction n'est sélectionnée (pour permettre la modification)
+    if (directionId && directionId !== "none") {
+      services = (allServices || []).filter(s => s.direction_id === directionId);
+    } else {
+      services = allServices || [];
+    }
   } else if (accessibleOrganizations && directionServices) {
     // Filtrer pour ne garder que les services accessibles
     const accessibleServiceIds = new Set(accessibleOrganizations.services.map(s => s.id));

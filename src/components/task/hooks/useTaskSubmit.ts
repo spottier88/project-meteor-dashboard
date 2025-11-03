@@ -11,6 +11,7 @@ interface UseTaskSubmitParams {
   onClose: () => void;
   onSubmit?: () => void;
   resetHasUnsavedChanges: () => void;
+  resetForm: () => void;
 }
 
 export const useTaskSubmit = ({
@@ -18,7 +19,8 @@ export const useTaskSubmit = ({
   taskId,
   onClose,
   onSubmit = () => {},
-  resetHasUnsavedChanges
+  resetHasUnsavedChanges,
+  resetForm
 }: UseTaskSubmitParams) => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -72,10 +74,14 @@ export const useTaskSubmit = ({
           title: "Succès",
           description: "La tâche a été créée",
         });
+        
+        // Réinitialiser le formulaire après création d'une nouvelle tâche
+        resetForm();
       }
 
-      queryClient.invalidateQueries({ queryKey: ["tasks", projectId] });
-      queryClient.invalidateQueries({ queryKey: ["project-tasks-for-parent", projectId] });
+      // Rafraîchir immédiatement les données au lieu d'invalider
+      await queryClient.refetchQueries({ queryKey: ["tasks", projectId] });
+      await queryClient.refetchQueries({ queryKey: ["project-tasks-for-parent", projectId] });
       
       resetHasUnsavedChanges();
       

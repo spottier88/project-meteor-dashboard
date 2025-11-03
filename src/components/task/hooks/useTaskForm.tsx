@@ -29,7 +29,8 @@ export const useTaskForm = ({
     assignmentMode,
     setAssignmentMode,
     parentTaskId,
-    setParentTaskId
+    setParentTaskId,
+    resetForm
   } = useTaskFormInitialization({ task, projectMembers });
 
   // Gestion de la soumission du formulaire
@@ -38,7 +39,8 @@ export const useTaskForm = ({
     taskId: task?.id,
     onClose,
     onSubmit,
-    resetHasUnsavedChanges: () => trackerState.resetHasUnsavedChanges()
+    resetHasUnsavedChanges: () => trackerState.resetHasUnsavedChanges(),
+    resetForm
   });
 
   // Suivi des modifications non enregistrées

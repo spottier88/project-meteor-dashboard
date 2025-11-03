@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Form } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
@@ -76,6 +76,21 @@ export const ReviewSheet = ({
       actions: [{ description: "" }],
     },
   });
+
+  // Réinitialiser le formulaire lorsque le sheet s'ouvre
+  useEffect(() => {
+    if (isOpen) {
+      form.reset({
+        weather: "cloudy",
+        progress: "stable",
+        completion: lastReview?.completion || 0,
+        comment: "",
+        difficulties: "",
+        actions: [{ description: "" }],
+      });
+      setTaskStatusUpdates([]);
+    }
+  }, [isOpen, lastReview, form]);
 
   const onSubmit = async (data: ReviewForm) => {
     setIsSubmitting(true);
@@ -162,6 +177,17 @@ export const ReviewSheet = ({
         title: "Revue enregistrée",
         description: "La revue du projet a été enregistrée avec succès.",
       });
+
+      // Réinitialiser le formulaire après soumission réussie
+      form.reset({
+        weather: "cloudy",
+        progress: "stable",
+        completion: lastReview?.completion || 0,
+        comment: "",
+        difficulties: "",
+        actions: [{ description: "" }],
+      });
+      setTaskStatusUpdates([]);
 
       onReviewSubmitted();
       onClose();
