@@ -3,6 +3,39 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
 import { PortfolioWithStats } from "@/types/portfolio";
 
+/**
+ * Fonction utilitaire pour récupérer les revues par lots de projets
+ * Évite les erreurs 502 dues aux URLs trop longues avec de nombreux project IDs
+ */
+const fetchReviewsInChunks = async (projectIds: string[]) => {
+  const CHUNK_SIZE = 50; // Taille sûre pour éviter les URL trop longues
+  const chunks: string[][] = [];
+  
+  // Diviser les project IDs en lots
+  for (let i = 0; i < projectIds.length; i += CHUNK_SIZE) {
+    chunks.push(projectIds.slice(i, i + CHUNK_SIZE));
+  }
+  
+  console.log(`[Portfolio Reviews] Chargement de ${projectIds.length} projets en ${chunks.length} requête(s)`);
+  
+  // Effectuer toutes les requêtes en parallèle
+  const results = await Promise.all(
+    chunks.map(chunk =>
+      supabase
+        .from("latest_reviews")
+        .select("project_id, completion")
+        .in("project_id", chunk)
+    )
+  );
+  
+  // Vérifier les erreurs
+  const firstError = results.find(r => r.error);
+  if (firstError?.error) throw firstError.error;
+  
+  // Combiner tous les résultats
+  return results.flatMap(r => r.data || []);
+};
+
 export const usePortfolioDetails = (portfolioId: string) => {
   return useQuery({
     queryKey: ["portfolio", portfolioId],
@@ -36,12 +69,8 @@ export const usePortfolioDetails = (portfolioId: string) => {
       if (projectsError) throw projectsError;
 
       // Récupérer les données de completion depuis latest_reviews pour chaque projet
-      const { data: reviewsData, error: reviewsError } = await supabase
-        .from("latest_reviews")
-        .select("project_id, completion")
-        .in("project_id", projects.map(p => p.id));
-
-      if (reviewsError) throw reviewsError;
+      // Utilise la pagination pour éviter les erreurs 502 avec de nombreux projets
+      const reviewsData = await fetchReviewsInChunks(projects.map(p => p.id));
 
       // Créer un map des completions par projet
       const completionMap = new Map(reviewsData?.map(r => [r.project_id, r.completion]) || []);
