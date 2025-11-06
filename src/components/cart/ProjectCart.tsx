@@ -1,9 +1,10 @@
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useProjectCart } from "@/hooks/use-project-cart";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Trash2, Presentation, GanttChartSquare, FileSpreadsheet } from "lucide-react";
+import { Trash2, Presentation, GanttChartSquare, FileSpreadsheet, ArrowUpDown } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { generateProjectPPTX } from "../pptx/ProjectPPTX";
 import { useState } from "react";
@@ -14,11 +15,70 @@ import { useDetailedProjectsData, ProjectData } from "@/hooks/use-detailed-proje
 import { ProjectData as PPTXProjectData } from "../pptx/types";
 import { ProjectStatus, ProgressStatus } from "@/types/project";
 import { RiskProbability, RiskSeverity, RiskStatus } from "@/types/risk";
+import { statusIcons } from "@/lib/project-status";
 
 interface ProjectCartProps {
   isOpen: boolean;
   onClose: () => void;
 }
+
+type BasicProject = {
+  id: string;
+  title: string;
+  weather: "sunny" | "cloudy" | "stormy" | null;
+};
+
+type SortOption = 'none' | 'weather-asc' | 'weather-desc' | 'name-asc' | 'name-desc';
+
+/**
+ * Fonction pour obtenir l'ordre de priorité de la météo
+ * sunny (1) < cloudy (2) < stormy (3) < null (4)
+ */
+const getWeatherPriority = (weather: string | null): number => {
+  switch (weather) {
+    case 'sunny': return 1;
+    case 'cloudy': return 2;
+    case 'stormy': return 3;
+    default: return 4; // null en dernier
+  }
+};
+
+/**
+ * Fonction de tri des projets selon l'option sélectionnée
+ */
+const sortProjects = <T extends { title: string; weather?: string | null; id?: string }>(
+  projects: T[], 
+  option: SortOption
+): T[] => {
+  if (option === 'none') return projects;
+  
+  const sorted = [...projects];
+  
+  switch (option) {
+    case 'weather-asc':
+      sorted.sort((a, b) => {
+        const priorityA = getWeatherPriority(a.weather || null);
+        const priorityB = getWeatherPriority(b.weather || null);
+        return priorityA - priorityB;
+      });
+      break;
+    case 'weather-desc':
+      sorted.sort((a, b) => {
+        const priorityA = getWeatherPriority(a.weather || null);
+        const priorityB = getWeatherPriority(b.weather || null);
+        return priorityB - priorityA;
+      });
+      break;
+    case 'name-asc':
+      sorted.sort((a, b) => a.title.localeCompare(b.title, 'fr'));
+      break;
+    case 'name-desc':
+      sorted.sort((a, b) => b.title.localeCompare(a.title, 'fr'));
+      break;
+  }
+  
+  return sorted;
+};
 
 export const ProjectCart = ({ isOpen, onClose }: ProjectCartProps) => {
   const { cartItems, removeFromCart, clearCart } = useProjectCart();
@@ -26,19 +86,60 @@ export const ProjectCart = ({ isOpen, onClose }: ProjectCartProps) => {
   const [isGanttOpen, setIsGanttOpen] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
   const [exportType, setExportType] = useState<'excel' | 'pptx' | null>(null);
+  const [sortOption, setSortOption] = useState<SortOption>('none');
 
   const { data: basicProjects } = useQuery({
     queryKey: ["basicProjects", cartItems],
     queryFn: async () => {
       if (cartItems.length === 0) return [];
-      const { data } = await supabase
+      
+      // Récupérer les projets
+      const { data: projects } = await supabase
         .from("projects")
         .select("id, title")
         .in("id", cartItems);
-      return data || [];
+      
+      if (!projects) return [];
+      
+      // Récupérer les météos depuis latest_reviews
+      const { data: reviews } = await supabase
+        .from("latest_reviews")
+        .select("project_id, weather")
+        .in("project_id", cartItems);
+      
+      // Créer un map des météos
+      const weatherMap = new Map(reviews?.map(r => [r.project_id, r.weather]) || []);
+      
+      // Enrichir les projets avec leur météo
+      return projects.map(p => ({
+        ...p,
+        weather: weatherMap.get(p.id) || null
+      })) as BasicProject[];
     },
     enabled: cartItems.length > 0,
   });
+
+  // Appliquer le tri aux projets de base
+  const sortedBasicProjects = sortProjects(basicProjects || [], sortOption);
+
+  // Fonction pour trier les données détaillées selon l'ordre défini
+  const getSortedDetailedProjects = (data: ProjectData[]): ProjectData[] => {
+    if (sortOption === 'none') return data;
+    
+    // Créer une version triée des projets basiques pour obtenir l'ordre
+    const sortedBasic = sortProjects(
+      data.map(d => ({
+        id: d.project.id,
+        title: d.project.title,
+        weather: d.lastReview?.weather || null
+      })),
+      sortOption
+    );
+    
+    // Réordonner les données détaillées selon cet ordre
+    const dataMap = new Map(data.map(d => [d.project.id, d]));
+    return sortedBasic.map(p => dataMap.get(p.id)!).filter(Boolean);
+  };
 
   const { data: detailedProjectsData, isLoading: isLoadingDetails, refetch } = useDetailedProjectsData(
     cartItems,
@@ -96,7 +197,9 @@ export const ProjectCart = ({ isOpen, onClose }: ProjectCartProps) => {
         return;
       }
 
-      exportProjectsToExcel(data);
+      // Appliquer le tri avant l'export
+      const sortedData = getSortedDetailedProjects(data);
+      exportProjectsToExcel(sortedData);
       toast({
         title: "Succès",
         description: "Fichier Excel généré avec succès",
@@ -131,8 +234,11 @@ export const ProjectCart = ({ isOpen, onClose }: ProjectCartProps) => {
         return;
       }
 
+      // Appliquer le tri avant l'export
+      const sortedData = getSortedDetailedProjects(data);
+      
       // Adapter les données pour le format PPTX
-      const adaptedData = adaptDataForPPTX(data);
+      const adaptedData = adaptDataForPPTX(sortedData);
       
       await generateProjectPPTX(adaptedData);
       toast({
@@ -165,6 +271,23 @@ export const ProjectCart = ({ isOpen, onClose }: ProjectCartProps) => {
         <SheetContent className="w-full sm:max-w-xl overflow-y-auto">
           <SheetHeader>
             <SheetTitle>Projets sélectionnés ({cartItems.length})</SheetTitle>
+            {cartItems.length > 0 && (
+              <div className="flex items-center gap-2 mt-2">
+                <ArrowUpDown className="h-4 w-4 text-muted-foreground" />
+                <Select value={sortOption} onValueChange={(value) => setSortOption(value as SortOption)}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Trier par..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">Sans tri (ordre d'ajout)</SelectItem>
+                    <SelectItem value="weather-asc">☀️ Météo : Ensoleillé → Orageux</SelectItem>
+                    <SelectItem value="weather-desc">⛈️ Météo : Orageux → Ensoleillé</SelectItem>
+                    <SelectItem value="name-asc">🔤 Nom : A → Z</SelectItem>
+                    <SelectItem value="name-desc">🔤 Nom : Z → A</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
           </SheetHeader>
           <div className="mt-6 space-y-4 relative">
             {cartItems.length === 0 ? (
@@ -172,18 +295,29 @@ export const ProjectCart = ({ isOpen, onClose }: ProjectCartProps) => {
             ) : (
               <>
                 <div className="space-y-4">
-                  {basicProjects?.map((project) => (
-                    <div key={project.id} className="flex items-center justify-between">
-                      <span>{project.title}</span>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => removeFromCart(project.id)}
-                      >
-                        <Trash2 className="h-4 w-4 text-destructive" />
-                      </Button>
-                    </div>
-                  ))}
+                  {sortedBasicProjects?.map((project) => {
+                    const WeatherIcon = project.weather ? statusIcons[project.weather].icon : null;
+                    const weatherColor = project.weather ? statusIcons[project.weather].color : "";
+                    
+                    return (
+                      <div key={project.id} className="flex items-center justify-between gap-3">
+                        <div className="flex items-center gap-2 flex-1 min-w-0">
+                          {WeatherIcon && (
+                            <WeatherIcon className={`h-4 w-4 flex-shrink-0 ${weatherColor}`} />
+                          )}
+                          <span className="truncate">{project.title}</span>
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => removeFromCart(project.id)}
+                          className="flex-shrink-0"
+                        >
+                          <Trash2 className="h-4 w-4 text-destructive" />
+                        </Button>
+                      </div>
+                    );
+                  })}
                 </div>
                 <div className="flex justify-between mt-4 pt-4 border-t">
                   <Button variant="outline" onClick={() => clearCart()}>
@@ -223,7 +357,7 @@ export const ProjectCart = ({ isOpen, onClose }: ProjectCartProps) => {
       <ProjectGanttSheet
         isOpen={isGanttOpen}
         onClose={() => setIsGanttOpen(false)}
-        projectIds={cartItems}
+        projectIds={sortedBasicProjects?.map(p => p.id) || cartItems}
       />
     </>
   );
