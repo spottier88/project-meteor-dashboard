@@ -22,7 +22,6 @@ import { HelpButton } from "@/components/help/HelpButton";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { usePermissionsContext } from "@/contexts/PermissionsContext";
-import { useOnboarding } from "@/hooks/useOnboarding";
 
 const clearSupabaseCookies = () => {
   const cookies = document.cookie.split(";");
@@ -37,7 +36,11 @@ const clearSupabaseCookies = () => {
   }
 };
 
-export const UserInfo = () => {
+interface UserInfoProps {
+  onOpenTutorial?: () => void;
+}
+
+export const UserInfo = ({ onOpenTutorial }: UserInfoProps) => {
   const user = useUser();
   const supabase = useSupabaseClient();
   const navigate = useNavigate();
@@ -46,9 +49,6 @@ export const UserInfo = () => {
   const [isProfileFormOpen, setIsProfileFormOpen] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
   const { hasAdminRole, isAdmin, adminRoleDisabled, toggleAdminRole } = usePermissionsContext();
-  
-  // Hook pour gérer l'accès au tutoriel de prise en main
-  const { openTutorial } = useOnboarding();
 
   const { data: profile } = useQuery({
     queryKey: ["profile", user?.id],
@@ -205,10 +205,12 @@ export const UserInfo = () => {
               Administration
             </Button>
           )}
-          <Button variant="ghost" size="sm" onClick={openTutorial} title="Revoir le tutoriel de prise en main">
-            <BookOpen className="h-4 w-4 mr-2" />
-            Tutoriel
-          </Button>
+          {onOpenTutorial && (
+            <Button variant="ghost" size="sm" onClick={onOpenTutorial} title="Revoir le tutoriel de prise en main">
+              <BookOpen className="h-4 w-4 mr-2" />
+              Tutoriel
+            </Button>
+          )}
           <Button variant="ghost" size="sm" onClick={handleLogout}>
             <LogOut className="h-4 w-4 mr-2" />
             Déconnexion
