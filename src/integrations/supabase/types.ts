@@ -1531,7 +1531,9 @@ export type Database = {
       user_preferences: {
         Row: {
           created_at: string
+          has_seen_onboarding: boolean
           id: string
+          onboarding_seen_at: string | null
           open_projects_in_new_tab: boolean
           points_visualization_mode: string
           updated_at: string
@@ -1539,7 +1541,9 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          has_seen_onboarding?: boolean
           id?: string
+          onboarding_seen_at?: string | null
           open_projects_in_new_tab?: boolean
           points_visualization_mode?: string
           updated_at?: string
@@ -1547,7 +1551,9 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          has_seen_onboarding?: boolean
           id?: string
+          onboarding_seen_at?: string | null
           open_projects_in_new_tab?: boolean
           points_visualization_mode?: string
           updated_at?: string
