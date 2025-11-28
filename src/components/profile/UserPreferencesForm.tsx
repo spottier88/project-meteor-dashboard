@@ -10,10 +10,13 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useUserPreferences } from "@/hooks/useUserPreferences";
-import { Loader2, Cookie } from "lucide-react";
+import { Loader2, Cookie, BookOpen } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { useToast } from "@/components/ui/use-toast";
 
 export const UserPreferencesForm = () => {
   const { preferences, isLoading, updatePreferences, getPreference } = useUserPreferences();
+  const { toast } = useToast();
 
   if (isLoading) {
     return (
@@ -30,6 +33,17 @@ export const UserPreferencesForm = () => {
 
   const handleVisualizationModeChange = (value: 'classic' | 'cookies') => {
     updatePreferences({ points_visualization_mode: value });
+  };
+
+  const handleResetOnboarding = () => {
+    updatePreferences({ 
+      has_seen_onboarding: false,
+      onboarding_seen_at: null
+    });
+    toast({
+      title: "Tutoriel réinitialisé",
+      description: "Le tutoriel de prise en main s'affichera à votre prochaine visite du tableau de bord.",
+    });
   };
 
   return (
@@ -93,6 +107,28 @@ export const UserPreferencesForm = () => {
               </Label>
             </div>
           </RadioGroup>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Aide et tutoriel</CardTitle>
+          <CardDescription>
+            Révisez le tutoriel de prise en main de l'application
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Button 
+            variant="outline" 
+            onClick={handleResetOnboarding}
+            className="w-full"
+          >
+            <BookOpen className="mr-2 h-4 w-4" />
+            Revoir le tutoriel de prise en main
+          </Button>
+          <p className="text-sm text-muted-foreground mt-2">
+            Le tutoriel s'affichera automatiquement lors de votre prochaine visite du tableau de bord.
+          </p>
         </CardContent>
       </Card>
     </div>

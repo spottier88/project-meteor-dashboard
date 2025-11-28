@@ -18,7 +18,7 @@ const Dashboard = () => {
   const { isLoading: isPermissionsLoading, isError: isPermissionsError } = usePermissionsContext();
   
   // Hook pour gérer le tutoriel de prise en main
-  const { isOpen: isOnboardingOpen, closeTutorial } = useOnboarding();
+  const { isOpen: isOnboardingOpen, closeTutorial, openTutorial } = useOnboarding();
   
   // États pour les modals
   const [isProjectFormOpen, setIsProjectFormOpen] = useState(false);
@@ -97,7 +97,7 @@ const Dashboard = () => {
         onClose={closeTutorial}
       />
       
-      <UserInfo />
+      <UserInfo onOpenTutorial={openTutorial} />
       
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
         <h1 className="text-3xl font-bold">Tableau de bord</h1>
