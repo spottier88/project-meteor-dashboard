@@ -123,8 +123,12 @@ export const OnboardingTutorial = ({ isOpen, onClose }: OnboardingTutorialProps)
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={() => handleClose()}>
-      <DialogContent className="max-w-2xl">
+    <Dialog open={isOpen} onOpenChange={(open) => {
+      if (!open) {
+        handleClose();
+      }
+    }}>
+      <DialogContent className="max-w-2xl max-h-[90vh] flex flex-col p-6">
         <DialogHeader className="sr-only">
           <DialogTitle>Tutoriel de prise en main</DialogTitle>
           <DialogDescription>
@@ -132,49 +136,52 @@ export const OnboardingTutorial = ({ isOpen, onClose }: OnboardingTutorialProps)
           </DialogDescription>
         </DialogHeader>
 
-        {/* Carousel des étapes */}
-        <Carousel
-          setApi={setCarouselApi}
-          className="w-full"
-          opts={{ watchDrag: false }}
-        >
-          <CarouselContent>
-            {ONBOARDING_STEPS.map((step, index) => (
-              <CarouselItem key={step.id}>
-                <OnboardingStep
-                  title={step.title}
-                  description={step.description}
-                  content={step.content}
-                  icon={step.icon}
-                  stepNumber={index + 1}
-                  totalSteps={ONBOARDING_STEPS.length}
-                />
-              </CarouselItem>
-            ))}
-          </CarouselContent>
-        </Carousel>
+        {/* Contenu scrollable */}
+        <div className="flex-1 overflow-y-auto -mx-6 px-6">
+          {/* Carousel des étapes */}
+          <Carousel
+            setApi={setCarouselApi}
+            className="w-full"
+            opts={{ watchDrag: false }}
+          >
+            <CarouselContent>
+              {ONBOARDING_STEPS.map((step, index) => (
+                <CarouselItem key={step.id}>
+                  <OnboardingStep
+                    title={step.title}
+                    description={step.description}
+                    content={step.content}
+                    icon={step.icon}
+                    stepNumber={index + 1}
+                    totalSteps={ONBOARDING_STEPS.length}
+                  />
+                </CarouselItem>
+              ))}
+            </CarouselContent>
+          </Carousel>
 
-        {/* Indicateurs de points (dots) */}
-        <div className="flex justify-center gap-2 my-4">
-          {ONBOARDING_STEPS.map((_, index) => (
-            <button
-              key={index}
-              onClick={() => {
-                setCurrentStep(index);
-                carouselApi?.scrollTo(index);
-              }}
-              className={`h-2 rounded-full transition-all ${
-                index === currentStep
-                  ? "w-8 bg-primary"
-                  : "w-2 bg-muted-foreground/30 hover:bg-muted-foreground/50"
-              }`}
-              aria-label={`Aller à l'étape ${index + 1}`}
-            />
-          ))}
+          {/* Indicateurs de points (dots) */}
+          <div className="flex justify-center gap-2 my-4">
+            {ONBOARDING_STEPS.map((_, index) => (
+              <button
+                key={index}
+                onClick={() => {
+                  setCurrentStep(index);
+                  carouselApi?.scrollTo(index);
+                }}
+                className={`h-2 rounded-full transition-all ${
+                  index === currentStep
+                    ? "w-8 bg-primary"
+                    : "w-2 bg-muted-foreground/30 hover:bg-muted-foreground/50"
+                }`}
+                aria-label={`Aller à l'étape ${index + 1}`}
+              />
+            ))}
+          </div>
         </div>
 
-        {/* Pied de page avec case à cocher et boutons */}
-        <div className="flex flex-col gap-4 pt-4 border-t">
+        {/* Pied de page avec case à cocher et boutons - fixe */}
+        <div className="flex flex-col gap-4 pt-4 border-t mt-4">
           {/* Case à cocher "Ne plus afficher" */}
           <div className="flex items-center space-x-2">
             <Checkbox
