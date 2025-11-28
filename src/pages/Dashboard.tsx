@@ -10,10 +10,15 @@ import { List } from "lucide-react";
 import { useState } from "react";
 import { ProjectModals } from "@/components/project/ProjectModals";
 import { useProjectsListView } from "@/hooks/use-projects-list-view";
+import { OnboardingTutorial } from "@/components/onboarding/OnboardingTutorial";
+import { useOnboarding } from "@/hooks/useOnboarding";
 
 const Dashboard = () => {
   const navigate = useNavigate();
   const { isLoading: isPermissionsLoading, isError: isPermissionsError } = usePermissionsContext();
+  
+  // Hook pour gérer le tutoriel de prise en main
+  const { isOpen: isOnboardingOpen, closeTutorial } = useOnboarding();
   
   // États pour les modals
   const [isProjectFormOpen, setIsProjectFormOpen] = useState(false);
@@ -86,6 +91,12 @@ const Dashboard = () => {
 
   return (
     <div className="container mx-auto py-8">
+      {/* Tutoriel de prise en main pour les nouveaux utilisateurs */}
+      <OnboardingTutorial 
+        isOpen={isOnboardingOpen} 
+        onClose={closeTutorial}
+      />
+      
       <UserInfo />
       
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">

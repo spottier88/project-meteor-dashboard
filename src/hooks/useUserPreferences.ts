@@ -15,6 +15,8 @@ interface UserPreferences {
   user_id: string;
   open_projects_in_new_tab: boolean;
   points_visualization_mode: 'classic' | 'cookies';
+  has_seen_onboarding: boolean;
+  onboarding_seen_at: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -22,6 +24,8 @@ interface UserPreferences {
 interface UserPreferencesInput {
   open_projects_in_new_tab?: boolean;
   points_visualization_mode?: 'classic' | 'cookies';
+  has_seen_onboarding?: boolean;
+  onboarding_seen_at?: string | null;
 }
 
 export const useUserPreferences = () => {
@@ -52,7 +56,9 @@ export const useUserPreferences = () => {
           .insert({
             user_id: user.id,
             open_projects_in_new_tab: false,
-            points_visualization_mode: 'classic'
+            points_visualization_mode: 'classic',
+            has_seen_onboarding: false,
+            onboarding_seen_at: null
           })
           .select()
           .single();
