@@ -84,6 +84,21 @@ export const ProjectFormStep2 = ({
             value={monitoringLevel} 
             onValueChange={(value: MonitoringLevel) => {
               setMonitoringLevel(value);
+              
+              // Mettre à jour automatiquement l'entité de suivi en fonction du niveau
+              switch (value) {
+                case 'pole':
+                  setMonitoringEntityId(projectManagerOrganization.pole?.id || null);
+                  break;
+                case 'direction':
+                  setMonitoringEntityId(projectManagerOrganization.direction?.id || null);
+                  break;
+                case 'dgs':
+                case 'none':
+                default:
+                  setMonitoringEntityId(null);
+                  break;
+              }
             }}
           >
             <SelectTrigger>

@@ -115,7 +115,8 @@ export const useProjectSubmit = ({
         }
 
         // Gestion du monitoring si présent
-        if (formState.monitoringLevel && formState.monitoringEntityId) {
+        console.log("📊 Monitoring update - Level:", formState.monitoringLevel, "EntityId:", formState.monitoringEntityId);
+        if (formState.monitoringLevel !== undefined) {
           const { error: monitoringError } = await supabase
             .from("project_monitoring")
             .upsert({
