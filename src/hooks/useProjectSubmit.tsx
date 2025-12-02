@@ -135,6 +135,7 @@ export const useProjectSubmit = ({
         // Invalider les caches spécifiques au projet
         await queryClient.invalidateQueries({ queryKey: ["project", project.id] });
         await queryClient.invalidateQueries({ queryKey: ["projectInnovationScores", project.id] });
+        await queryClient.invalidateQueries({ queryKey: ["project-monitoring", project.id] });
         
       } else {
         // Création d'un nouveau projet - Logique complète intégrée
