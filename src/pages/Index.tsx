@@ -109,15 +109,12 @@ const Index = () => {
       if (monitoringLevel === 'none') {
         const hasNoMonitoring = !project.monitoring_level || 
                               project.monitoring_level === 'none';
-        return hasNoMonitoring;
+        if (!hasNoMonitoring) return false;
+      } else {
+        if (!project.monitoring_level || project.monitoring_level !== monitoringLevel) {
+          return false;
+        }
       }
-
-      if (!project.monitoring_level) {
-        return false;
-      }
-      
-      const levelMatch = project.monitoring_level === monitoringLevel;
-      return levelMatch;
     }
 
     if (showMyProjectsOnly && userProfile) {
