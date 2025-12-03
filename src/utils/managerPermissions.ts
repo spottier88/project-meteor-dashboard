@@ -1,12 +1,14 @@
 import { supabase } from "@/integrations/supabase/client";
 
-interface ProjectData {
-  id: string;
-  pole_id: string | null;
-  direction_id: string | null;
-  service_id: string | null;
-}
-
+/**
+ * Vérifie si un manager a accès à un projet via les chemins hiérarchiques (manager_path_assignments)
+ * Système unifié utilisant uniquement manager_path_assignments pour la cohérence
+ * 
+ * @param userId ID de l'utilisateur
+ * @param projectId ID du projet
+ * @param userEmail Email de l'utilisateur (optionnel, pour vérifier si chef de projet)
+ * @returns true si l'utilisateur peut accéder au projet
+ */
 export const canManagerAccessProject = async (
   userId: string | undefined,
   projectId: string,
@@ -14,7 +16,7 @@ export const canManagerAccessProject = async (
 ): Promise<boolean> => {
   if (!userId) return false;
 
-  // Vérifier si l'utilisateur est admin ou chef de projet
+  // Vérifier si l'utilisateur est admin
   const { data: userRoles } = await supabase
     .from("user_roles")
     .select("role")
@@ -25,7 +27,7 @@ export const canManagerAccessProject = async (
   // Vérifier si l'utilisateur est le propriétaire ou le chef de projet
   const { data: project } = await supabase
     .from("projects")
-    .select("owner_id, project_manager")
+    .select("owner_id, project_manager, path_id")
     .eq("id", projectId)
     .single();
 
@@ -33,35 +35,36 @@ export const canManagerAccessProject = async (
     return true;
   }
 
-  // Récupérer les affectations du manager et les informations du projet
-  const { data: assignments } = await supabase
-    .from("manager_assignments")
-    .select("entity_id, entity_type")
-    .eq("user_id", userId);
+  // Si le projet n'a pas de path_id, pas d'accès via manager
+  if (!project?.path_id) return false;
 
-  const { data: projectData } = await supabase
-    .from("projects")
-    .select("pole_id, direction_id, service_id")
-    .eq("id", projectId)
+  // Récupérer le chemin hiérarchique du projet
+  const { data: projectPath } = await supabase
+    .from("hierarchy_paths")
+    .select("path_string")
+    .eq("id", project.path_id)
     .single();
 
-  // console.log("Checking access for project:", projectId);
-  // console.log("Project data:", projectData);
-  // console.log("User assignments:", assignments);
+  if (!projectPath) return false;
 
-  if (!assignments || !projectData) return false;
+  // Récupérer les chemins assignés au manager via manager_path_assignments
+  const { data: managerPaths } = await supabase
+    .from("manager_path_assignments")
+    .select(`
+      path_id,
+      hierarchy_paths!inner (
+        path_string
+      )
+    `)
+    .eq("user_id", userId);
 
-  // Pour chaque affectation, vérifier si elle donne accès au projet
-  return assignments.some(assignment => {
-    switch (assignment.entity_type) {
-      case 'service':
-        return assignment.entity_id === projectData.service_id;
-      case 'direction':
-        return assignment.entity_id === projectData.direction_id;
-      case 'pole':
-        return assignment.entity_id === projectData.pole_id;
-      default:
-        return false;
-    }
+  if (!managerPaths || managerPaths.length === 0) return false;
+
+  // Vérifier si l'un des chemins du manager est un préfixe du chemin du projet
+  return managerPaths.some(mp => {
+    const managerPathString = (mp.hierarchy_paths as any)?.path_string;
+    if (!managerPathString) return false;
+    // Le chemin du projet doit commencer par le chemin du manager
+    return projectPath.path_string.startsWith(managerPathString);
   });
 };

@@ -1,8 +1,9 @@
-
 import { supabase } from "@/integrations/supabase/client";
 
 /**
  * Vérifie si l'utilisateur actuel aurait accès au projet avec les données mises à jour
+ * Système unifié utilisant uniquement manager_path_assignments pour la cohérence
+ * 
  * @param userId ID de l'utilisateur actuel
  * @param projectId ID du projet en cours de modification
  * @param newProjectManager Email du nouveau chef de projet
@@ -46,27 +47,70 @@ export const willUserStillHaveAccess = async (
   }
   
   // 4. Vérifier si l'utilisateur est un manager qui aura accès après la modification
-  const { data: managerAssignments } = await supabase
-    .from("manager_assignments")
-    .select("entity_id, entity_type")
-    .eq("user_id", userId);
+  // via manager_path_assignments (système unifié)
   
-  if (managerAssignments) {
-    const hasAccess = managerAssignments.some(assignment => {
-      switch (assignment.entity_type) {
-        case 'service':
-          return serviceId && assignment.entity_id === serviceId;
-        case 'direction':
-          return directionId && assignment.entity_id === directionId;
-        case 'pole':
-          return poleId && assignment.entity_id === poleId;
-        default:
-          return false;
-      }
-    });
+  // Trouver le hierarchy_path correspondant aux nouvelles valeurs du projet
+  let targetPathId: string | null = null;
+  
+  // Chercher le chemin le plus spécifique possible
+  if (serviceId) {
+    const { data: servicePath } = await supabase
+      .from("hierarchy_paths")
+      .select("id, path_string")
+      .eq("service_id", serviceId)
+      .single();
+    targetPathId = servicePath?.id || null;
+  } else if (directionId) {
+    const { data: directionPath } = await supabase
+      .from("hierarchy_paths")
+      .select("id, path_string")
+      .eq("direction_id", directionId)
+      .is("service_id", null)
+      .single();
+    targetPathId = directionPath?.id || null;
+  } else if (poleId) {
+    const { data: polePath } = await supabase
+      .from("hierarchy_paths")
+      .select("id, path_string")
+      .eq("pole_id", poleId)
+      .is("direction_id", null)
+      .is("service_id", null)
+      .single();
+    targetPathId = polePath?.id || null;
+  }
+  
+  if (targetPathId) {
+    // Récupérer le path_string du projet cible
+    const { data: targetPath } = await supabase
+      .from("hierarchy_paths")
+      .select("path_string")
+      .eq("id", targetPathId)
+      .single();
     
-    if (hasAccess) {
-      return true;
+    if (targetPath) {
+      // Récupérer les chemins assignés au manager via manager_path_assignments
+      const { data: managerPaths } = await supabase
+        .from("manager_path_assignments")
+        .select(`
+          path_id,
+          hierarchy_paths!inner (
+            path_string
+          )
+        `)
+        .eq("user_id", userId);
+      
+      if (managerPaths && managerPaths.length > 0) {
+        // Vérifier si l'un des chemins du manager est un préfixe du nouveau chemin du projet
+        const hasAccess = managerPaths.some(mp => {
+          const managerPathString = (mp.hierarchy_paths as any)?.path_string;
+          if (!managerPathString) return false;
+          return targetPath.path_string.startsWith(managerPathString);
+        });
+        
+        if (hasAccess) {
+          return true;
+        }
+      }
     }
   }
   
