@@ -14,6 +14,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 interface ProjectSummaryContentProps {
   project: any;
   lastReview: any;
+  previousReview?: { weather: "sunny" | "cloudy" | "stormy" } | null;
   risks: any[];
   tasks: any[];
   innovationScores?: {
@@ -44,6 +45,7 @@ interface ProjectSummaryContentProps {
 export const ProjectSummaryContent = ({
   project,
   lastReview,
+  previousReview,
   risks,
   tasks,
   innovationScores,
@@ -135,7 +137,7 @@ export const ProjectSummaryContent = ({
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <LastReview review={lastReview} />
+        <LastReview review={lastReview} previousReview={previousReview} />
 
         {/* Carte du diagramme d'innovation */}
         <Card>

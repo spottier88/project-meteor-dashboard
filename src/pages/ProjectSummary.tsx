@@ -82,21 +82,24 @@ export const ProjectSummary = () => {
     enabled: !!projectId,
   });
 
-  const { data: lastReview, refetch: refetchLastReview } = useQuery({
-    queryKey: ["lastReview", projectId],
+  // Récupérer les 2 dernières revues pour afficher la météo précédente
+  const { data: reviewsData, refetch: refetchLastReview } = useQuery({
+    queryKey: ["lastReviews", projectId],
     queryFn: async () => {
-      if (!projectId) return null;
+      if (!projectId) return { current: null, previous: null };
       
       const { data, error } = await supabase
         .from("reviews")
         .select("*")
         .eq("project_id", projectId)
         .order("created_at", { ascending: false })
-        .limit(1)
-        .maybeSingle();
+        .limit(2);
 
-      if (error) return null;
-      return data;
+      if (error) return { current: null, previous: null };
+      return {
+        current: data?.[0] || null,
+        previous: data?.[1] || null,
+      };
     },
     enabled: !!projectId,
   });
@@ -272,7 +275,8 @@ export const ProjectSummary = () => {
 
       <ProjectSummaryContent
         project={project}
-        lastReview={lastReview}
+        lastReview={reviewsData?.current}
+        previousReview={reviewsData?.previous}
         risks={aggregatedRisks || risks || []}
         tasks={aggregatedTasks || tasks || []}
         innovationScores={innovationScores}

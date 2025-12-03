@@ -10,6 +10,10 @@ interface LastReviewProps {
     difficulties?: string;
     created_at: string;
   } | null;
+  /** Revue précédente pour afficher la météo antérieure en petite icône */
+  previousReview?: {
+    weather: "sunny" | "cloudy" | "stormy";
+  } | null;
 }
 
 const weatherIcons = {
@@ -30,7 +34,7 @@ const progressLabels = {
   worse: "En dégradation",
 };
 
-export const LastReview = ({ review }: LastReviewProps) => {
+export const LastReview = ({ review, previousReview }: LastReviewProps) => {
   if (!review) {
     return (
       <Card>
@@ -45,6 +49,7 @@ export const LastReview = ({ review }: LastReviewProps) => {
   }
 
   const WeatherIcon = weatherIcons[review.weather].icon;
+  const PreviousWeatherIcon = previousReview ? weatherIcons[previousReview.weather].icon : null;
 
   return (
     <Card>
@@ -57,8 +62,17 @@ export const LastReview = ({ review }: LastReviewProps) => {
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="flex items-center justify-center">
+        <div className="flex items-center justify-center relative">
           <WeatherIcon className={cn("w-24 h-24", weatherIcons[review.weather].color)} />
+          {/* Icône de la météo de la revue précédente - petite, en coin supérieur gauche */}
+          {previousReview && PreviousWeatherIcon && (
+            <div 
+              className="absolute -top-1 -left-1 bg-background rounded-full p-1 shadow-sm border"
+              title={`Revue précédente : ${weatherIcons[previousReview.weather].label}`}
+            >
+              <PreviousWeatherIcon className={cn("w-5 h-5", weatherIcons[previousReview.weather].color)} />
+            </div>
+          )}
         </div>
         <div className="text-center">
           <p className={cn("text-lg font-medium", progressColors[review.progress])}>
