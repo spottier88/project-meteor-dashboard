@@ -38,6 +38,7 @@ import { logger } from "./utils/logger";
 import { ProjectFraming } from "./pages/ProjectFraming";
 import { MyTasks } from "./pages/MyTasks";
 import APITokenManagement from "./pages/APITokenManagement";
+import { ProjectPresentation } from "./pages/ProjectPresentation";
 
 export const AppRoutes = () => {
   const session = useSession();
@@ -273,6 +274,14 @@ export const AppRoutes = () => {
             element={
               <ProtectedRoute>
                 <ProjectFraming />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/presentation"
+            element={
+              <ProtectedRoute>
+                <ProjectPresentation />
               </ProtectedRoute>
             }
           />
