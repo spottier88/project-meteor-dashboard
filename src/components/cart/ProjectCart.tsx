@@ -4,10 +4,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useProjectCart } from "@/hooks/use-project-cart";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Trash2, Presentation, GanttChartSquare, FileSpreadsheet, ArrowUpDown } from "lucide-react";
+import { Trash2, Presentation, GanttChartSquare, FileSpreadsheet, ArrowUpDown, Play } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { generateProjectPPTX } from "../pptx/ProjectPPTX";
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { ProjectGanttSheet } from "./ProjectGanttSheet";
 import { exportProjectsToExcel } from "@/utils/projectExport";
 import { LoadingOverlay } from "../ui/loading-overlay";
@@ -83,6 +84,7 @@ const sortProjects = <T extends { title: string; weather?: string | null; id?: s
 export const ProjectCart = ({ isOpen, onClose }: ProjectCartProps) => {
   const { cartItems, removeFromCart, clearCart } = useProjectCart();
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [isGanttOpen, setIsGanttOpen] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
   const [exportType, setExportType] = useState<'excel' | 'pptx' | null>(null);
@@ -319,31 +321,45 @@ export const ProjectCart = ({ isOpen, onClose }: ProjectCartProps) => {
                     );
                   })}
                 </div>
-                <div className="flex justify-between mt-4 pt-4 border-t">
-                  <Button variant="outline" onClick={() => clearCart()}>
-                    Vider le panier
+                <div className="flex flex-col gap-3 mt-4 pt-4 border-t">
+                  {/* Bouton présenter en vedette */}
+                  <Button 
+                    onClick={() => {
+                      onClose();
+                      navigate("/presentation");
+                    }}
+                    className="w-full"
+                  >
+                    <Play className="h-4 w-4 mr-2" />
+                    Présenter
                   </Button>
-                  <div className="space-x-2">
-                    <Button 
-                      onClick={handleExcelExport} 
-                      variant="outline"
-                      disabled={isExporting}
-                    >
-                      <FileSpreadsheet className="h-4 w-4 mr-2" />
-                      Excel
+                  
+                  <div className="flex justify-between">
+                    <Button variant="outline" onClick={() => clearCart()}>
+                      Vider le panier
                     </Button>
-                    <Button 
-                      onClick={handlePPTXExport} 
-                      variant="outline"
-                      disabled={isExporting}
-                    >
-                      <Presentation className="h-4 w-4 mr-2" />
-                      PPTX
-                    </Button>
-                    <Button onClick={() => setIsGanttOpen(true)} variant="outline">
-                      <GanttChartSquare className="h-4 w-4 mr-2" />
-                      Gantt
-                    </Button>
+                    <div className="space-x-2">
+                      <Button 
+                        onClick={handleExcelExport} 
+                        variant="outline"
+                        disabled={isExporting}
+                      >
+                        <FileSpreadsheet className="h-4 w-4 mr-2" />
+                        Excel
+                      </Button>
+                      <Button 
+                        onClick={handlePPTXExport} 
+                        variant="outline"
+                        disabled={isExporting}
+                      >
+                        <Presentation className="h-4 w-4 mr-2" />
+                        PPTX
+                      </Button>
+                      <Button onClick={() => setIsGanttOpen(true)} variant="outline">
+                        <GanttChartSquare className="h-4 w-4 mr-2" />
+                        Gantt
+                      </Button>
+                    </div>
                   </div>
                 </div>
               </>
