@@ -15,12 +15,12 @@ const corsHeaders = {
 };
 
 // Configuration SMTP via variables d'environnement
-const SMTP_HOST = Deno.env.get("SMTP_HOST");
-const SMTP_PORT = parseInt(Deno.env.get("SMTP_PORT") || "465");
-const SMTP_USER = Deno.env.get("SMTP_USER");
-const SMTP_PASS = Deno.env.get("SMTP_PASS");
-const SMTP_FROM = Deno.env.get("SMTP_FROM") || SMTP_USER;
-const APP_URL = Deno.env.get("APP_URL") || "https://meteor.app";
+const SMTP_HOST = Deno.env.get("EDGE_SMTP_HOST");
+const SMTP_PORT = parseInt(Deno.env.get("EDGE_SMTP_PORT") || "465");
+const SMTP_USER = Deno.env.get("EDGE_SMTP_USER");
+const SMTP_PASS = Deno.env.get("EDGE_SMTP_PASS");
+const SMTP_FROM = Deno.env.get("EDGE_SMTP_FROM") || SMTP_USER;
+const APP_URL = Deno.env.get("EDGE_APP_URL") || "https://meteor.app";
 
 // Interface pour les notifications groupées par utilisateur
 interface UserNotificationGroup {
