@@ -6,7 +6,9 @@
 
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Mail, Plus, ArrowLeft, Eye, Pencil, Trash2, ToggleLeft, ToggleRight } from "lucide-react";
+import { Mail, Plus, ArrowLeft, Eye, Pencil, Trash2, ToggleLeft, ToggleRight, Send, Loader2 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -37,12 +39,15 @@ export const EmailTemplateManagement = () => {
   const navigate = useNavigate();
   const { templates, isLoading, deleteTemplate, toggleActive, isDeleting } = useEmailTemplates();
   
+  const { toast } = useToast();
+  
   // États pour les dialogs
   const [selectedTemplate, setSelectedTemplate] = useState<EmailTemplate | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [templateToDelete, setTemplateToDelete] = useState<string | null>(null);
+  const [sendingTestId, setSendingTestId] = useState<string | null>(null);
 
   // Ouvrir le formulaire de création
   const handleCreate = () => {
@@ -86,6 +91,32 @@ export const EmailTemplateManagement = () => {
   const handleFormClose = () => {
     setShowForm(false);
     setSelectedTemplate(null);
+  };
+
+  // Envoyer un email de test
+  const handleSendTest = async (template: EmailTemplate) => {
+    setSendingTestId(template.id);
+    try {
+      const { data, error } = await supabase.functions.invoke('send-test-email', {
+        body: { template_id: template.id }
+      });
+      
+      if (error) throw error;
+      
+      toast({
+        title: "Email de test envoyé",
+        description: `Un email de test a été envoyé à ${data.recipient}`,
+      });
+    } catch (error: any) {
+      console.error('Erreur envoi test:', error);
+      toast({
+        title: "Erreur d'envoi",
+        description: error.message || "Impossible d'envoyer l'email de test. Vérifiez la configuration SMTP.",
+        variant: "destructive",
+      });
+    } finally {
+      setSendingTestId(null);
+    }
   };
 
   return (
@@ -171,6 +202,19 @@ export const EmailTemplateManagement = () => {
                           title="Prévisualiser"
                         >
                           <Eye className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleSendTest(template)}
+                          disabled={sendingTestId === template.id}
+                          title="Envoyer un email de test"
+                        >
+                          {sendingTestId === template.id ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <Send className="h-4 w-4" />
+                          )}
                         </Button>
                         <Button
                           variant="ghost"
