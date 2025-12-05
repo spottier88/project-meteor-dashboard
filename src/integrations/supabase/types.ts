@@ -458,6 +458,78 @@ export type Database = {
           },
         ]
       }
+      email_notification_queue: {
+        Row: {
+          created_at: string | null
+          email_sent_at: string | null
+          event_data: Json
+          event_type: string
+          id: string
+          processed_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          email_sent_at?: string | null
+          event_data: Json
+          event_type: string
+          id?: string
+          processed_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          email_sent_at?: string | null
+          event_data?: Json
+          event_type?: string
+          id?: string
+          processed_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      email_templates: {
+        Row: {
+          body_html: string
+          body_text: string | null
+          code: string
+          created_at: string | null
+          description: string | null
+          id: string
+          is_active: boolean | null
+          name: string
+          subject: string
+          updated_at: string | null
+          variables: Json | null
+        }
+        Insert: {
+          body_html: string
+          body_text?: string | null
+          code: string
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          subject: string
+          updated_at?: string | null
+          variables?: Json | null
+        }
+        Update: {
+          body_html?: string
+          body_text?: string | null
+          code?: string
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          subject?: string
+          updated_at?: string | null
+          variables?: Json | null
+        }
+        Relationships: []
+      }
       hierarchy_paths: {
         Row: {
           created_at: string | null
@@ -1531,6 +1603,8 @@ export type Database = {
       user_preferences: {
         Row: {
           created_at: string
+          email_digest_frequency: number | null
+          email_notifications_enabled: boolean | null
           has_seen_onboarding: boolean
           id: string
           onboarding_seen_at: string | null
@@ -1541,6 +1615,8 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          email_digest_frequency?: number | null
+          email_notifications_enabled?: boolean | null
           has_seen_onboarding?: boolean
           id?: string
           onboarding_seen_at?: string | null
@@ -1551,6 +1627,8 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          email_digest_frequency?: number | null
+          email_notifications_enabled?: boolean | null
           has_seen_onboarding?: boolean
           id?: string
           onboarding_seen_at?: string | null

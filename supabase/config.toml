@@ -1,6 +1,7 @@
-
 project_id = "rgfabywkwllxoqsahrpt"
 
 [functions.api-gateway]
 verify_jwt = false
 
+[functions.send-email-digest]
+verify_jwt = false
