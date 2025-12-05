@@ -39,6 +39,7 @@ import { ProjectFraming } from "./pages/ProjectFraming";
 import { MyTasks } from "./pages/MyTasks";
 import APITokenManagement from "./pages/APITokenManagement";
 import { ProjectPresentation } from "./pages/ProjectPresentation";
+import { EmailTemplateManagement } from "./pages/EmailTemplateManagement";
 
 export const AppRoutes = () => {
   const session = useSession();
@@ -218,6 +219,14 @@ export const AppRoutes = () => {
             element={
               <ProtectedRoute>
                 <ProjectTemplateManagement />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/email-templates"
+            element={
+              <ProtectedRoute>
+                <EmailTemplateManagement />
               </ProtectedRoute>
             }
           />
