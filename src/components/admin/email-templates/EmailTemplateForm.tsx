@@ -368,25 +368,27 @@ export const EmailTemplateForm = ({ template, open, onClose }: EmailTemplateForm
                         </Tooltip>
                       </TooltipProvider>
                     </h4>
-                    <div className="flex flex-wrap gap-2">
-                      {PREDEFINED_VARIABLES.map((v) => (
-                        <TooltipProvider key={v.name}>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <Badge
-                                variant="secondary"
-                                className="cursor-pointer hover:bg-primary hover:text-primary-foreground"
-                                onClick={() => handleCopyVariable(v.name)}
-                              >
-                                <Copy className="h-3 w-3 mr-1" />
-                                {`{{${v.name}}}`}
-                              </Badge>
-                            </TooltipTrigger>
-                            <TooltipContent>{v.description}</TooltipContent>
-                          </Tooltip>
-                        </TooltipProvider>
-                      ))}
-                    </div>
+                    <ScrollArea className="h-32 rounded-md border p-2">
+                      <div className="flex flex-wrap gap-2">
+                        {PREDEFINED_VARIABLES.map((v) => (
+                          <TooltipProvider key={v.name}>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Badge
+                                  variant="secondary"
+                                  className="cursor-pointer hover:bg-primary hover:text-primary-foreground"
+                                  onClick={() => handleCopyVariable(v.name)}
+                                >
+                                  <Copy className="h-3 w-3 mr-1" />
+                                  {`{{${v.name}}}`}
+                                </Badge>
+                              </TooltipTrigger>
+                              <TooltipContent>{v.description}</TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        ))}
+                      </div>
+                    </ScrollArea>
                   </div>
 
                   {/* Variables personnalisées du template */}
