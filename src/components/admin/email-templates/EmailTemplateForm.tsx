@@ -394,29 +394,31 @@ export const EmailTemplateForm = ({ template, open, onClose }: EmailTemplateForm
                   {/* Variables personnalisées du template */}
                   <div>
                     <h4 className="text-sm font-medium mb-2">Variables du modèle</h4>
-                    <div className="space-y-2">
-                      {variables.map((v) => (
-                        <div 
-                          key={v.name} 
-                          className="flex items-center justify-between bg-muted/50 rounded-md p-2"
-                        >
-                          <div>
-                            <code className="text-sm font-medium">{`{{${v.name}}}`}</code>
-                            <span className="text-sm text-muted-foreground ml-2">
-                              - {v.description}
-                            </span>
-                          </div>
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => handleRemoveVariable(v.name)}
+                    <ScrollArea className="h-40 rounded-md border p-2">
+                      <div className="space-y-2">
+                        {variables.map((v) => (
+                          <div 
+                            key={v.name} 
+                            className="flex items-center justify-between bg-muted/50 rounded-md p-2"
                           >
-                            <X className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      ))}
-                    </div>
+                            <div>
+                              <code className="text-sm font-medium">{`{{${v.name}}}`}</code>
+                              <span className="text-sm text-muted-foreground ml-2">
+                                - {v.description}
+                              </span>
+                            </div>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => handleRemoveVariable(v.name)}
+                            >
+                              <X className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        ))}
+                      </div>
+                    </ScrollArea>
                   </div>
 
                   {/* Ajouter une variable */}
