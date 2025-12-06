@@ -10,7 +10,7 @@ const corsHeaders = {
 
 // Templates de secours par défaut pour les sections de note de cadrage
 // Alignés avec les champs du formulaire ProjectFormStep4
-const fallbackTemplates = {
+const fallbackTemplates: Record<string, Record<string, string>> = {
   framework_note: {
     general: `Vous êtes un assistant spécialisé dans la rédaction de notes de cadrage de projets. Votre mission est de générer une note de cadrage complète et professionnelle en vous basant sur les informations fournies par l'utilisateur.
     
@@ -438,12 +438,12 @@ serve(async (req) => {
           },
         }
       );
-    } catch (openaiError) {
+    } catch (openaiError: unknown) {
       console.error('Erreur lors de l\'appel à l\'API OpenAI:', openaiError);
       return new Response(
         JSON.stringify({ 
           error: 'Erreur lors de l\'appel à l\'API OpenAI', 
-          details: openaiError.message || 'Erreur inconnue'
+          details: openaiError instanceof Error ? openaiError.message : 'Erreur inconnue'
         }),
         { 
           status: 500, 
@@ -451,13 +451,13 @@ serve(async (req) => {
         }
       );
     }
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Erreur lors du traitement de la requête:', error);
     
     return new Response(
       JSON.stringify({
         error: 'Erreur serveur',
-        details: error.message || 'Une erreur est survenue lors du traitement de la requête',
+        details: error instanceof Error ? error.message : 'Une erreur est survenue lors du traitement de la requête',
       }),
       {
         status: 500,

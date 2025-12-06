@@ -43,9 +43,9 @@ serve(async (req) => {
       },
     });
 
-  } catch (error) {
+  } catch (error: unknown) {
     // On garde un message d'erreur minimal pour le débogage
-    return new Response(JSON.stringify({ error: error.message }), { 
+    return new Response(JSON.stringify({ error: error instanceof Error ? error.message : 'Unknown error' }), { 
       status: 400,
       headers: { 
         ...corsHeaders,

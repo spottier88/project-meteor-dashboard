@@ -349,9 +349,9 @@ serve(async (req) => {
         processedIds.push(...data.notifications.map(n => n.id));
         console.log(`[send-email-digest] Email envoyé à ${data.user.email}`);
 
-      } catch (userError) {
+      } catch (userError: unknown) {
         console.error(`[send-email-digest] Erreur pour ${data.user.email}:`, userError);
-        errors.push(`${data.user.email}: ${userError.message}`);
+        errors.push(`${data.user.email}: ${userError instanceof Error ? userError.message : 'Unknown error'}`);
       }
     }
 
@@ -386,10 +386,10 @@ serve(async (req) => {
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
 
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('[send-email-digest] Erreur générale:', error);
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: error instanceof Error ? error.message : 'Unknown error' }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }
