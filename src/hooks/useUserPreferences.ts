@@ -17,6 +17,8 @@ interface UserPreferences {
   points_visualization_mode: 'classic' | 'cookies';
   has_seen_onboarding: boolean;
   onboarding_seen_at: string | null;
+  email_notifications_enabled: boolean | null;
+  email_digest_frequency: number | null;
   created_at: string;
   updated_at: string;
 }
@@ -26,6 +28,8 @@ interface UserPreferencesInput {
   points_visualization_mode?: 'classic' | 'cookies';
   has_seen_onboarding?: boolean;
   onboarding_seen_at?: string | null;
+  email_notifications_enabled?: boolean;
+  email_digest_frequency?: number;
 }
 
 export const useUserPreferences = () => {

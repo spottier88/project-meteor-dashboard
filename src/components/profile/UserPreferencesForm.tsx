@@ -1,18 +1,28 @@
-
 /**
  * @component UserPreferencesForm
  * @description Formulaire de configuration des préférences utilisateur.
- * Permet de configurer les options comme l'ouverture des projets dans un nouvel onglet.
+ * Permet de configurer les options comme l'ouverture des projets dans un nouvel onglet,
+ * les notifications email et la fréquence de réception.
  */
 
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useUserPreferences } from "@/hooks/useUserPreferences";
-import { Loader2, Cookie, BookOpen } from "lucide-react";
+import { Loader2, Cookie, BookOpen, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
+
+// Options de fréquence de réception des emails (en heures)
+const FREQUENCY_OPTIONS = [
+  { value: "1", label: "Toutes les heures" },
+  { value: "4", label: "Toutes les 4 heures" },
+  { value: "12", label: "Toutes les 12 heures" },
+  { value: "24", label: "Une fois par jour" },
+  { value: "168", label: "Une fois par semaine" },
+];
 
 export const UserPreferencesForm = () => {
   const { preferences, isLoading, updatePreferences, getPreference } = useUserPreferences();
@@ -35,6 +45,14 @@ export const UserPreferencesForm = () => {
     updatePreferences({ points_visualization_mode: value });
   };
 
+  const handleToggleEmailNotifications = (checked: boolean) => {
+    updatePreferences({ email_notifications_enabled: checked });
+  };
+
+  const handleFrequencyChange = (value: string) => {
+    updatePreferences({ email_digest_frequency: parseInt(value, 10) });
+  };
+
   const handleResetOnboarding = () => {
     updatePreferences({ 
       has_seen_onboarding: false,
@@ -46,8 +64,12 @@ export const UserPreferencesForm = () => {
     });
   };
 
+  const emailNotificationsEnabled = getPreference('email_notifications_enabled', true);
+  const emailDigestFrequency = getPreference('email_digest_frequency', 24);
+
   return (
     <div className="space-y-6">
+      {/* Section Navigation */}
       <Card>
         <CardHeader>
           <CardTitle>Navigation</CardTitle>
@@ -72,6 +94,61 @@ export const UserPreferencesForm = () => {
         </CardContent>
       </Card>
 
+      {/* Section Notifications Email */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Mail className="h-5 w-5" />
+            Notifications par email
+          </CardTitle>
+          <CardDescription>
+            Configurez la réception des notifications par email
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          {/* Activation/désactivation des notifications */}
+          <div className="flex items-center justify-between space-x-2">
+            <div className="space-y-1">
+              <Label htmlFor="email-notifications">Recevoir les notifications par email</Label>
+              <p className="text-sm text-muted-foreground">
+                Recevez un résumé des notifications importantes directement dans votre boîte mail
+              </p>
+            </div>
+            <Switch
+              id="email-notifications"
+              checked={emailNotificationsEnabled ?? true}
+              onCheckedChange={handleToggleEmailNotifications}
+            />
+          </div>
+
+          {/* Fréquence de réception */}
+          {emailNotificationsEnabled !== false && (
+            <div className="space-y-2">
+              <Label htmlFor="email-frequency">Fréquence de réception</Label>
+              <Select
+                value={String(emailDigestFrequency ?? 24)}
+                onValueChange={handleFrequencyChange}
+              >
+                <SelectTrigger id="email-frequency" className="w-full">
+                  <SelectValue placeholder="Choisir une fréquence" />
+                </SelectTrigger>
+                <SelectContent>
+                  {FREQUENCY_OPTIONS.map((option) => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-sm text-muted-foreground">
+                Définissez la fréquence à laquelle vous souhaitez recevoir les récapitulatifs de notifications
+              </p>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Section Affichage des points */}
       <Card>
         <CardHeader>
           <CardTitle>Affichage des points</CardTitle>
@@ -110,6 +187,7 @@ export const UserPreferencesForm = () => {
         </CardContent>
       </Card>
 
+      {/* Section Aide et tutoriel */}
       <Card>
         <CardHeader>
           <CardTitle>Aide et tutoriel</CardTitle>
