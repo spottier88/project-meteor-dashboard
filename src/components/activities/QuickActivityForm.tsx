@@ -85,7 +85,7 @@ const QuickActivityForm = ({ onSuccess }: { onSuccess?: () => void }) => {
     },
   });
 
-  const { mutate: createActivity, isLoading } = useMutation({
+  const { mutate: createActivity, isPending: isLoading } = useMutation({
     mutationFn: async (data: FormData) => {
       // Traiter la valeur spéciale "aucun" comme null pour project_id
       const projectId = data.project_id === "aucun" ? null : data.project_id;

@@ -189,9 +189,9 @@ export const useWeeklyPoints = (userId: string, weekStartDate: Date) => {
     addBulkPoints: addBulkPointsMutation.mutateAsync,
     updatePoints: updatePointsMutation.mutate,
     deletePoints: deletePointsMutation.mutate,
-    isAddingPoints: addPointsMutation.status === "loading",
-    isUpdatingPoints: updatePointsMutation.status === "loading",
-    isDeletingPoints: deletePointsMutation.status === "loading",
+    isAddingPoints: addPointsMutation.status === "pending",
+    isUpdatingPoints: updatePointsMutation.status === "pending",
+    isDeletingPoints: deletePointsMutation.status === "pending",
   };
 };
 

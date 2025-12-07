@@ -82,7 +82,7 @@ export const DeleteProjectDialog = ({
       }
 
       // Invalider le cache des projets pour forcer un rafraîchissement
-      await queryClient.invalidateQueries(["projects"]);
+      await queryClient.invalidateQueries({ queryKey: ["projects"] });
 
       // Attendre un court instant pour s'assurer que la requête est bien invalidée
       await new Promise(resolve => setTimeout(resolve, 100));

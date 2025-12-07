@@ -152,8 +152,8 @@ export const ActivityPointsSettings = () => {
             />
 
             <div className="flex gap-4">
-              <Button type="submit" disabled={mutation.status === "loading"}>
-                {mutation.status === "loading"
+              <Button type="submit" disabled={mutation.status === "pending"}>
+                {mutation.status === "pending"
                   ? "Sauvegarde en cours..."
                   : "Sauvegarder"}
               </Button>

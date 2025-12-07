@@ -77,7 +77,7 @@ export const FramingDetails = ({ projectId }: FramingDetailsProps) => {
   });
 
   // Mutation pour sauvegarder toutes les sections générées
-  const { mutate: saveAllSections, isLoading: isSaving } = useMutation({
+  const { mutate: saveAllSections, isPending: isSaving } = useMutation({
     mutationFn: async (generatedSections: Record<FramingSectionKey, string>) => {
       const { data: existingData, error: fetchError } = await supabase
         .from("project_framing")
@@ -106,7 +106,7 @@ export const FramingDetails = ({ projectId }: FramingDetailsProps) => {
         title: "Note de cadrage générée",
         description: "Toutes les sections ont été générées et sauvegardées avec succès.",
       });
-      queryClient.invalidateQueries(["project-framing", projectId]);
+      queryClient.invalidateQueries({ queryKey: ["project-framing", projectId] });
     },
     onError: (error) => {
       console.error("Error saving all sections:", error);

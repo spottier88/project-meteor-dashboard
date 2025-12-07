@@ -285,9 +285,9 @@ export const AddProjectsModal = ({
             </Button>
             <Button 
               onClick={handleAddProjects}
-              disabled={selectedProjectIds.length === 0 || addProjects.isLoading}
+              disabled={selectedProjectIds.length === 0 || addProjects.isPending}
             >
-              {addProjects.isLoading && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+              {addProjects.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
               Ajouter {selectedProjectIds.length > 0 && `(${selectedProjectIds.length})`}
             </Button>
           </div>

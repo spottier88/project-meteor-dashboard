@@ -139,7 +139,7 @@ export const LinkProjectDialog = ({
             onPointerDown={(e) => e.stopPropagation()}
             onMouseDown={(e) => e.stopPropagation()}
             onMouseUp={(e) => e.stopPropagation()}
-            disabled={!selectedMasterProjectId || linkProjects.isLoading}
+            disabled={!selectedMasterProjectId || linkProjects.isPending}
           >
             Lier les projets
           </Button>
