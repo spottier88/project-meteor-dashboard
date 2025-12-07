@@ -76,7 +76,7 @@ export const FramingSectionEditor = ({
     }
   };
 
-  const { mutate, isLoading } = useMutation({
+  const { mutate, isPending: isLoading } = useMutation({
     mutationFn: async () => {
       // 1. Récupérer d'abord les données existantes
       const { data: existingData, error: fetchError } = await supabase
@@ -109,7 +109,7 @@ export const FramingSectionEditor = ({
         title: "Section mise à jour",
         description: `La section "${sectionTitle}" a été mise à jour avec succès.`,
       });
-      queryClient.invalidateQueries(["project-framing", projectId]);
+      queryClient.invalidateQueries({ queryKey: ["project-framing", projectId] });
       onCancel();
     },
     onError: (error) => {

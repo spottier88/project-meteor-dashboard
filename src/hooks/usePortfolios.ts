@@ -112,7 +112,7 @@ export const usePortfolios = () => {
       return portfoliosWithStats;
     },
     staleTime: 60000, // 1 minute - réduire pour plus de réactivité
-    cacheTime: 300000, // 5 minutes
+    gcTime: 300000, // 5 minutes
   });
 };
 

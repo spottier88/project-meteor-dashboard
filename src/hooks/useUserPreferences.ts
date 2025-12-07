@@ -141,7 +141,7 @@ export const useUserPreferences = () => {
     isLoading,
     error,
     updatePreferences,
-    isUpdating: updatePreferencesMutation.isLoading,
+    isUpdating: updatePreferencesMutation.isPending,
     getPreference,
   };
 };

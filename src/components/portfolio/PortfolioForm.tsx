@@ -29,7 +29,7 @@ export const PortfolioForm = ({ isOpen, onClose, portfolio }: PortfolioFormProps
   const updatePortfolio = useUpdatePortfolio();
 
   const isEditing = Boolean(portfolio);
-  const isSubmitting = createPortfolio.isLoading || updatePortfolio.isLoading;
+  const isSubmitting = createPortfolio.isPending || updatePortfolio.isPending;
 
   useEffect(() => {
     if (portfolio) {

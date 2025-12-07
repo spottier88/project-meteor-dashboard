@@ -973,9 +973,9 @@ export const AIPromptManagement = () => {
                 </Button>
                 <Button
                   type="submit"
-                  disabled={mutation.status === "loading"}
+                  disabled={mutation.status === "pending"}
                 >
-                  {mutation.status === "loading" ? (
+                  {mutation.status === "pending" ? (
                     "Enregistrement..."
                   ) : (
                     editingTemplate ? "Mettre à jour" : "Créer"
@@ -1046,9 +1046,9 @@ export const AIPromptManagement = () => {
             </Button>
             <Button
               onClick={() => createDefaultTemplatesMutation.mutate()}
-              disabled={createDefaultTemplatesMutation.isLoading}
+              disabled={createDefaultTemplatesMutation.isPending}
             >
-              {createDefaultTemplatesMutation.isLoading ? (
+              {createDefaultTemplatesMutation.isPending ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   Création en cours...

@@ -349,7 +349,7 @@ export const GeneralSettings = () => {
                   type="button" 
                   variant="secondary"
                   onClick={testMicrosoftConnection}
-                  disabled={mutation.status === 'loading'}
+                  disabled={mutation.status === 'pending'}
                 >
                   Tester la connexion Microsoft
                 </Button>
@@ -385,7 +385,7 @@ export const GeneralSettings = () => {
                   type="button" 
                   variant="secondary"
                   onClick={testOpenAIConnection}
-                  disabled={mutation.status === 'loading'}
+                  disabled={mutation.status === 'pending'}
                 >
                   Tester la connexion OpenAI
                 </Button>
@@ -421,7 +421,7 @@ export const GeneralSettings = () => {
                   type="button" 
                   variant="secondary"
                   onClick={testDocumentation}
-                  disabled={mutation.status === 'loading'}
+                  disabled={mutation.status === 'pending'}
                 >
                   Tester l'accès à la documentation
                 </Button>
@@ -431,9 +431,9 @@ export const GeneralSettings = () => {
             <div className="flex gap-4 pt-6">
               <Button 
                 type="submit"
-                disabled={mutation.status === 'loading'}
+                disabled={mutation.status === 'pending'}
               >
-                {mutation.status === 'loading' ? "Sauvegarde en cours..." : "Sauvegarder tous les paramètres"}
+                {mutation.status === 'pending' ? "Sauvegarde en cours..." : "Sauvegarder tous les paramètres"}
               </Button>
             </div>
           </form>

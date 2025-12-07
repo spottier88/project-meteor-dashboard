@@ -218,8 +218,8 @@ export const useEmailTemplates = () => {
     updateTemplate: updateMutation.mutate,
     deleteTemplate: deleteMutation.mutate,
     toggleActive: toggleActiveMutation.mutate,
-    isCreating: createMutation.isLoading,
-    isUpdating: updateMutation.isLoading,
-    isDeleting: deleteMutation.isLoading,
+    isCreating: createMutation.isPending,
+    isUpdating: updateMutation.isPending,
+    isDeleting: deleteMutation.isPending,
   };
 };

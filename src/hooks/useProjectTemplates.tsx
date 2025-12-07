@@ -288,12 +288,12 @@ export const useProjectTemplates = (templateId?: string) => {
     updateTemplateTask: updateTemplateTaskMutation.mutateAsync,
     deleteTemplateTask: deleteTemplateTaskMutation.mutateAsync,
     isLoadingAction: 
-      createTemplateMutation.isLoading || 
-      updateTemplateMutation.isLoading || 
-      deleteTemplateMutation.isLoading ||
-      createTemplateTaskMutation.isLoading ||
-      updateTemplateTaskMutation.isLoading ||
-      deleteTemplateTaskMutation.isLoading,
+      createTemplateMutation.isPending || 
+      updateTemplateMutation.isPending || 
+      deleteTemplateMutation.isPending ||
+      createTemplateTaskMutation.isPending ||
+      updateTemplateTaskMutation.isPending ||
+      deleteTemplateTaskMutation.isPending,
     setCurrentTemplateId,
   };
 };

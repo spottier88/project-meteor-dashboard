@@ -214,9 +214,9 @@ export const useActivityTypePermissions = (activityTypeCode?: string) => {
     addPermission: addPermissionMutation.mutate,
     deletePermission: deletePermissionMutation.mutate,
     updatePermissionsBatch: updatePermissionsBatchMutation.mutate,
-    isUpdating: addPermissionMutation.isLoading || 
-               deletePermissionMutation.isLoading || 
-               updatePermissionsBatchMutation.isLoading,
+    isUpdating: addPermissionMutation.isPending || 
+               deletePermissionMutation.isPending || 
+               updatePermissionsBatchMutation.isPending,
     hasPermission,
   };
 };
