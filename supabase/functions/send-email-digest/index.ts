@@ -3,6 +3,10 @@
  * @description Envoie les emails de synthèse quotidienne aux utilisateurs
  * avec leurs notifications en attente (tâches, projets, rôles).
  * Utilise un serveur SMTP configuré via les secrets Supabase.
+ * 
+ * Configuration SMTP flexible :
+ * - Mode authentifié : EDGE_SMTP_USER et EDGE_SMTP_PASS requis
+ * - Mode non authentifié (self-hosted) : seulement EDGE_SMTP_HOST et EDGE_SMTP_FROM requis
  */
 
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
@@ -16,11 +20,18 @@ const corsHeaders = {
 
 // Configuration SMTP via variables d'environnement
 const SMTP_HOST = Deno.env.get("EDGE_SMTP_HOST");
-const SMTP_PORT = parseInt(Deno.env.get("EDGE_SMTP_PORT") || "465");
+const SMTP_PORT = parseInt(Deno.env.get("EDGE_SMTP_PORT") || "25");
 const SMTP_USER = Deno.env.get("EDGE_SMTP_USER");
 const SMTP_PASS = Deno.env.get("EDGE_SMTP_PASS");
-const SMTP_FROM = Deno.env.get("EDGE_SMTP_FROM") || SMTP_USER;
+const SMTP_FROM = Deno.env.get("EDGE_SMTP_FROM");
+const SMTP_TLS = Deno.env.get("EDGE_SMTP_TLS");
 const APP_URL = Deno.env.get("EDGE_APP_URL") || "https://meteor.app";
+
+// Déterminer si l'authentification est requise (credentials présents)
+const SMTP_AUTH_ENABLED = !!(SMTP_USER && SMTP_PASS);
+
+// Déterminer le mode TLS : explicite via variable, ou automatique si port 465
+const SMTP_USE_TLS = SMTP_TLS === "true" || (SMTP_TLS !== "false" && SMTP_PORT === 465);
 
 // Interface pour les notifications groupées par utilisateur
 interface UserNotificationGroup {
@@ -36,12 +47,6 @@ interface UserNotificationGroup {
     event_data: Record<string, unknown>;
     created_at: string;
   }>;
-}
-
-// Interface pour les préférences utilisateur
-interface UserPreferences {
-  email_notifications_enabled: boolean;
-  email_digest_frequency: number;
 }
 
 /**
@@ -161,6 +166,35 @@ function generateRolesListText(notifications: Array<{ event_data: Record<string,
     .join('\n');
 }
 
+/**
+ * Crée la configuration SMTP selon le mode (authentifié ou non)
+ */
+function createSmtpConfig() {
+  const baseConfig = {
+    hostname: SMTP_HOST!,
+    port: SMTP_PORT,
+    tls: SMTP_USE_TLS,
+  };
+
+  // Ajouter l'authentification seulement si les credentials sont présents
+  if (SMTP_AUTH_ENABLED) {
+    return {
+      connection: {
+        ...baseConfig,
+        auth: {
+          username: SMTP_USER!,
+          password: SMTP_PASS!,
+        },
+      },
+    };
+  }
+
+  // Mode sans authentification (relais interne)
+  return {
+    connection: baseConfig,
+  };
+}
+
 serve(async (req) => {
   // Gestion CORS
   if (req.method === 'OPTIONS') {
@@ -170,17 +204,26 @@ serve(async (req) => {
   console.log('[send-email-digest] Démarrage du traitement des notifications email');
 
   try {
-    // Vérifier la configuration SMTP
-    if (!SMTP_HOST || !SMTP_USER || !SMTP_PASS) {
-      console.error('[send-email-digest] Configuration SMTP manquante');
+    // Vérifier la configuration SMTP minimale
+    if (!SMTP_HOST || !SMTP_FROM) {
+      console.error('[send-email-digest] Configuration SMTP minimale manquante (SMTP_HOST ou SMTP_FROM)');
       return new Response(
         JSON.stringify({ 
           error: 'Configuration SMTP manquante',
-          details: 'Veuillez configurer SMTP_HOST, SMTP_USER et SMTP_PASS dans les secrets Supabase'
+          details: 'Veuillez configurer EDGE_SMTP_HOST et EDGE_SMTP_FROM dans les secrets Supabase'
         }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
+
+    // Log de la configuration SMTP utilisée
+    console.log('[send-email-digest] Configuration SMTP:', {
+      host: SMTP_HOST,
+      port: SMTP_PORT,
+      tls: SMTP_USE_TLS,
+      auth: SMTP_AUTH_ENABLED ? 'authentifié' : 'sans authentification',
+      from: SMTP_FROM,
+    });
 
     // Créer le client Supabase avec la clé service role
     const supabase = createClient(
@@ -263,18 +306,10 @@ serve(async (req) => {
 
     console.log(`[send-email-digest] ${userNotificationsMap.size} utilisateurs à notifier`);
 
-    // Initialiser le client SMTP
-    const client = new SMTPClient({
-      connection: {
-        hostname: SMTP_HOST,
-        port: SMTP_PORT,
-        tls: SMTP_PORT === 465,
-        auth: { 
-          username: SMTP_USER, 
-          password: SMTP_PASS 
-        }
-      }
-    });
+    // Initialiser le client SMTP avec la configuration flexible
+    const smtpConfig = createSmtpConfig();
+    console.log('[send-email-digest] Connexion SMTP en cours...');
+    const client = new SMTPClient(smtpConfig);
 
     let emailsSent = 0;
     const processedIds: string[] = [];
