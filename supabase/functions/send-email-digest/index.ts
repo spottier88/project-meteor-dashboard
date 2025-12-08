@@ -2,36 +2,27 @@
  * Edge Function : send-email-digest
  * @description Envoie les emails de synthèse quotidienne aux utilisateurs
  * avec leurs notifications en attente (tâches, projets, rôles).
- * Utilise un serveur SMTP configuré via les secrets Supabase.
+ * Utilise une API HTTP pour l'envoi d'emails (smtp-api).
  * 
- * Configuration SMTP flexible :
- * - Mode authentifié : EDGE_SMTP_USER et EDGE_SMTP_PASS requis
- * - Mode non authentifié (self-hosted) : seulement EDGE_SMTP_HOST et EDGE_SMTP_FROM requis
+ * Configuration :
+ * - EDGE_SMTP_API_URL : URL de l'API d'envoi (ex: http://smtp-api:3000/send)
+ * - EDGE_SMTP_API_KEY : Clé API pour l'authentification
+ * - EDGE_SMTP_FROM : Adresse expéditeur
  */
 
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.42.0";
-import { SMTPClient } from "https://deno.land/x/denomailer@1.6.0/mod.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// Configuration SMTP via variables d'environnement
-const SMTP_HOST = Deno.env.get("EDGE_SMTP_HOST");
-const SMTP_PORT = parseInt(Deno.env.get("EDGE_SMTP_PORT") || "25");
-const SMTP_USER = Deno.env.get("EDGE_SMTP_USER");
-const SMTP_PASS = Deno.env.get("EDGE_SMTP_PASS");
+// Configuration API d'envoi d'email via variables d'environnement
+const SMTP_API_URL = Deno.env.get("EDGE_SMTP_API_URL");
+const SMTP_API_KEY = Deno.env.get("EDGE_SMTP_API_KEY");
 const SMTP_FROM = Deno.env.get("EDGE_SMTP_FROM");
-const SMTP_TLS = Deno.env.get("EDGE_SMTP_TLS");
 const APP_URL = Deno.env.get("EDGE_APP_URL") || "https://meteor.app";
-
-// Déterminer si l'authentification est requise (credentials présents)
-const SMTP_AUTH_ENABLED = !!(SMTP_USER && SMTP_PASS);
-
-// Déterminer le mode TLS : explicite via variable, ou automatique si port 465
-const SMTP_USE_TLS = SMTP_TLS === "true" || (SMTP_TLS !== "false" && SMTP_PORT === 465);
 
 // Interface pour les notifications groupées par utilisateur
 interface UserNotificationGroup {
@@ -47,6 +38,48 @@ interface UserNotificationGroup {
     event_data: Record<string, unknown>;
     created_at: string;
   }>;
+}
+
+// Interface pour la réponse de l'API smtp-api
+interface SmtpApiResponse {
+  status?: string;
+  error?: string;
+}
+
+/**
+ * Envoie un email via l'API HTTP smtp-api
+ */
+async function sendEmailViaApi(params: {
+  from: string;
+  to: string;
+  subject: string;
+  html: string;
+  text?: string;
+}): Promise<void> {
+  console.log(`[send-email-digest] Appel API smtp-api pour ${params.to}...`);
+  
+  const response = await fetch(SMTP_API_URL!, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': SMTP_API_KEY!,
+    },
+    body: JSON.stringify({
+      from: params.from,
+      to: params.to,
+      subject: params.subject,
+      html: params.html,
+      text: params.text || '',
+    }),
+  });
+
+  const result: SmtpApiResponse = await response.json();
+
+  if (!response.ok || result.error) {
+    throw new Error(result.error || `Erreur API smtp-api: ${response.status}`);
+  }
+
+  console.log(`[send-email-digest] Email envoyé via API à ${params.to}`);
 }
 
 /**
@@ -166,35 +199,6 @@ function generateRolesListText(notifications: Array<{ event_data: Record<string,
     .join('\n');
 }
 
-/**
- * Crée la configuration SMTP selon le mode (authentifié ou non)
- */
-function createSmtpConfig() {
-  const baseConfig = {
-    hostname: SMTP_HOST!,
-    port: SMTP_PORT,
-    tls: SMTP_USE_TLS,
-  };
-
-  // Ajouter l'authentification seulement si les credentials sont présents
-  if (SMTP_AUTH_ENABLED) {
-    return {
-      connection: {
-        ...baseConfig,
-        auth: {
-          username: SMTP_USER!,
-          password: SMTP_PASS!,
-        },
-      },
-    };
-  }
-
-  // Mode sans authentification (relais interne)
-  return {
-    connection: baseConfig,
-  };
-}
-
 serve(async (req) => {
   // Gestion CORS
   if (req.method === 'OPTIONS') {
@@ -204,24 +208,21 @@ serve(async (req) => {
   console.log('[send-email-digest] Démarrage du traitement des notifications email');
 
   try {
-    // Vérifier la configuration SMTP minimale
-    if (!SMTP_HOST || !SMTP_FROM) {
-      console.error('[send-email-digest] Configuration SMTP minimale manquante (SMTP_HOST ou SMTP_FROM)');
+    // Vérifier la configuration minimale
+    if (!SMTP_API_URL || !SMTP_API_KEY || !SMTP_FROM) {
+      console.error('[send-email-digest] Configuration API manquante');
       return new Response(
         JSON.stringify({ 
-          error: 'Configuration SMTP manquante',
-          details: 'Veuillez configurer EDGE_SMTP_HOST et EDGE_SMTP_FROM dans les secrets Supabase'
+          error: 'Configuration API manquante',
+          details: 'Veuillez configurer EDGE_SMTP_API_URL, EDGE_SMTP_API_KEY et EDGE_SMTP_FROM dans les secrets Supabase'
         }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    // Log de la configuration SMTP utilisée
-    console.log('[send-email-digest] Configuration SMTP:', {
-      host: SMTP_HOST,
-      port: SMTP_PORT,
-      tls: SMTP_USE_TLS,
-      auth: SMTP_AUTH_ENABLED ? 'authentifié' : 'sans authentification',
+    // Log de la configuration utilisée
+    console.log('[send-email-digest] Configuration:', {
+      apiUrl: SMTP_API_URL,
       from: SMTP_FROM,
     });
 
@@ -306,11 +307,6 @@ serve(async (req) => {
 
     console.log(`[send-email-digest] ${userNotificationsMap.size} utilisateurs à notifier`);
 
-    // Initialiser le client SMTP avec la configuration flexible
-    const smtpConfig = createSmtpConfig();
-    console.log('[send-email-digest] Connexion SMTP en cours...');
-    const client = new SMTPClient(smtpConfig);
-
     let emailsSent = 0;
     const processedIds: string[] = [];
     const errors: string[] = [];
@@ -369,15 +365,15 @@ serve(async (req) => {
         const textBody = template.body_text ? mergeTemplate(template.body_text, variables) : undefined;
         const subject = mergeTemplate(template.subject, variables);
 
-        // Envoyer l'email
+        // Envoyer l'email via l'API HTTP
         console.log(`[send-email-digest] Envoi email à ${data.user.email}...`);
         
-        await client.send({
+        await sendEmailViaApi({
           from: SMTP_FROM!,
           to: data.user.email,
           subject: subject,
           html: htmlBody,
-          content: textBody,
+          text: textBody,
         });
 
         emailsSent++;
@@ -389,9 +385,6 @@ serve(async (req) => {
         errors.push(`${data.user.email}: ${userError instanceof Error ? userError.message : 'Unknown error'}`);
       }
     }
-
-    // Fermer la connexion SMTP
-    await client.close();
 
     // Marquer les notifications comme traitées
     if (processedIds.length > 0) {
