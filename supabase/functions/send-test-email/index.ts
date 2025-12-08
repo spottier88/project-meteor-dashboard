@@ -2,6 +2,10 @@
  * Edge Function : send-test-email
  * @description Envoie un email de test à l'utilisateur connecté
  * avec des données fictives pour prévisualiser le rendu réel du template.
+ * 
+ * Configuration SMTP flexible :
+ * - Mode authentifié : EDGE_SMTP_USER et EDGE_SMTP_PASS requis
+ * - Mode non authentifié (self-hosted) : seulement EDGE_SMTP_HOST et EDGE_SMTP_FROM requis
  */
 
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
@@ -15,11 +19,18 @@ const corsHeaders = {
 
 // Configuration SMTP via variables d'environnement
 const SMTP_HOST = Deno.env.get("EDGE_SMTP_HOST");
-const SMTP_PORT = parseInt(Deno.env.get("EDGE_SMTP_PORT") || "465");
+const SMTP_PORT = parseInt(Deno.env.get("EDGE_SMTP_PORT") || "25");
 const SMTP_USER = Deno.env.get("EDGE_SMTP_USER");
 const SMTP_PASS = Deno.env.get("EDGE_SMTP_PASS");
-const SMTP_FROM = Deno.env.get("EDGE_SMTP_FROM") || SMTP_USER;
+const SMTP_FROM = Deno.env.get("EDGE_SMTP_FROM");
+const SMTP_TLS = Deno.env.get("EDGE_SMTP_TLS");
 const APP_URL = Deno.env.get("EDGE_APP_URL") || "https://meteor.app";
+
+// Déterminer si l'authentification est requise (credentials présents)
+const SMTP_AUTH_ENABLED = !!(SMTP_USER && SMTP_PASS);
+
+// Déterminer le mode TLS : explicite via variable, ou automatique si port 465
+const SMTP_USE_TLS = SMTP_TLS === "true" || (SMTP_TLS !== "false" && SMTP_PORT === 465);
 
 /**
  * Remplace les variables de publipostage dans un template
@@ -111,6 +122,35 @@ function generateTestData(userEmail: string, userFirstName: string, userLastName
   };
 }
 
+/**
+ * Crée la configuration SMTP selon le mode (authentifié ou non)
+ */
+function createSmtpConfig() {
+  const baseConfig = {
+    hostname: SMTP_HOST!,
+    port: SMTP_PORT,
+    tls: SMTP_USE_TLS,
+  };
+
+  // Ajouter l'authentification seulement si les credentials sont présents
+  if (SMTP_AUTH_ENABLED) {
+    return {
+      connection: {
+        ...baseConfig,
+        auth: {
+          username: SMTP_USER!,
+          password: SMTP_PASS!,
+        },
+      },
+    };
+  }
+
+  // Mode sans authentification (relais interne)
+  return {
+    connection: baseConfig,
+  };
+}
+
 serve(async (req) => {
   // Gestion CORS
   if (req.method === 'OPTIONS') {
@@ -120,17 +160,26 @@ serve(async (req) => {
   console.log('[send-test-email] Démarrage de l\'envoi d\'email de test');
 
   try {
-    // Vérifier la configuration SMTP
-    if (!SMTP_HOST || !SMTP_USER || !SMTP_PASS) {
-      console.error('[send-test-email] Configuration SMTP manquante');
+    // Vérifier la configuration SMTP minimale
+    if (!SMTP_HOST || !SMTP_FROM) {
+      console.error('[send-test-email] Configuration SMTP minimale manquante (SMTP_HOST ou SMTP_FROM)');
       return new Response(
         JSON.stringify({ 
           error: 'Configuration SMTP manquante',
-          details: 'Veuillez configurer SMTP_HOST, SMTP_USER et SMTP_PASS dans les secrets Supabase'
+          details: 'Veuillez configurer EDGE_SMTP_HOST et EDGE_SMTP_FROM dans les secrets Supabase'
         }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
+
+    // Log de la configuration SMTP utilisée
+    console.log('[send-test-email] Configuration SMTP:', {
+      host: SMTP_HOST,
+      port: SMTP_PORT,
+      tls: SMTP_USE_TLS,
+      auth: SMTP_AUTH_ENABLED ? 'authentifié' : 'sans authentification',
+      from: SMTP_FROM,
+    });
 
     // Récupérer le token d'authentification
     const authHeader = req.headers.get('Authorization');
@@ -213,18 +262,10 @@ serve(async (req) => {
     const textBody = template.body_text ? mergeTemplate(template.body_text, testVariables) : undefined;
     const subject = `[TEST] ${mergeTemplate(template.subject, testVariables)}`;
 
-    // Initialiser le client SMTP
-    const client = new SMTPClient({
-      connection: {
-        hostname: SMTP_HOST,
-        port: SMTP_PORT,
-        tls: SMTP_PORT === 465,
-        auth: { 
-          username: SMTP_USER, 
-          password: SMTP_PASS 
-        }
-      }
-    });
+    // Initialiser le client SMTP avec la configuration flexible
+    const smtpConfig = createSmtpConfig();
+    console.log('[send-test-email] Connexion SMTP en cours...');
+    const client = new SMTPClient(smtpConfig);
 
     // Envoyer l'email de test
     console.log(`[send-test-email] Envoi email de test à ${userEmail}...`);
