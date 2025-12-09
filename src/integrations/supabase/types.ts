@@ -1607,6 +1607,7 @@ export type Database = {
           email_notifications_enabled: boolean | null
           has_seen_onboarding: boolean
           id: string
+          last_email_sent_at: string | null
           onboarding_seen_at: string | null
           open_projects_in_new_tab: boolean
           points_visualization_mode: string
@@ -1619,6 +1620,7 @@ export type Database = {
           email_notifications_enabled?: boolean | null
           has_seen_onboarding?: boolean
           id?: string
+          last_email_sent_at?: string | null
           onboarding_seen_at?: string | null
           open_projects_in_new_tab?: boolean
           points_visualization_mode?: string
@@ -1631,6 +1633,7 @@ export type Database = {
           email_notifications_enabled?: boolean | null
           has_seen_onboarding?: boolean
           id?: string
+          last_email_sent_at?: string | null
           onboarding_seen_at?: string | null
           open_projects_in_new_tab?: boolean
           points_visualization_mode?: string
