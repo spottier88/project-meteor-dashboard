@@ -320,10 +320,10 @@ serve(async (req) => {
     // Traiter chaque utilisateur
     for (const [userId, data] of userNotificationsMap) {
       try {
-        // Vérifier les préférences de l'utilisateur
+        // Vérifier les préférences de l'utilisateur (incluant last_email_sent_at pour la fréquence)
         const { data: prefs } = await supabase
           .from('user_preferences')
-          .select('email_notifications_enabled, email_digest_frequency')
+          .select('email_notifications_enabled, email_digest_frequency, last_email_sent_at')
           .eq('user_id', userId)
           .single();
 
@@ -332,6 +332,21 @@ serve(async (req) => {
           console.log(`[send-email-digest] Notifications désactivées pour ${data.user.email}`);
           processedIds.push(...data.notifications.map(n => n.id));
           continue;
+        }
+
+        // Vérifier si la fréquence d'envoi est respectée
+        const frequencyHours = prefs?.email_digest_frequency ?? 24; // Défaut: 24h
+        const lastSentAt = prefs?.last_email_sent_at ? new Date(prefs.last_email_sent_at) : null;
+        const now = new Date();
+
+        if (lastSentAt) {
+          const hoursSinceLastEmail = (now.getTime() - lastSentAt.getTime()) / (1000 * 60 * 60);
+          
+          if (hoursSinceLastEmail < frequencyHours) {
+            console.log(`[send-email-digest] Fréquence non atteinte pour ${data.user.email} (${hoursSinceLastEmail.toFixed(1)}h < ${frequencyHours}h) - reporté`);
+            // NE PAS marquer comme traité, reporter au prochain cycle
+            continue;
+          }
         }
 
         // Séparer les notifications par type
@@ -378,7 +393,14 @@ serve(async (req) => {
 
         emailsSent++;
         processedIds.push(...data.notifications.map(n => n.id));
-        console.log(`[send-email-digest] Email envoyé à ${data.user.email}`);
+        
+        // Mettre à jour last_email_sent_at pour respecter la fréquence
+        await supabase
+          .from('user_preferences')
+          .update({ last_email_sent_at: new Date().toISOString() })
+          .eq('user_id', userId);
+        
+        console.log(`[send-email-digest] Email envoyé à ${data.user.email}, last_email_sent_at mis à jour`);
 
       } catch (userError: unknown) {
         console.error(`[send-email-digest] Erreur pour ${data.user.email}:`, userError);
