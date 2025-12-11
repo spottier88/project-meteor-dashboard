@@ -1,4 +1,10 @@
 
+/**
+ * @file PortfolioProjectsTable.tsx
+ * @description Tableau listant les projets d'un portefeuille avec filtres,
+ * tri et actions (export, présentation, Gantt).
+ */
+
 import { useState } from "react";
 import { 
   Table, 
@@ -36,6 +42,8 @@ import { useRemoveProjectFromPortfolio } from "@/hooks/usePortfolioDetails";
 import { useProjectNavigation } from "@/hooks/useProjectNavigation";
 import { ProjectStatus, ProjectLifecycleStatus } from "@/types/project";
 import { SortableHeader, SortDirection } from "@/components/ui/sortable-header";
+import { PortfolioProjectsActions } from "./PortfolioProjectsActions";
+import { usePortfolioPermissions } from "@/hooks/usePortfolioPermissions";
 
 interface Project {
   id: string;
@@ -64,6 +72,7 @@ export const PortfolioProjectsTable = ({
 }: PortfolioProjectsTableProps) => {
   const removeProject = useRemoveProjectFromPortfolio();
   const { navigateToProject } = useProjectNavigation();
+  const { canManagePortfolios } = usePortfolioPermissions();
   
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
@@ -125,18 +134,29 @@ export const PortfolioProjectsTable = ({
 
   return (
     <div className="space-y-4">
-      {/* En-tête et filtres */}
-      <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-center justify-between">
-        <div>
-          <h3 className="text-lg font-semibold">Projets du portefeuille</h3>
-          <p className="text-sm text-muted-foreground">
-            {filteredProjects.length} projet(s) sur {projects.length}
-          </p>
+      {/* En-tête et actions */}
+      <div className="flex flex-col gap-4">
+        <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-center justify-between">
+          <div>
+            <h3 className="text-lg font-semibold">Projets du portefeuille</h3>
+            <p className="text-sm text-muted-foreground">
+              {filteredProjects.length} projet(s) sur {projects.length}
+            </p>
+          </div>
+          <div className="flex flex-wrap gap-2 items-center">
+            {/* Boutons d'actions (export, présentation, Gantt) */}
+            <PortfolioProjectsActions
+              portfolioId={portfolioId}
+              projectIds={projects.map(p => p.id)}
+              canManage={canManagePortfolios}
+            />
+            {/* Bouton d'ajout de projets */}
+            <Button onClick={onAddProjects} className="shrink-0">
+              <Plus className="h-4 w-4 mr-2" />
+              Ajouter des projets
+            </Button>
+          </div>
         </div>
-        <Button onClick={onAddProjects} className="shrink-0">
-          <Plus className="h-4 w-4 mr-2" />
-          Ajouter des projets
-        </Button>
       </div>
 
       {/* Filtres */}
