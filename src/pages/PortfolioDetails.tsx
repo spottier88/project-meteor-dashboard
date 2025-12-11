@@ -1,16 +1,15 @@
-
 import { useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowLeft, Calendar, Euro, Users, TrendingUp, Settings, Download } from "lucide-react";
+import { ArrowLeft, Calendar, Euro, Users, TrendingUp, Settings } from "lucide-react";
 import { usePortfolioDetails } from "@/hooks/usePortfolioDetails";
 import { usePortfolioPermissions } from "@/hooks/usePortfolioPermissions";
 import { PortfolioCharts } from "@/components/portfolio/PortfolioCharts";
 import { PortfolioProjectsTable } from "@/components/portfolio/PortfolioProjectsTable";
 import { PortfolioManagersTable } from "@/components/portfolio/PortfolioManagersTable";
-import { PortfolioExportButtons } from "@/components/portfolio/PortfolioExportButtons";
+import { PortfolioActionsBar } from "@/components/portfolio/PortfolioActionsBar";
 import { AddProjectsModal } from "@/components/portfolio/AddProjectsModal";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
@@ -95,11 +94,6 @@ const PortfolioDetails = () => {
               <p className="text-muted-foreground text-lg">{portfolio.description}</p>
             )}
           </div>
-          
-          {/* Boutons d'export */}
-          <div className="flex gap-2">
-            <PortfolioExportButtons portfolioData={portfolio} />
-          </div>
         </div>
 
         {/* Informations générales */}
@@ -175,7 +169,7 @@ const PortfolioDetails = () => {
                   </div>
                 </div>
               </CardContent>
-            </Card>
+          </Card>
           )}
         </div>
 
@@ -192,6 +186,14 @@ const PortfolioDetails = () => {
             </CardContent>
           </Card>
         )}
+
+        {/* Barre d'actions unifiée */}
+        <div className="mt-6">
+          <PortfolioActionsBar 
+            portfolioData={portfolio} 
+            canManage={canManagePortfolios} 
+          />
+        </div>
       </div>
 
       {/* Contenu principal avec onglets */}
