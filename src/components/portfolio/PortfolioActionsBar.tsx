@@ -22,8 +22,6 @@ import {
   Presentation, 
   Download,
   ChevronDown,
-  FolderOpen,
-  FileText,
   Loader2
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
@@ -313,106 +311,88 @@ export const PortfolioActionsBar = ({
 
   return (
     <>
-      {/* Barre d'actions avec séparation visuelle */}
-      <div className="flex flex-wrap items-center gap-4 p-4 bg-muted/30 rounded-lg border">
-        {/* Section Portefeuille */}
-        <div className="flex items-center gap-2">
-          <span className="text-sm font-medium text-muted-foreground flex items-center gap-1.5">
-            <FolderOpen className="h-4 w-4" />
-            Portefeuille
-          </span>
-          <Separator orientation="vertical" className="h-6" />
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handlePortfolioExcelExport}
-            disabled={isDisabled}
-            className="gap-2"
-          >
-            {exportType === 'portfolio-excel' ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
+      {/* Barre d'actions alignée - style cohérent avec ProjectSummaryActions */}
+      <div className="flex flex-wrap items-center gap-2">
+        {/* Exports Portefeuille */}
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={handlePortfolioExcelExport}
+          disabled={isDisabled}
+          className="gap-2"
+        >
+          {exportType === 'portfolio-excel' ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : (
+            <FileSpreadsheet className="h-4 w-4" />
+          )}
+          Portefeuille Excel
+        </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={handlePortfolioPPTXExport}
+          disabled={isDisabled}
+          className="gap-2"
+        >
+          {exportType === 'portfolio-pptx' ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : (
+            <Presentation className="h-4 w-4" />
+          )}
+          Portefeuille PPTX
+        </Button>
+
+        {/* Séparateur subtil entre les deux groupes */}
+        <Separator orientation="vertical" className="h-6 mx-1" />
+
+        {/* Actions Revues de projets */}
+        <Button
+          size="sm"
+          onClick={handlePresent}
+          disabled={isDisabled || !hasProjects}
+          className="gap-2"
+        >
+          <Play className="h-4 w-4" />
+          Présenter
+        </Button>
+
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={handleGantt}
+          disabled={isDisabled || !hasProjects}
+          className="gap-2"
+        >
+          <GanttChartSquare className="h-4 w-4" />
+          Gantt
+        </Button>
+
+        {/* Menu déroulant pour les exports des revues */}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={isDisabled || !hasProjects}
+              className="gap-2"
+            >
+              <Download className="h-4 w-4" />
+              Exporter Revues
+              <ChevronDown className="h-4 w-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem onClick={handleProjectsExcelExport} className="gap-2 cursor-pointer">
               <FileSpreadsheet className="h-4 w-4" />
-            )}
-            Excel
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handlePortfolioPPTXExport}
-            disabled={isDisabled}
-            className="gap-2"
-          >
-            {exportType === 'portfolio-pptx' ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
+              Excel (.xlsx)
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={handleProjectsPPTXExport} className="gap-2 cursor-pointer">
               <Presentation className="h-4 w-4" />
-            )}
-            PowerPoint
-          </Button>
-        </div>
-
-        {/* Séparateur vertical */}
-        <Separator orientation="vertical" className="h-8 hidden lg:block" />
-        <Separator className="w-full lg:hidden" />
-
-        {/* Section Revues de projets */}
-        <div className="flex items-center gap-2 flex-wrap">
-          <span className="text-sm font-medium text-muted-foreground flex items-center gap-1.5">
-            <FileText className="h-4 w-4" />
-            Revues de projets
-          </span>
-          <Separator orientation="vertical" className="h-6" />
-          
-          {/* Bouton Présenter (principal) */}
-          <Button
-            size="sm"
-            onClick={handlePresent}
-            disabled={isDisabled || !hasProjects}
-            className="gap-2"
-          >
-            <Play className="h-4 w-4" />
-            Présenter
-          </Button>
-
-          {/* Bouton Vue Gantt */}
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleGantt}
-            disabled={isDisabled || !hasProjects}
-            className="gap-2"
-          >
-            <GanttChartSquare className="h-4 w-4" />
-            Gantt
-          </Button>
-
-          {/* Menu déroulant pour les exports des revues */}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="outline"
-                size="sm"
-                disabled={isDisabled || !hasProjects}
-                className="gap-2"
-              >
-                <Download className="h-4 w-4" />
-                Exporter
-                <ChevronDown className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={handleProjectsExcelExport} className="gap-2 cursor-pointer">
-                <FileSpreadsheet className="h-4 w-4" />
-                Export Excel (.xlsx)
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={handleProjectsPPTXExport} className="gap-2 cursor-pointer">
-                <Presentation className="h-4 w-4" />
-                Export PowerPoint (.pptx)
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
+              PowerPoint (.pptx)
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
 
       {/* Overlay de chargement pendant l'export */}
