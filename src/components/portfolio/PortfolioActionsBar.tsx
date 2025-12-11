@@ -15,15 +15,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { 
-  Play, 
-  GanttChartSquare, 
-  FileSpreadsheet, 
-  Presentation, 
-  Download,
-  ChevronDown,
-  Loader2
-} from "lucide-react";
+import { Play, GanttChartSquare, FileSpreadsheet, Presentation, Download, ChevronDown, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useDetailedProjectsData, ProjectData } from "@/hooks/use-detailed-projects-data";
 import { generateProjectPPTX } from "@/components/pptx/ProjectPPTX";
@@ -61,55 +53,54 @@ interface PortfolioActionsBarProps {
  * - Les exports du portefeuille (synthèse)
  * - Les exports et actions sur les revues de projets
  */
-export const PortfolioActionsBar = ({
-  portfolioData,
-  canManage = false,
-}: PortfolioActionsBarProps) => {
+export const PortfolioActionsBar = ({ portfolioData, canManage = false }: PortfolioActionsBarProps) => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [isGanttOpen, setIsGanttOpen] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
   const [exportType, setExportType] = useState<string | null>(null);
 
-  const projectIds = portfolioData.projects.map(p => p.id);
+  const projectIds = portfolioData.projects.map((p) => p.id);
 
   // Hook pour charger les données détaillées des projets (à la demande)
   const { refetch, isLoading: isLoadingDetails } = useDetailedProjectsData(
     projectIds,
-    false // Ne pas charger automatiquement
+    false, // Ne pas charger automatiquement
   );
 
   /**
    * Adapte les données au format attendu par le générateur PPTX
    */
   const adaptDataForPPTX = (data: ProjectData[]): PPTXProjectData[] => {
-    return data.map(item => ({
+    return data.map((item) => ({
       project: {
         ...item.project,
-        status: item.project.status || "cloudy" as ProjectStatus,
-        progress: item.project.progress || "stable" as ProgressStatus,
+        status: item.project.status || ("cloudy" as ProjectStatus),
+        progress: item.project.progress || ("stable" as ProgressStatus),
         lifecycle_status: item.project.lifecycle_status,
       },
-      lastReview: item.lastReview ? {
-        ...item.lastReview,
-        weather: item.lastReview.weather || "cloudy" as ProjectStatus,
-        progress: item.lastReview.progress || "stable" as ProgressStatus,
-        actions: item.lastReview.actions || []
-      } : undefined,
-      risks: item.risks.map(risk => ({
+      lastReview: item.lastReview
+        ? {
+            ...item.lastReview,
+            weather: item.lastReview.weather || ("cloudy" as ProjectStatus),
+            progress: item.lastReview.progress || ("stable" as ProgressStatus),
+            actions: item.lastReview.actions || [],
+          }
+        : undefined,
+      risks: item.risks.map((risk) => ({
         description: risk.description,
         probability: risk.probability,
         severity: risk.severity,
         status: risk.status,
-        mitigation_plan: risk.mitigation_plan
+        mitigation_plan: risk.mitigation_plan,
       })),
-      tasks: item.tasks.map(task => ({
+      tasks: item.tasks.map((task) => ({
         title: task.title,
         description: task.description,
         status: task.status as "todo" | "in_progress" | "done",
         assignee: task.assignee,
-        due_date: task.due_date
-      }))
+        due_date: task.due_date,
+      })),
     }));
   };
 
@@ -120,7 +111,7 @@ export const PortfolioActionsBar = ({
    */
   const handlePortfolioExcelExport = async () => {
     try {
-      setExportType('portfolio-excel');
+      setExportType("portfolio-excel");
       setIsExporting(true);
       await generatePortfolioExcel(portfolioData);
       toast({
@@ -145,7 +136,7 @@ export const PortfolioActionsBar = ({
    */
   const handlePortfolioPPTXExport = async () => {
     try {
-      setExportType('portfolio-pptx');
+      setExportType("portfolio-pptx");
       setIsExporting(true);
       await generatePortfolioPPTX(portfolioData);
       toast({
@@ -181,7 +172,7 @@ export const PortfolioActionsBar = ({
     }
 
     try {
-      setExportType('projects-excel');
+      setExportType("projects-excel");
       setIsExporting(true);
 
       const { data } = await refetch();
@@ -227,7 +218,7 @@ export const PortfolioActionsBar = ({
     }
 
     try {
-      setExportType('projects-pptx');
+      setExportType("projects-pptx");
       setIsExporting(true);
 
       const { data } = await refetch();
@@ -243,7 +234,7 @@ export const PortfolioActionsBar = ({
 
       const adaptedData = adaptDataForPPTX(data);
       await generateProjectPPTX(adaptedData);
-      
+
       toast({
         title: "Succès",
         description: "Présentation PowerPoint des revues générée avec succès",
@@ -298,11 +289,16 @@ export const PortfolioActionsBar = ({
    */
   const getLoadingMessage = () => {
     switch (exportType) {
-      case 'portfolio-excel': return "Export Excel du portefeuille en cours...";
-      case 'portfolio-pptx': return "Export PowerPoint du portefeuille en cours...";
-      case 'projects-excel': return "Chargement des données pour l'export Excel des revues...";
-      case 'projects-pptx': return "Chargement des données pour l'export PowerPoint des revues...";
-      default: return "Chargement...";
+      case "portfolio-excel":
+        return "Export Excel du portefeuille en cours...";
+      case "portfolio-pptx":
+        return "Export PowerPoint du portefeuille en cours...";
+      case "projects-excel":
+        return "Chargement des données pour l'export Excel des revues...";
+      case "projects-pptx":
+        return "Chargement des données pour l'export PowerPoint des revues...";
+      default:
+        return "Chargement...";
     }
   };
 
@@ -321,21 +317,15 @@ export const PortfolioActionsBar = ({
           disabled={isDisabled}
           className="gap-2"
         >
-          {exportType === 'portfolio-excel' ? (
+          {exportType === "portfolio-excel" ? (
             <Loader2 className="h-4 w-4 animate-spin" />
           ) : (
             <FileSpreadsheet className="h-4 w-4" />
           )}
           Portefeuille Excel
         </Button>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={handlePortfolioPPTXExport}
-          disabled={isDisabled}
-          className="gap-2"
-        >
-          {exportType === 'portfolio-pptx' ? (
+        <Button variant="outline" size="sm" onClick={handlePortfolioPPTXExport} disabled={isDisabled} className="gap-2">
+          {exportType === "portfolio-pptx" ? (
             <Loader2 className="h-4 w-4 animate-spin" />
           ) : (
             <Presentation className="h-4 w-4" />
@@ -347,14 +337,9 @@ export const PortfolioActionsBar = ({
         <Separator orientation="vertical" className="h-6 mx-1" />
 
         {/* Actions Revues de projets */}
-        <Button
-          size="sm"
-          onClick={handlePresent}
-          disabled={isDisabled || !hasProjects}
-          className="gap-2"
-        >
+        <Button size="sm" onClick={handlePresent} disabled={isDisabled || !hasProjects} className="gap-2">
           <Play className="h-4 w-4" />
-          Présenter
+          Présenter la revue
         </Button>
 
         <Button
@@ -371,12 +356,7 @@ export const PortfolioActionsBar = ({
         {/* Menu déroulant pour les exports des revues */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button
-              variant="outline"
-              size="sm"
-              disabled={isDisabled || !hasProjects}
-              className="gap-2"
-            >
+            <Button variant="outline" size="sm" disabled={isDisabled || !hasProjects} className="gap-2">
               <Download className="h-4 w-4" />
               Exporter Revues
               <ChevronDown className="h-4 w-4" />
@@ -396,16 +376,10 @@ export const PortfolioActionsBar = ({
       </div>
 
       {/* Overlay de chargement pendant l'export */}
-      {isExporting && (
-        <LoadingOverlay message={getLoadingMessage()} />
-      )}
+      {isExporting && <LoadingOverlay message={getLoadingMessage()} />}
 
       {/* Sheet Gantt */}
-      <PortfolioGanttSheet
-        isOpen={isGanttOpen}
-        onClose={() => setIsGanttOpen(false)}
-        projectIds={projectIds}
-      />
+      <PortfolioGanttSheet isOpen={isGanttOpen} onClose={() => setIsGanttOpen(false)} projectIds={projectIds} />
     </>
   );
 };
