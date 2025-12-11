@@ -39,6 +39,7 @@ import { ProjectFraming } from "./pages/ProjectFraming";
 import { MyTasks } from "./pages/MyTasks";
 import APITokenManagement from "./pages/APITokenManagement";
 import { ProjectPresentation } from "./pages/ProjectPresentation";
+import { PortfolioPresentation } from "./pages/PortfolioPresentation";
 import { EmailTemplateManagement } from "./pages/EmailTemplateManagement";
 
 export const AppRoutes = () => {
@@ -99,6 +100,14 @@ export const AppRoutes = () => {
             element={
               <ProtectedRoute>
                 <PortfolioDetails />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/portfolios/:id/presentation"
+            element={
+              <ProtectedRoute>
+                <PortfolioPresentation />
               </ProtectedRoute>
             }
           />
