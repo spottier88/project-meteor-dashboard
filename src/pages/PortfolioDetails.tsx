@@ -3,13 +3,14 @@ import { useParams, Link } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowLeft, Calendar, Euro, Users, TrendingUp, Settings } from "lucide-react";
+import { ArrowLeft, Calendar, Euro, Users, TrendingUp, Settings, ClipboardList } from "lucide-react";
 import { usePortfolioDetails } from "@/hooks/usePortfolioDetails";
 import { usePortfolioPermissions } from "@/hooks/usePortfolioPermissions";
 import { PortfolioCharts } from "@/components/portfolio/PortfolioCharts";
 import { PortfolioProjectsTable } from "@/components/portfolio/PortfolioProjectsTable";
 import { PortfolioManagersTable } from "@/components/portfolio/PortfolioManagersTable";
-import { PortfolioActionsBar } from "@/components/portfolio/PortfolioActionsBar";
+import { PortfolioExportButtons } from "@/components/portfolio/PortfolioExportButtons";
+import { PortfolioReviewsTab } from "@/components/portfolio/PortfolioReviewsTab";
 import { AddProjectsModal } from "@/components/portfolio/AddProjectsModal";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
@@ -94,6 +95,8 @@ const PortfolioDetails = () => {
               <p className="text-muted-foreground text-lg">{portfolio.description}</p>
             )}
           </div>
+          {/* Boutons d'export du portefeuille en haut */}
+          <PortfolioExportButtons portfolioData={portfolio} />
         </div>
 
         {/* Informations générales */}
@@ -186,19 +189,11 @@ const PortfolioDetails = () => {
             </CardContent>
           </Card>
         )}
-
-        {/* Barre d'actions unifiée */}
-        <div className="mt-6">
-          <PortfolioActionsBar 
-            portfolioData={portfolio} 
-            canManage={canManagePortfolios} 
-          />
-        </div>
       </div>
 
       {/* Contenu principal avec onglets */}
       <Tabs defaultValue="overview" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className={`grid w-full ${canManagePortfolios ? "grid-cols-4" : "grid-cols-3"}`}>
           <TabsTrigger value="overview" className="gap-2">
             <TrendingUp className="h-4 w-4" />
             Vue d'ensemble
@@ -206,6 +201,10 @@ const PortfolioDetails = () => {
           <TabsTrigger value="projects" className="gap-2">
             <Users className="h-4 w-4" />
             Projets
+          </TabsTrigger>
+          <TabsTrigger value="reviews" className="gap-2">
+            <ClipboardList className="h-4 w-4" />
+            Revues de projets
           </TabsTrigger>
           {canManagePortfolios && (
             <TabsTrigger value="managers" className="gap-2">
@@ -232,6 +231,14 @@ const PortfolioDetails = () => {
             projects={portfolio.projects}
             portfolioId={portfolio.id}
             onAddProjects={() => setIsAddProjectsModalOpen(true)}
+          />
+        </TabsContent>
+
+        <TabsContent value="reviews" className="space-y-6">
+          <PortfolioReviewsTab
+            portfolioId={portfolio.id}
+            portfolioName={portfolio.name}
+            projects={portfolio.projects}
           />
         </TabsContent>
 
