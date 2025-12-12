@@ -87,7 +87,11 @@ export const PortfolioReviewForm = ({
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent 
+        className="sm:max-w-[425px]"
+        onPointerDownOutside={(e) => e.preventDefault()}
+        onEscapeKeyDown={handleClose}
+      >
         <DialogHeader>
           <DialogTitle>
             {isEditing ? "Modifier la revue" : "Organiser une revue de projets"}
