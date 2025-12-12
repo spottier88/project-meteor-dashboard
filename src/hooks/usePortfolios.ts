@@ -3,58 +3,12 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
 import { Portfolio, PortfolioWithStats, PortfolioFormData } from "@/types/portfolio";
-import { useEffect } from "react";
 
+/**
+ * Hook pour récupérer la liste des portefeuilles avec leurs statistiques
+ * Utilise le polling (refetchInterval) au lieu du Realtime pour compatibilité self-hosted
+ */
 export const usePortfolios = () => {
-  const queryClient = useQueryClient();
-
-  // Configuration de la synchronisation en temps réel
-  useEffect(() => {
-    const channel = supabase
-      .channel('portfolio-changes')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'project_portfolios'
-        },
-        () => {
-          // Invalider et refetch les données des portefeuilles
-          queryClient.invalidateQueries({ queryKey: ["portfolios"] });
-        }
-      )
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'portfolio_projects'
-        },
-        () => {
-          // Invalider quand des projets sont ajoutés/retirés d'un portefeuille
-          queryClient.invalidateQueries({ queryKey: ["portfolios"] });
-        }
-      )
-      .on(
-        'postgres_changes',
-        {
-          event: 'UPDATE',
-          schema: 'public',
-          table: 'projects'
-        },
-        () => {
-          // Invalider quand un projet change (lifecycle_status, etc.)
-          queryClient.invalidateQueries({ queryKey: ["portfolios"] });
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [queryClient]);
-
   return useQuery({
     queryKey: ["portfolios"],
     queryFn: async () => {
@@ -121,10 +75,12 @@ export const usePortfolios = () => {
 
       return portfoliosWithStats;
     },
-    staleTime: 30000, // 30 secondes pour plus de réactivité
+    staleTime: 30000, // 30 secondes
     gcTime: 300000, // 5 minutes
     refetchOnWindowFocus: true, // Refetch quand l'utilisateur revient sur l'onglet
     refetchOnMount: 'always', // Toujours refetch au montage du composant
+    refetchInterval: 60000, // Polling toutes les 60 secondes (remplace Realtime)
+    refetchIntervalInBackground: false, // Pas de polling quand l'onglet est en arrière-plan
   });
 };
 
