@@ -91,6 +91,10 @@ export const PortfolioReviewForm = ({
         className="sm:max-w-[425px]"
         onPointerDownOutside={(e) => e.preventDefault()}
         onEscapeKeyDown={handleClose}
+        onCloseAutoFocus={(event) => {
+          event.preventDefault();
+          document.body.focus();
+        }}
       >
         <DialogHeader>
           <DialogTitle>

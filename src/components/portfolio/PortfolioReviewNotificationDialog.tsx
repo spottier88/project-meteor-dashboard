@@ -295,7 +295,13 @@ export const PortfolioReviewNotificationDialog = ({
     <>
       {/* Dialog principal - visible seulement si open ET pas en prévisualisation */}
       <Dialog open={open && !showPreview} onOpenChange={handleMainDialogClose}>
-        <DialogContent className="sm:max-w-[550px]">
+        <DialogContent 
+          className="sm:max-w-[550px]"
+          onCloseAutoFocus={(event) => {
+            event.preventDefault();
+            document.body.focus();
+          }}
+        >
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Send className="h-5 w-5" />
@@ -467,6 +473,10 @@ export const PortfolioReviewNotificationDialog = ({
         <DialogContent 
           className="sm:max-w-[700px] max-h-[80vh]"
           onPointerDownOutside={(e) => e.preventDefault()}
+          onCloseAutoFocus={(event) => {
+            event.preventDefault();
+            document.body.focus();
+          }}
         >
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
