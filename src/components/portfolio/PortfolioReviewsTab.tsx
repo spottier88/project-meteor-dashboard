@@ -376,6 +376,7 @@ export const PortfolioReviewsTab = ({ portfolioId, portfolioName, projects }: Po
               <PortfolioReviewList
                 reviews={reviews}
                 portfolioId={portfolioId}
+                portfolioName={portfolioName}
                 projects={projects}
                 onEdit={(review) => setEditingReview(review)}
                 onDelete={deleteReview}
