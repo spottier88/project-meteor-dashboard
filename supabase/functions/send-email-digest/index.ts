@@ -251,10 +251,12 @@ serve(async (req) => {
     console.log('[send-email-digest] Modèle email chargé:', template.name);
 
     // Récupérer les notifications en attente avec les infos utilisateur
+    // Exclure portfolio_review qui est traité immédiatement par send-portfolio-review-email
     const { data: pendingNotifications, error: notifError } = await supabase
       .from('email_notification_queue')
       .select('*')
       .is('processed_at', null)
+      .neq('event_type', 'portfolio_review')
       .order('created_at', { ascending: true });
 
     if (notifError) {
