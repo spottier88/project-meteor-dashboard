@@ -1888,6 +1888,10 @@ export type Database = {
         Args: { p_activity_type_code: string; p_user_id: string }
         Returns: boolean
       }
+      can_view_portfolio: {
+        Args: { p_portfolio_id: string; p_user_id: string }
+        Returns: boolean
+      }
       can_view_project_members: {
         Args: { p_project_id: string; p_user_id: string }
         Returns: boolean
