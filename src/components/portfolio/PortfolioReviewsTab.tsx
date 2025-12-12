@@ -1,14 +1,15 @@
 /**
  * @file PortfolioReviewsTab.tsx
  * @description Onglet dédié aux revues de projets du portefeuille.
- * Contient les boutons d'action (présentation, Gantt, exports) et
- * affichera d'autres fonctionnalités à venir.
+ * Contient les boutons d'action (présentation, Gantt, exports),
+ * l'organisation des revues et l'envoi de notifications.
  */
 
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -24,13 +25,17 @@ import {
   ChevronDown,
   Loader2,
   ClipboardList,
+  CalendarPlus,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useDetailedProjectsData, ProjectData } from "@/hooks/use-detailed-projects-data";
+import { usePortfolioReviews, PortfolioReview } from "@/hooks/usePortfolioReviews";
 import { generateProjectPPTX } from "@/components/pptx/ProjectPPTX";
 import { exportProjectsToExcel } from "@/utils/projectExport";
 import { LoadingOverlay } from "@/components/ui/loading-overlay";
 import { PortfolioGanttSheet } from "./PortfolioGanttSheet";
+import { PortfolioReviewForm } from "./PortfolioReviewForm";
+import { PortfolioReviewList } from "./PortfolioReviewList";
 import { ProjectData as PPTXProjectData } from "@/components/pptx/types";
 import { ProjectStatus, ProgressStatus } from "@/types/project";
 
@@ -40,11 +45,11 @@ interface PortfolioReviewsTabProps {
   /** Nom du portefeuille (pour navigation) */
   portfolioName: string;
   /** Liste des projets du portefeuille */
-  projects: { id: string; title: string }[];
+  projects: { id: string; title: string; project_manager_id?: string | null }[];
 }
 
 /**
- * Onglet des revues de projets avec boutons d'action
+ * Onglet des revues de projets avec boutons d'action et organisation des revues
  */
 export const PortfolioReviewsTab = ({ portfolioId, portfolioName, projects }: PortfolioReviewsTabProps) => {
   const navigate = useNavigate();
@@ -52,9 +57,22 @@ export const PortfolioReviewsTab = ({ portfolioId, portfolioName, projects }: Po
   const [isGanttOpen, setIsGanttOpen] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
   const [exportType, setExportType] = useState<string | null>(null);
+  const [isFormOpen, setIsFormOpen] = useState(false);
+  const [editingReview, setEditingReview] = useState<PortfolioReview | null>(null);
 
   const projectIds = projects.map((p) => p.id);
   const hasProjects = projectIds.length > 0;
+
+  // Hook pour les revues de portefeuille
+  const {
+    reviews,
+    isLoading: isLoadingReviews,
+    createReview,
+    updateReview,
+    deleteReview,
+    isCreating,
+    isUpdating,
+  } = usePortfolioReviews(portfolioId);
 
   // Hook pour charger les données détaillées des projets (à la demande)
   const { refetch } = useDetailedProjectsData(projectIds, false);
@@ -220,6 +238,53 @@ export const PortfolioReviewsTab = ({ portfolioId, portfolioName, projects }: Po
   };
 
   /**
+   * Gestion de la création d'une revue
+   */
+  const handleCreateReview = (data: { subject: string; review_date: string; notes?: string }) => {
+    createReview(
+      {
+        portfolio_id: portfolioId,
+        subject: data.subject,
+        review_date: data.review_date,
+        notes: data.notes,
+      },
+      {
+        onSuccess: () => {
+          setIsFormOpen(false);
+        },
+      }
+    );
+  };
+
+  /**
+   * Gestion de la modification d'une revue
+   */
+  const handleEditReview = (data: { subject: string; review_date: string; notes?: string }) => {
+    if (!editingReview) return;
+    
+    updateReview(
+      {
+        id: editingReview.id,
+        subject: data.subject,
+        review_date: data.review_date,
+        notes: data.notes,
+      },
+      {
+        onSuccess: () => {
+          setEditingReview(null);
+        },
+      }
+    );
+  };
+
+  /**
+   * Gestion du changement de statut
+   */
+  const handleStatusChange = (reviewId: string, status: PortfolioReview["status"]) => {
+    updateReview({ id: reviewId, status });
+  };
+
+  /**
    * Retourne le message de chargement approprié
    */
   const getLoadingMessage = () => {
@@ -240,7 +305,20 @@ export const PortfolioReviewsTab = ({ portfolioId, portfolioName, projects }: Po
       <div className="space-y-6">
         {/* Barre d'actions en haut de l'onglet */}
         <div className="flex flex-wrap items-center gap-2">
-          <Button size="sm" onClick={handlePresent} disabled={isDisabled || !hasProjects} className="gap-2">
+          {/* Bouton d'organisation de revue */}
+          <Button
+            size="sm"
+            onClick={() => setIsFormOpen(true)}
+            disabled={isDisabled}
+            className="gap-2"
+          >
+            <CalendarPlus className="h-4 w-4" />
+            Organiser une revue
+          </Button>
+
+          <Separator orientation="vertical" className="h-6 mx-1" />
+
+          <Button size="sm" variant="outline" onClick={handlePresent} disabled={isDisabled || !hasProjects} className="gap-2">
             <Play className="h-4 w-4" />
             Présenter
           </Button>
@@ -278,34 +356,35 @@ export const PortfolioReviewsTab = ({ portfolioId, portfolioName, projects }: Po
           </DropdownMenu>
         </div>
 
-        {/* Contenu de l'onglet - à enrichir plus tard */}
-        {hasProjects ? (
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <ClipboardList className="h-5 w-5" />
-                Revues de projets
-              </CardTitle>
-              <CardDescription>
-                {projects.length} projet{projects.length > 1 ? "s" : ""} dans ce portefeuille
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <p className="text-muted-foreground">
-                Utilisez les boutons ci-dessus pour présenter les revues, visualiser le planning Gantt 
-                ou exporter les données des revues au format Excel ou PowerPoint.
-              </p>
-            </CardContent>
-          </Card>
-        ) : (
-          <Card>
-            <CardContent className="p-6">
-              <p className="text-center text-muted-foreground">
-                Aucun projet dans ce portefeuille. Ajoutez des projets depuis l'onglet "Projets".
-              </p>
-            </CardContent>
-          </Card>
-        )}
+        {/* Liste des revues organisées */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <ClipboardList className="h-5 w-5" />
+              Revues organisées
+            </CardTitle>
+            <CardDescription>
+              {reviews.length} revue{reviews.length !== 1 ? "s" : ""} organisée{reviews.length !== 1 ? "s" : ""} pour ce portefeuille
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {isLoadingReviews ? (
+              <div className="flex items-center justify-center py-8">
+                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+              </div>
+            ) : (
+              <PortfolioReviewList
+                reviews={reviews}
+                portfolioId={portfolioId}
+                projects={projects}
+                onEdit={(review) => setEditingReview(review)}
+                onDelete={deleteReview}
+                onStatusChange={handleStatusChange}
+                isLoading={isUpdating}
+              />
+            )}
+          </CardContent>
+        </Card>
       </div>
 
       {/* Overlay de chargement pendant l'export */}
@@ -313,6 +392,31 @@ export const PortfolioReviewsTab = ({ portfolioId, portfolioName, projects }: Po
 
       {/* Sheet Gantt */}
       <PortfolioGanttSheet isOpen={isGanttOpen} onClose={() => setIsGanttOpen(false)} projectIds={projectIds} />
+
+      {/* Formulaire de création de revue */}
+      <PortfolioReviewForm
+        open={isFormOpen}
+        onClose={() => setIsFormOpen(false)}
+        onSubmit={handleCreateReview}
+        isSubmitting={isCreating}
+      />
+
+      {/* Formulaire d'édition de revue */}
+      <PortfolioReviewForm
+        open={!!editingReview}
+        onClose={() => setEditingReview(null)}
+        onSubmit={handleEditReview}
+        isSubmitting={isUpdating}
+        initialData={
+          editingReview
+            ? {
+                subject: editingReview.subject,
+                review_date: editingReview.review_date,
+                notes: editingReview.notes,
+              }
+            : undefined
+        }
+      />
     </>
   );
 };

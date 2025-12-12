@@ -806,6 +806,85 @@ export type Database = {
           },
         ]
       }
+      portfolio_review_notifications: {
+        Row: {
+          id: string
+          message: string | null
+          portfolio_review_id: string
+          recipient_count: number
+          sent_at: string
+          sent_by: string | null
+        }
+        Insert: {
+          id?: string
+          message?: string | null
+          portfolio_review_id: string
+          recipient_count?: number
+          sent_at?: string
+          sent_by?: string | null
+        }
+        Update: {
+          id?: string
+          message?: string | null
+          portfolio_review_id?: string
+          recipient_count?: number
+          sent_at?: string
+          sent_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "portfolio_review_notifications_portfolio_review_id_fkey"
+            columns: ["portfolio_review_id"]
+            isOneToOne: false
+            referencedRelation: "portfolio_reviews"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      portfolio_reviews: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          notes: string | null
+          portfolio_id: string
+          review_date: string
+          status: string
+          subject: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          notes?: string | null
+          portfolio_id: string
+          review_date: string
+          status?: string
+          subject: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          notes?: string | null
+          portfolio_id?: string
+          review_date?: string
+          status?: string
+          subject?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "portfolio_reviews_portfolio_id_fkey"
+            columns: ["portfolio_id"]
+            isOneToOne: false
+            referencedRelation: "project_portfolios"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           created_at: string | null
