@@ -68,8 +68,9 @@ export interface ProjectFormState {
   setForEntityId: (value: string | undefined) => void;
   templateId: string | undefined;
   setTemplateId: (value: string | undefined) => void;
-  portfolioId: string | undefined;
-  setPortfolioId: (value: string | undefined) => void;
+  // Support multi-portefeuilles
+  portfolioIds: string[];
+  setPortfolioIds: (value: string[]) => void;
 }
 
 export const useProjectFormState = (isOpen: boolean, project?: any) => {
@@ -106,7 +107,7 @@ export const useProjectFormState = (isOpen: boolean, project?: any) => {
   const [forEntityType, setForEntityType] = useState<ForEntityType>(null);
   const [forEntityId, setForEntityId] = useState<string | undefined>(undefined);
   const [templateId, setTemplateId] = useState<string | undefined>(undefined);
-  const [portfolioId, setPortfolioId] = useState<string | undefined>(undefined);
+  const [portfolioIds, setPortfolioIds] = useState<string[]>([]);
 
   const user = useUser();
 
@@ -258,7 +259,7 @@ export const useProjectFormState = (isOpen: boolean, project?: any) => {
         setForEntityType(null);
         setForEntityId(undefined);
         setTemplateId(undefined);
-        setPortfolioId(undefined);
+        setPortfolioIds([]);
 
         if (user?.email) {
           setProjectManager(user.email);
@@ -278,7 +279,8 @@ export const useProjectFormState = (isOpen: boolean, project?: any) => {
           setForEntityType(project.for_entity_type as ForEntityType || null);
           setForEntityId(project.for_entity_id || undefined);
           setTemplateId(project.template_id);
-          setPortfolioId(project.portfolio_id || undefined);
+          // Gérer la compatibilité : si portfolio_id existe, l'ajouter au tableau
+          setPortfolioIds(project.portfolio_id ? [project.portfolio_id] : []);
 
           await loadProjectManagerOrganization(project.project_manager);
 
@@ -360,7 +362,7 @@ export const useProjectFormState = (isOpen: boolean, project?: any) => {
     monitoringLevel, monitoringEntityId, 
     novateur, usager, ouverture, agilite, impact, lifecycleStatus,
     context, stakeholders, governance, objectives, timeline, deliverables,
-    forEntityType, forEntityId, templateId, portfolioId
+    forEntityType, forEntityId, templateId, portfolioIds
   ]);
 
   const resetHasUnsavedChanges = () => {
@@ -431,7 +433,7 @@ export const useProjectFormState = (isOpen: boolean, project?: any) => {
     setForEntityId,
     templateId,
     setTemplateId,
-    portfolioId,
-    setPortfolioId
+    portfolioIds,
+    setPortfolioIds
   };
 };

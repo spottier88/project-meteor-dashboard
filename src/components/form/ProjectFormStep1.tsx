@@ -19,8 +19,9 @@ export interface ProjectFormStep1Props {
   setPriority: (value: string) => void;
   lifecycleStatus: ProjectLifecycleStatus;
   setLifecycleStatus: (value: ProjectLifecycleStatus) => void;
-  portfolioId: string | undefined;
-  setPortfolioId: (value: string | undefined) => void;
+  // Support multi-portefeuilles
+  portfolioIds: string[];
+  setPortfolioIds: (value: string[]) => void;
   isAdmin: boolean;
   isManager: boolean;
   ownerId: string;
@@ -43,8 +44,8 @@ export const ProjectFormStep1 = ({
   setPriority,
   lifecycleStatus,
   setLifecycleStatus,
-  portfolioId,
-  setPortfolioId,
+  portfolioIds,
+  setPortfolioIds,
   isAdmin,
   isManager,
   ownerId,
@@ -69,8 +70,8 @@ export const ProjectFormStep1 = ({
           setPriority={setPriority}
           lifecycleStatus={lifecycleStatus}
           setLifecycleStatus={setLifecycleStatus}
-          portfolioId={portfolioId}
-          setPortfolioId={setPortfolioId}
+          portfolioIds={portfolioIds}
+          setPortfolioIds={setPortfolioIds}
           isAdmin={isAdmin}
           isManager={isManager}
           projectManagers={projectManagers}

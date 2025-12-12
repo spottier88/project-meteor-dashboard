@@ -22,8 +22,9 @@ interface ProjectFormFieldsProps {
   setPriority: (value: string) => void;
   lifecycleStatus: ProjectLifecycleStatus;
   setLifecycleStatus: (value: ProjectLifecycleStatus) => void;
-  portfolioId: string | undefined;
-  setPortfolioId: (value: string | undefined) => void;
+  // Support multi-portefeuilles
+  portfolioIds: string[];
+  setPortfolioIds: (value: string[]) => void;
   monitoringLevel: MonitoringLevel;
   setMonitoringLevel: (value: MonitoringLevel) => void;
   monitoringEntityId: string | null;
@@ -70,8 +71,8 @@ export const ProjectFormFields = ({
   setPriority,
   lifecycleStatus,
   setLifecycleStatus,
-  portfolioId,
-  setPortfolioId,
+  portfolioIds,
+  setPortfolioIds,
   monitoringLevel,
   setMonitoringLevel,
   monitoringEntityId,
@@ -118,8 +119,8 @@ export const ProjectFormFields = ({
         setPriority={setPriority}
         lifecycleStatus={lifecycleStatus}
         setLifecycleStatus={setLifecycleStatus}
-        portfolioId={portfolioId}
-        setPortfolioId={setPortfolioId}
+        portfolioIds={portfolioIds}
+        setPortfolioIds={setPortfolioIds}
         isAdmin={isAdmin}
         isManager={isManager}
         projectManagers={projectManagers}

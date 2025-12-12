@@ -62,10 +62,23 @@ export const AddProjectsModal = ({
   const [lifecycleFilter, setLifecycleFilter] = useState<string>("all");
   const [organizationFilter, setOrganizationFilter] = useState<string>("all");
 
-  // Récupérer les projets disponibles (non associés à un portefeuille)
+  // Récupérer les projets disponibles (non déjà dans ce portefeuille)
   const { data: availableProjects, isLoading } = useQuery({
     queryKey: ["availableProjects", portfolioId],
     queryFn: async () => {
+      // D'abord, récupérer les IDs des projets déjà dans ce portefeuille
+      const { data: existingLinks, error: linksError } = await supabase
+        .from("portfolio_projects")
+        .select("project_id")
+        .eq("portfolio_id", portfolioId);
+
+      if (linksError) throw linksError;
+
+      const excludedIds = [
+        ...(existingLinks || []).map(l => l.project_id),
+        ...excludeProjectIds
+      ];
+
       // Construire la requête de base
       let query = supabase
         .from("projects")
@@ -81,12 +94,11 @@ export const AddProjectsModal = ({
           poles:pole_id(name),
           directions:direction_id(name),
           services:service_id(name)
-        `)
-        .is("portfolio_id", null);
+        `);
 
-      // Appliquer le filtre NOT IN seulement si excludeProjectIds n'est pas vide
-      if (excludeProjectIds && excludeProjectIds.length > 0) {
-        query = query.not("id", "in", `(${excludeProjectIds.join(",")})`);
+      // Appliquer le filtre NOT IN seulement si excludedIds n'est pas vide
+      if (excludedIds.length > 0) {
+        query = query.not("id", "in", `(${excludedIds.join(",")})`);
       }
 
       const { data, error } = await query;
