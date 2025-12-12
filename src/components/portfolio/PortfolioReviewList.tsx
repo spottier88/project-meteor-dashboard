@@ -217,7 +217,11 @@ export const PortfolioReviewList = ({
       {/* Dialog de confirmation de suppression */}
       <AlertDialog
         open={!!deleteConfirmId}
-        onOpenChange={() => setDeleteConfirmId(null)}
+        onOpenChange={(open) => {
+          if (!open) {
+            setDeleteConfirmId(null);
+          }
+        }}
       >
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -228,7 +232,7 @@ export const PortfolioReviewList = ({
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Annuler</AlertDialogCancel>
+            <AlertDialogCancel autoFocus>Annuler</AlertDialogCancel>
             <AlertDialogAction
               onClick={() => {
                 if (deleteConfirmId) {
@@ -245,14 +249,16 @@ export const PortfolioReviewList = ({
       </AlertDialog>
 
       {/* Dialog d'envoi de notifications */}
-      <PortfolioReviewNotificationDialog
-        open={!!notificationReview}
-        onClose={() => setNotificationReview(null)}
-        portfolioId={portfolioId}
-        portfolioName={portfolioName}
-        review={notificationReview}
-        projects={projects}
-      />
+      {notificationReview && (
+        <PortfolioReviewNotificationDialog
+          open={!!notificationReview}
+          onClose={() => setNotificationReview(null)}
+          portfolioId={portfolioId}
+          portfolioName={portfolioName}
+          review={notificationReview}
+          projects={projects}
+        />
+      )}
     </>
   );
 };
