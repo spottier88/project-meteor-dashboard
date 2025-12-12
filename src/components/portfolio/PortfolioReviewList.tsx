@@ -8,7 +8,6 @@ import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import {
   Calendar,
-  MoreHorizontal,
   Pencil,
   Trash2,
   Send,
@@ -21,12 +20,10 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -138,75 +135,105 @@ export const PortfolioReviewList = ({
                     )}
                   </div>
 
-                  {/* Actions */}
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon" disabled={isLoading}>
-                        <MoreHorizontal className="h-4 w-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="bg-popover">
-                      {/* Envoi de notifications */}
-                      <DropdownMenuItem
-                        onClick={() => setNotificationReview(review)}
-                        className="gap-2 cursor-pointer"
-                      >
-                        <Send className="h-4 w-4" />
-                        Notifier les chefs de projet
-                      </DropdownMenuItem>
-
-                      <DropdownMenuSeparator />
-
-                      {/* Changement de statut */}
-                      {review.status !== "in_progress" && (
-                        <DropdownMenuItem
-                          onClick={() => onStatusChange(review.id, "in_progress")}
-                          className="gap-2 cursor-pointer"
+                  {/* Barre d'outils avec actions directes */}
+                  <div className="flex items-center gap-1">
+                    {/* Notifier */}
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => setNotificationReview(review)}
+                          disabled={isLoading}
                         >
-                          <PlayCircle className="h-4 w-4" />
-                          Marquer en cours
-                        </DropdownMenuItem>
-                      )}
-                      {review.status !== "completed" && (
-                        <DropdownMenuItem
-                          onClick={() => onStatusChange(review.id, "completed")}
-                          className="gap-2 cursor-pointer"
+                          <Send className="h-4 w-4" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>Notifier les chefs de projet</TooltipContent>
+                    </Tooltip>
+
+                    {/* Statut: En cours */}
+                    {review.status !== "in_progress" && (
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => onStatusChange(review.id, "in_progress")}
+                            disabled={isLoading}
+                          >
+                            <PlayCircle className="h-4 w-4 text-blue-500" />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>Marquer en cours</TooltipContent>
+                      </Tooltip>
+                    )}
+
+                    {/* Statut: Terminée */}
+                    {review.status !== "completed" && (
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => onStatusChange(review.id, "completed")}
+                            disabled={isLoading}
+                          >
+                            <CheckCircle2 className="h-4 w-4 text-green-500" />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>Marquer terminée</TooltipContent>
+                      </Tooltip>
+                    )}
+
+                    {/* Statut: Annulée */}
+                    {review.status !== "cancelled" && (
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => onStatusChange(review.id, "cancelled")}
+                            disabled={isLoading}
+                          >
+                            <XCircle className="h-4 w-4 text-orange-500" />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>Annuler la revue</TooltipContent>
+                      </Tooltip>
+                    )}
+
+                    {/* Modifier */}
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => onEdit(review)}
+                          disabled={isLoading}
                         >
-                          <CheckCircle2 className="h-4 w-4" />
-                          Marquer terminée
-                        </DropdownMenuItem>
-                      )}
-                      {review.status !== "cancelled" && (
-                        <DropdownMenuItem
-                          onClick={() => onStatusChange(review.id, "cancelled")}
-                          className="gap-2 cursor-pointer"
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>Modifier</TooltipContent>
+                    </Tooltip>
+
+                    {/* Supprimer */}
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => setDeleteConfirmId(review.id)}
+                          disabled={isLoading}
+                          className="text-destructive hover:text-destructive"
                         >
-                          <XCircle className="h-4 w-4" />
-                          Annuler
-                        </DropdownMenuItem>
-                      )}
-
-                      <DropdownMenuSeparator />
-
-                      {/* Edition */}
-                      <DropdownMenuItem
-                        onClick={() => onEdit(review)}
-                        className="gap-2 cursor-pointer"
-                      >
-                        <Pencil className="h-4 w-4" />
-                        Modifier
-                      </DropdownMenuItem>
-
-                      {/* Suppression */}
-                      <DropdownMenuItem
-                        onClick={() => setDeleteConfirmId(review.id)}
-                        className="gap-2 cursor-pointer text-destructive"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                        Supprimer
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>Supprimer</TooltipContent>
+                    </Tooltip>
+                  </div>
                 </div>
               </CardContent>
             </Card>
