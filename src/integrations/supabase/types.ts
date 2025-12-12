@@ -808,6 +808,7 @@ export type Database = {
       }
       portfolio_review_notifications: {
         Row: {
+          email_template_id: string | null
           id: string
           message: string | null
           portfolio_review_id: string
@@ -816,6 +817,7 @@ export type Database = {
           sent_by: string | null
         }
         Insert: {
+          email_template_id?: string | null
           id?: string
           message?: string | null
           portfolio_review_id: string
@@ -824,6 +826,7 @@ export type Database = {
           sent_by?: string | null
         }
         Update: {
+          email_template_id?: string | null
           id?: string
           message?: string | null
           portfolio_review_id?: string
@@ -832,6 +835,13 @@ export type Database = {
           sent_by?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "portfolio_review_notifications_email_template_id_fkey"
+            columns: ["email_template_id"]
+            isOneToOne: false
+            referencedRelation: "email_templates"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "portfolio_review_notifications_portfolio_review_id_fkey"
             columns: ["portfolio_review_id"]

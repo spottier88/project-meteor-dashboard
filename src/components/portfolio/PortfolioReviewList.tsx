@@ -45,6 +45,8 @@ interface PortfolioReviewListProps {
   reviews: PortfolioReview[];
   /** ID du portefeuille */
   portfolioId: string;
+  /** Nom du portefeuille */
+  portfolioName: string;
   /** Liste des projets du portefeuille */
   projects: { id: string; title: string; project_manager_id?: string | null }[];
   /** Callback d'édition */
@@ -76,6 +78,7 @@ const statusConfig: Record<
 export const PortfolioReviewList = ({
   reviews,
   portfolioId,
+  portfolioName,
   projects,
   onEdit,
   onDelete,
@@ -83,7 +86,7 @@ export const PortfolioReviewList = ({
   isLoading = false,
 }: PortfolioReviewListProps) => {
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
-  const [notificationReviewId, setNotificationReviewId] = useState<string | null>(null);
+  const [notificationReview, setNotificationReview] = useState<PortfolioReview | null>(null);
 
   if (reviews.length === 0) {
     return (
@@ -145,7 +148,7 @@ export const PortfolioReviewList = ({
                     <DropdownMenuContent align="end" className="bg-popover">
                       {/* Envoi de notifications */}
                       <DropdownMenuItem
-                        onClick={() => setNotificationReviewId(review.id)}
+                        onClick={() => setNotificationReview(review)}
                         className="gap-2 cursor-pointer"
                       >
                         <Send className="h-4 w-4" />
@@ -243,10 +246,11 @@ export const PortfolioReviewList = ({
 
       {/* Dialog d'envoi de notifications */}
       <PortfolioReviewNotificationDialog
-        open={!!notificationReviewId}
-        onClose={() => setNotificationReviewId(null)}
+        open={!!notificationReview}
+        onClose={() => setNotificationReview(null)}
         portfolioId={portfolioId}
-        reviewId={notificationReviewId || ""}
+        portfolioName={portfolioName}
+        review={notificationReview}
         projects={projects}
       />
     </>
