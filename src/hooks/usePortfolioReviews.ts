@@ -281,7 +281,7 @@ export const useSendReviewNotifications = (portfolioId: string) => {
         };
       }) || [];
 
-      // Insérer dans la file de notifications
+      // Insérer dans la file de notifications (pour traçabilité)
       const { error: insertError } = await supabase
         .from("email_notification_queue")
         .insert(notifications);
@@ -300,6 +300,14 @@ export const useSendReviewNotifications = (portfolioId: string) => {
         });
 
       if (logError) throw logError;
+
+      // Appeler directement la fonction Edge pour envoi immédiat
+      const { error: invokeError } = await supabase.functions.invoke('send-portfolio-review-email');
+
+      if (invokeError) {
+        console.warn("Erreur lors de l'envoi immédiat des emails de revue:", invokeError);
+        // L'email reste dans la queue pour traitement ultérieur si nécessaire
+      }
 
       return { recipientCount: projectManagerIds.length };
     },
