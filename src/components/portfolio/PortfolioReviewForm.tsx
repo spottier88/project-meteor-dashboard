@@ -3,7 +3,7 @@
  * @description Formulaire de création/modification d'une revue de portefeuille
  */
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { CalendarIcon } from "lucide-react";
@@ -54,13 +54,20 @@ export const PortfolioReviewForm = ({
   isSubmitting = false,
   initialData,
 }: PortfolioReviewFormProps) => {
-  const [subject, setSubject] = useState(initialData?.subject || "");
-  const [date, setDate] = useState<Date | undefined>(
-    initialData?.review_date ? new Date(initialData.review_date) : undefined
-  );
-  const [notes, setNotes] = useState(initialData?.notes || "");
+  const [subject, setSubject] = useState("");
+  const [date, setDate] = useState<Date | undefined>(undefined);
+  const [notes, setNotes] = useState("");
 
   const isEditing = !!initialData;
+
+  // Synchroniser les états quand initialData change ou quand le dialog s'ouvre
+  useEffect(() => {
+    if (open) {
+      setSubject(initialData?.subject || "");
+      setDate(initialData?.review_date ? new Date(initialData.review_date) : undefined);
+      setNotes(initialData?.notes || "");
+    }
+  }, [open, initialData]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
