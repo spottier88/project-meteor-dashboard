@@ -1,4 +1,3 @@
-
 import { Card, CardContent } from "@/components/ui/card";
 import { TaskSummary } from "./TaskSummary";
 import { ProjectCardHeader } from "./project/ProjectCardHeader";
@@ -10,6 +9,7 @@ import { useProjectPermissions } from "@/hooks/useProjectPermissions";
 import { cn } from "@/lib/utils";
 import { useProjectNavigation } from "@/hooks/useProjectNavigation";
 import { ProjectLinkBadge } from "./project/ProjectLinkBadge";
+import { ProjectPortfoliosBadges } from "./project/ProjectPortfoliosBadges";
 
 interface ProjectCardProps {
   title: string;
@@ -169,6 +169,8 @@ export const ProjectCard = ({
                pole_name ? `Pôle: ${pole_name}` : ""}
             </p>
           )}
+          {/* Badges des portefeuilles associés */}
+          <ProjectPortfoliosBadges projectId={id} compact maxVisible={2} />
           <ProjectMetrics
             progress={progressStatus || null}
             completion={completion || 0}

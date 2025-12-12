@@ -1,4 +1,3 @@
-
 import { ProjectStatus, ProgressStatus } from "@/types/project";
 import { StatusIcon } from "./StatusIcon";
 import { ProjectMetrics } from "./ProjectMetrics";
@@ -10,6 +9,7 @@ import { RiskList } from "@/components/RiskList";
 import { TaskList } from "@/components/TaskList";
 import { InnovationRadarChart } from "@/components/innovation/InnovationRadarChart";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ProjectPortfoliosBadges } from "./ProjectPortfoliosBadges";
 
 interface ProjectSummaryContentProps {
   project: any;
@@ -88,6 +88,8 @@ export const ProjectSummaryContent = ({
               />
             </div>
             <p className="text-gray-600">{project.description}</p>
+            {/* Badges des portefeuilles associés */}
+            <ProjectPortfoliosBadges projectId={projectId} />
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-4">
