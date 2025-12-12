@@ -235,11 +235,21 @@ export const useSendReviewNotifications = (portfolioId: string) => {
 
       if (managersError) throw managersError;
 
-      // Récupérer les projets par chef de projet
+      // Récupérer les projets du portefeuille via la table de liaison portfolio_projects
+      const { data: portfolioProjects, error: portfolioProjectsError } = await supabase
+        .from("portfolio_projects")
+        .select("project_id")
+        .eq("portfolio_id", portfolioId);
+
+      if (portfolioProjectsError) throw portfolioProjectsError;
+
+      const portfolioProjectIds = portfolioProjects?.map(pp => pp.project_id) || [];
+
+      // Récupérer les détails des projets avec leurs chefs de projet
       const { data: projects, error: projectsError } = await supabase
         .from("projects")
         .select("id, title, project_manager_id")
-        .eq("portfolio_id", portfolioId)
+        .in("id", portfolioProjectIds)
         .in("project_manager_id", projectManagerIds);
 
       if (projectsError) throw projectsError;

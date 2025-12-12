@@ -273,9 +273,28 @@ export const PortfolioReviewNotificationDialog = ({
     return manager.email;
   };
 
+  /**
+   * Gestion de la fermeture du dialog principal
+   * Permet de s'assurer que le focus est correctement restitué
+   */
+  const handleMainDialogClose = (isOpen: boolean) => {
+    if (!isOpen) {
+      onClose();
+    }
+  };
+
+  /**
+   * Gestion de la fermeture du dialog de prévisualisation
+   * Retourne au dialog principal sans perdre le focus
+   */
+  const handlePreviewClose = () => {
+    setShowPreview(false);
+  };
+
   return (
     <>
-      <Dialog open={open && !showPreview} onOpenChange={onClose}>
+      {/* Dialog principal - visible seulement si open ET pas en prévisualisation */}
+      <Dialog open={open && !showPreview} onOpenChange={handleMainDialogClose}>
         <DialogContent className="sm:max-w-[550px]">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
@@ -443,9 +462,12 @@ export const PortfolioReviewNotificationDialog = ({
         </DialogContent>
       </Dialog>
 
-      {/* Dialog de prévisualisation */}
-      <Dialog open={showPreview} onOpenChange={setShowPreview}>
-        <DialogContent className="sm:max-w-[700px] max-h-[80vh]">
+      {/* Dialog de prévisualisation - modal séparé avec gestion du focus */}
+      <Dialog open={showPreview} onOpenChange={handlePreviewClose} modal>
+        <DialogContent 
+          className="sm:max-w-[700px] max-h-[80vh]"
+          onPointerDownOutside={(e) => e.preventDefault()}
+        >
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Eye className="h-5 w-5" />
@@ -480,7 +502,7 @@ export const PortfolioReviewNotificationDialog = ({
           </div>
 
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowPreview(false)}>
+            <Button variant="outline" onClick={handlePreviewClose} autoFocus>
               Retour
             </Button>
           </DialogFooter>
