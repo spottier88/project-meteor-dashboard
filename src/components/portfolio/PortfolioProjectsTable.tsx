@@ -119,7 +119,7 @@ export const PortfolioProjectsTable = ({
 
   const handleRemoveProject = async () => {
     if (projectToRemove) {
-      await removeProject.mutateAsync({ projectId: projectToRemove });
+      await removeProject.mutateAsync({ projectId: projectToRemove, portfolioId });
       setProjectToRemove(null);
     }
   };

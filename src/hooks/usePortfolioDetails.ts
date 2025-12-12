@@ -49,24 +49,42 @@ export const usePortfolioDetails = (portfolioId: string) => {
 
       if (portfolioError) throw portfolioError;
 
-      // Récupérer les projets du portefeuille avec leurs dernières revues
-      const { data: projects, error: projectsError } = await supabase
-        .from("projects")
+      // Récupérer les projets du portefeuille via la table de liaison portfolio_projects
+      const { data: portfolioProjects, error: portfolioProjectsError } = await supabase
+        .from("portfolio_projects")
         .select(`
-          id,
-          title,
-          project_manager,
-          status,
-          progress,
-          start_date,
-          end_date,
-          lifecycle_status,
-          priority,
-          created_at
+          project:projects(
+            id,
+            title,
+            project_manager,
+            status,
+            progress,
+            start_date,
+            end_date,
+            lifecycle_status,
+            priority,
+            created_at
+          )
         `)
         .eq("portfolio_id", portfolioId);
 
-      if (projectsError) throw projectsError;
+      if (portfolioProjectsError) throw portfolioProjectsError;
+
+      // Extraire les projets de la structure imbriquée avec les bons types
+      const projects = (portfolioProjects || [])
+        .map(pp => pp.project)
+        .filter(Boolean) as Array<{
+          id: string;
+          title: string;
+          project_manager: string | null;
+          status: "sunny" | "cloudy" | "stormy" | null;
+          progress: "better" | "stable" | "worse" | null;
+          start_date: string | null;
+          end_date: string | null;
+          lifecycle_status: "study" | "validated" | "in_progress" | "completed" | "suspended" | "abandoned";
+          priority: string | null;
+          created_at: string | null;
+        }>;
 
       // Récupérer les données de completion depuis latest_reviews pour chaque projet
       // Utilise la pagination pour éviter les erreurs 502 avec de nombreux projets
@@ -147,11 +165,13 @@ export const useRemoveProjectFromPortfolio = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ projectId }: { projectId: string }) => {
+    mutationFn: async ({ projectId, portfolioId }: { projectId: string; portfolioId: string }) => {
+      // Supprimer la liaison dans portfolio_projects
       const { error } = await supabase
-        .from("projects")
-        .update({ portfolio_id: null })
-        .eq("id", projectId);
+        .from("portfolio_projects")
+        .delete()
+        .eq("project_id", projectId)
+        .eq("portfolio_id", portfolioId);
 
       if (error) throw error;
     },
@@ -160,6 +180,7 @@ export const useRemoveProjectFromPortfolio = () => {
       queryClient.invalidateQueries({ queryKey: ["portfolios"] });
       queryClient.invalidateQueries({ queryKey: ["portfolio"] });
       queryClient.invalidateQueries({ queryKey: ["projects"] });
+      queryClient.invalidateQueries({ queryKey: ["project-portfolios", projectId] });
       
       toast({
         title: "Succès",
@@ -183,17 +204,24 @@ export const useAddProjectsToPortfolio = () => {
 
   return useMutation({
     mutationFn: async ({ portfolioId, projectIds }: { portfolioId: string; projectIds: string[] }) => {
+      // Insérer les liaisons dans portfolio_projects
       const { error } = await supabase
-        .from("projects")
-        .update({ portfolio_id: portfolioId })
-        .in("id", projectIds);
+        .from("portfolio_projects")
+        .insert(projectIds.map(projectId => ({
+          portfolio_id: portfolioId,
+          project_id: projectId
+        })));
 
       if (error) throw error;
     },
-    onSuccess: (_, { projectIds }) => {
+    onSuccess: (_, { projectIds, portfolioId }) => {
       queryClient.invalidateQueries({ queryKey: ["portfolios"] });
       queryClient.invalidateQueries({ queryKey: ["portfolio"] });
       queryClient.invalidateQueries({ queryKey: ["projects"] });
+      // Invalider les caches de portefeuilles pour chaque projet
+      projectIds.forEach(projectId => {
+        queryClient.invalidateQueries({ queryKey: ["project-portfolios", projectId] });
+      });
       
       toast({
         title: "Succès",

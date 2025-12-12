@@ -806,6 +806,52 @@ export type Database = {
           },
         ]
       }
+      portfolio_projects: {
+        Row: {
+          added_at: string | null
+          added_by: string | null
+          id: string
+          portfolio_id: string
+          project_id: string
+        }
+        Insert: {
+          added_at?: string | null
+          added_by?: string | null
+          id?: string
+          portfolio_id: string
+          project_id: string
+        }
+        Update: {
+          added_at?: string | null
+          added_by?: string | null
+          id?: string
+          portfolio_id?: string
+          project_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "portfolio_projects_added_by_fkey"
+            columns: ["added_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "portfolio_projects_portfolio_id_fkey"
+            columns: ["portfolio_id"]
+            isOneToOne: false
+            referencedRelation: "project_portfolios"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "portfolio_projects_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       portfolio_review_notifications: {
         Row: {
           email_template_id: string | null
