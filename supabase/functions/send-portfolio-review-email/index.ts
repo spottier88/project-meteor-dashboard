@@ -2,18 +2,27 @@
  * @file send-portfolio-review-email/index.ts
  * @description Edge function pour envoyer les emails de notification de revue de portefeuille.
  * Récupère les notifications en attente, charge le modèle d'email, fusionne les variables,
- * et envoie les emails via Resend.
+ * et envoie les emails via le microservice smtp-api.
+ * 
+ * Configuration :
+ * - EDGE_SMTP_API_URL : URL de l'API d'envoi (ex: http://smtp-api:3000/send)
+ * - EDGE_SMTP_API_KEY : Clé API pour l'authentification
+ * - EDGE_SMTP_FROM : Adresse expéditeur
  */
 
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { Resend } from "npm:resend@2.0.0";
 
 // Configuration CORS
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
+
+// Configuration API d'envoi d'email via variables d'environnement
+const SMTP_API_URL = Deno.env.get("EDGE_SMTP_API_URL");
+const SMTP_API_KEY = Deno.env.get("EDGE_SMTP_API_KEY");
+const SMTP_FROM = Deno.env.get("EDGE_SMTP_FROM");
 
 // Interface pour les données d'événement de notification
 interface NotificationEventData {
@@ -37,6 +46,48 @@ interface EmailTemplate {
   subject: string;
   body_html: string;
   body_text: string | null;
+}
+
+// Interface pour la réponse de l'API smtp-api
+interface SmtpApiResponse {
+  status?: string;
+  error?: string;
+}
+
+/**
+ * Envoie un email via l'API HTTP smtp-api
+ */
+async function sendEmailViaApi(params: {
+  from: string;
+  to: string;
+  subject: string;
+  html: string;
+  text?: string;
+}): Promise<void> {
+  console.log(`[send-portfolio-review-email] Appel API smtp-api pour ${params.to}...`);
+  
+  const response = await fetch(SMTP_API_URL!, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': SMTP_API_KEY!,
+    },
+    body: JSON.stringify({
+      from: params.from,
+      to: params.to,
+      subject: params.subject,
+      html: params.html,
+      text: params.text || '',
+    }),
+  });
+
+  const result: SmtpApiResponse = await response.json();
+
+  if (!response.ok || result.error) {
+    throw new Error(result.error || `Erreur API smtp-api: ${response.status}`);
+  }
+
+  console.log(`[send-portfolio-review-email] Email envoyé via API à ${params.to}`);
 }
 
 /**
@@ -85,17 +136,23 @@ const handler = async (req: Request): Promise<Response> => {
   console.log("[send-portfolio-review-email] Démarrage du traitement des notifications");
 
   try {
-    // Vérification de la clé Resend
-    const resendApiKey = Deno.env.get("RESEND_API_KEY");
-    if (!resendApiKey) {
-      console.error("[send-portfolio-review-email] RESEND_API_KEY non configurée");
+    // Vérifier la configuration minimale
+    if (!SMTP_API_URL || !SMTP_API_KEY || !SMTP_FROM) {
+      console.error('[send-portfolio-review-email] Configuration API manquante');
       return new Response(
-        JSON.stringify({ error: "Configuration email manquante" }),
-        { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } }
+        JSON.stringify({ 
+          error: 'Configuration API manquante',
+          details: 'Veuillez configurer EDGE_SMTP_API_URL, EDGE_SMTP_API_KEY et EDGE_SMTP_FROM dans les secrets Supabase'
+        }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    const resend = new Resend(resendApiKey);
+    // Log de la configuration utilisée
+    console.log('[send-portfolio-review-email] Configuration:', {
+      apiUrl: SMTP_API_URL,
+      from: SMTP_FROM,
+    });
 
     // Création du client Supabase
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
@@ -198,20 +255,14 @@ const handler = async (req: Request): Promise<Response> => {
           emailText = `Bonjour ${eventData.manager_name},\n\nUne revue de projets est organisée pour le portefeuille "${eventData.portfolio_name}".\n\nObjet : ${eventData.review_subject}\nDate : ${eventData.review_date}\n\n${eventData.message ? `Message : ${eventData.message}\n\n` : ""}Merci de mettre à jour l'état d'avancement de vos projets.`;
         }
 
-        // Envoyer l'email via Resend
-        const { error: sendError } = await resend.emails.send({
-          from: Deno.env.get("EMAIL_FROM") || "Gestion de Projets <onboarding@resend.dev>",
-          to: [eventData.manager_email],
+        // Envoyer l'email via le microservice smtp-api
+        await sendEmailViaApi({
+          from: SMTP_FROM!,
+          to: eventData.manager_email,
           subject: emailSubject,
           html: emailHtml,
           text: emailText,
         });
-
-        if (sendError) {
-          console.error(`[send-portfolio-review-email] Erreur envoi email à ${eventData.manager_email}:`, sendError);
-          errorCount++;
-          continue;
-        }
 
         // Marquer comme traité
         const { error: updateError } = await supabase
