@@ -22,6 +22,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import {
   Tooltip,
   TooltipContent,
+  TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import {
@@ -136,7 +137,8 @@ export const PortfolioReviewList = ({
                   </div>
 
                   {/* Barre d'outils avec actions directes */}
-                  <div className="flex items-center gap-1">
+                  <TooltipProvider>
+                    <div className="flex items-center gap-1">
                     {/* Notifier */}
                     <Tooltip>
                       <TooltipTrigger asChild>
@@ -233,7 +235,8 @@ export const PortfolioReviewList = ({
                       </TooltipTrigger>
                       <TooltipContent>Supprimer</TooltipContent>
                     </Tooltip>
-                  </div>
+                    </div>
+                  </TooltipProvider>
                 </div>
               </CardContent>
             </Card>
