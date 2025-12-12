@@ -29,16 +29,23 @@ export const usePortfolios = () => {
         {
           event: '*',
           schema: 'public',
+          table: 'portfolio_projects'
+        },
+        () => {
+          // Invalider quand des projets sont ajoutés/retirés d'un portefeuille
+          queryClient.invalidateQueries({ queryKey: ["portfolios"] });
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
           table: 'projects'
         },
-        (payload) => {
-          // Si un projet change de portefeuille, invalider les données
-          const newRecord = payload.new as any;
-          const oldRecord = payload.old as any;
-          
-          if (newRecord?.portfolio_id || oldRecord?.portfolio_id) {
-            queryClient.invalidateQueries({ queryKey: ["portfolios"] });
-          }
+        () => {
+          // Invalider quand un projet change (lifecycle_status, etc.)
+          queryClient.invalidateQueries({ queryKey: ["portfolios"] });
         }
       )
       .subscribe();
@@ -59,26 +66,31 @@ export const usePortfolios = () => {
 
       if (error) throw error;
 
-      // Calculer les statistiques pour chaque portefeuille de manière optimisée
+      // Calculer les statistiques pour chaque portefeuille via portfolio_projects
       const portfoliosWithStats: PortfolioWithStats[] = await Promise.all(
         portfolios.map(async (portfolio) => {
-          // Récupérer tous les projets du portefeuille
-          const { data: projectStats, error: statsError } = await supabase
-            .from("projects")
-            .select("id, lifecycle_status")
+          // Récupérer les projets via la table de liaison portfolio_projects
+          const { data: portfolioProjects, error: statsError } = await supabase
+            .from("portfolio_projects")
+            .select("project:projects(id, lifecycle_status)")
             .eq("portfolio_id", portfolio.id);
 
           if (statsError) {
             console.error("Erreur lors de la récupération des statistiques:", statsError);
           }
 
-          const totalProjects = projectStats?.length || 0;
-          const completedProjects = projectStats?.filter(p => p.lifecycle_status === 'completed').length || 0;
+          // Extraire les projets de la réponse
+          const projects = portfolioProjects
+            ?.map(pp => pp.project)
+            .filter((p): p is NonNullable<typeof p> => p !== null) || [];
+
+          const totalProjects = projects.length;
+          const completedProjects = projects.filter(p => p.lifecycle_status === 'completed').length;
 
           // Récupérer les complétions de TOUS les projets du portefeuille
           let averageCompletion = 0;
           if (totalProjects > 0) {
-            const projectIds = projectStats?.map(p => p.id) || [];
+            const projectIds = projects.map(p => p.id);
             const { data: reviews, error: reviewsError } = await supabase
               .from("latest_reviews")
               .select("project_id, completion")
@@ -89,13 +101,11 @@ export const usePortfolios = () => {
               const completionMap = new Map(reviews.map(r => [r.project_id, r.completion || 0]));
               
               // Calculer la moyenne en incluant TOUS les projets
-              // Les projets sans revues ont une completion de 0
               let totalCompletion = 0;
               projectIds.forEach(projectId => {
                 totalCompletion += completionMap.get(projectId) || 0;
               });
               
-              // Utiliser le nombre total de projets comme dénominateur
               averageCompletion = Math.round(totalCompletion / totalProjects);
             }
           }
@@ -111,8 +121,10 @@ export const usePortfolios = () => {
 
       return portfoliosWithStats;
     },
-    staleTime: 60000, // 1 minute - réduire pour plus de réactivité
+    staleTime: 30000, // 30 secondes pour plus de réactivité
     gcTime: 300000, // 5 minutes
+    refetchOnWindowFocus: true, // Refetch quand l'utilisateur revient sur l'onglet
+    refetchOnMount: 'always', // Toujours refetch au montage du composant
   });
 };
 
