@@ -223,7 +223,12 @@ export const PortfolioReviewList = ({
           }
         }}
       >
-        <AlertDialogContent>
+        <AlertDialogContent
+          onCloseAutoFocus={(event) => {
+            event.preventDefault();
+            document.body.focus();
+          }}
+        >
           <AlertDialogHeader>
             <AlertDialogTitle>Supprimer cette revue ?</AlertDialogTitle>
             <AlertDialogDescription>
