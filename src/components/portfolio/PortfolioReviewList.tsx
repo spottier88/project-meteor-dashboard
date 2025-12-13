@@ -1,6 +1,6 @@
 /**
  * @file PortfolioReviewList.tsx
- * @description Liste des revues de portefeuille avec actions
+ * @description Liste des revues de portefeuille avec actions conditionnées par les permissions
  */
 
 import { useState } from "react";
@@ -55,6 +55,8 @@ interface PortfolioReviewListProps {
   onStatusChange: (reviewId: string, status: PortfolioReview["status"]) => void;
   /** Indique si une action est en cours */
   isLoading?: boolean;
+  /** Peut gérer les revues (owner ou manager) */
+  canManage?: boolean;
 }
 
 /**
@@ -82,6 +84,7 @@ export const PortfolioReviewList = ({
   onDelete,
   onStatusChange,
   isLoading = false,
+  canManage = false,
 }: PortfolioReviewListProps) => {
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
   const [notificationReview, setNotificationReview] = useState<PortfolioReview | null>(null);
@@ -136,107 +139,109 @@ export const PortfolioReviewList = ({
                     )}
                   </div>
 
-                  {/* Barre d'outils avec actions directes */}
-                  <TooltipProvider>
-                    <div className="flex items-center gap-1">
-                    {/* Notifier */}
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => setNotificationReview(review)}
-                          disabled={isLoading}
-                        >
-                          <Send className="h-4 w-4" />
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent>Notifier les chefs de projet</TooltipContent>
-                    </Tooltip>
+                  {/* Barre d'outils avec actions - visible uniquement pour les gestionnaires */}
+                  {canManage && (
+                    <TooltipProvider>
+                      <div className="flex items-center gap-1">
+                        {/* Notifier */}
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => setNotificationReview(review)}
+                              disabled={isLoading}
+                            >
+                              <Send className="h-4 w-4" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>Notifier les chefs de projet</TooltipContent>
+                        </Tooltip>
 
-                    {/* Statut: En cours */}
-                    {review.status !== "in_progress" && (
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => onStatusChange(review.id, "in_progress")}
-                            disabled={isLoading}
-                          >
-                            <PlayCircle className="h-4 w-4 text-blue-500" />
-                          </Button>
-                        </TooltipTrigger>
-                        <TooltipContent>Marquer en cours</TooltipContent>
-                      </Tooltip>
-                    )}
+                        {/* Statut: En cours */}
+                        {review.status !== "in_progress" && (
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => onStatusChange(review.id, "in_progress")}
+                                disabled={isLoading}
+                              >
+                                <PlayCircle className="h-4 w-4 text-blue-500" />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>Marquer en cours</TooltipContent>
+                          </Tooltip>
+                        )}
 
-                    {/* Statut: Terminée */}
-                    {review.status !== "completed" && (
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => onStatusChange(review.id, "completed")}
-                            disabled={isLoading}
-                          >
-                            <CheckCircle2 className="h-4 w-4 text-green-500" />
-                          </Button>
-                        </TooltipTrigger>
-                        <TooltipContent>Marquer terminée</TooltipContent>
-                      </Tooltip>
-                    )}
+                        {/* Statut: Terminée */}
+                        {review.status !== "completed" && (
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => onStatusChange(review.id, "completed")}
+                                disabled={isLoading}
+                              >
+                                <CheckCircle2 className="h-4 w-4 text-green-500" />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>Marquer terminée</TooltipContent>
+                          </Tooltip>
+                        )}
 
-                    {/* Statut: Annulée */}
-                    {review.status !== "cancelled" && (
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => onStatusChange(review.id, "cancelled")}
-                            disabled={isLoading}
-                          >
-                            <XCircle className="h-4 w-4 text-orange-500" />
-                          </Button>
-                        </TooltipTrigger>
-                        <TooltipContent>Annuler la revue</TooltipContent>
-                      </Tooltip>
-                    )}
+                        {/* Statut: Annulée */}
+                        {review.status !== "cancelled" && (
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => onStatusChange(review.id, "cancelled")}
+                                disabled={isLoading}
+                              >
+                                <XCircle className="h-4 w-4 text-orange-500" />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>Annuler la revue</TooltipContent>
+                          </Tooltip>
+                        )}
 
-                    {/* Modifier */}
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => onEdit(review)}
-                          disabled={isLoading}
-                        >
-                          <Pencil className="h-4 w-4" />
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent>Modifier</TooltipContent>
-                    </Tooltip>
+                        {/* Modifier */}
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => onEdit(review)}
+                              disabled={isLoading}
+                            >
+                              <Pencil className="h-4 w-4" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>Modifier</TooltipContent>
+                        </Tooltip>
 
-                    {/* Supprimer */}
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => setDeleteConfirmId(review.id)}
-                          disabled={isLoading}
-                          className="text-destructive hover:text-destructive"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent>Supprimer</TooltipContent>
-                    </Tooltip>
-                    </div>
-                  </TooltipProvider>
+                        {/* Supprimer */}
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => setDeleteConfirmId(review.id)}
+                              disabled={isLoading}
+                              className="text-destructive hover:text-destructive"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>Supprimer</TooltipContent>
+                        </Tooltip>
+                      </div>
+                    </TooltipProvider>
+                  )}
                 </div>
               </CardContent>
             </Card>

@@ -1,3 +1,9 @@
+/**
+ * @file PortfolioDetails.tsx
+ * @description Page de détail d'un portefeuille avec permissions conditionnelles
+ * Les actions sont affichées en fonction du rôle de l'utilisateur sur le portefeuille
+ */
+
 import { useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -5,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ArrowLeft, Calendar, Euro, Users, TrendingUp, Settings, ClipboardList } from "lucide-react";
 import { usePortfolioDetails } from "@/hooks/usePortfolioDetails";
-import { usePortfolioPermissions } from "@/hooks/usePortfolioPermissions";
+import { usePortfolioRole } from "@/hooks/usePortfolioRole";
 import { PortfolioCharts } from "@/components/portfolio/PortfolioCharts";
 import { PortfolioProjectsTable } from "@/components/portfolio/PortfolioProjectsTable";
 import { PortfolioManagersTable } from "@/components/portfolio/PortfolioManagersTable";
@@ -17,12 +23,12 @@ import { fr } from "date-fns/locale";
 
 const PortfolioDetails = () => {
   const { id } = useParams<{ id: string }>();
-  const { canManagePortfolios } = usePortfolioPermissions();
+  const { canManage, canEdit, isOwner, isLoading: isLoadingRole } = usePortfolioRole(id || "");
   const [isAddProjectsModalOpen, setIsAddProjectsModalOpen] = useState(false);
 
   const { data: portfolio, isLoading, error } = usePortfolioDetails(id!);
 
-  if (isLoading) {
+  if (isLoading || isLoadingRole) {
     return (
       <div className="container mx-auto py-8">
         <div className="flex justify-center items-center h-48">
@@ -95,8 +101,8 @@ const PortfolioDetails = () => {
               <p className="text-muted-foreground text-lg">{portfolio.description}</p>
             )}
           </div>
-          {/* Boutons d'export du portefeuille en haut */}
-          <PortfolioExportButtons portfolioData={portfolio} />
+          {/* Boutons d'export - visibles uniquement pour owner/manager */}
+          <PortfolioExportButtons portfolioData={portfolio} canExport={canManage} />
         </div>
 
         {/* Informations générales */}
@@ -193,7 +199,7 @@ const PortfolioDetails = () => {
 
       {/* Contenu principal avec onglets */}
       <Tabs defaultValue="overview" className="space-y-6">
-        <TabsList className={`grid w-full ${canManagePortfolios ? "grid-cols-4" : "grid-cols-3"}`}>
+        <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="overview" className="gap-2">
             <TrendingUp className="h-4 w-4" />
             Vue d'ensemble
@@ -206,12 +212,10 @@ const PortfolioDetails = () => {
             <ClipboardList className="h-4 w-4" />
             Revues de projets
           </TabsTrigger>
-          {canManagePortfolios && (
-            <TabsTrigger value="managers" className="gap-2">
-              <Settings className="h-4 w-4" />
-              Gestionnaires
-            </TabsTrigger>
-          )}
+          <TabsTrigger value="managers" className="gap-2">
+            <Settings className="h-4 w-4" />
+            Gestionnaires
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview" className="space-y-6">
@@ -231,6 +235,7 @@ const PortfolioDetails = () => {
             projects={portfolio.projects}
             portfolioId={portfolio.id}
             onAddProjects={() => setIsAddProjectsModalOpen(true)}
+            canManage={canManage}
           />
         </TabsContent>
 
@@ -239,21 +244,22 @@ const PortfolioDetails = () => {
             portfolioId={portfolio.id}
             portfolioName={portfolio.name}
             projects={portfolio.projects}
+            canManage={canManage}
           />
         </TabsContent>
 
-        {canManagePortfolios && (
-          <TabsContent value="managers" className="space-y-6">
-            <PortfolioManagersTable
-              portfolioId={portfolio.id}
-              portfolioOwnerId={portfolio.created_by}
-            />
-          </TabsContent>
-        )}
+        <TabsContent value="managers" className="space-y-6">
+          <PortfolioManagersTable
+            portfolioId={portfolio.id}
+            portfolioOwnerId={portfolio.created_by}
+            canManage={canManage}
+            isOwner={isOwner}
+          />
+        </TabsContent>
       </Tabs>
 
-      {/* Modal d'ajout de projets */}
-      {canManagePortfolios && (
+      {/* Modal d'ajout de projets - visible uniquement pour les gestionnaires */}
+      {canManage && (
         <AddProjectsModal
           isOpen={isAddProjectsModalOpen}
           onClose={() => setIsAddProjectsModalOpen(false)}

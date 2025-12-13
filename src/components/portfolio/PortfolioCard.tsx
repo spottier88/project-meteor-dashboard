@@ -1,3 +1,8 @@
+/**
+ * @file PortfolioCard.tsx
+ * @description Carte de portefeuille avec actions conditionnelles selon le rôle de l'utilisateur
+ */
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -12,9 +17,20 @@ interface PortfolioCardProps {
   onEdit: (portfolio: PortfolioWithStats) => void;
   onDelete: (id: string) => void;
   onView: (id: string) => void;
+  /** Peut modifier le portefeuille (owner ou manager) */
+  canEdit?: boolean;
+  /** Peut supprimer le portefeuille (owner uniquement) */
+  canDelete?: boolean;
 }
 
-export const PortfolioCard = ({ portfolio, onEdit, onDelete, onView }: PortfolioCardProps) => {
+export const PortfolioCard = ({ 
+  portfolio, 
+  onEdit, 
+  onDelete, 
+  onView,
+  canEdit = false,
+  canDelete = false,
+}: PortfolioCardProps) => {
   const getStatusColor = (status: string | null) => {
     switch (status) {
       case "actif":
@@ -104,20 +120,24 @@ export const PortfolioCard = ({ portfolio, onEdit, onDelete, onView }: Portfolio
               Voir
             </Button>
           </Link>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => onEdit(portfolio)}
-          >
-            <Edit className="h-4 w-4" />
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => onDelete(portfolio.id)}
-          >
-            <Trash2 className="h-4 w-4" />
-          </Button>
+          {canEdit && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => onEdit(portfolio)}
+            >
+              <Edit className="h-4 w-4" />
+            </Button>
+          )}
+          {canDelete && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => onDelete(portfolio.id)}
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          )}
         </div>
       </CardContent>
     </Card>
