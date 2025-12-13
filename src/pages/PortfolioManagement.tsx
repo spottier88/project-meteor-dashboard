@@ -1,3 +1,9 @@
+/**
+ * @file PortfolioManagement.tsx
+ * @description Page de gestion des portefeuilles avec permissions conditionnelles
+ * Les actions sur chaque carte sont conditionnées par le rôle de l'utilisateur
+ */
+
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -8,11 +14,42 @@ import { Link } from "react-router-dom";
 import { PortfolioCard } from "@/components/portfolio/PortfolioCard";
 import { PortfolioForm } from "@/components/portfolio/PortfolioForm";
 import { usePortfolios, useDeletePortfolio } from "@/hooks/usePortfolios";
+import { usePortfolioPermissions } from "@/hooks/usePortfolioPermissions";
+import { usePortfolioRole } from "@/hooks/usePortfolioRole";
 import { PortfolioWithStats } from "@/types/portfolio";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 
+/**
+ * Composant wrapper pour récupérer les permissions d'un portefeuille spécifique
+ */
+const PortfolioCardWithPermissions = ({
+  portfolio,
+  onEdit,
+  onDelete,
+  onView,
+}: {
+  portfolio: PortfolioWithStats;
+  onEdit: (portfolio: PortfolioWithStats) => void;
+  onDelete: (id: string) => void;
+  onView: (id: string) => void;
+}) => {
+  const { canEdit, canDelete } = usePortfolioRole(portfolio.id);
+  
+  return (
+    <PortfolioCard
+      portfolio={portfolio}
+      onEdit={onEdit}
+      onDelete={onDelete}
+      onView={onView}
+      canEdit={canEdit}
+      canDelete={canDelete}
+    />
+  );
+};
+
 const PortfolioManagement = () => {
   const { data: portfolios, isLoading, error } = usePortfolios();
+  const { canCreatePortfolio } = usePortfolioPermissions();
   const deletePortfolio = useDeletePortfolio();
 
   const [searchTerm, setSearchTerm] = useState("");
@@ -51,7 +88,7 @@ const PortfolioManagement = () => {
   };
 
   const handleView = (id: string) => {
-    // TODO: Naviguer vers la page de détail du portefeuille
+    // La navigation est gérée par le Link dans PortfolioCard
     console.log("Voir le portefeuille:", id);
   };
 
@@ -103,10 +140,13 @@ const PortfolioManagement = () => {
             Gérez vos portefeuilles de projets et suivez leur avancement
           </p>
         </div>
-        <Button onClick={handleCreate} className="shrink-0" variant="green">
-          <Plus className="h-4 w-4 mr-2" />
-          Nouveau portefeuille
-        </Button>
+        {/* Bouton de création visible uniquement si l'utilisateur a le droit */}
+        {canCreatePortfolio && (
+          <Button onClick={handleCreate} className="shrink-0" variant="green">
+            <Plus className="h-4 w-4 mr-2" />
+            Nouveau portefeuille
+          </Button>
+        )}
       </div>
 
       {/* Filtres */}
@@ -154,7 +194,7 @@ const PortfolioManagement = () => {
                 ? "Aucun portefeuille ne correspond à vos critères de recherche." 
                 : "Aucun portefeuille créé pour le moment."}
             </div>
-            {!searchTerm && statusFilter === "all" && (
+            {!searchTerm && statusFilter === "all" && canCreatePortfolio && (
               <Button onClick={handleCreate} className="mt-4" variant="green">
                 <Plus className="h-4 w-4 mr-2" />
                 Créer votre premier portefeuille
@@ -165,7 +205,7 @@ const PortfolioManagement = () => {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredPortfolios.map((portfolio) => (
-            <PortfolioCard
+            <PortfolioCardWithPermissions
               key={portfolio.id}
               portfolio={portfolio}
               onEdit={handleEdit}

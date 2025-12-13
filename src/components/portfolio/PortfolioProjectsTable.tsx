@@ -1,8 +1,8 @@
-
 /**
  * @file PortfolioProjectsTable.tsx
  * @description Tableau listant les projets d'un portefeuille avec filtres,
  * tri et actions (export, présentation, Gantt).
+ * Les actions sont conditionnées par les permissions de l'utilisateur.
  */
 
 import { useState } from "react";
@@ -54,19 +54,22 @@ interface Project {
   lifecycle_status: ProjectLifecycleStatus;
   priority: string | null;
   created_at: string | null;
-  completion: number; // Ajout de la propriété completion
+  completion: number;
 }
 
 interface PortfolioProjectsTableProps {
   projects: Project[];
   portfolioId: string;
   onAddProjects: () => void;
+  /** Peut gérer les projets (ajouter/supprimer) */
+  canManage?: boolean;
 }
 
 export const PortfolioProjectsTable = ({ 
   projects, 
   portfolioId, 
-  onAddProjects 
+  onAddProjects,
+  canManage = false,
 }: PortfolioProjectsTableProps) => {
   const removeProject = useRemoveProjectFromPortfolio();
   const { navigateToProject } = useProjectNavigation();
@@ -139,11 +142,13 @@ export const PortfolioProjectsTable = ({
             {filteredProjects.length} projet(s) sur {projects.length}
           </p>
         </div>
-        {/* Bouton d'ajout de projets */}
-        <Button onClick={onAddProjects} className="shrink-0">
-          <Plus className="h-4 w-4 mr-2" />
-          Ajouter des projets
-        </Button>
+        {/* Bouton d'ajout de projets - visible uniquement pour les gestionnaires */}
+        {canManage && (
+          <Button onClick={onAddProjects} className="shrink-0">
+            <Plus className="h-4 w-4 mr-2" />
+            Ajouter des projets
+          </Button>
+        )}
       </div>
 
       {/* Filtres */}
@@ -311,13 +316,15 @@ export const PortfolioProjectsTable = ({
                       >
                         <Eye className="h-4 w-4" />
                       </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setProjectToRemove(project.id)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+                      {canManage && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setProjectToRemove(project.id)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      )}
                     </div>
                   </TableCell>
                 </TableRow>

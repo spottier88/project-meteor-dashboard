@@ -3,6 +3,7 @@
  * @description Onglet dédié aux revues de projets du portefeuille.
  * Contient les boutons d'action (présentation, Gantt, exports),
  * l'organisation des revues et l'envoi de notifications.
+ * Les actions sont conditionnées par les permissions de l'utilisateur.
  */
 
 import { useState } from "react";
@@ -46,12 +47,19 @@ interface PortfolioReviewsTabProps {
   portfolioName: string;
   /** Liste des projets du portefeuille */
   projects: { id: string; title: string; project_manager_id?: string | null }[];
+  /** Peut gérer les revues (owner ou manager) */
+  canManage?: boolean;
 }
 
 /**
  * Onglet des revues de projets avec boutons d'action et organisation des revues
  */
-export const PortfolioReviewsTab = ({ portfolioId, portfolioName, projects }: PortfolioReviewsTabProps) => {
+export const PortfolioReviewsTab = ({ 
+  portfolioId, 
+  portfolioName, 
+  projects,
+  canManage = false,
+}: PortfolioReviewsTabProps) => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [isGanttOpen, setIsGanttOpen] = useState(false);
@@ -305,55 +313,64 @@ export const PortfolioReviewsTab = ({ portfolioId, portfolioName, projects }: Po
       <div className="space-y-6">
         {/* Barre d'actions en haut de l'onglet */}
         <div className="flex flex-wrap items-center gap-2">
-          {/* Bouton d'organisation de revue */}
-          <Button
-            size="sm"
-            onClick={() => setIsFormOpen(true)}
-            disabled={isDisabled}
-            className="gap-2"
-          >
-            <CalendarPlus className="h-4 w-4" />
-            Organiser une revue
-          </Button>
+          {/* Bouton d'organisation de revue - visible uniquement pour les gestionnaires */}
+          {canManage && (
+            <>
+              <Button
+                size="sm"
+                onClick={() => setIsFormOpen(true)}
+                disabled={isDisabled}
+                className="gap-2"
+              >
+                <CalendarPlus className="h-4 w-4" />
+                Organiser une revue
+              </Button>
+              <Separator orientation="vertical" className="h-6 mx-1" />
+            </>
+          )}
 
-          <Separator orientation="vertical" className="h-6 mx-1" />
-
+          {/* Bouton Présenter - visible pour tous */}
           <Button size="sm" variant="outline" onClick={handlePresent} disabled={isDisabled || !hasProjects} className="gap-2">
             <Play className="h-4 w-4" />
             Présenter
           </Button>
 
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleGantt}
-            disabled={isDisabled || !hasProjects}
-            className="gap-2"
-          >
-            <GanttChartSquare className="h-4 w-4" />
-            Vue Gantt
-          </Button>
+          {/* Vue Gantt - visible uniquement pour les gestionnaires */}
+          {canManage && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleGantt}
+              disabled={isDisabled || !hasProjects}
+              className="gap-2"
+            >
+              <GanttChartSquare className="h-4 w-4" />
+              Vue Gantt
+            </Button>
+          )}
 
-          {/* Menu déroulant pour les exports */}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm" disabled={isDisabled || !hasProjects} className="gap-2">
-                <Download className="h-4 w-4" />
-                Exporter
-                <ChevronDown className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="start" className="bg-popover">
-              <DropdownMenuItem onClick={handleExcelExport} className="gap-2 cursor-pointer">
-                <FileSpreadsheet className="h-4 w-4" />
-                Excel (.xlsx)
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={handlePPTXExport} className="gap-2 cursor-pointer">
-                <Presentation className="h-4 w-4" />
-                PowerPoint (.pptx)
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          {/* Menu déroulant pour les exports - visible uniquement pour les gestionnaires */}
+          {canManage && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm" disabled={isDisabled || !hasProjects} className="gap-2">
+                  <Download className="h-4 w-4" />
+                  Exporter
+                  <ChevronDown className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" className="bg-popover">
+                <DropdownMenuItem onClick={handleExcelExport} className="gap-2 cursor-pointer">
+                  <FileSpreadsheet className="h-4 w-4" />
+                  Excel (.xlsx)
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={handlePPTXExport} className="gap-2 cursor-pointer">
+                  <Presentation className="h-4 w-4" />
+                  PowerPoint (.pptx)
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
         </div>
 
         {/* Liste des revues organisées */}
@@ -382,6 +399,7 @@ export const PortfolioReviewsTab = ({ portfolioId, portfolioName, projects }: Po
                 onDelete={deleteReview}
                 onStatusChange={handleStatusChange}
                 isLoading={isUpdating}
+                canManage={canManage}
               />
             )}
           </CardContent>
@@ -395,29 +413,33 @@ export const PortfolioReviewsTab = ({ portfolioId, portfolioName, projects }: Po
       <PortfolioGanttSheet isOpen={isGanttOpen} onClose={() => setIsGanttOpen(false)} projectIds={projectIds} />
 
       {/* Formulaire de création de revue */}
-      <PortfolioReviewForm
-        open={isFormOpen}
-        onClose={() => setIsFormOpen(false)}
-        onSubmit={handleCreateReview}
-        isSubmitting={isCreating}
-      />
+      {canManage && (
+        <PortfolioReviewForm
+          open={isFormOpen}
+          onClose={() => setIsFormOpen(false)}
+          onSubmit={handleCreateReview}
+          isSubmitting={isCreating}
+        />
+      )}
 
       {/* Formulaire d'édition de revue */}
-      <PortfolioReviewForm
-        open={!!editingReview}
-        onClose={() => setEditingReview(null)}
-        onSubmit={handleEditReview}
-        isSubmitting={isUpdating}
-        initialData={
-          editingReview
-            ? {
-                subject: editingReview.subject,
-                review_date: editingReview.review_date,
-                notes: editingReview.notes,
-              }
-            : undefined
-        }
-      />
+      {canManage && (
+        <PortfolioReviewForm
+          open={!!editingReview}
+          onClose={() => setEditingReview(null)}
+          onSubmit={handleEditReview}
+          isSubmitting={isUpdating}
+          initialData={
+            editingReview
+              ? {
+                  subject: editingReview.subject,
+                  review_date: editingReview.review_date,
+                  notes: editingReview.notes,
+                }
+              : undefined
+          }
+        />
+      )}
     </>
   );
 };
