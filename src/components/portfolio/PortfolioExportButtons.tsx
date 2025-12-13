@@ -28,16 +28,23 @@ interface PortfolioExportButtonsProps {
     statusStats: any;
     lifecycleStats: any;
   };
+  /** Indique si l'utilisateur peut exporter (owner ou manager) */
+  canExport?: boolean;
 }
 
 /**
  * Boutons d'export du portefeuille (Excel et PowerPoint)
  * pour la synthèse du portefeuille uniquement
  */
-export const PortfolioExportButtons = ({ portfolioData }: PortfolioExportButtonsProps) => {
+export const PortfolioExportButtons = ({ portfolioData, canExport = true }: PortfolioExportButtonsProps) => {
   const { toast } = useToast();
   const [isExporting, setIsExporting] = useState(false);
   const [exportType, setExportType] = useState<"excel" | "pptx" | null>(null);
+
+  // Ne pas afficher les boutons si l'utilisateur n'a pas le droit d'exporter
+  if (!canExport) {
+    return null;
+  }
 
   /**
    * Export Excel du portefeuille (synthèse)
