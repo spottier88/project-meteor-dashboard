@@ -56,7 +56,8 @@ const PortfolioManagement = () => {
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [selectedPortfolio, setSelectedPortfolio] = useState<PortfolioWithStats | null>(null);
-  const [portfolioToDelete, setPortfolioToDelete] = useState<string | null>(null);
+  const [portfolioToDelete, setPortfolioToDelete] = useState<PortfolioWithStats | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   // Filtrer les portefeuilles
   const filteredPortfolios = portfolios?.filter((portfolio) => {
@@ -77,13 +78,22 @@ const PortfolioManagement = () => {
   };
 
   const handleDelete = (id: string) => {
-    setPortfolioToDelete(id);
+    // Trouver le portefeuille pour afficher ses infos dans la confirmation
+    const portfolio = portfolios?.find(p => p.id === id);
+    if (portfolio) {
+      setPortfolioToDelete(portfolio);
+    }
   };
 
   const confirmDelete = async () => {
     if (portfolioToDelete) {
-      await deletePortfolio.mutateAsync(portfolioToDelete);
-      setPortfolioToDelete(null);
+      setIsDeleting(true);
+      try {
+        await deletePortfolio.mutateAsync(portfolioToDelete.id);
+        setPortfolioToDelete(null);
+      } finally {
+        setIsDeleting(false);
+      }
     }
   };
 
@@ -223,19 +233,39 @@ const PortfolioManagement = () => {
         portfolio={selectedPortfolio}
       />
 
-      {/* Dialog de confirmation de suppression */}
-      <AlertDialog open={!!portfolioToDelete} onOpenChange={() => setPortfolioToDelete(null)}>
+      {/* Dialog de confirmation de suppression avec détails */}
+      <AlertDialog open={!!portfolioToDelete} onOpenChange={() => !isDeleting && setPortfolioToDelete(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Confirmer la suppression</AlertDialogTitle>
-            <AlertDialogDescription>
-              Êtes-vous sûr de vouloir supprimer ce portefeuille ? Cette action est irréversible.
+            <AlertDialogDescription asChild>
+              <div className="space-y-3">
+                <p>
+                  Êtes-vous sûr de vouloir supprimer le portefeuille <strong>"{portfolioToDelete?.name}"</strong> ?
+                </p>
+                {portfolioToDelete && portfolioToDelete.project_count > 0 && (
+                  <p className="text-amber-600 dark:text-amber-400">
+                    ⚠️ Ce portefeuille contient {portfolioToDelete.project_count} projet(s) qui seront détachés.
+                  </p>
+                )}
+                <p className="text-sm text-muted-foreground">
+                  Cette action supprimera également les gestionnaires associés et les revues de portefeuille. 
+                  Les projets ne seront pas supprimés, seulement détachés du portefeuille.
+                </p>
+                <p className="text-destructive font-medium">
+                  Cette action est irréversible.
+                </p>
+              </div>
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Annuler</AlertDialogCancel>
-            <AlertDialogAction onClick={confirmDelete}>
-              Supprimer
+            <AlertDialogCancel disabled={isDeleting}>Annuler</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={confirmDelete} 
+              disabled={isDeleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {isDeleting ? "Suppression..." : "Supprimer définitivement"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
