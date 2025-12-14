@@ -179,18 +179,79 @@ export const useUpdatePortfolio = () => {
   });
 };
 
+/**
+ * Hook pour supprimer un portefeuille avec nettoyage des relations
+ * Supprime d'abord les relations (projets, gestionnaires, revues) puis le portefeuille
+ */
 export const useDeletePortfolio = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async (id: string) => {
+      console.log("Suppression du portefeuille:", id);
+
+      // 1. Supprimer les notifications des revues du portefeuille
+      const { data: reviews } = await supabase
+        .from("portfolio_reviews")
+        .select("id")
+        .eq("portfolio_id", id);
+      
+      if (reviews && reviews.length > 0) {
+        const reviewIds = reviews.map(r => r.id);
+        const { error: notifError } = await supabase
+          .from("portfolio_review_notifications")
+          .delete()
+          .in("portfolio_review_id", reviewIds);
+        
+        if (notifError) {
+          console.error("Erreur suppression notifications revues:", notifError);
+        }
+      }
+
+      // 2. Supprimer les revues du portefeuille
+      const { error: reviewsError } = await supabase
+        .from("portfolio_reviews")
+        .delete()
+        .eq("portfolio_id", id);
+
+      if (reviewsError) {
+        console.error("Erreur suppression revues:", reviewsError);
+        throw new Error("Erreur lors de la suppression des revues du portefeuille");
+      }
+
+      // 3. Supprimer les liens projets-portefeuille
+      const { error: projectsError } = await supabase
+        .from("portfolio_projects")
+        .delete()
+        .eq("portfolio_id", id);
+
+      if (projectsError) {
+        console.error("Erreur suppression projets:", projectsError);
+        throw new Error("Erreur lors de la suppression des projets du portefeuille");
+      }
+
+      // 4. Supprimer les gestionnaires du portefeuille
+      const { error: managersError } = await supabase
+        .from("portfolio_managers")
+        .delete()
+        .eq("portfolio_id", id);
+
+      if (managersError) {
+        console.error("Erreur suppression gestionnaires:", managersError);
+        throw new Error("Erreur lors de la suppression des gestionnaires du portefeuille");
+      }
+
+      // 5. Enfin, supprimer le portefeuille lui-même
       const { error } = await supabase
         .from("project_portfolios")
         .delete()
         .eq("id", id);
 
-      if (error) throw error;
+      if (error) {
+        console.error("Erreur suppression portefeuille:", error);
+        throw error;
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["portfolios"] });
@@ -199,11 +260,11 @@ export const useDeletePortfolio = () => {
         description: "Le portefeuille a été supprimé avec succès",
       });
     },
-    onError: (error) => {
+    onError: (error: any) => {
       console.error("Erreur lors de la suppression du portefeuille:", error);
       toast({
         title: "Erreur",
-        description: "Une erreur est survenue lors de la suppression du portefeuille",
+        description: error.message || "Une erreur est survenue lors de la suppression du portefeuille",
         variant: "destructive",
       });
     },
