@@ -2,11 +2,13 @@
  * @file PresentationSlide.tsx
  * @description Composant de slide individuel reproduisant le design PPTX
  * avec en-tête rouge, grille de sections et informations projet.
+ * Affichage plein écran adaptatif sans troncature de texte ni de listes.
  */
 
 import { ProjectData } from "@/hooks/use-detailed-projects-data";
 import { lifecycleStatusLabels } from "@/types/project";
 import { Sun, Cloud, CloudRain, TrendingUp, TrendingDown, Minus } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface PresentationSlideProps {
   data: ProjectData;
@@ -52,61 +54,61 @@ export const PresentationSlide = ({ data }: PresentationSlideProps) => {
 
   return (
     <div className="w-full h-full bg-white flex flex-col overflow-hidden">
-      {/* En-tête rouge */}
-      <div className="bg-[#CC0000] text-white p-4 flex-shrink-0">
-        <div className="flex justify-between items-start">
-          <div className="flex-1">
-            <h1 className="text-xl font-bold">
+      {/* En-tête rouge compact */}
+      <div className="bg-[#CC0000] text-white p-2 flex-shrink-0">
+        <div className="flex justify-between items-start gap-2">
+          <div className="flex-1 min-w-0">
+            <h1 className="text-lg font-bold leading-tight">
               {data.project.title}
-              <span className="font-normal text-sm ml-2 opacity-90">
+              <span className="font-normal text-xs ml-2 opacity-90">
                 - {lifecycleStatusLabels[data.project.lifecycle_status]}
               </span>
             </h1>
             {data.project.description && (
-              <p className="text-sm opacity-90 mt-1 line-clamp-2">{data.project.description}</p>
+              <p className="text-xs opacity-90 mt-0.5">{data.project.description}</p>
             )}
           </div>
-          <div className="text-right text-sm flex-shrink-0 ml-4">
+          <div className="text-right text-xs flex-shrink-0">
             {data.lastReview?.created_at && (
-              <p>{new Date(data.lastReview.created_at).toLocaleDateString("fr-FR")}</p>
+              <p className="font-medium">{new Date(data.lastReview.created_at).toLocaleDateString("fr-FR")}</p>
             )}
-            <p className="text-xs opacity-80">
-              <span className="font-semibold">Chef de projet: </span>
+            <p className="opacity-80">
+              <span className="font-semibold">CDP: </span>
               {data.project.project_manager || "Non défini"}
             </p>
             {hierarchyText && (
-              <p className="text-xs opacity-80">{hierarchyText}</p>
+              <p className="opacity-80 text-[10px]">{hierarchyText}</p>
             )}
           </div>
         </div>
       </div>
 
-      {/* Grille de contenu */}
-      <div className="flex-1 p-4 overflow-auto">
+      {/* Grille de contenu - utilise tout l'espace disponible */}
+      <div className="flex-1 p-2 flex flex-col gap-1.5 min-h-0 overflow-hidden">
         {/* Première ligne : Situation, Évolution, Situation générale, Fin cible */}
-        <div className="grid grid-cols-12 gap-2 mb-2">
+        <div className="grid grid-cols-12 gap-1.5 flex-shrink-0" style={{ height: '15%' }}>
           {/* Situation (météo) */}
-          <div className="col-span-2">
+          <div className="col-span-1">
             <Section title="SITUATION">
               <div className="flex items-center justify-center h-full">
-                <WeatherIcon className={`h-12 w-12 ${weatherIcons[weather].color}`} />
+                <WeatherIcon className={`h-8 w-8 ${weatherIcons[weather].color}`} />
               </div>
             </Section>
           </div>
 
           {/* Évolution */}
-          <div className="col-span-2">
+          <div className="col-span-1">
             <Section title="ÉVOLUTION">
               <div className="flex items-center justify-center h-full">
-                <ProgressIcon className={`h-12 w-12 ${progressIcons[progress].color}`} />
+                <ProgressIcon className={`h-8 w-8 ${progressIcons[progress].color}`} />
               </div>
             </Section>
           </div>
 
           {/* Situation générale */}
-          <div className="col-span-6">
-            <Section title="SITUATION GÉNÉRALE">
-              <p className="text-sm text-muted-foreground line-clamp-4">
+          <div className="col-span-8">
+            <Section title="SITUATION GÉNÉRALE" scrollable>
+              <p className="text-xs text-muted-foreground">
                 {data.lastReview?.comment || "Pas de commentaire"}
               </p>
             </Section>
@@ -116,7 +118,7 @@ export const PresentationSlide = ({ data }: PresentationSlideProps) => {
           <div className="col-span-2">
             <Section title="FIN CIBLE">
               <div className="flex items-center justify-center h-full">
-                <p className="text-sm font-medium text-center">
+                <p className="text-xs font-medium text-center">
                   {formatDate(data.project.end_date)}
                 </p>
               </div>
@@ -124,35 +126,35 @@ export const PresentationSlide = ({ data }: PresentationSlideProps) => {
           </div>
         </div>
 
-        {/* Deuxième ligne : Tâches */}
-        <div className="grid grid-cols-3 gap-2 mb-2">
-          <Section title="TÂCHES TERMINÉES">
+        {/* Deuxième ligne : Tâches - occupe 45% de l'espace */}
+        <div className="grid grid-cols-3 gap-1.5 flex-1 min-h-0" style={{ height: '45%' }}>
+          <Section title="TÂCHES TERMINÉES" scrollable>
             <TaskList tasks={tasksDone} />
           </Section>
-          <Section title="TÂCHES EN COURS">
+          <Section title="TÂCHES EN COURS" scrollable>
             <TaskList tasks={tasksInProgress} />
           </Section>
-          <Section title="TÂCHES À VENIR">
+          <Section title="TÂCHES À VENIR" scrollable>
             <TaskList tasks={tasksTodo} />
           </Section>
         </div>
 
-        {/* Troisième ligne : Difficultés et Actions */}
-        <div className="grid grid-cols-2 gap-2">
-          <Section title="DIFFICULTÉS EN COURS">
+        {/* Troisième ligne : Difficultés et Actions - occupe le reste */}
+        <div className="grid grid-cols-2 gap-1.5 flex-1 min-h-0" style={{ height: '40%' }}>
+          <Section title="DIFFICULTÉS EN COURS" scrollable>
             {data.lastReview?.difficulties ? (
-              <p className="text-sm text-muted-foreground">{data.lastReview.difficulties}</p>
+              <p className="text-xs text-muted-foreground">{data.lastReview.difficulties}</p>
             ) : data.risks.length > 0 ? (
               <BulletList items={data.risks.map((r) => r.description)} />
             ) : (
-              <p className="text-sm text-muted-foreground italic">Aucune difficulté signalée</p>
+              <p className="text-xs text-muted-foreground italic">Aucune difficulté signalée</p>
             )}
           </Section>
-          <Section title="ACTIONS CORRECTIVES">
+          <Section title="ACTIONS CORRECTIVES" scrollable>
             {data.lastReview?.actions && data.lastReview.actions.length > 0 ? (
               <BulletList items={data.lastReview.actions.map((a) => a.description)} />
             ) : (
-              <p className="text-sm text-muted-foreground italic">Aucune action définie</p>
+              <p className="text-xs text-muted-foreground italic">Aucune action définie</p>
             )}
           </Section>
         </div>
@@ -161,65 +163,65 @@ export const PresentationSlide = ({ data }: PresentationSlideProps) => {
   );
 };
 
-// Composant Section avec titre noir
+// Composant Section avec titre noir et scroll optionnel
 interface SectionProps {
   title: string;
   children: React.ReactNode;
+  scrollable?: boolean;
 }
 
-const Section = ({ title, children }: SectionProps) => (
+const Section = ({ title, children, scrollable = false }: SectionProps) => (
   <div className="bg-muted/50 rounded overflow-hidden h-full flex flex-col">
-    <div className="bg-black text-white text-xs font-bold py-1 px-2 text-center">
+    <div className="bg-black text-white text-[10px] font-bold py-0.5 px-1.5 text-center flex-shrink-0">
       {title}
     </div>
-    <div className="p-2 flex-1">{children}</div>
+    <div className={cn(
+      "p-1.5 flex-1 min-h-0",
+      scrollable && "overflow-y-auto"
+    )}>
+      {children}
+    </div>
   </div>
 );
 
-// Composant liste de tâches
+// Composant liste de tâches - affiche toutes les tâches sans limite
 interface TaskListProps {
   tasks: Array<{ title: string }>;
 }
 
 const TaskList = ({ tasks }: TaskListProps) => {
   if (tasks.length === 0) {
-    return <p className="text-sm text-muted-foreground italic">Aucune tâche</p>;
+    return <p className="text-xs text-muted-foreground italic">Aucune tâche</p>;
   }
 
   return (
-    <ol className="text-sm space-y-1 list-decimal list-inside">
-      {tasks.slice(0, 5).map((task, index) => (
-        <li key={index} className="text-muted-foreground truncate">
+    <ol className="text-xs space-y-0.5 list-decimal list-inside">
+      {tasks.map((task, index) => (
+        <li key={index} className="text-muted-foreground leading-tight">
           {task.title}
         </li>
       ))}
-      {tasks.length > 5 && (
-        <li className="text-muted-foreground italic">+{tasks.length - 5} autres...</li>
-      )}
     </ol>
   );
 };
 
-// Composant liste à puces
+// Composant liste à puces - affiche tous les éléments sans limite
 interface BulletListProps {
   items: string[];
 }
 
 const BulletList = ({ items }: BulletListProps) => {
   if (items.length === 0) {
-    return <p className="text-sm text-muted-foreground italic">Aucun élément</p>;
+    return <p className="text-xs text-muted-foreground italic">Aucun élément</p>;
   }
 
   return (
-    <ol className="text-sm space-y-1 list-decimal list-inside">
-      {items.slice(0, 4).map((item, index) => (
-        <li key={index} className="text-muted-foreground">
+    <ol className="text-xs space-y-0.5 list-decimal list-inside">
+      {items.map((item, index) => (
+        <li key={index} className="text-muted-foreground leading-tight">
           {item}
         </li>
       ))}
-      {items.length > 4 && (
-        <li className="text-muted-foreground italic">+{items.length - 4} autres...</li>
-      )}
     </ol>
   );
 };
