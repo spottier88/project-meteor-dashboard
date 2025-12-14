@@ -231,7 +231,18 @@ export const useDeletePortfolio = () => {
         throw new Error("Erreur lors de la suppression des projets du portefeuille");
       }
 
-      // 4. Supprimer les gestionnaires du portefeuille
+      // 4. Mettre à NULL les références portfolio_id dans projects (ancien mode de fonctionnement)
+      const { error: projectsRefError } = await supabase
+        .from("projects")
+        .update({ portfolio_id: null })
+        .eq("portfolio_id", id);
+
+      if (projectsRefError) {
+        console.error("Erreur nettoyage références projets:", projectsRefError);
+        // On ne throw pas ici car c'est du nettoyage legacy
+      }
+
+      // 5. Supprimer les gestionnaires du portefeuille
       const { error: managersError } = await supabase
         .from("portfolio_managers")
         .delete()
@@ -242,7 +253,7 @@ export const useDeletePortfolio = () => {
         throw new Error("Erreur lors de la suppression des gestionnaires du portefeuille");
       }
 
-      // 5. Enfin, supprimer le portefeuille lui-même
+      // 6. Enfin, supprimer le portefeuille lui-même
       const { error } = await supabase
         .from("project_portfolios")
         .delete()
