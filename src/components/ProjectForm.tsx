@@ -113,7 +113,10 @@ export const ProjectForm = ({ isOpen, onClose, onSubmit, project }: ProjectFormP
   const handleConfirmClose = () => {
     setShowUnsavedChangesAlert(false);
     formState.resetHasUnsavedChanges();
-    onClose();
+    // Utiliser setTimeout pour laisser l'AlertDialog se fermer proprement avant le Dialog parent
+    setTimeout(() => {
+      onClose();
+    }, 0);
   };
 
   const handleCancelClose = () => {
@@ -173,7 +176,7 @@ export const ProjectForm = ({ isOpen, onClose, onSubmit, project }: ProjectFormP
       </Dialog>
 
       <AlertDialog open={showUnsavedChangesAlert} onOpenChange={setShowUnsavedChangesAlert}>
-        <AlertDialogContent>
+        <AlertDialogContent onCloseAutoFocus={(e) => e.preventDefault()}>
           <AlertDialogHeader>
             <AlertDialogTitle>Modifications non enregistrées</AlertDialogTitle>
             <AlertDialogDescription>
@@ -190,7 +193,7 @@ export const ProjectForm = ({ isOpen, onClose, onSubmit, project }: ProjectFormP
       <AlertDialog open={showAccessWarning} onOpenChange={(open) => {
         if (!open) handleCancelSubmit();
       }}>
-        <AlertDialogContent>
+        <AlertDialogContent onCloseAutoFocus={(e) => e.preventDefault()}>
           <AlertDialogHeader>
             <AlertDialogTitle>Attention au changement d'attribution</AlertDialogTitle>
             <AlertDialogDescription>
