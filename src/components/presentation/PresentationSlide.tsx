@@ -54,30 +54,30 @@ export const PresentationSlide = ({ data }: PresentationSlideProps) => {
 
   return (
     <div className="w-full h-full bg-white flex flex-col overflow-hidden">
-      {/* En-tête rouge compact */}
-      <div className="bg-[#CC0000] text-white p-2 flex-shrink-0">
-        <div className="flex justify-between items-start gap-2">
+      {/* En-tête rouge étendu */}
+      <div className="bg-[#CC0000] text-white p-3 flex-shrink-0">
+        <div className="flex justify-between items-start gap-4">
           <div className="flex-1 min-w-0">
-            <h1 className="text-lg font-bold leading-tight">
+            <h1 className="text-2xl font-bold leading-tight">
               {data.project.title}
-              <span className="font-normal text-xs ml-2 opacity-90">
+              <span className="font-normal text-sm ml-3 opacity-90">
                 - {lifecycleStatusLabels[data.project.lifecycle_status]}
               </span>
             </h1>
             {data.project.description && (
-              <p className="text-xs opacity-90 mt-0.5">{data.project.description}</p>
+              <p className="text-sm opacity-90 mt-1">{data.project.description}</p>
             )}
           </div>
-          <div className="text-right text-xs flex-shrink-0">
+          <div className="text-right text-sm flex-shrink-0">
             {data.lastReview?.created_at && (
-              <p className="font-medium">{new Date(data.lastReview.created_at).toLocaleDateString("fr-FR")}</p>
+              <p className="font-medium text-base">{new Date(data.lastReview.created_at).toLocaleDateString("fr-FR")}</p>
             )}
             <p className="opacity-80">
               <span className="font-semibold">CDP: </span>
               {data.project.project_manager || "Non défini"}
             </p>
             {hierarchyText && (
-              <p className="opacity-80 text-[10px]">{hierarchyText}</p>
+              <p className="opacity-80 text-xs">{hierarchyText}</p>
             )}
           </div>
         </div>
@@ -85,13 +85,13 @@ export const PresentationSlide = ({ data }: PresentationSlideProps) => {
 
       {/* Grille de contenu - utilise tout l'espace disponible */}
       <div className="flex-1 p-2 flex flex-col gap-1.5 min-h-0 overflow-hidden">
-        {/* Première ligne : Situation, Évolution, Situation générale, Fin cible */}
-        <div className="grid grid-cols-12 gap-1.5 flex-shrink-0" style={{ height: '15%' }}>
+        {/* Première ligne : Situation, Évolution, Situation générale, Fin cible - étendue */}
+        <div className="grid grid-cols-12 gap-1.5 flex-shrink-0" style={{ height: '22%' }}>
           {/* Situation (météo) */}
           <div className="col-span-1">
             <Section title="SITUATION">
               <div className="flex items-center justify-center h-full">
-                <WeatherIcon className={`h-8 w-8 ${weatherIcons[weather].color}`} />
+                <WeatherIcon className={`h-10 w-10 ${weatherIcons[weather].color}`} />
               </div>
             </Section>
           </div>
@@ -100,7 +100,7 @@ export const PresentationSlide = ({ data }: PresentationSlideProps) => {
           <div className="col-span-1">
             <Section title="ÉVOLUTION">
               <div className="flex items-center justify-center h-full">
-                <ProgressIcon className={`h-8 w-8 ${progressIcons[progress].color}`} />
+                <ProgressIcon className={`h-10 w-10 ${progressIcons[progress].color}`} />
               </div>
             </Section>
           </div>
@@ -108,7 +108,7 @@ export const PresentationSlide = ({ data }: PresentationSlideProps) => {
           {/* Situation générale */}
           <div className="col-span-8">
             <Section title="SITUATION GÉNÉRALE" scrollable>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-sm text-muted-foreground leading-relaxed">
                 {data.lastReview?.comment || "Pas de commentaire"}
               </p>
             </Section>
@@ -118,7 +118,7 @@ export const PresentationSlide = ({ data }: PresentationSlideProps) => {
           <div className="col-span-2">
             <Section title="FIN CIBLE">
               <div className="flex items-center justify-center h-full">
-                <p className="text-xs font-medium text-center">
+                <p className="text-sm font-medium text-center">
                   {formatDate(data.project.end_date)}
                 </p>
               </div>
