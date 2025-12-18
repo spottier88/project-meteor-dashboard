@@ -199,6 +199,46 @@ function generateRolesListText(notifications: Array<{ event_data: Record<string,
     .join('\n');
 }
 
+/**
+ * Génère la liste HTML des nouvelles inscriptions (pour les admins)
+ */
+function generateSignupsListHtml(notifications: Array<{ event_data: Record<string, unknown> }>): string {
+  return notifications
+    .map(n => {
+      const data = n.event_data;
+      const signupDate = data.signup_date 
+        ? new Date(data.signup_date as string).toLocaleDateString('fr-FR', { 
+            day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' 
+          }) 
+        : 'Non définie';
+      const fullName = [data.new_user_first_name, data.new_user_last_name].filter(Boolean).join(' ') || 'Non renseigné';
+      return `<div class="item">
+        <div class="item-title">${data.new_user_email || 'Email inconnu'}</div>
+        <div class="item-meta">
+          <span class="badge badge-signup">Nom : ${fullName}</span>
+          <span style="margin-left: 10px;">Inscrit le : ${signupDate}</span>
+        </div>
+      </div>`;
+    })
+    .join('');
+}
+
+/**
+ * Génère la liste texte des nouvelles inscriptions
+ */
+function generateSignupsListText(notifications: Array<{ event_data: Record<string, unknown> }>): string {
+  return notifications
+    .map(n => {
+      const data = n.event_data;
+      const signupDate = data.signup_date 
+        ? new Date(data.signup_date as string).toLocaleDateString('fr-FR') 
+        : 'Non définie';
+      const fullName = [data.new_user_first_name, data.new_user_last_name].filter(Boolean).join(' ') || 'Non renseigné';
+      return `- ${data.new_user_email || 'Email inconnu'} (Nom: ${fullName}, Inscrit le: ${signupDate})`;
+    })
+    .join('\n');
+}
+
 serve(async (req) => {
   // Gestion CORS
   if (req.method === 'OPTIONS') {
@@ -355,6 +395,7 @@ serve(async (req) => {
         const taskNotifs = data.notifications.filter(n => n.event_type === 'task_assigned');
         const projectNotifs = data.notifications.filter(n => n.event_type === 'project_assigned');
         const roleNotifs = data.notifications.filter(n => n.event_type === 'role_changed');
+        const signupNotifs = data.notifications.filter(n => n.event_type === 'user_signup');
 
         // Préparer les variables de publipostage
         const variables: Record<string, string | boolean | number> = {
@@ -375,6 +416,11 @@ serve(async (req) => {
           roles_count: roleNotifs.length,
           roles_list: generateRolesListHtml(roleNotifs),
           roles_list_text: generateRolesListText(roleNotifs),
+          // Nouvelles inscriptions (pour les admins)
+          has_signups: signupNotifs.length > 0,
+          signups_count: signupNotifs.length,
+          signups_list: generateSignupsListHtml(signupNotifs),
+          signups_list_text: generateSignupsListText(signupNotifs),
         };
 
         // Fusionner le template avec les variables
