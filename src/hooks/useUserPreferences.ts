@@ -19,6 +19,7 @@ interface UserPreferences {
   onboarding_seen_at: string | null;
   email_notifications_enabled: boolean | null;
   email_digest_frequency: number | null;
+  profile_reminder_dismissed_until?: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -30,6 +31,7 @@ interface UserPreferencesInput {
   onboarding_seen_at?: string | null;
   email_notifications_enabled?: boolean;
   email_digest_frequency?: number;
+  profile_reminder_dismissed_until?: string | null;
 }
 
 export const useUserPreferences = () => {

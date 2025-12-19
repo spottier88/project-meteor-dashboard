@@ -1746,6 +1746,7 @@ export type Database = {
           onboarding_seen_at: string | null
           open_projects_in_new_tab: boolean
           points_visualization_mode: string
+          profile_reminder_dismissed_until: string | null
           updated_at: string
           user_id: string
         }
@@ -1759,6 +1760,7 @@ export type Database = {
           onboarding_seen_at?: string | null
           open_projects_in_new_tab?: boolean
           points_visualization_mode?: string
+          profile_reminder_dismissed_until?: string | null
           updated_at?: string
           user_id: string
         }
@@ -1772,6 +1774,7 @@ export type Database = {
           onboarding_seen_at?: string | null
           open_projects_in_new_tab?: boolean
           points_visualization_mode?: string
+          profile_reminder_dismissed_until?: string | null
           updated_at?: string
           user_id?: string
         }
