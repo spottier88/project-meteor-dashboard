@@ -2,10 +2,10 @@
  * @component OnboardingTutorial
  * @description Tutoriel interactif de prise en main pour les nouveaux utilisateurs.
  * Affiche un carousel avec les étapes de découverte de l'application
- * et inclut une étape obligatoire de complétion du profil.
+ * et inclut une étape obligatoire de complétion du profil si celui-ci est incomplet.
  */
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
 import {
   Dialog,
   DialogContent,
@@ -21,8 +21,10 @@ import {
 } from "@/components/ui/carousel";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Loader2 } from "lucide-react";
 import { OnboardingStep } from "./OnboardingStep";
 import { OnboardingProfileStep } from "./OnboardingProfileStep";
+import { useIncompleteProfile } from "@/hooks/useIncompleteProfile";
 
 /**
  * Définition des étapes du tutoriel de prise en main
@@ -78,9 +80,6 @@ const ONBOARDING_STEPS = [
   },
 ];
 
-// Index de l'étape profil
-const PROFILE_STEP_INDEX = 1;
-
 interface OnboardingTutorialProps {
   isOpen: boolean;
   onClose: (dontShowAgain: boolean) => void;
@@ -89,6 +88,7 @@ interface OnboardingTutorialProps {
 /**
  * Composant principal du tutoriel d'onboarding.
  * Gère la navigation entre les étapes et la validation du profil.
+ * Masque l'étape profil si les données sont déjà complètes.
  */
 export const OnboardingTutorial = ({ isOpen, onClose }: OnboardingTutorialProps) => {
   const [currentStep, setCurrentStep] = useState(0);
@@ -97,16 +97,41 @@ export const OnboardingTutorial = ({ isOpen, onClose }: OnboardingTutorialProps)
   const [isProfileValid, setIsProfileValid] = useState(false);
   const [profileSaved, setProfileSaved] = useState(false);
 
+  // Vérifier si le profil est complet (prénom, nom, affectation)
+  const { completionStatus, isLoading: profileLoading } = useIncompleteProfile();
+
+  /**
+   * Filtrer les étapes : exclure l'étape profil si le profil est déjà complet
+   */
+  const visibleSteps = useMemo(() => {
+    if (completionStatus.isComplete) {
+      return ONBOARDING_STEPS.filter(step => step.type !== "profile");
+    }
+    return ONBOARDING_STEPS;
+  }, [completionStatus.isComplete]);
+
+  /**
+   * Calculer l'index de l'étape profil dans les étapes visibles (-1 si masquée)
+   */
+  const profileStepIndex = useMemo(() => {
+    return visibleSteps.findIndex(step => step.type === "profile");
+  }, [visibleSteps]);
+
+  /**
+   * Vérifie si on est sur l'étape profil
+   */
+  const isOnProfileStep = profileStepIndex !== -1 && currentStep === profileStepIndex;
+
   /**
    * Vérifie si on peut passer à l'étape suivante
    */
   const canProceed = useCallback(() => {
-    // Si on est sur l'étape profil et qu'il n'est pas sauvegardé
-    if (currentStep === PROFILE_STEP_INDEX && !profileSaved) {
+    // Bloquer seulement si on est sur l'étape profil et qu'il n'est pas sauvegardé
+    if (isOnProfileStep && !profileSaved) {
       return false;
     }
     return true;
-  }, [currentStep, profileSaved]);
+  }, [isOnProfileStep, profileSaved]);
 
   /**
    * Gère la navigation vers l'étape suivante
@@ -114,7 +139,7 @@ export const OnboardingTutorial = ({ isOpen, onClose }: OnboardingTutorialProps)
   const handleNext = () => {
     if (!canProceed()) return;
     
-    if (currentStep < ONBOARDING_STEPS.length - 1) {
+    if (currentStep < visibleSteps.length - 1) {
       const nextStep = currentStep + 1;
       setCurrentStep(nextStep);
       carouselApi?.scrollTo(nextStep);
@@ -157,9 +182,20 @@ export const OnboardingTutorial = ({ isOpen, onClose }: OnboardingTutorialProps)
     setIsProfileValid(isValid);
   };
 
-  const currentStepData = ONBOARDING_STEPS[currentStep];
-  const isOnProfileStep = currentStep === PROFILE_STEP_INDEX;
-  const isLastStep = currentStep === ONBOARDING_STEPS.length - 1;
+  const isLastStep = currentStep === visibleSteps.length - 1;
+
+  // Afficher un loader pendant le chargement du statut du profil
+  if (profileLoading) {
+    return (
+      <Dialog open={isOpen}>
+        <DialogContent className="max-w-2xl">
+          <div className="flex items-center justify-center py-12">
+            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+          </div>
+        </DialogContent>
+      </Dialog>
+    );
+  }
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => {
@@ -196,7 +232,7 @@ export const OnboardingTutorial = ({ isOpen, onClose }: OnboardingTutorialProps)
             opts={{ watchDrag: false }}
           >
             <CarouselContent>
-              {ONBOARDING_STEPS.map((step, index) => (
+              {visibleSteps.map((step, index) => (
                 <CarouselItem key={step.id}>
                   {step.type === "profile" ? (
                     <OnboardingProfileStep
@@ -210,7 +246,7 @@ export const OnboardingTutorial = ({ isOpen, onClose }: OnboardingTutorialProps)
                       content={step.content}
                       icon={step.icon}
                       stepNumber={index + 1}
-                      totalSteps={ONBOARDING_STEPS.length}
+                      totalSteps={visibleSteps.length}
                     />
                   )}
                 </CarouselItem>
@@ -220,22 +256,22 @@ export const OnboardingTutorial = ({ isOpen, onClose }: OnboardingTutorialProps)
 
           {/* Indicateurs de points (dots) */}
           <div className="flex justify-center gap-2 my-4">
-            {ONBOARDING_STEPS.map((_, index) => (
+            {visibleSteps.map((_, index) => (
               <button
                 key={index}
                 onClick={() => {
-                  // Empêcher la navigation si profil non sauvegardé
-                  if (currentStep === PROFILE_STEP_INDEX && !profileSaved && index > PROFILE_STEP_INDEX) {
+                  // Empêcher la navigation si profil non sauvegardé et on essaie d'avancer
+                  if (isOnProfileStep && !profileSaved && index > profileStepIndex) {
                     return;
                   }
                   setCurrentStep(index);
                   carouselApi?.scrollTo(index);
                 }}
-                disabled={currentStep === PROFILE_STEP_INDEX && !profileSaved && index > PROFILE_STEP_INDEX}
+                disabled={isOnProfileStep && !profileSaved && index > profileStepIndex}
                 className={`h-2 rounded-full transition-all ${
                   index === currentStep
                     ? "w-8 bg-primary"
-                    : currentStep === PROFILE_STEP_INDEX && !profileSaved && index > PROFILE_STEP_INDEX
+                    : isOnProfileStep && !profileSaved && index > profileStepIndex
                     ? "w-2 bg-muted-foreground/20 cursor-not-allowed"
                     : "w-2 bg-muted-foreground/30 hover:bg-muted-foreground/50"
                 }`}
