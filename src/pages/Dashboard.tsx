@@ -4,17 +4,19 @@ import { ProjectsSummary } from "@/components/dashboard/ProjectsSummary";
 import { QuickActions } from "@/components/dashboard/QuickActions";
 import { AlertsSection } from "@/components/dashboard/AlertsSection";
 import { UserInfo } from "@/components/UserInfo";
-import { Button } from "@/components/ui/button";
-import { Link, useNavigate } from "react-router-dom";
-import { List } from "lucide-react";
 import { useState } from "react";
 import { ProjectModals } from "@/components/project/ProjectModals";
 import { useProjectsListView } from "@/hooks/use-projects-list-view";
 import { OnboardingTutorial } from "@/components/onboarding/OnboardingTutorial";
 import { useOnboarding } from "@/hooks/useOnboarding";
+import { IncompleteProfileDialog } from "@/components/profile/IncompleteProfileDialog";
+import { ProfileForm } from "@/components/profile/ProfileForm";
+import { useUser } from "@supabase/auth-helpers-react";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 const Dashboard = () => {
-  const navigate = useNavigate();
+  const user = useUser();
   const { isLoading: isPermissionsLoading, isError: isPermissionsError } = usePermissionsContext();
   
   // Hook pour gérer le tutoriel de prise en main
@@ -29,6 +31,25 @@ const Dashboard = () => {
     id: string;
     title: string;
   } | null>(null);
+  
+  // État pour la modale de profil (scénario 1)
+  const [isProfileFormOpen, setIsProfileFormOpen] = useState(false);
+
+  // Récupération du profil utilisateur pour ProfileForm
+  const { data: userProfile } = useQuery({
+    queryKey: ["dashboardUserProfile", user?.id],
+    queryFn: async () => {
+      if (!user?.id) return null;
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("id", user.id)
+        .single();
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!user?.id,
+  });
 
   // Hook pour récupérer les projets (nécessaire pour les modals)
   const { data: projects, refetch: refetchProjects } = useProjectsListView();
@@ -64,8 +85,6 @@ const Dashboard = () => {
 
   // Fonction de soumission du projet (callback optionnel)
   const handleProjectFormSubmit = async (projectData: any) => {
-    // La logique complète est gérée dans useProjectSubmit
-    // Cette fonction sert uniquement de callback après la création
     console.log("Projet créé avec succès:", projectData);
     return projectData;
   };
@@ -97,6 +116,16 @@ const Dashboard = () => {
         onClose={closeTutorial}
       />
       
+      {/* Modale d'incitation à compléter le profil (utilisateurs existants) */}
+      <IncompleteProfileDialog onOpenProfile={() => setIsProfileFormOpen(true)} />
+      
+      {/* Formulaire de profil */}
+      <ProfileForm 
+        isOpen={isProfileFormOpen} 
+        onClose={() => setIsProfileFormOpen(false)} 
+        profile={userProfile || null}
+      />
+      
       <UserInfo onOpenTutorial={openTutorial} />
       
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
@@ -104,12 +133,9 @@ const Dashboard = () => {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Zone de synthèse des projets */}
         <div className="lg:col-span-2">
           <ProjectsSummary />
         </div>
-
-        {/* Zone d'actions rapides */}
         <div>
           <QuickActions 
             onNewProject={handleNewProject}
@@ -118,12 +144,10 @@ const Dashboard = () => {
         </div>
       </div>
 
-      {/* Zone d'alertes - en pleine largeur */}
       <div className="mt-6">
         <AlertsSection />
       </div>
 
-      {/* Modals */}
       <ProjectModals
         isProjectFormOpen={isProjectFormOpen}
         onProjectFormClose={handleProjectFormClose}
