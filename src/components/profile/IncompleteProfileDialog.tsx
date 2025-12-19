@@ -73,7 +73,7 @@ export const IncompleteProfileDialog = ({ onOpenProfile }: IncompleteProfileDial
 
   return (
     <Dialog open={true} onOpenChange={(open) => !open && handleClose()}>
-      <DialogContent className="sm:max-w-[450px]">
+      <DialogContent className="sm:max-w-[450px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <User className="h-5 w-5 text-primary" />
@@ -86,7 +86,7 @@ export const IncompleteProfileDialog = ({ onOpenProfile }: IncompleteProfileDial
 
         <div className="py-4">
           {/* Barre de progression */}
-          <div className="mb-6">
+          <div className="mb-4">
             <div className="flex justify-between text-sm mb-2">
               <span className="text-muted-foreground">Progression du profil</span>
               <span className="font-medium">{completionPercentage}%</span>
@@ -100,7 +100,7 @@ export const IncompleteProfileDialog = ({ onOpenProfile }: IncompleteProfileDial
           </div>
 
           {/* Liste des éléments à compléter */}
-          <div className="space-y-3">
+          <div className="space-y-2">
             <ProfileItem 
               label="Prénom" 
               isComplete={completionStatus.hasFirstName}
@@ -112,35 +112,35 @@ export const IncompleteProfileDialog = ({ onOpenProfile }: IncompleteProfileDial
               icon={User}
             />
             <ProfileItem 
-              label="Affectation hiérarchique" 
+              label="Affectation" 
               isComplete={completionStatus.hasHierarchyAssignment}
               icon={Building2}
             />
           </div>
         </div>
 
-        <DialogFooter className="flex-col sm:flex-row gap-2">
-          <div className="flex gap-2 w-full sm:w-auto">
+        <DialogFooter className="flex-col gap-2 sm:flex-row">
+          <div className="flex gap-2 w-full sm:w-auto order-2 sm:order-1">
             <Button 
               variant="ghost" 
               size="sm"
               onClick={handleRemindLater}
-              className="flex-1 sm:flex-none"
+              className="flex-1 sm:flex-none text-xs px-2"
             >
-              <Clock className="h-4 w-4 mr-1" />
+              <Clock className="h-3 w-3 mr-1" />
               Demain
             </Button>
             <Button 
               variant="ghost" 
               size="sm"
               onClick={handleRemindNextWeek}
-              className="flex-1 sm:flex-none"
+              className="flex-1 sm:flex-none text-xs px-2"
             >
-              <Clock className="h-4 w-4 mr-1" />
-              Dans 7 jours
+              <Clock className="h-3 w-3 mr-1" />
+              7 jours
             </Button>
           </div>
-          <Button onClick={handleOpenProfile} className="w-full sm:w-auto">
+          <Button onClick={handleOpenProfile} className="w-full sm:w-auto order-1 sm:order-2">
             Compléter mon profil
           </Button>
         </DialogFooter>
@@ -161,20 +161,20 @@ const ProfileItem = ({
   isComplete: boolean; 
   icon: React.ComponentType<{ className?: string }>;
 }) => (
-  <div className="flex items-center justify-between p-3 rounded-lg bg-secondary/30">
-    <div className="flex items-center gap-3">
-      <Icon className="h-4 w-4 text-muted-foreground" />
+  <div className="flex items-center justify-between p-2 rounded-lg bg-secondary/30">
+    <div className="flex items-center gap-2">
+      <Icon className="h-4 w-4 text-muted-foreground flex-shrink-0" />
       <span className="text-sm">{label}</span>
     </div>
     {isComplete ? (
-      <Badge variant="outline" className="bg-green-500/10 text-green-600 border-green-200">
+      <Badge variant="outline" className="bg-green-500/10 text-green-600 border-green-200 text-xs px-2 py-0.5">
         <CheckCircle2 className="h-3 w-3 mr-1" />
-        Complété
+        OK
       </Badge>
     ) : (
-      <Badge variant="outline" className="bg-orange-500/10 text-orange-600 border-orange-200">
+      <Badge variant="outline" className="bg-orange-500/10 text-orange-600 border-orange-200 text-xs px-2 py-0.5">
         <XCircle className="h-3 w-3 mr-1" />
-        À renseigner
+        Manquant
       </Badge>
     )}
   </div>
