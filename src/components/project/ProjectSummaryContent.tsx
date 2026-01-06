@@ -10,6 +10,7 @@ import { TaskList } from "@/components/TaskList";
 import { InnovationRadarChart } from "@/components/innovation/InnovationRadarChart";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ProjectPortfoliosBadges } from "./ProjectPortfoliosBadges";
+import { PortfolioReadOnlyBadge } from "./PortfolioReadOnlyBadge";
 
 interface ProjectSummaryContentProps {
   project: any;
@@ -32,6 +33,12 @@ interface ProjectSummaryContentProps {
     isAdmin: boolean;
     canManageTeam: boolean;
     canManageRisks: boolean;
+    isReadOnlyViaPortfolio?: boolean;
+    portfolioAccessInfo?: {
+      portfolioId: string;
+      portfolioName: string;
+      role: 'owner' | 'manager' | 'viewer';
+    } | null;
   };
   teamManagement?: {
     project: any;
@@ -78,14 +85,23 @@ export const ProjectSummaryContent = ({
               <div className="flex items-center space-x-2">
                 <StatusIcon status={project.status as ProjectStatus} />
                 <h1 className="text-2xl font-bold">{project.title}</h1>
+                {/* Afficher le badge lecture seule si applicable */}
+                {permissions.isReadOnlyViaPortfolio && (
+                  <PortfolioReadOnlyBadge 
+                    portfolioName={permissions.portfolioAccessInfo?.portfolioName} 
+                  />
+                )}
               </div>
-              <ProjectSummaryActions 
-                project={project}
-                risks={risks}
-                tasks={tasks}
-                onEditProject={onEditProject}
-                onCreateReview={onCreateReview}
-              />
+              {/* Masquer les actions si en mode lecture seule via portefeuille */}
+              {!permissions.isReadOnlyViaPortfolio && (
+                <ProjectSummaryActions 
+                  project={project}
+                  risks={risks}
+                  tasks={tasks}
+                  onEditProject={onEditProject}
+                  onCreateReview={onCreateReview}
+                />
+              )}
             </div>
             <p className="text-gray-600">{project.description}</p>
             {/* Badges des portefeuilles associés */}

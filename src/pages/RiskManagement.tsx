@@ -10,13 +10,14 @@ import { Project } from "@/types/user";
 import { useProjectPermissions } from "@/hooks/useProjectPermissions";
 import { useToast } from "@/components/ui/use-toast";
 import { ProjectSummaryHeader } from "@/components/project/ProjectSummaryHeader";
+import { PortfolioReadOnlyBadge } from "@/components/project/PortfolioReadOnlyBadge";
 
 export const RiskManagement = () => {
   const { projectId } = useParams<{ projectId: string }>();
   const navigate = useNavigate();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const { canEdit, isProjectManager, isAdmin, isSecondaryProjectManager } = useProjectPermissions(projectId || "");
+  const { canEdit, isProjectManager, isAdmin, isSecondaryProjectManager, isReadOnlyViaPortfolio, portfolioAccessInfo } = useProjectPermissions(projectId || "");
 
   const { data: project, isLoading, error, refetch } = useQuery({
     queryKey: ["project", projectId],
@@ -80,14 +81,19 @@ export const RiskManagement = () => {
 
   return (
     <div className="container mx-auto py-8 px-4">
-      <Button
-        variant="ghost"
-        className="mb-6"
-        onClick={() => navigate("/")}
-      >
-        <ArrowLeft className="h-4 w-4 mr-2" />
-        Retour aux projets
-      </Button>
+      <div className="flex items-center gap-3 mb-6">
+        <Button
+          variant="ghost"
+          onClick={() => navigate("/")}
+        >
+          <ArrowLeft className="h-4 w-4 mr-2" />
+          Retour aux projets
+        </Button>
+        {/* Afficher le badge lecture seule si applicable */}
+        {isReadOnlyViaPortfolio && (
+          <PortfolioReadOnlyBadge portfolioName={portfolioAccessInfo?.portfolioName} />
+        )}
+      </div>
 
       <ProjectSummaryHeader
         title={project.title}
@@ -104,9 +110,9 @@ export const RiskManagement = () => {
         <RiskList 
           projectId={projectId || ""} 
           projectTitle={project.title}
-          canEdit={canEdit}
+          canEdit={isReadOnlyViaPortfolio ? false : canEdit}
           isProjectManager={isProjectManager}
-          isAdmin={isAdmin}
+          isAdmin={isReadOnlyViaPortfolio ? false : isAdmin}
           onUpdate={refreshData}
         />
       </div>

@@ -3,10 +3,14 @@ import { usePermissionsContext } from "@/contexts/PermissionsContext";
 import { useAdminModeAwareData } from "./useAdminModeAwareData";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { usePortfolioProjectAccess } from "./usePortfolioProjectAccess";
 
 export const useTaskPermissions = (projectId?: string, taskAssignee?: string) => {
   const { userProfile } = usePermissionsContext();
   const { effectiveAdminStatus: isAdmin } = useAdminModeAwareData();
+  
+  // Vérifier l'accès via portefeuille
+  const { hasAccessViaPortfolio } = usePortfolioProjectAccess(projectId || "");
   
   const { data: projectAccess } = useQuery({
     queryKey: ["projectAccess", projectId, userProfile?.id],
@@ -16,6 +20,7 @@ export const useTaskPermissions = (projectId?: string, taskAssignee?: string) =>
         isProjectManager: false,
         isSecondaryProjectManager: false,
         isMember: false,
+        hasRegularAccess: false,
       };
 
       const { data: project } = await supabase
@@ -31,7 +36,8 @@ export const useTaskPermissions = (projectId?: string, taskAssignee?: string) =>
           canEdit: true,
           isProjectManager,
           isSecondaryProjectManager: false,
-          isMember: true
+          isMember: true,
+          hasRegularAccess: true,
         };
       }
 
@@ -60,28 +66,36 @@ export const useTaskPermissions = (projectId?: string, taskAssignee?: string) =>
         .eq("user_id", userProfile.id)
         .maybeSingle();
 
+      const hasRegularAccess = !!canAccess || isSecondaryProjectManager || !!isMember;
+
       return {
         canEdit: !!canAccess || isSecondaryProjectManager,
         isProjectManager,
         isSecondaryProjectManager,
-        isMember: !!isMember
+        isMember: !!isMember,
+        hasRegularAccess,
       };
     },
     enabled: !!userProfile?.id && !!projectId,
   });
 
+  // Déterminer si l'utilisateur est en mode lecture seule via portefeuille
+  const isReadOnlyViaPortfolio = hasAccessViaPortfolio && !projectAccess?.hasRegularAccess && !isAdmin;
+
   // Un utilisateur peut gérer les tâches seulement s'il est admin, s'il a des droits d'édition spécifiques
-  // sur ce projet ou s'il est chef de projet secondaire
-  const canManage = isAdmin || projectAccess?.canEdit || projectAccess?.isSecondaryProjectManager || false;
+  // sur ce projet ou s'il est chef de projet secondaire - et s'il n'est pas en lecture seule via portefeuille
+  const canManage = isReadOnlyViaPortfolio ? false : (isAdmin || projectAccess?.canEdit || projectAccess?.isSecondaryProjectManager || false);
   
   return {
     canCreateTask: canManage,
-    canEditTask: (assignee?: string) => canManage || assignee === userProfile?.email,
+    canEditTask: (assignee?: string) => isReadOnlyViaPortfolio ? false : (canManage || assignee === userProfile?.email),
     canDeleteTask: canManage,
     isAdmin,
     isProjectManager: projectAccess?.isProjectManager || false,
     isSecondaryProjectManager: projectAccess?.isSecondaryProjectManager || false,
     isMember: projectAccess?.isMember || false,
+    isReadOnlyViaPortfolio,
     userEmail: userProfile?.email,
   };
 };
+
