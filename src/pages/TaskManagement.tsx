@@ -9,13 +9,14 @@ import { ProjectStatus, ProgressStatus } from "@/types/project";
 import { useProjectPermissions } from "@/hooks/useProjectPermissions";
 import { useToast } from "@/components/ui/use-toast";
 import { ProjectSummaryHeader } from "@/components/project/ProjectSummaryHeader";
+import { PortfolioReadOnlyBadge } from "@/components/project/PortfolioReadOnlyBadge";
 import { exportTasksToExcel } from "@/utils/activityExport";
 
 export const TaskManagement = () => {
   const { projectId } = useParams<{ projectId: string }>();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { canEdit, isProjectManager, isAdmin, isSecondaryProjectManager } = useProjectPermissions(projectId || "");
+  const { canEdit, isProjectManager, isAdmin, isSecondaryProjectManager, isReadOnlyViaPortfolio, portfolioAccessInfo } = useProjectPermissions(projectId || "");
 
   const { data: project } = useQuery({
     queryKey: ["project", projectId],
@@ -95,13 +96,19 @@ export const TaskManagement = () => {
   return (
     <div className="container mx-auto py-8 px-4">
       <div className="flex justify-between items-center mb-6">
-        <Button
-          variant="ghost"
-          onClick={() => navigate("/")}
-        >
-          <ArrowLeft className="h-4 w-4 mr-2" />
-          Retour aux projets
-        </Button>
+        <div className="flex items-center gap-3">
+          <Button
+            variant="ghost"
+            onClick={() => navigate("/")}
+          >
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Retour aux projets
+          </Button>
+          {/* Afficher le badge lecture seule si applicable */}
+          {isReadOnlyViaPortfolio && (
+            <PortfolioReadOnlyBadge portfolioName={portfolioAccessInfo?.portfolioName} />
+          )}
+        </div>
         
         <Button
           variant="outline"
@@ -127,9 +134,9 @@ export const TaskManagement = () => {
       <div className="mt-8">
         <TaskList 
           projectId={projectId || ""}
-          canEdit={canEdit}
+          canEdit={isReadOnlyViaPortfolio ? false : canEdit}
           isProjectManager={isProjectManager}
-          isAdmin={isAdmin}
+          isAdmin={isReadOnlyViaPortfolio ? false : isAdmin}
         />
       </div>
     </div>

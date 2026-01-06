@@ -4,10 +4,14 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useMemo } from "react";
 import { useAdminModeAwareData } from "./useAdminModeAwareData";
+import { usePortfolioProjectAccess } from "./usePortfolioProjectAccess";
 
 export const useProjectPermissions = (projectId: string) => {
   const { userProfile, accessibleOrganizations } = usePermissionsContext();
   const { effectiveAdminStatus: isAdmin } = useAdminModeAwareData();
+  
+  // Vérifier l'accès via portefeuille
+  const { hasAccessViaPortfolio, portfolioAccessInfo } = usePortfolioProjectAccess(projectId);
   
   const { data: projectAccess } = useQuery({
     queryKey: ["projectAccess", projectId, userProfile?.id],
@@ -16,7 +20,8 @@ export const useProjectPermissions = (projectId: string) => {
         canEdit: false,
         isProjectManager: false,
         isSecondaryProjectManager: false,
-        isMember: false
+        isMember: false,
+        hasRegularAccess: false
       };
 
       const { data: project } = await supabase
@@ -33,6 +38,7 @@ export const useProjectPermissions = (projectId: string) => {
           isProjectManager,
           isSecondaryProjectManager: false,
           isMember: true,
+          hasRegularAccess: true,
           projectOrganization: {
             pole_id: project?.pole_id,
             direction_id: project?.direction_id,
@@ -65,11 +71,15 @@ export const useProjectPermissions = (projectId: string) => {
         .eq("user_id", userProfile.id)
         .maybeSingle();
 
+      // L'utilisateur a un accès régulier s'il est membre, manager ou chef de projet secondaire
+      const hasRegularAccess = !!canAccess || isSecondaryProjectManager || !!isMember;
+
       return {
         canEdit: !!canAccess || isSecondaryProjectManager,
         isProjectManager,
         isSecondaryProjectManager,
         isMember: !!isMember,
+        hasRegularAccess,
         projectOrganization: {
           pole_id: project?.pole_id,
           direction_id: project?.direction_id,
@@ -80,6 +90,9 @@ export const useProjectPermissions = (projectId: string) => {
     enabled: !!userProfile?.id && !!projectId,
     staleTime: 300000, // 5 minutes
   });
+
+  // Déterminer si l'utilisateur est en mode lecture seule via portefeuille
+  const isReadOnlyViaPortfolio = hasAccessViaPortfolio && !projectAccess?.hasRegularAccess && !isAdmin;
 
   const { data: userRoles } = useQuery({
     queryKey: ["userRoles", userProfile?.id],
@@ -128,17 +141,24 @@ export const useProjectPermissions = (projectId: string) => {
     return hasPoleAccess && hasDirectionAccess && hasServiceAccess;
   }, [isAdmin, isManager, projectAccess, accessibleOrganizations]);
 
+  // Si lecture seule via portefeuille, forcer les permissions en lecture uniquement
+  const effectiveCanEdit = isReadOnlyViaPortfolio ? false : (projectAccess?.canEdit || false);
+  const effectiveCanManageRisks = isReadOnlyViaPortfolio ? false : (isAdmin || projectAccess?.canEdit || projectAccess?.isSecondaryProjectManager || false);
+  const effectiveCanManageTeam = isReadOnlyViaPortfolio ? false : (isAdmin || projectAccess?.isProjectManager || projectAccess?.isSecondaryProjectManager || false);
+
   return {
-    canManageRisks: isAdmin || projectAccess?.canEdit || projectAccess?.isSecondaryProjectManager || false,
-    canEdit: projectAccess?.canEdit || false,
+    canManageRisks: effectiveCanManageRisks,
+    canEdit: effectiveCanEdit,
     canCreate: isAdmin || isProjectManager,
-    canEditOrganization,  // Updated canEditOrganization
-    canManageTeam: isAdmin || projectAccess?.isProjectManager || projectAccess?.isSecondaryProjectManager || false,
+    canEditOrganization,
+    canManageTeam: effectiveCanManageTeam,
     isAdmin,
     isManager,
     isProjectManager: projectAccess?.isProjectManager || false,
     isSecondaryProjectManager: projectAccess?.isSecondaryProjectManager || false,
     isMember: projectAccess?.isMember || false,
+    isReadOnlyViaPortfolio,
+    portfolioAccessInfo,
     userEmail: userProfile?.email,
     accessibleOrganizations
   };
