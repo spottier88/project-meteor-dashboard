@@ -27,6 +27,7 @@ interface ProjectSummaryContentProps {
   };
   onEditProject?: () => void;
   onCreateReview?: () => void;
+  onClosureComplete?: () => void;
   permissions: {
     canEdit: boolean;
     isProjectManager: boolean;
@@ -58,6 +59,7 @@ export const ProjectSummaryContent = ({
   innovationScores,
   onEditProject,
   onCreateReview,
+  onClosureComplete,
   permissions,
   teamManagement,
 }: ProjectSummaryContentProps) => {
@@ -100,6 +102,7 @@ export const ProjectSummaryContent = ({
                   tasks={tasks}
                   onEditProject={onEditProject}
                   onCreateReview={onCreateReview}
+                  onClosureComplete={onClosureComplete}
                 />
               )}
             </div>
