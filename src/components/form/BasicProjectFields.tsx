@@ -89,11 +89,14 @@ export const BasicProjectFields = ({
             <SelectValue placeholder="Sélectionner un statut" />
           </SelectTrigger>
           <SelectContent>
-            {Object.entries(lifecycleStatusLabels).map(([value, label]) => (
-              <SelectItem key={value} value={value}>
-                {label}
-              </SelectItem>
-            ))}
+            {/* Exclure le statut "Terminé" - passage obligatoire par le processus de clôture */}
+            {Object.entries(lifecycleStatusLabels)
+              .filter(([value]) => value !== 'completed')
+              .map(([value, label]) => (
+                <SelectItem key={value} value={value}>
+                  {label}
+                </SelectItem>
+              ))}
           </SelectContent>
         </Select>
       </div>

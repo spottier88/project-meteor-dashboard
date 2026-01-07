@@ -164,6 +164,11 @@ export const ProjectSummary = () => {
     setIsReviewSheetOpen(true);
   };
 
+  const handleClosureComplete = async () => {
+    await refetchProject();
+    await refetchLastReview();
+  };
+
   const handleReviewClose = () => {
     setIsReviewSheetOpen(false);
   };
@@ -282,6 +287,7 @@ export const ProjectSummary = () => {
         innovationScores={innovationScores}
         onEditProject={handleEditProject}
         onCreateReview={handleCreateReview}
+        onClosureComplete={handleClosureComplete}
         permissions={projectPermissions}
         teamManagement={teamManagement}
       />

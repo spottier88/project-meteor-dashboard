@@ -991,6 +991,50 @@ export type Database = {
           },
         ]
       }
+      project_evaluations: {
+        Row: {
+          created_at: string | null
+          created_by: string | null
+          id: string
+          improvements: string | null
+          lessons_learned: string | null
+          project_id: string
+          updated_at: string | null
+          what_was_missing: string | null
+          what_worked: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          improvements?: string | null
+          lessons_learned?: string | null
+          project_id: string
+          updated_at?: string | null
+          what_was_missing?: string | null
+          what_worked?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          improvements?: string | null
+          lessons_learned?: string | null
+          project_id?: string
+          updated_at?: string | null
+          what_was_missing?: string | null
+          what_worked?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_evaluations_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: true
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       project_framing: {
         Row: {
           context: string | null
@@ -1327,6 +1371,9 @@ export type Database = {
       }
       projects: {
         Row: {
+          closed_at: string | null
+          closed_by: string | null
+          closure_status: string | null
           created_at: string | null
           description: string | null
           direction_id: string | null
@@ -1351,6 +1398,9 @@ export type Database = {
           title: string
         }
         Insert: {
+          closed_at?: string | null
+          closed_by?: string | null
+          closure_status?: string | null
           created_at?: string | null
           description?: string | null
           direction_id?: string | null
@@ -1375,6 +1425,9 @@ export type Database = {
           title: string
         }
         Update: {
+          closed_at?: string | null
+          closed_by?: string | null
+          closure_status?: string | null
           created_at?: string | null
           description?: string | null
           direction_id?: string | null
@@ -1493,6 +1546,7 @@ export type Database = {
           created_at: string | null
           difficulties: string | null
           id: string
+          is_final_review: boolean | null
           progress: Database["public"]["Enums"]["progress_status"]
           project_id: string
           weather: Database["public"]["Enums"]["project_status"]
@@ -1503,6 +1557,7 @@ export type Database = {
           created_at?: string | null
           difficulties?: string | null
           id?: string
+          is_final_review?: boolean | null
           progress: Database["public"]["Enums"]["progress_status"]
           project_id: string
           weather: Database["public"]["Enums"]["project_status"]
@@ -1513,6 +1568,7 @@ export type Database = {
           created_at?: string | null
           difficulties?: string | null
           id?: string
+          is_final_review?: boolean | null
           progress?: Database["public"]["Enums"]["progress_status"]
           project_id?: string
           weather?: Database["public"]["Enums"]["project_status"]

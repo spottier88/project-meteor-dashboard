@@ -3,7 +3,7 @@
  * @description Actions disponibles sur la vue de résumé d'un projet.
  * Permet d'exporter les informations du projet au format PPTX ou PDF (note de cadrage)
  * en combinant les données du projet, des revues, des risques et des tâches.
- * Inclut également un bouton pour éditer le projet et créer une revue.
+ * Inclut également un bouton pour éditer le projet, créer une revue et clôturer le projet.
  */
 
 import { useState } from "react";
@@ -15,12 +15,14 @@ import { ProjectData as PPTXProjectData } from "@/components/pptx/types";
 import { ProjectStatus, ProgressStatus, ProjectLifecycleStatus } from "@/types/project";
 import { RiskProbability, RiskSeverity, RiskStatus } from "@/types/risk";
 import { useDetailedProjectsData, ProjectData } from "@/hooks/use-detailed-projects-data";
-import { Presentation, FileText, Edit, Calendar } from "lucide-react";
+import { Presentation, FileText, Edit, Calendar, CheckCircle, FileCheck } from "lucide-react";
 import { generateProjectFramingPDF } from "@/components/framing/ProjectFramingExport";
 import { generateProjectFramingDOCX } from "@/components/framing/ProjectFramingExportDOCX";
 import { FramingExportDialog } from "@/components/framing/FramingExportDialog";
 import { useProjectPermissions } from "@/hooks/useProjectPermissions";
 import { useReviewAccess } from "@/hooks/use-review-access";
+import { ProjectClosureDialog } from "./closure/ProjectClosureDialog";
+import { ClosurePendingBadge } from "./ClosurePendingBadge";
 
 interface ProjectSummaryActionsProps {
   project: any;
@@ -28,6 +30,7 @@ interface ProjectSummaryActionsProps {
   tasks?: any[];
   onEditProject?: () => void;
   onCreateReview?: () => void;
+  onClosureComplete?: () => void;
 }
 
 const ProjectSummaryActions = ({ 
@@ -35,18 +38,25 @@ const ProjectSummaryActions = ({
   risks = [], 
   tasks = [], 
   onEditProject,
-  onCreateReview 
+  onCreateReview,
+  onClosureComplete,
 }: ProjectSummaryActionsProps) => {
   const { toast } = useToast();
   const [isExporting, setIsExporting] = useState(false);
   const [isExportingFraming, setIsExportingFraming] = useState(false);
   const [showExportDialog, setShowExportDialog] = useState(false);
+  const [isClosureDialogOpen, setIsClosureDialogOpen] = useState(false);
   
   // Vérifier les permissions pour l'édition
   const { canEdit } = useProjectPermissions(project?.id);
   
   // Vérifier les permissions pour créer une revue
   const { canCreateReview } = useReviewAccess(project?.id);
+
+  // Conditions pour afficher le bouton de clôture
+  const canCloseProject = canEdit && project?.lifecycle_status !== 'completed';
+  const hasPendingEvaluation = project?.lifecycle_status === 'completed' && project?.closure_status === 'pending_evaluation';
+  const lastCompletion = project?.completion || 0;
 
   const fetchDetailedProject = async (projectId: string): Promise<ProjectData | null> => {
     try {
@@ -178,7 +188,10 @@ const ProjectSummaryActions = ({
 
   return (
     <>
-      <div className="flex space-x-4">
+      <div className="flex flex-wrap gap-2">
+        {/* Badge évaluation en attente */}
+        {hasPendingEvaluation && <ClosurePendingBadge />}
+
         {canEdit && (
           <Button 
             onClick={onEditProject}
@@ -189,10 +202,34 @@ const ProjectSummaryActions = ({
             Modifier
           </Button>
         )}
-        {canCreateReview && (
+
+        {/* Bouton clôturer le projet */}
+        {canCloseProject && (
+          <Button 
+            onClick={() => setIsClosureDialogOpen(true)}
+            className="bg-green-600 hover:bg-green-700 text-white"
+          >
+            <CheckCircle className="h-4 w-4 mr-2" />
+            Clôturer le projet
+          </Button>
+        )}
+
+        {/* Bouton compléter l'évaluation */}
+        {hasPendingEvaluation && canEdit && (
+          <Button 
+            onClick={() => setIsClosureDialogOpen(true)}
+            variant="outline"
+            className="border-orange-300 text-orange-600 hover:bg-orange-50"
+          >
+            <FileCheck className="h-4 w-4 mr-2" />
+            Compléter l'évaluation
+          </Button>
+        )}
+
+        {canCreateReview && project?.lifecycle_status !== 'completed' && (
           <Button 
             onClick={onCreateReview}
-            className="w-full justify-start bg-blue-600 text-white hover:bg-blue-700" 
+            className="bg-blue-600 text-white hover:bg-blue-700" 
             size="sm"
           >
             <Calendar className="h-4 w-4 mr-2" />
@@ -223,6 +260,16 @@ const ProjectSummaryActions = ({
         onOpenChange={setShowExportDialog}
         onExport={handleExportFraming}
         isExporting={isExportingFraming}
+      />
+
+      <ProjectClosureDialog
+        projectId={project?.id || ""}
+        projectTitle={project?.title || ""}
+        isOpen={isClosureDialogOpen}
+        onClose={() => setIsClosureDialogOpen(false)}
+        onClosureComplete={onClosureComplete}
+        lastCompletion={lastCompletion}
+        pendingEvaluationMode={hasPendingEvaluation}
       />
     </>
   );
