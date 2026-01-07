@@ -97,7 +97,6 @@ export const ProjectClosureDialog = ({
             initialData={closureState.finalReviewData}
             lastCompletion={lastCompletion}
             onSubmit={saveFinalReviewData}
-            onPostpone={handlePostpone}
             onBack={goToPreviousStep}
             isSubmitting={closureState.isSubmitting}
           />
@@ -108,7 +107,9 @@ export const ProjectClosureDialog = ({
           <ClosureStepMethodEvaluation
             initialData={closureState.evaluationData}
             onSubmit={saveEvaluationData}
+            onPostpone={handlePostpone}
             onBack={pendingEvaluationMode ? onClose : goToPreviousStep}
+            isSubmitting={closureState.isSubmitting}
           />
         );
       

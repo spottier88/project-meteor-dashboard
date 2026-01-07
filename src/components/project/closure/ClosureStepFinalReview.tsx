@@ -9,14 +9,13 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Slider } from "@/components/ui/slider";
-import { Sun, Cloud, CloudRain, TrendingUp, Minus, TrendingDown, Clock } from "lucide-react";
+import { Sun, Cloud, CloudRain, TrendingUp, Minus, TrendingDown } from "lucide-react";
 import { FinalReviewFormData } from "@/types/project-closure";
 
 interface ClosureStepFinalReviewProps {
   initialData?: FinalReviewFormData | null;
   lastCompletion?: number;
   onSubmit: (data: FinalReviewFormData) => void;
-  onPostpone: () => void;
   onBack: () => void;
   isSubmitting?: boolean;
 }
@@ -25,7 +24,6 @@ export const ClosureStepFinalReview = ({
   initialData,
   lastCompletion = 0,
   onSubmit,
-  onPostpone,
   onBack,
   isSubmitting = false,
 }: ClosureStepFinalReviewProps) => {
@@ -179,20 +177,9 @@ export const ClosureStepFinalReview = ({
         <Button variant="outline" onClick={onBack}>
           Retour
         </Button>
-        <div className="flex gap-3">
-          <Button 
-            variant="outline" 
-            onClick={onPostpone}
-            disabled={isSubmitting}
-            className="text-orange-600 border-orange-300 hover:bg-orange-50"
-          >
-            <Clock className="h-4 w-4 mr-2" />
-            Reporter l'évaluation
-          </Button>
-          <Button onClick={handleSubmit} disabled={isSubmitting}>
-            Continuer
-          </Button>
-        </div>
+        <Button onClick={handleSubmit} disabled={isSubmitting}>
+          Continuer
+        </Button>
       </div>
     </div>
   );

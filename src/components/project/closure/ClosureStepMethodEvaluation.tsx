@@ -7,19 +7,23 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { ThumbsUp, AlertCircle, Lightbulb, GraduationCap } from "lucide-react";
+import { ThumbsUp, AlertCircle, Lightbulb, GraduationCap, Clock } from "lucide-react";
 import { EvaluationFormData } from "@/types/project-closure";
 
 interface ClosureStepMethodEvaluationProps {
   initialData?: EvaluationFormData | null;
   onSubmit: (data: EvaluationFormData) => void;
+  onPostpone: () => void;
   onBack: () => void;
+  isSubmitting?: boolean;
 }
 
 export const ClosureStepMethodEvaluation = ({
   initialData,
   onSubmit,
+  onPostpone,
   onBack,
+  isSubmitting = false,
 }: ClosureStepMethodEvaluationProps) => {
   const [whatWorked, setWhatWorked] = useState(initialData?.what_worked || '');
   const [whatWasMissing, setWhatWasMissing] = useState(initialData?.what_was_missing || '');
@@ -122,9 +126,20 @@ export const ClosureStepMethodEvaluation = ({
         <Button variant="outline" onClick={onBack}>
           Retour
         </Button>
-        <Button onClick={handleSubmit}>
-          Continuer
-        </Button>
+        <div className="flex gap-3">
+          <Button 
+            variant="outline" 
+            onClick={onPostpone}
+            disabled={isSubmitting}
+            className="text-orange-600 border-orange-300 hover:bg-orange-50"
+          >
+            <Clock className="h-4 w-4 mr-2" />
+            Reporter l'évaluation
+          </Button>
+          <Button onClick={handleSubmit} disabled={isSubmitting}>
+            Continuer
+          </Button>
+        </div>
       </div>
     </div>
   );
