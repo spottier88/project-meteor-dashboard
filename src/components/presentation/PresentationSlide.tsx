@@ -2,13 +2,15 @@
  * @file PresentationSlide.tsx
  * @description Composant de slide individuel reproduisant le design PPTX
  * avec en-tête rouge, grille de sections et informations projet.
- * Affichage plein écran adaptatif sans troncature de texte ni de listes.
+ * Affichage plein écran adaptatif avec troncature et bouton loupe pour les contenus longs.
  */
 
+import { useState, useRef, useEffect } from "react";
 import { ProjectData } from "@/hooks/use-detailed-projects-data";
 import { lifecycleStatusLabels } from "@/types/project";
-import { Sun, Cloud, CloudRain, TrendingUp, TrendingDown, Minus } from "lucide-react";
+import { Sun, Cloud, CloudRain, TrendingUp, TrendingDown, Minus, Expand } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { SectionDetailDialog } from "./SectionDetailDialog";
 
 interface PresentationSlideProps {
   data: ProjectData;
@@ -65,7 +67,7 @@ export const PresentationSlide = ({ data }: PresentationSlideProps) => {
               </span>
             </h1>
             {data.project.description && (
-              <p className="text-sm opacity-90 mt-1">{data.project.description}</p>
+              <p className="text-sm opacity-90 mt-1 line-clamp-1">{data.project.description}</p>
             )}
           </div>
           <div className="text-right text-sm flex-shrink-0">
@@ -85,8 +87,8 @@ export const PresentationSlide = ({ data }: PresentationSlideProps) => {
 
       {/* Grille de contenu - utilise tout l'espace disponible */}
       <div className="flex-1 p-2 flex flex-col gap-1.5 min-h-0 overflow-hidden">
-        {/* Première ligne : Situation, Évolution, Situation générale, Fin cible - étendue */}
-        <div className="grid grid-cols-12 gap-1.5 flex-shrink-0" style={{ height: '22%' }}>
+        {/* Première ligne : Situation, Évolution, Situation générale, Fin cible */}
+        <div className="grid grid-cols-12 gap-1.5" style={{ height: '20%', minHeight: 0 }}>
           {/* Situation (météo) */}
           <div className="col-span-1">
             <Section title="SITUATION">
@@ -107,8 +109,16 @@ export const PresentationSlide = ({ data }: PresentationSlideProps) => {
 
           {/* Situation générale */}
           <div className="col-span-8">
-            <Section title="SITUATION GÉNÉRALE" scrollable>
-              <p className="text-sm text-muted-foreground leading-relaxed">
+            <Section 
+              title="SITUATION GÉNÉRALE" 
+              expandable
+              fullContent={
+                <p className="whitespace-pre-wrap">
+                  {data.lastReview?.comment || "Pas de commentaire"}
+                </p>
+              }
+            >
+              <p className="text-sm text-muted-foreground leading-relaxed line-clamp-3">
                 {data.lastReview?.comment || "Pas de commentaire"}
               </p>
             </Section>
@@ -126,33 +136,67 @@ export const PresentationSlide = ({ data }: PresentationSlideProps) => {
           </div>
         </div>
 
-        {/* Deuxième ligne : Tâches - occupe 45% de l'espace */}
-        <div className="grid grid-cols-3 gap-1.5 flex-1 min-h-0" style={{ height: '45%' }}>
-          <Section title="TÂCHES TERMINÉES" scrollable>
-            <TaskList tasks={tasksDone} />
+        {/* Deuxième ligne : Tâches */}
+        <div className="grid grid-cols-3 gap-1.5" style={{ height: '40%', minHeight: 0 }}>
+          <Section 
+            title="TÂCHES TERMINÉES" 
+            expandable
+            fullContent={<TaskListFull tasks={tasksDone} />}
+          >
+            <TaskList tasks={tasksDone} maxItems={5} />
           </Section>
-          <Section title="TÂCHES EN COURS" scrollable>
-            <TaskList tasks={tasksInProgress} />
+          <Section 
+            title="TÂCHES EN COURS" 
+            expandable
+            fullContent={<TaskListFull tasks={tasksInProgress} />}
+          >
+            <TaskList tasks={tasksInProgress} maxItems={5} />
           </Section>
-          <Section title="TÂCHES À VENIR" scrollable>
-            <TaskList tasks={tasksTodo} />
+          <Section 
+            title="TÂCHES À VENIR" 
+            expandable
+            fullContent={<TaskListFull tasks={tasksTodo} />}
+          >
+            <TaskList tasks={tasksTodo} maxItems={5} />
           </Section>
         </div>
 
-        {/* Troisième ligne : Difficultés et Actions - occupe le reste */}
-        <div className="grid grid-cols-2 gap-1.5 flex-1 min-h-0" style={{ height: '40%' }}>
-          <Section title="DIFFICULTÉS EN COURS" scrollable>
+        {/* Troisième ligne : Difficultés et Actions */}
+        <div className="grid grid-cols-2 gap-1.5" style={{ height: '35%', minHeight: 0 }}>
+          <Section 
+            title="DIFFICULTÉS EN COURS" 
+            expandable
+            fullContent={
+              data.lastReview?.difficulties ? (
+                <p className="whitespace-pre-wrap">{data.lastReview.difficulties}</p>
+              ) : data.risks.length > 0 ? (
+                <BulletListFull items={data.risks.map((r) => r.description)} />
+              ) : (
+                <p className="italic">Aucune difficulté signalée</p>
+              )
+            }
+          >
             {data.lastReview?.difficulties ? (
-              <p className="text-xs text-muted-foreground">{data.lastReview.difficulties}</p>
+              <p className="text-xs text-muted-foreground line-clamp-4">{data.lastReview.difficulties}</p>
             ) : data.risks.length > 0 ? (
-              <BulletList items={data.risks.map((r) => r.description)} />
+              <BulletList items={data.risks.map((r) => r.description)} maxItems={4} />
             ) : (
               <p className="text-xs text-muted-foreground italic">Aucune difficulté signalée</p>
             )}
           </Section>
-          <Section title="ACTIONS CORRECTIVES" scrollable>
+          <Section 
+            title="ACTIONS CORRECTIVES" 
+            expandable
+            fullContent={
+              data.lastReview?.actions && data.lastReview.actions.length > 0 ? (
+                <BulletListFull items={data.lastReview.actions.map((a) => a.description)} />
+              ) : (
+                <p className="italic">Aucune action définie</p>
+              )
+            }
+          >
             {data.lastReview?.actions && data.lastReview.actions.length > 0 ? (
-              <BulletList items={data.lastReview.actions.map((a) => a.description)} />
+              <BulletList items={data.lastReview.actions.map((a) => a.description)} maxItems={4} />
             ) : (
               <p className="text-xs text-muted-foreground italic">Aucune action définie</p>
             )}
@@ -163,41 +207,112 @@ export const PresentationSlide = ({ data }: PresentationSlideProps) => {
   );
 };
 
-// Composant Section avec titre noir et scroll optionnel
+// Composant Section avec titre noir, détection de débordement et bouton loupe
 interface SectionProps {
   title: string;
   children: React.ReactNode;
-  scrollable?: boolean;
+  /** Active la possibilité d'étendre le contenu via un bouton loupe */
+  expandable?: boolean;
+  /** Contenu complet à afficher dans le dialogue (si différent de children) */
+  fullContent?: React.ReactNode;
 }
 
-const Section = ({ title, children, scrollable = false }: SectionProps) => (
-  <div className="bg-muted/50 rounded overflow-hidden h-full flex flex-col">
-    <div className="bg-black text-white text-[10px] font-bold py-0.5 px-1.5 text-center flex-shrink-0">
-      {title}
-    </div>
-    <div className={cn(
-      "p-1.5 flex-1 min-h-0",
-      scrollable && "overflow-y-auto"
-    )}>
-      {children}
-    </div>
-  </div>
-);
+const Section = ({ title, children, expandable = false, fullContent }: SectionProps) => {
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const contentRef = useRef<HTMLDivElement>(null);
+  const [hasOverflow, setHasOverflow] = useState(false);
 
-// Composant liste de tâches - affiche toutes les tâches sans limite
+  // Détection du débordement de contenu
+  useEffect(() => {
+    const checkOverflow = () => {
+      if (contentRef.current) {
+        const { scrollHeight, clientHeight } = contentRef.current;
+        setHasOverflow(scrollHeight > clientHeight + 2); // +2 pour tolérance
+      }
+    };
+
+    checkOverflow();
+    // Re-vérifier lors du redimensionnement
+    window.addEventListener('resize', checkOverflow);
+    return () => window.removeEventListener('resize', checkOverflow);
+  }, [children]);
+
+  const showExpandButton = expandable && hasOverflow;
+
+  return (
+    <>
+      <div className="bg-muted/50 rounded overflow-hidden h-full flex flex-col">
+        <div className="bg-black text-white text-[10px] font-bold py-0.5 px-1.5 text-center flex-shrink-0 relative">
+          {title}
+          {showExpandButton && (
+            <button
+              onClick={() => setIsDialogOpen(true)}
+              className="absolute right-1 top-1/2 -translate-y-1/2 hover:bg-white/20 rounded p-0.5 transition-colors"
+              title="Voir le contenu complet"
+            >
+              <Expand className="h-3 w-3" />
+            </button>
+          )}
+        </div>
+        <div 
+          ref={contentRef}
+          className="p-1.5 flex-1 min-h-0 overflow-hidden"
+        >
+          {children}
+        </div>
+      </div>
+      {expandable && (
+        <SectionDetailDialog
+          title={title}
+          content={fullContent || children}
+          isOpen={isDialogOpen}
+          onClose={() => setIsDialogOpen(false)}
+        />
+      )}
+    </>
+  );
+};
+
+// Composant liste de tâches avec limite
 interface TaskListProps {
   tasks: Array<{ title: string }>;
+  maxItems?: number;
 }
 
-const TaskList = ({ tasks }: TaskListProps) => {
+const TaskList = ({ tasks, maxItems = 5 }: TaskListProps) => {
   if (tasks.length === 0) {
     return <p className="text-xs text-muted-foreground italic">Aucune tâche</p>;
   }
 
+  const displayedTasks = tasks.slice(0, maxItems);
+  const remaining = tasks.length - maxItems;
+
   return (
     <ol className="text-xs space-y-0.5 list-decimal list-inside">
+      {displayedTasks.map((task, index) => (
+        <li key={index} className="text-muted-foreground leading-tight truncate">
+          {task.title}
+        </li>
+      ))}
+      {remaining > 0 && (
+        <li className="text-muted-foreground/60 italic list-none">
+          +{remaining} autre{remaining > 1 ? 's' : ''}...
+        </li>
+      )}
+    </ol>
+  );
+};
+
+// Composant liste de tâches complète pour le dialogue
+const TaskListFull = ({ tasks }: { tasks: Array<{ title: string }> }) => {
+  if (tasks.length === 0) {
+    return <p className="italic">Aucune tâche</p>;
+  }
+
+  return (
+    <ol className="space-y-1 list-decimal list-inside">
       {tasks.map((task, index) => (
-        <li key={index} className="text-muted-foreground leading-tight">
+        <li key={index} className="leading-relaxed">
           {task.title}
         </li>
       ))}
@@ -205,20 +320,46 @@ const TaskList = ({ tasks }: TaskListProps) => {
   );
 };
 
-// Composant liste à puces - affiche tous les éléments sans limite
+// Composant liste à puces avec limite
 interface BulletListProps {
   items: string[];
+  maxItems?: number;
 }
 
-const BulletList = ({ items }: BulletListProps) => {
+const BulletList = ({ items, maxItems = 4 }: BulletListProps) => {
   if (items.length === 0) {
     return <p className="text-xs text-muted-foreground italic">Aucun élément</p>;
   }
 
+  const displayedItems = items.slice(0, maxItems);
+  const remaining = items.length - maxItems;
+
   return (
     <ol className="text-xs space-y-0.5 list-decimal list-inside">
+      {displayedItems.map((item, index) => (
+        <li key={index} className="text-muted-foreground leading-tight line-clamp-2">
+          {item}
+        </li>
+      ))}
+      {remaining > 0 && (
+        <li className="text-muted-foreground/60 italic list-none">
+          +{remaining} autre{remaining > 1 ? 's' : ''}...
+        </li>
+      )}
+    </ol>
+  );
+};
+
+// Composant liste à puces complète pour le dialogue
+const BulletListFull = ({ items }: { items: string[] }) => {
+  if (items.length === 0) {
+    return <p className="italic">Aucun élément</p>;
+  }
+
+  return (
+    <ol className="space-y-2 list-decimal list-inside">
       {items.map((item, index) => (
-        <li key={index} className="text-muted-foreground leading-tight">
+        <li key={index} className="leading-relaxed">
           {item}
         </li>
       ))}
