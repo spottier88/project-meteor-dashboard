@@ -5,7 +5,7 @@
  * Affichage plein écran adaptatif avec troncature et bouton loupe pour les contenus longs.
  */
 
-import { useState, useRef, useEffect } from "react";
+import { useState } from "react";
 import { ProjectData } from "@/hooks/use-detailed-projects-data";
 import { lifecycleStatusLabels } from "@/types/project";
 import { Sun, Cloud, CloudRain, TrendingUp, TrendingDown, Minus, Expand } from "lucide-react";
@@ -219,25 +219,10 @@ interface SectionProps {
 
 const Section = ({ title, children, expandable = false, fullContent }: SectionProps) => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const contentRef = useRef<HTMLDivElement>(null);
-  const [hasOverflow, setHasOverflow] = useState(false);
 
-  // Détection du débordement de contenu
-  useEffect(() => {
-    const checkOverflow = () => {
-      if (contentRef.current) {
-        const { scrollHeight, clientHeight } = contentRef.current;
-        setHasOverflow(scrollHeight > clientHeight + 2); // +2 pour tolérance
-      }
-    };
-
-    checkOverflow();
-    // Re-vérifier lors du redimensionnement
-    window.addEventListener('resize', checkOverflow);
-    return () => window.removeEventListener('resize', checkOverflow);
-  }, [children]);
-
-  const showExpandButton = expandable && hasOverflow;
+  // Afficher le bouton loupe pour toutes les sections expandables
+  // (le line-clamp CSS masque le débordement réel, donc on affiche toujours le bouton)
+  const showExpandButton = expandable;
 
   return (
     <>
@@ -254,10 +239,7 @@ const Section = ({ title, children, expandable = false, fullContent }: SectionPr
             </button>
           )}
         </div>
-        <div 
-          ref={contentRef}
-          className="p-1.5 flex-1 min-h-0 overflow-hidden"
-        >
+        <div className="p-1.5 flex-1 min-h-0 overflow-hidden">
           {children}
         </div>
       </div>
