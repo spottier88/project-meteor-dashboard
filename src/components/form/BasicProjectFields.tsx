@@ -1,13 +1,14 @@
+import { useState } from "react";
+import { ChevronsUpDown } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
 import { UserProfile } from "@/types/user";
-import { Label } from "@/components/ui/label";
 import { DateInputField } from "./DateInputField";
 import { ProjectLifecycleStatus, lifecycleStatusLabels } from "@/types/project";
-import { ProjectManagerCombobox } from "./ProjectManagerCombobox";
+import { ProjectManagerDialog } from "./ProjectManagerDialog";
 import { PortfolioMultiSelect } from "./PortfolioMultiSelect";
-
 interface BasicProjectFieldsProps {
   title: string;
   setTitle: (value: string) => void;
@@ -53,6 +54,18 @@ export const BasicProjectFields = ({
   projectManagers,
 }: BasicProjectFieldsProps) => {
   const canEditProjectManager = Boolean(isAdmin) || Boolean(isManager);
+  const [isManagerDialogOpen, setIsManagerDialogOpen] = useState(false);
+
+  // Trouver le manager sélectionné pour afficher son nom
+  const selectedManager = projectManagers?.find((m) => m.email === projectManager);
+  
+  const getManagerDisplayName = (manager: UserProfile | undefined) => {
+    if (!manager) return "";
+    if (manager.first_name && manager.last_name) {
+      return `${manager.first_name} ${manager.last_name}`;
+    }
+    return manager.email || "";
+  };
 
   return (
     <div className="space-y-4">
@@ -116,11 +129,35 @@ export const BasicProjectFields = ({
           Chef de projet *
         </label>
         {canEditProjectManager && projectManagers ? (
-          <ProjectManagerCombobox
-            value={projectManager}
-            onChange={setProjectManager}
-            projectManagers={projectManagers}
-          />
+          <>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setIsManagerDialogOpen(true)}
+              className="w-full justify-between"
+            >
+              {selectedManager ? (
+                <span className="truncate">
+                  {getManagerDisplayName(selectedManager)}
+                  <span className="text-muted-foreground ml-2">
+                    ({selectedManager.email})
+                  </span>
+                </span>
+              ) : (
+                <span className="text-muted-foreground">
+                  Sélectionner un chef de projet...
+                </span>
+              )}
+              <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+            </Button>
+            <ProjectManagerDialog
+              isOpen={isManagerDialogOpen}
+              onClose={() => setIsManagerDialogOpen(false)}
+              value={projectManager}
+              onChange={setProjectManager}
+              projectManagers={projectManagers}
+            />
+          </>
         ) : (
           <Input
             id="project-manager"
