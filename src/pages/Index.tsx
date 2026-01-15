@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useUser } from "@supabase/auth-helpers-react";
 import { useNavigate } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { DashboardHeader } from "@/components/DashboardHeader";
 import { UserInfo } from "@/components/UserInfo";
@@ -94,6 +95,23 @@ const Index = () => {
   // Utilisation du hook optimisé
   const { data: projects, isLoading: isProjectsLoading, refetch: refetchProjects } = useProjectsListView();
 
+  // Récupérer les projets dont l'utilisateur est membre
+  const { data: userMemberships } = useQuery({
+    queryKey: ["userProjectMemberships", user?.id],
+    queryFn: async () => {
+      if (!user?.id) return [];
+      const { data, error } = await supabase
+        .from("project_members")
+        .select("project_id")
+        .eq("user_id", user.id);
+      
+      if (error) throw error;
+      return data?.map(pm => pm.project_id) || [];
+    },
+    enabled: !!user?.id,
+    staleTime: 5 * 60 * 1000, // Cache de 5 minutes
+  });
+
   const [accessibleProjectIds, setAccessibleProjectIds] = useState<string[]>([]);
 
   const handleFilteredProjectsChange = (projectIds: string[]) => {
@@ -117,8 +135,12 @@ const Index = () => {
       }
     }
 
+    // Filtre "Mes projets" : chef de projet OU membre
     if (showMyProjectsOnly && userProfile) {
-      if (project.project_manager !== userProfile.email) {
+      const isProjectManager = project.project_manager === userProfile.email;
+      const isMember = userMemberships?.includes(project.id) || false;
+      
+      if (!isProjectManager && !isMember) {
         return false;
       }
     }
