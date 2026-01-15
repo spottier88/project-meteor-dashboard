@@ -2,6 +2,8 @@
  * @component ProjectNotesList
  * @description Affiche la liste des notes d'un projet avec le formulaire d'ajout.
  * Gère l'affichage, la création, l'édition et la suppression des notes.
+ * Le dialogue de suppression est centralisé ici pour éviter les problèmes
+ * de pointer-events lock avec Radix UI (quand le composant enfant est démonté).
  */
 
 import { useState, useRef } from "react";
@@ -9,6 +11,16 @@ import { useProjectNotes } from "@/hooks/useProjectNotes";
 import { ProjectNoteForm } from "./ProjectNoteForm";
 import { ProjectNoteCard } from "./ProjectNoteCard";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { FileText } from "lucide-react";
 import type { ProjectNote, ProjectNoteType } from "@/types/project-notes";
 
@@ -34,6 +46,8 @@ export const ProjectNotesList = ({
   } = useProjectNotes(projectId);
 
   const [editingNote, setEditingNote] = useState<ProjectNote | null>(null);
+  // Note en attente de suppression (pour le dialogue centralisé)
+  const [noteToDelete, setNoteToDelete] = useState<ProjectNote | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
   // Fonction pour restaurer le focus sur le conteneur
@@ -57,14 +71,37 @@ export const ProjectNotesList = ({
     setEditingNote(null);
   };
 
-  // Supprimer une note avec restauration du focus
-  const handleDelete = (noteId: string) => {
-    deleteNote.mutate(noteId, {
-      onSuccess: () => {
-        // Restaurer le focus sur le conteneur après suppression
-        setTimeout(() => focusContainer(), 0);
-      },
-    });
+  // Demande de suppression (ouvre le dialogue)
+  const handleRequestDelete = (note: ProjectNote) => {
+    setNoteToDelete(note);
+  };
+
+  // Confirmation de suppression (appelée depuis le dialogue)
+  const handleConfirmDelete = () => {
+    if (!noteToDelete) return;
+    
+    const noteId = noteToDelete.id;
+    // Fermer le dialogue d'abord pour laisser Radix nettoyer correctement
+    setNoteToDelete(null);
+    
+    // Exécuter la suppression au tick suivant pour éviter les conflits
+    setTimeout(() => {
+      deleteNote.mutate(noteId, {
+        onSuccess: () => {
+          // Restaurer le focus sur le conteneur après suppression
+          setTimeout(() => focusContainer(), 0);
+        },
+      });
+    }, 0);
+  };
+
+  // Gestion de la fermeture du dialogue de suppression
+  const handleDeleteDialogChange = (open: boolean) => {
+    if (!open) {
+      setNoteToDelete(null);
+      // Filet de sécurité : s'assurer que pointer-events est réinitialisé
+      document.body.style.pointerEvents = "";
+    }
   };
 
   // Épingler/désépingler une note
@@ -134,12 +171,38 @@ export const ProjectNotesList = ({
               canEdit={canEditNote(note)}
               canDelete={canDeleteNote(note)}
               onEdit={setEditingNote}
-              onDelete={handleDelete}
+              onRequestDelete={handleRequestDelete}
               onTogglePin={handleTogglePin}
             />
           ))}
         </div>
       )}
+
+      {/* Dialogue de confirmation de suppression centralisé */}
+      <AlertDialog open={!!noteToDelete} onOpenChange={handleDeleteDialogChange}>
+        <AlertDialogContent 
+          onCloseAutoFocus={(e) => {
+            e.preventDefault();
+            focusContainer();
+          }}
+        >
+          <AlertDialogHeader>
+            <AlertDialogTitle>Supprimer cette note ?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Cette action est irréversible. La note sera définitivement supprimée.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel autoFocus>Annuler</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleConfirmDelete}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Supprimer
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
