@@ -11,6 +11,7 @@ import { InnovationRadarChart } from "@/components/innovation/InnovationRadarCha
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ProjectPortfoliosBadges } from "./ProjectPortfoliosBadges";
 import { PortfolioReadOnlyBadge } from "./PortfolioReadOnlyBadge";
+import { ProjectNotesList } from "@/components/notes/ProjectNotesList";
 
 interface ProjectSummaryContentProps {
   project: any;
@@ -174,9 +175,10 @@ export const ProjectSummaryContent = ({
       </div>
 
       <Tabs defaultValue="tasks" className="w-full">
-        <TabsList className="grid grid-cols-3 w-full max-w-md">
+        <TabsList className="grid grid-cols-4 w-full max-w-lg">
           <TabsTrigger value="tasks">Tâches</TabsTrigger>
           <TabsTrigger value="risks">Risques</TabsTrigger>
+          <TabsTrigger value="notes">Notes</TabsTrigger>
           <TabsTrigger value="team">Équipe</TabsTrigger>
         </TabsList>
         <TabsContent value="tasks">
@@ -199,6 +201,15 @@ export const ProjectSummaryContent = ({
               isProjectManager={permissions.isProjectManager}
               isAdmin={permissions.isAdmin}
               preloadedRisks={risks}
+            />
+          </div>
+        </TabsContent>
+        <TabsContent value="notes">
+          <div className="bg-white rounded-lg shadow-sm overflow-hidden p-6">
+            <ProjectNotesList
+              projectId={projectId}
+              canEdit={permissions.canEdit}
+              isAdmin={permissions.isAdmin}
             />
           </div>
         </TabsContent>
