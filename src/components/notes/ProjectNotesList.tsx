@@ -6,7 +6,7 @@
  * de pointer-events lock avec Radix UI (quand le composant enfant est démonté).
  */
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { useProjectNotes } from "@/hooks/useProjectNotes";
 import { ProjectNoteForm } from "./ProjectNoteForm";
 import { ProjectNoteCard } from "./ProjectNoteCard";
@@ -23,6 +23,17 @@ import {
 } from "@/components/ui/alert-dialog";
 import { FileText } from "lucide-react";
 import type { ProjectNote, ProjectNoteType } from "@/types/project-notes";
+
+/**
+ * Utilitaire pour déverrouiller les pointer-events sur body et html
+ * Radix UI peut parfois laisser pointer-events: none après fermeture de modales
+ */
+const unlockPointerEvents = () => {
+  document.body.style.pointerEvents = "";
+  document.body.style.removeProperty("pointer-events");
+  document.documentElement.style.pointerEvents = "";
+  document.documentElement.style.removeProperty("pointer-events");
+};
 
 interface ProjectNotesListProps {
   projectId: string;
@@ -71,38 +82,56 @@ export const ProjectNotesList = ({
     setEditingNote(null);
   };
 
-  // Demande de suppression (ouvre le dialogue)
-  const handleRequestDelete = (note: ProjectNote) => {
-    setNoteToDelete(note);
-  };
+  // Demande de suppression (ouvre le dialogue au tick suivant pour laisser le DropdownMenu se fermer)
+  const handleRequestDelete = useCallback((note: ProjectNote) => {
+    // Décaler l'ouverture du dialog pour éviter les conflits avec la fermeture du menu
+    setTimeout(() => setNoteToDelete(note), 0);
+  }, []);
 
   // Confirmation de suppression (appelée depuis le dialogue)
-  const handleConfirmDelete = () => {
+  const handleConfirmDelete = useCallback(() => {
     if (!noteToDelete) return;
     
     const noteId = noteToDelete.id;
     // Fermer le dialogue d'abord pour laisser Radix nettoyer correctement
     setNoteToDelete(null);
     
+    // Déverrouiller immédiatement
+    unlockPointerEvents();
+    
     // Exécuter la suppression au tick suivant pour éviter les conflits
     setTimeout(() => {
       deleteNote.mutate(noteId, {
+        onSettled: () => {
+          // Triple filet de sécurité : déverrouiller à différents moments
+          // pour couvrir les animations Radix et le re-render de la query
+          unlockPointerEvents();
+          requestAnimationFrame(unlockPointerEvents);
+          setTimeout(unlockPointerEvents, 250);
+        },
         onSuccess: () => {
           // Restaurer le focus sur le conteneur après suppression
           setTimeout(() => focusContainer(), 0);
         },
       });
     }, 0);
-  };
+  }, [noteToDelete, deleteNote]);
 
   // Gestion de la fermeture du dialogue de suppression
-  const handleDeleteDialogChange = (open: boolean) => {
+  const handleDeleteDialogChange = useCallback((open: boolean) => {
     if (!open) {
       setNoteToDelete(null);
-      // Filet de sécurité : s'assurer que pointer-events est réinitialisé
-      document.body.style.pointerEvents = "";
+      // Filet de sécurité : déverrouiller pointer-events sur body et html
+      unlockPointerEvents();
+      // Double sécurité avec requestAnimationFrame
+      requestAnimationFrame(unlockPointerEvents);
     }
-  };
+  }, []);
+
+  // Effet de sécurité : déverrouiller après chaque changement de notes (refetch)
+  useEffect(() => {
+    unlockPointerEvents();
+  }, [notes.length]);
 
   // Épingler/désépingler une note
   const handleTogglePin = (noteId: string, isPinned: boolean) => {
