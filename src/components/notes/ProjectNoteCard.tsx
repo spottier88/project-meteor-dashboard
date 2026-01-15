@@ -64,6 +64,7 @@ export const ProjectNoteCard = ({
   onTogglePin,
 }: ProjectNoteCardProps) => {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [pendingDelete, setPendingDelete] = useState(false);
 
   // Formatage de la date
   const formatDate = (dateString: string) => {
@@ -160,7 +161,21 @@ export const ProjectNoteCard = ({
 
       {/* Dialogue de confirmation de suppression */}
       <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
-        <AlertDialogContent onCloseAutoFocus={(e) => e.preventDefault()}>
+        <AlertDialogContent 
+          onCloseAutoFocus={(e) => {
+            e.preventDefault();
+            // Exécuter la suppression après fermeture du dialogue
+            if (pendingDelete) {
+              setPendingDelete(false);
+              // Forcer le focus sur le body pour débloquer l'interface
+              document.body.focus();
+              // Appeler la suppression après un court délai
+              setTimeout(() => {
+                onDelete(note.id);
+              }, 10);
+            }
+          }}
+        >
           <AlertDialogHeader>
             <AlertDialogTitle>Supprimer cette note ?</AlertDialogTitle>
             <AlertDialogDescription>
@@ -171,7 +186,7 @@ export const ProjectNoteCard = ({
             <AlertDialogCancel>Annuler</AlertDialogCancel>
             <AlertDialogAction
               onClick={() => {
-                onDelete(note.id);
+                setPendingDelete(true);
                 setShowDeleteDialog(false);
               }}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
