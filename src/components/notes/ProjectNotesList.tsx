@@ -4,7 +4,7 @@
  * Gère l'affichage, la création, l'édition et la suppression des notes.
  */
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useProjectNotes } from "@/hooks/useProjectNotes";
 import { ProjectNoteForm } from "./ProjectNoteForm";
 import { ProjectNoteCard } from "./ProjectNoteCard";
@@ -34,6 +34,14 @@ export const ProjectNotesList = ({
   } = useProjectNotes(projectId);
 
   const [editingNote, setEditingNote] = useState<ProjectNote | null>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  // Fonction pour restaurer le focus sur le conteneur
+  const focusContainer = () => {
+    if (containerRef.current) {
+      containerRef.current.focus();
+    }
+  };
 
   // Créer une nouvelle note
   const handleCreate = (input: { project_id: string; content: string; note_type: ProjectNoteType }) => {
@@ -49,9 +57,14 @@ export const ProjectNotesList = ({
     setEditingNote(null);
   };
 
-  // Supprimer une note
+  // Supprimer une note avec restauration du focus
   const handleDelete = (noteId: string) => {
-    deleteNote.mutate(noteId);
+    deleteNote.mutate(noteId, {
+      onSuccess: () => {
+        // Restaurer le focus sur le conteneur après suppression
+        setTimeout(() => focusContainer(), 0);
+      },
+    });
   };
 
   // Épingler/désépingler une note
@@ -79,7 +92,7 @@ export const ProjectNotesList = ({
   }
 
   return (
-    <div className="space-y-4">
+    <div ref={containerRef} tabIndex={-1} className="space-y-4 outline-none">
       {/* Formulaire d'ajout (visible pour ceux qui peuvent éditer) */}
       {canEdit && !editingNote && (
         <ProjectNoteForm

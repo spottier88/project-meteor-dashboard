@@ -160,7 +160,7 @@ export const ProjectNoteCard = ({
 
       {/* Dialogue de confirmation de suppression */}
       <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
-        <AlertDialogContent>
+        <AlertDialogContent onCloseAutoFocus={(e) => e.preventDefault()}>
           <AlertDialogHeader>
             <AlertDialogTitle>Supprimer cette note ?</AlertDialogTitle>
             <AlertDialogDescription>
