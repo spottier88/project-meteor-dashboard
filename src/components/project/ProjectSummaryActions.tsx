@@ -103,6 +103,8 @@ const ProjectSummaryActions = ({
           progress: (detailedProjectData.project?.progress || "stable") as ProgressStatus,
           completion: detailedProjectData.project?.completion || 0,
           project_manager: detailedProjectData.project?.project_manager,
+          project_manager_name: detailedProjectData.project?.project_manager_name,
+          secondary_managers: detailedProjectData.project?.secondary_managers || [],
           last_review_date: detailedProjectData.project?.last_review_date,
           start_date: detailedProjectData.project?.start_date,
           end_date: detailedProjectData.project?.end_date,
