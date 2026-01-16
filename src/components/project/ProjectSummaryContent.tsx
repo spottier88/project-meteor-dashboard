@@ -12,7 +12,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ProjectPortfoliosBadges } from "./ProjectPortfoliosBadges";
 import { PortfolioReadOnlyBadge } from "./PortfolioReadOnlyBadge";
 import { ProjectNotesList } from "@/components/notes/ProjectNotesList";
-
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 interface ProjectSummaryContentProps {
   project: any;
   lastReview: any;
@@ -66,6 +67,31 @@ export const ProjectSummaryContent = ({
 }: ProjectSummaryContentProps) => {
   const projectId = project.id;
 
+  // Récupération du profil du chef de projet pour afficher son nom
+  const { data: projectManagerProfile } = useQuery({
+    queryKey: ["projectManagerProfile", project.project_manager],
+    queryFn: async () => {
+      if (!project.project_manager) return null;
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("first_name, last_name")
+        .eq("email", project.project_manager)
+        .maybeSingle();
+      if (error) return null;
+      return data;
+    },
+    enabled: !!project.project_manager,
+  });
+
+  // Fonction helper pour afficher le nom du chef de projet
+  const getProjectManagerDisplay = () => {
+    if (!project.project_manager) return "-";
+    if (projectManagerProfile?.first_name && projectManagerProfile?.last_name) {
+      return `${projectManagerProfile.first_name} ${projectManagerProfile.last_name}`;
+    }
+    return project.project_manager;
+  };
+
   // Utiliser les scores d'innovation passés en prop avec des valeurs par défaut
   const innovationData = innovationScores || {
     novateur: 0,
@@ -115,7 +141,7 @@ export const ProjectSummaryContent = ({
           <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-4">
             <div>
               <span className="text-sm text-muted-foreground">Chef de projet</span>
-              <p className="font-medium">{project.project_manager || "-"}</p>
+              <p className="font-medium">{getProjectManagerDisplay()}</p>
             </div>
             <div>
               <span className="text-sm text-muted-foreground">Avancement</span>
