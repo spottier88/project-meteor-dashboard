@@ -38,6 +38,22 @@ export const ProjectHeader = ({ project }: ProjectHeaderProps) => {
     },
     enabled: !!project.id,
   });
+
+  // Récupération du profil du chef de projet pour afficher son nom
+  const { data: projectManagerProfile } = useQuery({
+    queryKey: ["projectManagerProfile", project.project_manager],
+    queryFn: async () => {
+      if (!project.project_manager) return null;
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("first_name, last_name")
+        .eq("email", project.project_manager)
+        .maybeSingle();
+      if (error) return null;
+      return data;
+    },
+    enabled: !!project.project_manager,
+  });
   
   const { data: forEntityName } = useQuery({
     queryKey: ["forEntity", project.for_entity_type, project.for_entity_id],
@@ -101,6 +117,15 @@ export const ProjectHeader = ({ project }: ProjectHeaderProps) => {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     }
+  };
+
+  // Fonction helper pour afficher le nom du chef de projet
+  const getProjectManagerDisplay = () => {
+    if (!project.project_manager) return "-";
+    if (projectManagerProfile?.first_name && projectManagerProfile?.last_name) {
+      return `${projectManagerProfile.first_name} ${projectManagerProfile.last_name}`;
+    }
+    return project.project_manager;
   };
   
   const getForEntityTypeLabel = (type: string) => {
@@ -167,7 +192,7 @@ export const ProjectHeader = ({ project }: ProjectHeaderProps) => {
           <div className="grid grid-cols-2 gap-4">
             <div>
               <span className="text-sm text-muted-foreground">Chef de projet</span>
-              <p className="text-sm font-medium">{project.project_manager || "-"}</p>
+              <p className="text-sm font-medium">{getProjectManagerDisplay()}</p>
             </div>
             <div>
               <span className="text-sm text-muted-foreground">Date de début</span>
