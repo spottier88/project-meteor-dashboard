@@ -78,6 +78,12 @@ export const PresentationSlide = ({ data }: PresentationSlideProps) => {
               <span className="font-semibold">CDP: </span>
               {data.project.project_manager || "Non défini"}
             </p>
+            {data.project.secondary_managers && data.project.secondary_managers.length > 0 && (
+              <p className="opacity-80 text-xs">
+                <span className="font-semibold">CDP secondaire(s): </span>
+                {data.project.secondary_managers.map(sm => sm.name).join(", ")}
+              </p>
+            )}
             {hierarchyText && (
               <p className="opacity-80 text-xs">{hierarchyText}</p>
             )}

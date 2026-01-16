@@ -70,11 +70,24 @@ const addProjectHeader = (slide: pptxgen.Slide, data: ProjectData) => {
     });
   }
 
-  // Ajout du chef de projet
+  // Ajout du chef de projet principal
   slide.addText([
     { text: "Chef de projet: ", options: { bold: true, color: "FFFFFF", fontSize: 8 } },
     { text: data.project.project_manager || "Non défini", options: { color: "FFFFFF", fontSize: 8 } }
   ], { x: 7, y: 0.3, w: 3, h: 0.2, align: "right", valign: "top" });
+
+  // Calcul de la position Y suivante (dépend si on affiche les CDP secondaires)
+  const secondaryPMs = data.project.secondary_managers?.map(sm => sm.name).join(", ");
+  let nextY = 0.45;
+
+  // Affichage des chefs de projet secondaires (si présents)
+  if (secondaryPMs) {
+    slide.addText([
+      { text: "CDP secondaire(s): ", options: { bold: true, color: "FFFFFF", fontSize: 7 } },
+      { text: secondaryPMs, options: { color: "FFFFFF", fontSize: 7 } }
+    ], { x: 7, y: nextY, w: 3, h: 0.15, align: "right", valign: "top" });
+    nextY = 0.58;
+  }
 
   const hierarchyText = [
     data.project.pole_name,
@@ -84,7 +97,7 @@ const addProjectHeader = (slide: pptxgen.Slide, data: ProjectData) => {
 
   slide.addText([
     { text: hierarchyText, options: { color: "FFFFFF", fontSize: 8 } }
-  ], { x: 7, y: 0.5, w: 3, h: 0.2, align: "right", valign: "top" });
+  ], { x: 7, y: nextY, w: 3, h: 0.2, align: "right", valign: "top" });
 };
 
 const addProjectGrid = (slide: pptxgen.Slide, data: ProjectData) => {
