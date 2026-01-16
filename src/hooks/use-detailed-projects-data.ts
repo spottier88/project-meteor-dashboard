@@ -16,6 +16,7 @@ export type ProjectData = {
     last_review_date: string | null;
     project_manager: string | null;
     project_manager_name: string | null;
+    secondary_managers: Array<{ id: string; name: string; }> | null;
     owner_id: string | null;
     pole_id: string | null;
     direction_id: string | null;
