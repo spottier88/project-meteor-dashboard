@@ -73,7 +73,7 @@ const addProjectHeader = (slide: pptxgen.Slide, data: ProjectData) => {
   // Ajout du chef de projet principal
   slide.addText([
     { text: "Chef de projet: ", options: { bold: true, color: "FFFFFF", fontSize: 8 } },
-    { text: data.project.project_manager || "Non défini", options: { color: "FFFFFF", fontSize: 8 } }
+    { text: data.project.project_manager_name || "Non défini", options: { color: "FFFFFF", fontSize: 8 } }
   ], { x: 7, y: 0.3, w: 3, h: 0.2, align: "right", valign: "top" });
 
   // Calcul de la position Y suivante (dépend si on affiche les CDP secondaires)
