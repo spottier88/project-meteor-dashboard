@@ -14,6 +14,7 @@ export interface ProjectData {
     progress: ProgressStatus;
     completion: number;
     project_manager?: string;
+    project_manager_name?: string;
     secondary_managers?: Array<{ id: string; name: string; }>;
     last_review_date: string;
     start_date?: string;

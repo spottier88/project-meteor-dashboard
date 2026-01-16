@@ -76,7 +76,7 @@ export const PresentationSlide = ({ data }: PresentationSlideProps) => {
             )}
             <p className="opacity-80">
               <span className="font-semibold">CDP: </span>
-              {data.project.project_manager || "Non défini"}
+              {data.project.project_manager_name || "Non défini"}
             </p>
             {data.project.secondary_managers && data.project.secondary_managers.length > 0 && (
               <p className="opacity-80 text-xs">
