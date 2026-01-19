@@ -31,6 +31,7 @@ export interface Project {
   for_entity_type?: ForEntityType;
   for_entity_id?: string;
   weather?: ProjectStatus | null;
+  teams_url?: string | null;
 }
 
 // Interface qui étend Project avec les propriétés additionnelles de ProjectListItem
@@ -48,4 +49,5 @@ export interface ProjectWithExtendedData extends Project {
   review_created_at?: string | null;
   review_progress?: ProgressStatus | null;
   last_review_date?: string | null;
+  teams_url?: string | null;
 }

@@ -14,6 +14,7 @@ import { PortfolioReadOnlyBadge } from "./PortfolioReadOnlyBadge";
 import { ProjectNotesList } from "@/components/notes/ProjectNotesList";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { Users, ExternalLink } from "lucide-react";
 interface ProjectSummaryContentProps {
   project: any;
   lastReview: any;
@@ -171,6 +172,22 @@ export const ProjectSummaryContent = ({
                   "-"}
               </p>
             </div>
+            {/* Lien vers l'équipe Microsoft Teams */}
+            {project.teams_url && (
+              <div>
+                <span className="text-sm text-muted-foreground">Équipe Teams</span>
+                <a 
+                  href={project.teams_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-1 text-primary hover:underline font-medium"
+                >
+                  <Users className="h-4 w-4" />
+                  Accéder à l'équipe
+                  <ExternalLink className="h-3 w-3" />
+                </a>
+              </div>
+            )}
           </div>
 
           <div className="mt-6">

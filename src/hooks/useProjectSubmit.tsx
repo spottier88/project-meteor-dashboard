@@ -54,6 +54,8 @@ export const useProjectSubmit = ({
         lifecycle_status: formState.lifecycleStatus,
         for_entity_type: formState.forEntityType,
         for_entity_id: formState.forEntityId,
+        // Lien vers l'équipe Microsoft Teams
+        teams_url: formState.teamsUrl?.trim() || null,
       };
 
       // Si c'est une mise à jour de projet existant
