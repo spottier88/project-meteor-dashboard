@@ -52,6 +52,8 @@ export const ProjectFormContent = ({
             ownerId={formState.ownerId}
             setOwnerId={formState.setOwnerId}
             projectManagers={projectManagers}
+            teamsUrl={formState.teamsUrl}
+            setTeamsUrl={formState.setTeamsUrl}
           />
         );
       case 1:

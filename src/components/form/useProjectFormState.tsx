@@ -71,6 +71,9 @@ export interface ProjectFormState {
   // Support multi-portefeuilles
   portfolioIds: string[];
   setPortfolioIds: (value: string[]) => void;
+  // Lien vers l'équipe Microsoft Teams
+  teamsUrl: string;
+  setTeamsUrl: (value: string) => void;
 }
 
 export const useProjectFormState = (isOpen: boolean, project?: any) => {
@@ -108,6 +111,7 @@ export const useProjectFormState = (isOpen: boolean, project?: any) => {
   const [forEntityId, setForEntityId] = useState<string | undefined>(undefined);
   const [templateId, setTemplateId] = useState<string | undefined>(undefined);
   const [portfolioIds, setPortfolioIds] = useState<string[]>([]);
+  const [teamsUrl, setTeamsUrl] = useState("");
 
   const user = useUser();
 
@@ -275,6 +279,7 @@ export const useProjectFormState = (isOpen: boolean, project?: any) => {
         setForEntityId(undefined);
         setTemplateId(undefined);
         setPortfolioIds([]);
+        setTeamsUrl("");
 
         if (user?.email) {
           setProjectManager(user.email);
@@ -296,6 +301,8 @@ export const useProjectFormState = (isOpen: boolean, project?: any) => {
           setTemplateId(project.template_id);
           // Gérer la compatibilité : si portfolio_id existe, l'ajouter au tableau
           setPortfolioIds(project.portfolio_id ? [project.portfolio_id] : []);
+          // Charger le lien Teams si présent
+          setTeamsUrl(project.teams_url || "");
 
           await loadProjectManagerOrganization(project.project_manager);
 
@@ -378,7 +385,7 @@ export const useProjectFormState = (isOpen: boolean, project?: any) => {
     monitoringLevel, monitoringEntityId, 
     novateur, usager, ouverture, agilite, impact, lifecycleStatus,
     context, stakeholders, governance, objectives, timeline, deliverables,
-    forEntityType, forEntityId, templateId, portfolioIds
+    forEntityType, forEntityId, templateId, portfolioIds, teamsUrl
   ]);
 
   const resetHasUnsavedChanges = () => {
@@ -450,6 +457,8 @@ export const useProjectFormState = (isOpen: boolean, project?: any) => {
     templateId,
     setTemplateId,
     portfolioIds,
-    setPortfolioIds
+    setPortfolioIds,
+    teamsUrl,
+    setTeamsUrl
   };
 };

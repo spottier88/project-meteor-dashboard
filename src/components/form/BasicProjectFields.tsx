@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ChevronsUpDown } from "lucide-react";
+import { ChevronsUpDown, Users } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -30,6 +30,9 @@ interface BasicProjectFieldsProps {
   isAdmin: boolean;
   isManager?: boolean;
   projectManagers?: UserProfile[];
+  // Lien vers l'équipe Microsoft Teams
+  teamsUrl: string;
+  setTeamsUrl: (value: string) => void;
 }
 
 export const BasicProjectFields = ({
@@ -52,6 +55,8 @@ export const BasicProjectFields = ({
   isAdmin,
   isManager = false,
   projectManagers,
+  teamsUrl,
+  setTeamsUrl,
 }: BasicProjectFieldsProps) => {
   const canEditProjectManager = Boolean(isAdmin) || Boolean(isManager);
   const [isManagerDialogOpen, setIsManagerDialogOpen] = useState(false);
@@ -197,6 +202,24 @@ export const BasicProjectFields = ({
             <SelectItem value="low">Basse</SelectItem>
           </SelectContent>
         </Select>
+      </div>
+
+      {/* Lien vers l'équipe Microsoft Teams */}
+      <div className="grid gap-2">
+        <label htmlFor="teams-url" className="text-sm font-medium flex items-center gap-2">
+          <Users className="h-4 w-4" />
+          Lien équipe Teams
+        </label>
+        <Input
+          id="teams-url"
+          type="url"
+          value={teamsUrl}
+          onChange={(e) => setTeamsUrl(e.target.value)}
+          placeholder="https://teams.microsoft.com/l/team/..."
+        />
+        <p className="text-xs text-muted-foreground">
+          URL de l'équipe Microsoft Teams associée au projet (optionnel)
+        </p>
       </div>
     </div>
   );

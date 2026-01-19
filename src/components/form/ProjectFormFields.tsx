@@ -54,6 +54,9 @@ interface ProjectFormFieldsProps {
   };
   projectManagers?: UserProfile[];
   canEditOrganization?: boolean;
+  // Lien vers l'équipe Microsoft Teams
+  teamsUrl: string;
+  setTeamsUrl: (value: string) => void;
 }
 
 export const ProjectFormFields = ({
@@ -89,7 +92,9 @@ export const ProjectFormFields = ({
   setServiceId,
   project,
   projectManagers,
-  canEditOrganization = true
+  canEditOrganization = true,
+  teamsUrl,
+  setTeamsUrl
 }: ProjectFormFieldsProps) => {
   // Ajouter un log pour vérifier les valeurs reçues
   // console.log("ProjectFormFields - permissions values:", {
@@ -124,6 +129,8 @@ export const ProjectFormFields = ({
         isAdmin={isAdmin}
         isManager={isManager}
         projectManagers={projectManagers}
+        teamsUrl={teamsUrl}
+        setTeamsUrl={setTeamsUrl}
       />
 
       {canEditOrganization && (

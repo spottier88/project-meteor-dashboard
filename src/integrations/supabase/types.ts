@@ -1443,6 +1443,7 @@ export type Database = {
           start_date: string | null
           status: Database["public"]["Enums"]["project_status"] | null
           suivi_dgs: boolean | null
+          teams_url: string | null
           title: string
         }
         Insert: {
@@ -1470,6 +1471,7 @@ export type Database = {
           start_date?: string | null
           status?: Database["public"]["Enums"]["project_status"] | null
           suivi_dgs?: boolean | null
+          teams_url?: string | null
           title: string
         }
         Update: {
@@ -1497,6 +1499,7 @@ export type Database = {
           start_date?: string | null
           status?: Database["public"]["Enums"]["project_status"] | null
           suivi_dgs?: boolean | null
+          teams_url?: string | null
           title?: string
         }
         Relationships: [
