@@ -175,7 +175,7 @@ export const ProjectSummaryContent = ({
             {/* Lien vers l'équipe Microsoft Teams */}
             {project.teams_url && (
               <div>
-                <span className="text-sm text-muted-foreground">Équipe Teams</span>
+                <span className="text-sm text-muted-foreground">Équipe Teams / Espace Sharepoint</span>
                 <a 
                   href={project.teams_url}
                   target="_blank"
