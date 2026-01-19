@@ -218,7 +218,7 @@ export const BasicProjectFields = ({
           placeholder="https://teams.microsoft.com/l/team/..."
         />
         <p className="text-xs text-muted-foreground">
-          URL de l'équipe Microsoft Teams associée au projet (optionnel)
+          URL de l'équipe Microsoft Teams / Sharepoint associée au projet (optionnel)
         </p>
       </div>
     </div>
