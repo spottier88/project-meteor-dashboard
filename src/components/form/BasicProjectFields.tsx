@@ -208,7 +208,7 @@ export const BasicProjectFields = ({
       <div className="grid gap-2">
         <label htmlFor="teams-url" className="text-sm font-medium flex items-center gap-2">
           <Users className="h-4 w-4" />
-          Lien équipe Teams
+          Lien équipe Teams / espace Sharepoint
         </label>
         <Input
           id="teams-url"
