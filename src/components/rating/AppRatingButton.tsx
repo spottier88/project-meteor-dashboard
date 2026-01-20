@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import {
   Tooltip,
   TooltipContent,
+  TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { AppRatingDialog } from "./AppRatingDialog";
@@ -21,26 +22,28 @@ export const AppRatingButton = () => {
 
   return (
     <>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => setIsDialogOpen(true)}
-            className="relative h-9 w-9"
-            disabled={isLoading}
-          >
-            <Star className="h-4 w-4" />
-            {/* Badge indicateur si pas encore évalué */}
-            {!hasRated && !isLoading && (
-              <span className="absolute -top-0.5 -right-0.5 h-2.5 w-2.5 bg-amber-500 rounded-full border-2 border-background" />
-            )}
-          </Button>
-        </TooltipTrigger>
-        <TooltipContent>
-          {hasRated ? "Modifier mon évaluation" : "Évaluer l'application"}
-        </TooltipContent>
-      </Tooltip>
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setIsDialogOpen(true)}
+              className="relative h-9 w-9"
+              disabled={isLoading}
+            >
+              <Star className="h-4 w-4" />
+              {/* Badge indicateur si pas encore évalué */}
+              {!hasRated && !isLoading && (
+                <span className="absolute -top-0.5 -right-0.5 h-2.5 w-2.5 bg-amber-500 rounded-full border-2 border-background" />
+              )}
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>
+            {hasRated ? "Modifier mon évaluation" : "Évaluer l'application"}
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
 
       <AppRatingDialog
         open={isDialogOpen}
