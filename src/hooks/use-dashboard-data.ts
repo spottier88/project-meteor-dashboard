@@ -24,8 +24,8 @@ interface DashboardSummary {
   byLifecycle: Record<string, number>;
 }
 
-// Statuts de cycle de vie considérés comme "actifs" pour les alertes de revue
-const ACTIVE_LIFECYCLE_STATUSES = ['study', 'validated', 'in_progress'];
+// Seuls les projets "en cours" nécessitent des revues régulières
+const ACTIVE_LIFECYCLE_STATUSES = ['in_progress'];
 
 export const useDashboardData = () => {
   const user = useUser();
