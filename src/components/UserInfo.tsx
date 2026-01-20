@@ -19,6 +19,7 @@ import { ProfileForm } from "./profile/ProfileForm";
 import { UserNotificationsDropdown } from "./notifications/UserNotificationsDropdown";
 import { RequiredNotificationDialog } from "./notifications/RequiredNotificationDialog";
 import { HelpButton } from "@/components/help/HelpButton";
+import { AppRatingButton } from "@/components/rating/AppRatingButton";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { usePermissionsContext } from "@/contexts/PermissionsContext";
@@ -188,6 +189,7 @@ export const UserInfo = ({ onOpenTutorial }: UserInfoProps) => {
         <div className="flex items-center gap-2">
           <UserNotificationsDropdown />
           <HelpButton />
+          <AppRatingButton />
           
           {hasAdminRole && (
             <div className="flex items-center gap-2 px-3 py-1 border rounded-lg bg-background">
