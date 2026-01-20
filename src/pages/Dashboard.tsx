@@ -2,7 +2,6 @@
 import { usePermissionsContext } from "@/contexts/PermissionsContext";
 import { ProjectsSummary } from "@/components/dashboard/ProjectsSummary";
 import { QuickActions } from "@/components/dashboard/QuickActions";
-import { AlertsSection } from "@/components/dashboard/AlertsSection";
 import { UserInfo } from "@/components/UserInfo";
 import { useState } from "react";
 import { ProjectModals } from "@/components/project/ProjectModals";
@@ -142,10 +141,6 @@ const Dashboard = () => {
             onNewReview={handleNewReview}
           />
         </div>
-      </div>
-
-      <div className="mt-6">
-        <AlertsSection />
       </div>
 
       <ProjectModals
