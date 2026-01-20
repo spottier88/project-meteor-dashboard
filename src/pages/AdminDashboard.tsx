@@ -1,5 +1,5 @@
 
-import { Settings, Users, Building2, Bell, Activity, BookOpenText, FileText, BarChart3, Target, Key, Mail } from "lucide-react";
+import { Settings, Users, Building2, Bell, Activity, BookOpenText, FileText, BarChart3, Target, Key, Mail, Star } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 
@@ -117,6 +117,15 @@ export const AdminDashboard = () => {
         >
           <Mail className="h-8 w-8" />
           <span>Modèles d'email</span>
+        </Button>
+
+        <Button
+          variant="outline"
+          className="h-32 flex flex-col items-center justify-center gap-2"
+          onClick={() => navigate("/admin/ratings")}
+        >
+          <Star className="h-8 w-8" />
+          <span>Évaluations</span>
         </Button>
       </div>
     </div>

@@ -41,6 +41,7 @@ import APITokenManagement from "./pages/APITokenManagement";
 import { ProjectPresentation } from "./pages/ProjectPresentation";
 import { PortfolioPresentation } from "./pages/PortfolioPresentation";
 import { EmailTemplateManagement } from "./pages/EmailTemplateManagement";
+import AppRatingsManagement from "./pages/AppRatingsManagement";
 
 export const AppRoutes = () => {
   const session = useSession();
@@ -236,6 +237,14 @@ export const AppRoutes = () => {
             element={
               <ProtectedRoute>
                 <EmailTemplateManagement />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/ratings"
+            element={
+              <ProtectedRoute>
+                <AppRatingsManagement />
               </ProtectedRoute>
             }
           />
