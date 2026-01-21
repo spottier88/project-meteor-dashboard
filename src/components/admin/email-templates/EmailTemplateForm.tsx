@@ -61,7 +61,7 @@ interface EmailTemplateFormProps {
   onClose: () => void;
 }
 
-// Variables prédéfinies disponibles
+// Variables prédéfinies disponibles pour les templates
 const PREDEFINED_VARIABLES = [
   { name: "user_first_name", description: "Prénom de l'utilisateur" },
   { name: "user_last_name", description: "Nom de l'utilisateur" },
@@ -80,6 +80,14 @@ const PREDEFINED_VARIABLES = [
   { name: "roles_count", description: "Nombre de changements" },
   { name: "roles_list", description: "Liste HTML des rôles" },
   { name: "roles_list_text", description: "Liste texte des rôles" },
+  { name: "has_signups", description: "Booléen: nouvelles inscriptions (admin)" },
+  { name: "signups_count", description: "Nombre de nouvelles inscriptions" },
+  { name: "signups_list", description: "Liste HTML des inscriptions" },
+  { name: "signups_list_text", description: "Liste texte des inscriptions" },
+  { name: "has_feedbacks", description: "Booléen: demandes utilisateurs (admin)" },
+  { name: "feedbacks_count", description: "Nombre de demandes utilisateurs" },
+  { name: "feedbacks_list", description: "Liste HTML des demandes (bugs, évolutions)" },
+  { name: "feedbacks_list_text", description: "Liste texte des demandes" },
 ];
 
 export const EmailTemplateForm = ({ template, open, onClose }: EmailTemplateFormProps) => {
