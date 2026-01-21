@@ -218,6 +218,30 @@ export function FeedbackForm({ onSuccess, onCancel }: FeedbackFormProps) {
 
       if (targetUsersError) throw targetUsersError;
 
+      // Ajouter une entrée dans email_notification_queue pour chaque admin
+      // afin d'inclure ce feedback dans le récapitulatif email
+      const adminEmailNotifications = admins.map((admin) => ({
+        user_id: admin.user_id,
+        event_type: 'admin_feedback',
+        event_data: {
+          notification_id: notification.id,
+          feedback_type: data.type, // bug, evolution, role_change, project_deletion
+          title: title,
+          content: content,
+          created_by_email: user.email,
+          created_at: new Date().toISOString()
+        }
+      }));
+
+      const { error: emailQueueError } = await supabase
+        .from("email_notification_queue")
+        .insert(adminEmailNotifications);
+
+      if (emailQueueError) {
+        console.error("Erreur insertion email queue:", emailQueueError);
+        // Non bloquant - le feedback est déjà enregistré
+      }
+
       toast({
         title: "Demande envoyée",
         description: "Votre demande a été transmise aux administrateurs",

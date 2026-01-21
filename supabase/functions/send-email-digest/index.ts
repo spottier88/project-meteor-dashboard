@@ -239,6 +239,74 @@ function generateSignupsListText(notifications: Array<{ event_data: Record<strin
     .join('\n');
 }
 
+/**
+ * Retourne le libellé du type de feedback
+ */
+function getFeedbackTypeLabel(type: string): string {
+  switch (type) {
+    case 'bug': return 'Bug';
+    case 'evolution': return 'Évolution';
+    case 'role_change': return 'Demande de rôle';
+    case 'project_deletion': return 'Suppression de projet';
+    default: return 'Feedback';
+  }
+}
+
+/**
+ * Retourne la classe CSS du badge selon le type de feedback
+ */
+function getFeedbackBadgeClass(type: string): string {
+  switch (type) {
+    case 'bug': return 'badge-bug';
+    case 'evolution': return 'badge-evolution';
+    case 'role_change': return 'badge-role';
+    case 'project_deletion': return 'badge-delete';
+    default: return 'badge-task';
+  }
+}
+
+/**
+ * Génère la liste HTML des feedbacks admin (bugs, évolutions, demandes)
+ */
+function generateFeedbacksListHtml(notifications: Array<{ event_data: Record<string, unknown> }>): string {
+  return notifications
+    .map(n => {
+      const data = n.event_data;
+      const typeLabel = getFeedbackTypeLabel(data.feedback_type as string);
+      const badgeClass = getFeedbackBadgeClass(data.feedback_type as string);
+      const createdAt = data.created_at 
+        ? new Date(data.created_at as string).toLocaleDateString('fr-FR', {
+            day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit'
+          })
+        : '';
+      return `<div class="item">
+        <div class="item-title">${data.title || 'Demande sans titre'}</div>
+        <div class="item-meta">
+          <span class="badge ${badgeClass}">${typeLabel}</span>
+          <span style="margin-left: 10px;">De : ${data.created_by_email || 'Inconnu'}</span>
+          <span style="margin-left: 10px;">${createdAt}</span>
+        </div>
+      </div>`;
+    })
+    .join('');
+}
+
+/**
+ * Génère la liste texte des feedbacks admin
+ */
+function generateFeedbacksListText(notifications: Array<{ event_data: Record<string, unknown> }>): string {
+  return notifications
+    .map(n => {
+      const data = n.event_data;
+      const typeLabel = getFeedbackTypeLabel(data.feedback_type as string);
+      const createdAt = data.created_at 
+        ? new Date(data.created_at as string).toLocaleDateString('fr-FR') 
+        : '';
+      return `- [${typeLabel}] ${data.title || 'Demande sans titre'} (De: ${data.created_by_email || 'Inconnu'}, ${createdAt})`;
+    })
+    .join('\n');
+}
+
 serve(async (req) => {
   // Gestion CORS
   if (req.method === 'OPTIONS') {
@@ -396,6 +464,7 @@ serve(async (req) => {
         const projectNotifs = data.notifications.filter(n => n.event_type === 'project_assigned');
         const roleNotifs = data.notifications.filter(n => n.event_type === 'role_changed');
         const signupNotifs = data.notifications.filter(n => n.event_type === 'user_signup');
+        const feedbackNotifs = data.notifications.filter(n => n.event_type === 'admin_feedback');
 
         // Préparer les variables de publipostage
         const variables: Record<string, string | boolean | number> = {
@@ -421,6 +490,11 @@ serve(async (req) => {
           signups_count: signupNotifs.length,
           signups_list: generateSignupsListHtml(signupNotifs),
           signups_list_text: generateSignupsListText(signupNotifs),
+          // Feedbacks utilisateurs (pour les admins)
+          has_feedbacks: feedbackNotifs.length > 0,
+          feedbacks_count: feedbackNotifs.length,
+          feedbacks_list: generateFeedbacksListHtml(feedbackNotifs),
+          feedbacks_list_text: generateFeedbacksListText(feedbackNotifs),
         };
 
         // Fusionner le template avec les variables
