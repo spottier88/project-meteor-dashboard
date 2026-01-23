@@ -2,6 +2,7 @@
 import { usePermissionsContext } from "@/contexts/PermissionsContext";
 import { ProjectsSummary } from "@/components/dashboard/ProjectsSummary";
 import { QuickActions } from "@/components/dashboard/QuickActions";
+import { FavoriteProjects } from "@/components/dashboard/FavoriteProjects";
 import { UserInfo } from "@/components/UserInfo";
 import { useState } from "react";
 import { ProjectModals } from "@/components/project/ProjectModals";
@@ -135,11 +136,12 @@ const Dashboard = () => {
         <div className="lg:col-span-2">
           <ProjectsSummary />
         </div>
-        <div>
+        <div className="space-y-6">
           <QuickActions 
             onNewProject={handleNewProject}
             onNewReview={handleNewReview}
           />
+          <FavoriteProjects />
         </div>
       </div>
 
