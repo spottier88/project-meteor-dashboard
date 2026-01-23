@@ -3,6 +3,7 @@ import { TaskSummary } from "./TaskSummary";
 import { ProjectCardHeader } from "./project/ProjectCardHeader";
 import { ProjectMetrics } from "./project/ProjectMetrics";
 import { AddToCartButton } from "./cart/AddToCartButton";
+import { FavoriteButton } from "./project/FavoriteButton";
 import { ProjectStatus, ProgressStatus, ProjectLifecycleStatus, ForEntityType } from "@/types/project";
 import { LifecycleStatusBadge } from "./project/LifecycleStatusBadge";
 import { useProjectPermissions } from "@/hooks/useProjectPermissions";
@@ -121,7 +122,8 @@ export const ProjectCard = ({
         canManageTeam={canManageTeam}
         isAdmin={isAdmin}
         additionalActions={
-          <div data-no-navigate>
+          <div className="flex items-center gap-1" data-no-navigate>
+            <FavoriteButton projectId={id} />
             <AddToCartButton projectId={id} projectTitle={title} />
           </div>
         }
