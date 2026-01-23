@@ -18,7 +18,9 @@ import { ProjectData as PPTXProjectData } from "@/components/pptx/types";
 import { ProjectStatus, ProgressStatus, ProjectLifecycleStatus } from "@/types/project";
 import { RiskProbability, RiskSeverity, RiskStatus } from "@/types/risk";
 import { useDetailedProjectsData, ProjectData } from "@/hooks/use-detailed-projects-data";
-import { Presentation, FileText, Edit, Calendar, CheckCircle, FileCheck, MoreVertical } from "lucide-react";
+import { Presentation, FileText, Edit, Calendar, CheckCircle, FileCheck, MoreVertical, Star } from "lucide-react";
+import { useFavoriteProjects } from "@/hooks/useFavoriteProjects";
+import { cn } from "@/lib/utils";
 import { generateProjectFramingPDF } from "@/components/framing/ProjectFramingExport";
 import { generateProjectFramingDOCX } from "@/components/framing/ProjectFramingExportDOCX";
 import { FramingExportDialog } from "@/components/framing/FramingExportDialog";
@@ -69,6 +71,10 @@ const ProjectSummaryActions = ({
   
   // Vérifier les permissions pour créer une revue
   const { canCreateReview } = useReviewAccess(project?.id);
+  
+  // Gestion des favoris
+  const { isFavorite, toggleFavorite, isToggling } = useFavoriteProjects();
+  const favorite = project?.id ? isFavorite(project.id) : false;
 
   // Conditions pour afficher le bouton de clôture
   const canCloseProject = canEdit && project?.lifecycle_status !== 'completed';
@@ -261,6 +267,21 @@ const ProjectSummaryActions = ({
           </Tooltip>
           
           <DropdownMenuContent align="end" className="w-56">
+            {/* Action Favoris */}
+            <DropdownMenuItem 
+              onClick={() => project?.id && toggleFavorite(project.id)}
+              disabled={isToggling || !project?.id}
+            >
+              <Star 
+                className={cn(
+                  "h-4 w-4 mr-2",
+                  favorite ? "text-yellow-500 fill-yellow-500" : "text-muted-foreground"
+                )} 
+              />
+              {favorite ? "Retirer des favoris" : "Ajouter aux favoris"}
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            
             {/* Groupe Gestion */}
             {hasManagementActions && (
               <>
