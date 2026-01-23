@@ -8,6 +8,7 @@ import { useUser } from "@supabase/auth-helpers-react";
 import { LifecycleStatusBadge } from "./LifecycleStatusBadge";
 import { ProjectLifecycleStatus, ProjectStatus } from "@/types/project";
 import { AddToCartButton } from "../cart/AddToCartButton";
+import { FavoriteButton } from "./FavoriteButton";
 import { MonitoringBadge } from "../monitoring/MonitoringBadge";
 import { useProjectNavigation } from "@/hooks/useProjectNavigation";
 
@@ -166,6 +167,7 @@ export const ProjectTableRow = ({
       </TableCell>
       <TableCell>
         <div className="flex justify-end items-center gap-1" data-no-navigate>
+          <FavoriteButton projectId={project.id} />
           <AddToCartButton projectId={project.id} projectTitle={project.title} />
           <ProjectActions
             projectId={project.id}
