@@ -4,6 +4,9 @@
  * Permet d'exporter les informations du projet au format PPTX ou PDF (note de cadrage)
  * en combinant les données du projet, des revues, des risques et des tâches.
  * Inclut également un bouton pour éditer le projet, créer une revue et clôturer le projet.
+ * 
+ * Interface optimisée : actions principales en icônes avec tooltip, 
+ * actions secondaires dans un menu déroulant "Plus d'actions".
  */
 
 import { useState } from "react";
@@ -15,7 +18,7 @@ import { ProjectData as PPTXProjectData } from "@/components/pptx/types";
 import { ProjectStatus, ProgressStatus, ProjectLifecycleStatus } from "@/types/project";
 import { RiskProbability, RiskSeverity, RiskStatus } from "@/types/risk";
 import { useDetailedProjectsData, ProjectData } from "@/hooks/use-detailed-projects-data";
-import { Presentation, FileText, Edit, Calendar, CheckCircle, FileCheck } from "lucide-react";
+import { Presentation, FileText, Edit, Calendar, CheckCircle, FileCheck, MoreVertical } from "lucide-react";
 import { generateProjectFramingPDF } from "@/components/framing/ProjectFramingExport";
 import { generateProjectFramingDOCX } from "@/components/framing/ProjectFramingExportDOCX";
 import { FramingExportDialog } from "@/components/framing/FramingExportDialog";
@@ -23,6 +26,19 @@ import { useProjectPermissions } from "@/hooks/useProjectPermissions";
 import { useReviewAccess } from "@/hooks/use-review-access";
 import { ProjectClosureDialog } from "./closure/ProjectClosureDialog";
 import { ClosurePendingBadge } from "./ClosurePendingBadge";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface ProjectSummaryActionsProps {
   project: any;
@@ -57,6 +73,9 @@ const ProjectSummaryActions = ({
   const canCloseProject = canEdit && project?.lifecycle_status !== 'completed';
   const hasPendingEvaluation = project?.lifecycle_status === 'completed' && project?.closure_status === 'pending_evaluation';
   const lastCompletion = project?.completion || 0;
+
+  // Vérifier si des actions de gestion sont disponibles
+  const hasManagementActions = canCloseProject || (hasPendingEvaluation && canEdit);
 
   const fetchDetailedProject = async (projectId: string): Promise<ProjectData | null> => {
     try {
@@ -190,71 +209,94 @@ const ProjectSummaryActions = ({
 
   return (
     <>
-      <div className="flex flex-wrap gap-2">
+      <div className="flex items-center gap-2">
         {/* Badge évaluation en attente */}
         {hasPendingEvaluation && <ClosurePendingBadge />}
 
+        {/* Bouton icône Modifier avec tooltip */}
         {canEdit && (
-          <Button 
-            onClick={onEditProject}
-            variant="outline"
-            className="flex items-center"
-          >
-            <Edit className="h-4 w-4 mr-2" />
-            Modifier
-          </Button>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button 
+                onClick={onEditProject}
+                variant="outline"
+                size="icon"
+              >
+                <Edit className="h-4 w-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Modifier le projet</TooltipContent>
+          </Tooltip>
         )}
 
-        {/* Bouton clôturer le projet */}
-        {canCloseProject && (
-          <Button 
-            onClick={() => setIsClosureDialogOpen(true)}
-            className="bg-green-600 hover:bg-green-700 text-white"
-          >
-            <CheckCircle className="h-4 w-4 mr-2" />
-            Clôturer le projet
-          </Button>
-        )}
-
-        {/* Bouton compléter l'évaluation */}
-        {hasPendingEvaluation && canEdit && (
-          <Button 
-            onClick={() => setIsClosureDialogOpen(true)}
-            variant="outline"
-            className="border-orange-300 text-orange-600 hover:bg-orange-50"
-          >
-            <FileCheck className="h-4 w-4 mr-2" />
-            Compléter l'évaluation
-          </Button>
-        )}
-
+        {/* Bouton icône Nouvelle revue avec tooltip */}
         {canCreateReview && project?.lifecycle_status !== 'completed' && (
-          <Button 
-            onClick={onCreateReview}
-            className="bg-blue-600 text-white hover:bg-blue-700" 
-            size="sm"
-          >
-            <Calendar className="h-4 w-4 mr-2" />
-            Nouvelle revue
-          </Button>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button 
+                onClick={onCreateReview}
+                className="bg-blue-600 text-white hover:bg-blue-700" 
+                size="icon"
+              >
+                <Calendar className="h-4 w-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Créer une revue de projet</TooltipContent>
+          </Tooltip>
         )}
-        <Button 
-          onClick={handleExportPPTX}
-          disabled={isExporting || isExportingFraming}
-          className="flex items-center"
-        >
-          <Presentation className="h-4 w-4 mr-2" />
-          {isExporting ? "Exportation..." : "Exporter en PPTX"}
-        </Button>
-        <Button
-          onClick={() => setShowExportDialog(true)}
-          disabled={isExporting || isExportingFraming}
-          variant="outline"
-          className="flex items-center"
-        >
-          <FileText className="h-4 w-4 mr-2" />
-          Note de cadrage
-        </Button>
+
+        {/* Menu déroulant pour les actions secondaires */}
+        <DropdownMenu>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="icon">
+                  <MoreVertical className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+            </TooltipTrigger>
+            <TooltipContent>Plus d'actions</TooltipContent>
+          </Tooltip>
+          
+          <DropdownMenuContent align="end" className="w-56">
+            {/* Groupe Gestion */}
+            {hasManagementActions && (
+              <>
+                <DropdownMenuLabel>Gestion</DropdownMenuLabel>
+                {canCloseProject && (
+                  <DropdownMenuItem onClick={() => setIsClosureDialogOpen(true)}>
+                    <CheckCircle className="h-4 w-4 mr-2 text-green-600" />
+                    Clôturer le projet
+                  </DropdownMenuItem>
+                )}
+                {hasPendingEvaluation && canEdit && (
+                  <DropdownMenuItem onClick={() => setIsClosureDialogOpen(true)}>
+                    <FileCheck className="h-4 w-4 mr-2 text-orange-600" />
+                    Compléter l'évaluation
+                  </DropdownMenuItem>
+                )}
+                <DropdownMenuSeparator />
+              </>
+            )}
+            
+            {/* Groupe Exports */}
+            <DropdownMenuLabel>Exports</DropdownMenuLabel>
+            <DropdownMenuItem 
+              onClick={handleExportPPTX} 
+              disabled={isExporting || isExportingFraming}
+            >
+              <Presentation className="h-4 w-4 mr-2" />
+              {isExporting ? "Exportation..." : "Exporter en PPTX"}
+            </DropdownMenuItem>
+            <DropdownMenuItem 
+              onClick={() => setShowExportDialog(true)} 
+              disabled={isExporting || isExportingFraming}
+            >
+              <FileText className="h-4 w-4 mr-2" />
+              Note de cadrage
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
 
       <FramingExportDialog
