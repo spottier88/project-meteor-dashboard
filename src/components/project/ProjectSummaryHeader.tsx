@@ -9,7 +9,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Badge } from "@/components/ui/badge";
-import { FavoriteButton } from "./FavoriteButton";
+
 
 interface ProjectSummaryHeaderProps {
   title: string;
@@ -236,7 +236,6 @@ export const ProjectSummaryHeader = ({
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
         <div className="space-y-2">
           <div className="flex items-center gap-3">
-            <FavoriteButton projectId={id} />
             <CardTitle className="text-2xl font-bold">{title}</CardTitle>
             {projectCode?.code && (
               <div className="flex items-center">
