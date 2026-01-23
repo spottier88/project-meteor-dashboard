@@ -29,6 +29,7 @@ import { ClosurePendingBadge } from "./ClosurePendingBadge";
 import {
   Tooltip,
   TooltipContent,
+  TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import {
@@ -209,6 +210,7 @@ const ProjectSummaryActions = ({
 
   return (
     <>
+      <TooltipProvider>
       <div className="flex items-center gap-2">
         {/* Badge évaluation en attente */}
         {hasPendingEvaluation && <ClosurePendingBadge />}
@@ -298,6 +300,7 @@ const ProjectSummaryActions = ({
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
+      </TooltipProvider>
 
       <FramingExportDialog
         open={showExportDialog}
