@@ -55,7 +55,24 @@ interface Project {
   priority: string | null;
   created_at: string | null;
   completion: number;
+  /** Profil du chef de projet (nom/prénom) pour affichage */
+  manager_profile?: {
+    first_name: string | null;
+    last_name: string | null;
+  } | null;
 }
+
+/**
+ * Formate le nom du chef de projet pour l'affichage
+ * Affiche Prénom Nom si disponible, sinon l'email
+ */
+const formatManagerName = (project: Project): string => {
+  const profile = project.manager_profile;
+  if (profile?.first_name || profile?.last_name) {
+    return `${profile.first_name || ''} ${profile.last_name || ''}`.trim();
+  }
+  return project.project_manager || "-";
+};
 
 interface PortfolioProjectsTableProps {
   projects: Project[];
@@ -263,7 +280,7 @@ export const PortfolioProjectsTable = ({
                       {project.title}
                     </button>
                   </TableCell>
-                  <TableCell>{project.project_manager || "-"}</TableCell>
+                  <TableCell>{formatManagerName(project)}</TableCell>
                   <TableCell>
                     <StatusIcon status={project.status} />
                   </TableCell>
