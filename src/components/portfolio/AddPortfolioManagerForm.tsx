@@ -1,33 +1,22 @@
 /**
  * @file AddPortfolioManagerForm.tsx
  * @description Formulaire d'ajout d'un gestionnaire à un portefeuille
- * Utilise un Combobox avec recherche pour faciliter la sélection parmi de nombreux utilisateurs
+ * Utilise une recherche intégrée dans le Dialog pour éviter les conflits de focus trap
  */
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAddPortfolioManager } from "@/hooks/usePortfolioManagers";
 import { UserProfile } from "@/types/user";
-import { Check, ChevronsUpDown } from "lucide-react";
+import { Check, Search, Users } from "lucide-react";
 import { cn } from "@/lib/utils";
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from "@/components/ui/command";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
 
 interface AddPortfolioManagerFormProps {
   portfolioId: string;
@@ -38,7 +27,7 @@ interface AddPortfolioManagerFormProps {
 export const AddPortfolioManagerForm = ({ portfolioId, isOpen, onClose }: AddPortfolioManagerFormProps) => {
   const [selectedUserId, setSelectedUserId] = useState<string>("");
   const [selectedRole, setSelectedRole] = useState<string>("manager");
-  const [open, setOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
   
   const addManager = useAddPortfolioManager();
 
@@ -85,6 +74,27 @@ export const AddPortfolioManagerForm = ({ portfolioId, isOpen, onClose }: AddPor
     enabled: isOpen,
   });
 
+  // Formater le nom complet d'un utilisateur
+  const formatUserName = (user: UserProfile) => {
+    if (user.first_name || user.last_name) {
+      return `${user.first_name || ''} ${user.last_name || ''}`.trim();
+    }
+    return user.email || 'Utilisateur inconnu';
+  };
+
+  // Filtrer les utilisateurs selon la recherche
+  const filteredUsers = useMemo(() => {
+    if (!eligibleUsers) return [];
+    if (!searchQuery.trim()) return eligibleUsers;
+    
+    const query = searchQuery.toLowerCase();
+    return eligibleUsers.filter((user) => {
+      const name = formatUserName(user).toLowerCase();
+      const email = (user.email || "").toLowerCase();
+      return name.includes(query) || email.includes(query);
+    });
+  }, [eligibleUsers, searchQuery]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -97,23 +107,28 @@ export const AddPortfolioManagerForm = ({ portfolioId, isOpen, onClose }: AddPor
         role: selectedRole,
       });
       
+      // Réinitialiser le formulaire
       setSelectedUserId("");
       setSelectedRole("manager");
+      setSearchQuery("");
       onClose();
     } catch (error) {
       // L'erreur est gérée dans le hook
     }
   };
 
-  const formatUserName = (user: UserProfile) => {
-    if (user.first_name || user.last_name) {
-      return `${user.first_name || ''} ${user.last_name || ''}`.trim();
+  // Gérer la fermeture du dialog avec réinitialisation
+  const handleOpenChange = (open: boolean) => {
+    if (!open) {
+      setSearchQuery("");
+      setSelectedUserId("");
+      setSelectedRole("manager");
+      onClose();
     }
-    return user.email || 'Utilisateur inconnu';
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
+    <Dialog open={isOpen} onOpenChange={handleOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Ajouter un gestionnaire</DialogTitle>
@@ -121,67 +136,67 @@ export const AddPortfolioManagerForm = ({ portfolioId, isOpen, onClose }: AddPor
         
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="user">Utilisateur</Label>
-            <Popover open={open} onOpenChange={setOpen}>
-              <PopoverTrigger asChild>
-                <Button
-                  variant="outline"
-                  role="combobox"
-                  aria-expanded={open}
-                  className="w-full justify-between"
-                >
-                  {selectedUserId && eligibleUsers?.find(u => u.id === selectedUserId) ? (
-                    <span className="truncate">
-                      {formatUserName(eligibleUsers.find(u => u.id === selectedUserId)!)}
-                    </span>
-                  ) : (
-                    <span className="text-muted-foreground">
-                      Rechercher un utilisateur...
-                    </span>
-                  )}
-                  <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-[350px] p-0" align="start">
-                <Command>
-                  <CommandInput placeholder="Rechercher par nom ou email..." />
-                  <CommandList>
-                    {loadingUsers ? (
-                      <div className="py-6 text-center text-sm">Chargement...</div>
-                    ) : (
-                      <>
-                        <CommandEmpty>Aucun utilisateur disponible</CommandEmpty>
-                        <CommandGroup>
-                          {eligibleUsers?.map((user) => (
-                            <CommandItem
-                              key={user.id}
-                              value={`${formatUserName(user)} ${user.email || ''}`.toLowerCase()}
-                              onSelect={() => {
-                                setSelectedUserId(user.id);
-                                setOpen(false);
-                              }}
-                            >
-                              <Check
-                                className={cn(
-                                  "mr-2 h-4 w-4",
-                                  selectedUserId === user.id ? "opacity-100" : "opacity-0"
-                                )}
-                              />
-                              <div className="flex flex-col">
-                                <span>{formatUserName(user)}</span>
-                                <span className="text-xs text-muted-foreground">
-                                  {user.email}
-                                </span>
-                              </div>
-                            </CommandItem>
-                          ))}
-                        </CommandGroup>
-                      </>
-                    )}
-                  </CommandList>
-                </Command>
-              </PopoverContent>
-            </Popover>
+            <Label>Utilisateur</Label>
+            
+            {/* Champ de recherche */}
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                placeholder="Rechercher par nom ou email..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-9"
+              />
+            </div>
+
+            {/* Liste des utilisateurs */}
+            <ScrollArea className="h-48 rounded-md border">
+              <div className="p-2">
+                {loadingUsers ? (
+                  <div className="py-6 text-center text-sm text-muted-foreground">
+                    Chargement...
+                  </div>
+                ) : filteredUsers.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center py-6 text-muted-foreground">
+                    <Users className="h-8 w-8 mb-2" />
+                    <p className="text-sm">Aucun utilisateur disponible</p>
+                  </div>
+                ) : (
+                  <div className="space-y-1">
+                    {filteredUsers.map((user) => {
+                      const isSelected = selectedUserId === user.id;
+                      return (
+                        <button
+                          key={user.id}
+                          type="button"
+                          onClick={() => setSelectedUserId(user.id)}
+                          className={cn(
+                            "flex w-full items-center gap-3 rounded-md px-3 py-2 text-left transition-colors",
+                            "hover:bg-accent hover:text-accent-foreground",
+                            isSelected && "bg-accent text-accent-foreground"
+                          )}
+                        >
+                          <Check
+                            className={cn(
+                              "h-4 w-4 shrink-0",
+                              isSelected ? "opacity-100" : "opacity-0"
+                            )}
+                          />
+                          <div className="flex flex-col min-w-0">
+                            <span className="font-medium truncate">
+                              {formatUserName(user)}
+                            </span>
+                            <span className="text-xs text-muted-foreground truncate">
+                              {user.email}
+                            </span>
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            </ScrollArea>
           </div>
 
           <div className="space-y-2">
@@ -198,7 +213,7 @@ export const AddPortfolioManagerForm = ({ portfolioId, isOpen, onClose }: AddPor
           </div>
 
           <div className="flex justify-end space-x-2 pt-4">
-            <Button type="button" variant="outline" onClick={onClose}>
+            <Button type="button" variant="outline" onClick={() => handleOpenChange(false)}>
               Annuler
             </Button>
             <Button 
