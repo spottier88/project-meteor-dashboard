@@ -93,10 +93,31 @@ export const usePortfolioDetails = (portfolioId: string) => {
       // Créer un map des completions par projet
       const completionMap = new Map(reviewsData?.map(r => [r.project_id, r.completion]) || []);
 
-      // Enrichir les projets avec leurs données de completion
+      // Récupérer les profils des chefs de projet pour afficher leur nom
+      const managerEmails = [...new Set(
+        projects.map(p => p.project_manager).filter(Boolean)
+      )] as string[];
+
+      let managerProfileMap = new Map<string, { first_name: string | null; last_name: string | null }>();
+      
+      if (managerEmails.length > 0) {
+        const { data: managerProfiles } = await supabase
+          .from("profiles")
+          .select("email, first_name, last_name")
+          .in("email", managerEmails);
+
+        managerProfileMap = new Map(
+          managerProfiles?.map(p => [p.email!, { first_name: p.first_name, last_name: p.last_name }]) || []
+        );
+      }
+
+      // Enrichir les projets avec leurs données de completion et le profil du chef de projet
       const enrichedProjects = projects.map(project => ({
         ...project,
-        completion: completionMap.get(project.id) || 0
+        completion: completionMap.get(project.id) || 0,
+        manager_profile: project.project_manager 
+          ? managerProfileMap.get(project.project_manager) || null 
+          : null
       }));
 
       // Calculer les statistiques

@@ -1,3 +1,8 @@
+/**
+ * @file AddPortfolioManagerForm.tsx
+ * @description Formulaire d'ajout d'un gestionnaire à un portefeuille
+ * Utilise un Combobox avec recherche pour faciliter la sélection parmi de nombreux utilisateurs
+ */
 
 import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -8,6 +13,21 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAddPortfolioManager } from "@/hooks/usePortfolioManagers";
 import { UserProfile } from "@/types/user";
+import { Check, ChevronsUpDown } from "lucide-react";
+import { cn } from "@/lib/utils";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 
 interface AddPortfolioManagerFormProps {
   portfolioId: string;
@@ -18,6 +38,7 @@ interface AddPortfolioManagerFormProps {
 export const AddPortfolioManagerForm = ({ portfolioId, isOpen, onClose }: AddPortfolioManagerFormProps) => {
   const [selectedUserId, setSelectedUserId] = useState<string>("");
   const [selectedRole, setSelectedRole] = useState<string>("manager");
+  const [open, setOpen] = useState(false);
   
   const addManager = useAddPortfolioManager();
 
@@ -99,27 +120,66 @@ export const AddPortfolioManagerForm = ({ portfolioId, isOpen, onClose }: AddPor
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="user">Utilisateur</Label>
-            <Select value={selectedUserId} onValueChange={setSelectedUserId}>
-              <SelectTrigger>
-                <SelectValue placeholder="Sélectionner un utilisateur" />
-              </SelectTrigger>
-              <SelectContent>
-                {loadingUsers ? (
-                  <SelectItem value="loading" disabled>Chargement...</SelectItem>
-                ) : eligibleUsers?.length === 0 ? (
-                  <SelectItem value="no-users" disabled>Aucun utilisateur disponible</SelectItem>
-                ) : (
-                  eligibleUsers?.map((user) => (
-                    <SelectItem key={user.id} value={user.id}>
-                      <div className="flex flex-col">
-                        <span>{formatUserName(user)}</span>
-                        <span className="text-sm text-muted-foreground">{user.email}</span>
-                      </div>
-                    </SelectItem>
-                  ))
-                )}
-              </SelectContent>
-            </Select>
+            <Popover open={open} onOpenChange={setOpen}>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  role="combobox"
+                  aria-expanded={open}
+                  className="w-full justify-between"
+                >
+                  {selectedUserId && eligibleUsers?.find(u => u.id === selectedUserId) ? (
+                    <span className="truncate">
+                      {formatUserName(eligibleUsers.find(u => u.id === selectedUserId)!)}
+                    </span>
+                  ) : (
+                    <span className="text-muted-foreground">
+                      Rechercher un utilisateur...
+                    </span>
+                  )}
+                  <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-[350px] p-0" align="start">
+                <Command>
+                  <CommandInput placeholder="Rechercher par nom ou email..." />
+                  <CommandList>
+                    {loadingUsers ? (
+                      <div className="py-6 text-center text-sm">Chargement...</div>
+                    ) : (
+                      <>
+                        <CommandEmpty>Aucun utilisateur disponible</CommandEmpty>
+                        <CommandGroup>
+                          {eligibleUsers?.map((user) => (
+                            <CommandItem
+                              key={user.id}
+                              value={`${formatUserName(user)} ${user.email}`}
+                              onSelect={() => {
+                                setSelectedUserId(user.id);
+                                setOpen(false);
+                              }}
+                            >
+                              <Check
+                                className={cn(
+                                  "mr-2 h-4 w-4",
+                                  selectedUserId === user.id ? "opacity-100" : "opacity-0"
+                                )}
+                              />
+                              <div className="flex flex-col">
+                                <span>{formatUserName(user)}</span>
+                                <span className="text-xs text-muted-foreground">
+                                  {user.email}
+                                </span>
+                              </div>
+                            </CommandItem>
+                          ))}
+                        </CommandGroup>
+                      </>
+                    )}
+                  </CommandList>
+                </Command>
+              </PopoverContent>
+            </Popover>
           </div>
 
           <div className="space-y-2">
@@ -141,7 +201,7 @@ export const AddPortfolioManagerForm = ({ portfolioId, isOpen, onClose }: AddPor
             </Button>
             <Button 
               type="submit" 
-              disabled={!selectedUserId || addManager.isPending || selectedUserId === "loading" || selectedUserId === "no-users"}
+              disabled={!selectedUserId || addManager.isPending}
             >
               {addManager.isPending ? "Ajout..." : "Ajouter"}
             </Button>
