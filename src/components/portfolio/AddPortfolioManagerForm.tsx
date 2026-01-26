@@ -46,23 +46,16 @@ export const AddPortfolioManagerForm = ({ portfolioId, isOpen, onClose }: AddPor
   const { data: eligibleUsers, isLoading: loadingUsers } = useQuery({
     queryKey: ["eligible-portfolio-managers", portfolioId],
     queryFn: async () => {
-      // Récupérer les utilisateurs avec le rôle portfolio_manager
+      // Étape 1 : Récupérer les user_id avec le rôle portfolio_manager
       const { data: usersWithRole, error: roleError } = await supabase
         .from("user_roles")
-        .select(`
-          user_id,
-          profiles!user_roles_user_id_fkey(
-            id,
-            email,
-            first_name,
-            last_name
-          )
-        `)
+        .select("user_id")
         .eq("role", "portfolio_manager");
 
       if (roleError) throw roleError;
+      if (!usersWithRole || usersWithRole.length === 0) return [];
 
-      // Récupérer les gestionnaires déjà assignés au portefeuille
+      // Étape 2 : Récupérer les gestionnaires déjà assignés au portefeuille
       const { data: existingManagers, error: managersError } = await supabase
         .from("portfolio_managers")
         .select("user_id")
@@ -73,12 +66,21 @@ export const AddPortfolioManagerForm = ({ portfolioId, isOpen, onClose }: AddPor
       const existingManagerIds = existingManagers?.map(m => m.user_id) || [];
       
       // Filtrer les utilisateurs déjà assignés
-      const availableUsers = usersWithRole
-        ?.filter(userRole => !existingManagerIds.includes(userRole.user_id))
-        .map(userRole => userRole.profiles)
-        .filter(profile => profile !== null) as UserProfile[];
+      const availableUserIds = usersWithRole
+        .map(ur => ur.user_id)
+        .filter(userId => !existingManagerIds.includes(userId));
 
-      return availableUsers || [];
+      if (availableUserIds.length === 0) return [];
+
+      // Étape 3 : Récupérer les profils des utilisateurs disponibles
+      const { data: profiles, error: profilesError } = await supabase
+        .from("profiles")
+        .select("id, email, first_name, last_name")
+        .in("id", availableUserIds);
+
+      if (profilesError) throw profilesError;
+
+      return (profiles || []) as UserProfile[];
     },
     enabled: isOpen,
   });
@@ -153,7 +155,7 @@ export const AddPortfolioManagerForm = ({ portfolioId, isOpen, onClose }: AddPor
                           {eligibleUsers?.map((user) => (
                             <CommandItem
                               key={user.id}
-                              value={`${formatUserName(user)} ${user.email}`}
+                              value={`${formatUserName(user)} ${user.email || ''}`.toLowerCase()}
                               onSelect={() => {
                                 setSelectedUserId(user.id);
                                 setOpen(false);
