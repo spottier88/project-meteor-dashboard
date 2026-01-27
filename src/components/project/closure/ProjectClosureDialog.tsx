@@ -54,6 +54,11 @@ export const ProjectClosureDialog = ({
     submitClosure,
     completeEvaluation,
     resetClosure,
+    // Nouvelles fonctions pour la gestion des données existantes
+    existingData,
+    checkingExistingData,
+    checkExistingClosureData,
+    deleteExistingClosureData,
   } = useProjectClosure({
     projectId,
     onClosureComplete: () => {
@@ -76,9 +81,12 @@ export const ProjectClosureDialog = ({
       // Si mode évaluation en attente, aller directement à l'étape d'évaluation
       if (pendingEvaluationMode) {
         goToStep('method_evaluation');
+      } else {
+        // Vérifier si des données de clôture existantes sont présentes
+        checkExistingClosureData();
       }
     }
-  }, [isOpen, resetClosure, pendingEvaluationMode, goToStep]);
+  }, [isOpen, resetClosure, pendingEvaluationMode, goToStep, checkExistingClosureData]);
 
   // Gérer le report de l'évaluation
   const handlePostpone = async () => {
@@ -106,6 +114,9 @@ export const ProjectClosureDialog = ({
             projectTitle={projectTitle}
             onContinue={goToNextStep}
             onCancel={handleClose}
+            existingData={existingData}
+            checkingExistingData={checkingExistingData}
+            onDeleteExistingData={deleteExistingClosureData}
           />
         );
       
