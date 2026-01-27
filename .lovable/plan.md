@@ -1,22 +1,22 @@
 
-# Plan de remédiation : Gestion du focus dans le processus de clôture de projet
+# Plan d'implémentation : Réactivation et nouvelle clôture de projet
 
-## Problème identifié
+## Contexte du problème
 
-Après la fermeture du dialogue de clôture (annulation, validation ou report), l'utilisateur perd le focus et l'interface devient difficile à naviguer.
+Lorsqu'un projet est clôturé, des données sont créées dans :
+1. **Table `reviews`** : Une revue finale avec `is_final_review = true`
+2. **Table `project_evaluations`** : Une évaluation de méthode (avec contrainte `UNIQUE(project_id)`)
 
-### Cause technique
-
-L'interaction entre le **DropdownMenu** (modal par défaut) et le **Dialog** de clôture crée un conflit de focus trap :
-1. Le `DropdownMenuItem` déclenche l'ouverture du Dialog puis disparaît du DOM
-2. À la fermeture du Dialog, Radix UI ne trouve pas l'élément d'origine pour restituer le focus
-3. Les `pointer-events` peuvent rester bloqués sur certains éléments
-
----
+Si l'utilisateur réactive le projet (modifie manuellement le `lifecycle_status`), il ne peut pas relancer le processus de clôture car :
+- L'insertion d'une nouvelle évaluation échoue (contrainte d'unicité)
+- Les anciennes données de clôture restent en base
 
 ## Solution proposée
 
-Appliquer les patterns de gestion du focus déjà utilisés dans l'application (notamment dans `ProjectNoteCard`, `PortfolioReviewForm`, `ProjectNotesList`).
+Ajouter une étape de vérification au début du processus de clôture qui :
+1. Détecte si des données de clôture existent déjà
+2. Propose à l'utilisateur de supprimer ces anciennes données
+3. Permet ensuite de créer une nouvelle clôture complète
 
 ---
 
@@ -24,123 +24,374 @@ Appliquer les patterns de gestion du focus déjà utilisés dans l'application (
 
 | Fichier | Modification |
 |---------|--------------|
-| `src/components/project/ProjectSummaryActions.tsx` | Ajouter `modal={false}` au DropdownMenu |
-| `src/components/project/closure/ProjectClosureDialog.tsx` | Ajouter gestion explicite du focus à la fermeture + nettoyage des pointer-events |
+| `src/hooks/useProjectClosure.ts` | Ajouter la logique de détection et suppression des données existantes |
+| `src/components/project/closure/ProjectClosureDialog.tsx` | Afficher un message d'avertissement et options de suppression |
+| `src/components/project/closure/ClosureStepIntro.tsx` | Adapter l'interface pour gérer le cas "données existantes" |
 
 ---
 
 ## Détails techniques
 
-### 1. Modification de `ProjectSummaryActions.tsx`
+### 1. Modification de `src/hooks/useProjectClosure.ts`
 
-Ajouter `modal={false}` au composant `DropdownMenu` pour éviter le conflit de focus trap.
+Ajouter de nouvelles fonctionnalités au hook :
 
-**Ligne 257 - Avant :**
+#### A. Nouveau state pour gérer les données existantes
+
 ```typescript
-<DropdownMenu>
+interface ExistingClosureData {
+  hasFinalReview: boolean;
+  hasEvaluation: boolean;
+  finalReviewId?: string;
+  evaluationId?: string;
+}
 ```
 
-**Après :**
+Ajouter au state :
 ```typescript
-<DropdownMenu modal={false}>
+const [existingData, setExistingData] = useState<ExistingClosureData | null>(null);
+const [checkingExistingData, setCheckingExistingData] = useState(false);
 ```
 
-Cette modification permet au Dialog de clôture de gérer le focus sans interférence du DropdownMenu.
+#### B. Fonction pour vérifier les données existantes
 
----
-
-### 2. Modification de `ProjectClosureDialog.tsx`
-
-Ajouter une gestion explicite du focus et un nettoyage des pointer-events à la fermeture du dialogue.
-
-#### A. Ajouter la fonction utilitaire de nettoyage
-
-Au début du fichier, après les imports :
 ```typescript
-/**
- * Nettoie les pointer-events résiduels après fermeture de modale
- * Radix UI peut parfois laisser pointer-events: none après fermeture
- */
-const unlockPointerEvents = () => {
-  document.body.style.pointerEvents = "";
-  document.body.style.removeProperty("pointer-events");
-  document.documentElement.style.pointerEvents = "";
-  document.documentElement.style.removeProperty("pointer-events");
+const checkExistingClosureData = async () => {
+  setCheckingExistingData(true);
+  try {
+    // Vérifier si une revue finale existe
+    const { data: finalReview } = await supabase
+      .from('reviews')
+      .select('id')
+      .eq('project_id', projectId)
+      .eq('is_final_review', true)
+      .maybeSingle();
+
+    // Vérifier si une évaluation existe
+    const { data: evaluation } = await supabase
+      .from('project_evaluations')
+      .select('id')
+      .eq('project_id', projectId)
+      .maybeSingle();
+
+    setExistingData({
+      hasFinalReview: !!finalReview,
+      hasEvaluation: !!evaluation,
+      finalReviewId: finalReview?.id,
+      evaluationId: evaluation?.id,
+    });
+  } catch (error) {
+    console.error("Erreur lors de la vérification des données existantes:", error);
+  } finally {
+    setCheckingExistingData(false);
+  }
 };
 ```
 
-#### B. Modifier la fonction `onClose` pour nettoyer les pointer-events
-
-Créer une fonction wrapper pour la fermeture qui nettoie les pointer-events :
-```typescript
-// Fonction de fermeture avec nettoyage du focus
-const handleClose = () => {
-  // Nettoyer les pointer-events résiduels
-  unlockPointerEvents();
-  // Rendre le focus au body
-  document.body.focus();
-  // Appeler la fonction de fermeture parente
-  onClose();
-};
-```
-
-Remplacer tous les appels à `onClose` par `handleClose` dans le composant.
-
-#### C. Ajouter `onCloseAutoFocus` au DialogContent
-
-Modifier le `DialogContent` pour gérer explicitement le focus à la fermeture :
-```typescript
-<DialogContent 
-  className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto"
-  onCloseAutoFocus={(event) => {
-    event.preventDefault();
-    unlockPointerEvents();
-    document.body.focus();
-  }}
->
-```
-
-#### D. Modifier le handler `onOpenChange` du Dialog
+#### C. Fonction pour supprimer les données existantes
 
 ```typescript
-<Dialog 
-  open={isOpen} 
-  onOpenChange={(open) => {
-    if (!open) {
-      handleClose();
+const deleteExistingClosureData = async () => {
+  if (!existingData) return false;
+
+  try {
+    // Supprimer l'évaluation existante si présente
+    if (existingData.evaluationId) {
+      const { error: evalError } = await supabase
+        .from('project_evaluations')
+        .delete()
+        .eq('id', existingData.evaluationId);
+      
+      if (evalError) throw evalError;
     }
-  }}
->
+
+    // Supprimer la revue finale existante si présente
+    if (existingData.finalReviewId) {
+      const { error: reviewError } = await supabase
+        .from('reviews')
+        .delete()
+        .eq('id', existingData.finalReviewId);
+      
+      if (reviewError) throw reviewError;
+    }
+
+    // Réinitialiser les champs de clôture du projet
+    const { error: projectError } = await supabase
+      .from('projects')
+      .update({
+        closure_status: null,
+        closed_at: null,
+        closed_by: null,
+      })
+      .eq('id', projectId);
+
+    if (projectError) throw projectError;
+
+    // Invalider les caches
+    queryClient.invalidateQueries({ queryKey: ["project", projectId] });
+    queryClient.invalidateQueries({ queryKey: ["projectEvaluation", projectId] });
+    queryClient.invalidateQueries({ queryKey: ["lastReviews", projectId] });
+
+    // Réinitialiser le state des données existantes
+    setExistingData(null);
+
+    toast({
+      title: "Données supprimées",
+      description: "Les anciennes données de clôture ont été supprimées.",
+    });
+
+    return true;
+  } catch (error) {
+    console.error("Erreur lors de la suppression:", error);
+    toast({
+      title: "Erreur",
+      description: "Impossible de supprimer les anciennes données.",
+      variant: "destructive",
+    });
+    return false;
+  }
+};
+```
+
+#### D. Retourner les nouvelles fonctions
+
+Ajouter au return du hook :
+```typescript
+return {
+  // ... existant
+  existingData,
+  checkingExistingData,
+  checkExistingClosureData,
+  deleteExistingClosureData,
+};
 ```
 
 ---
 
-## Résumé des changements
+### 2. Modification de `src/components/project/closure/ProjectClosureDialog.tsx`
 
-| Composant | Changement | Effet |
-|-----------|------------|-------|
-| `DropdownMenu` | `modal={false}` | Désactive le focus trap du menu déroulant |
-| `DialogContent` | `onCloseAutoFocus` | Empêche le focus automatique de Radix et force le focus sur le body |
-| Nouvelle fonction | `unlockPointerEvents` | Nettoie les styles résiduels qui bloquent les interactions |
-| Nouvelle fonction | `handleClose` | Centralise la logique de fermeture avec nettoyage |
+#### A. Appeler la vérification à l'ouverture
+
+Modifier le `useEffect` existant :
+```typescript
+useEffect(() => {
+  if (isOpen) {
+    resetClosure();
+    if (pendingEvaluationMode) {
+      goToStep('method_evaluation');
+    } else {
+      // Vérifier si des données existantes existent
+      checkExistingClosureData();
+    }
+  }
+}, [isOpen, resetClosure, pendingEvaluationMode, goToStep, checkExistingClosureData]);
+```
+
+#### B. Passer les props au composant ClosureStepIntro
+
+```typescript
+case 'intro':
+  return (
+    <ClosureStepIntro
+      projectTitle={projectTitle}
+      onContinue={goToNextStep}
+      onCancel={handleClose}
+      existingData={existingData}
+      checkingExistingData={checkingExistingData}
+      onDeleteExistingData={deleteExistingClosureData}
+    />
+  );
+```
 
 ---
 
-## Comportement attendu après correction
+### 3. Modification de `src/components/project/closure/ClosureStepIntro.tsx`
 
-1. **Ouverture du dialogue** : Le dialogue de clôture s'ouvre normalement depuis le menu déroulant
-2. **Annulation** (bouton Annuler ou clic hors du dialogue) : Le focus revient au body, l'interface reste interactive
-3. **Validation** (clôture complète ou report) : Le focus revient au body après la fermeture du dialogue
-4. **Complétion d'évaluation** : Même comportement fluide lors de la complétion d'une évaluation en attente
+Adapter l'interface pour afficher un avertissement si des données existent.
+
+#### A. Nouvelles props
+
+```typescript
+interface ClosureStepIntroProps {
+  projectTitle: string;
+  onContinue: () => void;
+  onCancel: () => void;
+  existingData?: {
+    hasFinalReview: boolean;
+    hasEvaluation: boolean;
+  } | null;
+  checkingExistingData?: boolean;
+  onDeleteExistingData?: () => Promise<boolean>;
+}
+```
+
+#### B. State local pour la confirmation de suppression
+
+```typescript
+const [isDeleting, setIsDeleting] = useState(false);
+const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
+```
+
+#### C. Ajouter un bloc d'avertissement conditionnel
+
+Avant le bloc des étapes, ajouter :
+```typescript
+{/* Avertissement si des données de clôture existent */}
+{existingData && (existingData.hasFinalReview || existingData.hasEvaluation) && (
+  <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 space-y-3">
+    <div className="flex items-start gap-3">
+      <AlertTriangle className="h-5 w-5 text-amber-600 flex-shrink-0 mt-0.5" />
+      <div className="space-y-2">
+        <h3 className="font-medium text-amber-800">Données de clôture existantes</h3>
+        <p className="text-sm text-amber-700">
+          Ce projet possède déjà des données de clôture :
+        </p>
+        <ul className="text-sm text-amber-700 list-disc list-inside">
+          {existingData.hasFinalReview && (
+            <li>Une revue finale de projet</li>
+          )}
+          {existingData.hasEvaluation && (
+            <li>Une évaluation de la méthode projet</li>
+          )}
+        </ul>
+        <p className="text-sm text-amber-700">
+          Pour créer une nouvelle clôture, vous devez d'abord supprimer ces données.
+        </p>
+      </div>
+    </div>
+    
+    {!showDeleteConfirmation ? (
+      <Button
+        variant="outline"
+        className="w-full border-amber-300 text-amber-700 hover:bg-amber-100"
+        onClick={() => setShowDeleteConfirmation(true)}
+      >
+        <Trash2 className="h-4 w-4 mr-2" />
+        Supprimer les anciennes données
+      </Button>
+    ) : (
+      <div className="space-y-2 pt-2 border-t border-amber-200">
+        <p className="text-sm font-medium text-amber-800">
+          Êtes-vous sûr de vouloir supprimer ces données ?
+        </p>
+        <p className="text-xs text-amber-600">
+          Cette action est irréversible.
+        </p>
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setShowDeleteConfirmation(false)}
+            disabled={isDeleting}
+          >
+            Annuler
+          </Button>
+          <Button
+            variant="destructive"
+            size="sm"
+            onClick={handleDeleteExistingData}
+            disabled={isDeleting}
+          >
+            {isDeleting ? "Suppression..." : "Confirmer la suppression"}
+          </Button>
+        </div>
+      </div>
+    )}
+  </div>
+)}
+```
+
+#### D. Handler pour la suppression
+
+```typescript
+const handleDeleteExistingData = async () => {
+  if (!onDeleteExistingData) return;
+  
+  setIsDeleting(true);
+  const success = await onDeleteExistingData();
+  setIsDeleting(false);
+  
+  if (success) {
+    setShowDeleteConfirmation(false);
+  }
+};
+```
+
+#### E. Désactiver le bouton "Commencer" si des données existent
+
+```typescript
+<Button 
+  onClick={onContinue}
+  disabled={checkingExistingData || (existingData && (existingData.hasFinalReview || existingData.hasEvaluation))}
+>
+  {checkingExistingData ? "Vérification..." : "Commencer la clôture"}
+</Button>
+```
 
 ---
 
-## Cohérence avec l'existant
+## Résumé des modifications
 
-Cette approche suit les mêmes patterns déjà utilisés dans :
-- `src/components/notes/ProjectNoteCard.tsx` (ligne 102) - `modal={false}`
-- `src/components/notes/ProjectNotesList.tsx` (lignes 31-36) - `unlockPointerEvents`
-- `src/components/portfolio/PortfolioReviewForm.tsx` (lignes 101-104) - `onCloseAutoFocus`
-- `src/components/portfolio/PortfolioReviewList.tsx` (lignes 262-265) - gestion du focus
+| Fichier | Changements |
+|---------|-------------|
+| `useProjectClosure.ts` | Ajout de `checkExistingClosureData` et `deleteExistingClosureData` |
+| `ProjectClosureDialog.tsx` | Appel de la vérification à l'ouverture, passage des props |
+| `ClosureStepIntro.tsx` | Interface conditionnelle avec avertissement et suppression |
 
-L'implémentation garantit une expérience utilisateur cohérente dans toute l'application.
+---
+
+## Flux utilisateur après implémentation
+
+```text
+┌─────────────────────────────────────────────────────────────────┐
+│                    Ouverture du dialogue                        │
+└─────────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+              ┌───────────────────────────────┐
+              │ Vérification des données      │
+              │ existantes (async)            │
+              └───────────────────────────────┘
+                              │
+            ┌─────────────────┴─────────────────┐
+            │                                   │
+            ▼                                   ▼
+   ┌─────────────────┐               ┌─────────────────────┐
+   │ Aucune donnée   │               │ Données existantes  │
+   │ → Continuer     │               │ → Avertissement     │
+   └─────────────────┘               └─────────────────────┘
+                                               │
+                                               ▼
+                                    ┌─────────────────────┐
+                                    │ Supprimer données ? │
+                                    └─────────────────────┘
+                                               │
+                                    ┌──────────┴──────────┐
+                                    │                     │
+                                    ▼                     ▼
+                           ┌──────────────┐      ┌──────────────┐
+                           │   Oui        │      │   Non        │
+                           │   → Supprime │      │   → Annuler  │
+                           │   → Continue │      └──────────────┘
+                           └──────────────┘
+```
+
+---
+
+## Imports à ajouter
+
+### ClosureStepIntro.tsx
+```typescript
+import { AlertTriangle, Trash2 } from "lucide-react";
+```
+
+---
+
+## Avantages de cette solution
+
+1. **Non-intrusif** : Ne modifie pas le comportement normal si aucune donnée n'existe
+2. **Sécurisé** : Demande une double confirmation avant suppression
+3. **Informatif** : L'utilisateur voit exactement quelles données seront supprimées
+4. **Cohérent** : Suit les patterns d'interface existants dans l'application
+5. **Complet** : Réinitialise également les champs de clôture du projet
+
