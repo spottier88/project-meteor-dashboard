@@ -254,7 +254,7 @@ const ProjectSummaryActions = ({
         )}
 
         {/* Menu déroulant pour les actions secondaires */}
-        <DropdownMenu>
+        <DropdownMenu modal={false}>
           <Tooltip>
             <TooltipTrigger asChild>
               <DropdownMenuTrigger asChild>

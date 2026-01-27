@@ -12,6 +12,17 @@ import { ClosureStepFinalReview } from "./ClosureStepFinalReview";
 import { ClosureStepMethodEvaluation } from "./ClosureStepMethodEvaluation";
 import { ClosureStepConfirmation } from "./ClosureStepConfirmation";
 
+/**
+ * Nettoie les pointer-events résiduels après fermeture de modale
+ * Radix UI peut parfois laisser pointer-events: none après fermeture
+ */
+const unlockPointerEvents = () => {
+  document.body.style.pointerEvents = "";
+  document.body.style.removeProperty("pointer-events");
+  document.documentElement.style.pointerEvents = "";
+  document.documentElement.style.removeProperty("pointer-events");
+};
+
 interface ProjectClosureDialogProps {
   projectId: string;
   projectTitle: string;
@@ -51,6 +62,13 @@ export const ProjectClosureDialog = ({
     },
   });
 
+  // Fonction de fermeture avec nettoyage du focus
+  const handleClose = () => {
+    unlockPointerEvents();
+    document.body.focus();
+    onClose();
+  };
+
   // Réinitialiser l'état à l'ouverture du dialogue
   useEffect(() => {
     if (isOpen) {
@@ -66,7 +84,7 @@ export const ProjectClosureDialog = ({
   const handlePostpone = async () => {
     const success = await postponeEvaluation();
     if (success) {
-      onClose();
+      handleClose();
     }
   };
 
@@ -87,7 +105,7 @@ export const ProjectClosureDialog = ({
           <ClosureStepIntro
             projectTitle={projectTitle}
             onContinue={goToNextStep}
-            onCancel={onClose}
+            onCancel={handleClose}
           />
         );
       
@@ -108,7 +126,7 @@ export const ProjectClosureDialog = ({
             initialData={closureState.evaluationData}
             onSubmit={saveEvaluationData}
             onPostpone={handlePostpone}
-            onBack={pendingEvaluationMode ? onClose : goToPreviousStep}
+            onBack={pendingEvaluationMode ? handleClose : goToPreviousStep}
             isSubmitting={closureState.isSubmitting}
           />
         );
@@ -131,8 +149,15 @@ export const ProjectClosureDialog = ({
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
+    <Dialog open={isOpen} onOpenChange={(open) => !open && handleClose()}>
+      <DialogContent 
+        className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto"
+        onCloseAutoFocus={(event) => {
+          event.preventDefault();
+          unlockPointerEvents();
+          document.body.focus();
+        }}
+      >
         <DialogHeader>
           <DialogTitle className="sr-only">
             {pendingEvaluationMode ? "Compléter l'évaluation" : "Clôturer le projet"}
