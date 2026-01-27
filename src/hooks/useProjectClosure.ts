@@ -243,15 +243,21 @@ export const useProjectClosure = ({ projectId, onClosureComplete }: UseProjectCl
       const { data: userData } = await supabase.auth.getUser();
       const userId = userData?.user?.id;
 
-      // Créer l'évaluation de méthode
-      const { error: evalError } = await supabase.from("project_evaluations").insert({
-        project_id: projectId,
-        what_worked: evaluationData.what_worked,
-        what_was_missing: evaluationData.what_was_missing,
-        improvements: evaluationData.improvements,
-        lessons_learned: evaluationData.lessons_learned,
-        created_by: userId,
-      });
+      // Créer ou mettre à jour l'évaluation de méthode (upsert)
+      // Utilise onConflict pour gérer le cas où une évaluation existe déjà
+      const { error: evalError } = await supabase
+        .from("project_evaluations")
+        .upsert({
+          project_id: projectId,
+          what_worked: evaluationData.what_worked,
+          what_was_missing: evaluationData.what_was_missing,
+          improvements: evaluationData.improvements,
+          lessons_learned: evaluationData.lessons_learned,
+          created_by: userId,
+          updated_at: new Date().toISOString(),
+        }, {
+          onConflict: 'project_id',
+        });
 
       if (evalError) throw evalError;
 
