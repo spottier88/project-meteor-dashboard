@@ -1,6 +1,7 @@
 /**
  * Hook pour gérer le processus de clôture d'un projet
  * Gère les étapes, la validation et la soumission des données
+ * Inclut la détection et suppression des données de clôture existantes
  */
 
 import { useState, useCallback } from "react";
@@ -13,6 +14,17 @@ import {
   FinalReviewFormData, 
   EvaluationFormData 
 } from "@/types/project-closure";
+
+/**
+ * Interface pour les données de clôture existantes
+ * Permet de savoir si une revue finale ou évaluation existe déjà
+ */
+interface ExistingClosureData {
+  hasFinalReview: boolean;
+  hasEvaluation: boolean;
+  finalReviewId?: string;
+  evaluationId?: string;
+}
 
 interface UseProjectClosureProps {
   projectId: string;
@@ -30,6 +42,10 @@ export const useProjectClosure = ({ projectId, onClosureComplete }: UseProjectCl
     evaluationData: null,
     isSubmitting: false,
   });
+
+  // État pour la vérification des données existantes
+  const [existingData, setExistingData] = useState<ExistingClosureData | null>(null);
+  const [checkingExistingData, setCheckingExistingData] = useState(false);
 
   // Navigation entre les étapes
   const goToStep = useCallback((step: ClosureStep) => {
@@ -280,7 +296,109 @@ export const useProjectClosure = ({ projectId, onClosureComplete }: UseProjectCl
       evaluationData: null,
       isSubmitting: false,
     });
+    setExistingData(null);
+    setCheckingExistingData(false);
   }, []);
+
+  /**
+   * Vérifie si des données de clôture existent déjà pour ce projet
+   * (revue finale et/ou évaluation de méthode)
+   */
+  const checkExistingClosureData = useCallback(async () => {
+    setCheckingExistingData(true);
+    try {
+      // Vérifier si une revue finale existe
+      const { data: finalReview } = await supabase
+        .from('reviews')
+        .select('id')
+        .eq('project_id', projectId)
+        .eq('is_final_review', true)
+        .maybeSingle();
+
+      // Vérifier si une évaluation existe
+      const { data: evaluation } = await supabase
+        .from('project_evaluations')
+        .select('id')
+        .eq('project_id', projectId)
+        .maybeSingle();
+
+      setExistingData({
+        hasFinalReview: !!finalReview,
+        hasEvaluation: !!evaluation,
+        finalReviewId: finalReview?.id,
+        evaluationId: evaluation?.id,
+      });
+    } catch (error) {
+      console.error("Erreur lors de la vérification des données existantes:", error);
+    } finally {
+      setCheckingExistingData(false);
+    }
+  }, [projectId]);
+
+  /**
+   * Supprime les données de clôture existantes pour permettre une nouvelle clôture
+   * Supprime l'évaluation, la revue finale et réinitialise les champs du projet
+   */
+  const deleteExistingClosureData = useCallback(async () => {
+    if (!existingData) return false;
+
+    try {
+      // Supprimer l'évaluation existante si présente
+      if (existingData.evaluationId) {
+        const { error: evalError } = await supabase
+          .from('project_evaluations')
+          .delete()
+          .eq('id', existingData.evaluationId);
+        
+        if (evalError) throw evalError;
+      }
+
+      // Supprimer la revue finale existante si présente
+      if (existingData.finalReviewId) {
+        const { error: reviewError } = await supabase
+          .from('reviews')
+          .delete()
+          .eq('id', existingData.finalReviewId);
+        
+        if (reviewError) throw reviewError;
+      }
+
+      // Réinitialiser les champs de clôture du projet
+      const { error: projectError } = await supabase
+        .from('projects')
+        .update({
+          closure_status: null,
+          closed_at: null,
+          closed_by: null,
+        })
+        .eq('id', projectId);
+
+      if (projectError) throw projectError;
+
+      // Invalider les caches
+      queryClient.invalidateQueries({ queryKey: ["project", projectId] });
+      queryClient.invalidateQueries({ queryKey: ["projectEvaluation", projectId] });
+      queryClient.invalidateQueries({ queryKey: ["lastReviews", projectId] });
+
+      // Réinitialiser le state des données existantes
+      setExistingData(null);
+
+      toast({
+        title: "Données supprimées",
+        description: "Les anciennes données de clôture ont été supprimées.",
+      });
+
+      return true;
+    } catch (error) {
+      console.error("Erreur lors de la suppression:", error);
+      toast({
+        title: "Erreur",
+        description: "Impossible de supprimer les anciennes données.",
+        variant: "destructive",
+      });
+      return false;
+    }
+  }, [existingData, projectId, queryClient, toast]);
 
   return {
     closureState,
@@ -293,5 +411,10 @@ export const useProjectClosure = ({ projectId, onClosureComplete }: UseProjectCl
     submitClosure,
     completeEvaluation,
     resetClosure,
+    // Nouvelles fonctions pour la gestion des données existantes
+    existingData,
+    checkingExistingData,
+    checkExistingClosureData,
+    deleteExistingClosureData,
   };
 };
