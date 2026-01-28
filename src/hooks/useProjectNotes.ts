@@ -1,6 +1,7 @@
 /**
  * Hook pour la gestion des notes de projet
  * Gère le CRUD des notes avec React Query
+ * Inclut l'envoi de notifications email aux membres du projet
  */
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -8,6 +9,110 @@ import { useUser } from "@supabase/auth-helpers-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import type { ProjectNote, CreateProjectNoteInput, UpdateProjectNoteInput, ProjectNoteType } from "@/types/project-notes";
+import { noteTypeLabels } from "@/types/project-notes";
+
+/**
+ * Récupère tous les membres à notifier pour un projet
+ * (chef de projet principal, chefs secondaires, membres)
+ * Exclut l'auteur de la note pour ne pas le notifier de sa propre action
+ */
+const getProjectMembersToNotify = async (
+  projectId: string, 
+  excludeUserId: string
+): Promise<Array<{ userId: string; role: string }>> => {
+  const members: Array<{ userId: string; role: string }> = [];
+
+  // 1. Récupérer le chef de projet principal
+  const { data: project } = await supabase
+    .from("projects")
+    .select("project_manager_id")
+    .eq("id", projectId)
+    .single();
+
+  if (project?.project_manager_id && project.project_manager_id !== excludeUserId) {
+    members.push({
+      userId: project.project_manager_id,
+      role: 'project_manager'
+    });
+  }
+
+  // 2. Récupérer les membres du projet (secondaires et membres)
+  const { data: projectMembers } = await supabase
+    .from("project_members")
+    .select("user_id, role")
+    .eq("project_id", projectId)
+    .neq("user_id", excludeUserId);
+
+  projectMembers?.forEach(member => {
+    members.push({
+      userId: member.user_id,
+      role: member.role
+    });
+  });
+
+  return members;
+};
+
+/**
+ * Ajoute les notifications email pour une nouvelle note de projet
+ * Insertion dans email_notification_queue pour traitement par send-email-digest
+ * Non bloquant : les erreurs sont loguées mais n'empêchent pas la création de la note
+ */
+const sendNoteNotifications = async (
+  note: ProjectNote,
+  projectId: string,
+  authorId: string
+) => {
+  try {
+    // Récupérer les informations du projet (titre)
+    const { data: project } = await supabase
+      .from("projects")
+      .select("title")
+      .eq("id", projectId)
+      .single();
+
+    // Récupérer les membres à notifier (exclure l'auteur)
+    const membersToNotify = await getProjectMembersToNotify(projectId, authorId);
+
+    if (membersToNotify.length === 0) {
+      console.log("[useProjectNotes] Aucun membre à notifier pour cette note");
+      return;
+    }
+
+    // Créer les entrées de notification pour chaque membre
+    const notifications = membersToNotify.map(member => ({
+      user_id: member.userId,
+      event_type: 'project_note_added' as const,
+      event_data: {
+        project_id: projectId,
+        project_title: project?.title || 'Projet sans titre',
+        note_id: note.id,
+        note_type: note.note_type,
+        note_type_label: noteTypeLabels[note.note_type as ProjectNoteType] || note.note_type,
+        note_content_preview: note.content.substring(0, 150) + 
+          (note.content.length > 150 ? '...' : ''),
+        author_name: [note.author?.first_name, note.author?.last_name]
+          .filter(Boolean).join(' ') || 'Utilisateur',
+        author_email: note.author?.email || '',
+        created_at: note.created_at,
+      }
+    }));
+
+    // Insérer dans la file de notifications email
+    const { error } = await supabase
+      .from("email_notification_queue")
+      .insert(notifications);
+
+    if (error) {
+      console.error("[useProjectNotes] Erreur lors de l'ajout des notifications de note:", error);
+    } else {
+      console.log(`[useProjectNotes] ${notifications.length} notification(s) ajoutée(s) pour la note`);
+    }
+  } catch (error) {
+    console.error("[useProjectNotes] Erreur lors de l'envoi des notifications de note:", error);
+    // Non bloquant - la note est déjà créée
+  }
+};
 
 export const useProjectNotes = (projectId: string) => {
   const user = useUser();
@@ -63,6 +168,10 @@ export const useProjectNotes = (projectId: string) => {
         .single();
 
       if (error) throw error;
+      
+      // Envoyer les notifications aux membres du projet (non bloquant)
+      sendNoteNotifications(data as ProjectNote, input.project_id, user.id);
+      
       return data as ProjectNote;
     },
     onSuccess: () => {
