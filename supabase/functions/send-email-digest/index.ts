@@ -307,6 +307,48 @@ function generateFeedbacksListText(notifications: Array<{ event_data: Record<str
     .join('\n');
 }
 
+/**
+ * Génère la liste HTML des notes de projet ajoutées
+ */
+function generateNotesListHtml(notifications: Array<{ event_data: Record<string, unknown> }>): string {
+  return notifications
+    .map(n => {
+      const data = n.event_data;
+      const createdAt = data.created_at 
+        ? new Date(data.created_at as string).toLocaleDateString('fr-FR', {
+            day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit'
+          })
+        : '';
+      return `<div class="item">
+        <div class="item-title">${data.project_title || 'Projet'}</div>
+        <div class="item-meta">
+          <span class="badge badge-note">${data.note_type_label || 'Note'}</span>
+          <span style="margin-left: 10px;">Par : ${data.author_name || 'Inconnu'}</span>
+          <span style="margin-left: 10px;">${createdAt}</span>
+        </div>
+        <div class="item-preview" style="margin-top: 8px; color: #6b7280; font-size: 13px;">
+          ${data.note_content_preview || ''}
+        </div>
+      </div>`;
+    })
+    .join('');
+}
+
+/**
+ * Génère la liste texte des notes de projet ajoutées
+ */
+function generateNotesListText(notifications: Array<{ event_data: Record<string, unknown> }>): string {
+  return notifications
+    .map(n => {
+      const data = n.event_data;
+      const createdAt = data.created_at 
+        ? new Date(data.created_at as string).toLocaleDateString('fr-FR') 
+        : '';
+      return `- [${data.note_type_label || 'Note'}] ${data.project_title || 'Projet'} - Par ${data.author_name || 'Inconnu'} (${createdAt})`;
+    })
+    .join('\n');
+}
+
 serve(async (req) => {
   // Gestion CORS
   if (req.method === 'OPTIONS') {
@@ -465,6 +507,7 @@ serve(async (req) => {
         const roleNotifs = data.notifications.filter(n => n.event_type === 'role_changed');
         const signupNotifs = data.notifications.filter(n => n.event_type === 'user_signup');
         const feedbackNotifs = data.notifications.filter(n => n.event_type === 'admin_feedback');
+        const noteNotifs = data.notifications.filter(n => n.event_type === 'project_note_added');
 
         // Préparer les variables de publipostage
         const variables: Record<string, string | boolean | number> = {
@@ -495,6 +538,11 @@ serve(async (req) => {
           feedbacks_count: feedbackNotifs.length,
           feedbacks_list: generateFeedbacksListHtml(feedbackNotifs),
           feedbacks_list_text: generateFeedbacksListText(feedbackNotifs),
+          // Notes de projet (nouveau)
+          has_notes: noteNotifs.length > 0,
+          notes_count: noteNotifs.length,
+          notes_list: generateNotesListHtml(noteNotifs),
+          notes_list_text: generateNotesListText(noteNotifs),
         };
 
         // Fusionner le template avec les variables
