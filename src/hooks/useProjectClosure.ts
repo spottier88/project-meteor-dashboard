@@ -130,6 +130,7 @@ export const useProjectClosure = ({ projectId, onClosureComplete }: UseProjectCl
       queryClient.invalidateQueries({ queryKey: ["project", projectId] });
       queryClient.invalidateQueries({ queryKey: ["projects"] });
       queryClient.invalidateQueries({ queryKey: ["lastReviews", projectId] });
+      queryClient.invalidateQueries({ queryKey: ["projectAccess", projectId] });
 
       toast({
         title: "Projet clôturé",
@@ -214,6 +215,7 @@ export const useProjectClosure = ({ projectId, onClosureComplete }: UseProjectCl
       queryClient.invalidateQueries({ queryKey: ["projects"] });
       queryClient.invalidateQueries({ queryKey: ["lastReviews", projectId] });
       queryClient.invalidateQueries({ queryKey: ["projectEvaluation", projectId] });
+      queryClient.invalidateQueries({ queryKey: ["projectAccess", projectId] });
 
       toast({
         title: "Projet clôturé",
@@ -273,6 +275,7 @@ export const useProjectClosure = ({ projectId, onClosureComplete }: UseProjectCl
       queryClient.invalidateQueries({ queryKey: ["project", projectId] });
       queryClient.invalidateQueries({ queryKey: ["projects"] });
       queryClient.invalidateQueries({ queryKey: ["projectEvaluation", projectId] });
+      queryClient.invalidateQueries({ queryKey: ["projectAccess", projectId] });
 
       toast({
         title: "Évaluation complétée",
@@ -385,6 +388,7 @@ export const useProjectClosure = ({ projectId, onClosureComplete }: UseProjectCl
       queryClient.invalidateQueries({ queryKey: ["project", projectId] });
       queryClient.invalidateQueries({ queryKey: ["projectEvaluation", projectId] });
       queryClient.invalidateQueries({ queryKey: ["lastReviews", projectId] });
+      queryClient.invalidateQueries({ queryKey: ["projectAccess", projectId] });
 
       // Réinitialiser le state des données existantes
       setExistingData(null);
