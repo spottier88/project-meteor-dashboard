@@ -12,7 +12,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ProjectPortfoliosBadges } from "./ProjectPortfoliosBadges";
 import { PortfolioReadOnlyBadge } from "./PortfolioReadOnlyBadge";
 import { ProjectClosedBadge } from "./ProjectClosedBadge";
+import { ClosurePendingBadge } from "./ClosurePendingBadge";
 import { ReactivateProjectButton } from "./ReactivateProjectButton";
+import { CompleteEvaluationButton } from "./CompleteEvaluationButton";
 import { ProjectNotesList } from "@/components/notes/ProjectNotesList";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -40,7 +42,9 @@ interface ProjectSummaryContentProps {
     canManageTeam: boolean;
     canManageRisks: boolean;
     isProjectClosed?: boolean;
+    hasPendingEvaluation?: boolean;
     canReactivateProject?: boolean;
+    canCompleteEvaluation?: boolean;
     isReadOnlyViaPortfolio?: boolean;
     portfolioAccessInfo?: {
       portfolioId: string;
@@ -127,9 +131,13 @@ export const ProjectSummaryContent = ({
               <div className="flex items-center space-x-2">
                 <StatusIcon status={project.status as ProjectStatus} />
                 <h1 className="text-2xl font-bold">{project.title}</h1>
-                {/* Badge projet clôturé */}
-                {permissions.isProjectClosed && (
+                {/* Badge projet clôturé (vert) - seulement si pas d'évaluation en attente */}
+                {permissions.isProjectClosed && !permissions.hasPendingEvaluation && (
                   <ProjectClosedBadge />
+                )}
+                {/* Badge évaluation en attente (orange) - quand clôturé mais évaluation pas faite */}
+                {permissions.hasPendingEvaluation && (
+                  <ClosurePendingBadge />
                 )}
                 {/* Afficher le badge lecture seule si applicable (et pas déjà clôturé) */}
                 {permissions.isReadOnlyViaPortfolio && !permissions.isProjectClosed && (
@@ -139,6 +147,15 @@ export const ProjectSummaryContent = ({
                 )}
               </div>
               <div className="flex items-center space-x-2">
+                {/* Bouton de réactivation pour admin/chef de projet si projet clôturé */}
+                {/* Bouton pour compléter l'évaluation en attente */}
+                {permissions.canCompleteEvaluation && (
+                  <CompleteEvaluationButton 
+                    projectId={projectId}
+                    projectTitle={project.title}
+                    onComplete={onClosureComplete}
+                  />
+                )}
                 {/* Bouton de réactivation pour admin/chef de projet si projet clôturé */}
                 {permissions.canReactivateProject && (
                   <ReactivateProjectButton 
