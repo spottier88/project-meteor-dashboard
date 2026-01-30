@@ -24,27 +24,28 @@ export const useProjectPermissions = (projectId: string) => {
         hasRegularAccess: false
       };
 
-      const { data: project } = await supabase
+const { data: project } = await supabase
         .from("projects")
-        .select("project_manager, pole_id, direction_id, service_id")
+        .select("project_manager, pole_id, direction_id, service_id, lifecycle_status")
         .eq("id", projectId)
         .single();
 
       const isProjectManager = project?.project_manager === userProfile.email;
 
       if (isAdmin || isProjectManager) {
-        return {
-          canEdit: true,
-          isProjectManager,
-          isSecondaryProjectManager: false,
-          isMember: true,
-          hasRegularAccess: true,
-          projectOrganization: {
-            pole_id: project?.pole_id,
-            direction_id: project?.direction_id,
-            service_id: project?.service_id
-          }
-        };
+      return {
+        canEdit: true,
+        isProjectManager,
+        isSecondaryProjectManager: false,
+        isMember: true,
+        hasRegularAccess: true,
+        lifecycleStatus: project?.lifecycle_status,
+        projectOrganization: {
+          pole_id: project?.pole_id,
+          direction_id: project?.direction_id,
+          service_id: project?.service_id
+        }
+      };
       }
 
       // Vérifier si l'utilisateur est un chef de projet secondaire
@@ -80,6 +81,7 @@ export const useProjectPermissions = (projectId: string) => {
         isSecondaryProjectManager,
         isMember: !!isMember,
         hasRegularAccess,
+        lifecycleStatus: project?.lifecycle_status,
         projectOrganization: {
           pole_id: project?.pole_id,
           direction_id: project?.direction_id,
@@ -93,6 +95,9 @@ export const useProjectPermissions = (projectId: string) => {
 
   // Déterminer si l'utilisateur est en mode lecture seule via portefeuille
   const isReadOnlyViaPortfolio = hasAccessViaPortfolio && !projectAccess?.hasRegularAccess && !isAdmin;
+  
+  // Déterminer si le projet est clôturé (lifecycle_status === 'completed')
+  const isProjectClosed = projectAccess?.lifecycleStatus === 'completed';
 
   const { data: userRoles } = useQuery({
     queryKey: ["userRoles", userProfile?.id],
@@ -141,10 +146,13 @@ export const useProjectPermissions = (projectId: string) => {
     return hasPoleAccess && hasDirectionAccess && hasServiceAccess;
   }, [isAdmin, isManager, projectAccess, accessibleOrganizations]);
 
-  // Si lecture seule via portefeuille, forcer les permissions en lecture uniquement
-  const effectiveCanEdit = isReadOnlyViaPortfolio ? false : (projectAccess?.canEdit || false);
-  const effectiveCanManageRisks = isReadOnlyViaPortfolio ? false : (isAdmin || projectAccess?.canEdit || projectAccess?.isSecondaryProjectManager || false);
-  const effectiveCanManageTeam = isReadOnlyViaPortfolio ? false : (isAdmin || projectAccess?.isProjectManager || projectAccess?.isSecondaryProjectManager || false);
+  // Si lecture seule via portefeuille ou projet clôturé, forcer les permissions en lecture uniquement
+  const effectiveCanEdit = (isReadOnlyViaPortfolio || isProjectClosed) ? false : (projectAccess?.canEdit || false);
+  const effectiveCanManageRisks = (isReadOnlyViaPortfolio || isProjectClosed) ? false : (isAdmin || projectAccess?.canEdit || projectAccess?.isSecondaryProjectManager || false);
+  const effectiveCanManageTeam = (isReadOnlyViaPortfolio || isProjectClosed) ? false : (isAdmin || projectAccess?.isProjectManager || projectAccess?.isSecondaryProjectManager || false);
+
+  // Permission de réactivation : seulement si projet clôturé ET (admin OU chef de projet)
+  const canReactivateProject = isProjectClosed && (isAdmin || projectAccess?.isProjectManager);
 
   return {
     canManageRisks: effectiveCanManageRisks,
@@ -152,11 +160,13 @@ export const useProjectPermissions = (projectId: string) => {
     canCreate: isAdmin || isProjectManager,
     canEditOrganization,
     canManageTeam: effectiveCanManageTeam,
+    canReactivateProject,
     isAdmin,
     isManager,
     isProjectManager: projectAccess?.isProjectManager || false,
     isSecondaryProjectManager: projectAccess?.isSecondaryProjectManager || false,
     isMember: projectAccess?.isMember || false,
+    isProjectClosed,
     isReadOnlyViaPortfolio,
     portfolioAccessInfo,
     userEmail: userProfile?.email,

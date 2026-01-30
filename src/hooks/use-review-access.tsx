@@ -23,7 +23,7 @@ export const useReviewAccess = (projectId?: string) => {
 
       const { data: project } = await supabase
         .from("projects")
-        .select("project_manager")
+        .select("project_manager, lifecycle_status")
         .eq("id", projectId)
         .single();
 
@@ -45,6 +45,7 @@ export const useReviewAccess = (projectId?: string) => {
         isProjectManager,
         isSecondaryProjectManager,
         hasRegularAccess,
+        lifecycleStatus: project?.lifecycle_status,
       };
     },
     enabled: !!userProfile?.id && !!projectId,
@@ -53,18 +54,24 @@ export const useReviewAccess = (projectId?: string) => {
   // Déterminer si l'utilisateur est en mode lecture seule via portefeuille
   const isReadOnlyViaPortfolio = hasAccessViaPortfolio && !projectAccess?.hasRegularAccess && !isAdmin;
   
+  // Déterminer si le projet est clôturé
+  const isProjectClosed = projectAccess?.lifecycleStatus === 'completed';
+  
   // Seuls les admins et chefs de projet (principaux ou secondaires) peuvent créer des revues
   // Les managers n'ont plus ce droit - et pas en mode lecture seule via portefeuille
-  const canCreateReview = isReadOnlyViaPortfolio ? false : (isAdmin || projectAccess?.isProjectManager || projectAccess?.isSecondaryProjectManager);
+  // ET pas si le projet est clôturé
+  const canCreateReview = (isReadOnlyViaPortfolio || isProjectClosed) ? false : (isAdmin || projectAccess?.isProjectManager || projectAccess?.isSecondaryProjectManager);
   
   // Nouvelle propriété pour contrôler qui peut supprimer des revues
   // Les managers ne peuvent pas supprimer de revues - et pas en mode lecture seule via portefeuille
-  const canDeleteReview = isReadOnlyViaPortfolio ? false : (isAdmin || projectAccess?.isProjectManager || projectAccess?.isSecondaryProjectManager);
+  // ET pas si le projet est clôturé
+  const canDeleteReview = (isReadOnlyViaPortfolio || isProjectClosed) ? false : (isAdmin || projectAccess?.isProjectManager || projectAccess?.isSecondaryProjectManager);
 
   return {
     canCreateReview,
     canDeleteReview,
     canViewReviews: true, // Tout le monde peut voir les revues s'ils ont accès au projet
+    isProjectClosed,
     isReadOnlyViaPortfolio
   };
 };

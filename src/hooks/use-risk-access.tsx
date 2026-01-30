@@ -24,7 +24,7 @@ export const useRiskAccess = (projectId?: string) => {
 
       const { data: project } = await supabase
         .from("projects")
-        .select("project_manager")
+        .select("project_manager, lifecycle_status")
         .eq("id", projectId)
         .single();
 
@@ -36,6 +36,7 @@ export const useRiskAccess = (projectId?: string) => {
           isProjectManager,
           isSecondaryProjectManager: false,
           hasRegularAccess: true,
+          lifecycleStatus: project?.lifecycle_status,
         };
       }
 
@@ -62,6 +63,7 @@ export const useRiskAccess = (projectId?: string) => {
         isProjectManager,
         isSecondaryProjectManager,
         hasRegularAccess,
+        lifecycleStatus: project?.lifecycle_status,
       };
     },
     enabled: !!userProfile?.id && !!projectId,
@@ -69,15 +71,20 @@ export const useRiskAccess = (projectId?: string) => {
 
   // Déterminer si l'utilisateur est en mode lecture seule via portefeuille
   const isReadOnlyViaPortfolio = hasAccessViaPortfolio && !projectAccess?.hasRegularAccess && !isAdmin;
+  
+  // Déterminer si le projet est clôturé
+  const isProjectClosed = projectAccess?.lifecycleStatus === 'completed';
 
   // Les chefs de projet secondaires peuvent aussi gérer les risques - sauf en mode lecture seule via portefeuille
-  const canManage = isReadOnlyViaPortfolio ? false : (isAdmin || projectAccess?.canEdit || projectAccess?.isSecondaryProjectManager || false);
+  // ET si le projet n'est pas clôturé
+  const canManage = (isReadOnlyViaPortfolio || isProjectClosed) ? false : (isAdmin || projectAccess?.canEdit || projectAccess?.isSecondaryProjectManager || false);
   
   return {
     canCreateRisk: canManage,
     canEditRisk: canManage,
     canDeleteRisk: canManage,
     canViewRisks: true, // Tout le monde peut voir les risques s'ils ont accès au projet
+    isProjectClosed,
     isReadOnlyViaPortfolio
   };
 };
