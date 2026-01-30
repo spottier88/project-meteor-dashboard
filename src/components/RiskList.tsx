@@ -16,6 +16,7 @@ export interface RiskListProps {
   canEdit: boolean;
   isProjectManager: boolean;
   isAdmin: boolean;
+  isProjectClosed?: boolean; // Prop pour forcer le mode lecture seule si projet clôturé
   onUpdate?: () => void; // Ajout de la propriété onUpdate en option
   preloadedRisks?: any[]; // Données pré-chargées optionnelles
 }
@@ -26,13 +27,21 @@ export const RiskList = ({
   canEdit,
   isProjectManager,
   isAdmin,
+  isProjectClosed = false,
   onUpdate, // Ajout du paramètre onUpdate
   preloadedRisks,
 }: RiskListProps) => {
   const { toast } = useToast();
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [selectedRisk, setSelectedRisk] = useState<any>(null);
-  const { canCreateRisk, canEditRisk, canDeleteRisk } = useRiskAccess(projectId);
+  
+  // Récupérer les permissions depuis le hook
+  const { canCreateRisk: hookCanCreate, canEditRisk: hookCanEdit, canDeleteRisk: hookCanDelete } = useRiskAccess(projectId);
+
+  // Si le projet est clôturé, forcer le mode lecture seule
+  const canCreateRisk = isProjectClosed ? false : hookCanCreate;
+  const canEditRisk = isProjectClosed ? false : hookCanEdit;
+  const canDeleteRisk = isProjectClosed ? false : hookCanDelete;
 
   // Utiliser les données pré-chargées si disponibles, sinon faire la requête
   const { data: queriedRisks, isLoading, isError, refetch } = useQuery({

@@ -28,6 +28,7 @@ export interface TaskListProps {
   canEdit: boolean;
   isProjectManager: boolean;
   isAdmin: boolean;
+  isProjectClosed?: boolean; // Prop pour forcer le mode lecture seule si projet clôturé
   preloadedTasks?: any[]; // Données pré-chargées optionnelles
 }
 
@@ -36,6 +37,7 @@ export const TaskList = ({
   canEdit,
   isProjectManager,
   isAdmin,
+  isProjectClosed = false,
   preloadedTasks,
 }: TaskListProps) => {
   const { toast } = useToast();
@@ -47,7 +49,13 @@ export const TaskList = ({
   const [view, setView] = useState<ViewMode>("table");
   const queryClient = useQueryClient();
 
-  const { canCreateTask, canEditTask, canDeleteTask } = useTaskPermissions(projectId);
+  // Récupérer les permissions depuis le hook
+  const { canCreateTask: hookCanCreate, canEditTask: hookCanEdit, canDeleteTask: hookCanDelete } = useTaskPermissions(projectId);
+
+  // Si le projet est clôturé (prop transmise), forcer les permissions en lecture seule
+  const canCreateTask = isProjectClosed ? false : hookCanCreate;
+  const canEditTask = (assignee?: string) => isProjectClosed ? false : hookCanEdit(assignee);
+  const canDeleteTask = isProjectClosed ? false : hookCanDelete;
 
   // Utiliser les données pré-chargées si disponibles, sinon faire la requête
   const { data: queriedTasks, refetch } = useQuery({
