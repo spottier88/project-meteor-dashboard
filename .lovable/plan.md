@@ -1,206 +1,191 @@
 
-
-# Plan de correction : Erreur 23505 lors de la re-clôture d'un projet
+# Plan de correction : Badge "clôturé" non affiché au premier chargement
 
 ## Problème identifié
 
-Lors de la re-clôture d'un projet (après réactivation), l'erreur suivante se produit :
-
-```
-code: "23505"
-message: "duplicate key value violates unique constraint \"project_evaluations_project_id_key\""
-```
+Lors de l'accès à la page de résumé d'un projet clôturé, le badge "Projet clôturé" et les restrictions associées ne sont pas appliqués immédiatement au premier rendu.
 
 ### Cause racine
 
-**Il n'existe PAS de policy RLS DELETE sur la table `project_evaluations`.**
+La variable `isProjectClosed` dépend de `projectAccess?.lifecycleStatus` qui est chargé de manière **asynchrone** via `useQuery`. 
 
-Les policies actuelles sur `project_evaluations` sont :
-- `SELECT` : Users can view project evaluations ✓
-- `INSERT` : Users can create project evaluations ✓
-- `UPDATE` : Users can update project evaluations ✓
-- **`DELETE` : ABSENTE** ✗
+1. **Au premier rendu** : `projectAccess` est `undefined` (query en cours)
+2. **Conséquence** : `projectAccess?.lifecycleStatus` retourne `undefined`
+3. **Résultat** : `isProjectClosed = undefined === 'completed'` → `false`
+4. **Effet** : Le badge n'est pas affiché et les boutons restent actifs
 
-Conséquence : les suppressions dans `submitClosure()` et `postponeEvaluation()` (lignes 189-193 et 101-105) s'exécutent **sans erreur** mais **ne suppriment aucune ligne** car RLS bloque silencieusement l'opération DELETE.
+De plus, la valeur par défaut retournée par la query ne contient **pas** les champs `lifecycleStatus` et `closureStatus` :
+
+```typescript
+// Valeur de retour par défaut (lignes 19-25)
+return {
+  canEdit: false,
+  isProjectManager: false,
+  // ... autres propriétés
+  // ⚠️ lifecycleStatus et closureStatus ABSENTS !
+};
+```
 
 ---
 
 ## Solution proposée
 
-### 1. Ajouter une policy DELETE sur `project_evaluations`
+### Approche retenue : Valeurs par défaut complètes + État de chargement
 
-Créer une migration SQL pour ajouter la policy manquante avec les mêmes permissions que UPDATE.
+1. **Ajouter les champs manquants** dans les valeurs par défaut de la query
+2. **Exposer un état `isLoading`** pour permettre aux composants de savoir quand les données sont prêtes
+3. **Utiliser le projet déjà chargé** dans `ProjectSummary` pour initialiser `isProjectClosed` en attendant
 
-**Fichier à créer :** `supabase/migrations/XXXXXXXX_add_delete_policy_project_evaluations.sql`
+---
 
-```sql
--- Ajouter la policy DELETE manquante sur project_evaluations
--- Permet aux propriétaires du projet et aux admins de supprimer les évaluations
+## Fichier à modifier
 
-CREATE POLICY "Users can delete project evaluations"
-ON project_evaluations
-FOR DELETE
-USING (
-  EXISTS (
-    SELECT 1
-    FROM projects p
-    WHERE p.id = project_evaluations.project_id
-    AND (
-      p.owner_id = auth.uid()
-      OR EXISTS (
-        SELECT 1 FROM user_roles ur
-        WHERE ur.user_id = auth.uid()
-        AND ur.role = 'admin'
-      )
-      OR EXISTS (
-        SELECT 1 FROM profiles pr
-        WHERE pr.id = auth.uid()
-        AND p.project_manager = pr.email
-      )
-    )
-  )
-);
-```
+`src/hooks/useProjectPermissions.tsx`
 
-**Logique de la policy :**
-- Le propriétaire du projet (`owner_id`) peut supprimer
-- Les administrateurs peuvent supprimer
-- Le chef de projet (`project_manager`) peut supprimer
+---
 
-### 2. Ajouter la suppression des évaluations dans `ReactivateProjectButton`
+## Modifications détaillées
 
-Pour plus de robustesse, supprimer les données de clôture lors de la réactivation du projet.
+### 1. Ajouter les champs manquants dans la valeur par défaut (lignes 19-25)
 
-**Fichier à modifier :** `src/components/project/ReactivateProjectButton.tsx`
+Ajouter `lifecycleStatus` et `closureStatus` avec des valeurs par défaut `undefined` :
 
 ```typescript
-const handleReactivate = async () => {
-  setIsReactivating(true);
-  try {
-    // NOUVEAU : Supprimer les données de clôture existantes avant réactivation
-    // Suppression de l'évaluation de méthode
-    await supabase
-      .from("project_evaluations")
-      .delete()
-      .eq("project_id", projectId);
-
-    // Suppression de la revue finale
-    await supabase
-      .from("reviews")
-      .delete()
-      .eq("project_id", projectId)
-      .eq("is_final_review", true);
-
-    // Mise à jour du projet (existant)
-    const { error } = await supabase
-      .from("projects")
-      .update({ 
-        lifecycle_status: "in_progress",
-        closure_status: null,
-        closed_at: null,
-        closed_by: null
-      })
-      .eq("id", projectId);
-
-    if (error) throw error;
-
-    // ... reste du code inchangé
-  }
+if (!userProfile?.id || !projectId) return {
+  canEdit: false,
+  isProjectManager: false,
+  isSecondaryProjectManager: false,
+  isMember: false,
+  hasRegularAccess: false,
+  lifecycleStatus: undefined,    // ← NOUVEAU
+  closureStatus: undefined,      // ← NOUVEAU
+  projectOrganization: undefined // ← NOUVEAU (pour cohérence)
 };
+```
+
+### 2. Exposer l'état de chargement de la query
+
+Récupérer `isLoading` de la query et l'exposer :
+
+```typescript
+const { data: projectAccess, isLoading: isLoadingProjectAccess } = useQuery({
+  queryKey: ["projectAccess", projectId, userProfile?.id],
+  // ...
+});
+```
+
+### 3. Retourner l'état de chargement dans le hook
+
+Ajouter `isLoadingProjectAccess` dans les valeurs retournées :
+
+```typescript
+return {
+  // ... propriétés existantes
+  isLoadingProjectAccess,  // ← NOUVEAU
+};
+```
+
+### 4. Mettre à jour `ProjectSummaryContent.tsx`
+
+Ajouter une gestion de l'état de chargement dans l'interface des permissions :
+
+```typescript
+permissions: {
+  // ... propriétés existantes
+  isLoadingProjectAccess?: boolean;
+};
+```
+
+Optionnellement, afficher un indicateur de chargement ou utiliser les données du projet directement.
+
+---
+
+## Alternative recommandée : Utiliser les données du projet déjà chargé
+
+Une approche plus robuste consiste à **passer le `lifecycle_status` du projet directement** depuis `ProjectSummary.tsx`, car le projet est déjà chargé via une query séparée.
+
+### Dans `ProjectSummary.tsx` :
+
+Le projet est déjà chargé avec `lifecycle_status` (ligne 47-83). On peut enrichir les permissions :
+
+```typescript
+// Dans ProjectSummary.tsx, après avoir chargé le projet
+const enhancedPermissions = {
+  ...projectPermissions,
+  // Si les permissions ne sont pas encore chargées, utiliser les données du projet
+  isProjectClosed: projectPermissions.isProjectClosed ?? (project?.lifecycle_status === 'completed'),
+  hasPendingEvaluation: projectPermissions.hasPendingEvaluation ?? 
+    (project?.lifecycle_status === 'completed' && project?.closure_status === 'pending_evaluation'),
+  canReactivateProject: projectPermissions.canReactivateProject ?? 
+    ((project?.lifecycle_status === 'completed') && (projectPermissions.isAdmin || projectPermissions.isProjectManager)),
+  canCompleteEvaluation: projectPermissions.canCompleteEvaluation ?? 
+    ((project?.lifecycle_status === 'completed' && project?.closure_status === 'pending_evaluation') && 
+     (projectPermissions.isAdmin || projectPermissions.isProjectManager))
+};
+
+// Puis passer enhancedPermissions au lieu de projectPermissions
+<ProjectSummaryContent
+  project={project}
+  // ...
+  permissions={enhancedPermissions}
+/>
 ```
 
 ---
 
 ## Résumé des modifications
 
-| Type | Fichier | Description |
-|------|---------|-------------|
-| **Migration SQL** | `supabase/migrations/..._add_delete_policy_project_evaluations.sql` | Ajouter policy DELETE sur `project_evaluations` |
-| **Code** | `src/components/project/ReactivateProjectButton.tsx` | Supprimer évaluations et revues finales lors de la réactivation |
+| Fichier | Modification |
+|---------|--------------|
+| `src/hooks/useProjectPermissions.tsx` | Ajouter `lifecycleStatus`, `closureStatus` dans valeurs par défaut + exposer `isLoadingProjectAccess` |
+| `src/pages/ProjectSummary.tsx` | Enrichir les permissions avec les données du projet déjà chargé |
 
 ---
 
-## Pourquoi cette solution fonctionne
+## Solution finale retenue
+
+La solution la plus simple et la plus robuste combine les deux approches :
+
+### 1. Dans `useProjectPermissions.tsx`
+
+- Ajouter `lifecycleStatus: undefined` et `closureStatus: undefined` dans les valeurs par défaut
+- Exposer `isLoadingProjectAccess` pour permettre aux composants de gérer l'état de chargement
+
+### 2. Dans `ProjectSummary.tsx`
+
+- Utiliser les données du projet (déjà chargé) comme **fallback** pour les permissions liées à la clôture
+- Cela garantit que dès que le projet est affiché, le statut de clôture est correct
+
+---
+
+## Flux après correction
 
 ```text
 ┌─────────────────────────────────────────────────────────────────┐
-│                    Avant (problème)                             │
+│                    Premier rendu                                │
 └─────────────────────────────────────────────────────────────────┘
                               │
-     submitClosure() appelle DELETE project_evaluations
+     useQuery (project) terminé : project.lifecycle_status = 'completed'
                               │
                               ▼
-              ┌───────────────────────────────┐
-              │ RLS vérifie la policy DELETE  │
-              │ → Policy inexistante = BLOQUÉ │
-              │ → 0 lignes supprimées         │
-              └───────────────────────────────┘
+     useQuery (projectAccess) en cours...
                               │
                               ▼
-              ┌───────────────────────────────┐
-              │ INSERT project_evaluations    │
-              │ → Violation contrainte unique │
-              │ → Erreur 23505                │
-              └───────────────────────────────┘
-
-┌─────────────────────────────────────────────────────────────────┐
-│                    Après (solution)                             │
-└─────────────────────────────────────────────────────────────────┘
-                              │
-     submitClosure() appelle DELETE project_evaluations
+     ┌────────────────────────────────────────────────────────┐
+     │  AVANT : isProjectClosed = undefined → false           │
+     │  APRÈS : isProjectClosed = project?.lifecycle_status   │
+     │          → 'completed' = true ✓                        │
+     └────────────────────────────────────────────────────────┘
                               │
                               ▼
-              ┌───────────────────────────────┐
-              │ RLS vérifie la policy DELETE  │
-              │ → Policy existe = AUTORISÉ    │
-              │ → 1 ligne supprimée           │
-              └───────────────────────────────┘
-                              │
-                              ▼
-              ┌───────────────────────────────┐
-              │ INSERT project_evaluations    │
-              │ → Table vide, OK              │
-              │ → Succès                      │
-              └───────────────────────────────┘
+     Badge "Projet clôturé" affiché dès le premier rendu ✓
 ```
 
 ---
 
-## Détails techniques
+## Avantages
 
-### Policy DELETE ajoutée
-
-La policy autorise la suppression si :
-1. L'utilisateur est le **propriétaire du projet** (`owner_id = auth.uid()`)
-2. L'utilisateur est **administrateur** (rôle `admin` dans `user_roles`)
-3. L'utilisateur est le **chef de projet** (`project_manager = email du profil`)
-
-Ces conditions sont cohérentes avec les policies UPDATE existantes.
-
-### Double sécurité avec ReactivateProjectButton
-
-Bien que la policy DELETE résolve le problème principal, ajouter la suppression dans `ReactivateProjectButton` offre une **double sécurité** :
-- Nettoie les données dès la réactivation
-- Évite les états incohérents (projet "en cours" avec des données de clôture)
-
----
-
-## Tests recommandés
-
-1. **Tester la re-clôture complète**
-   - Clôturer un projet avec évaluation complète
-   - Réactiver le projet
-   - Re-clôturer avec une nouvelle évaluation
-   - Vérifier : pas d'erreur 23505
-
-2. **Tester la re-clôture après report**
-   - Clôturer un projet avec report d'évaluation
-   - Réactiver le projet
-   - Re-clôturer (avec ou sans évaluation)
-   - Vérifier : pas d'erreur 23505
-
-3. **Tester les permissions**
-   - En tant que chef de projet : vérifier suppression OK
-   - En tant qu'admin : vérifier suppression OK
-   - En tant que membre simple : vérifier suppression bloquée
-
+1. **Immédiat** : Le badge s'affiche dès que le projet est chargé
+2. **Robuste** : Double source de données (projet + permissions)
+3. **Cohérent** : Les permissions sont correctes même si la query `projectAccess` échoue
+4. **Minimal** : Modifications légères dans seulement 2 fichiers
