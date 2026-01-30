@@ -13,15 +13,20 @@ export const useProjectPermissions = (projectId: string) => {
   // Vérifier l'accès via portefeuille
   const { hasAccessViaPortfolio, portfolioAccessInfo } = usePortfolioProjectAccess(projectId);
   
-  const { data: projectAccess } = useQuery({
+  // Récupérer l'état de chargement pour permettre aux composants de gérer l'attente
+  const { data: projectAccess, isLoading: isLoadingProjectAccess } = useQuery({
     queryKey: ["projectAccess", projectId, userProfile?.id],
     queryFn: async () => {
+      // Valeurs par défaut complètes avec les champs lifecycleStatus et closureStatus
       if (!userProfile?.id || !projectId) return {
         canEdit: false,
         isProjectManager: false,
         isSecondaryProjectManager: false,
         isMember: false,
-        hasRegularAccess: false
+        hasRegularAccess: false,
+        lifecycleStatus: undefined,
+        closureStatus: undefined,
+        projectOrganization: undefined
       };
 
 const { data: project } = await supabase
@@ -180,6 +185,8 @@ const { data: project } = await supabase
     isReadOnlyViaPortfolio,
     portfolioAccessInfo,
     userEmail: userProfile?.email,
-    accessibleOrganizations
+    accessibleOrganizations,
+    // Exposer l'état de chargement pour permettre aux composants d'utiliser un fallback
+    isLoadingProjectAccess
   };
 };
