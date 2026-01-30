@@ -25,7 +25,7 @@ export const useTaskPermissions = (projectId?: string, taskAssignee?: string) =>
 
       const { data: project } = await supabase
         .from("projects")
-        .select("project_manager")
+        .select("project_manager, lifecycle_status")
         .eq("id", projectId)
         .single();
 
@@ -38,6 +38,7 @@ export const useTaskPermissions = (projectId?: string, taskAssignee?: string) =>
           isSecondaryProjectManager: false,
           isMember: true,
           hasRegularAccess: true,
+          lifecycleStatus: project?.lifecycle_status,
         };
       }
 
@@ -74,6 +75,7 @@ export const useTaskPermissions = (projectId?: string, taskAssignee?: string) =>
         isSecondaryProjectManager,
         isMember: !!isMember,
         hasRegularAccess,
+        lifecycleStatus: project?.lifecycle_status,
       };
     },
     enabled: !!userProfile?.id && !!projectId,
@@ -81,19 +83,24 @@ export const useTaskPermissions = (projectId?: string, taskAssignee?: string) =>
 
   // Déterminer si l'utilisateur est en mode lecture seule via portefeuille
   const isReadOnlyViaPortfolio = hasAccessViaPortfolio && !projectAccess?.hasRegularAccess && !isAdmin;
+  
+  // Déterminer si le projet est clôturé
+  const isProjectClosed = projectAccess?.lifecycleStatus === 'completed';
 
   // Un utilisateur peut gérer les tâches seulement s'il est admin, s'il a des droits d'édition spécifiques
   // sur ce projet ou s'il est chef de projet secondaire - et s'il n'est pas en lecture seule via portefeuille
-  const canManage = isReadOnlyViaPortfolio ? false : (isAdmin || projectAccess?.canEdit || projectAccess?.isSecondaryProjectManager || false);
+  // ET si le projet n'est pas clôturé
+  const canManage = (isReadOnlyViaPortfolio || isProjectClosed) ? false : (isAdmin || projectAccess?.canEdit || projectAccess?.isSecondaryProjectManager || false);
   
   return {
     canCreateTask: canManage,
-    canEditTask: (assignee?: string) => isReadOnlyViaPortfolio ? false : (canManage || assignee === userProfile?.email),
+    canEditTask: (assignee?: string) => (isReadOnlyViaPortfolio || isProjectClosed) ? false : (canManage || assignee === userProfile?.email),
     canDeleteTask: canManage,
     isAdmin,
     isProjectManager: projectAccess?.isProjectManager || false,
     isSecondaryProjectManager: projectAccess?.isSecondaryProjectManager || false,
     isMember: projectAccess?.isMember || false,
+    isProjectClosed,
     isReadOnlyViaPortfolio,
     userEmail: userProfile?.email,
   };

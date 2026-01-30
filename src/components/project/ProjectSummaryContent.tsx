@@ -11,8 +11,10 @@ import { InnovationRadarChart } from "@/components/innovation/InnovationRadarCha
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ProjectPortfoliosBadges } from "./ProjectPortfoliosBadges";
 import { PortfolioReadOnlyBadge } from "./PortfolioReadOnlyBadge";
+import { ProjectClosedBadge } from "./ProjectClosedBadge";
+import { ReactivateProjectButton } from "./ReactivateProjectButton";
 import { ProjectNotesList } from "@/components/notes/ProjectNotesList";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Users, ExternalLink } from "lucide-react";
 interface ProjectSummaryContentProps {
@@ -37,6 +39,8 @@ interface ProjectSummaryContentProps {
     isAdmin: boolean;
     canManageTeam: boolean;
     canManageRisks: boolean;
+    isProjectClosed?: boolean;
+    canReactivateProject?: boolean;
     isReadOnlyViaPortfolio?: boolean;
     portfolioAccessInfo?: {
       portfolioId: string;
@@ -66,6 +70,7 @@ export const ProjectSummaryContent = ({
   permissions,
   teamManagement,
 }: ProjectSummaryContentProps) => {
+  const queryClient = useQueryClient();
   const projectId = project.id;
 
   // Récupération du profil du chef de projet pour afficher son nom
@@ -102,6 +107,13 @@ export const ProjectSummaryContent = ({
     impact: 0,
   };
 
+  // Handler pour rafraîchir les données après réactivation
+  const handleProjectReactivated = () => {
+    queryClient.invalidateQueries({ queryKey: ["project", projectId] });
+    queryClient.invalidateQueries({ queryKey: ["projectAccess", projectId] });
+    queryClient.invalidateQueries({ queryKey: ["projects"] });
+  };
+
   // Utilisation de l'avancement provenant de la dernière revue si disponible, sinon utiliser l'avancement du projet
   const completionPercentage = lastReview?.completion ?? project.completion ?? 0;
 
@@ -115,24 +127,37 @@ export const ProjectSummaryContent = ({
               <div className="flex items-center space-x-2">
                 <StatusIcon status={project.status as ProjectStatus} />
                 <h1 className="text-2xl font-bold">{project.title}</h1>
-                {/* Afficher le badge lecture seule si applicable */}
-                {permissions.isReadOnlyViaPortfolio && (
+                {/* Badge projet clôturé */}
+                {permissions.isProjectClosed && (
+                  <ProjectClosedBadge />
+                )}
+                {/* Afficher le badge lecture seule si applicable (et pas déjà clôturé) */}
+                {permissions.isReadOnlyViaPortfolio && !permissions.isProjectClosed && (
                   <PortfolioReadOnlyBadge 
                     portfolioName={permissions.portfolioAccessInfo?.portfolioName} 
                   />
                 )}
               </div>
-              {/* Masquer les actions si en mode lecture seule via portefeuille */}
-              {!permissions.isReadOnlyViaPortfolio && (
-                <ProjectSummaryActions 
-                  project={project}
-                  risks={risks}
-                  tasks={tasks}
-                  onEditProject={onEditProject}
-                  onCreateReview={onCreateReview}
-                  onClosureComplete={onClosureComplete}
-                />
-              )}
+              <div className="flex items-center space-x-2">
+                {/* Bouton de réactivation pour admin/chef de projet si projet clôturé */}
+                {permissions.canReactivateProject && (
+                  <ReactivateProjectButton 
+                    projectId={projectId}
+                    onReactivated={handleProjectReactivated}
+                  />
+                )}
+                {/* Masquer les actions si en mode lecture seule via portefeuille OU projet clôturé */}
+                {!permissions.isReadOnlyViaPortfolio && !permissions.isProjectClosed && (
+                  <ProjectSummaryActions 
+                    project={project}
+                    risks={risks}
+                    tasks={tasks}
+                    onEditProject={onEditProject}
+                    onCreateReview={onCreateReview}
+                    onClosureComplete={onClosureComplete}
+                  />
+                )}
+              </div>
             </div>
             <p className="text-gray-600">{project.description}</p>
             {/* Badges des portefeuilles associés */}
