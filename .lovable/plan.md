@@ -1,261 +1,206 @@
 
-# Plan d'implémentation : Permettre la saisie de l'évaluation reportée
+
+# Plan de correction : Erreur 23505 lors de la re-clôture d'un projet
 
 ## Problème identifié
 
-Lorsqu'un utilisateur reporte l'évaluation lors de la clôture d'un projet :
-- Le projet passe au statut `lifecycle_status = 'completed'` et `closure_status = 'pending_evaluation'`
-- Comme `lifecycle_status === 'completed'`, le système considère le projet comme "clôturé" (`isProjectClosed = true`)
-- Le composant `ProjectSummaryActions` est masqué pour les projets clôturés
-- **Résultat** : Le bouton "Compléter l'évaluation" et le badge "Évaluation en attente" ne sont jamais affichés
+Lors de la re-clôture d'un projet (après réactivation), l'erreur suivante se produit :
+
+```
+code: "23505"
+message: "duplicate key value violates unique constraint \"project_evaluations_project_id_key\""
+```
+
+### Cause racine
+
+**Il n'existe PAS de policy RLS DELETE sur la table `project_evaluations`.**
+
+Les policies actuelles sur `project_evaluations` sont :
+- `SELECT` : Users can view project evaluations ✓
+- `INSERT` : Users can create project evaluations ✓
+- `UPDATE` : Users can update project evaluations ✓
+- **`DELETE` : ABSENTE** ✗
+
+Conséquence : les suppressions dans `submitClosure()` et `postponeEvaluation()` (lignes 189-193 et 101-105) s'exécutent **sans erreur** mais **ne suppriment aucune ligne** car RLS bloque silencieusement l'opération DELETE.
 
 ---
 
-## Architecture de la solution
+## Solution proposée
 
-### Approche retenue : Créer un bouton dédié pour compléter l'évaluation
+### 1. Ajouter une policy DELETE sur `project_evaluations`
 
-Plutôt que de modifier la logique complexe de masquage de `ProjectSummaryActions`, créer un **nouveau composant** `CompleteEvaluationButton` qui sera affiché dans l'en-tête du projet spécifiquement pour les projets avec évaluation en attente.
+Créer une migration SQL pour ajouter la policy manquante avec les mêmes permissions que UPDATE.
 
-Cette approche :
-- Ne modifie pas la logique de masquage existante pour les projets clôturés
-- Rend le bouton bien visible dans l'en-tête (pas caché dans un menu)
-- Est cohérente avec le bouton `ReactivateProjectButton` qui s'affiche aussi à côté du badge
+**Fichier à créer :** `supabase/migrations/XXXXXXXX_add_delete_policy_project_evaluations.sql`
 
----
+```sql
+-- Ajouter la policy DELETE manquante sur project_evaluations
+-- Permet aux propriétaires du projet et aux admins de supprimer les évaluations
 
-## Fichiers à créer
+CREATE POLICY "Users can delete project evaluations"
+ON project_evaluations
+FOR DELETE
+USING (
+  EXISTS (
+    SELECT 1
+    FROM projects p
+    WHERE p.id = project_evaluations.project_id
+    AND (
+      p.owner_id = auth.uid()
+      OR EXISTS (
+        SELECT 1 FROM user_roles ur
+        WHERE ur.user_id = auth.uid()
+        AND ur.role = 'admin'
+      )
+      OR EXISTS (
+        SELECT 1 FROM profiles pr
+        WHERE pr.id = auth.uid()
+        AND p.project_manager = pr.email
+      )
+    )
+  )
+);
+```
 
-### 1. Nouveau composant : `src/components/project/CompleteEvaluationButton.tsx`
+**Logique de la policy :**
+- Le propriétaire du projet (`owner_id`) peut supprimer
+- Les administrateurs peuvent supprimer
+- Le chef de projet (`project_manager`) peut supprimer
+
+### 2. Ajouter la suppression des évaluations dans `ReactivateProjectButton`
+
+Pour plus de robustesse, supprimer les données de clôture lors de la réactivation du projet.
+
+**Fichier à modifier :** `src/components/project/ReactivateProjectButton.tsx`
 
 ```typescript
-/**
- * Bouton pour compléter l'évaluation d'un projet clôturé
- * S'affiche uniquement pour les projets avec closure_status = 'pending_evaluation'
- */
+const handleReactivate = async () => {
+  setIsReactivating(true);
+  try {
+    // NOUVEAU : Supprimer les données de clôture existantes avant réactivation
+    // Suppression de l'évaluation de méthode
+    await supabase
+      .from("project_evaluations")
+      .delete()
+      .eq("project_id", projectId);
 
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { FileCheck } from "lucide-react";
-import { ProjectClosureDialog } from "./closure/ProjectClosureDialog";
+    // Suppression de la revue finale
+    await supabase
+      .from("reviews")
+      .delete()
+      .eq("project_id", projectId)
+      .eq("is_final_review", true);
 
-interface CompleteEvaluationButtonProps {
-  projectId: string;
-  projectTitle: string;
-  onComplete?: () => void;
-}
+    // Mise à jour du projet (existant)
+    const { error } = await supabase
+      .from("projects")
+      .update({ 
+        lifecycle_status: "in_progress",
+        closure_status: null,
+        closed_at: null,
+        closed_by: null
+      })
+      .eq("id", projectId);
 
-export const CompleteEvaluationButton = ({
-  projectId,
-  projectTitle,
-  onComplete,
-}: CompleteEvaluationButtonProps) => {
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
+    if (error) throw error;
 
-  return (
-    <>
-      <Button 
-        variant="outline" 
-        size="sm"
-        onClick={() => setIsDialogOpen(true)}
-        className="text-orange-600 border-orange-300 hover:bg-orange-50"
-      >
-        <FileCheck className="h-4 w-4 mr-2" />
-        Compléter l'évaluation
-      </Button>
-
-      <ProjectClosureDialog
-        projectId={projectId}
-        projectTitle={projectTitle}
-        isOpen={isDialogOpen}
-        onClose={() => setIsDialogOpen(false)}
-        onClosureComplete={onComplete}
-        pendingEvaluationMode={true}
-      />
-    </>
-  );
+    // ... reste du code inchangé
+  }
 };
-```
-
----
-
-## Fichiers à modifier
-
-### 2. Modifier `src/hooks/useProjectPermissions.tsx`
-
-Ajouter une nouvelle propriété `hasPendingEvaluation` pour détecter les projets avec évaluation en attente.
-
-**Modifications :**
-
-1. Récupérer `closure_status` dans la query (en plus de `lifecycle_status`)
-
-2. Ajouter une nouvelle variable pour déterminer si une évaluation est en attente :
-
-```typescript
-// Déterminer si le projet a une évaluation en attente
-const hasPendingEvaluation = projectAccess?.lifecycleStatus === 'completed' 
-  && projectAccess?.closureStatus === 'pending_evaluation';
-```
-
-3. Ajouter une permission pour compléter l'évaluation :
-
-```typescript
-// Permission de compléter l'évaluation : si évaluation en attente ET (admin OU chef de projet)
-const canCompleteEvaluation = hasPendingEvaluation 
-  && (isAdmin || projectAccess?.isProjectManager);
-```
-
-4. Retourner les nouvelles propriétés :
-
-```typescript
-return {
-  // ... propriétés existantes
-  hasPendingEvaluation,
-  canCompleteEvaluation,
-};
-```
-
----
-
-### 3. Modifier `src/components/project/ProjectSummaryContent.tsx`
-
-Afficher le badge "Évaluation en attente" et le bouton "Compléter l'évaluation" dans l'en-tête.
-
-**Modifications :**
-
-1. Importer les nouveaux composants :
-
-```typescript
-import { ClosurePendingBadge } from "./ClosurePendingBadge";
-import { CompleteEvaluationButton } from "./CompleteEvaluationButton";
-```
-
-2. Mettre à jour l'interface des permissions :
-
-```typescript
-permissions: {
-  // ... propriétés existantes
-  hasPendingEvaluation?: boolean;
-  canCompleteEvaluation?: boolean;
-};
-```
-
-3. Dans le JSX, après le badge "Projet clôturé", ajouter le badge "Évaluation en attente" :
-
-```tsx
-{/* Badge projet clôturé */}
-{permissions.isProjectClosed && !permissions.hasPendingEvaluation && (
-  <ProjectClosedBadge />
-)}
-
-{/* Badge évaluation en attente (différent de clôturé complet) */}
-{permissions.hasPendingEvaluation && (
-  <ClosurePendingBadge />
-)}
-```
-
-4. Dans la zone des boutons, ajouter le bouton "Compléter l'évaluation" :
-
-```tsx
-{/* Bouton de réactivation pour admin/chef de projet si projet clôturé */}
-{permissions.canReactivateProject && (
-  <ReactivateProjectButton ... />
-)}
-
-{/* Bouton pour compléter l'évaluation en attente */}
-{permissions.canCompleteEvaluation && (
-  <CompleteEvaluationButton 
-    projectId={projectId}
-    projectTitle={project.title}
-    onComplete={onClosureComplete}
-  />
-)}
 ```
 
 ---
 
 ## Résumé des modifications
 
-| Fichier | Action | Description |
-|---------|--------|-------------|
-| `src/components/project/CompleteEvaluationButton.tsx` | Créer | Bouton pour ouvrir le dialogue d'évaluation |
-| `src/hooks/useProjectPermissions.tsx` | Modifier | Ajouter `hasPendingEvaluation`, `canCompleteEvaluation`, récupérer `closure_status` |
-| `src/components/project/ProjectSummaryContent.tsx` | Modifier | Afficher badge + bouton pour évaluation en attente |
+| Type | Fichier | Description |
+|------|---------|-------------|
+| **Migration SQL** | `supabase/migrations/..._add_delete_policy_project_evaluations.sql` | Ajouter policy DELETE sur `project_evaluations` |
+| **Code** | `src/components/project/ReactivateProjectButton.tsx` | Supprimer évaluations et revues finales lors de la réactivation |
 
 ---
 
-## Logique de décision pour les badges et boutons
-
-| État du projet | Badge affiché | Bouton visible |
-|----------------|---------------|----------------|
-| En cours (`lifecycle_status != completed`) | Aucun | Actions normales |
-| Clôturé avec évaluation (`closure_status = completed`) | "Projet clôturé" (vert) | "Réactiver" (admin/CDP) |
-| Clôturé sans évaluation (`closure_status = pending_evaluation`) | "Évaluation en attente" (orange) | "Compléter l'évaluation" + "Réactiver" (admin/CDP) |
-
----
-
-## Flux visuel après implémentation
+## Pourquoi cette solution fonctionne
 
 ```text
 ┌─────────────────────────────────────────────────────────────────┐
-│  Projet avec évaluation en attente                              │
-│  (lifecycle_status = completed, closure_status = pending_eval)  │
+│                    Avant (problème)                             │
 └─────────────────────────────────────────────────────────────────┘
                               │
-                              ▼
-     ┌────────────────────────────────────────────────────────┐
-     │  En-tête du projet                                     │
-     │  ┌───────────────────────┐                             │
-     │  │ Titre │ Badge orange  │  [Compléter] [Réactiver]    │
-     │  │       │ "Évaluation   │                             │
-     │  │       │ en attente"   │                             │
-     │  └───────────────────────┘                             │
-     └────────────────────────────────────────────────────────┘
-                              │
-                              │ Clic sur "Compléter l'évaluation"
-                              ▼
-     ┌────────────────────────────────────────────────────────┐
-     │  Dialogue ProjectClosureDialog                         │
-     │  (mode pendingEvaluationMode = true)                   │
-     │                                                         │
-     │  → Affiche directement l'étape d'évaluation            │
-     │    de méthode (4 champs texte)                         │
-     │                                                         │
-     │  [Retour]              [Continuer]                      │
-     └────────────────────────────────────────────────────────┘
+     submitClosure() appelle DELETE project_evaluations
                               │
                               ▼
-     ┌────────────────────────────────────────────────────────┐
-     │  Confirmation et enregistrement                        │
-     │  closure_status → 'completed'                          │
-     └────────────────────────────────────────────────────────┘
+              ┌───────────────────────────────┐
+              │ RLS vérifie la policy DELETE  │
+              │ → Policy inexistante = BLOQUÉ │
+              │ → 0 lignes supprimées         │
+              └───────────────────────────────┘
+                              │
+                              ▼
+              ┌───────────────────────────────┐
+              │ INSERT project_evaluations    │
+              │ → Violation contrainte unique │
+              │ → Erreur 23505                │
+              └───────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────┐
+│                    Après (solution)                             │
+└─────────────────────────────────────────────────────────────────┘
+                              │
+     submitClosure() appelle DELETE project_evaluations
+                              │
+                              ▼
+              ┌───────────────────────────────┐
+              │ RLS vérifie la policy DELETE  │
+              │ → Policy existe = AUTORISÉ    │
+              │ → 1 ligne supprimée           │
+              └───────────────────────────────┘
+                              │
+                              ▼
+              ┌───────────────────────────────┐
+              │ INSERT project_evaluations    │
+              │ → Table vide, OK              │
+              │ → Succès                      │
+              └───────────────────────────────┘
 ```
 
 ---
 
-## Avantages de cette solution
+## Détails techniques
 
-1. **Visible** : Le bouton "Compléter l'évaluation" est dans l'en-tête, pas caché dans un menu
-2. **Cohérent** : Suit le même pattern que `ReactivateProjectButton`
-3. **Minimal** : Ne modifie pas la logique de masquage de `ProjectSummaryActions`
-4. **Réutilisable** : Le dialogue existant est réutilisé avec son mode `pendingEvaluationMode`
-5. **Sécurisé** : Respecte les permissions (seuls admin/chef de projet peuvent compléter)
+### Policy DELETE ajoutée
+
+La policy autorise la suppression si :
+1. L'utilisateur est le **propriétaire du projet** (`owner_id = auth.uid()`)
+2. L'utilisateur est **administrateur** (rôle `admin` dans `user_roles`)
+3. L'utilisateur est le **chef de projet** (`project_manager = email du profil`)
+
+Ces conditions sont cohérentes avec les policies UPDATE existantes.
+
+### Double sécurité avec ReactivateProjectButton
+
+Bien que la policy DELETE résolve le problème principal, ajouter la suppression dans `ReactivateProjectButton` offre une **double sécurité** :
+- Nettoie les données dès la réactivation
+- Évite les états incohérents (projet "en cours" avec des données de clôture)
 
 ---
 
 ## Tests recommandés
 
-1. **Clôturer un projet avec report d'évaluation**
-   - Vérifier que le badge orange "Évaluation en attente" apparaît
-   - Vérifier que le bouton "Compléter l'évaluation" apparaît (pour admin/CDP)
-   - Vérifier que le badge vert "Projet clôturé" n'apparaît PAS
+1. **Tester la re-clôture complète**
+   - Clôturer un projet avec évaluation complète
+   - Réactiver le projet
+   - Re-clôturer avec une nouvelle évaluation
+   - Vérifier : pas d'erreur 23505
 
-2. **Compléter l'évaluation en attente**
-   - Cliquer sur "Compléter l'évaluation"
-   - Vérifier que le dialogue s'ouvre directement sur l'étape d'évaluation
-   - Remplir et valider
-   - Vérifier que le badge passe au vert "Projet clôturé"
+2. **Tester la re-clôture après report**
+   - Clôturer un projet avec report d'évaluation
+   - Réactiver le projet
+   - Re-clôturer (avec ou sans évaluation)
+   - Vérifier : pas d'erreur 23505
 
-3. **Projet complètement clôturé**
-   - Vérifier que seul le badge vert apparaît
-   - Vérifier que le bouton "Compléter l'évaluation" n'apparaît PAS
+3. **Tester les permissions**
+   - En tant que chef de projet : vérifier suppression OK
+   - En tant qu'admin : vérifier suppression OK
+   - En tant que membre simple : vérifier suppression bloquée
+
