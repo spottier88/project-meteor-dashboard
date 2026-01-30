@@ -1,237 +1,261 @@
 
-# Plan de correction : Erreur de contrainte unique lors de la re-clôture d'un projet
+# Plan d'implémentation : Permettre la saisie de l'évaluation reportée
 
 ## Problème identifié
 
-Lors de la clôture d'un projet pour la seconde fois (après une première clôture et une réactivation), l'erreur suivante se produit :
-
-```
-code: "23505"
-message: "duplicate key value violates unique constraint \"project_evaluations_project_id_key\""
-```
-
-### Cause racine
-
-La table `project_evaluations` a une contrainte d'unicité sur `project_id` (un seul enregistrement par projet). Le flux actuel présente deux problèmes :
-
-1. **Réactivation incomplète** : Le bouton `ReactivateProjectButton` ne supprime **pas** les données d'évaluation et de revue finale existantes lors de la réactivation
-
-2. **Insertion sans vérification** : La fonction `submitClosure` tente un `INSERT` sans vérifier/supprimer les données existantes au préalable
-
-Le mécanisme de vérification dans `ClosureStepIntro` existe, mais il dépend d'une action manuelle de l'utilisateur et peut être contourné.
+Lorsqu'un utilisateur reporte l'évaluation lors de la clôture d'un projet :
+- Le projet passe au statut `lifecycle_status = 'completed'` et `closure_status = 'pending_evaluation'`
+- Comme `lifecycle_status === 'completed'`, le système considère le projet comme "clôturé" (`isProjectClosed = true`)
+- Le composant `ProjectSummaryActions` est masqué pour les projets clôturés
+- **Résultat** : Le bouton "Compléter l'évaluation" et le badge "Évaluation en attente" ne sont jamais affichés
 
 ---
 
-## Solution proposée
+## Architecture de la solution
 
-### Approche retenue : Nettoyage automatique avant insertion
+### Approche retenue : Créer un bouton dédié pour compléter l'évaluation
 
-Plutôt que de dépendre uniquement de la vérification dans l'UI, modifier les fonctions `submitClosure` et `postponeEvaluation` pour :
+Plutôt que de modifier la logique complexe de masquage de `ProjectSummaryActions`, créer un **nouveau composant** `CompleteEvaluationButton` qui sera affiché dans l'en-tête du projet spécifiquement pour les projets avec évaluation en attente.
 
-1. **Supprimer automatiquement** les évaluations et revues finales existantes **avant** d'insérer les nouvelles
-2. Cela rend le processus **idempotent** et robuste
-
-Cette approche est recommandée car elle garantit que la clôture fonctionnera toujours, même si le mécanisme de vérification UI est contourné.
-
----
-
-## Fichier à modifier
-
-`src/hooks/useProjectClosure.ts`
+Cette approche :
+- Ne modifie pas la logique de masquage existante pour les projets clôturés
+- Rend le bouton bien visible dans l'en-tête (pas caché dans un menu)
+- Est cohérente avec le bouton `ReactivateProjectButton` qui s'affiche aussi à côté du badge
 
 ---
 
-## Modifications à effectuer
+## Fichiers à créer
 
-### 1. Dans la fonction `postponeEvaluation` (ligne ~84-153)
-
-Ajouter la suppression de la revue finale existante **avant** l'insertion :
+### 1. Nouveau composant : `src/components/project/CompleteEvaluationButton.tsx`
 
 ```typescript
-// Reporter l'évaluation (marque le projet comme terminé mais évaluation en attente)
-const postponeEvaluation = async () => {
-  if (!closureState.finalReviewData) {
-    toast({
-      title: "Erreur",
-      description: "Le bilan du projet doit être complété avant de reporter l'évaluation.",
-      variant: "destructive",
-    });
-    return false;
-  }
+/**
+ * Bouton pour compléter l'évaluation d'un projet clôturé
+ * S'affiche uniquement pour les projets avec closure_status = 'pending_evaluation'
+ */
 
-  setClosureState(prev => ({ ...prev, isSubmitting: true }));
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { FileCheck } from "lucide-react";
+import { ProjectClosureDialog } from "./closure/ProjectClosureDialog";
 
-  try {
-    const { data: userData } = await supabase.auth.getUser();
-    const userId = userData?.user?.id;
+interface CompleteEvaluationButtonProps {
+  projectId: string;
+  projectTitle: string;
+  onComplete?: () => void;
+}
 
-    // NOUVEAU : Supprimer les données de clôture existantes pour permettre une nouvelle clôture
-    // Suppression de l'évaluation existante (si présente)
-    await supabase
-      .from("project_evaluations")
-      .delete()
-      .eq("project_id", projectId);
+export const CompleteEvaluationButton = ({
+  projectId,
+  projectTitle,
+  onComplete,
+}: CompleteEvaluationButtonProps) => {
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
 
-    // Suppression de la revue finale existante (si présente)
-    await supabase
-      .from("reviews")
-      .delete()
-      .eq("project_id", projectId)
-      .eq("is_final_review", true);
+  return (
+    <>
+      <Button 
+        variant="outline" 
+        size="sm"
+        onClick={() => setIsDialogOpen(true)}
+        className="text-orange-600 border-orange-300 hover:bg-orange-50"
+      >
+        <FileCheck className="h-4 w-4 mr-2" />
+        Compléter l'évaluation
+      </Button>
 
-    // 1. Créer la revue finale
-    const { error: reviewError } = await supabase.from("reviews").insert({
-      // ... reste inchangé
-    });
-
-    // ... reste de la fonction inchangé
-  }
+      <ProjectClosureDialog
+        projectId={projectId}
+        projectTitle={projectTitle}
+        isOpen={isDialogOpen}
+        onClose={() => setIsDialogOpen(false)}
+        onClosureComplete={onComplete}
+        pendingEvaluationMode={true}
+      />
+    </>
+  );
 };
 ```
 
-### 2. Dans la fonction `submitClosure` (ligne ~156-238)
+---
 
-Ajouter la suppression des données existantes **avant** l'insertion :
+## Fichiers à modifier
+
+### 2. Modifier `src/hooks/useProjectPermissions.tsx`
+
+Ajouter une nouvelle propriété `hasPendingEvaluation` pour détecter les projets avec évaluation en attente.
+
+**Modifications :**
+
+1. Récupérer `closure_status` dans la query (en plus de `lifecycle_status`)
+
+2. Ajouter une nouvelle variable pour déterminer si une évaluation est en attente :
 
 ```typescript
-// Soumettre la clôture complète
-const submitClosure = async () => {
-  if (!closureState.finalReviewData || !closureState.evaluationData) {
-    toast({
-      title: "Erreur",
-      description: "Toutes les données doivent être complétées.",
-      variant: "destructive",
-    });
-    return false;
-  }
+// Déterminer si le projet a une évaluation en attente
+const hasPendingEvaluation = projectAccess?.lifecycleStatus === 'completed' 
+  && projectAccess?.closureStatus === 'pending_evaluation';
+```
 
-  setClosureState(prev => ({ ...prev, isSubmitting: true }));
+3. Ajouter une permission pour compléter l'évaluation :
 
-  try {
-    const { data: userData } = await supabase.auth.getUser();
-    const userId = userData?.user?.id;
+```typescript
+// Permission de compléter l'évaluation : si évaluation en attente ET (admin OU chef de projet)
+const canCompleteEvaluation = hasPendingEvaluation 
+  && (isAdmin || projectAccess?.isProjectManager);
+```
 
-    // NOUVEAU : Supprimer les données de clôture existantes pour permettre une nouvelle clôture
-    // Cela garantit que l'insertion ne violera pas la contrainte d'unicité
-    
-    // Suppression de l'évaluation existante (si présente)
-    await supabase
-      .from("project_evaluations")
-      .delete()
-      .eq("project_id", projectId);
+4. Retourner les nouvelles propriétés :
 
-    // Suppression de la revue finale existante (si présente)
-    await supabase
-      .from("reviews")
-      .delete()
-      .eq("project_id", projectId)
-      .eq("is_final_review", true);
-
-    // 1. Créer la revue finale
-    const { error: reviewError } = await supabase.from("reviews").insert({
-      // ... reste inchangé
-    });
-
-    // 2. Créer l'évaluation de méthode
-    const { error: evalError } = await supabase.from("project_evaluations").insert({
-      // ... reste inchangé
-    });
-
-    // ... reste de la fonction inchangé
-  }
+```typescript
+return {
+  // ... propriétés existantes
+  hasPendingEvaluation,
+  canCompleteEvaluation,
 };
+```
+
+---
+
+### 3. Modifier `src/components/project/ProjectSummaryContent.tsx`
+
+Afficher le badge "Évaluation en attente" et le bouton "Compléter l'évaluation" dans l'en-tête.
+
+**Modifications :**
+
+1. Importer les nouveaux composants :
+
+```typescript
+import { ClosurePendingBadge } from "./ClosurePendingBadge";
+import { CompleteEvaluationButton } from "./CompleteEvaluationButton";
+```
+
+2. Mettre à jour l'interface des permissions :
+
+```typescript
+permissions: {
+  // ... propriétés existantes
+  hasPendingEvaluation?: boolean;
+  canCompleteEvaluation?: boolean;
+};
+```
+
+3. Dans le JSX, après le badge "Projet clôturé", ajouter le badge "Évaluation en attente" :
+
+```tsx
+{/* Badge projet clôturé */}
+{permissions.isProjectClosed && !permissions.hasPendingEvaluation && (
+  <ProjectClosedBadge />
+)}
+
+{/* Badge évaluation en attente (différent de clôturé complet) */}
+{permissions.hasPendingEvaluation && (
+  <ClosurePendingBadge />
+)}
+```
+
+4. Dans la zone des boutons, ajouter le bouton "Compléter l'évaluation" :
+
+```tsx
+{/* Bouton de réactivation pour admin/chef de projet si projet clôturé */}
+{permissions.canReactivateProject && (
+  <ReactivateProjectButton ... />
+)}
+
+{/* Bouton pour compléter l'évaluation en attente */}
+{permissions.canCompleteEvaluation && (
+  <CompleteEvaluationButton 
+    projectId={projectId}
+    projectTitle={project.title}
+    onComplete={onClosureComplete}
+  />
+)}
 ```
 
 ---
 
 ## Résumé des modifications
 
-| Fichier | Fonction | Modification |
-|---------|----------|--------------|
-| `src/hooks/useProjectClosure.ts` | `postponeEvaluation` | Ajouter suppression des données existantes avant insertion |
-| `src/hooks/useProjectClosure.ts` | `submitClosure` | Ajouter suppression des données existantes avant insertion |
+| Fichier | Action | Description |
+|---------|--------|-------------|
+| `src/components/project/CompleteEvaluationButton.tsx` | Créer | Bouton pour ouvrir le dialogue d'évaluation |
+| `src/hooks/useProjectPermissions.tsx` | Modifier | Ajouter `hasPendingEvaluation`, `canCompleteEvaluation`, récupérer `closure_status` |
+| `src/components/project/ProjectSummaryContent.tsx` | Modifier | Afficher badge + bouton pour évaluation en attente |
 
 ---
 
-## Logique de nettoyage ajoutée
+## Logique de décision pour les badges et boutons
 
-```typescript
-// Suppression de l'évaluation existante (si présente)
-await supabase
-  .from("project_evaluations")
-  .delete()
-  .eq("project_id", projectId);
-
-// Suppression de la revue finale existante (si présente)  
-await supabase
-  .from("reviews")
-  .delete()
-  .eq("project_id", projectId)
-  .eq("is_final_review", true);
-```
-
-**Notes :**
-- Ces suppressions utilisent `.eq()` donc si aucun enregistrement n'existe, la requête ne fait rien (pas d'erreur)
-- Les erreurs de suppression ne sont pas vérifiées car elles ne doivent pas bloquer le processus
-- Cette approche est recommandée par la documentation (Stack Overflow) pour ce type de contrainte
+| État du projet | Badge affiché | Bouton visible |
+|----------------|---------------|----------------|
+| En cours (`lifecycle_status != completed`) | Aucun | Actions normales |
+| Clôturé avec évaluation (`closure_status = completed`) | "Projet clôturé" (vert) | "Réactiver" (admin/CDP) |
+| Clôturé sans évaluation (`closure_status = pending_evaluation`) | "Évaluation en attente" (orange) | "Compléter l'évaluation" + "Réactiver" (admin/CDP) |
 
 ---
 
-## Flux après correction
+## Flux visuel après implémentation
 
 ```text
 ┌─────────────────────────────────────────────────────────────────┐
-│                    Re-clôture d'un projet                       │
+│  Projet avec évaluation en attente                              │
+│  (lifecycle_status = completed, closure_status = pending_eval)  │
 └─────────────────────────────────────────────────────────────────┘
                               │
                               ▼
-              ┌───────────────────────────────┐
-              │ submitClosure / postpone...   │
-              └───────────────────────────────┘
+     ┌────────────────────────────────────────────────────────┐
+     │  En-tête du projet                                     │
+     │  ┌───────────────────────┐                             │
+     │  │ Titre │ Badge orange  │  [Compléter] [Réactiver]    │
+     │  │       │ "Évaluation   │                             │
+     │  │       │ en attente"   │                             │
+     │  └───────────────────────┘                             │
+     └────────────────────────────────────────────────────────┘
+                              │
+                              │ Clic sur "Compléter l'évaluation"
+                              ▼
+     ┌────────────────────────────────────────────────────────┐
+     │  Dialogue ProjectClosureDialog                         │
+     │  (mode pendingEvaluationMode = true)                   │
+     │                                                         │
+     │  → Affiche directement l'étape d'évaluation            │
+     │    de méthode (4 champs texte)                         │
+     │                                                         │
+     │  [Retour]              [Continuer]                      │
+     └────────────────────────────────────────────────────────┘
                               │
                               ▼
-              ┌───────────────────────────────┐
-              │ 1. DELETE project_evaluations │  ← NOUVEAU
-              │    WHERE project_id = ?       │
-              └───────────────────────────────┘
-                              │
-                              ▼
-              ┌───────────────────────────────┐
-              │ 2. DELETE reviews             │  ← NOUVEAU
-              │    WHERE is_final_review      │
-              └───────────────────────────────┘
-                              │
-                              ▼
-              ┌───────────────────────────────┐
-              │ 3. INSERT reviews             │  ✅ Pas de conflit
-              │    (nouvelle revue finale)    │
-              └───────────────────────────────┘
-                              │
-                              ▼
-              ┌───────────────────────────────┐
-              │ 4. INSERT project_evaluations │  ✅ Pas de conflit
-              │    (nouvelle évaluation)      │
-              └───────────────────────────────┘
-                              │
-                              ▼
-              ┌───────────────────────────────┐
-              │ 5. UPDATE project             │
-              │    (statut clôturé)           │
-              └───────────────────────────────┘
+     ┌────────────────────────────────────────────────────────┐
+     │  Confirmation et enregistrement                        │
+     │  closure_status → 'completed'                          │
+     └────────────────────────────────────────────────────────┘
 ```
 
 ---
 
 ## Avantages de cette solution
 
-1. **Robuste** : Fonctionne même si l'utilisateur contourne la vérification UI
-2. **Idempotent** : Peut être exécuté plusieurs fois sans erreur
-3. **Pas de dépendance** : Ne dépend pas de l'état `existingData` qui pourrait être obsolète
-4. **Simple** : Quelques lignes de code ajoutées sans restructuration majeure
-5. **Cohérent** : Les nouvelles données remplacent toujours les anciennes
+1. **Visible** : Le bouton "Compléter l'évaluation" est dans l'en-tête, pas caché dans un menu
+2. **Cohérent** : Suit le même pattern que `ReactivateProjectButton`
+3. **Minimal** : Ne modifie pas la logique de masquage de `ProjectSummaryActions`
+4. **Réutilisable** : Le dialogue existant est réutilisé avec son mode `pendingEvaluationMode`
+5. **Sécurisé** : Respecte les permissions (seuls admin/chef de projet peuvent compléter)
 
 ---
 
-## Impact sur le mécanisme existant
+## Tests recommandés
 
-Le mécanisme de vérification dans `ClosureStepIntro` reste utile comme **garde-fou visuel** pour informer l'utilisateur, mais n'est plus critique pour le fonctionnement. La suppression automatique garantit le succès de l'opération.
+1. **Clôturer un projet avec report d'évaluation**
+   - Vérifier que le badge orange "Évaluation en attente" apparaît
+   - Vérifier que le bouton "Compléter l'évaluation" apparaît (pour admin/CDP)
+   - Vérifier que le badge vert "Projet clôturé" n'apparaît PAS
+
+2. **Compléter l'évaluation en attente**
+   - Cliquer sur "Compléter l'évaluation"
+   - Vérifier que le dialogue s'ouvre directement sur l'étape d'évaluation
+   - Remplir et valider
+   - Vérifier que le badge passe au vert "Projet clôturé"
+
+3. **Projet complètement clôturé**
+   - Vérifier que seul le badge vert apparaît
+   - Vérifier que le bouton "Compléter l'évaluation" n'apparaît PAS
