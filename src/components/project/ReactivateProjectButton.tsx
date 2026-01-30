@@ -39,6 +39,21 @@ export const ReactivateProjectButton = ({
   const handleReactivate = async () => {
     setIsReactivating(true);
     try {
+      // Supprimer les données de clôture existantes avant réactivation
+      // Suppression de l'évaluation de méthode
+      await supabase
+        .from("project_evaluations")
+        .delete()
+        .eq("project_id", projectId);
+
+      // Suppression de la revue finale
+      await supabase
+        .from("reviews")
+        .delete()
+        .eq("project_id", projectId)
+        .eq("is_final_review", true);
+
+      // Mise à jour du projet
       const { error } = await supabase
         .from("projects")
         .update({ 
