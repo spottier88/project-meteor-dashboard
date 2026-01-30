@@ -97,6 +97,20 @@ export const useProjectClosure = ({ projectId, onClosureComplete }: UseProjectCl
       const { data: userData } = await supabase.auth.getUser();
       const userId = userData?.user?.id;
 
+      // Nettoyage des données de clôture existantes pour permettre une nouvelle clôture
+      // Suppression de l'évaluation existante (si présente)
+      await supabase
+        .from("project_evaluations")
+        .delete()
+        .eq("project_id", projectId);
+
+      // Suppression de la revue finale existante (si présente)
+      await supabase
+        .from("reviews")
+        .delete()
+        .eq("project_id", projectId)
+        .eq("is_final_review", true);
+
       // 1. Créer la revue finale
       const { error: reviewError } = await supabase.from("reviews").insert({
         project_id: projectId,
@@ -168,6 +182,22 @@ export const useProjectClosure = ({ projectId, onClosureComplete }: UseProjectCl
     try {
       const { data: userData } = await supabase.auth.getUser();
       const userId = userData?.user?.id;
+
+      // Nettoyage des données de clôture existantes pour permettre une nouvelle clôture
+      // Cela garantit que l'insertion ne violera pas la contrainte d'unicité
+      
+      // Suppression de l'évaluation existante (si présente)
+      await supabase
+        .from("project_evaluations")
+        .delete()
+        .eq("project_id", projectId);
+
+      // Suppression de la revue finale existante (si présente)
+      await supabase
+        .from("reviews")
+        .delete()
+        .eq("project_id", projectId)
+        .eq("is_final_review", true);
 
       // 1. Créer la revue finale
       const { error: reviewError } = await supabase.from("reviews").insert({
