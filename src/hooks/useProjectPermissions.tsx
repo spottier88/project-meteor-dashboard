@@ -26,7 +26,7 @@ export const useProjectPermissions = (projectId: string) => {
 
 const { data: project } = await supabase
         .from("projects")
-        .select("project_manager, pole_id, direction_id, service_id, lifecycle_status")
+        .select("project_manager, pole_id, direction_id, service_id, lifecycle_status, closure_status")
         .eq("id", projectId)
         .single();
 
@@ -40,6 +40,7 @@ const { data: project } = await supabase
         isMember: true,
         hasRegularAccess: true,
         lifecycleStatus: project?.lifecycle_status,
+        closureStatus: project?.closure_status,
         projectOrganization: {
           pole_id: project?.pole_id,
           direction_id: project?.direction_id,
@@ -82,6 +83,7 @@ const { data: project } = await supabase
         isMember: !!isMember,
         hasRegularAccess,
         lifecycleStatus: project?.lifecycle_status,
+        closureStatus: project?.closure_status,
         projectOrganization: {
           pole_id: project?.pole_id,
           direction_id: project?.direction_id,
@@ -98,6 +100,9 @@ const { data: project } = await supabase
   
   // Déterminer si le projet est clôturé (lifecycle_status === 'completed')
   const isProjectClosed = projectAccess?.lifecycleStatus === 'completed';
+  
+  // Déterminer si le projet a une évaluation en attente
+  const hasPendingEvaluation = isProjectClosed && projectAccess?.closureStatus === 'pending_evaluation';
 
   const { data: userRoles } = useQuery({
     queryKey: ["userRoles", userProfile?.id],
@@ -153,6 +158,9 @@ const { data: project } = await supabase
 
   // Permission de réactivation : seulement si projet clôturé ET (admin OU chef de projet)
   const canReactivateProject = isProjectClosed && (isAdmin || projectAccess?.isProjectManager);
+  
+  // Permission de compléter l'évaluation : si évaluation en attente ET (admin OU chef de projet)
+  const canCompleteEvaluation = hasPendingEvaluation && (isAdmin || projectAccess?.isProjectManager);
 
   return {
     canManageRisks: effectiveCanManageRisks,
@@ -167,6 +175,8 @@ const { data: project } = await supabase
     isSecondaryProjectManager: projectAccess?.isSecondaryProjectManager || false,
     isMember: projectAccess?.isMember || false,
     isProjectClosed,
+    hasPendingEvaluation,
+    canCompleteEvaluation,
     isReadOnlyViaPortfolio,
     portfolioAccessInfo,
     userEmail: userProfile?.email,
