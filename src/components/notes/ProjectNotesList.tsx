@@ -39,12 +39,14 @@ interface ProjectNotesListProps {
   projectId: string;
   canEdit: boolean;
   isAdmin: boolean;
+  isProjectClosed?: boolean; // Prop pour forcer le mode lecture seule si projet clôturé
 }
 
 export const ProjectNotesList = ({
   projectId,
   canEdit,
   isAdmin,
+  isProjectClosed = false,
 }: ProjectNotesListProps) => {
   const {
     notes,
@@ -55,6 +57,9 @@ export const ProjectNotesList = ({
     togglePinNote,
     userId,
   } = useProjectNotes(projectId);
+  
+  // Si le projet est clôturé, forcer le mode lecture seule
+  const effectiveCanEdit = isProjectClosed ? false : canEdit;
 
   const [editingNote, setEditingNote] = useState<ProjectNote | null>(null);
   // Note en attente de suppression (pour le dialogue centralisé)
@@ -138,12 +143,14 @@ export const ProjectNotesList = ({
     togglePinNote.mutate({ noteId, isPinned });
   };
 
-  // Déterminer les permissions pour chaque note
+  // Déterminer les permissions pour chaque note (en tenant compte de la clôture du projet)
   const canEditNote = (note: ProjectNote) => {
+    if (isProjectClosed) return false;
     return isAdmin || note.author_id === userId;
   };
 
   const canDeleteNote = (note: ProjectNote) => {
+    if (isProjectClosed) return false;
     return isAdmin || note.author_id === userId;
   };
 
@@ -159,8 +166,8 @@ export const ProjectNotesList = ({
 
   return (
     <div ref={containerRef} tabIndex={-1} className="space-y-4 outline-none">
-      {/* Formulaire d'ajout (visible pour ceux qui peuvent éditer) */}
-      {canEdit && !editingNote && (
+      {/* Formulaire d'ajout (visible pour ceux qui peuvent éditer et si projet non clôturé) */}
+      {effectiveCanEdit && !editingNote && (
         <ProjectNoteForm
           projectId={projectId}
           onSubmit={handleCreate}
@@ -168,8 +175,8 @@ export const ProjectNotesList = ({
         />
       )}
 
-      {/* Formulaire d'édition */}
-      {editingNote && (
+      {/* Formulaire d'édition (uniquement si projet non clôturé) */}
+      {editingNote && !isProjectClosed && (
         <ProjectNoteForm
           projectId={projectId}
           onSubmit={handleCreate}
@@ -186,7 +193,7 @@ export const ProjectNotesList = ({
           <FileText className="h-12 w-12 mx-auto mb-4 opacity-50" />
           <p className="text-lg font-medium">Aucune note pour le moment</p>
           <p className="text-sm">
-            {canEdit 
+            {effectiveCanEdit 
               ? "Ajoutez une première note pour documenter le projet."
               : "Les notes du projet apparaîtront ici."}
           </p>

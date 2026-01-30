@@ -259,72 +259,92 @@ export const ProjectSummaryContent = ({
         </Card>
       </div>
 
-      <Tabs defaultValue="tasks" className="w-full">
-        <TabsList className="grid grid-cols-4 w-full max-w-lg">
-          <TabsTrigger value="tasks">Tâches</TabsTrigger>
-          <TabsTrigger value="risks">Risques</TabsTrigger>
-          <TabsTrigger value="notes">Notes</TabsTrigger>
-          <TabsTrigger value="team">Équipe</TabsTrigger>
-        </TabsList>
-        <TabsContent value="tasks">
-          <div className="bg-white rounded-lg shadow-sm overflow-hidden p-6">
-            <TaskList 
-              projectId={projectId}
-              canEdit={permissions.canEdit}
-              isProjectManager={permissions.isProjectManager}
-              isAdmin={permissions.isAdmin}
-              preloadedTasks={tasks}
-            />
-          </div>
-        </TabsContent>
-        <TabsContent value="risks">
-          <div className="bg-white rounded-lg shadow-sm overflow-hidden p-6">
-            <RiskList 
-              projectId={projectId}
-              projectTitle={project.title}
-              canEdit={permissions.canEdit}
-              isProjectManager={permissions.isProjectManager}
-              isAdmin={permissions.isAdmin}
-              preloadedRisks={risks}
-            />
-          </div>
-        </TabsContent>
-        <TabsContent value="notes">
-          <div className="bg-white rounded-lg shadow-sm overflow-hidden p-6">
-            <ProjectNotesList
-              projectId={projectId}
-              canEdit={permissions.canEdit}
-              isAdmin={permissions.isAdmin}
-            />
-          </div>
-        </TabsContent>
-        <TabsContent value="team">
-          <div className="bg-white rounded-lg shadow-sm overflow-hidden p-6">
-            {teamManagement ? (
-              <div className="space-y-6">
-                <div className="flex items-center justify-between">
-                  <h2 className="text-2xl font-bold">Équipe projet</h2>
-                  {permissions.canManageTeam && (
-                    <div className="flex space-x-2">
-                      {/* Les boutons d'ajout seront gérés par TeamMembersTable */}
-                    </div>
-                  )}
-                </div>
-                <TeamManagement
+      {/* Calculer les permissions effectives en tenant compte du projet clôturé */}
+      {(() => {
+        const effectiveCanEdit = permissions.isProjectClosed ? false : permissions.canEdit;
+        const effectiveCanManageTeam = permissions.isProjectClosed ? false : permissions.canManageTeam;
+        const effectiveCanManageRisks = permissions.isProjectClosed ? false : permissions.canManageRisks;
+        
+        return (
+          <Tabs defaultValue="tasks" className="w-full">
+            <TabsList className="grid grid-cols-4 w-full max-w-lg">
+              <TabsTrigger value="tasks">Tâches</TabsTrigger>
+              <TabsTrigger value="risks">Risques</TabsTrigger>
+              <TabsTrigger value="notes">Notes</TabsTrigger>
+              <TabsTrigger value="team">Équipe</TabsTrigger>
+            </TabsList>
+            <TabsContent value="tasks">
+              <div className="bg-white rounded-lg shadow-sm overflow-hidden p-6">
+                <TaskList 
                   projectId={projectId}
-                  permissions={permissions}
-                  preloadedData={teamManagement}
+                  canEdit={effectiveCanEdit}
+                  isProjectManager={permissions.isProjectManager}
+                  isAdmin={permissions.isAdmin}
+                  isProjectClosed={permissions.isProjectClosed}
+                  preloadedTasks={tasks}
                 />
               </div>
-            ) : (
-              <TeamManagement
-                projectId={projectId}
-                permissions={permissions}
-              />
-            )}
-          </div>
-        </TabsContent>
-      </Tabs>
+            </TabsContent>
+            <TabsContent value="risks">
+              <div className="bg-white rounded-lg shadow-sm overflow-hidden p-6">
+                <RiskList 
+                  projectId={projectId}
+                  projectTitle={project.title}
+                  canEdit={effectiveCanEdit}
+                  isProjectManager={permissions.isProjectManager}
+                  isAdmin={permissions.isAdmin}
+                  isProjectClosed={permissions.isProjectClosed}
+                  preloadedRisks={risks}
+                />
+              </div>
+            </TabsContent>
+            <TabsContent value="notes">
+              <div className="bg-white rounded-lg shadow-sm overflow-hidden p-6">
+                <ProjectNotesList
+                  projectId={projectId}
+                  canEdit={effectiveCanEdit}
+                  isAdmin={permissions.isAdmin}
+                  isProjectClosed={permissions.isProjectClosed}
+                />
+              </div>
+            </TabsContent>
+            <TabsContent value="team">
+              <div className="bg-white rounded-lg shadow-sm overflow-hidden p-6">
+                {teamManagement ? (
+                  <div className="space-y-6">
+                    <div className="flex items-center justify-between">
+                      <h2 className="text-2xl font-bold">Équipe projet</h2>
+                      {effectiveCanManageTeam && (
+                        <div className="flex space-x-2">
+                          {/* Les boutons d'ajout seront gérés par TeamMembersTable */}
+                        </div>
+                      )}
+                    </div>
+                    <TeamManagement
+                      projectId={projectId}
+                      permissions={{
+                        ...permissions,
+                        canEdit: effectiveCanEdit,
+                        canManageTeam: effectiveCanManageTeam,
+                      }}
+                      preloadedData={teamManagement}
+                    />
+                  </div>
+                ) : (
+                  <TeamManagement
+                    projectId={projectId}
+                    permissions={{
+                      ...permissions,
+                      canEdit: effectiveCanEdit,
+                      canManageTeam: effectiveCanManageTeam,
+                    }}
+                  />
+                )}
+              </div>
+            </TabsContent>
+          </Tabs>
+        );
+      })()}
     </div>
   );
 };

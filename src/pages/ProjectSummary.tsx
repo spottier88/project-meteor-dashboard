@@ -19,6 +19,7 @@ import { LinkedProjectRedirect } from "@/components/project/LinkedProjectRedirec
 import { ProjectLinkBadge } from "@/components/project/ProjectLinkBadge";
 import { LinkedProjectsSection } from "@/components/project/LinkedProjectsSection";
 import { useAggregatedProjectData } from "@/hooks/useAggregatedProjectData";
+import { usePermissionsContext } from "@/contexts/PermissionsContext";
 
 export const ProjectSummary = () => {
   const { projectId } = useParams<{ projectId: string }>();
@@ -28,6 +29,9 @@ export const ProjectSummary = () => {
   const [isProjectFormOpen, setIsProjectFormOpen] = useState(false);
   const [isReviewSheetOpen, setIsReviewSheetOpen] = useState(false);
   const { toast } = useToast();
+
+  // Récupérer le profil utilisateur pour calculer isProjectManager synchroniquement
+  const { userProfile } = usePermissionsContext();
 
   // Centraliser le chargement des permissions au niveau parent avec un état stable
   const projectPermissions = useProjectPermissions(projectId || "");
@@ -280,30 +284,40 @@ export const ProjectSummary = () => {
 
       {/* Enrichir les permissions avec les données du projet comme fallback
           pour garantir que le badge "clôturé" s'affiche dès le premier rendu */}
-      <ProjectSummaryContent
-        project={project}
-        lastReview={reviewsData?.current}
-        previousReview={reviewsData?.previous}
-        risks={aggregatedRisks || risks || []}
-        tasks={aggregatedTasks || tasks || []}
-        innovationScores={innovationScores}
-        onEditProject={handleEditProject}
-        onCreateReview={handleCreateReview}
-        onClosureComplete={handleClosureComplete}
-        permissions={{
-          ...projectPermissions,
-          // Utiliser les données du projet comme fallback si les permissions ne sont pas encore chargées
-          isProjectClosed: projectPermissions.isProjectClosed || (project?.lifecycle_status === 'completed'),
-          hasPendingEvaluation: projectPermissions.hasPendingEvaluation || 
-            (project?.lifecycle_status === 'completed' && project?.closure_status === 'pending_evaluation'),
-          canReactivateProject: projectPermissions.canReactivateProject ?? 
-            ((project?.lifecycle_status === 'completed') && (projectPermissions.isAdmin || projectPermissions.isProjectManager)),
-          canCompleteEvaluation: projectPermissions.canCompleteEvaluation ?? 
-            ((project?.lifecycle_status === 'completed' && project?.closure_status === 'pending_evaluation') && 
-             (projectPermissions.isAdmin || projectPermissions.isProjectManager))
-        }}
-        teamManagement={teamManagement}
-      />
+      {(() => {
+        // Calcul synchrone du statut chef de projet à partir des données du projet
+        const isCurrentUserProjectManager = project?.project_manager === userProfile?.email;
+        const syncIsProjectManager = projectPermissions.isProjectManager || isCurrentUserProjectManager;
+        const syncIsProjectClosed = projectPermissions.isProjectClosed || (project?.lifecycle_status === 'completed');
+        const syncHasPendingEvaluation = projectPermissions.hasPendingEvaluation || 
+          (project?.lifecycle_status === 'completed' && project?.closure_status === 'pending_evaluation');
+        
+        return (
+          <ProjectSummaryContent
+            project={project}
+            lastReview={reviewsData?.current}
+            previousReview={reviewsData?.previous}
+            risks={aggregatedRisks || risks || []}
+            tasks={aggregatedTasks || tasks || []}
+            innovationScores={innovationScores}
+            onEditProject={handleEditProject}
+            onCreateReview={handleCreateReview}
+            onClosureComplete={handleClosureComplete}
+            permissions={{
+              ...projectPermissions,
+              // Utiliser les données du projet comme fallback synchrone
+              isProjectManager: syncIsProjectManager,
+              isProjectClosed: syncIsProjectClosed,
+              hasPendingEvaluation: syncHasPendingEvaluation,
+              canReactivateProject: projectPermissions.canReactivateProject ?? 
+                (syncIsProjectClosed && (projectPermissions.isAdmin || syncIsProjectManager)),
+              canCompleteEvaluation: projectPermissions.canCompleteEvaluation ?? 
+                (syncHasPendingEvaluation && (projectPermissions.isAdmin || syncIsProjectManager))
+            }}
+            teamManagement={teamManagement}
+          />
+        );
+      })()}
 
       <TaskForm
         isOpen={isTaskFormOpen}
