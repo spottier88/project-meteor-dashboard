@@ -278,6 +278,8 @@ export const ProjectSummary = () => {
         />
       )}
 
+      {/* Enrichir les permissions avec les données du projet comme fallback
+          pour garantir que le badge "clôturé" s'affiche dès le premier rendu */}
       <ProjectSummaryContent
         project={project}
         lastReview={reviewsData?.current}
@@ -288,7 +290,18 @@ export const ProjectSummary = () => {
         onEditProject={handleEditProject}
         onCreateReview={handleCreateReview}
         onClosureComplete={handleClosureComplete}
-        permissions={projectPermissions}
+        permissions={{
+          ...projectPermissions,
+          // Utiliser les données du projet comme fallback si les permissions ne sont pas encore chargées
+          isProjectClosed: projectPermissions.isProjectClosed || (project?.lifecycle_status === 'completed'),
+          hasPendingEvaluation: projectPermissions.hasPendingEvaluation || 
+            (project?.lifecycle_status === 'completed' && project?.closure_status === 'pending_evaluation'),
+          canReactivateProject: projectPermissions.canReactivateProject ?? 
+            ((project?.lifecycle_status === 'completed') && (projectPermissions.isAdmin || projectPermissions.isProjectManager)),
+          canCompleteEvaluation: projectPermissions.canCompleteEvaluation ?? 
+            ((project?.lifecycle_status === 'completed' && project?.closure_status === 'pending_evaluation') && 
+             (projectPermissions.isAdmin || projectPermissions.isProjectManager))
+        }}
         teamManagement={teamManagement}
       />
 
