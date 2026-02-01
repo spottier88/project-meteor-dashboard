@@ -45,6 +45,7 @@ interface ProjectActionsProps {
   canManageTeam?: boolean;
   isAdmin?: boolean;
   isSecondaryProjectManager?: boolean;
+  isProjectClosed?: boolean; // Indique si le projet est clôturé (mode lecture seule)
 }
 
 export const ProjectActions = ({
@@ -60,6 +61,7 @@ export const ProjectActions = ({
   canManageTeam,
   isAdmin,
   isSecondaryProjectManager,
+  isProjectClosed,
 }: ProjectActionsProps) => {
   const navigate = useNavigate();
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
@@ -75,6 +77,11 @@ export const ProjectActions = ({
   const _canManageTeam = canManageTeam ?? permissions.canManageTeam;
   const _isAdmin = isAdmin ?? permissions.isAdmin;
   const _isSecondaryProjectManager = isSecondaryProjectManager ?? permissions.isSecondaryProjectManager;
+
+  // Si le projet est clôturé, désactiver toutes les actions d'édition
+  const effectiveCanEdit = isProjectClosed ? false : _canEdit;
+  const effectiveCanManageTeam = isProjectClosed ? false : _canManageTeam;
+  const effectiveIsMember = isProjectClosed ? false : _isMember;
 
   const handleClick = (e: React.MouseEvent, action: () => void) => {
     e.stopPropagation();
@@ -94,7 +101,7 @@ export const ProjectActions = ({
 
   return (
     <>
-      {_canEdit && !_isSecondaryProjectManager && (
+      {effectiveCanEdit && !_isSecondaryProjectManager && (
         <Button
           variant="ghost"
           size="icon"
@@ -115,7 +122,7 @@ export const ProjectActions = ({
         <History className="h-4 w-4" />
       </Button>
 
-      {(_canEdit || _isMember || _canManageTeam || _isAdmin) && (
+      {(effectiveCanEdit || effectiveIsMember || effectiveCanManageTeam || _isAdmin) && (
         <DropdownMenu>
           <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
             <Button variant="ghost" size="icon" className="h-8 w-8">
@@ -123,7 +130,7 @@ export const ProjectActions = ({
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            {(_canEdit || _isMember) && (
+            {(effectiveCanEdit || effectiveIsMember) && (
               <>
                 <DropdownMenuItem onClick={(e) => { e.stopPropagation(); navigate(`/tasks/${projectId}`); }}>
                   <ListTodo className="mr-2 h-4 w-4" />
@@ -139,9 +146,9 @@ export const ProjectActions = ({
                 </DropdownMenuItem>
               </>
             )}
-            {_canManageTeam && (
+            {effectiveCanManageTeam && (
               <>
-                {(_canEdit || _isMember) && <DropdownMenuSeparator />}
+                {(effectiveCanEdit || effectiveIsMember) && <DropdownMenuSeparator />}
                 <DropdownMenuItem onClick={(e) => { e.stopPropagation(); navigate(`/projects/${projectId}/team`); }}>
                   <Users className="mr-2 h-4 w-4" />
                   Gérer l'équipe

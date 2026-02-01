@@ -65,6 +65,9 @@ export const ProjectCard = ({
 }: ProjectCardProps) => {
   const { canEdit, isMember, isProjectManager, isAdmin, canManageTeam, isSecondaryProjectManager } = useProjectPermissions(id);
   const { navigateToProject } = useProjectNavigation();
+  
+  // Calculer le statut clôturé depuis les données du projet (synchrone)
+  const isProjectClosed = lifecycle_status === 'completed';
 
   const getProjectManagerDisplay = () => {
     if (!project_manager) return "-";
@@ -121,6 +124,7 @@ export const ProjectCard = ({
         isMember={isMember}
         canManageTeam={canManageTeam}
         isAdmin={isAdmin}
+        isProjectClosed={isProjectClosed}
         additionalActions={
           <div className="flex items-center gap-1" data-no-navigate>
             <FavoriteButton projectId={id} />

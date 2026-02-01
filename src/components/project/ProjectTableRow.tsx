@@ -178,6 +178,7 @@ export const ProjectTableRow = ({
             owner_id={project.owner_id}
             project_manager={project.project_manager}
             isMember={isMember}
+            isProjectClosed={project.lifecycle_status === 'completed'}
           />
         </div>
       </TableCell>
