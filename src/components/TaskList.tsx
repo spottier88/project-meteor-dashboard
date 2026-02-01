@@ -164,6 +164,7 @@ export const TaskList = ({
                 setTaskToDelete(task);
               }
             }}
+            isProjectClosed={isProjectClosed}
           />
         ) : view === "grid" ? (
           <KanbanBoard
@@ -175,6 +176,7 @@ export const TaskList = ({
                 setIsTaskFormOpen(true);
               }
             }}
+            isProjectClosed={isProjectClosed}
           /> 
         ) : view === "gantt" ? (
           <TaskGantt 
@@ -187,6 +189,7 @@ export const TaskList = ({
               }
             }}
             onUpdate={refreshTasks}
+            isProjectClosed={isProjectClosed}
           />
         ) : null
       ) : (

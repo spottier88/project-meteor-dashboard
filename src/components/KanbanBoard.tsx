@@ -37,16 +37,21 @@ interface KanbanBoardProps {
   projectId: string;
   readOnly?: boolean;
   onEditTask?: (task: any) => void;
+  isProjectClosed?: boolean; // Prop pour forcer le mode lecture seule si projet clôturé
 }
 
-export const KanbanBoard = ({ projectId, readOnly = false, onEditTask }: KanbanBoardProps) => {
+export const KanbanBoard = ({ projectId, readOnly = false, onEditTask, isProjectClosed = false }: KanbanBoardProps) => {
   const [tasks, setTasks] = useState<Task[]>([]);
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [taskToDelete, setTaskToDelete] = useState<string | null>(null);
   const [expandedTasks, setExpandedTasks] = useState<Record<string, boolean>>({});
 
-  const { canEditTask, canDeleteTask } = useTaskPermissions(projectId);
+  const { canEditTask: hookCanEdit, canDeleteTask: hookCanDelete } = useTaskPermissions(projectId);
+
+  // Forcer lecture seule si projet clôturé (override synchrone des permissions async)
+  const canEditTask = (assignee?: string) => isProjectClosed ? false : hookCanEdit(assignee);
+  const canDeleteTask = isProjectClosed ? false : hookCanDelete;
 
   // Récupérer les profils des membres du projet pour formater les noms
   const { data: projectMembers } = useQuery({

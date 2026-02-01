@@ -22,6 +22,7 @@ interface RiskTableProps {
   projectId: string;
   onEdit?: (risk: Risk) => void;
   onDelete?: (risk: Risk) => void;
+  isProjectClosed?: boolean; // Prop pour forcer le mode lecture seule si projet clôturé
 }
 
 const probabilityColors = {
@@ -42,10 +43,14 @@ const statusColors = {
   resolved: "bg-green-100 text-green-800",
 };
 
-export const RiskTable = ({ risks, projectId, onEdit, onDelete }: RiskTableProps) => {
+export const RiskTable = ({ risks, projectId, onEdit, onDelete, isProjectClosed = false }: RiskTableProps) => {
   const [sortKey, setSortKey] = useState<string | null>(null);
   const [sortDirection, setSortDirection] = useState<SortDirection>(null);
-  const { canEditRisk, canDeleteRisk } = useRiskAccess(projectId);
+  const { canEditRisk: hookCanEdit, canDeleteRisk: hookCanDelete } = useRiskAccess(projectId);
+
+  // Forcer lecture seule si projet clôturé (override synchrone des permissions async)
+  const canEditRisk = isProjectClosed ? false : hookCanEdit;
+  const canDeleteRisk = isProjectClosed ? false : hookCanDelete;
 
   const handleSort = (key: string) => {
     if (sortKey === key) {
