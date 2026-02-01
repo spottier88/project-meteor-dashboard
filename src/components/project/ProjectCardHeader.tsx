@@ -23,6 +23,7 @@ interface ProjectCardHeaderProps {
   canManageTeam?: boolean;
   isAdmin?: boolean;
   additionalActions?: React.ReactNode;
+  isProjectClosed?: boolean; // Indique si le projet est clôturé (mode lecture seule)
 }
 
 export const ProjectCardHeader = ({
@@ -36,6 +37,7 @@ export const ProjectCardHeader = ({
   canManageTeam,
   isAdmin,
   additionalActions,
+  isProjectClosed,
 }: ProjectCardHeaderProps) => {
   return (
     <CardHeader className={cn(
@@ -56,6 +58,7 @@ export const ProjectCardHeader = ({
           isMember={isMember}
           canManageTeam={canManageTeam}
           isAdmin={isAdmin}
+          isProjectClosed={isProjectClosed}
         />
       </div>
     </CardHeader>
