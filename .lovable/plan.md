@@ -1,116 +1,171 @@
 
-# Plan de correction : Mode lecture seule pour projets clôturés
+
+# Plan de correction : Propagation du statut clôturé aux composants enfants
 
 ## Problème identifié
 
-Le statut "clôturé" d'un projet n'est pas correctement appliqué au démarrage car :
+Les boutons de modification/suppression dans les listes de tâches et de risques restent visibles au premier chargement car les composants enfants (`TaskTable`, `RiskCard`) appellent **leurs propres hooks de permissions** au lieu d'utiliser la prop `isProjectClosed` déjà calculée par le parent.
 
-1. **Dans `ProjectCard` et `ProjectTableRow`** : Le hook `useProjectPermissions` effectue des requêtes asynchrones pour chaque projet. Au premier rendu, les permissions ne sont pas encore chargées.
+### Flux actuel problématique
 
-2. **Données disponibles non utilisées** : Le `lifecycle_status` est **déjà présent** dans `ProjectListItem` (données de la liste), mais il n'est **pas exploité** pour bloquer les actions.
-
-3. **Absence de prop `isProjectClosed`** : Les composants `ProjectActions`, `ProjectCard` et `ProjectTableRow` n'ont pas de prop pour recevoir le statut clôturé de manière synchrone.
+```text
+ProjectSummaryContent
+    │
+    ├── isProjectClosed = true (calculé synchrone depuis project.lifecycle_status)
+    │
+    ├── TaskList (reçoit isProjectClosed = true) ✓
+    │       │
+    │       └── TaskTable (ne reçoit PAS isProjectClosed)
+    │               │
+    │               └── useTaskPermissions() ← Appel asynchrone direct
+    │                       │
+    │                       └── Au 1er rendu: projectAccess = undefined
+    │                                         isProjectClosed = false ✗
+    │
+    └── RiskList (reçoit isProjectClosed = true) ✓
+            │
+            └── RiskCard (ne reçoit PAS isProjectClosed)
+                    │
+                    └── useRiskAccess() ← Appel asynchrone direct
+                            │
+                            └── Au 1er rendu: projectAccess = undefined
+                                              isProjectClosed = false ✗
+```
 
 ---
 
 ## Solution proposée
 
-### Approche : Utiliser `lifecycle_status` comme source de vérité synchrone
+### Approche : Transmettre `isProjectClosed` aux composants enfants
 
-Le `lifecycle_status === 'completed'` est disponible immédiatement dans les données de la liste des projets. Il faut le transmettre aux composants enfants pour bloquer les actions **dès le premier rendu**.
+Modifier les composants pour qu'ils reçoivent la prop `isProjectClosed` depuis le parent au lieu de la calculer eux-mêmes.
 
 ---
 
 ## Modifications à effectuer
 
-### 1. Modifier `ProjectActions.tsx`
+### 1. Modifier `TaskTable.tsx`
 
-Ajouter une prop `isProjectClosed` pour forcer le mode lecture seule :
+#### a) Ajouter la prop `isProjectClosed` à l'interface
 
 ```typescript
-interface ProjectActionsProps {
-  // ... props existantes
+interface TaskTableProps {
+  tasks: Task[];
+  onEdit?: (task: Task) => void;
+  onDelete?: (task: Task) => void;
   isProjectClosed?: boolean;  // NOUVEAU
 }
-
-// Dans le composant, calculer les permissions effectives :
-const effectiveCanEdit = isProjectClosed ? false : _canEdit;
-const effectiveCanManageTeam = isProjectClosed ? false : _canManageTeam;
-const effectiveIsMember = isProjectClosed ? false : _isMember;
 ```
 
-Puis utiliser ces variables effectives pour l'affichage des boutons.
-
----
-
-### 2. Modifier `ProjectCardHeader.tsx`
-
-Ajouter la prop `isProjectClosed` et la transmettre à `ProjectActions` :
+#### b) Utiliser cette prop pour calculer les permissions effectives
 
 ```typescript
-interface ProjectCardHeaderProps {
-  // ... props existantes
-  isProjectClosed?: boolean;  // NOUVEAU
-}
+export const TaskTable = ({ tasks, onEdit, onDelete, isProjectClosed = false }: TaskTableProps) => {
+  // ...
+  const { canEditTask: hookCanEdit, canDeleteTask: hookCanDelete } = useTaskPermissions(tasks[0]?.project_id || "");
 
-// Transmettre à ProjectActions
-<ProjectActions
-  // ... autres props
-  isProjectClosed={isProjectClosed}
-/>
+  // Forcer lecture seule si projet clôturé
+  const canEditTask = (assignee?: string) => isProjectClosed ? false : hookCanEdit(assignee);
+  const canDeleteTask = isProjectClosed ? false : hookCanDelete;
+  
+  // Utiliser ces variables au lieu des valeurs du hook
 ```
 
 ---
 
-### 3. Modifier `ProjectCard.tsx`
+### 2. Modifier `TaskList.tsx`
 
-Calculer `isProjectClosed` depuis `lifecycle_status` (disponible synchrone) et le transmettre :
-
-```typescript
-// Calculer le statut clôturé depuis les données du projet (synchrone)
-const isProjectClosed = lifecycle_status === 'completed';
-
-// Transmettre à ProjectCardHeader
-<ProjectCardHeader
-  // ... autres props
-  isProjectClosed={isProjectClosed}
-/>
-```
-
-Ajouter également un indicateur visuel (badge ou opacité réduite) pour les projets clôturés :
+#### Transmettre `isProjectClosed` à `TaskTable`
 
 ```tsx
-{isProjectClosed && (
-  <span className="text-xs bg-green-600 text-white px-2 py-1 rounded">
-    Clôturé
-  </span>
-)}
-```
-
----
-
-### 4. Modifier `ProjectTableRow.tsx`
-
-Calculer `isProjectClosed` depuis `lifecycle_status` et le transmettre à `ProjectActions` :
-
-```typescript
-// Calculer le statut clôturé (la prop lifecycle_status est déjà disponible)
-const isProjectClosed = project.lifecycle_status === 'completed';
-
-// Transmettre à ProjectActions
-<ProjectActions
-  // ... autres props
-  isProjectClosed={isProjectClosed}
+<TaskTable
+  tasks={filteredTasks || []}
+  onEdit={(task) => { ... }}
+  onDelete={task => { ... }}
+  isProjectClosed={isProjectClosed}  // NOUVEAU
 />
 ```
 
+Aussi pour les autres vues (KanbanBoard, TaskGantt) si elles utilisent des permissions.
+
 ---
 
-### 5. Mettre à jour `useProjectPermissions.tsx` (amélioration)
+### 3. Modifier `RiskCard.tsx`
 
-Modifier le hook pour utiliser `lifecycle_status` comme valeur par défaut durant le chargement :
+#### a) Ajouter la prop `isProjectClosed` à l'interface
 
-Le hook doit retourner `isLoadingProjectAccess` pour permettre aux composants d'utiliser un fallback.
+```typescript
+interface RiskCardProps {
+  risk: { ... };
+  onEdit: (risk: any) => void;
+  onDelete: (risk: any) => void;
+  isProjectClosed?: boolean;  // NOUVEAU
+}
+```
+
+#### b) Utiliser cette prop pour calculer les permissions
+
+```typescript
+export const RiskCard = ({ risk, onEdit, onDelete, isProjectClosed = false }: RiskCardProps) => {
+  const { canEditRisk: hookCanEdit, canDeleteRisk: hookCanDelete } = useRiskAccess(risk.project_id);
+
+  // Forcer lecture seule si projet clôturé
+  const canEditRisk = isProjectClosed ? false : hookCanEdit;
+  const canDeleteRisk = isProjectClosed ? false : hookCanDelete;
+  
+  // ...
+```
+
+---
+
+### 4. Modifier `RiskList.tsx`
+
+#### Transmettre `isProjectClosed` à `RiskCard`
+
+```tsx
+{risks.map((risk) => (
+  <RiskCard
+    key={risk.id}
+    risk={risk}
+    onEdit={handleEdit}
+    onDelete={handleDelete}
+    isProjectClosed={isProjectClosed}  // NOUVEAU
+  />
+))}
+```
+
+---
+
+### 5. Modifier `RiskTable.tsx` (si utilisé)
+
+#### a) Ajouter la prop `isProjectClosed`
+
+```typescript
+interface RiskTableProps {
+  risks: Risk[];
+  projectId: string;
+  onEdit?: (risk: Risk) => void;
+  onDelete?: (risk: Risk) => void;
+  isProjectClosed?: boolean;  // NOUVEAU
+}
+```
+
+#### b) Utiliser cette prop
+
+```typescript
+export const RiskTable = ({ risks, projectId, onEdit, onDelete, isProjectClosed = false }: RiskTableProps) => {
+  const { canEditRisk: hookCanEdit, canDeleteRisk: hookCanDelete } = useRiskAccess(projectId);
+
+  // Forcer lecture seule si projet clôturé
+  const canEditRisk = isProjectClosed ? false : hookCanEdit;
+  const canDeleteRisk = isProjectClosed ? false : hookCanDelete;
+```
+
+---
+
+### 6. Modifier `KanbanBoard.tsx` (si nécessaire)
+
+Vérifier si le composant utilise des permissions pour les boutons d'édition et ajouter la prop `isProjectClosed` le cas échéant.
 
 ---
 
@@ -118,109 +173,101 @@ Le hook doit retourner `isLoadingProjectAccess` pour permettre aux composants d'
 
 | Fichier | Modification |
 |---------|--------------|
-| `src/components/project/ProjectActions.tsx` | Ajouter prop `isProjectClosed` et désactiver les actions si `true` |
-| `src/components/project/ProjectCardHeader.tsx` | Ajouter prop `isProjectClosed` et la transmettre à `ProjectActions` |
-| `src/components/ProjectCard.tsx` | Calculer `isProjectClosed` depuis `lifecycle_status` et transmettre + badge visuel |
-| `src/components/project/ProjectTableRow.tsx` | Calculer `isProjectClosed` depuis `lifecycle_status` et transmettre à `ProjectActions` |
+| `src/components/task/TaskTable.tsx` | Ajouter prop `isProjectClosed` et l'utiliser pour forcer lecture seule |
+| `src/components/TaskList.tsx` | Transmettre `isProjectClosed` à `TaskTable`, `KanbanBoard`, `TaskGantt` |
+| `src/components/risk/RiskCard.tsx` | Ajouter prop `isProjectClosed` et l'utiliser pour forcer lecture seule |
+| `src/components/RiskList.tsx` | Transmettre `isProjectClosed` à `RiskCard` |
+| `src/components/risk/RiskTable.tsx` | Ajouter prop `isProjectClosed` et l'utiliser pour forcer lecture seule |
+| `src/components/KanbanBoard.tsx` | (Optionnel) Ajouter prop `isProjectClosed` si boutons d'édition présents |
 
 ---
 
 ## Flux après correction
 
 ```text
-┌─────────────────────────────────────────────────────────────────┐
-│                    Liste des projets chargée                    │
-└─────────────────────────────────────────────────────────────────┘
-                              │
-     Chaque projet a lifecycle_status = 'completed' ou autre
-                              │
-                              ▼
-     ┌────────────────────────────────────────────────────────┐
-     │  ProjectCard / ProjectTableRow                         │
-     │  - isProjectClosed = lifecycle_status === 'completed'  │
-     │  - Calculé SYNCHRONIQUEMENT (pas de requête)           │
-     └────────────────────────────────────────────────────────┘
-                              │
-                              ▼
-     ┌────────────────────────────────────────────────────────┐
-     │  ProjectActions reçoit isProjectClosed = true          │
-     │  - Bouton "Modifier" masqué ✓                          │
-     │  - Menu "Plus d'actions" masqué ou restreint ✓         │
-     │  - Seul "Historique des revues" visible ✓              │
-     └────────────────────────────────────────────────────────┘
-                              │
-                              ▼
-     ┌────────────────────────────────────────────────────────┐
-     │  Badge visuel "Clôturé" affiché ✓                      │
-     │  L'utilisateur voit immédiatement le statut            │
-     └────────────────────────────────────────────────────────┘
+ProjectSummaryContent
+    │
+    ├── isProjectClosed = true (synchrone depuis project.lifecycle_status)
+    │
+    ├── TaskList (reçoit isProjectClosed = true) ✓
+    │       │
+    │       └── TaskTable (reçoit isProjectClosed = true) ✓
+    │               │
+    │               ├── useTaskPermissions() → hookCanEdit = true (async)
+    │               │
+    │               └── canEditTask = isProjectClosed ? false : hookCanEdit
+    │                                = true ? false : true
+    │                                = FALSE ✓
+    │
+    └── RiskList (reçoit isProjectClosed = true) ✓
+            │
+            └── RiskCard (reçoit isProjectClosed = true) ✓
+                    │
+                    ├── useRiskAccess() → hookCanEdit = true (async)
+                    │
+                    └── canEditRisk = isProjectClosed ? false : hookCanEdit
+                                    = true ? false : true
+                                    = FALSE ✓
 ```
 
 ---
 
 ## Détails techniques
 
-### Logique de `ProjectActions` avec `isProjectClosed`
+### Pattern de "permission override"
+
+Le pattern utilisé consiste à :
+
+1. **Récupérer les permissions depuis le hook** (qui peut être asynchrone)
+2. **Appliquer un override synchrone** basé sur la prop `isProjectClosed`
 
 ```typescript
-// Désactiver les actions si le projet est clôturé
-const effectiveCanEdit = isProjectClosed ? false : _canEdit;
-const effectiveCanManageTeam = isProjectClosed ? false : _canManageTeam;
-const effectiveIsMember = isProjectClosed ? false : _isMember;
+// Exemple dans TaskTable.tsx
+const { canEditTask: hookCanEdit, canDeleteTask: hookCanDelete } = useTaskPermissions(projectId);
 
-// Le bouton Modifier n'apparaît plus
-{effectiveCanEdit && !_isSecondaryProjectManager && (
-  <Button ... />
-)}
+// Override synchrone
+const canEditTask = (assignee?: string) => isProjectClosed ? false : hookCanEdit(assignee);
+const canDeleteTask = isProjectClosed ? false : hookCanDelete;
 
-// Le menu Plus d'actions n'apparaît plus ou est restreint
-{(effectiveCanEdit || effectiveIsMember || effectiveCanManageTeam || _isAdmin) && (
-  <DropdownMenu>...</DropdownMenu>
+// Puis dans le JSX
+{canEditTask(task.assignee) && (
+  <Button onClick={() => onEdit?.(task)}>
+    <Pencil className="h-4 w-4" />
+  </Button>
 )}
 ```
 
-### Indicateur visuel dans `ProjectCard`
-
-```tsx
-<div className="flex gap-2">
-  {isProjectClosed && (
-    <span className="text-xs bg-green-600 text-white px-2 py-1 rounded">
-      Clôturé
-    </span>
-  )}
-  {/* ... autres badges existants */}
-</div>
-```
+Ce pattern garantit que :
+- **Au premier rendu** : `isProjectClosed = true` → boutons masqués immédiatement ✓
+- **Après chargement du hook** : La logique reste correcte car le hook retournera aussi `canEdit = false`
 
 ---
 
 ## Avantages de cette solution
 
-1. **Synchrone** : Utilise `lifecycle_status` déjà disponible dans les données de la liste
-2. **Pas de requête supplémentaire** : Pas d'attente asynchrone
-3. **Immédiat** : Les actions sont masquées dès le premier rendu
-4. **Cohérent** : Même comportement dans la liste (carte et tableau) et dans le résumé du projet
-5. **Visuel** : Badge "Clôturé" visible immédiatement
+1. **Synchrone** : Le statut clôturé est transmis immédiatement depuis le parent
+2. **Cohérent** : Tous les niveaux de composants reçoivent la même information
+3. **Robuste** : Double source de vérité (prop + hook) avec priorité à la prop
+4. **Non-cassant** : Les hooks restent fonctionnels pour les cas où la prop n'est pas fournie
 
 ---
 
 ## Tests recommandés
 
-1. **Vue tableau des projets**
-   - Charger la liste des projets
-   - Vérifier que les projets clôturés n'ont pas de bouton "Modifier"
-   - Vérifier que le menu "Plus d'actions" est restreint ou masqué
-
-2. **Vue carte des projets**
-   - Charger la liste des projets
-   - Vérifier que les projets clôturés affichent un badge "Clôturé"
-   - Vérifier que les actions sont masquées
-
-3. **Accès direct à un projet clôturé**
+1. **Accès direct à un projet clôturé**
    - Naviguer vers `/projects/{id}` d'un projet clôturé
-   - Vérifier que le badge s'affiche immédiatement
-   - Vérifier que les actions sont masquées
+   - Vérifier que les boutons modifier/supprimer sont masqués dans TaskTable
+   - Vérifier que les boutons sont masqués dans RiskCard
 
-4. **Navigation depuis la liste vers un projet clôturé**
-   - Cliquer sur un projet clôturé dans la liste
-   - Vérifier la cohérence entre la liste et la page de résumé
+2. **Changement d'onglet**
+   - Cliquer sur l'onglet "Tâches" puis "Risques"
+   - Vérifier que les boutons restent masqués
+
+3. **Vue Kanban des tâches**
+   - Basculer en vue Kanban
+   - Vérifier que les actions d'édition sont désactivées
+
+4. **Réactivation du projet**
+   - Cliquer sur "Réactiver le projet"
+   - Vérifier que les boutons réapparaissent
+
