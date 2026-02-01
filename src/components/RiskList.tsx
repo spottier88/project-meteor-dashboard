@@ -146,6 +146,7 @@ export const RiskList = ({
                 risk={risk}
                 onEdit={handleEdit}
                 onDelete={handleDelete}
+                isProjectClosed={isProjectClosed}
               />
             ))}
           </TableBody>

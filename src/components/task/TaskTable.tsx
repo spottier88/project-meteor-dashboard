@@ -27,6 +27,7 @@ interface TaskTableProps {
   tasks: Task[];
   onEdit?: (task: Task) => void;
   onDelete?: (task: Task) => void;
+  isProjectClosed?: boolean; // Prop pour forcer le mode lecture seule si projet clôturé
 }
 
 const statusColors = {
@@ -41,11 +42,15 @@ const statusLabels = {
   done: "Terminé",
 };
 
-export const TaskTable = ({ tasks, onEdit, onDelete }: TaskTableProps) => {
+export const TaskTable = ({ tasks, onEdit, onDelete, isProjectClosed = false }: TaskTableProps) => {
   const [sortKey, setSortKey] = useState<string | null>(null);
   const [sortDirection, setSortDirection] = useState<SortDirection>(null);
   const [expandedTasks, setExpandedTasks] = useState<Record<string, boolean>>({});
-  const { canEditTask, canDeleteTask } = useTaskPermissions(tasks[0]?.project_id || "");
+  const { canEditTask: hookCanEdit, canDeleteTask: hookCanDelete } = useTaskPermissions(tasks[0]?.project_id || "");
+
+  // Forcer lecture seule si projet clôturé (override synchrone des permissions async)
+  const canEditTask = (assignee?: string) => isProjectClosed ? false : hookCanEdit(assignee);
+  const canDeleteTask = isProjectClosed ? false : hookCanDelete;
 
   // Récupérer les profils des membres du projet
   const { data: projectMembers } = useQuery({

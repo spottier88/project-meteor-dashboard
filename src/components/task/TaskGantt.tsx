@@ -15,9 +15,10 @@ interface TaskGanttProps {
   onEdit?: (task: any) => void;
   onUpdate?: () => void;
   onExpanderClick?: (task: any) => void; // Propriété pour gérer l'expansion
+  isProjectClosed?: boolean; // Prop pour forcer le mode lecture seule si projet clôturé
 }
 
-export const TaskGantt: React.FC<TaskGanttProps> = ({ tasks, projectId, onEdit, onUpdate, onExpanderClick }) => {
+export const TaskGantt: React.FC<TaskGanttProps> = ({ tasks, projectId, onEdit, onUpdate, onExpanderClick, isProjectClosed = false }) => {
   const [viewMode, setViewMode] = useState<ViewMode>(ViewMode.Week);
   const [showTaskList, setShowTaskList] = useState<boolean>(true);
   const [localTasks, setLocalTasks] = useState<Array<any>>(tasks);
