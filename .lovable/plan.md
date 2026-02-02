@@ -1,171 +1,88 @@
 
-
-# Plan de correction : Propagation du statut clôturé aux composants enfants
+# Plan de correction : Affichage immédiat du bouton "Réactiver le projet"
 
 ## Problème identifié
 
-Les boutons de modification/suppression dans les listes de tâches et de risques restent visibles au premier chargement car les composants enfants (`TaskTable`, `RiskCard`) appellent **leurs propres hooks de permissions** au lieu d'utiliser la prop `isProjectClosed` déjà calculée par le parent.
+Le bouton "Réactiver le projet" n'apparaît pas immédiatement lorsqu'on accède à un projet clôturé depuis la liste, car :
 
-### Flux actuel problématique
+1. **`canReactivateProject` retourne `false` au lieu de `undefined`** : Dans `useProjectPermissions`, le calcul retourne `false` pendant le chargement car `isProjectClosed` est `false` (données non encore chargées)
 
-```text
-ProjectSummaryContent
-    │
-    ├── isProjectClosed = true (calculé synchrone depuis project.lifecycle_status)
-    │
-    ├── TaskList (reçoit isProjectClosed = true) ✓
-    │       │
-    │       └── TaskTable (ne reçoit PAS isProjectClosed)
-    │               │
-    │               └── useTaskPermissions() ← Appel asynchrone direct
-    │                       │
-    │                       └── Au 1er rendu: projectAccess = undefined
-    │                                         isProjectClosed = false ✗
-    │
-    └── RiskList (reçoit isProjectClosed = true) ✓
-            │
-            └── RiskCard (ne reçoit PAS isProjectClosed)
-                    │
-                    └── useRiskAccess() ← Appel asynchrone direct
-                            │
-                            └── Au 1er rendu: projectAccess = undefined
-                                              isProjectClosed = false ✗
-```
+2. **L'opérateur `??` ne fonctionne pas** : Dans `ProjectSummary.tsx`, le code utilise :
+   ```typescript
+   canReactivateProject: projectPermissions.canReactivateProject ?? fallback
+   ```
+   Or, `false ?? fallback` retourne `false`, pas le fallback
 
----
+3. **Chaîne de dépendances asynchrones** :
+   - `projectAccess` → requête async → `undefined` au 1er rendu
+   - `isProjectClosed` = `projectAccess?.lifecycleStatus === 'completed'` → `false`
+   - `canReactivateProject` = `isProjectClosed && ...` → `false`
 
 ## Solution proposée
 
-### Approche : Transmettre `isProjectClosed` aux composants enfants
+### Approche : Forcer le calcul synchrone à partir des données du projet
 
-Modifier les composants pour qu'ils reçoivent la prop `isProjectClosed` depuis le parent au lieu de la calculer eux-mêmes.
+Utiliser exclusivement les données du projet (`project.lifecycle_status`) et du profil utilisateur (`userProfile.email`) déjà disponibles pour calculer les permissions de réactivation, sans dépendre du hook asynchrone.
 
 ---
 
 ## Modifications à effectuer
 
-### 1. Modifier `TaskTable.tsx`
+### 1. Modifier `ProjectSummary.tsx`
 
-#### a) Ajouter la prop `isProjectClosed` à l'interface
+#### a) Calculer `canReactivateProject` de manière synchrone
+
+Au lieu d'utiliser `projectPermissions.canReactivateProject` avec un fallback `??`, calculer directement depuis les données du projet :
 
 ```typescript
-interface TaskTableProps {
-  tasks: Task[];
-  onEdit?: (task: Task) => void;
-  onDelete?: (task: Task) => void;
-  isProjectClosed?: boolean;  // NOUVEAU
-}
+// Calcul 100% synchrone - ne dépend pas de projectPermissions
+const syncIsProjectClosed = project?.lifecycle_status === 'completed';
+const syncHasPendingEvaluation = syncIsProjectClosed && project?.closure_status === 'pending_evaluation';
+const isCurrentUserProjectManager = project?.project_manager === userProfile?.email;
+
+// Calcul synchrone de canReactivateProject
+// Utiliser isAdmin du contexte (déjà chargé) et le calcul synchrone du chef de projet
+const syncCanReactivateProject = syncIsProjectClosed && 
+  (projectPermissions.isAdmin || isCurrentUserProjectManager);
+
+const syncCanCompleteEvaluation = syncHasPendingEvaluation && 
+  (projectPermissions.isAdmin || isCurrentUserProjectManager);
 ```
 
-#### b) Utiliser cette prop pour calculer les permissions effectives
+#### b) Utiliser ces valeurs synchrones dans les permissions
 
 ```typescript
-export const TaskTable = ({ tasks, onEdit, onDelete, isProjectClosed = false }: TaskTableProps) => {
-  // ...
-  const { canEditTask: hookCanEdit, canDeleteTask: hookCanDelete } = useTaskPermissions(tasks[0]?.project_id || "");
-
-  // Forcer lecture seule si projet clôturé
-  const canEditTask = (assignee?: string) => isProjectClosed ? false : hookCanEdit(assignee);
-  const canDeleteTask = isProjectClosed ? false : hookCanDelete;
-  
-  // Utiliser ces variables au lieu des valeurs du hook
+permissions={{
+  ...projectPermissions,
+  // Forcer les valeurs synchrones (pas de fallback avec ??)
+  isProjectManager: isCurrentUserProjectManager || projectPermissions.isProjectManager,
+  isProjectClosed: syncIsProjectClosed,
+  hasPendingEvaluation: syncHasPendingEvaluation,
+  canReactivateProject: syncCanReactivateProject,
+  canCompleteEvaluation: syncCanCompleteEvaluation,
+}}
 ```
 
 ---
 
-### 2. Modifier `TaskList.tsx`
+### 2. Améliorer `useProjectPermissions.tsx` (optionnel, pour robustesse)
 
-#### Transmettre `isProjectClosed` à `TaskTable`
+#### a) Retourner `undefined` au lieu de `false` pendant le chargement
 
-```tsx
-<TaskTable
-  tasks={filteredTasks || []}
-  onEdit={(task) => { ... }}
-  onDelete={task => { ... }}
-  isProjectClosed={isProjectClosed}  // NOUVEAU
-/>
-```
-
-Aussi pour les autres vues (KanbanBoard, TaskGantt) si elles utilisent des permissions.
-
----
-
-### 3. Modifier `RiskCard.tsx`
-
-#### a) Ajouter la prop `isProjectClosed` à l'interface
+Modifier le hook pour distinguer "pas autorisé" de "en cours de chargement" :
 
 ```typescript
-interface RiskCardProps {
-  risk: { ... };
-  onEdit: (risk: any) => void;
-  onDelete: (risk: any) => void;
-  isProjectClosed?: boolean;  // NOUVEAU
-}
+// Au lieu de :
+const isProjectClosed = projectAccess?.lifecycleStatus === 'completed';
+const canReactivateProject = isProjectClosed && (isAdmin || projectAccess?.isProjectManager);
+
+// Utiliser :
+const isProjectClosed = projectAccess ? projectAccess.lifecycleStatus === 'completed' : undefined;
+const canReactivateProject = isProjectClosed === undefined ? undefined : 
+  (isProjectClosed && (isAdmin || projectAccess?.isProjectManager));
 ```
 
-#### b) Utiliser cette prop pour calculer les permissions
-
-```typescript
-export const RiskCard = ({ risk, onEdit, onDelete, isProjectClosed = false }: RiskCardProps) => {
-  const { canEditRisk: hookCanEdit, canDeleteRisk: hookCanDelete } = useRiskAccess(risk.project_id);
-
-  // Forcer lecture seule si projet clôturé
-  const canEditRisk = isProjectClosed ? false : hookCanEdit;
-  const canDeleteRisk = isProjectClosed ? false : hookCanDelete;
-  
-  // ...
-```
-
----
-
-### 4. Modifier `RiskList.tsx`
-
-#### Transmettre `isProjectClosed` à `RiskCard`
-
-```tsx
-{risks.map((risk) => (
-  <RiskCard
-    key={risk.id}
-    risk={risk}
-    onEdit={handleEdit}
-    onDelete={handleDelete}
-    isProjectClosed={isProjectClosed}  // NOUVEAU
-  />
-))}
-```
-
----
-
-### 5. Modifier `RiskTable.tsx` (si utilisé)
-
-#### a) Ajouter la prop `isProjectClosed`
-
-```typescript
-interface RiskTableProps {
-  risks: Risk[];
-  projectId: string;
-  onEdit?: (risk: Risk) => void;
-  onDelete?: (risk: Risk) => void;
-  isProjectClosed?: boolean;  // NOUVEAU
-}
-```
-
-#### b) Utiliser cette prop
-
-```typescript
-export const RiskTable = ({ risks, projectId, onEdit, onDelete, isProjectClosed = false }: RiskTableProps) => {
-  const { canEditRisk: hookCanEdit, canDeleteRisk: hookCanDelete } = useRiskAccess(projectId);
-
-  // Forcer lecture seule si projet clôturé
-  const canEditRisk = isProjectClosed ? false : hookCanEdit;
-  const canDeleteRisk = isProjectClosed ? false : hookCanDelete;
-```
-
----
-
-### 6. Modifier `KanbanBoard.tsx` (si nécessaire)
-
-Vérifier si le composant utilise des permissions pour les boutons d'édition et ajouter la prop `isProjectClosed` le cas échéant.
+Cela permettra au `??` de fonctionner correctement dans les composants parents.
 
 ---
 
@@ -173,101 +90,121 @@ Vérifier si le composant utilise des permissions pour les boutons d'édition et
 
 | Fichier | Modification |
 |---------|--------------|
-| `src/components/task/TaskTable.tsx` | Ajouter prop `isProjectClosed` et l'utiliser pour forcer lecture seule |
-| `src/components/TaskList.tsx` | Transmettre `isProjectClosed` à `TaskTable`, `KanbanBoard`, `TaskGantt` |
-| `src/components/risk/RiskCard.tsx` | Ajouter prop `isProjectClosed` et l'utiliser pour forcer lecture seule |
-| `src/components/RiskList.tsx` | Transmettre `isProjectClosed` à `RiskCard` |
-| `src/components/risk/RiskTable.tsx` | Ajouter prop `isProjectClosed` et l'utiliser pour forcer lecture seule |
-| `src/components/KanbanBoard.tsx` | (Optionnel) Ajouter prop `isProjectClosed` si boutons d'édition présents |
+| `src/pages/ProjectSummary.tsx` | Calculer `canReactivateProject` et `canCompleteEvaluation` de manière 100% synchrone |
+| `src/hooks/useProjectPermissions.tsx` | (Optionnel) Retourner `undefined` pendant le chargement pour permettre le fallback |
 
 ---
 
 ## Flux après correction
 
 ```text
-ProjectSummaryContent
-    │
-    ├── isProjectClosed = true (synchrone depuis project.lifecycle_status)
-    │
-    ├── TaskList (reçoit isProjectClosed = true) ✓
-    │       │
-    │       └── TaskTable (reçoit isProjectClosed = true) ✓
-    │               │
-    │               ├── useTaskPermissions() → hookCanEdit = true (async)
-    │               │
-    │               └── canEditTask = isProjectClosed ? false : hookCanEdit
-    │                                = true ? false : true
-    │                                = FALSE ✓
-    │
-    └── RiskList (reçoit isProjectClosed = true) ✓
-            │
-            └── RiskCard (reçoit isProjectClosed = true) ✓
-                    │
-                    ├── useRiskAccess() → hookCanEdit = true (async)
-                    │
-                    └── canEditRisk = isProjectClosed ? false : hookCanEdit
-                                    = true ? false : true
-                                    = FALSE ✓
+┌─────────────────────────────────────────────────────────────────┐
+│                    Premier rendu                                │
+└─────────────────────────────────────────────────────────────────┘
+                              │
+     project chargé : lifecycle_status = 'completed'
+     userProfile chargé : email = 'user@example.com'
+                              │
+                              ▼
+     ┌────────────────────────────────────────────────────────┐
+     │  ProjectSummary.tsx - Calcul SYNCHRONE                 │
+     │                                                         │
+     │  syncIsProjectClosed = project.lifecycle_status === 'completed'    │
+     │                      = true ✓                          │
+     │                                                         │
+     │  isCurrentUserProjectManager = project.project_manager === userProfile.email │
+     │                              = true (si CDP) ✓         │
+     │                                                         │
+     │  syncCanReactivateProject = syncIsProjectClosed &&     │
+     │                            (isAdmin || isCurrentUserProjectManager) │
+     │                          = true ✓                      │
+     └────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+     ┌────────────────────────────────────────────────────────┐
+     │  ProjectSummaryContent reçoit :                        │
+     │  - permissions.canReactivateProject = true ✓           │
+     │                                                         │
+     │  Le bouton "Réactiver le projet" s'affiche             │
+     │  IMMÉDIATEMENT au premier rendu ✓                      │
+     └────────────────────────────────────────────────────────┘
 ```
 
 ---
 
 ## Détails techniques
 
-### Pattern de "permission override"
+### Pourquoi cette approche fonctionne
 
-Le pattern utilisé consiste à :
+1. **`project`** est chargé via `useQuery` avec la clé `["project", projectId]` - c'est la même requête utilisée partout, donc les données sont souvent déjà en cache
 
-1. **Récupérer les permissions depuis le hook** (qui peut être asynchrone)
-2. **Appliquer un override synchrone** basé sur la prop `isProjectClosed`
+2. **`userProfile`** vient du `PermissionsContext` qui est chargé au niveau racine de l'application - il est donc toujours disponible
+
+3. **`isAdmin`** vient aussi du contexte (`effectiveAdminStatus`) - toujours disponible
+
+4. En combinant ces trois sources synchrones, on peut calculer `canReactivateProject` sans attendre `projectAccess`
+
+### Code final dans ProjectSummary.tsx
 
 ```typescript
-// Exemple dans TaskTable.tsx
-const { canEditTask: hookCanEdit, canDeleteTask: hookCanDelete } = useTaskPermissions(projectId);
+// Récupérer le profil utilisateur depuis le contexte (synchrone)
+const { userProfile } = usePermissionsContext();
 
-// Override synchrone
-const canEditTask = (assignee?: string) => isProjectClosed ? false : hookCanEdit(assignee);
-const canDeleteTask = isProjectClosed ? false : hookCanDelete;
+// ... après le chargement du project ...
 
-// Puis dans le JSX
-{canEditTask(task.assignee) && (
-  <Button onClick={() => onEdit?.(task)}>
-    <Pencil className="h-4 w-4" />
-  </Button>
-)}
+// Calculs 100% synchrones
+const syncIsProjectClosed = project?.lifecycle_status === 'completed';
+const syncHasPendingEvaluation = syncIsProjectClosed && project?.closure_status === 'pending_evaluation';
+const isCurrentUserProjectManager = project?.project_manager === userProfile?.email;
+
+// Ces permissions sont calculées de manière synchrone et ne dépendent pas de projectAccess
+const syncCanReactivateProject = syncIsProjectClosed && 
+  (projectPermissions.isAdmin || isCurrentUserProjectManager);
+
+const syncCanCompleteEvaluation = syncHasPendingEvaluation && 
+  (projectPermissions.isAdmin || isCurrentUserProjectManager);
+
+return (
+  <ProjectSummaryContent
+    permissions={{
+      ...projectPermissions,
+      isProjectClosed: syncIsProjectClosed,
+      hasPendingEvaluation: syncHasPendingEvaluation,
+      isProjectManager: isCurrentUserProjectManager || projectPermissions.isProjectManager,
+      canReactivateProject: syncCanReactivateProject,
+      canCompleteEvaluation: syncCanCompleteEvaluation,
+    }}
+  />
+);
 ```
-
-Ce pattern garantit que :
-- **Au premier rendu** : `isProjectClosed = true` → boutons masqués immédiatement ✓
-- **Après chargement du hook** : La logique reste correcte car le hook retournera aussi `canEdit = false`
 
 ---
 
 ## Avantages de cette solution
 
-1. **Synchrone** : Le statut clôturé est transmis immédiatement depuis le parent
-2. **Cohérent** : Tous les niveaux de composants reçoivent la même information
-3. **Robuste** : Double source de vérité (prop + hook) avec priorité à la prop
-4. **Non-cassant** : Les hooks restent fonctionnels pour les cas où la prop n'est pas fournie
+1. **100% synchrone** : Aucune attente de requête asynchrone
+2. **Sources fiables** : Utilise `project` (déjà chargé) et `userProfile` (toujours disponible)
+3. **Simple** : Pas de modification complexe des hooks
+4. **Cohérent** : Le même pattern utilisé pour `isProjectClosed` et les autres badges
 
 ---
 
 ## Tests recommandés
 
-1. **Accès direct à un projet clôturé**
-   - Naviguer vers `/projects/{id}` d'un projet clôturé
-   - Vérifier que les boutons modifier/supprimer sont masqués dans TaskTable
-   - Vérifier que les boutons sont masqués dans RiskCard
+1. **Navigation depuis la liste des projets**
+   - Charger la liste des projets
+   - Cliquer sur un projet clôturé
+   - Vérifier que le bouton "Réactiver" apparaît IMMÉDIATEMENT
 
-2. **Changement d'onglet**
-   - Cliquer sur l'onglet "Tâches" puis "Risques"
-   - Vérifier que les boutons restent masqués
+2. **Accès direct via URL**
+   - Naviguer directement vers `/projects/{id}` d'un projet clôturé
+   - Vérifier que le bouton "Réactiver" apparaît dès le premier rendu
 
-3. **Vue Kanban des tâches**
-   - Basculer en vue Kanban
-   - Vérifier que les actions d'édition sont désactivées
+3. **Évaluation en attente**
+   - Naviguer vers un projet avec `closure_status = 'pending_evaluation'`
+   - Vérifier que le bouton "Compléter l'évaluation" apparaît immédiatement
 
-4. **Réactivation du projet**
-   - Cliquer sur "Réactiver le projet"
-   - Vérifier que les boutons réapparaissent
-
+4. **Utilisateur non autorisé**
+   - Se connecter avec un utilisateur non admin et non chef de projet
+   - Naviguer vers un projet clôturé
+   - Vérifier que le bouton "Réactiver" n'apparaît PAS
