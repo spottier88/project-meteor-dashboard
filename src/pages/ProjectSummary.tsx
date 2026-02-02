@@ -282,15 +282,20 @@ export const ProjectSummary = () => {
         />
       )}
 
-      {/* Enrichir les permissions avec les données du projet comme fallback
-          pour garantir que le badge "clôturé" s'affiche dès le premier rendu */}
+      {/* Calcul 100% synchrone des permissions de réactivation/évaluation
+          pour garantir que les boutons s'affichent dès le premier rendu */}
       {(() => {
-        // Calcul synchrone du statut chef de projet à partir des données du projet
+        // Calcul synchrone depuis les données du projet (sans dépendre de projectAccess async)
         const isCurrentUserProjectManager = project?.project_manager === userProfile?.email;
-        const syncIsProjectManager = projectPermissions.isProjectManager || isCurrentUserProjectManager;
-        const syncIsProjectClosed = projectPermissions.isProjectClosed || (project?.lifecycle_status === 'completed');
-        const syncHasPendingEvaluation = projectPermissions.hasPendingEvaluation || 
-          (project?.lifecycle_status === 'completed' && project?.closure_status === 'pending_evaluation');
+        const syncIsProjectClosed = project?.lifecycle_status === 'completed';
+        const syncHasPendingEvaluation = syncIsProjectClosed && project?.closure_status === 'pending_evaluation';
+        
+        // Permissions de réactivation/évaluation 100% synchrones
+        // On force ces valeurs sans fallback ?? car projectPermissions retourne false au lieu de undefined
+        const syncCanReactivateProject = syncIsProjectClosed && 
+          (projectPermissions.isAdmin || isCurrentUserProjectManager);
+        const syncCanCompleteEvaluation = syncHasPendingEvaluation && 
+          (projectPermissions.isAdmin || isCurrentUserProjectManager);
         
         return (
           <ProjectSummaryContent
@@ -305,14 +310,12 @@ export const ProjectSummary = () => {
             onClosureComplete={handleClosureComplete}
             permissions={{
               ...projectPermissions,
-              // Utiliser les données du projet comme fallback synchrone
-              isProjectManager: syncIsProjectManager,
+              // Forcer les valeurs synchrones (pas de fallback avec ?? car false ?? x = false)
+              isProjectManager: isCurrentUserProjectManager || projectPermissions.isProjectManager,
               isProjectClosed: syncIsProjectClosed,
               hasPendingEvaluation: syncHasPendingEvaluation,
-              canReactivateProject: projectPermissions.canReactivateProject ?? 
-                (syncIsProjectClosed && (projectPermissions.isAdmin || syncIsProjectManager)),
-              canCompleteEvaluation: projectPermissions.canCompleteEvaluation ?? 
-                (syncHasPendingEvaluation && (projectPermissions.isAdmin || syncIsProjectManager))
+              canReactivateProject: syncCanReactivateProject,
+              canCompleteEvaluation: syncCanCompleteEvaluation
             }}
             teamManagement={teamManagement}
           />
