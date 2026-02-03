@@ -1,210 +1,409 @@
 
-# Plan de correction : Affichage immédiat du bouton "Réactiver le projet"
+# Plan d'implémentation : Scénario 5 Hybride avec nouveau rôle "Responsable Qualité"
 
-## Problème identifié
+## Résumé de la modification demandée
 
-Le bouton "Réactiver le projet" n'apparaît pas immédiatement lorsqu'on accède à un projet clôturé depuis la liste, car :
+Remplacer l'accès administrateur pour la consultation des évaluations de tous les projets par un **nouveau rôle utilisateur dédié**, permettant à des utilisateurs non-admin d'accéder à l'analyse transversale des évaluations.
 
-1. **`canReactivateProject` retourne `false` au lieu de `undefined`** : Dans `useProjectPermissions`, le calcul retourne `false` pendant le chargement car `isProjectClosed` est `false` (données non encore chargées)
+---
 
-2. **L'opérateur `??` ne fonctionne pas** : Dans `ProjectSummary.tsx`, le code utilise :
-   ```typescript
-   canReactivateProject: projectPermissions.canReactivateProject ?? fallback
-   ```
-   Or, `false ?? fallback` retourne `false`, pas le fallback
+## Proposition de nom pour le nouveau rôle
 
-3. **Chaîne de dépendances asynchrones** :
-   - `projectAccess` → requête async → `undefined` au 1er rendu
-   - `isProjectClosed` = `projectAccess?.lifecycleStatus === 'completed'` → `false`
-   - `canReactivateProject` = `isProjectClosed && ...` → `false`
+| Option | Nom technique | Libellé français | Description |
+|--------|---------------|------------------|-------------|
+| A | `quality_manager` | Responsable Qualité | Focus sur l'amélioration continue |
+| B | `evaluation_viewer` | Lecteur Évaluations | Descriptif mais limité |
+| C | `rex_manager` | Responsable REX | Retour d'Expérience (terme PMO) |
 
-## Solution proposée
+**Recommandation** : `quality_manager` (Responsable Qualité) - plus générique et potentiellement extensible à d'autres fonctionnalités qualité.
 
-### Approche : Forcer le calcul synchrone à partir des données du projet
+---
 
-Utiliser exclusivement les données du projet (`project.lifecycle_status`) et du profil utilisateur (`userProfile.email`) déjà disponibles pour calculer les permissions de réactivation, sans dépendre du hook asynchrone.
+## Architecture de la solution
+
+```text
+┌─────────────────────────────────────────────────────────────────┐
+│                     Nouveau rôle : quality_manager               │
+└─────────────────────────────────────────────────────────────────┘
+                              │
+        ┌─────────────────────┴─────────────────────┐
+        │                                           │
+        ▼                                           ▼
+┌───────────────────────┐                 ┌───────────────────────┐
+│ Accès page dédiée     │                 │ Accès onglet "Bilan"  │
+│ /evaluations          │                 │ dans ProjectSummary   │
+│ (vue transversale)    │                 │ (projets clôturés)    │
+└───────────────────────┘                 └───────────────────────┘
+        │                                           │
+        ▼                                           ▼
+┌───────────────────────┐                 ┌───────────────────────┐
+│ - Liste toutes les    │                 │ - Visible par CDP,    │
+│   évaluations         │                 │   admin, manager org  │
+│ - Filtres par pôle,   │                 │   ET quality_manager  │
+│   direction, période  │                 │ - Lecture seule       │
+│ - Export Excel        │                 └───────────────────────┘
+│ - Statistiques        │
+└───────────────────────┘
+```
 
 ---
 
 ## Modifications à effectuer
 
-### 1. Modifier `ProjectSummary.tsx`
+### Phase 1 : Création du nouveau rôle
 
-#### a) Calculer `canReactivateProject` de manière synchrone
+#### 1.1 Mise à jour du type `UserRole`
 
-Au lieu d'utiliser `projectPermissions.canReactivateProject` avec un fallback `??`, calculer directement depuis les données du projet :
-
-```typescript
-// Calcul 100% synchrone - ne dépend pas de projectPermissions
-const syncIsProjectClosed = project?.lifecycle_status === 'completed';
-const syncHasPendingEvaluation = syncIsProjectClosed && project?.closure_status === 'pending_evaluation';
-const isCurrentUserProjectManager = project?.project_manager === userProfile?.email;
-
-// Calcul synchrone de canReactivateProject
-// Utiliser isAdmin du contexte (déjà chargé) et le calcul synchrone du chef de projet
-const syncCanReactivateProject = syncIsProjectClosed && 
-  (projectPermissions.isAdmin || isCurrentUserProjectManager);
-
-const syncCanCompleteEvaluation = syncHasPendingEvaluation && 
-  (projectPermissions.isAdmin || isCurrentUserProjectManager);
-```
-
-#### b) Utiliser ces valeurs synchrones dans les permissions
+**Fichier** : `src/types/user.ts`
 
 ```typescript
-permissions={{
-  ...projectPermissions,
-  // Forcer les valeurs synchrones (pas de fallback avec ??)
-  isProjectManager: isCurrentUserProjectManager || projectPermissions.isProjectManager,
-  isProjectClosed: syncIsProjectClosed,
-  hasPendingEvaluation: syncHasPendingEvaluation,
-  canReactivateProject: syncCanReactivateProject,
-  canCompleteEvaluation: syncCanCompleteEvaluation,
-}}
+// Avant
+export type UserRole = "admin" | "chef_projet" | "manager" | "membre" | "time_tracker" | "portfolio_manager";
+
+// Après
+export type UserRole = "admin" | "chef_projet" | "manager" | "membre" | "time_tracker" | "portfolio_manager" | "quality_manager";
 ```
 
----
+#### 1.2 Mise à jour de l'enum côté base de données
 
-### 2. Améliorer `useProjectPermissions.tsx` (optionnel, pour robustesse)
+**Migration SQL à exécuter** :
 
-#### a) Retourner `undefined` au lieu de `false` pendant le chargement
+```sql
+-- Ajouter la nouvelle valeur à l'enum app_role
+ALTER TYPE public.app_role ADD VALUE IF NOT EXISTS 'quality_manager';
+```
 
-Modifier le hook pour distinguer "pas autorisé" de "en cours de chargement" :
+#### 1.3 Mise à jour du contexte de permissions
 
+**Fichier** : `src/contexts/PermissionsContext.tsx`
+
+Ajouter dans l'interface `PermissionsState` :
 ```typescript
-// Au lieu de :
-const isProjectClosed = projectAccess?.lifecycleStatus === 'completed';
-const canReactivateProject = isProjectClosed && (isAdmin || projectAccess?.isProjectManager);
-
-// Utiliser :
-const isProjectClosed = projectAccess ? projectAccess.lifecycleStatus === 'completed' : undefined;
-const canReactivateProject = isProjectClosed === undefined ? undefined : 
-  (isProjectClosed && (isAdmin || projectAccess?.isProjectManager));
+isQualityManager: boolean;
 ```
 
-Cela permettra au `??` de fonctionner correctement dans les composants parents.
+Ajouter le calcul :
+```typescript
+const isQualityManager = hasRole('quality_manager');
+```
 
----
+Et l'exposer dans le provider.
 
-## Résumé des fichiers à modifier
+#### 1.4 Mise à jour des formulaires utilisateur
 
-| Fichier | Modification |
-|---------|--------------|
-| `src/pages/ProjectSummary.tsx` | Calculer `canReactivateProject` et `canCompleteEvaluation` de manière 100% synchrone |
-| `src/hooks/useProjectPermissions.tsx` | (Optionnel) Retourner `undefined` pendant le chargement pour permettre le fallback |
+**Fichier** : `src/components/form/UserFormFields.tsx`
 
----
+Ajouter une checkbox pour le rôle `quality_manager` :
+```tsx
+<Checkbox
+  id="quality_manager"
+  checked={roles.includes("quality_manager")}
+  onCheckedChange={() => handleRoleToggle("quality_manager")}
+/>
+<Label htmlFor="quality_manager">Responsable Qualité</Label>
+```
 
-## Flux après correction
+**Fichier** : `src/components/admin/InviteUserForm.tsx`
 
-```text
-┌─────────────────────────────────────────────────────────────────┐
-│                    Premier rendu                                │
-└─────────────────────────────────────────────────────────────────┘
-                              │
-     project chargé : lifecycle_status = 'completed'
-     userProfile chargé : email = 'user@example.com'
-                              │
-                              ▼
-     ┌────────────────────────────────────────────────────────┐
-     │  ProjectSummary.tsx - Calcul SYNCHRONE                 │
-     │                                                         │
-     │  syncIsProjectClosed = project.lifecycle_status === 'completed'    │
-     │                      = true ✓                          │
-     │                                                         │
-     │  isCurrentUserProjectManager = project.project_manager === userProfile.email │
-     │                              = true (si CDP) ✓         │
-     │                                                         │
-     │  syncCanReactivateProject = syncIsProjectClosed &&     │
-     │                            (isAdmin || isCurrentUserProjectManager) │
-     │                          = true ✓                      │
-     └────────────────────────────────────────────────────────┘
-                              │
-                              ▼
-     ┌────────────────────────────────────────────────────────┐
-     │  ProjectSummaryContent reçoit :                        │
-     │  - permissions.canReactivateProject = true ✓           │
-     │                                                         │
-     │  Le bouton "Réactiver le projet" s'affiche             │
-     │  IMMÉDIATEMENT au premier rendu ✓                      │
-     └────────────────────────────────────────────────────────┘
+Ajouter dans le Select :
+```tsx
+<SelectItem value="quality_manager">Responsable Qualité</SelectItem>
+```
+
+**Fichiers** : `src/pages/UserManagement.tsx`, `src/components/profile/ProfileForm.tsx`, `src/components/feedback/FeedbackForm.tsx`
+
+Ajouter le libellé dans les fonctions de mapping :
+```typescript
+case "quality_manager":
+  return "Responsable Qualité";
 ```
 
 ---
 
-## Détails techniques
+### Phase 2 : Onglet "Bilan" dans ProjectSummary
 
-### Pourquoi cette approche fonctionne
+#### 2.1 Créer le composant d'affichage de l'évaluation
 
-1. **`project`** est chargé via `useQuery` avec la clé `["project", projectId]` - c'est la même requête utilisée partout, donc les données sont souvent déjà en cache
-
-2. **`userProfile`** vient du `PermissionsContext` qui est chargé au niveau racine de l'application - il est donc toujours disponible
-
-3. **`isAdmin`** vient aussi du contexte (`effectiveAdminStatus`) - toujours disponible
-
-4. En combinant ces trois sources synchrones, on peut calculer `canReactivateProject` sans attendre `projectAccess`
-
-### Code final dans ProjectSummary.tsx
+**Nouveau fichier** : `src/components/project/ProjectEvaluationTab.tsx`
 
 ```typescript
-// Récupérer le profil utilisateur depuis le contexte (synchrone)
-const { userProfile } = usePermissionsContext();
+interface ProjectEvaluationTabProps {
+  projectId: string;
+}
 
-// ... après le chargement du project ...
+// Affiche les 4 sections de l'évaluation en lecture seule :
+// - Ce qui a fonctionné
+// - Ce qui a manqué
+// - Améliorations proposées
+// - Leçons apprises
+```
 
-// Calculs 100% synchrones
-const syncIsProjectClosed = project?.lifecycle_status === 'completed';
-const syncHasPendingEvaluation = syncIsProjectClosed && project?.closure_status === 'pending_evaluation';
-const isCurrentUserProjectManager = project?.project_manager === userProfile?.email;
+#### 2.2 Créer le hook de récupération des évaluations
 
-// Ces permissions sont calculées de manière synchrone et ne dépendent pas de projectAccess
-const syncCanReactivateProject = syncIsProjectClosed && 
-  (projectPermissions.isAdmin || isCurrentUserProjectManager);
+**Nouveau fichier** : `src/hooks/useProjectEvaluation.ts`
 
-const syncCanCompleteEvaluation = syncHasPendingEvaluation && 
-  (projectPermissions.isAdmin || isCurrentUserProjectManager);
+```typescript
+export const useProjectEvaluation = (projectId: string) => {
+  return useQuery({
+    queryKey: ["project-evaluation", projectId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("project_evaluations")
+        .select("*")
+        .eq("project_id", projectId)
+        .single();
+      
+      if (error && error.code !== "PGRST116") throw error;
+      return data;
+    },
+    enabled: !!projectId,
+  });
+};
+```
 
-return (
-  <ProjectSummaryContent
-    permissions={{
-      ...projectPermissions,
-      isProjectClosed: syncIsProjectClosed,
-      hasPendingEvaluation: syncHasPendingEvaluation,
-      isProjectManager: isCurrentUserProjectManager || projectPermissions.isProjectManager,
-      canReactivateProject: syncCanReactivateProject,
-      canCompleteEvaluation: syncCanCompleteEvaluation,
-    }}
-  />
+#### 2.3 Intégrer l'onglet dans ProjectSummaryContent
+
+**Fichier** : `src/components/project/ProjectSummaryContent.tsx`
+
+Ajouter l'onglet "Bilan" visible uniquement pour les projets clôturés :
+```tsx
+{isProjectClosed && (
+  <TabsTrigger value="evaluation">
+    <ClipboardCheck className="h-4 w-4 mr-2" />
+    Bilan
+  </TabsTrigger>
+)}
+
+<TabsContent value="evaluation">
+  <ProjectEvaluationTab projectId={projectId} />
+</TabsContent>
+```
+
+---
+
+### Phase 3 : Page dédiée aux évaluations
+
+#### 3.1 Créer la page principale
+
+**Nouveau fichier** : `src/pages/EvaluationsManagement.tsx`
+
+Structure :
+- En-tête avec titre "Retours d'Expérience"
+- Filtres : Pôle, Direction, Service, Période, Recherche
+- Tableau des évaluations avec colonnes :
+  - Projet (lien)
+  - Chef de projet
+  - Date de clôture
+  - Organisation (Pôle/Direction/Service)
+  - Actions (Voir détails)
+- Bouton d'export Excel
+- Statistiques globales (optionnel)
+
+#### 3.2 Créer le hook de récupération des évaluations
+
+**Nouveau fichier** : `src/hooks/useAllEvaluations.ts`
+
+```typescript
+interface EvaluationFilters {
+  poleId?: string;
+  directionId?: string;
+  serviceId?: string;
+  startDate?: Date;
+  endDate?: Date;
+  search?: string;
+}
+
+export const useAllEvaluations = (filters: EvaluationFilters) => {
+  return useQuery({
+    queryKey: ["all-evaluations", filters],
+    queryFn: async () => {
+      let query = supabase
+        .from("project_evaluations")
+        .select(`
+          *,
+          projects:project_id (
+            id,
+            title,
+            project_manager,
+            pole_id,
+            direction_id,
+            service_id,
+            end_date,
+            poles:pole_id (name),
+            directions:direction_id (name),
+            services:service_id (name)
+          )
+        `);
+      
+      // Appliquer les filtres...
+      
+      return data;
+    },
+  });
+};
+```
+
+#### 3.3 Créer le composant de dialogue de détails
+
+**Nouveau fichier** : `src/components/evaluations/EvaluationDetailsDialog.tsx`
+
+Affiche le détail complet d'une évaluation dans une modale :
+- Informations du projet
+- Les 4 sections de l'évaluation
+- Date de création
+
+#### 3.4 Créer l'utilitaire d'export Excel
+
+**Nouveau fichier** : `src/utils/evaluationsExport.ts`
+
+```typescript
+export const exportEvaluationsToExcel = async (evaluations: Evaluation[]) => {
+  // Utilise la bibliothèque xlsx déjà installée
+  // Format : 1 ligne par évaluation avec toutes les colonnes
+};
+```
+
+#### 3.5 Ajouter la route
+
+**Fichier** : `src/routes.tsx`
+
+```tsx
+<Route
+  path="/evaluations"
+  element={
+    <ProtectedRoute>
+      <EvaluationsManagement />
+    </ProtectedRoute>
+  }
+/>
+```
+
+#### 3.6 Ajouter le lien dans le Dashboard
+
+**Fichier** : `src/components/dashboard/QuickActions.tsx`
+
+Ajouter un bouton visible pour `admin` OU `quality_manager` :
+```tsx
+const canViewAllEvaluations = isAdmin || hasRole('quality_manager');
+
+{canViewAllEvaluations && (
+  <Button onClick={() => navigate("/evaluations")}>
+    <ClipboardCheck className="mr-2 h-4 w-4" />
+    Retours d'expérience
+  </Button>
+)}
+```
+
+---
+
+### Phase 4 : Politiques RLS
+
+#### 4.1 Créer une fonction SQL pour vérifier le rôle quality_manager
+
+```sql
+CREATE OR REPLACE FUNCTION public.is_quality_manager(p_user_id uuid)
+RETURNS boolean
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path = public
+AS $$
+  SELECT EXISTS (
+    SELECT 1
+    FROM public.user_roles
+    WHERE user_id = p_user_id
+      AND role = 'quality_manager'
+  )
+$$;
+```
+
+#### 4.2 Mettre à jour les politiques RLS sur `project_evaluations`
+
+```sql
+-- Politique de lecture étendue
+CREATE POLICY "quality_managers_can_read_all_evaluations"
+ON public.project_evaluations
+FOR SELECT
+TO authenticated
+USING (
+  public.has_role(auth.uid(), 'admin')
+  OR public.is_quality_manager(auth.uid())
+  OR EXISTS (
+    SELECT 1 FROM projects p
+    WHERE p.id = project_evaluations.project_id
+    AND (
+      p.owner_id = auth.uid()
+      OR p.project_manager = (SELECT email FROM profiles WHERE id = auth.uid())
+    )
+  )
 );
 ```
 
 ---
 
-## Avantages de cette solution
+## Résumé des fichiers à créer/modifier
 
-1. **100% synchrone** : Aucune attente de requête asynchrone
-2. **Sources fiables** : Utilise `project` (déjà chargé) et `userProfile` (toujours disponible)
-3. **Simple** : Pas de modification complexe des hooks
-4. **Cohérent** : Le même pattern utilisé pour `isProjectClosed` et les autres badges
+| Action | Fichier | Description |
+|--------|---------|-------------|
+| Modifier | `src/types/user.ts` | Ajouter `quality_manager` au type |
+| Modifier | `src/contexts/PermissionsContext.tsx` | Ajouter `isQualityManager` |
+| Modifier | `src/components/form/UserFormFields.tsx` | Ajouter checkbox rôle |
+| Modifier | `src/components/admin/InviteUserForm.tsx` | Ajouter option invitation |
+| Modifier | `src/pages/UserManagement.tsx` | Ajouter libellé rôle |
+| Modifier | `src/components/profile/ProfileForm.tsx` | Ajouter libellé rôle |
+| Modifier | `src/components/feedback/FeedbackForm.tsx` | Ajouter libellé rôle |
+| Créer | `src/hooks/useProjectEvaluation.ts` | Hook récupération évaluation |
+| Créer | `src/components/project/ProjectEvaluationTab.tsx` | Onglet Bilan |
+| Modifier | `src/components/project/ProjectSummaryContent.tsx` | Intégrer onglet |
+| Créer | `src/hooks/useAllEvaluations.ts` | Hook toutes évaluations |
+| Créer | `src/pages/EvaluationsManagement.tsx` | Page principale |
+| Créer | `src/components/evaluations/EvaluationDetailsDialog.tsx` | Dialogue détails |
+| Créer | `src/utils/evaluationsExport.ts` | Export Excel |
+| Modifier | `src/routes.tsx` | Ajouter route /evaluations |
+| Modifier | `src/components/dashboard/QuickActions.tsx` | Ajouter bouton accès |
+| Migration | SQL | Ajouter enum + politiques RLS |
+
+---
+
+## Matrice des accès
+
+| Fonctionnalité | Admin | Quality Manager | Chef de projet | Manager | Membre |
+|----------------|-------|-----------------|----------------|---------|--------|
+| Onglet "Bilan" (son projet) | Oui | Oui | Oui | Oui (si manager org) | Non |
+| Page /evaluations | Oui | Oui | Non | Non | Non |
+| Export Excel évaluations | Oui | Oui | Non | Non | Non |
+| Statistiques transversales | Oui | Oui | Non | Non | Non |
+
+---
+
+## Estimation
+
+| Phase | Durée estimée |
+|-------|---------------|
+| Phase 1 : Nouveau rôle | 1-2h |
+| Phase 2 : Onglet Bilan | 2-3h |
+| Phase 3 : Page dédiée | 4-5h |
+| Phase 4 : Politiques RLS | 1h |
+| **Total** | **8-11h** |
 
 ---
 
 ## Tests recommandés
 
-1. **Navigation depuis la liste des projets**
-   - Charger la liste des projets
-   - Cliquer sur un projet clôturé
-   - Vérifier que le bouton "Réactiver" apparaît IMMÉDIATEMENT
+1. **Création du rôle**
+   - Assigner le rôle `quality_manager` à un utilisateur non-admin
+   - Vérifier qu'il voit le bouton "Retours d'expérience" sur le dashboard
 
-2. **Accès direct via URL**
-   - Naviguer directement vers `/projects/{id}` d'un projet clôturé
-   - Vérifier que le bouton "Réactiver" apparaît dès le premier rendu
+2. **Page des évaluations**
+   - Accéder à `/evaluations` avec un `quality_manager`
+   - Vérifier que toutes les évaluations sont listées
+   - Tester les filtres et l'export Excel
 
-3. **Évaluation en attente**
-   - Naviguer vers un projet avec `closure_status = 'pending_evaluation'`
-   - Vérifier que le bouton "Compléter l'évaluation" apparaît immédiatement
-
-4. **Utilisateur non autorisé**
-   - Se connecter avec un utilisateur non admin et non chef de projet
+3. **Onglet Bilan**
    - Naviguer vers un projet clôturé
-   - Vérifier que le bouton "Réactiver" n'apparaît PAS
+   - Vérifier que l'onglet "Bilan" est visible
+   - Vérifier l'affichage des 4 sections de l'évaluation
+
+4. **Sécurité**
+   - Tenter d'accéder à `/evaluations` sans le rôle approprié
+   - Vérifier que l'accès est refusé
