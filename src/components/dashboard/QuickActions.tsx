@@ -19,7 +19,8 @@ import {
   Settings,
   Users,
   Briefcase,
-  List
+  List,
+  ClipboardCheck
 } from "lucide-react";
 
 interface QuickActionsProps {
@@ -28,7 +29,7 @@ interface QuickActionsProps {
 }
 
 export const QuickActions = ({ onNewProject, onNewReview }: QuickActionsProps) => {
-  const { isAdmin, isTimeTracker, isProjectManager, isManager, hasRole } = usePermissionsContext();
+  const { isAdmin, isTimeTracker, isProjectManager, isManager, isQualityManager, hasRole } = usePermissionsContext();
   const { data: overdueTasks, isLoading } = useMyTasks(true);
 
   // Permissions pour créer un projet
@@ -42,6 +43,9 @@ export const QuickActions = ({ onNewProject, onNewReview }: QuickActionsProps) =
 
   // Permissions pour gérer les portefeuilles
   const canManagePortfolios = isAdmin || hasRole('portfolio_manager');
+
+  // Permissions pour accéder aux évaluations transversales
+  const canViewAllEvaluations = isAdmin || isQualityManager;
 
   const overdueCount = overdueTasks?.length || 0;
 
@@ -141,6 +145,19 @@ export const QuickActions = ({ onNewProject, onNewReview }: QuickActionsProps) =
             >
               <Users className="h-4 w-4 mr-2" />
               Activités d'équipe
+            </Button>
+          </Link>
+        )}
+
+        {canViewAllEvaluations && (
+          <Link to="/evaluations" className="block">
+            <Button 
+              variant="outline" 
+              className="w-full justify-start hover:bg-emerald-50 hover:border-emerald-200" 
+              size="sm"
+            >
+              <ClipboardCheck className="h-4 w-4 mr-2" />
+              Retours d'expérience
             </Button>
           </Link>
         )}
