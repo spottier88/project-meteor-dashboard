@@ -54,11 +54,11 @@ export function FeedbackForm({ onSuccess, onCancel }: FeedbackFormProps) {
 
   const selectedType = form.watch("type");
 
-  // Récupérer les rôles disponibles - ajout du rôle portfolio_manager
+  // Récupérer les rôles disponibles - ajout des rôles portfolio_manager et quality_manager
   const { data: availableRoles } = useQuery({
     queryKey: ["availableRoles"],
     queryFn: async () => {
-      return ["chef_projet", "manager", "membre", "time_tracker", "portfolio_manager"] as UserRole[];
+      return ["chef_projet", "manager", "membre", "time_tracker", "portfolio_manager", "quality_manager"] as UserRole[];
     },
   });
 
@@ -325,7 +325,8 @@ export function FeedbackForm({ onSuccess, onCancel }: FeedbackFormProps) {
                           role === "manager" ? "Manager" :
                           role === "membre" ? "Membre" :
                           role === "time_tracker" ? "Suivi des activités" :
-                          role === "portfolio_manager" ? "Gestionnaire de portefeuille" : role}
+                          role === "portfolio_manager" ? "Gestionnaire de portefeuille" :
+                          role === "quality_manager" ? "Responsable Qualité" : role}
                       </SelectItem>
                     ))}
                   </SelectContent>

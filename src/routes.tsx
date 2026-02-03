@@ -42,6 +42,7 @@ import { ProjectPresentation } from "./pages/ProjectPresentation";
 import { PortfolioPresentation } from "./pages/PortfolioPresentation";
 import { EmailTemplateManagement } from "./pages/EmailTemplateManagement";
 import AppRatingsManagement from "./pages/AppRatingsManagement";
+import EvaluationsManagement from "./pages/EvaluationsManagement";
 
 export const AppRoutes = () => {
   const session = useSession();
@@ -309,6 +310,14 @@ export const AppRoutes = () => {
             element={
               <ProtectedRoute>
                 <ProjectPresentation />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/evaluations"
+            element={
+              <ProtectedRoute>
+                <EvaluationsManagement />
               </ProtectedRoute>
             }
           />

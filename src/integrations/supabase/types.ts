@@ -2200,11 +2200,19 @@ export type Database = {
           id: string
         }[]
       }
+      has_role: {
+        Args: {
+          p_role: Database["public"]["Enums"]["user_role"]
+          p_user_id: string
+        }
+        Returns: boolean
+      }
       is_portfolio_owner: {
         Args: { p_portfolio_id: string; p_user_id: string }
         Returns: boolean
       }
       is_project_linked: { Args: { p_project_id: string }; Returns: boolean }
+      is_quality_manager: { Args: { p_user_id: string }; Returns: boolean }
       update_portfolio_stats: {
         Args: { p_portfolio_id: string }
         Returns: undefined
@@ -2243,6 +2251,7 @@ export type Database = {
         | "membre"
         | "time_tracker"
         | "portfolio_manager"
+        | "quality_manager"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -2404,6 +2413,7 @@ export const Constants = {
         "membre",
         "time_tracker",
         "portfolio_manager",
+        "quality_manager",
       ],
     },
   },

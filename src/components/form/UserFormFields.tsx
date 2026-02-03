@@ -154,6 +154,16 @@ export const UserFormFields = ({
               Gestionnaire de portefeuille
             </Label>
           </div>
+          <div className="flex items-center space-x-2">
+            <Checkbox
+              id="quality_manager"
+              checked={roles.includes("quality_manager")}
+              onCheckedChange={() => handleRoleToggle("quality_manager")}
+            />
+            <Label htmlFor="quality_manager" className="font-normal">
+              Responsable Qualité
+            </Label>
+          </div>
         </div>
       </div>
     </div>

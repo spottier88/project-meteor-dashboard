@@ -16,9 +16,10 @@ import { ClosurePendingBadge } from "./ClosurePendingBadge";
 import { ReactivateProjectButton } from "./ReactivateProjectButton";
 import { CompleteEvaluationButton } from "./CompleteEvaluationButton";
 import { ProjectNotesList } from "@/components/notes/ProjectNotesList";
+import { ProjectEvaluationTab } from "./ProjectEvaluationTab";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Users, ExternalLink } from "lucide-react";
+import { Users, ExternalLink, ClipboardCheck } from "lucide-react";
 interface ProjectSummaryContentProps {
   project: any;
   lastReview: any;
@@ -267,11 +268,17 @@ export const ProjectSummaryContent = ({
         
         return (
           <Tabs defaultValue="tasks" className="w-full">
-            <TabsList className="grid grid-cols-4 w-full max-w-lg">
+            <TabsList className={`grid w-full max-w-lg ${permissions.isProjectClosed ? 'grid-cols-5' : 'grid-cols-4'}`}>
               <TabsTrigger value="tasks">Tâches</TabsTrigger>
               <TabsTrigger value="risks">Risques</TabsTrigger>
               <TabsTrigger value="notes">Notes</TabsTrigger>
               <TabsTrigger value="team">Équipe</TabsTrigger>
+              {permissions.isProjectClosed && (
+                <TabsTrigger value="evaluation" className="flex items-center gap-1">
+                  <ClipboardCheck className="h-3 w-3" />
+                  Bilan
+                </TabsTrigger>
+              )}
             </TabsList>
             <TabsContent value="tasks">
               <div className="bg-white rounded-lg shadow-sm overflow-hidden p-6">
@@ -342,6 +349,14 @@ export const ProjectSummaryContent = ({
                 )}
               </div>
             </TabsContent>
+            {/* Onglet Bilan - visible uniquement pour les projets clôturés */}
+            {permissions.isProjectClosed && (
+              <TabsContent value="evaluation">
+                <div className="bg-white rounded-lg shadow-sm overflow-hidden p-6">
+                  <ProjectEvaluationTab projectId={projectId} />
+                </div>
+              </TabsContent>
+            )}
           </Tabs>
         );
       })()}

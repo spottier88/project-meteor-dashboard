@@ -51,6 +51,8 @@ const getRoleLabel = (role: UserRole): string => {
       return "Suivi activités";
     case "portfolio_manager":
       return "Gestionnaire de portefeuille";
+    case "quality_manager":
+      return "Responsable Qualité";
     default:
       return role;
   }

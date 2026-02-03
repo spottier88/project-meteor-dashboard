@@ -14,6 +14,7 @@ interface PermissionsState {
   isProjectManager: boolean;
   isMember: boolean;
   isTimeTracker: boolean;
+  isQualityManager: boolean;
   highestRole: UserRole | null;
   hasRole: (role: UserRole) => boolean;
   isLoading: boolean;
@@ -105,6 +106,7 @@ export function PermissionsProvider({ children }: { children: React.ReactNode })
   const isProjectManager = hasRole('chef_projet');
   const isMember = hasRole('membre');
   const isTimeTracker = hasRole('time_tracker');
+  const isQualityManager = hasRole('quality_manager');
   const isLoading = isLoadingRoles || isLoadingProfile;
   const isError = isRolesError || isProfileError;
   const canAccessAllOrganizations = isAdmin;
@@ -176,6 +178,7 @@ export function PermissionsProvider({ children }: { children: React.ReactNode })
       isProjectManager,
       isMember,
       isTimeTracker,
+      isQualityManager,
       highestRole,
       hasRole,
       isLoading,
