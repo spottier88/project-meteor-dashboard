@@ -1,343 +1,211 @@
 
-# Plan d'implémentation : Scénario 5 Hybride avec nouveau rôle "Responsable Qualité"
 
-## Résumé de la modification demandée
+# Plan d'implémentation : Notifications de revue de portefeuille
 
-Remplacer l'accès administrateur pour la consultation des évaluations de tous les projets par un **nouveau rôle utilisateur dédié**, permettant à des utilisateurs non-admin d'accéder à l'analyse transversale des évaluations.
+## Besoin 1 : Inclure les chefs de projet secondaires comme destinataires
+
+### Problème actuel
+
+Le dialog `PortfolioReviewNotificationDialog.tsx` ne récupère que les chefs de projet principaux (`project_manager_id`) des projets du portefeuille. Les chefs de projet secondaires (rôle `secondary_manager` dans la table `project_members`) sont ignorés.
+
+### Modifications à effectuer
+
+#### 1.1 Modifier la requête de récupération des destinataires
+
+**Fichier** : `src/components/portfolio/PortfolioReviewNotificationDialog.tsx`
+
+Dans la query `portfolio-project-managers` (lignes 141-184), ajouter la récupération des chefs de projet secondaires :
+
+```typescript
+queryFn: async () => {
+  // 1. Récupérer les projets du portefeuille
+  const { data: projectsData } = await supabase
+    .from("projects")
+    .select("id, title, project_manager_id, project_manager")
+    .in("id", projects.map((p) => p.id));
+
+  // 2. Récupérer les CDP secondaires via project_members
+  const { data: secondaryManagers } = await supabase
+    .from("project_members")
+    .select("user_id, project_id")
+    .in("project_id", projects.map((p) => p.id))
+    .eq("role", "secondary_manager");
+
+  // 3. Collecter TOUS les IDs uniques (principaux + secondaires)
+  const allManagerIds = new Set<string>();
+  projectsData?.forEach(p => { if (p.project_manager_id) allManagerIds.add(p.project_manager_id); });
+  secondaryManagers?.forEach(sm => { if (sm.user_id) allManagerIds.add(sm.user_id); });
+
+  // 4. Récupérer les profils une seule fois (dédupliqué par Set)
+  const { data: profiles } = await supabase
+    .from("profiles")
+    .select("id, email, first_name, last_name")
+    .in("id", [...allManagerIds]);
+
+  // 5. Construire le mapping manager -> projets (principal + secondaire)
+  // Un manager voit les projets dont il est CDP principal OU secondaire
+  const managerProjectsMap = new Map<string, string[]>();
+  projectsData?.forEach(project => {
+    if (project.project_manager_id) {
+      const existing = managerProjectsMap.get(project.project_manager_id) || [];
+      existing.push(project.title);
+      managerProjectsMap.set(project.project_manager_id, existing);
+    }
+  });
+  secondaryManagers?.forEach(sm => {
+    if (sm.user_id) {
+      const projectTitle = projectsData?.find(p => p.id === sm.project_id)?.title;
+      if (projectTitle) {
+        const existing = managerProjectsMap.get(sm.user_id) || [];
+        if (!existing.includes(projectTitle)) existing.push(projectTitle);
+        managerProjectsMap.set(sm.user_id, existing);
+      }
+    }
+  });
+
+  // 6. Construire la liste finale (déjà dédupliquée via le Set)
+  return (profiles || []).map(profile => ({
+    id: profile.id,
+    email: profile.email || "",
+    first_name: profile.first_name,
+    last_name: profile.last_name,
+    projectTitles: managerProjectsMap.get(profile.id) || [],
+  }));
+}
+```
+
+**Resultat** : Le `Set` garantit qu'un utilisateur qui est CDP principal d'un projet ET secondaire d'un autre n'apparait qu'une seule fois dans la liste des destinataires.
+
+#### 1.2 Modifier le hook d'envoi des notifications
+
+**Fichier** : `src/hooks/usePortfolioReviews.ts`
+
+Dans `useSendReviewNotifications`, adapter la requête qui mappe les managers aux projets (lignes 248-265) pour aussi inclure les projets dont le manager est CDP secondaire :
+
+```typescript
+// Récupérer aussi les liens CDP secondaire
+const { data: secondaryLinks } = await supabase
+  .from("project_members")
+  .select("user_id, project_id")
+  .in("project_id", portfolioProjectIds)
+  .in("user_id", projectManagerIds)
+  .eq("role", "secondary_manager");
+
+// Enrichir le mapping avec les projets secondaires
+secondaryLinks?.forEach(link => {
+  if (link.user_id) {
+    const projectTitle = projects?.find(p => p.id === link.project_id)?.title;
+    if (projectTitle) {
+      const existing = managerProjectsMap.get(link.user_id) || [];
+      if (!existing.includes(projectTitle)) existing.push(projectTitle);
+      managerProjectsMap.set(link.user_id, existing);
+    }
+  }
+});
+```
+
+Ainsi, l'email envoyé au CDP secondaire listera bien les projets concernés.
+
+#### 1.3 Optionnel : indicateur visuel du rôle
+
+Dans la liste des destinataires du dialog, afficher une mention "(secondaire)" à côté des projets gérés en tant que CDP secondaire, pour que l'expéditeur sache qui est CDP principal et qui est secondaire.
 
 ---
 
-## Proposition de nom pour le nouveau rôle
+## Besoin 2 : Suivi des envois de notifications
 
-| Option | Nom technique | Libellé français | Description |
-|--------|---------------|------------------|-------------|
-| A | `quality_manager` | Responsable Qualité | Focus sur l'amélioration continue |
-| B | `evaluation_viewer` | Lecteur Évaluations | Descriptif mais limité |
-| C | `rex_manager` | Responsable REX | Retour d'Expérience (terme PMO) |
+### Situation actuelle
 
-**Recommandation** : `quality_manager` (Responsable Qualité) - plus générique et potentiellement extensible à d'autres fonctionnalités qualité.
+La table `portfolio_review_notifications` enregistre déjà chaque envoi avec :
+- `sent_at` (date d'envoi)
+- `sent_by` (expéditeur)
+- `recipient_count` (nombre de destinataires)
+- `message` (message personnalisé)
+- `email_template_id` (template utilisé)
 
----
+Mais ces données **ne sont pas affichées** dans l'interface.
 
-## Architecture de la solution
+### Modifications à effectuer
+
+#### 2.1 Créer un composant d'historique des notifications
+
+**Nouveau fichier** : `src/components/portfolio/PortfolioReviewNotificationHistory.tsx`
+
+Affiche l'historique des envois pour une revue donnée :
 
 ```text
-┌─────────────────────────────────────────────────────────────────┐
-│                     Nouveau rôle : quality_manager               │
-└─────────────────────────────────────────────────────────────────┘
-                              │
-        ┌─────────────────────┴─────────────────────┐
-        │                                           │
-        ▼                                           ▼
-┌───────────────────────┐                 ┌───────────────────────┐
-│ Accès page dédiée     │                 │ Accès onglet "Bilan"  │
-│ /evaluations          │                 │ dans ProjectSummary   │
-│ (vue transversale)    │                 │ (projets clôturés)    │
-└───────────────────────┘                 └───────────────────────┘
-        │                                           │
-        ▼                                           ▼
-┌───────────────────────┐                 ┌───────────────────────┐
-│ - Liste toutes les    │                 │ - Visible par CDP,    │
-│   évaluations         │                 │   admin, manager org  │
-│ - Filtres par pôle,   │                 │   ET quality_manager  │
-│   direction, période  │                 │ - Lecture seule       │
-│ - Export Excel        │                 └───────────────────────┘
-│ - Statistiques        │
-└───────────────────────┘
+┌──────────────────────────────────────────────────────────┐
+│  Historique des envois                                    │
+├──────────────────────────────────────────────────────────┤
+│  📧 12/02/2026 à 14:32 - par Jean Dupont                │
+│     3 destinataire(s) - Modèle: "Notification revue"    │
+│     Message: "Merci de mettre à jour vos projets..."    │
+├──────────────────────────────────────────────────────────┤
+│  📧 05/02/2026 à 09:15 - par Marie Martin               │
+│     3 destinataire(s) - Modèle: "Notification revue"    │
+└──────────────────────────────────────────────────────────┘
 ```
 
----
+#### 2.2 Ajouter un hook de récupération de l'historique
 
-## Modifications à effectuer
+**Fichier** : `src/hooks/usePortfolioReviews.ts`
 
-### Phase 1 : Création du nouveau rôle
-
-#### 1.1 Mise à jour du type `UserRole`
-
-**Fichier** : `src/types/user.ts`
+Ajouter un hook `useReviewNotificationHistory` :
 
 ```typescript
-// Avant
-export type UserRole = "admin" | "chef_projet" | "manager" | "membre" | "time_tracker" | "portfolio_manager";
-
-// Après
-export type UserRole = "admin" | "chef_projet" | "manager" | "membre" | "time_tracker" | "portfolio_manager" | "quality_manager";
-```
-
-#### 1.2 Mise à jour de l'enum côté base de données
-
-**Migration SQL à exécuter** :
-
-```sql
--- Ajouter la nouvelle valeur à l'enum app_role
-ALTER TYPE public.app_role ADD VALUE IF NOT EXISTS 'quality_manager';
-```
-
-#### 1.3 Mise à jour du contexte de permissions
-
-**Fichier** : `src/contexts/PermissionsContext.tsx`
-
-Ajouter dans l'interface `PermissionsState` :
-```typescript
-isQualityManager: boolean;
-```
-
-Ajouter le calcul :
-```typescript
-const isQualityManager = hasRole('quality_manager');
-```
-
-Et l'exposer dans le provider.
-
-#### 1.4 Mise à jour des formulaires utilisateur
-
-**Fichier** : `src/components/form/UserFormFields.tsx`
-
-Ajouter une checkbox pour le rôle `quality_manager` :
-```tsx
-<Checkbox
-  id="quality_manager"
-  checked={roles.includes("quality_manager")}
-  onCheckedChange={() => handleRoleToggle("quality_manager")}
-/>
-<Label htmlFor="quality_manager">Responsable Qualité</Label>
-```
-
-**Fichier** : `src/components/admin/InviteUserForm.tsx`
-
-Ajouter dans le Select :
-```tsx
-<SelectItem value="quality_manager">Responsable Qualité</SelectItem>
-```
-
-**Fichiers** : `src/pages/UserManagement.tsx`, `src/components/profile/ProfileForm.tsx`, `src/components/feedback/FeedbackForm.tsx`
-
-Ajouter le libellé dans les fonctions de mapping :
-```typescript
-case "quality_manager":
-  return "Responsable Qualité";
-```
-
----
-
-### Phase 2 : Onglet "Bilan" dans ProjectSummary
-
-#### 2.1 Créer le composant d'affichage de l'évaluation
-
-**Nouveau fichier** : `src/components/project/ProjectEvaluationTab.tsx`
-
-```typescript
-interface ProjectEvaluationTabProps {
-  projectId: string;
-}
-
-// Affiche les 4 sections de l'évaluation en lecture seule :
-// - Ce qui a fonctionné
-// - Ce qui a manqué
-// - Améliorations proposées
-// - Leçons apprises
-```
-
-#### 2.2 Créer le hook de récupération des évaluations
-
-**Nouveau fichier** : `src/hooks/useProjectEvaluation.ts`
-
-```typescript
-export const useProjectEvaluation = (projectId: string) => {
+export const useReviewNotificationHistory = (reviewId: string) => {
   return useQuery({
-    queryKey: ["project-evaluation", projectId],
+    queryKey: ["portfolio-review-notifications", reviewId],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("project_evaluations")
-        .select("*")
-        .eq("project_id", projectId)
-        .single();
-      
-      if (error && error.code !== "PGRST116") throw error;
-      return data;
-    },
-    enabled: !!projectId,
-  });
-};
-```
-
-#### 2.3 Intégrer l'onglet dans ProjectSummaryContent
-
-**Fichier** : `src/components/project/ProjectSummaryContent.tsx`
-
-Ajouter l'onglet "Bilan" visible uniquement pour les projets clôturés :
-```tsx
-{isProjectClosed && (
-  <TabsTrigger value="evaluation">
-    <ClipboardCheck className="h-4 w-4 mr-2" />
-    Bilan
-  </TabsTrigger>
-)}
-
-<TabsContent value="evaluation">
-  <ProjectEvaluationTab projectId={projectId} />
-</TabsContent>
-```
-
----
-
-### Phase 3 : Page dédiée aux évaluations
-
-#### 3.1 Créer la page principale
-
-**Nouveau fichier** : `src/pages/EvaluationsManagement.tsx`
-
-Structure :
-- En-tête avec titre "Retours d'Expérience"
-- Filtres : Pôle, Direction, Service, Période, Recherche
-- Tableau des évaluations avec colonnes :
-  - Projet (lien)
-  - Chef de projet
-  - Date de clôture
-  - Organisation (Pôle/Direction/Service)
-  - Actions (Voir détails)
-- Bouton d'export Excel
-- Statistiques globales (optionnel)
-
-#### 3.2 Créer le hook de récupération des évaluations
-
-**Nouveau fichier** : `src/hooks/useAllEvaluations.ts`
-
-```typescript
-interface EvaluationFilters {
-  poleId?: string;
-  directionId?: string;
-  serviceId?: string;
-  startDate?: Date;
-  endDate?: Date;
-  search?: string;
-}
-
-export const useAllEvaluations = (filters: EvaluationFilters) => {
-  return useQuery({
-    queryKey: ["all-evaluations", filters],
-    queryFn: async () => {
-      let query = supabase
-        .from("project_evaluations")
+        .from("portfolio_review_notifications")
         .select(`
           *,
-          projects:project_id (
-            id,
-            title,
-            project_manager,
-            pole_id,
-            direction_id,
-            service_id,
-            end_date,
-            poles:pole_id (name),
-            directions:direction_id (name),
-            services:service_id (name)
-          )
-        `);
-      
-      // Appliquer les filtres...
-      
+          profiles:sent_by (first_name, last_name, email),
+          email_templates:email_template_id (name)
+        `)
+        .eq("portfolio_review_id", reviewId)
+        .order("sent_at", { ascending: false });
+
+      if (error) throw error;
       return data;
     },
+    enabled: !!reviewId,
   });
 };
 ```
 
-#### 3.3 Créer le composant de dialogue de détails
+#### 2.3 Intégrer l'historique dans la liste des revues
 
-**Nouveau fichier** : `src/components/evaluations/EvaluationDetailsDialog.tsx`
+**Fichier** : `src/components/portfolio/PortfolioReviewList.tsx`
 
-Affiche le détail complet d'une évaluation dans une modale :
-- Informations du projet
-- Les 4 sections de l'évaluation
-- Date de création
+Ajouter un bouton ou une section dépliable sous chaque revue pour afficher l'historique :
 
-#### 3.4 Créer l'utilitaire d'export Excel
+- Ajouter une icône "Historique" (ex: `Clock` ou `History` de lucide-react)
+- Au clic, afficher/masquer le composant `PortfolioReviewNotificationHistory`
+- Ou bien : afficher un badge avec le nombre d'envois, et un Collapsible pour le détail
 
-**Nouveau fichier** : `src/utils/evaluationsExport.ts`
+#### 2.4 Enrichir les données de suivi (optionnel)
 
-```typescript
-export const exportEvaluationsToExcel = async (evaluations: Evaluation[]) => {
-  // Utilise la bibliothèque xlsx déjà installée
-  // Format : 1 ligne par évaluation avec toutes les colonnes
-};
-```
+Pour un suivi plus détaillé, on pourrait aussi stocker les **destinataires individuels** de chaque envoi. Cela nécessiterait :
 
-#### 3.5 Ajouter la route
-
-**Fichier** : `src/routes.tsx`
-
-```tsx
-<Route
-  path="/evaluations"
-  element={
-    <ProtectedRoute>
-      <EvaluationsManagement />
-    </ProtectedRoute>
-  }
-/>
-```
-
-#### 3.6 Ajouter le lien dans le Dashboard
-
-**Fichier** : `src/components/dashboard/QuickActions.tsx`
-
-Ajouter un bouton visible pour `admin` OU `quality_manager` :
-```tsx
-const canViewAllEvaluations = isAdmin || hasRole('quality_manager');
-
-{canViewAllEvaluations && (
-  <Button onClick={() => navigate("/evaluations")}>
-    <ClipboardCheck className="mr-2 h-4 w-4" />
-    Retours d'expérience
-  </Button>
-)}
-```
-
----
-
-### Phase 4 : Politiques RLS
-
-#### 4.1 Créer une fonction SQL pour vérifier le rôle quality_manager
+**Nouvelle table** : `portfolio_review_notification_recipients`
 
 ```sql
-CREATE OR REPLACE FUNCTION public.is_quality_manager(p_user_id uuid)
-RETURNS boolean
-LANGUAGE sql
-STABLE
-SECURITY DEFINER
-SET search_path = public
-AS $$
-  SELECT EXISTS (
-    SELECT 1
-    FROM public.user_roles
-    WHERE user_id = p_user_id
-      AND role = 'quality_manager'
-  )
-$$;
-```
-
-#### 4.2 Mettre à jour les politiques RLS sur `project_evaluations`
-
-```sql
--- Politique de lecture étendue
-CREATE POLICY "quality_managers_can_read_all_evaluations"
-ON public.project_evaluations
-FOR SELECT
-TO authenticated
-USING (
-  public.has_role(auth.uid(), 'admin')
-  OR public.is_quality_manager(auth.uid())
-  OR EXISTS (
-    SELECT 1 FROM projects p
-    WHERE p.id = project_evaluations.project_id
-    AND (
-      p.owner_id = auth.uid()
-      OR p.project_manager = (SELECT email FROM profiles WHERE id = auth.uid())
-    )
-  )
+CREATE TABLE portfolio_review_notification_recipients (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  notification_id uuid REFERENCES portfolio_review_notifications(id) ON DELETE CASCADE,
+  recipient_id uuid REFERENCES profiles(id),
+  recipient_email text NOT NULL,
+  recipient_name text,
+  project_titles text[],
+  created_at timestamptz DEFAULT now()
 );
 ```
+
+Et dans `usePortfolioReviews.ts`, lors de l'envoi, insérer une ligne par destinataire.
+
+Cela permettrait d'afficher : "Envoyé à Jean Dupont (Projet A, B), Marie Martin (Projet C)".
 
 ---
 
@@ -345,65 +213,24 @@ USING (
 
 | Action | Fichier | Description |
 |--------|---------|-------------|
-| Modifier | `src/types/user.ts` | Ajouter `quality_manager` au type |
-| Modifier | `src/contexts/PermissionsContext.tsx` | Ajouter `isQualityManager` |
-| Modifier | `src/components/form/UserFormFields.tsx` | Ajouter checkbox rôle |
-| Modifier | `src/components/admin/InviteUserForm.tsx` | Ajouter option invitation |
-| Modifier | `src/pages/UserManagement.tsx` | Ajouter libellé rôle |
-| Modifier | `src/components/profile/ProfileForm.tsx` | Ajouter libellé rôle |
-| Modifier | `src/components/feedback/FeedbackForm.tsx` | Ajouter libellé rôle |
-| Créer | `src/hooks/useProjectEvaluation.ts` | Hook récupération évaluation |
-| Créer | `src/components/project/ProjectEvaluationTab.tsx` | Onglet Bilan |
-| Modifier | `src/components/project/ProjectSummaryContent.tsx` | Intégrer onglet |
-| Créer | `src/hooks/useAllEvaluations.ts` | Hook toutes évaluations |
-| Créer | `src/pages/EvaluationsManagement.tsx` | Page principale |
-| Créer | `src/components/evaluations/EvaluationDetailsDialog.tsx` | Dialogue détails |
-| Créer | `src/utils/evaluationsExport.ts` | Export Excel |
-| Modifier | `src/routes.tsx` | Ajouter route /evaluations |
-| Modifier | `src/components/dashboard/QuickActions.tsx` | Ajouter bouton accès |
-| Migration | SQL | Ajouter enum + politiques RLS |
-
----
-
-## Matrice des accès
-
-| Fonctionnalité | Admin | Quality Manager | Chef de projet | Manager | Membre |
-|----------------|-------|-----------------|----------------|---------|--------|
-| Onglet "Bilan" (son projet) | Oui | Oui | Oui | Oui (si manager org) | Non |
-| Page /evaluations | Oui | Oui | Non | Non | Non |
-| Export Excel évaluations | Oui | Oui | Non | Non | Non |
-| Statistiques transversales | Oui | Oui | Non | Non | Non |
-
----
-
-## Estimation
-
-| Phase | Durée estimée |
-|-------|---------------|
-| Phase 1 : Nouveau rôle | 1-2h |
-| Phase 2 : Onglet Bilan | 2-3h |
-| Phase 3 : Page dédiée | 4-5h |
-| Phase 4 : Politiques RLS | 1h |
-| **Total** | **8-11h** |
+| Modifier | `src/components/portfolio/PortfolioReviewNotificationDialog.tsx` | Ajouter CDP secondaires dans la liste des destinataires |
+| Modifier | `src/hooks/usePortfolioReviews.ts` | Ajouter projets secondaires au mapping + hook historique |
+| Créer | `src/components/portfolio/PortfolioReviewNotificationHistory.tsx` | Composant d'affichage de l'historique des envois |
+| Modifier | `src/components/portfolio/PortfolioReviewList.tsx` | Intégrer l'historique dans la liste des revues |
+| Migration | SQL (optionnel) | Table `portfolio_review_notification_recipients` pour suivi détaillé |
 
 ---
 
 ## Tests recommandés
 
-1. **Création du rôle**
-   - Assigner le rôle `quality_manager` à un utilisateur non-admin
-   - Vérifier qu'il voit le bouton "Retours d'expérience" sur le dashboard
+1. **CDP secondaires comme destinataires**
+   - Ajouter un CDP secondaire à un projet du portefeuille
+   - Ouvrir le dialog de notification : vérifier qu'il apparait dans la liste
+   - Vérifier qu'un utilisateur CDP principal d'un projet ET secondaire d'un autre n'apparait qu'une seule fois
+   - Envoyer la notification et vérifier la réception
 
-2. **Page des évaluations**
-   - Accéder à `/evaluations` avec un `quality_manager`
-   - Vérifier que toutes les évaluations sont listées
-   - Tester les filtres et l'export Excel
+2. **Historique des envois**
+   - Envoyer plusieurs notifications pour une même revue
+   - Vérifier que chaque envoi est listé avec date, expéditeur et nombre de destinataires
+   - Vérifier l'affichage du nom du template utilisé
 
-3. **Onglet Bilan**
-   - Naviguer vers un projet clôturé
-   - Vérifier que l'onglet "Bilan" est visible
-   - Vérifier l'affichage des 4 sections de l'évaluation
-
-4. **Sécurité**
-   - Tenter d'accéder à `/evaluations` sans le rôle approprié
-   - Vérifier que l'accès est refusé
