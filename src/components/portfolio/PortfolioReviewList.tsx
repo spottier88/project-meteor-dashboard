@@ -15,6 +15,7 @@ import {
   Clock,
   XCircle,
   PlayCircle,
+  History,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -37,6 +38,8 @@ import {
 } from "@/components/ui/alert-dialog";
 import { PortfolioReview } from "@/hooks/usePortfolioReviews";
 import { PortfolioReviewNotificationDialog } from "./PortfolioReviewNotificationDialog";
+import { PortfolioReviewNotificationHistory } from "./PortfolioReviewNotificationHistory";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
 interface PortfolioReviewListProps {
   /** Liste des revues */
@@ -243,6 +246,19 @@ export const PortfolioReviewList = ({
                     </TooltipProvider>
                   )}
                 </div>
+
+                {/* Section dépliable : historique des notifications */}
+                <Collapsible>
+                  <CollapsibleTrigger asChild>
+                    <Button variant="ghost" size="sm" className="gap-1 mt-2 text-xs text-muted-foreground h-7 px-2">
+                      <History className="h-3 w-3" />
+                      Historique des envois
+                    </Button>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent>
+                    <PortfolioReviewNotificationHistory reviewId={review.id} />
+                  </CollapsibleContent>
+                </Collapsible>
               </CardContent>
             </Card>
           );
