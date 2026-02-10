@@ -141,6 +141,7 @@ export const PortfolioReviewNotificationDialog = ({
   const { data: projectManagers, isLoading } = useQuery({
     queryKey: ["portfolio-project-managers", portfolioId, projects.map((p) => p.id)],
     queryFn: async () => {
+      // 1. Récupérer les projets du portefeuille
       const { data: projectsData, error } = await supabase
         .from("projects")
         .select("id, title, project_manager_id, project_manager")
@@ -148,28 +149,49 @@ export const PortfolioReviewNotificationDialog = ({
 
       if (error) throw error;
 
-      const managerIds = projectsData
-        .filter((p) => p.project_manager_id)
-        .map((p) => p.project_manager_id as string);
+      // 2. Récupérer les CDP secondaires via project_members
+      const { data: secondaryManagers } = await supabase
+        .from("project_members")
+        .select("user_id, project_id")
+        .in("project_id", projects.map((p) => p.id))
+        .eq("role", "secondary_manager");
 
-      if (managerIds.length === 0) return [];
+      // 3. Collecter TOUS les IDs uniques (principaux + secondaires)
+      const allManagerIds = new Set<string>();
+      projectsData?.forEach(p => { if (p.project_manager_id) allManagerIds.add(p.project_manager_id); });
+      secondaryManagers?.forEach(sm => { if (sm.user_id) allManagerIds.add(sm.user_id); });
 
+      if (allManagerIds.size === 0) return [];
+
+      // 4. Récupérer les profils (dédupliqués via Set)
       const { data: profiles, error: profilesError } = await supabase
         .from("profiles")
         .select("id, email, first_name, last_name")
-        .in("id", [...new Set(managerIds)]);
+        .in("id", [...allManagerIds]);
 
       if (profilesError) throw profilesError;
 
+      // 5. Construire le mapping manager -> projets (principal + secondaire)
       const managerProjectsMap = new Map<string, string[]>();
-      projectsData.forEach((project) => {
+      projectsData?.forEach((project) => {
         if (project.project_manager_id) {
           const existing = managerProjectsMap.get(project.project_manager_id) || [];
           existing.push(project.title);
           managerProjectsMap.set(project.project_manager_id, existing);
         }
       });
+      secondaryManagers?.forEach(sm => {
+        if (sm.user_id) {
+          const projectTitle = projectsData?.find(p => p.id === sm.project_id)?.title;
+          if (projectTitle) {
+            const existing = managerProjectsMap.get(sm.user_id) || [];
+            if (!existing.includes(projectTitle)) existing.push(projectTitle);
+            managerProjectsMap.set(sm.user_id, existing);
+          }
+        }
+      });
 
+      // 6. Construire la liste finale dédupliquée
       const managers: ProjectManager[] = (profiles || []).map((profile) => ({
         id: profile.id,
         email: profile.email || "",

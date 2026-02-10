@@ -194,6 +194,30 @@ export const usePortfolioReviews = (portfolioId: string) => {
 };
 
 /**
+ * Hook pour récupérer l'historique des notifications d'une revue
+ */
+export const useReviewNotificationHistory = (reviewId: string) => {
+  return useQuery({
+    queryKey: ["portfolio-review-notifications", reviewId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("portfolio_review_notifications")
+        .select(`
+          *,
+          profiles:sent_by (first_name, last_name, email),
+          email_templates:email_template_id (name)
+        `)
+        .eq("portfolio_review_id", reviewId)
+        .order("sent_at", { ascending: false });
+
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!reviewId,
+  });
+};
+
+/**
  * Interface pour les paramètres d'envoi de notifications
  */
 interface SendNotificationsParams {
@@ -245,22 +269,40 @@ export const useSendReviewNotifications = (portfolioId: string) => {
 
       const portfolioProjectIds = portfolioProjects?.map(pp => pp.project_id) || [];
 
-      // Récupérer les détails des projets avec leurs chefs de projet
+      // Récupérer les détails des projets du portefeuille
       const { data: projects, error: projectsError } = await supabase
         .from("projects")
         .select("id, title, project_manager_id")
-        .in("id", portfolioProjectIds)
-        .in("project_manager_id", projectManagerIds);
+        .in("id", portfolioProjectIds);
 
       if (projectsError) throw projectsError;
 
-      // Créer un mapping chef de projet -> titres de projets
+      // Créer un mapping chef de projet -> titres de projets (CDP principaux)
       const managerProjectsMap = new Map<string, string[]>();
       projects?.forEach((project) => {
-        if (project.project_manager_id) {
+        if (project.project_manager_id && projectManagerIds.includes(project.project_manager_id)) {
           const existing = managerProjectsMap.get(project.project_manager_id) || [];
           existing.push(project.title);
           managerProjectsMap.set(project.project_manager_id, existing);
+        }
+      });
+
+      // Récupérer les liens CDP secondaire et enrichir le mapping
+      const { data: secondaryLinks } = await supabase
+        .from("project_members")
+        .select("user_id, project_id")
+        .in("project_id", portfolioProjectIds)
+        .in("user_id", projectManagerIds)
+        .eq("role", "secondary_manager");
+
+      secondaryLinks?.forEach(link => {
+        if (link.user_id) {
+          const projectTitle = projects?.find(p => p.id === link.project_id)?.title;
+          if (projectTitle) {
+            const existing = managerProjectsMap.get(link.user_id) || [];
+            if (!existing.includes(projectTitle)) existing.push(projectTitle);
+            managerProjectsMap.set(link.user_id, existing);
+          }
         }
       });
 
