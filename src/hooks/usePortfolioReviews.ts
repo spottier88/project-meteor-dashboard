@@ -200,18 +200,44 @@ export const useReviewNotificationHistory = (reviewId: string) => {
   return useQuery({
     queryKey: ["portfolio-review-notifications", reviewId],
     queryFn: async () => {
-      const { data, error } = await supabase
+      // Récupérer les notifications sans jointure (pas de FK sur sent_by -> profiles)
+      const { data: notifications, error } = await supabase
         .from("portfolio_review_notifications")
-        .select(`
-          *,
-          profiles:sent_by (first_name, last_name, email),
-          email_templates:email_template_id (name)
-        `)
+        .select("*")
         .eq("portfolio_review_id", reviewId)
         .order("sent_at", { ascending: false });
 
       if (error) throw error;
-      return data;
+      if (!notifications || notifications.length === 0) return [];
+
+      // Récupérer les profils des expéditeurs
+      const senderIds = [...new Set(notifications.map(n => n.sent_by).filter(Boolean))] as string[];
+      const profilesMap = new Map<string, { first_name: string | null; last_name: string | null; email: string | null }>();
+      if (senderIds.length > 0) {
+        const { data: profiles } = await supabase
+          .from("profiles")
+          .select("id, first_name, last_name, email")
+          .in("id", senderIds);
+        profiles?.forEach(p => profilesMap.set(p.id, p));
+      }
+
+      // Récupérer les noms des templates utilisés
+      const templateIds = [...new Set(notifications.map(n => n.email_template_id).filter(Boolean))] as string[];
+      const templatesMap = new Map<string, string>();
+      if (templateIds.length > 0) {
+        const { data: templates } = await supabase
+          .from("email_templates")
+          .select("id, name")
+          .in("id", templateIds);
+        templates?.forEach(t => templatesMap.set(t.id, t.name));
+      }
+
+      // Assembler les données enrichies
+      return notifications.map(n => ({
+        ...n,
+        profiles: n.sent_by ? profilesMap.get(n.sent_by) || null : null,
+        email_templates: n.email_template_id ? { name: templatesMap.get(n.email_template_id) || null } : null,
+      }));
     },
     enabled: !!reviewId,
   });
