@@ -134,6 +134,36 @@ export const useProjectSubmit = ({
           }
         }
 
+        // Gestion des portefeuilles multi-sélection
+        if (formState.portfolioIds !== undefined) {
+          const { data: currentLinks } = await supabase
+            .from("portfolio_projects")
+            .select("portfolio_id")
+            .eq("project_id", project.id);
+          
+          const currentIds = currentLinks?.map(l => l.portfolio_id) || [];
+          const toAdd = formState.portfolioIds.filter(id => !currentIds.includes(id));
+          const toRemove = currentIds.filter(id => !formState.portfolioIds.includes(id));
+
+          if (toAdd.length > 0) {
+            await supabase
+              .from("portfolio_projects")
+              .insert(toAdd.map(portfolioId => ({
+                project_id: project.id,
+                portfolio_id: portfolioId,
+                added_by: formState.ownerId || null
+              })));
+          }
+
+          if (toRemove.length > 0) {
+            await supabase
+              .from("portfolio_projects")
+              .delete()
+              .eq("project_id", project.id)
+              .in("portfolio_id", toRemove);
+          }
+        }
+
         // Invalider les caches spécifiques au projet
         await queryClient.invalidateQueries({ queryKey: ["project", project.id] });
         await queryClient.invalidateQueries({ queryKey: ["projectInnovationScores", project.id] });
@@ -205,6 +235,21 @@ export const useProjectSubmit = ({
             console.error("❌ ProjectSubmit - Erreur création cadrage:", framingError);
           }
         }
+
+        // Ajouter le projet aux portefeuilles sélectionnés
+        if (formState.portfolioIds.length > 0) {
+          const { error: portfolioError } = await supabase
+            .from("portfolio_projects")
+            .insert(formState.portfolioIds.map(portfolioId => ({
+              project_id: projectId,
+              portfolio_id: portfolioId,
+              added_by: formState.ownerId || null
+            })));
+
+          if (portfolioError) {
+            console.error("❌ ProjectSubmit - Erreur ajout portefeuilles:", portfolioError);
+          }
+        }
         
         // Appeler onSubmit pour compatibilité et callbacks éventuels
         if (onSubmit) {
@@ -232,6 +277,11 @@ export const useProjectSubmit = ({
       
       // Invalider spécifiquement la vue liste des projets pour la page d'accueil
       await queryClient.invalidateQueries({ queryKey: ["projectsListView"] });
+
+      // Invalider les caches portefeuilles
+      await queryClient.invalidateQueries({ queryKey: ["project-portfolios"] });
+      await queryClient.invalidateQueries({ queryKey: ["portfolios"] });
+      await queryClient.invalidateQueries({ queryKey: ["portfolio"] });
       
       // Réinitialiser l'indicateur de modifications non enregistrées
       formState.resetHasUnsavedChanges();

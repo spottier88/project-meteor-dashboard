@@ -299,8 +299,18 @@ export const useProjectFormState = (isOpen: boolean, project?: any) => {
           setForEntityType(project.for_entity_type as ForEntityType || null);
           setForEntityId(project.for_entity_id || undefined);
           setTemplateId(project.template_id);
-          // Gérer la compatibilité : si portfolio_id existe, l'ajouter au tableau
-          setPortfolioIds(project.portfolio_id ? [project.portfolio_id] : []);
+          // Charger les portefeuilles depuis la table de liaison portfolio_projects
+          try {
+            const { data: portfolioLinks } = await supabase
+              .from("portfolio_projects")
+              .select("portfolio_id")
+              .eq("project_id", project.id);
+            
+            setPortfolioIds(portfolioLinks?.map(p => p.portfolio_id) || []);
+          } catch (error) {
+            console.error("Erreur chargement portefeuilles:", error);
+            setPortfolioIds([]);
+          }
           // Charger le lien Teams si présent
           setTeamsUrl(project.teams_url || "");
 
