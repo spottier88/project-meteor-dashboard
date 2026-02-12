@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 import { RiskList } from "@/components/RiskList";
 import { ProjectStatus, ProgressStatus } from "@/types/project";
-import { Project } from "@/types/user";
+
 import { useProjectPermissions } from "@/hooks/useProjectPermissions";
 import { useToast } from "@/components/ui/use-toast";
 import { ProjectSummaryHeader } from "@/components/project/ProjectSummaryHeader";

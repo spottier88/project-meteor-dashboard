@@ -36,8 +36,6 @@ export const TeamActivityFilters = ({
     queryFn: async () => {
       if (!user?.id) return [];
       
-      console.log("[TeamActivityFilters] Fetching team view users for user:", user.id);
-      
       const { data, error } = await supabase
         .rpc('get_team_view_users', {
           p_user_id: user.id
@@ -48,7 +46,6 @@ export const TeamActivityFilters = ({
         throw error;
       }
 
-      console.log("[TeamActivityFilters] Fetched users:", data);
       return data;
     },
     enabled: !!user?.id,
@@ -60,8 +57,6 @@ export const TeamActivityFilters = ({
     queryFn: async () => {
       if (!user?.id) return [];
       
-      console.log("[TeamActivityFilters] Fetching team view projects for user:", user.id);
-      
       const { data, error } = await supabase
         .rpc('get_team_view_projects', {
           p_user_id: user.id
@@ -72,7 +67,6 @@ export const TeamActivityFilters = ({
         throw error;
       }
 
-      console.log("[TeamActivityFilters] Fetched projects:", data);
       return data;
     },
     enabled: !!user?.id,

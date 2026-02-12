@@ -7,7 +7,7 @@ import { ArrowLeft } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { ProjectSummaryHeader } from "@/components/project/ProjectSummaryHeader";
 import { FramingDetails } from "@/components/framing/FramingDetails";
-import { useProjectPermissions } from "@/hooks/use-project-permissions";
+import { useProjectPermissions } from "@/hooks/useProjectPermissions";
 
 export const ProjectFraming = () => {
   const { projectId } = useParams<{ projectId: string }>();

@@ -16,7 +16,7 @@ import { Button } from "@/components/ui/button";
 import { Pencil, Sparkles } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import { FramingSectionEditor } from "./FramingSectionEditor";
-import { useProjectPermissions } from "@/hooks/use-project-permissions";
+import { useProjectPermissions } from "@/hooks/useProjectPermissions";
 import { useFramingAIGeneration } from "@/hooks/useFramingAIGeneration";
 import { AIGenerateButton } from "./AIGenerateButton";
 import { FramingSectionKey } from "@/utils/framingAIHelpers";
