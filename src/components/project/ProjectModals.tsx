@@ -11,12 +11,13 @@ import { ProjectSelectionSheet } from "@/components/ProjectSelectionSheet";
 import { ReviewSheet } from "@/components/review/ReviewSheet";
 import { Project } from "@/types/project";
 import { ProjectListItem } from "@/hooks/use-projects-list-view";
+import { ProjectRecord } from "@/types/supabase-models";
 
 interface ProjectModalsProps {
   isProjectFormOpen: boolean;
   onProjectFormClose: () => void;
   onProjectFormSubmit: (projectData: any) => Promise<any>;
-  selectedProject: Project | null;
+  selectedProject: ProjectListItem | ProjectRecord | Project | null;
   isProjectSelectionOpen: boolean;
   onProjectSelectionClose: () => void;
   onProjectSelect: (id: string, title: string) => void;

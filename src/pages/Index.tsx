@@ -11,6 +11,7 @@ import { ProjectModals } from "@/components/project/ProjectModals";
 import { usePermissionsContext } from "@/contexts/PermissionsContext";
 import { useProjectsListView } from "@/hooks/use-projects-list-view";
 import { useUserProjectMemberships } from "@/hooks/use-user-project-memberships";
+import { ProjectListItem } from "@/hooks/use-projects-list-view";
 const LoadingSpinner = () => (
   <div className="flex justify-center items-center h-48">
     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
@@ -23,7 +24,7 @@ const Index = () => {
   const [isProjectFormOpen, setIsProjectFormOpen] = useState(false);
   const [isProjectSelectionOpen, setIsProjectSelectionOpen] = useState(false);
   const [isReviewSheetOpen, setIsReviewSheetOpen] = useState(false);
-  const [selectedProject, setSelectedProject] = useState<any>(null);
+  const [selectedProject, setSelectedProject] = useState<ProjectListItem | null>(null);
   const [selectedProjectForReview, setSelectedProjectForReview] = useState<{
     id: string;
     title: string;
@@ -176,10 +177,7 @@ const Index = () => {
   };
 
   // Fonction de soumission du projet (callback simple après création)
-  const handleProjectFormSubmit = async (projectData: any) => {
-    // La logique complète est gérée dans useProjectSubmit
-    // Cette fonction sert uniquement de callback après la création
-    console.log("Projet créé/mis à jour avec succès:", projectData);
+  const handleProjectFormSubmit = async (projectData: unknown) => {
     return projectData;
   };
 

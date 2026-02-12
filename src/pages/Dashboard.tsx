@@ -26,7 +26,7 @@ const Dashboard = () => {
   const [isProjectFormOpen, setIsProjectFormOpen] = useState(false);
   const [isProjectSelectionOpen, setIsProjectSelectionOpen] = useState(false);
   const [isReviewSheetOpen, setIsReviewSheetOpen] = useState(false);
-  const [selectedProject, setSelectedProject] = useState<any>(null);
+  const [selectedProject, setSelectedProject] = useState<null>(null);
   const [selectedProjectForReview, setSelectedProjectForReview] = useState<{
     id: string;
     title: string;
@@ -84,8 +84,7 @@ const Dashboard = () => {
   };
 
   // Fonction de soumission du projet (callback optionnel)
-  const handleProjectFormSubmit = async (projectData: any) => {
-    console.log("Projet créé avec succès:", projectData);
+  const handleProjectFormSubmit = async (projectData: unknown) => {
     return projectData;
   };
 
