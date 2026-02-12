@@ -2,10 +2,17 @@
  * @module projectSubmitHelpers
  * @description Fonctions utilitaires extraites de useProjectSubmit pour la sauvegarde
  * des données annexes d'un projet (innovation, monitoring, cadrage, portefeuilles).
+ * Chaque fonction retourne un message d'avertissement en cas d'erreur non-critique.
  */
 
 import { supabase } from "@/integrations/supabase/client";
 import { ProjectFormState } from "@/components/form/useProjectFormState";
+
+/** Résultat d'une sauvegarde annexe */
+interface SaveResult {
+  success: boolean;
+  warning?: string;
+}
 
 /**
  * Sauvegarde les scores d'innovation d'un projet (upsert ou insert).
@@ -14,7 +21,7 @@ export const saveInnovationScores = async (
   projectId: string,
   formState: ProjectFormState,
   mode: "upsert" | "insert" = "upsert"
-) => {
+): Promise<SaveResult> => {
   const payload = {
     project_id: projectId,
     novateur: formState.novateur || 0,
@@ -31,7 +38,9 @@ export const saveInnovationScores = async (
   if (error) {
     console.error("❌ Erreur sauvegarde innovation:", error);
     if (mode === "insert") throw error;
+    return { success: false, warning: "Les scores d'innovation n'ont pas pu être enregistrés." };
   }
+  return { success: true };
 };
 
 /**
@@ -42,8 +51,8 @@ export const saveMonitoring = async (
   formState: ProjectFormState,
   getMonitoringEntityId: (level: string) => string | null,
   mode: "upsert" | "insert" = "upsert"
-) => {
-  if (formState.monitoringLevel === undefined) return;
+): Promise<SaveResult> => {
+  if (formState.monitoringLevel === undefined) return { success: true };
 
   const payload = {
     project_id: projectId,
@@ -58,7 +67,9 @@ export const saveMonitoring = async (
   if (error) {
     console.error("❌ Erreur sauvegarde monitoring:", error);
     if (mode === "insert") throw error;
+    return { success: false, warning: "Le niveau de suivi n'a pas pu être enregistré." };
   }
+  return { success: true };
 };
 
 /**
@@ -68,11 +79,11 @@ export const saveFraming = async (
   projectId: string,
   formState: ProjectFormState,
   mode: "upsert" | "insert" = "upsert"
-) => {
+): Promise<SaveResult> => {
   const hasFramingData = formState.context || formState.objectives || formState.governance ||
     formState.deliverables || formState.stakeholders || formState.timeline;
 
-  if (!hasFramingData) return;
+  if (!hasFramingData) return { success: true };
 
   const payload = {
     project_id: projectId,
@@ -90,7 +101,9 @@ export const saveFraming = async (
 
   if (error) {
     console.error("❌ Erreur sauvegarde cadrage:", error);
+    return { success: false, warning: "Les données de cadrage n'ont pas pu être enregistrées." };
   }
+  return { success: true };
 };
 
 /**
@@ -101,9 +114,9 @@ export const savePortfolios = async (
   portfolioIds: string[],
   ownerId: string | null,
   mode: "sync" | "insert" = "sync"
-) => {
+): Promise<SaveResult> => {
   if (mode === "insert") {
-    if (portfolioIds.length === 0) return;
+    if (portfolioIds.length === 0) return { success: true };
     const { error } = await supabase
       .from("portfolio_projects")
       .insert(portfolioIds.map(portfolioId => ({
@@ -111,8 +124,11 @@ export const savePortfolios = async (
         portfolio_id: portfolioId,
         added_by: ownerId,
       })));
-    if (error) console.error("❌ Erreur ajout portefeuilles:", error);
-    return;
+    if (error) {
+      console.error("❌ Erreur ajout portefeuilles:", error);
+      return { success: false, warning: "L'association aux portefeuilles a échoué." };
+    }
+    return { success: true };
   }
 
   // Mode sync : diff entre état actuel et souhaité
@@ -134,4 +150,6 @@ export const savePortfolios = async (
   if (toRemove.length > 0) {
     await supabase.from("portfolio_projects").delete().eq("project_id", projectId).in("portfolio_id", toRemove);
   }
+
+  return { success: true };
 };

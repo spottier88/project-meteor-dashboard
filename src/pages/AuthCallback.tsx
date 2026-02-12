@@ -31,7 +31,7 @@ const AuthCallback = () => {
   useEffect(() => {
     const handleAuthCallback = async () => {
       try {
-        console.log("Traitement du callback d'authentification");
+        // Traitement du callback d'authentification
         
         // Nettoyer les anciennes données de navigation
         cleanupOldNavigationData();
@@ -50,7 +50,7 @@ const AuthCallback = () => {
                         );
         
         if (isReset) {
-          console.log("Mode réinitialisation de mot de passe détecté");
+          // Mode réinitialisation de mot de passe détecté
           setIsResetMode(true);
           return; // Ne pas poursuivre le traitement normal
         }
@@ -69,12 +69,12 @@ const AuthCallback = () => {
         }
 
         if (!data.session) {
-          console.log("Aucune session trouvée dans le callback");
+          // Aucune session trouvée dans le callback
           throw new Error("No session found");
         }
 
         // Authentification réussie
-        console.log("Authentification réussie via callback");
+        // Authentification réussie via callback
         toast({
           title: "Connexion réussie",
           description: "Vous allez être redirigé vers la page d'accueil",
@@ -88,7 +88,7 @@ const AuthCallback = () => {
         
         // En cas d'erreur, nettoyer les cookies Supabase et se déconnecter
         try {
-          console.log("Tentative de déconnexion suite à une erreur d'authentification");
+          // Tentative de déconnexion suite à une erreur d'authentification
           await supabase.auth.signOut();
           clearSupabaseCookies();
           
@@ -103,7 +103,7 @@ const AuthCallback = () => {
 
         // En cas d'erreur, redirection vers la page de login après un court délai
         setTimeout(() => {
-          console.log("Redirection vers /login depuis AuthCallback suite à une erreur");
+          // Redirection vers /login depuis AuthCallback suite à une erreur
           window.location.href = "/login";
         }, 2000);
       }

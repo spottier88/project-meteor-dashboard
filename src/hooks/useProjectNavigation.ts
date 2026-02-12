@@ -34,7 +34,7 @@ export const useProjectNavigation = () => {
         // Construire l'URL complète avec le paramètre pour identifier la navigation en nouvel onglet
         const fullUrl = `${window.location.origin}${projectUrl}?newTab=${newTabKey}`;
         
-        console.log('Ouverture du projet dans un nouvel onglet:', projectId);
+        // Ouverture du projet dans un nouvel onglet
         
         // Ouvrir dans un nouvel onglet avec l'URL complète
         const newWindow = window.open(fullUrl, '_blank');

@@ -35,6 +35,7 @@ export const useProjectSubmit = ({
   const submitProject = async () => {
     formState.setIsSubmitting(true);
     try {
+      const warnings: string[] = [];
       const { pole, direction, service } = formState.projectManagerOrganization;
 
       const projectData = {
@@ -64,12 +65,17 @@ export const useProjectSubmit = ({
         if (projectError) throw projectError;
 
         // Sauvegardes annexes (cadrage, innovation, monitoring, portefeuilles)
-        await saveFraming(project.id, formState, "upsert");
-        await saveInnovationScores(project.id, formState, "upsert");
-        await saveMonitoring(project.id, formState, getMonitoringEntityId, "upsert");
+        // Collecter les avertissements pour informer l'utilisateur
+        const framingResult = await saveFraming(project.id, formState, "upsert");
+        if (framingResult.warning) warnings.push(framingResult.warning);
+        const innovationResult = await saveInnovationScores(project.id, formState, "upsert");
+        if (innovationResult.warning) warnings.push(innovationResult.warning);
+        const monitoringResult = await saveMonitoring(project.id, formState, getMonitoringEntityId, "upsert");
+        if (monitoringResult.warning) warnings.push(monitoringResult.warning);
 
         if (formState.portfolioIds !== undefined) {
-          await savePortfolios(project.id, formState.portfolioIds, formState.ownerId || null, "sync");
+          const portfolioResult = await savePortfolios(project.id, formState.portfolioIds, formState.ownerId || null, "sync");
+          if (portfolioResult.warning) warnings.push(portfolioResult.warning);
         }
 
         // Invalider les caches spécifiques au projet
@@ -90,10 +96,14 @@ export const useProjectSubmit = ({
         const projectId = newProject.id;
 
         // Sauvegardes annexes
-        await saveInnovationScores(projectId, formState, "insert");
-        await saveMonitoring(projectId, formState, getMonitoringEntityId, "insert");
-        await saveFraming(projectId, formState, "insert");
-        await savePortfolios(projectId, formState.portfolioIds, formState.ownerId || null, "insert");
+        const innResult = await saveInnovationScores(projectId, formState, "insert");
+        if (innResult.warning) warnings.push(innResult.warning);
+        const monResult = await saveMonitoring(projectId, formState, getMonitoringEntityId, "insert");
+        if (monResult.warning) warnings.push(monResult.warning);
+        const frmResult = await saveFraming(projectId, formState, "insert");
+        if (frmResult.warning) warnings.push(frmResult.warning);
+        const prtResult = await savePortfolios(projectId, formState.portfolioIds, formState.ownerId || null, "insert");
+        if (prtResult.warning) warnings.push(prtResult.warning);
 
         // Callback de compatibilité
         if (onSubmit) {
@@ -123,6 +133,15 @@ export const useProjectSubmit = ({
       
       formState.resetHasUnsavedChanges();
       
+      // Afficher les avertissements éventuels pour les sauvegardes annexes
+      if (warnings.length > 0) {
+        toast({
+          title: "Attention",
+          description: warnings.join(" "),
+          variant: "destructive",
+        });
+      }
+
       toast({
         title: "Succès",
         description: project ? "Projet mis à jour" : "Projet créé",
