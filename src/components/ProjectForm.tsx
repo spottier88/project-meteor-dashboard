@@ -13,13 +13,14 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { useProjectPermissions } from "@/hooks/useProjectPermissions";
 import { ProfileForm } from "./profile/ProfileForm";
 import { UserProfile } from "@/types/user";
+import { ProjectRecord } from "@/types/supabase-models";
 import { supabase } from "@/integrations/supabase/client";
 
 interface ProjectFormProps {
   isOpen: boolean;
   onClose: () => void;
   onSubmit: (projectData: any) => Promise<any>;
-  project?: any;
+  project?: ProjectRecord | any | null;
 }
 
 export const ProjectForm = ({ isOpen, onClose, onSubmit, project }: ProjectFormProps) => {
@@ -144,6 +145,7 @@ export const ProjectForm = ({ isOpen, onClose, onSubmit, project }: ProjectFormP
               currentStep={formState.currentStep} 
               isEditMode={!!project}
               title={formState.title}
+              onStepClick={(step) => formState.setCurrentStep(step)}
             />
             
             <div className="flex-1 overflow-auto my-4">
