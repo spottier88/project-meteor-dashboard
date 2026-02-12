@@ -1,9 +1,10 @@
 
 import { useToast } from "@/components/ui/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
-import { ProjectFormState } from "./useProjectFormState";
+import { ProjectFormState } from "@/components/form/useProjectFormState";
 import { createTasksFromTemplate } from "../utils/templateTasks";
 import { supabase } from "@/integrations/supabase/client";
+import { saveInnovationScores, saveMonitoring, saveFraming, savePortfolios } from "@/utils/projectSubmitHelpers";
 
 interface UseProjectSubmitProps {
   project?: any;
@@ -21,23 +22,20 @@ export const useProjectSubmit = ({
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
+  /** Retourne l'ID de l'entité de suivi en fonction du niveau de monitoring */
+  const getMonitoringEntityId = (level: string): string | null => {
+    const { pole, direction } = formState.projectManagerOrganization;
+    switch (level) {
+      case 'pole': return pole?.id || null;
+      case 'direction': return direction?.id || null;
+      default: return null;
+    }
+  };
+
   const submitProject = async () => {
     formState.setIsSubmitting(true);
     try {
-      // Déterminer les IDs des entités organisationnelles à partir de l'organisation du chef de projet
       const { pole, direction, service } = formState.projectManagerOrganization;
-      
-      // Fonction pour obtenir l'ID de l'entité de suivi en fonction du niveau
-      function getMonitoringEntityId(level: string) {
-        switch (level) {
-          case 'pole':
-            return pole?.id || null;
-          case 'direction':
-            return direction?.id || null;
-          default:
-            return null;
-        }
-      }
 
       const projectData = {
         title: formState.title,
@@ -47,121 +45,31 @@ export const useProjectSubmit = ({
         end_date: formState.endDate?.toISOString().split('T')[0],
         priority: formState.priority,
         owner_id: formState.ownerId || null,
-        // Assignation basée sur l'organisation du chef de projet
         pole_id: pole?.id === "none" ? null : pole?.id || null,
         direction_id: direction?.id === "none" ? null : direction?.id || null,
         service_id: service?.id === "none" ? null : service?.id || null,
         lifecycle_status: formState.lifecycleStatus,
         for_entity_type: formState.forEntityType,
         for_entity_id: formState.forEntityId,
-        // Lien vers l'équipe Microsoft Teams
         teams_url: formState.teamsUrl?.trim() || null,
       };
 
-      // Si c'est une mise à jour de projet existant
       if (project?.id) {
-        // Mettre à jour le projet principal
+        // --- Mise à jour d'un projet existant ---
         const { error: projectError } = await supabase
           .from("projects")
           .update(projectData)
           .eq("id", project.id);
 
-        if (projectError) {
-          throw projectError;
-        }
+        if (projectError) throw projectError;
 
-        // Gestion des données de cadrage si présentes
-        if (formState.context || formState.objectives || formState.governance || 
-            formState.deliverables || formState.stakeholders || formState.timeline) {
-          
-          const { error: framingError } = await supabase
-            .from("project_framing")
-            .upsert({
-              project_id: project.id,
-              context: formState.context,
-              objectives: formState.objectives,
-              governance: formState.governance,
-              deliverables: formState.deliverables,
-              stakeholders: formState.stakeholders,
-              timeline: formState.timeline,
-            }, {
-              onConflict: 'project_id'
-            });
+        // Sauvegardes annexes (cadrage, innovation, monitoring, portefeuilles)
+        await saveFraming(project.id, formState, "upsert");
+        await saveInnovationScores(project.id, formState, "upsert");
+        await saveMonitoring(project.id, formState, getMonitoringEntityId, "upsert");
 
-          if (framingError) {
-            console.error("❌ ProjectSubmit - Erreur cadrage:", framingError);
-          }
-        }
-
-        // Gestion des scores d'innovation si présents
-        if (formState.novateur !== undefined || formState.usager !== undefined || 
-            formState.ouverture !== undefined || formState.agilite !== undefined || 
-            formState.impact !== undefined) {
-          
-          const { error: innovationError } = await supabase
-            .from("project_innovation_scores")
-            .upsert({
-              project_id: project.id,
-              novateur: formState.novateur || 0,
-              usager: formState.usager || 0,
-              ouverture: formState.ouverture || 0,
-              agilite: formState.agilite || 0,
-              impact: formState.impact || 0,
-            }, {
-              onConflict: 'project_id'
-            });
-
-          if (innovationError) {
-            console.error("❌ ProjectSubmit - Erreur innovation:", innovationError);
-          }
-        }
-
-        // Gestion du monitoring si présent
-        console.log("📊 Monitoring update - Level:", formState.monitoringLevel, "EntityId:", formState.monitoringEntityId);
-        if (formState.monitoringLevel !== undefined) {
-          const { error: monitoringError } = await supabase
-            .from("project_monitoring")
-            .upsert({
-              project_id: project.id,
-              monitoring_level: formState.monitoringLevel,
-              monitoring_entity_id: getMonitoringEntityId(formState.monitoringLevel),
-            }, {
-              onConflict: 'project_id'
-            });
-
-          if (monitoringError) {
-            console.error("❌ ProjectSubmit - Erreur monitoring:", monitoringError);
-          }
-        }
-
-        // Gestion des portefeuilles multi-sélection
         if (formState.portfolioIds !== undefined) {
-          const { data: currentLinks } = await supabase
-            .from("portfolio_projects")
-            .select("portfolio_id")
-            .eq("project_id", project.id);
-          
-          const currentIds = currentLinks?.map(l => l.portfolio_id) || [];
-          const toAdd = formState.portfolioIds.filter(id => !currentIds.includes(id));
-          const toRemove = currentIds.filter(id => !formState.portfolioIds.includes(id));
-
-          if (toAdd.length > 0) {
-            await supabase
-              .from("portfolio_projects")
-              .insert(toAdd.map(portfolioId => ({
-                project_id: project.id,
-                portfolio_id: portfolioId,
-                added_by: formState.ownerId || null
-              })));
-          }
-
-          if (toRemove.length > 0) {
-            await supabase
-              .from("portfolio_projects")
-              .delete()
-              .eq("project_id", project.id)
-              .in("portfolio_id", toRemove);
-          }
+          await savePortfolios(project.id, formState.portfolioIds, formState.ownerId || null, "sync");
         }
 
         // Invalider les caches spécifiques au projet
@@ -170,97 +78,31 @@ export const useProjectSubmit = ({
         await queryClient.invalidateQueries({ queryKey: ["project-monitoring", project.id] });
         
       } else {
-        // Création d'un nouveau projet - Logique complète intégrée
+        // --- Création d'un nouveau projet ---
         const { data: newProject, error: projectError } = await supabase
           .from("projects")
           .insert(projectData)
           .select()
           .single();
 
-        if (projectError) {
-          console.error("❌ ProjectSubmit - Erreur création projet:", projectError);
-          throw projectError;
-        }
+        if (projectError) throw projectError;
 
         const projectId = newProject.id;
 
-        // Création des scores d'innovation
-        const { error: innovationError } = await supabase
-          .from("project_innovation_scores")
-          .insert({
-            project_id: projectId,
-            novateur: formState.novateur || 0,
-            usager: formState.usager || 0,
-            ouverture: formState.ouverture || 0,
-            agilite: formState.agilite || 0,
-            impact: formState.impact || 0,
-          });
+        // Sauvegardes annexes
+        await saveInnovationScores(projectId, formState, "insert");
+        await saveMonitoring(projectId, formState, getMonitoringEntityId, "insert");
+        await saveFraming(projectId, formState, "insert");
+        await savePortfolios(projectId, formState.portfolioIds, formState.ownerId || null, "insert");
 
-        if (innovationError) {
-          console.error("❌ ProjectSubmit - Erreur création innovation:", innovationError);
-          throw innovationError;
-        }
-
-        // Création du monitoring
-        const { error: monitoringError } = await supabase
-          .from("project_monitoring")
-          .insert({
-            project_id: projectId,
-            monitoring_level: formState.monitoringLevel,
-            monitoring_entity_id: getMonitoringEntityId(formState.monitoringLevel),
-          });
-
-        if (monitoringError) {
-          console.error("❌ ProjectSubmit - Erreur création monitoring:", monitoringError);
-          throw monitoringError;
-        }
-
-        // Gestion du framing si présent
-        if (formState.context || formState.objectives || formState.governance || 
-            formState.deliverables || formState.stakeholders || formState.timeline) {
-          
-          const { error: framingError } = await supabase
-            .from("project_framing")
-            .insert({
-              project_id: projectId,
-              context: formState.context,
-              objectives: formState.objectives,
-              governance: formState.governance,
-              deliverables: formState.deliverables,
-              stakeholders: formState.stakeholders,
-              timeline: formState.timeline,
-            });
-
-          if (framingError) {
-            console.error("❌ ProjectSubmit - Erreur création cadrage:", framingError);
-          }
-        }
-
-        // Ajouter le projet aux portefeuilles sélectionnés
-        if (formState.portfolioIds.length > 0) {
-          const { error: portfolioError } = await supabase
-            .from("portfolio_projects")
-            .insert(formState.portfolioIds.map(portfolioId => ({
-              project_id: projectId,
-              portfolio_id: portfolioId,
-              added_by: formState.ownerId || null
-            })));
-
-          if (portfolioError) {
-            console.error("❌ ProjectSubmit - Erreur ajout portefeuilles:", portfolioError);
-          }
-        }
-        
-        // Appeler onSubmit pour compatibilité et callbacks éventuels
+        // Callback de compatibilité
         if (onSubmit) {
           await onSubmit(newProject);
         }
 
-        // Si un modèle a été sélectionné, créer les tâches
+        // Création des tâches depuis le modèle si sélectionné
         if (formState.templateId) {
-          console.log("Création des tâches à partir du modèle:", formState.templateId, "pour le projet:", projectId);
           const startDateString = formState.startDate ? formState.startDate.toISOString().split('T')[0] : undefined;
-          
           const tasksCreated = await createTasksFromTemplate(formState.templateId, projectId, startDateString);
           
           if (tasksCreated) {
@@ -272,18 +114,13 @@ export const useProjectSubmit = ({
         }
       }
       
-      // Invalider toutes les requêtes liées aux projets pour forcer un rafraîchissement
+      // Invalider les caches globaux
       await queryClient.invalidateQueries({ queryKey: ["projects"] });
-      
-      // Invalider spécifiquement la vue liste des projets pour la page d'accueil
       await queryClient.invalidateQueries({ queryKey: ["projectsListView"] });
-
-      // Invalider les caches portefeuilles
       await queryClient.invalidateQueries({ queryKey: ["project-portfolios"] });
       await queryClient.invalidateQueries({ queryKey: ["portfolios"] });
       await queryClient.invalidateQueries({ queryKey: ["portfolio"] });
       
-      // Réinitialiser l'indicateur de modifications non enregistrées
       formState.resetHasUnsavedChanges();
       
       toast({

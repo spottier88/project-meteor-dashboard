@@ -69,8 +69,6 @@ export const useProjectsListView = (enabled = true) => {
       if (!user?.id) return [];
       
       try {
-        console.log("Récupération des données de projets optimisées avec mode admin:", { adminModeDisabled });
-        
         const { data, error } = await supabase
           .rpc('get_accessible_projects_list_view_with_admin_mode', {
             p_user_id: user.id,
@@ -83,7 +81,6 @@ export const useProjectsListView = (enabled = true) => {
         }
 
         if (!data) {
-          console.log("Aucune donnée de projets récupérée");
           return [];
         }
 
@@ -123,7 +120,6 @@ export const useProjectsListView = (enabled = true) => {
             }))
           : [];
         
-        console.log(`${projects.length} projets récupérés avec succès via la vue optimisée`);
         return projects;
       } catch (error) {
         console.error("Erreur dans useProjectsListView:", error);

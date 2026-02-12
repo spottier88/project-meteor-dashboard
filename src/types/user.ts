@@ -1,5 +1,3 @@
-import { ProjectStatus, ProgressStatus } from "./project";
-
 export type UserRole = "admin" | "chef_projet" | "manager" | "membre" | "time_tracker" | "portfolio_manager" | "quality_manager";
 
 export interface UserProfile {
@@ -74,22 +72,3 @@ export interface ManagerAssignmentWithDetails extends ManagerAssignment {
   };
 }
 
-export interface Project {
-  id: string;
-  title: string;
-  status: ProjectStatus | null;
-  progress: ProgressStatus | null;
-  last_review_date: string | null;
-  project_manager?: string | null;
-  owner_id?: string | null;
-  pole_id?: string | null;
-  direction_id?: string | null;
-  service_id?: string | null;
-  created_at?: string | null;
-  description?: string | null;
-  start_date?: string | null;
-  end_date?: string | null;
-  priority?: string | null;
-  suivi_dgs?: boolean | null;
-  completion?: number;
-}

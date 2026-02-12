@@ -23,7 +23,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { DeleteProjectDialog } from "./DeleteProjectDialog";
 import { LinkProjectDialog } from "./LinkProjectDialog";
-import { useProjectPermissions } from "@/hooks/use-project-permissions";
+import { useProjectPermissions } from "@/hooks/useProjectPermissions";
 import {
   DropdownMenu,
   DropdownMenuContent,
