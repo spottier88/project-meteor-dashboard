@@ -14,7 +14,7 @@ import { useState } from "react";
 import { TeamMemberForm } from "@/components/project/TeamMemberForm";
 import { InviteMemberForm } from "@/components/project/InviteMemberForm";
 import { TeamMembersTable } from "@/components/project/TeamMembersTable";
-import { useTeamManagement } from "@/hooks/use-team-management";
+import { useTeamManagement } from "@/hooks/useTeamManagement";
 
 export interface TeamManagementProps {
   projectId: string;

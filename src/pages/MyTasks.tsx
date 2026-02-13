@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { useMyTasks } from "@/hooks/use-my-tasks";
+import { useMyTasks } from "@/hooks/useMyTasks";
 import { Table, TableBody, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { ArrowLeft, RotateCcw, Eye, EyeOff } from "lucide-react";
 import { TaskCard } from "@/components/task/TaskCard";

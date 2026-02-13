@@ -6,7 +6,7 @@
 
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { usePortfolioDetails } from "@/hooks/usePortfolioDetails";
-import { useDetailedProjectsData, ProjectData } from "@/hooks/use-detailed-projects-data";
+import { useDetailedProjectsData, ProjectData } from "@/hooks/useDetailedProjectsData";
 import { PresentationView } from "@/components/presentation/PresentationView";
 import { LoadingOverlay } from "@/components/ui/loading-overlay";
 import { Button } from "@/components/ui/button";

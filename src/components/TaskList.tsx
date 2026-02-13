@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { ViewToggle, ViewMode } from "@/components/ViewToggle";
 import { KanbanBoard } from "@/components/KanbanBoard";
 import { TaskGantt } from "@/components/task/TaskGantt";
-import { useTaskPermissions } from "@/hooks/use-task-permissions";
+import { useTaskPermissions } from "@/hooks/useTaskPermissions";
 import { usePermissionsContext } from "@/contexts/PermissionsContext";
 import {
   AlertDialog,

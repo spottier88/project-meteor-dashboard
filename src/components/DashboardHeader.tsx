@@ -11,7 +11,7 @@ import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Link, useLocation } from "react-router-dom";
 import { usePermissionsContext } from '@/contexts/PermissionsContext';
-import { useProjectCart } from '@/hooks/use-project-cart';
+import { useProjectCart } from '@/hooks/useProjectCart';
 import { CartButton } from '@/components/cart/CartButton';
 import { ProjectCart } from '@/components/cart/ProjectCart';
 import { ArrowLeft } from 'lucide-react';

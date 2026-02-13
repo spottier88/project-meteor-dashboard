@@ -9,9 +9,9 @@ import { ProjectFilters } from "@/components/project/ProjectFilters";
 import { ProjectList } from "@/components/project/ProjectList";
 import { ProjectModals } from "@/components/project/ProjectModals";
 import { usePermissionsContext } from "@/contexts/PermissionsContext";
-import { useProjectsListView } from "@/hooks/use-projects-list-view";
-import { useUserProjectMemberships } from "@/hooks/use-user-project-memberships";
-import { ProjectListItem } from "@/hooks/use-projects-list-view";
+import { useProjectsListView } from "@/hooks/useProjectsListView";
+import { useUserProjectMemberships } from "@/hooks/useUserProjectMemberships";
+import { ProjectListItem } from "@/hooks/useProjectsListView";
 const LoadingSpinner = () => (
   <div className="flex justify-center items-center h-48">
     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>

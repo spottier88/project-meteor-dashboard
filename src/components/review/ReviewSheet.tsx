@@ -12,7 +12,7 @@ import { ReviewFormFields } from "@/components/review/ReviewFormFields";
 import { ReviewActionFields } from "@/components/review/ReviewActionFields";
 import { ReviewDifficultiesField } from "@/components/review/ReviewDifficultiesField";
 import { TaskStatusUpdateSection } from "@/components/review/TaskStatusUpdateSection";
-import { useTaskPermissions } from "@/hooks/use-task-permissions";
+import { useTaskPermissions } from "@/hooks/useTaskPermissions";
 import { Trash2 } from "lucide-react";
 import { DeleteReviewDialog } from "./DeleteReviewDialog";
 

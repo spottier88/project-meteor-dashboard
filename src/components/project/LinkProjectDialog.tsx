@@ -16,7 +16,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { useProjectLinks } from "@/hooks/useProjectLinks";
-import { useProjectsListView } from "@/hooks/use-projects-list-view";
+import { useProjectsListView } from "@/hooks/useProjectsListView";
 import {
   Select,
   SelectContent,

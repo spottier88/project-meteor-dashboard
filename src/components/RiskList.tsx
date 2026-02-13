@@ -8,7 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { useToast } from "@/components/ui/use-toast";
 import { RiskForm } from "./RiskForm";
 import { RiskCard } from "./risk/RiskCard";
-import { useRiskAccess } from "@/hooks/use-risk-access";
+import { useRiskAccess } from "@/hooks/useRiskAccess";
 
 export interface RiskListProps {
   projectId: string;

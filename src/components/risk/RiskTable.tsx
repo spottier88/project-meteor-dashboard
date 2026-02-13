@@ -5,7 +5,7 @@ import { useState } from "react";
 import { SortableHeader, SortDirection } from "@/components/ui/sortable-header";
 import { Button } from "@/components/ui/button";
 import { Pencil, Trash2 } from "lucide-react";
-import { useRiskAccess } from "@/hooks/use-risk-access";
+import { useRiskAccess } from "@/hooks/useRiskAccess";
 
 interface Risk {
   id: string;

@@ -19,7 +19,7 @@ import {
 } from 'docx';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import { ProjectData } from '@/hooks/use-detailed-projects-data';
+import { ProjectData } from '@/hooks/useDetailedProjectsData';
 import { RiskProbability, RiskSeverity, RiskStatus } from '@/types/risk';
 import { ProjectLifecycleStatus, lifecycleStatusLabels } from '@/types/project';
 

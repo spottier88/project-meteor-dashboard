@@ -4,7 +4,7 @@
  * l'affichage des slides et la navigation.
  */
 
-import { ProjectData } from "@/hooks/use-detailed-projects-data";
+import { ProjectData } from "@/hooks/useDetailedProjectsData";
 import { usePresentationMode } from "@/hooks/usePresentationMode";
 import { PresentationSlide } from "./PresentationSlide";
 import { PresentationNavigation } from "./PresentationNavigation";

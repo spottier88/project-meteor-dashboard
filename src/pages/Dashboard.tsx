@@ -6,7 +6,7 @@ import { FavoriteProjects } from "@/components/dashboard/FavoriteProjects";
 import { UserInfo } from "@/components/UserInfo";
 import { useState } from "react";
 import { ProjectModals } from "@/components/project/ProjectModals";
-import { useProjectsListView } from "@/hooks/use-projects-list-view";
+import { useProjectsListView } from "@/hooks/useProjectsListView";
 import { OnboardingTutorial } from "@/components/onboarding/OnboardingTutorial";
 import { useOnboarding } from "@/hooks/useOnboarding";
 import { IncompleteProfileDialog } from "@/components/profile/IncompleteProfileDialog";

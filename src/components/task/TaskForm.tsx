@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { useTaskForm } from "./useTaskForm";
 import { TaskFormProps } from "./TaskFormTypes";
 import { usePermissionsContext } from "@/contexts/PermissionsContext";
-import { useTaskFormData } from "@/hooks/use-task-form-data";
+import { useTaskFormData } from "@/hooks/useTaskFormData";
 import { TaskFormContent } from "./TaskFormContent";
 import { useState, useMemo } from "react";
 import {

@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { usePermissionsContext } from "@/contexts/PermissionsContext";
 import { Link } from "react-router-dom";
-import { useMyTasks } from "@/hooks/use-my-tasks";
+import { useMyTasks } from "@/hooks/useMyTasks";
 import { 
   Plus, 
   History, 

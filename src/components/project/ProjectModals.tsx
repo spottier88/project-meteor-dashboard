@@ -10,7 +10,7 @@ import { ProjectForm } from "@/components/ProjectForm";
 import { ProjectSelectionSheet } from "@/components/ProjectSelectionSheet";
 import { ReviewSheet } from "@/components/review/ReviewSheet";
 import { Project } from "@/types/project";
-import { ProjectListItem } from "@/hooks/use-projects-list-view";
+import { ProjectListItem } from "@/hooks/useProjectsListView";
 import { ProjectRecord } from "@/types/supabase-models";
 
 interface ProjectModalsProps {
