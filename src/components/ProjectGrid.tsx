@@ -5,9 +5,9 @@ import { ProjectStatus, ProgressStatus, ProjectLifecycleStatus } from "@/types/p
 import { useUser } from "@supabase/auth-helpers-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useManagerProjectAccess } from "@/hooks/use-manager-project-access";
+import { useManagerProjectAccess } from "@/hooks/useManagerProjectAccess";
 import { usePermissionsContext } from "@/contexts/PermissionsContext";
-import { ProjectListItem } from '@/hooks/use-projects-list-view';
+import { ProjectListItem } from '@/hooks/useProjectsListView';
 import { ProjectPagination } from "./project/ProjectPagination";
 
 interface ProjectGridProps {

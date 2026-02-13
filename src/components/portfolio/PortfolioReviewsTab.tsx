@@ -29,7 +29,7 @@ import {
   CalendarPlus,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { useDetailedProjectsData, ProjectData } from "@/hooks/use-detailed-projects-data";
+import { useDetailedProjectsData, ProjectData } from "@/hooks/useDetailedProjectsData";
 import { usePortfolioReviews, PortfolioReview } from "@/hooks/usePortfolioReviews";
 import { generateProjectPPTX } from "@/components/pptx/ProjectPPTX";
 import { exportProjectsToExcel } from "@/utils/projectExport";

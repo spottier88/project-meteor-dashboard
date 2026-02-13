@@ -11,7 +11,7 @@ import { ProjectForm } from "@/components/ProjectForm";
 import { ReviewSheet } from "@/components/review/ReviewSheet";
 import { useToast } from "@/components/ui/use-toast";
 import { useProjectPermissions } from "@/hooks/useProjectPermissions";
-import { useTeamManagement } from "@/hooks/use-team-management";
+import { useTeamManagement } from "@/hooks/useTeamManagement";
 import { useProjectInnovationScores } from "@/hooks/useProjectInnovationScores";
 import { useProjectSubmit } from "@/hooks/useProjectSubmit";
 import { useProjectFormState } from "@/components/form/useProjectFormState";

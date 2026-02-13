@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { ProjectHeader } from "./ProjectHeader";
 import { DeleteReviewDialog } from "./review/DeleteReviewDialog";
-import { useReviewAccess } from "@/hooks/use-review-access";
+import { useReviewAccess } from "@/hooks/useReviewAccess";
 
 const statusIcons = {
   sunny: { icon: Sun, color: "text-warning", label: "Ensoleillé" },

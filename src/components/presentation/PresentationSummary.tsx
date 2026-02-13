@@ -4,7 +4,7 @@
  * de tous les projets avec météo, évolution et commentaire.
  */
 
-import { ProjectData } from "@/hooks/use-detailed-projects-data";
+import { ProjectData } from "@/hooks/useDetailedProjectsData";
 import { Sun, Cloud, CloudRain, TrendingUp, TrendingDown, Minus } from "lucide-react";
 import {
   Table,

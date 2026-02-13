@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Pencil, Trash2, ChevronDown, ChevronRight } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { cn } from "@/lib/utils";
-import { useTaskPermissions } from "@/hooks/use-task-permissions";
+import { useTaskPermissions } from "@/hooks/useTaskPermissions";
 import { formatUserName } from "@/utils/formatUserName";
 import {
   AlertDialog,

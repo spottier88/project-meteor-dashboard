@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { ShoppingCart } from "lucide-react";
-import { useProjectCart } from "@/hooks/use-project-cart";
+import { useProjectCart } from "@/hooks/useProjectCart";
 import { Badge } from "@/components/ui/badge";
 
 export const CartButton = () => {

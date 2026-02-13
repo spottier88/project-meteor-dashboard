@@ -1,7 +1,7 @@
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useProjectCart } from "@/hooks/use-project-cart";
+import { useProjectCart } from "@/hooks/useProjectCart";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Trash2, Presentation, GanttChartSquare, FileSpreadsheet, ArrowUpDown, Play } from "lucide-react";
@@ -12,7 +12,7 @@ import { useNavigate } from "react-router-dom";
 import { ProjectGanttSheet } from "./ProjectGanttSheet";
 import { exportProjectsToExcel } from "@/utils/projectExport";
 import { LoadingOverlay } from "../ui/loading-overlay";
-import { useDetailedProjectsData, ProjectData } from "@/hooks/use-detailed-projects-data";
+import { useDetailedProjectsData, ProjectData } from "@/hooks/useDetailedProjectsData";
 import { ProjectData as PPTXProjectData } from "../pptx/types";
 import { ProjectStatus, ProgressStatus } from "@/types/project";
 import { RiskProbability, RiskSeverity, RiskStatus } from "@/types/risk";

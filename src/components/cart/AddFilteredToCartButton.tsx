@@ -1,7 +1,7 @@
 
 import { Button } from "@/components/ui/button";
 import { ShoppingCart, Plus } from "lucide-react";
-import { useProjectCart } from "@/hooks/use-project-cart";
+import { useProjectCart } from "@/hooks/useProjectCart";
 import { useToast } from "@/components/ui/use-toast";
 
 interface AddFilteredToCartButtonProps {

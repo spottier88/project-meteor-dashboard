@@ -10,7 +10,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { usePermissionsContext } from "@/contexts/PermissionsContext";
 import { useAdminModeAwareData } from "./useAdminModeAwareData";
-import { useUserProjectMemberships } from "./use-user-project-memberships";
+import { useUserProjectMemberships } from "./useUserProjectMemberships";
 import { differenceInDays } from "date-fns";
 
 interface DashboardSummary {

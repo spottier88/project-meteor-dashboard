@@ -6,7 +6,7 @@ import { useState } from "react";
 import { SortableHeader, SortDirection } from "@/components/ui/sortable-header";
 import { Button } from "@/components/ui/button";
 import { ChevronDown, ChevronRight, Pencil, Trash2 } from "lucide-react";
-import { useTaskPermissions } from "@/hooks/use-task-permissions";
+import { useTaskPermissions } from "@/hooks/useTaskPermissions";
 import { formatUserName } from "@/utils/formatUserName";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";

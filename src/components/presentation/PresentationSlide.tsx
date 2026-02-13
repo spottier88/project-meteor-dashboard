@@ -6,7 +6,7 @@
  */
 
 import { useState } from "react";
-import { ProjectData } from "@/hooks/use-detailed-projects-data";
+import { ProjectData } from "@/hooks/useDetailedProjectsData";
 import { lifecycleStatusLabels } from "@/types/project";
 import { Sun, Cloud, CloudRain, TrendingUp, TrendingDown, Minus, Expand } from "lucide-react";
 import { cn } from "@/lib/utils";

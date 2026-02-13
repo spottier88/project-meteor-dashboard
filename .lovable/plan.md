@@ -24,7 +24,7 @@ Toutes les actions du plan ont été traitées. Voici le récapitulatif :
 
 | # | Action | Raison |
 |---|--------|--------|
-| 4.1 | Harmoniser nommage hooks (kebab→camelCase) | Renommage massif de fichiers, risque de casser des imports. À faire progressivement. |
+| 4.1 | Harmoniser nommage hooks (kebab→camelCase) | ✅ Fait — 17 fichiers renommés, 40+ imports mis à jour |
 | 4.2 | Refactoriser `useProjectFormState` (useReducer) | Hook fonctionnel, refactoring lourd pour gain limité à court terme. |
 | 4.5 | Optimiser `organizationAccess.ts` | Utilise déjà `.in()` et `Promise.all` pour admin/manager. La section chef de projet a des boucles séquentielles mais la logique hiérarchique est complexe. |
 

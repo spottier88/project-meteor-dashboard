@@ -17,7 +17,7 @@ import { generateProjectPPTX } from "@/components/pptx/ProjectPPTX";
 import { ProjectData as PPTXProjectData } from "@/components/pptx/types";
 import { ProjectStatus, ProgressStatus, ProjectLifecycleStatus } from "@/types/project";
 import { RiskProbability, RiskSeverity, RiskStatus } from "@/types/risk";
-import { useDetailedProjectsData, ProjectData } from "@/hooks/use-detailed-projects-data";
+import { useDetailedProjectsData, ProjectData } from "@/hooks/useDetailedProjectsData";
 import { Presentation, FileText, Edit, Calendar, CheckCircle, FileCheck, MoreVertical, Star } from "lucide-react";
 import { useFavoriteProjects } from "@/hooks/useFavoriteProjects";
 import { cn } from "@/lib/utils";
@@ -25,7 +25,7 @@ import { generateProjectFramingPDF } from "@/components/framing/ProjectFramingEx
 import { generateProjectFramingDOCX } from "@/components/framing/ProjectFramingExportDOCX";
 import { FramingExportDialog } from "@/components/framing/FramingExportDialog";
 import { useProjectPermissions } from "@/hooks/useProjectPermissions";
-import { useReviewAccess } from "@/hooks/use-review-access";
+import { useReviewAccess } from "@/hooks/useReviewAccess";
 import { ProjectClosureDialog } from "./closure/ProjectClosureDialog";
 import { ClosurePendingBadge } from "./ClosurePendingBadge";
 import {

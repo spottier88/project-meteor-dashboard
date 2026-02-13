@@ -5,8 +5,8 @@
  */
 
 import { useNavigate } from "react-router-dom";
-import { useProjectCart } from "@/hooks/use-project-cart";
-import { useDetailedProjectsData, ProjectData } from "@/hooks/use-detailed-projects-data";
+import { useProjectCart } from "@/hooks/useProjectCart";
+import { useDetailedProjectsData, ProjectData } from "@/hooks/useDetailedProjectsData";
 import { PresentationView } from "@/components/presentation/PresentationView";
 import { LoadingOverlay } from "@/components/ui/loading-overlay";
 import { Button } from "@/components/ui/button";

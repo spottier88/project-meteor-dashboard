@@ -7,7 +7,7 @@
  */
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { useDashboardData } from "@/hooks/use-dashboard-data";
+import { useDashboardData } from "@/hooks/useDashboardData";
 import { Badge } from "@/components/ui/badge";
 import { lifecycleStatusLabels } from "@/types/project";
 import { StatusIcon } from "@/components/project/StatusIcon";

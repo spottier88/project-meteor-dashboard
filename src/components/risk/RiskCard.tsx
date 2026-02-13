@@ -3,7 +3,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Pencil, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useRiskAccess } from "@/hooks/use-risk-access";
+import { useRiskAccess } from "@/hooks/useRiskAccess";
 
 interface RiskCardProps {
   risk: {
