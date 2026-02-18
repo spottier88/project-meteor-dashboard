@@ -6,7 +6,7 @@ import { Separator } from "@/components/ui/separator";
 import { ParentTaskSelector } from "./ParentTaskSelector";
 import { AssigneeSelector } from "./AssigneeSelector";
 import { DateInputField } from "@/components/form/DateInputField";
-import { FileText, ExternalLink } from "lucide-react";
+import { FileText, ExternalLink, ClipboardCheck } from "lucide-react";
 
 interface TaskFormContentProps {
   title: string;
@@ -25,6 +25,8 @@ interface TaskFormContentProps {
   setAssignmentMode: (value: "free" | "member") => void;
   documentUrl: string;
   setDocumentUrl: (value: string) => void;
+  completionComment: string;
+  setCompletionComment: (value: string) => void;
   parentTaskId: string | undefined;
   setParentTaskId: (value: string | undefined) => void;
   projectTasks: Array<{ id: string; title: string }> | undefined;
@@ -58,6 +60,8 @@ export const TaskFormContent = ({
   setAssignmentMode,
   documentUrl,
   setDocumentUrl,
+  completionComment,
+  setCompletionComment,
   parentTaskId,
   setParentTaskId,
   projectTasks,
@@ -149,6 +153,31 @@ export const TaskFormContent = ({
           </SelectContent>
         </Select>
       </div>
+
+      {/* Champ bilan/résultat conditionnel - visible uniquement si statut "Terminé" */}
+      {status === "done" && (
+        <div className="grid gap-2">
+          <label htmlFor="completionComment" className="text-sm font-medium flex items-center gap-1">
+            <ClipboardCheck className="h-4 w-4 text-green-600" />
+            Bilan / Résultat
+          </label>
+          {readOnlyFields ? (
+            completionComment ? (
+              <p className="text-sm text-muted-foreground whitespace-pre-wrap">{completionComment}</p>
+            ) : (
+              <span className="text-sm text-muted-foreground italic">Aucun bilan renseigné</span>
+            )
+          ) : (
+            <Textarea
+              id="completionComment"
+              value={completionComment}
+              onChange={(e) => setCompletionComment(e.target.value)}
+              placeholder="Décrivez le résultat, les livrables ou les conclusions..."
+              rows={3}
+            />
+          )}
+        </div>
+      )}
       
       {!readOnlyFields && (
         <>

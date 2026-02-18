@@ -14,6 +14,7 @@ export interface TaskFormProps {
     assignee?: string;
     parent_task_id?: string;
     document_url?: string;
+    completion_comment?: string;
   };
   readOnlyFields?: boolean;
 }

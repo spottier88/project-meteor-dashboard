@@ -1773,6 +1773,7 @@ export type Database = {
       tasks: {
         Row: {
           assignee: string | null
+          completion_comment: string | null
           created_at: string | null
           description: string | null
           document_url: string | null
@@ -1787,6 +1788,7 @@ export type Database = {
         }
         Insert: {
           assignee?: string | null
+          completion_comment?: string | null
           created_at?: string | null
           description?: string | null
           document_url?: string | null
@@ -1801,6 +1803,7 @@ export type Database = {
         }
         Update: {
           assignee?: string | null
+          completion_comment?: string | null
           created_at?: string | null
           description?: string | null
           document_url?: string | null

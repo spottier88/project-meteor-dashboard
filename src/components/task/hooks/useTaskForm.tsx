@@ -32,6 +32,8 @@ export const useTaskForm = ({
     setParentTaskId,
     documentUrl,
     setDocumentUrl,
+    completionComment,
+    setCompletionComment,
     resetForm
   } = useTaskFormInitialization({ task, projectMembers });
 
@@ -56,6 +58,7 @@ export const useTaskForm = ({
       assignee,
       parentTaskId,
       documentUrl,
+      completionComment,
       isSubmitting
   });
 
@@ -77,6 +80,7 @@ export const useTaskForm = ({
       assignee,
       parent_task_id: parentTaskId === "none" ? null : parentTaskId || null,
       document_url: documentUrl.trim() || null,
+      completion_comment: status === "done" ? (completionComment.trim() || null) : null,
     };
 
     await submitTask(taskData);
@@ -102,6 +106,8 @@ export const useTaskForm = ({
     setParentTaskId,
     documentUrl,
     setDocumentUrl,
+    completionComment,
+    setCompletionComment,
     hasUnsavedChanges: trackerState.hasUnsavedChanges,
     resetHasUnsavedChanges: trackerState.resetHasUnsavedChanges,
     handleSubmit,

@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Pencil, Trash2, ChevronDown, ChevronRight, FileText } from "lucide-react";
+import { Pencil, Trash2, ChevronDown, ChevronRight, FileText, ClipboardCheck } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { cn } from "@/lib/utils";
 import { useTaskPermissions } from "@/hooks/useTaskPermissions";
@@ -32,6 +32,7 @@ interface Task {
   project_id: string;
   parent_task_id?: string;
   document_url?: string;
+  completion_comment?: string;
 }
 
 interface KanbanBoardProps {
@@ -289,6 +290,12 @@ export const KanbanBoard = ({ projectId, readOnly = false, onEditTask, isProject
                           <span className="truncate">Document lié</span>
                         </a>
                       )}
+                      {task.status === "done" && task.completion_comment && (
+                        <p className="text-sm text-green-700 flex items-start gap-1">
+                          <ClipboardCheck className="h-3 w-3 mt-0.5 flex-shrink-0" />
+                          <span className="line-clamp-2">{task.completion_comment}</span>
+                        </p>
+                      )}
                       {!readOnly && (
                         <div className="flex items-center justify-end gap-2 pt-2">
                           {canEditTask(task.assignee) && (
@@ -356,6 +363,12 @@ export const KanbanBoard = ({ projectId, readOnly = false, onEditTask, isProject
                                   <FileText className="h-3 w-3 flex-shrink-0" />
                                   <span className="truncate">Document lié</span>
                                 </a>
+                              )}
+                              {childTask.status === "done" && childTask.completion_comment && (
+                                <p className="text-sm text-green-700 flex items-start gap-1">
+                                  <ClipboardCheck className="h-3 w-3 mt-0.5 flex-shrink-0" />
+                                  <span className="line-clamp-2">{childTask.completion_comment}</span>
+                                </p>
                               )}
                               {!readOnly && (
                                 <div className="flex items-center justify-end gap-2 pt-2">
