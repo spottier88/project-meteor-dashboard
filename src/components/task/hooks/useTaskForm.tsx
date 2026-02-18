@@ -30,6 +30,8 @@ export const useTaskForm = ({
     setAssignmentMode,
     parentTaskId,
     setParentTaskId,
+    documentUrl,
+    setDocumentUrl,
     resetForm
   } = useTaskFormInitialization({ task, projectMembers });
 
@@ -51,9 +53,10 @@ export const useTaskForm = ({
     status,
     dueDate,
     startDate,
-    assignee,
-    parentTaskId,
-    isSubmitting
+      assignee,
+      parentTaskId,
+      documentUrl,
+      isSubmitting
   });
 
   // Fonction principale de soumission qui prépare les données avant de les envoyer
@@ -73,6 +76,7 @@ export const useTaskForm = ({
       start_date: formatLocalDate(startDate),
       assignee,
       parent_task_id: parentTaskId === "none" ? null : parentTaskId || null,
+      document_url: documentUrl.trim() || null,
     };
 
     await submitTask(taskData);
@@ -96,6 +100,8 @@ export const useTaskForm = ({
     isSubmitting,
     parentTaskId,
     setParentTaskId,
+    documentUrl,
+    setDocumentUrl,
     hasUnsavedChanges: trackerState.hasUnsavedChanges,
     resetHasUnsavedChanges: trackerState.resetHasUnsavedChanges,
     handleSubmit,

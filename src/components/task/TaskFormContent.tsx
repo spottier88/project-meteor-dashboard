@@ -6,6 +6,7 @@ import { Separator } from "@/components/ui/separator";
 import { ParentTaskSelector } from "./ParentTaskSelector";
 import { AssigneeSelector } from "./AssigneeSelector";
 import { DateInputField } from "@/components/form/DateInputField";
+import { FileText, ExternalLink } from "lucide-react";
 
 interface TaskFormContentProps {
   title: string;
@@ -22,6 +23,8 @@ interface TaskFormContentProps {
   setAssignee: (value: string) => void;
   assignmentMode: "free" | "member";
   setAssignmentMode: (value: "free" | "member") => void;
+  documentUrl: string;
+  setDocumentUrl: (value: string) => void;
   parentTaskId: string | undefined;
   setParentTaskId: (value: string | undefined) => void;
   projectTasks: Array<{ id: string; title: string }> | undefined;
@@ -53,6 +56,8 @@ export const TaskFormContent = ({
   setAssignee,
   assignmentMode,
   setAssignmentMode,
+  documentUrl,
+  setDocumentUrl,
   parentTaskId,
   setParentTaskId,
   projectTasks,
@@ -85,6 +90,37 @@ export const TaskFormContent = ({
           onChange={(e) => setDescription(e.target.value)}
           placeholder="Description de la tâche"
         />
+      </div>
+
+      {/* Champ lien document OneDrive / SharePoint */}
+      <div className="grid gap-2">
+        <label htmlFor="documentUrl" className="text-sm font-medium flex items-center gap-1">
+          <FileText className="h-4 w-4" />
+          Lien document (OneDrive / SharePoint)
+        </label>
+        {readOnlyFields ? (
+          documentUrl ? (
+            <a
+              href={documentUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-sm text-primary hover:underline flex items-center gap-1 truncate"
+            >
+              <ExternalLink className="h-3 w-3 flex-shrink-0" />
+              <span className="truncate">{documentUrl}</span>
+            </a>
+          ) : (
+            <span className="text-sm text-muted-foreground">Aucun document lié</span>
+          )
+        ) : (
+          <Input
+            id="documentUrl"
+            type="url"
+            value={documentUrl}
+            onChange={(e) => setDocumentUrl(e.target.value)}
+            placeholder="https://..."
+          />
+        )}
       </div>
       
       {!readOnlyFields && (

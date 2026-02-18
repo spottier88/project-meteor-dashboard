@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils";
 import { useState } from "react";
 import { SortableHeader, SortDirection } from "@/components/ui/sortable-header";
 import { Button } from "@/components/ui/button";
-import { ChevronDown, ChevronRight, Pencil, Trash2 } from "lucide-react";
+import { ChevronDown, ChevronRight, Pencil, Trash2, FileText } from "lucide-react";
 import { useTaskPermissions } from "@/hooks/useTaskPermissions";
 import { formatUserName } from "@/utils/formatUserName";
 import { useQuery } from "@tanstack/react-query";
@@ -21,6 +21,7 @@ interface Task {
   start_date?: string;
   project_id: string;
   parent_task_id?: string;
+  document_url?: string;
 }
 
 interface TaskTableProps {
@@ -238,6 +239,18 @@ export const TaskTable = ({ tasks, onEdit, onDelete, isProjectClosed = false }: 
                   </Button>
                 )}
                 {task.title}
+                {task.document_url && (
+                  <a
+                    href={task.document_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex ml-1 text-primary hover:text-primary/80"
+                    title="Document lié"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <FileText className="h-4 w-4" />
+                  </a>
+                )}
                 {task.id in childTasksByParent && (
                   <Badge variant="outline" className="ml-2 text-xs">
                     {childTasksByParent[task.id].length} sous-tâche(s)
@@ -295,6 +308,18 @@ export const TaskTable = ({ tasks, onEdit, onDelete, isProjectClosed = false }: 
                 <TableRow key={childTask.id} className="bg-muted/30">
                   <TableCell className="font-medium pl-10">
                     {childTask.title}
+                    {childTask.document_url && (
+                      <a
+                        href={childTask.document_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex ml-1 text-primary hover:text-primary/80"
+                        title="Document lié"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <FileText className="h-4 w-4" />
+                      </a>
+                    )}
                   </TableCell>
                   <TableCell>{childTask.description || "-"}</TableCell>
                   <TableCell>

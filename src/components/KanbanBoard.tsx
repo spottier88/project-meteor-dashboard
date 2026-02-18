@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Pencil, Trash2, ChevronDown, ChevronRight } from "lucide-react";
+import { Pencil, Trash2, ChevronDown, ChevronRight, FileText } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { cn } from "@/lib/utils";
 import { useTaskPermissions } from "@/hooks/useTaskPermissions";
@@ -31,6 +31,7 @@ interface Task {
   start_date?: string;
   project_id: string;
   parent_task_id?: string;
+  document_url?: string;
 }
 
 interface KanbanBoardProps {
@@ -277,6 +278,17 @@ export const KanbanBoard = ({ projectId, readOnly = false, onEditTask, isProject
                           Échéance : {new Date(task.due_date).toLocaleDateString("fr-FR")}
                         </p>
                       )}
+                      {task.document_url && (
+                        <a
+                          href={task.document_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-sm text-primary hover:underline flex items-center gap-1 truncate"
+                        >
+                          <FileText className="h-3 w-3 flex-shrink-0" />
+                          <span className="truncate">Document lié</span>
+                        </a>
+                      )}
                       {!readOnly && (
                         <div className="flex items-center justify-end gap-2 pt-2">
                           {canEditTask(task.assignee) && (
@@ -333,6 +345,17 @@ export const KanbanBoard = ({ projectId, readOnly = false, onEditTask, isProject
                                 )}>
                                   Échéance : {new Date(childTask.due_date).toLocaleDateString("fr-FR")}
                                 </p>
+                              )}
+                              {childTask.document_url && (
+                                <a
+                                  href={childTask.document_url}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-sm text-primary hover:underline flex items-center gap-1 truncate"
+                                >
+                                  <FileText className="h-3 w-3 flex-shrink-0" />
+                                  <span className="truncate">Document lié</span>
+                                </a>
                               )}
                               {!readOnly && (
                                 <div className="flex items-center justify-end gap-2 pt-2">

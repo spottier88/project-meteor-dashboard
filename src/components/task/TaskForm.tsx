@@ -61,6 +61,8 @@ export const TaskForm = ({
     isSubmitting,
     parentTaskId,
     setParentTaskId,
+    documentUrl,
+    setDocumentUrl,
     hasUnsavedChanges,
     resetHasUnsavedChanges,
     handleSubmit,
@@ -117,6 +119,8 @@ export const TaskForm = ({
             setAssignee={setAssignee}
             assignmentMode={assignmentMode}
             setAssignmentMode={setAssignmentMode}
+            documentUrl={documentUrl}
+            setDocumentUrl={setDocumentUrl}
             parentTaskId={parentTaskId}
             setParentTaskId={setParentTaskId}
             projectTasks={projectTasks}
