@@ -1,7 +1,7 @@
 
 import { Button } from "@/components/ui/button";
 import { TableCell, TableRow } from "@/components/ui/table";
-import { Pencil, Trash2 } from "lucide-react";
+import { Pencil, Trash2, FileText } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTaskPermissions } from "@/hooks/useTaskPermissions";
 import { formatUserName } from "@/utils/formatUserName";
@@ -17,6 +17,7 @@ interface TaskCardProps {
     assignee?: string;
     due_date?: string;
     project_id: string;
+    document_url?: string;
     projects?: {
       id: string;
       title: string;
@@ -108,7 +109,23 @@ export const TaskCard = ({ task, onEdit, onDelete, showActions = true }: TaskCar
       <TableCell className="font-medium">
         {task.projects?.title || "-"}
       </TableCell>
-      <TableCell>{task.title}</TableCell>
+      <TableCell>
+        <span className="flex items-center gap-1">
+          {task.title}
+          {task.document_url && (
+            <a
+              href={task.document_url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex text-primary hover:text-primary/80"
+              title="Document lié"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <FileText className="h-4 w-4" />
+            </a>
+          )}
+        </span>
+      </TableCell>
       <TableCell className="max-w-md">{task.description || "-"}</TableCell>
       <TableCell>
         <span className={statusColors[task.status]}>

@@ -10,6 +10,7 @@ interface UseUnsavedChangesTrackerParams {
     start_date?: string;
     assignee?: string;
     parent_task_id?: string;
+    document_url?: string;
   };
   title: string;
   description: string;
@@ -18,6 +19,7 @@ interface UseUnsavedChangesTrackerParams {
   startDate?: Date;
   assignee: string;
   parentTaskId?: string;
+  documentUrl: string;
   isSubmitting: boolean;
 }
 
@@ -30,6 +32,7 @@ export const useUnsavedChangesTracker = ({
   startDate,
   assignee,
   parentTaskId,
+  documentUrl,
   isSubmitting
 }: UseUnsavedChangesTrackerParams) => {
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
@@ -49,6 +52,7 @@ export const useUnsavedChangesTracker = ({
       const originalStartDate = task.start_date ? new Date(task.start_date).toISOString() : undefined;
       const originalAssignee = task.assignee || "";
       const originalParentTaskId = task.parent_task_id;
+      const originalDocumentUrl = task.document_url || "";
       
       const currentStartDate = startDate?.toISOString();
       const currentDueDate = dueDate?.toISOString();
@@ -61,14 +65,15 @@ export const useUnsavedChangesTracker = ({
         (currentDueDate !== originalDueDate) ||
         (currentStartDate !== originalStartDate) ||
         assignee !== originalAssignee ||
-        parentTaskId !== originalParentTaskId;
+        parentTaskId !== originalParentTaskId ||
+        documentUrl !== originalDocumentUrl;
       
       setHasUnsavedChanges(hasChanges);
-    } else if (title || description || assignee || dueDate || startDate || status !== "todo" || parentTaskId) {
+    } else if (title || description || assignee || dueDate || startDate || status !== "todo" || parentTaskId || documentUrl) {
       // Pour les nouvelles tâches, vérifier s'il y a des saisies
       setHasUnsavedChanges(true);
     }
-  }, [title, description, status, dueDate, startDate, assignee, parentTaskId, task]);
+  }, [title, description, status, dueDate, startDate, assignee, parentTaskId, documentUrl, task]);
 
   // Ne pas suivre les changements pendant la soumission
   useEffect(() => {

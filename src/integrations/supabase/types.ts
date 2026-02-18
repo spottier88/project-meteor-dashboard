@@ -1775,6 +1775,7 @@ export type Database = {
           assignee: string | null
           created_at: string | null
           description: string | null
+          document_url: string | null
           due_date: string | null
           id: string
           parent_task_id: string | null
@@ -1788,6 +1789,7 @@ export type Database = {
           assignee?: string | null
           created_at?: string | null
           description?: string | null
+          document_url?: string | null
           due_date?: string | null
           id?: string
           parent_task_id?: string | null
@@ -1801,6 +1803,7 @@ export type Database = {
           assignee?: string | null
           created_at?: string | null
           description?: string | null
+          document_url?: string | null
           due_date?: string | null
           id?: string
           parent_task_id?: string | null
