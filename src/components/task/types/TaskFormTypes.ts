@@ -9,6 +9,7 @@ export interface TaskData {
   assignee?: string;
   parent_task_id?: string | null;
   document_url?: string | null;
+  completion_comment?: string | null;
   id?: string;
 }
 
@@ -24,6 +25,7 @@ export interface UseTaskFormParams {
     assignee?: string;
     parent_task_id?: string;
     document_url?: string;
+    completion_comment?: string;
   };
   onClose: () => void;
   onSubmit?: () => void;
@@ -48,6 +50,7 @@ export interface TaskFormState {
   assignmentMode: "free" | "member";
   parentTaskId: string | undefined;
   documentUrl: string;
+  completionComment: string;
   isSubmitting: boolean;
   hasUnsavedChanges: boolean;
 }

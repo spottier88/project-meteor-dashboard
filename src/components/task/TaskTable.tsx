@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils";
 import { useState } from "react";
 import { SortableHeader, SortDirection } from "@/components/ui/sortable-header";
 import { Button } from "@/components/ui/button";
-import { ChevronDown, ChevronRight, Pencil, Trash2, FileText } from "lucide-react";
+import { ChevronDown, ChevronRight, Pencil, Trash2, FileText, ClipboardCheck } from "lucide-react";
 import { useTaskPermissions } from "@/hooks/useTaskPermissions";
 import { formatUserName } from "@/utils/formatUserName";
 import { useQuery } from "@tanstack/react-query";
@@ -22,6 +22,7 @@ interface Task {
   project_id: string;
   parent_task_id?: string;
   document_url?: string;
+  completion_comment?: string;
 }
 
 interface TaskTableProps {
@@ -250,6 +251,11 @@ export const TaskTable = ({ tasks, onEdit, onDelete, isProjectClosed = false }: 
                   >
                     <FileText className="h-4 w-4" />
                   </a>
+                )}
+                {task.completion_comment && (
+                  <span title={task.completion_comment} className="inline-flex ml-1 text-green-600">
+                    <ClipboardCheck className="h-4 w-4" />
+                  </span>
                 )}
                 {task.id in childTasksByParent && (
                   <Badge variant="outline" className="ml-2 text-xs">

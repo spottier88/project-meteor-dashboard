@@ -16,6 +16,7 @@ export const useTaskFormInitialization = ({ task, projectMembers }: Pick<UseTask
   const [assignmentMode, setAssignmentMode] = useState<"free" | "member">("free");
   const [parentTaskId, setParentTaskId] = useState<string | undefined>(task?.parent_task_id);
   const [documentUrl, setDocumentUrl] = useState(task?.document_url || "");
+  const [completionComment, setCompletionComment] = useState(task?.completion_comment || "");
 
   useEffect(() => {
     if (task) {
@@ -27,6 +28,7 @@ export const useTaskFormInitialization = ({ task, projectMembers }: Pick<UseTask
       setAssignee(task.assignee || "");
       setParentTaskId(task.parent_task_id);
       setDocumentUrl(task.document_url || "");
+      setCompletionComment(task.completion_comment || "");
       
       const isMember = projectMembers?.some(m => m.profiles.email === task.assignee);
       setAssignmentMode(isMember ? "member" : "free");
@@ -39,6 +41,7 @@ export const useTaskFormInitialization = ({ task, projectMembers }: Pick<UseTask
       setAssignee("");
       setParentTaskId(undefined);
       setDocumentUrl("");
+      setCompletionComment("");
       
       if (projectMembers && projectMembers.length > 0) {
         setAssignmentMode("member");
@@ -58,6 +61,7 @@ export const useTaskFormInitialization = ({ task, projectMembers }: Pick<UseTask
     setAssignee("");
     setParentTaskId(undefined);
     setDocumentUrl("");
+    setCompletionComment("");
     
     if (projectMembers && projectMembers.length > 0) {
       setAssignmentMode("member");
@@ -85,6 +89,8 @@ export const useTaskFormInitialization = ({ task, projectMembers }: Pick<UseTask
     setParentTaskId,
     documentUrl,
     setDocumentUrl,
+    completionComment,
+    setCompletionComment,
     resetForm
   };
 };

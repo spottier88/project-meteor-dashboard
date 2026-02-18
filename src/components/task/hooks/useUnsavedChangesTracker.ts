@@ -11,6 +11,7 @@ interface UseUnsavedChangesTrackerParams {
     assignee?: string;
     parent_task_id?: string;
     document_url?: string;
+    completion_comment?: string;
   };
   title: string;
   description: string;
@@ -20,6 +21,7 @@ interface UseUnsavedChangesTrackerParams {
   assignee: string;
   parentTaskId?: string;
   documentUrl: string;
+  completionComment: string;
   isSubmitting: boolean;
 }
 
@@ -33,6 +35,7 @@ export const useUnsavedChangesTracker = ({
   assignee,
   parentTaskId,
   documentUrl,
+  completionComment,
   isSubmitting
 }: UseUnsavedChangesTrackerParams) => {
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
@@ -53,6 +56,7 @@ export const useUnsavedChangesTracker = ({
       const originalAssignee = task.assignee || "";
       const originalParentTaskId = task.parent_task_id;
       const originalDocumentUrl = task.document_url || "";
+      const originalCompletionComment = task.completion_comment || "";
       
       const currentStartDate = startDate?.toISOString();
       const currentDueDate = dueDate?.toISOString();
@@ -66,14 +70,15 @@ export const useUnsavedChangesTracker = ({
         (currentStartDate !== originalStartDate) ||
         assignee !== originalAssignee ||
         parentTaskId !== originalParentTaskId ||
-        documentUrl !== originalDocumentUrl;
+        documentUrl !== originalDocumentUrl ||
+        completionComment !== originalCompletionComment;
       
       setHasUnsavedChanges(hasChanges);
-    } else if (title || description || assignee || dueDate || startDate || status !== "todo" || parentTaskId || documentUrl) {
+    } else if (title || description || assignee || dueDate || startDate || status !== "todo" || parentTaskId || documentUrl || completionComment) {
       // Pour les nouvelles tâches, vérifier s'il y a des saisies
       setHasUnsavedChanges(true);
     }
-  }, [title, description, status, dueDate, startDate, assignee, parentTaskId, documentUrl, task]);
+  }, [title, description, status, dueDate, startDate, assignee, parentTaskId, documentUrl, completionComment, task]);
 
   // Ne pas suivre les changements pendant la soumission
   useEffect(() => {

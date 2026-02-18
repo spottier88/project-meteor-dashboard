@@ -1,7 +1,7 @@
 
 import { Button } from "@/components/ui/button";
 import { TableCell, TableRow } from "@/components/ui/table";
-import { Pencil, Trash2, FileText } from "lucide-react";
+import { Pencil, Trash2, FileText, ClipboardCheck } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTaskPermissions } from "@/hooks/useTaskPermissions";
 import { formatUserName } from "@/utils/formatUserName";
@@ -18,6 +18,7 @@ interface TaskCardProps {
     due_date?: string;
     project_id: string;
     document_url?: string;
+    completion_comment?: string;
     projects?: {
       id: string;
       title: string;
@@ -123,6 +124,11 @@ export const TaskCard = ({ task, onEdit, onDelete, showActions = true }: TaskCar
             >
               <FileText className="h-4 w-4" />
             </a>
+          )}
+          {task.completion_comment && (
+            <span title={task.completion_comment} className="inline-flex text-green-600">
+              <ClipboardCheck className="h-4 w-4" />
+            </span>
           )}
         </span>
       </TableCell>
