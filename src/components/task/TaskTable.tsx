@@ -8,8 +8,10 @@ import { Button } from "@/components/ui/button";
 import { ChevronDown, ChevronRight, Pencil, Trash2, FileText, ClipboardCheck } from "lucide-react";
 import { useTaskPermissions } from "@/hooks/useTaskPermissions";
 import { formatUserName } from "@/utils/formatUserName";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/components/ui/use-toast";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface Task {
   id: string;
@@ -49,10 +51,26 @@ export const TaskTable = ({ tasks, onEdit, onDelete, isProjectClosed = false }: 
   const [sortDirection, setSortDirection] = useState<SortDirection>(null);
   const [expandedTasks, setExpandedTasks] = useState<Record<string, boolean>>({});
   const { canEditTask: hookCanEdit, canDeleteTask: hookCanDelete } = useTaskPermissions(tasks[0]?.project_id || "");
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
 
   // Forcer lecture seule si projet clôturé (override synchrone des permissions async)
   const canEditTask = (assignee?: string) => isProjectClosed ? false : hookCanEdit(assignee);
   const canDeleteTask = isProjectClosed ? false : hookCanDelete;
+
+  // Fonction de changement rapide de statut (cycle : todo -> in_progress -> done -> todo)
+  const cycleTaskStatus = async (taskId: string, currentStatus: string, assignee?: string) => {
+    if (!canEditTask(assignee)) return;
+    const nextStatus: Record<string, "todo" | "in_progress" | "done"> = { todo: "in_progress", in_progress: "done", done: "todo" };
+    const next = nextStatus[currentStatus];
+    const { error } = await supabase.from("tasks").update({ status: next }).eq("id", taskId);
+    if (error) {
+      toast({ title: "Erreur", description: "Impossible de changer le statut", variant: "destructive" });
+    } else {
+      queryClient.invalidateQueries({ queryKey: ["tasks", tasks[0]?.project_id] });
+      toast({ title: "Statut mis à jour", description: `Statut changé vers "${statusLabels[next as keyof typeof statusLabels]}"` });
+    }
+  };
 
   // Récupérer les profils des membres du projet
   const { data: projectMembers } = useQuery({
@@ -265,9 +283,24 @@ export const TaskTable = ({ tasks, onEdit, onDelete, isProjectClosed = false }: 
               </TableCell>
               <TableCell>{task.description || "-"}</TableCell>
               <TableCell>
-                <Badge className={cn(statusColors[task.status])}>
-                  {statusLabels[task.status]}
-                </Badge>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Badge
+                        className={cn(
+                          statusColors[task.status],
+                          canEditTask(task.assignee) && "cursor-pointer hover:opacity-80 transition-opacity"
+                        )}
+                        onClick={() => canEditTask(task.assignee) && cycleTaskStatus(task.id, task.status, task.assignee)}
+                      >
+                        {statusLabels[task.status]}
+                      </Badge>
+                    </TooltipTrigger>
+                    {canEditTask(task.assignee) && (
+                      <TooltipContent>Cliquer pour avancer le statut</TooltipContent>
+                    )}
+                  </Tooltip>
+                </TooltipProvider>
               </TableCell>
               <TableCell>{formatUserName(task.assignee, profiles)}</TableCell>
               <TableCell>
