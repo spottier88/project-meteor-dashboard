@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Pencil, Trash2, ChevronDown, ChevronRight, FileText, ClipboardCheck } from "lucide-react";
+import { Pencil, Trash2, ChevronDown, ChevronRight, ChevronLeft, FileText, ClipboardCheck, ArrowRight, ArrowLeft } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { cn } from "@/lib/utils";
 import { useTaskPermissions } from "@/hooks/useTaskPermissions";
@@ -158,6 +158,25 @@ export const KanbanBoard = ({ projectId, readOnly = false, onEditTask, isProject
     }
   };
 
+  // Changement rapide de statut pour les cartes Kanban
+  const statusOrder: Array<"todo" | "in_progress" | "done"> = ["todo", "in_progress", "done"];
+  
+  const changeTaskStatus = async (taskId: string, direction: "next" | "prev", assignee?: string) => {
+    if (!canEditTask(assignee)) return;
+    const task = tasks.find(t => t.id === taskId);
+    if (!task) return;
+    const currentIndex = statusOrder.indexOf(task.status);
+    const newIndex = direction === "next" ? currentIndex + 1 : currentIndex - 1;
+    if (newIndex < 0 || newIndex >= statusOrder.length) return;
+    const newStatus = statusOrder[newIndex];
+    const { error } = await supabase.from("tasks").update({ status: newStatus }).eq("id", taskId);
+    if (error) {
+      toast({ title: "Erreur", description: "Impossible de changer le statut", variant: "destructive" });
+    } else {
+      queryClient.invalidateQueries({ queryKey: ["tasks", projectId] });
+    }
+  };
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case "todo":
@@ -297,25 +316,55 @@ export const KanbanBoard = ({ projectId, readOnly = false, onEditTask, isProject
                         </p>
                       )}
                       {!readOnly && (
-                        <div className="flex items-center justify-end gap-2 pt-2">
+                        <div className="flex items-center justify-between pt-2">
+                          {/* Boutons de navigation rapide entre statuts */}
                           {canEditTask(task.assignee) && (
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => onEditTask?.(task)}
-                            >
-                              <Pencil className="h-4 w-4" />
-                            </Button>
+                            <div className="flex items-center gap-1">
+                              {task.status !== "todo" && (
+                                <Button
+                                  variant="outline"
+                                  size="icon"
+                                  className="h-6 w-6"
+                                  onClick={() => changeTaskStatus(task.id, "prev", task.assignee)}
+                                  title="Statut précédent"
+                                >
+                                  <ArrowLeft className="h-3 w-3" />
+                                </Button>
+                              )}
+                              {task.status !== "done" && (
+                                <Button
+                                  variant="outline"
+                                  size="icon"
+                                  className="h-6 w-6"
+                                  onClick={() => changeTaskStatus(task.id, "next", task.assignee)}
+                                  title="Statut suivant"
+                                >
+                                  <ArrowRight className="h-3 w-3" />
+                                </Button>
+                              )}
+                            </div>
                           )}
-                          {canDeleteTask && (
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => setTaskToDelete(task.id)}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          )}
+                          {!canEditTask(task.assignee) && <div />}
+                          <div className="flex items-center gap-1">
+                            {canEditTask(task.assignee) && (
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => onEditTask?.(task)}
+                              >
+                                <Pencil className="h-4 w-4" />
+                              </Button>
+                            )}
+                            {canDeleteTask && (
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => setTaskToDelete(task.id)}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            )}
+                          </div>
                         </div>
                       )}
                     </Card>

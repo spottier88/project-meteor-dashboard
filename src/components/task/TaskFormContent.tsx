@@ -1,10 +1,10 @@
 
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { ParentTaskSelector } from "./ParentTaskSelector";
 import { AssigneeSelector } from "./AssigneeSelector";
+import { TaskStatusButtons } from "./TaskStatusButtons";
 import { DateInputField } from "@/components/form/DateInputField";
 import { FileText, ExternalLink, ClipboardCheck } from "lucide-react";
 
@@ -138,21 +138,11 @@ export const TaskFormContent = ({
       
       <Separator className="my-2" />
       
-      <div className="grid gap-2">
-        <label htmlFor="status" className="text-sm font-medium">
-          Statut
-        </label>
-        <Select value={status} onValueChange={(value: "todo" | "in_progress" | "done") => setStatus(value)}>
-          <SelectTrigger>
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="todo">À faire</SelectItem>
-            <SelectItem value="in_progress">En cours</SelectItem>
-            <SelectItem value="done">Terminé</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
+      <TaskStatusButtons
+        status={status}
+        onStatusChange={setStatus}
+        readOnly={readOnlyFields}
+      />
 
       {/* Champ bilan/résultat conditionnel - visible uniquement si statut "Terminé" */}
       {status === "done" && (
