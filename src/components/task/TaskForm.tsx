@@ -89,6 +89,9 @@ export const TaskForm = ({
   const handleConfirmClose = () => {
     setShowUnsavedChangesAlert(false);
     resetHasUnsavedChanges();
+    // Restaurer les pointer-events après fermeture des modales imbriquées
+    document.body.style.pointerEvents = "";
+    document.documentElement.style.pointerEvents = "";
     onClose();
   };
 
@@ -151,7 +154,14 @@ export const TaskForm = ({
       </Dialog>
 
       <AlertDialog open={showUnsavedChangesAlert} onOpenChange={setShowUnsavedChangesAlert}>
-        <AlertDialogContent>
+        <AlertDialogContent
+          onCloseAutoFocus={(e) => {
+            // Empêcher le focus automatique et restaurer les pointer-events
+            e.preventDefault();
+            document.body.style.pointerEvents = "";
+            document.documentElement.style.pointerEvents = "";
+          }}
+        >
           <AlertDialogHeader>
             <AlertDialogTitle>Modifications non enregistrées</AlertDialogTitle>
             <AlertDialogDescription>
