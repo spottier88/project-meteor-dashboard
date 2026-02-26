@@ -23,7 +23,7 @@ const fetchReviewsInChunks = async (projectIds: string[]) => {
     chunks.map(chunk =>
       supabase
         .from("latest_reviews")
-        .select("project_id, completion")
+        .select("project_id, completion, created_at")
         .in("project_id", chunk)
     )
   );
@@ -91,7 +91,9 @@ export const usePortfolioDetails = (portfolioId: string) => {
       const reviewsData = await fetchReviewsInChunks(projects.map(p => p.id));
 
       // Créer un map des completions par projet
+      // Map des completions et dates de dernière revue par projet
       const completionMap = new Map(reviewsData?.map(r => [r.project_id, r.completion]) || []);
+      const lastReviewDateMap = new Map(reviewsData?.map(r => [r.project_id, r.created_at]) || []);
 
       // Récupérer les profils des chefs de projet pour afficher leur nom
       const managerEmails = [...new Set(
@@ -115,6 +117,7 @@ export const usePortfolioDetails = (portfolioId: string) => {
       const enrichedProjects = projects.map(project => ({
         ...project,
         completion: completionMap.get(project.id) || 0,
+        last_review_date: lastReviewDateMap.get(project.id) || null,
         manager_profile: project.project_manager 
           ? managerProfileMap.get(project.project_manager) || null 
           : null
