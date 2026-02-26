@@ -4,8 +4,9 @@ import { mapTasksToGanttFormat } from '@/utils/gantt-helpers';
 import "gantt-task-react/dist/index.css";
 import "@/styles/gantt.css";
 import { Button } from "@/components/ui/button";
-import { CalendarDays, CalendarRange, Calendar } from "lucide-react";
+import { CalendarDays, CalendarRange, Calendar, FileSpreadsheet } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { exportGanttToExcel } from "@/utils/ganttExcelExport";
 import { toast } from "sonner";
 import { logger } from "@/utils/logger";
 
@@ -16,9 +17,10 @@ interface TaskGanttProps {
   onUpdate?: () => void;
   onExpanderClick?: (task: any) => void; // Propriété pour gérer l'expansion
   isProjectClosed?: boolean; // Prop pour forcer le mode lecture seule si projet clôturé
+  projectTitle?: string; // Titre du projet pour l'export Excel
 }
 
-export const TaskGantt: React.FC<TaskGanttProps> = ({ tasks, projectId, onEdit, onUpdate, onExpanderClick, isProjectClosed = false }) => {
+export const TaskGantt: React.FC<TaskGanttProps> = ({ tasks, projectId, onEdit, onUpdate, onExpanderClick, isProjectClosed = false, projectTitle }) => {
   const [viewMode, setViewMode] = useState<ViewMode>(ViewMode.Week);
   const [showTaskList, setShowTaskList] = useState<boolean>(true);
   const [localTasks, setLocalTasks] = useState<Array<any>>(tasks);
@@ -127,13 +129,24 @@ export const TaskGantt: React.FC<TaskGanttProps> = ({ tasks, projectId, onEdit, 
           </Button>
         </div>
         
-        <Button
-          size="sm"
-          variant="outline"
-          onClick={() => setShowTaskList(!showTaskList)}
-        >
-          {showTaskList ? "Masquer liste des tâches" : "Afficher liste des tâches"}
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => exportGanttToExcel(ganttTasks, projectTitle)}
+            disabled={ganttTasks.length === 0}
+          >
+            <FileSpreadsheet className="h-4 w-4 mr-2" />
+            Export Gantt Excel
+          </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => setShowTaskList(!showTaskList)}
+          >
+            {showTaskList ? "Masquer liste des tâches" : "Afficher liste des tâches"}
+          </Button>
+        </div>
       </div>
 
       {ganttTasks.length > 0 ? (

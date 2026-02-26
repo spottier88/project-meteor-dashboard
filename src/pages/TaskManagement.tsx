@@ -137,6 +137,7 @@ export const TaskManagement = () => {
           canEdit={isReadOnlyViaPortfolio ? false : canEdit}
           isProjectManager={isProjectManager}
           isAdmin={isReadOnlyViaPortfolio ? false : isAdmin}
+          projectTitle={project.title}
         />
       </div>
     </div>

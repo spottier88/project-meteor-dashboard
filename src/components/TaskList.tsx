@@ -28,6 +28,7 @@ export interface TaskListProps {
   canEdit: boolean;
   isProjectManager: boolean;
   isAdmin: boolean;
+  projectTitle?: string;
   isProjectClosed?: boolean; // Prop pour forcer le mode lecture seule si projet clôturé
   preloadedTasks?: any[]; // Données pré-chargées optionnelles
 }
@@ -39,6 +40,7 @@ export const TaskList = ({
   isAdmin,
   isProjectClosed = false,
   preloadedTasks,
+  projectTitle,
 }: TaskListProps) => {
   const { toast } = useToast();
   const { isManager } = usePermissionsContext();
@@ -182,6 +184,7 @@ export const TaskList = ({
           <TaskGantt 
             tasks={filteredTasks || []}
             projectId={projectId}
+            projectTitle={projectTitle}
             onEdit={(task) => {
               if (canEditTask(task.assignee)) {
                 setSelectedTask(task);
