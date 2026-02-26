@@ -1,104 +1,70 @@
 
 
-# Evolution du changement de statut des taches
+# Export Excel avec visualisation Gantt depuis la vue Gantt des taches
 
-## Constat actuel
+## Objectif
 
-Le changement de statut d'une tache repose actuellement sur une **liste deroulante classique** (`Select`) dans le formulaire d'edition. Ce fonctionnement presente plusieurs inconvenients :
-- Il faut **ouvrir le formulaire complet** pour simplement changer un statut
-- La liste deroulante n'offre pas de retour visuel immediat sur la progression
-- Le flux "A faire > En cours > Termine" n'est pas represente visuellement
+Ajouter un bouton d'export Excel dans la barre d'outils de la vue Gantt (`TaskGantt.tsx`) qui genere un fichier Excel contenant la liste des taches **et** une representation visuelle du Gantt sous forme de cellules colorees representant la duree de chaque tache sur une echelle temporelle.
 
-## Evolution proposee : Boutons de progression contextuelle
+## Principe de la visualisation Gantt dans Excel
 
-Remplacer la liste deroulante par un **groupe de boutons visuels** representant le flux de progression de la tache, et ajouter un **changement rapide de statut** directement depuis les vues tableau et Kanban (sans ouvrir le formulaire).
-
-### 1. Dans le formulaire d'edition (`TaskFormContent.tsx`)
-
-Remplacer le `Select` par **3 boutons cote a cote** representant les etapes :
+Le fichier Excel genere contiendra :
+- **Colonnes fixes** (a gauche) : Nom de la tache, Statut, Date debut, Date fin, Avancement
+- **Colonnes temporelles** (a droite) : une colonne par semaine (ou par jour selon la granularite) couvrant la plage temporelle de toutes les taches. Chaque cellule correspondant a une periode ou la tache est active sera coloree avec un fond correspondant au statut (gris = a faire, bleu = en cours, vert = termine)
 
 ```text
-[ O A faire ]  [ > En cours ]  [ v Termine ]
-     gris           bleu            vert
+| Nom         | Statut   | Debut      | Fin        | Avancement | S1  | S2  | S3  | S4  | S5  |
+|-------------|----------|------------|------------|------------|-----|-----|-----|-----|-----|
+| Tache A     | En cours | 01/03/2026 | 15/03/2026 |    50%     | [=] | [=] | [=] |     |     |
+| Tache B     | A faire  | 10/03/2026 | 28/03/2026 |     0%     |     | [=] | [=] | [=] | [=] |
 ```
 
-- Chaque bouton affiche une icone et un label
-- Le bouton actif est mis en evidence (fond colore, bordure)
-- Les boutons inactifs restent cliquables mais en style attenue
-- Le clic sur un bouton change immediatement le statut
-- Le champ "Bilan / Resultat" apparait toujours conditionnellement quand "Termine" est selectionne
+Les cellules actives sont remplies avec une couleur de fond (pas de texte), ce qui reproduit visuellement un diagramme de Gantt directement dans Excel.
 
-### 2. Changement rapide dans le tableau (`TaskTable.tsx`)
+## Modifications techniques
 
-Rendre le **badge de statut cliquable** dans la colonne "Statut" :
-- Au clic sur le badge, le statut passe a l'etape suivante (todo > in_progress > done)
-- Mise a jour directe en base sans ouvrir le formulaire
-- Animation subtile de transition
-- Le badge cliquable affiche un curseur pointer et un tooltip "Cliquer pour avancer le statut"
-- Desactive si le projet est cloture ou si l'utilisateur n'a pas les droits d'edition
+### 1. Nouveau fichier utilitaire : `src/utils/ganttExcelExport.ts`
 
-### 3. Changement rapide dans le Kanban (`KanbanBoard.tsx`)
+Fonction principale `exportGanttToExcel(tasks: Task[], projectTitle?: string)` :
 
-Ajouter de **petits boutons fleches** sur les cartes :
-- Fleche droite pour avancer au statut suivant
-- Fleche gauche pour revenir au statut precedent
-- Visibles au survol de la carte uniquement (pour ne pas surcharger)
-- Mise a jour directe en base avec rafraichissement de la vue
+- **Calcul de la plage temporelle** : trouver la date min et max parmi toutes les taches, avec une marge d'une semaine de chaque cote
+- **Generation des colonnes temporelles** : creer une colonne par semaine (lundi de chaque semaine) entre date min et date max
+- **Construction des donnees** :
+  - Ligne d'en-tete : colonnes fixes + dates des semaines formatees (ex: "03/03", "10/03", ...)
+  - Lignes de taches : donnees textuelles + cellules vides ou marquees pour les periodes actives
+- **Application des styles Excel** (via les capacites de `xlsx`) :
+  - Couleur de fond des cellules Gantt selon le statut de la tache
+  - En-tetes en gras avec fond gris
+  - Largeurs de colonnes adaptees (colonnes temporelles etroites ~4 caracteres)
+- **Generation du fichier** : `gantt-[projectTitle]-[date].xlsx`
 
----
+### 2. Modification de `src/components/task/TaskGantt.tsx`
 
-## Details techniques
+- Importer la fonction `exportGanttToExcel` et l'icone `FileSpreadsheet`
+- Ajouter un bouton "Export Gantt Excel" dans la barre d'outils (a cote du bouton "Masquer/Afficher liste")
+- Au clic, appeler `exportGanttToExcel(ganttTasks, projectTitle)` avec les taches deja formatees
 
-### Fichiers a creer
+### 3. Props de `TaskGantt`
 
-| Fichier | Description |
-|---------|-------------|
-| `src/components/task/TaskStatusButtons.tsx` | Composant reutilisable de boutons de statut (3 boutons avec icones) |
+- Ajouter une prop optionnelle `projectTitle?: string` pour nommer le fichier d'export. Si non fournie, utiliser "projet" par defaut.
 
-### Fichiers a modifier
+## Fichiers concernes
 
-| Fichier | Modification |
-|---------|-------------|
-| `src/components/task/TaskFormContent.tsx` | Remplacer le `Select` par `TaskStatusButtons` |
-| `src/components/task/TaskTable.tsx` | Rendre le badge de statut cliquable avec progression rapide |
-| `src/components/KanbanBoard.tsx` | Ajouter les boutons fleches de navigation entre statuts |
+| Fichier | Action |
+|---------|--------|
+| `src/utils/ganttExcelExport.ts` | Creation - logique d'export Excel avec Gantt visuel |
+| `src/components/task/TaskGantt.tsx` | Modification - ajout du bouton d'export et de la prop `projectTitle` |
+| `src/pages/TaskManagement.tsx` | Modification - passer `projectTitle` au composant `TaskGantt` |
 
-### Composant `TaskStatusButtons`
+## Limites connues
 
-Ce composant encapsule la logique des 3 boutons de statut :
-- Props : `status`, `onStatusChange`, `disabled`, `readOnly`
-- Utilise `ToggleGroup` de Radix (deja installe) pour le comportement de selection exclusive
-- Icones : `Circle` (A faire), `Clock` (En cours), `CheckCircle2` (Termine)
-- Style : le bouton actif a un fond colore + bordure, les autres sont en variante `outline`
-
-### Changement rapide (tableau et Kanban)
-
-La logique de mise a jour rapide sera une fonction partagee :
-
-```text
-Fonction cycleTaskStatus(taskId, currentStatus) :
-  - todo -> in_progress
-  - in_progress -> done
-  - done -> todo (retour au debut)
-  - Met a jour en base (supabase.update)
-  - Invalide le cache React Query
-  - Affiche un toast de confirmation
-```
-
-Pour le Kanban, deux fonctions distinctes (avancer / reculer) au lieu du cycle.
-
-### Gestion des permissions
-
-Les actions rapides respectent les memes permissions que l'edition :
-- `canEditTask(assignee)` pour verifier le droit
-- `isProjectClosed` pour bloquer les modifications
-
----
+La bibliotheque `xlsx` (version community) ne supporte pas nativement les couleurs de cellules. Deux approches possibles :
+- **Approche retenue** : utiliser un marqueur textuel (ex: caractere plein "█" ou "X") dans les cellules actives avec une mise en forme conditionnelle basique, ce qui reste lisible et fonctionnel
+- Les couleurs de fond reelles necessiteraient `xlsx-style` ou `exceljs`, mais pour rester coherent avec les dependances existantes, on reste sur `xlsx` avec des marqueurs visuels
 
 ## Sequencement
 
-1. Creer `TaskStatusButtons.tsx` (composant reutilisable)
-2. Modifier `TaskFormContent.tsx` (remplacer Select par TaskStatusButtons)
-3. Modifier `TaskTable.tsx` (badge cliquable avec progression rapide)
-4. Modifier `KanbanBoard.tsx` (boutons fleches sur les cartes)
+1. Creer `ganttExcelExport.ts` avec la logique complete
+2. Modifier `TaskGantt.tsx` pour ajouter le bouton et la prop
+3. Modifier `TaskManagement.tsx` pour transmettre le titre du projet
 
