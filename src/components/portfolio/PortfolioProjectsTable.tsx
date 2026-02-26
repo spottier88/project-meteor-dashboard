@@ -55,6 +55,8 @@ interface Project {
   priority: string | null;
   created_at: string | null;
   completion: number;
+  /** Date de la dernière revue */
+  last_review_date: string | null;
   /** Profil du chef de projet (nom/prénom) pour affichage */
   manager_profile?: {
     first_name: string | null;
@@ -257,13 +259,20 @@ export const PortfolioProjectsTable = ({
                 currentDirection={sortDirection}
                 onSort={handleSort}
               />
+              <SortableHeader
+                label="Dernière revue"
+                sortKey="last_review_date"
+                currentSort={sortKey}
+                currentDirection={sortDirection}
+                onSort={handleSort}
+              />
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {sortedProjects.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={9} className="text-center py-8 text-muted-foreground">
+                <TableCell colSpan={10} className="text-center py-8 text-muted-foreground">
                   {projects.length === 0 
                     ? "Aucun projet dans ce portefeuille" 
                     : "Aucun projet ne correspond aux filtres"}
@@ -321,6 +330,12 @@ export const PortfolioProjectsTable = ({
                   <TableCell>
                     {project.end_date 
                       ? format(new Date(project.end_date), "dd/MM/yyyy", { locale: fr })
+                      : "-"
+                    }
+                  </TableCell>
+                  <TableCell>
+                    {project.last_review_date 
+                      ? format(new Date(project.last_review_date), "dd/MM/yyyy", { locale: fr })
                       : "-"
                     }
                   </TableCell>
