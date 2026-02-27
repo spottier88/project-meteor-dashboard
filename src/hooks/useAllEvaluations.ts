@@ -81,6 +81,9 @@ export const useAllEvaluations = (filters: EvaluationFilters = {}) => {
       // Filtrage côté client (car les filtres sont sur la table jointe)
       let filteredData = (data || []) as EvaluationWithProject[];
 
+      // Filtrer les évaluations dont le projet joint est inaccessible (RLS projects)
+      filteredData = filteredData.filter(e => e.project !== null);
+
       // Filtre par pôle
       if (filters.poleId) {
         filteredData = filteredData.filter(
