@@ -43,6 +43,7 @@ import {
   X,
   FileSpreadsheet
 } from "lucide-react";
+import { formatUserName } from "@/utils/formatUserName";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
@@ -96,6 +97,19 @@ export const EvaluationsManagement = () => {
         query = query.eq("direction_id", filters.directionId);
       }
       const { data, error } = await query;
+      if (error) throw error;
+      return data;
+    },
+    enabled: canAccess,
+  });
+
+  // Récupération des profils pour afficher les noms des chefs de projet
+  const { data: profiles } = useQuery({
+    queryKey: ["profiles-for-evaluations"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("id, email, first_name, last_name");
       if (error) throw error;
       return data;
     },
@@ -388,7 +402,7 @@ export const EvaluationsManagement = () => {
                         </Link>
                       </TableCell>
                       <TableCell className="text-muted-foreground">
-                        {evaluation.project?.project_manager || "-"}
+                        {formatUserName(evaluation.project?.project_manager ?? undefined, profiles)}
                       </TableCell>
                       <TableCell>
                         {orgParts.length > 0 ? (
