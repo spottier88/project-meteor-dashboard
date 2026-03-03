@@ -133,7 +133,7 @@ export const TaskGantt: React.FC<TaskGanttProps> = ({ tasks, projectId, onEdit, 
           <Button
             size="sm"
             variant="outline"
-            onClick={() => exportGanttToExcel(ganttTasks, projectTitle)}
+            onClick={() => exportGanttToExcel(ganttTasks, projectTitle).catch(() => toast.error("Erreur lors de l'export Excel"))}
             disabled={ganttTasks.length === 0}
           >
             <FileSpreadsheet className="h-4 w-4 mr-2" />
