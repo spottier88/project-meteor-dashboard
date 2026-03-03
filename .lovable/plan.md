@@ -1,45 +1,77 @@
 
-# Correction de l'affichage des evaluations pour les utilisateurs sans acces aux projets
 
-## Probleme identifie
+# Amelioration de l'export Excel Gantt : ajout de couleurs et mise en forme avancee
 
-La politique RLS `evaluation_read_policy` sur `project_evaluations` accorde aux `quality_manager` l'acces a **toutes** les evaluations. Cependant, la jointure sur la table `projects` est elle-meme filtree par les politiques RLS de `projects`, qui n'incluent **pas** le role `quality_manager`. Resultat : les evaluations sont bien recuperees, mais les donnees du projet joint sont `null`, ce qui provoque l'affichage de lignes "Projet inconnu".
+## Constat actuel
 
-## Solution proposee
+L'export actuel utilise la bibliotheque `xlsx` (SheetJS community) qui ne supporte **pas** la mise en forme des cellules (couleurs de fond, bordures, polices). Le rendu repose sur des caracteres Unicode (`░`, `▓`, `■`) qui sont fonctionnels mais peu lisibles dans Excel.
 
-Deux corrections complementaires :
+## Solution proposee : migration vers ExcelJS
 
-### 1. Filtrage client-side dans `useAllEvaluations.ts` (correction immediate)
+Remplacer `xlsx` par `exceljs` uniquement pour cet export Gantt. La bibliotheque `exceljs` supporte nativement :
+- Couleurs de fond des cellules
+- Bordures fines
+- Police en gras, taille, couleur
+- Fusion de cellules
+- Alignement
 
-Filtrer les evaluations dont le projet joint est `null` (donc inaccessible a l'utilisateur). Cela garantit qu'aucune ligne "Projet inconnu" n'apparait, quel que soit le role.
-
-**Fichier** : `src/hooks/useAllEvaluations.ts`
-
-Apres la recuperation des donnees, ajouter un filtre eliminant les evaluations sans donnees de projet :
+### Rendu cible dans Excel
 
 ```text
-filteredData = filteredData.filter(e => e.project !== null);
+| Nom           | Statut   | Debut      | Fin        | %   | 02/03 | 09/03 | 16/03 | 23/03 |
+|---------------|----------|------------|------------|-----|-------|-------|-------|-------|
+| Tache A       | En cours | 01/03      | 15/03      | 50  | [bleu]| [bleu]| [bleu]|       |
+| Tache B       | A faire  | 10/03      | 28/03      |  0  |       | [gris]| [gris]| [gris]|
+| Tache C       | Termine  | 01/03      | 08/03      | 100 | [vert]| [vert]|       |       |
 ```
 
-Cela s'applique avant tous les autres filtres existants (pole, direction, recherche, etc.).
+Les cellules temporelles actives auront un **fond colore** (pas de texte) :
+- Gris clair (`#E2E8F0`) pour "A faire"
+- Bleu (`#3B82F6`) pour "En cours"
+- Vert (`#22C55E`) pour "Termine"
 
-### 2. Mise a jour des statistiques dans `EvaluationsManagement.tsx`
+### Ameliorations supplementaires
 
-Les compteurs en haut de page (Total, Lecons apprises, Ameliorations) refleteront automatiquement le bon nombre puisqu'ils se basent sur le tableau filtre retourne par le hook.
+1. **Ligne d'en-tete stylee** : fond gris fonce, texte blanc, police en gras
+2. **Colonne Statut coloree** : texte colore selon le statut (rouge/orange/vert)
+3. **Bordures fines** sur toutes les cellules pour une meilleure lisibilite
+4. **Ligne de titre** : nom du projet en haut du fichier, fusionne sur plusieurs colonnes
+5. **Legende** en bas du tableau expliquant les couleurs
+6. **Gel des volets** : les 5 premieres colonnes et la ligne d'en-tete restent visibles au scroll
 
-## Fichiers a modifier
+## Modifications techniques
 
-| Fichier | Modification |
-|---------|-------------|
-| `src/hooks/useAllEvaluations.ts` | Ajouter `filteredData = filteredData.filter(e => e.project !== null)` apres la ligne 82, avant les filtres existants |
+### 1. Ajouter la dependance `exceljs`
 
-## Pourquoi ne pas modifier les politiques RLS de `projects` ?
+Installation du package `exceljs` (compatible navigateur, ~200 Ko gzippe).
 
-Accorder aux `quality_manager` un acces SELECT global a tous les projets serait disproportionne : ce role est prevu pour la consultation des **evaluations**, pas pour l'acces complet aux donnees de projet. Filtrer cote client les lignes sans projet accessible est la solution la plus coherente avec le modele de permissions existant, et la securite reste assuree par les RLS en base.
+### 2. Reecrire `src/utils/ganttExcelExport.ts`
 
-## Impact
+Remplacement complet du contenu en utilisant l'API ExcelJS :
 
-- Les lignes "Projet inconnu" disparaissent
-- Les compteurs sont corrects
-- Aucune modification de securite ou de schema de base
-- Modification minimale (une ligne ajoutee)
+- **Workbook/Worksheet** : creation via `new ExcelJS.Workbook()` au lieu de `XLSX.utils`
+- **Ligne titre** : cellule A1 fusionnee avec le nom du projet, police 14pt gras
+- **En-tetes** : fond `#4B5563` (gris fonce), texte blanc, gras
+- **Cellules Gantt** : `cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF3B82F6' } }` pour les cellules actives
+- **Colonne Avancement** : barre de progression textuelle ou pourcentage colore
+- **Legende** : 3 lignes en bas avec un carre de couleur + libelle
+- **Gel des volets** : `worksheet.views = [{ state: 'frozen', xSplit: 5, ySplit: 2 }]`
+- **Telechargement** : `workbook.xlsx.writeBuffer()` puis creation d'un Blob pour le download cote navigateur
+
+### 3. Aucune modification d'interface
+
+Le bouton "Export Gantt Excel" dans `TaskGantt.tsx` appelle deja `exportGanttToExcel(ganttTasks, projectTitle)`. La signature de la fonction reste identique, donc aucune modification de composant n'est necessaire.
+
+## Fichiers concernes
+
+| Fichier | Action |
+|---------|--------|
+| `package.json` | Ajout de la dependance `exceljs` |
+| `src/utils/ganttExcelExport.ts` | Reecriture complete avec ExcelJS et mise en forme avancee |
+
+## Compatibilite
+
+- ExcelJS fonctionne cote navigateur via `writeBuffer()` (pas besoin de Node.js)
+- La bibliotheque `xlsx` reste utilisee par les autres exports du projet (taches, activites, permissions, etc.) et n'est pas supprimee
+- Le fichier genere est compatible Excel, LibreOffice et Google Sheets
+
