@@ -6,8 +6,8 @@
  */
 
 import ExcelJS from 'exceljs';
-import { Task } from 'gantt-task-react';
-import { startOfWeek, addWeeks, format, addDays } from 'date-fns';
+import { Task, ViewMode } from 'gantt-task-react';
+import { startOfWeek, startOfMonth, startOfYear, addWeeks, addMonths, addYears, addDays, format, endOfMonth, endOfYear } from 'date-fns';
 import { fr } from 'date-fns/locale';
 
 /** Couleurs ARGB pour les statuts des tâches */
@@ -66,37 +66,100 @@ const getDateRange = (tasks: Task[]): { start: Date; end: Date } => {
 };
 
 /**
- * Génère la liste des lundis couvrant la plage temporelle
+ * Génère la liste des périodes couvrant la plage temporelle selon le mode de vue
  */
-const generateWeekStarts = (start: Date, end: Date): Date[] => {
-  const weeks: Date[] = [];
-  let current = startOfWeek(start, { weekStartsOn: 1 });
-  while (current <= end) {
-    weeks.push(new Date(current));
-    current = addWeeks(current, 1);
+const generatePeriodStarts = (start: Date, end: Date, viewMode: ViewMode): Date[] => {
+  const periods: Date[] = [];
+  let current: Date;
+
+  switch (viewMode) {
+    case ViewMode.Day:
+      current = new Date(start);
+      current.setHours(0, 0, 0, 0);
+      while (current <= end) {
+        periods.push(new Date(current));
+        current = addDays(current, 1);
+      }
+      break;
+    case ViewMode.Month:
+      current = startOfMonth(start);
+      while (current <= end) {
+        periods.push(new Date(current));
+        current = addMonths(current, 1);
+      }
+      break;
+    case ViewMode.Year:
+      current = startOfYear(start);
+      while (current <= end) {
+        periods.push(new Date(current));
+        current = addYears(current, 1);
+      }
+      break;
+    case ViewMode.Week:
+    default:
+      current = startOfWeek(start, { weekStartsOn: 1 });
+      while (current <= end) {
+        periods.push(new Date(current));
+        current = addWeeks(current, 1);
+      }
+      break;
   }
-  return weeks;
+  return periods;
 };
 
 /**
- * Vérifie si une tâche est active durant une semaine donnée
+ * Vérifie si une tâche est active durant une période donnée selon le mode de vue
  */
-const isTaskActiveInWeek = (task: Task, weekStart: Date): boolean => {
-  const weekEnd = addDays(weekStart, 6);
-  return task.start <= weekEnd && task.end >= weekStart;
+const isTaskActiveInPeriod = (task: Task, periodStart: Date, viewMode: ViewMode): boolean => {
+  let periodEnd: Date;
+  switch (viewMode) {
+    case ViewMode.Day:
+      periodEnd = new Date(periodStart);
+      periodEnd.setHours(23, 59, 59, 999);
+      break;
+    case ViewMode.Month:
+      periodEnd = endOfMonth(periodStart);
+      break;
+    case ViewMode.Year:
+      periodEnd = endOfYear(periodStart);
+      break;
+    case ViewMode.Week:
+    default:
+      periodEnd = addDays(periodStart, 6);
+      break;
+  }
+  return task.start <= periodEnd && task.end >= periodStart;
+};
+
+/**
+ * Formate l'en-tête d'une période selon le mode de vue
+ */
+const formatPeriodHeader = (date: Date, viewMode: ViewMode): string => {
+  switch (viewMode) {
+    case ViewMode.Day:
+      return format(date, 'dd/MM/yy', { locale: fr });
+    case ViewMode.Month:
+      return format(date, 'MMM yyyy', { locale: fr });
+    case ViewMode.Year:
+      return format(date, 'yyyy', { locale: fr });
+    case ViewMode.Week:
+    default:
+      return format(date, 'dd/MM/yy', { locale: fr });
+  }
 };
 
 /**
  * Exporte les tâches du Gantt vers un fichier Excel avec mise en forme avancée
  * @param tasks - Liste des tâches au format gantt-task-react
  * @param projectTitle - Titre du projet pour le nom du fichier et la ligne de titre
+ * @param viewMode - Mode de vue sélectionné (Day, Week, Month, Year)
  */
-export const exportGanttToExcel = async (tasks: Task[], projectTitle?: string): Promise<void> => {
+export const exportGanttToExcel = async (tasks: Task[], projectTitle?: string, viewMode: ViewMode = ViewMode.Week): Promise<void> => {
   if (tasks.length === 0) return;
 
   const title = projectTitle || 'Projet';
   const { start, end } = getDateRange(tasks);
-  const weekStarts = generateWeekStarts(start, end);
+  const periodStarts = generatePeriodStarts(start, end, viewMode);
   const filteredTasks = tasks.filter(t => t.type !== 'project');
 
   // Création du workbook et de la feuille
@@ -106,8 +169,8 @@ export const exportGanttToExcel = async (tasks: Task[], projectTitle?: string): 
   });
 
   const fixedHeaders = ['Nom', 'Statut', 'Date début', 'Date fin', 'Avancement (%)'];
-  const weekHeaders = weekStarts.map(w => format(w, 'dd/MM', { locale: fr }));
-  const totalCols = fixedHeaders.length + weekHeaders.length;
+  const periodHeaders = periodStarts.map(p => formatPeriodHeader(p, viewMode));
+  const totalCols = fixedHeaders.length + periodHeaders.length;
 
   // --- Ligne 1 : Titre du projet fusionné ---
   ws.mergeCells(1, 1, 1, totalCols);
@@ -119,7 +182,7 @@ export const exportGanttToExcel = async (tasks: Task[], projectTitle?: string): 
 
   // --- Ligne 2 : En-têtes ---
   const headerRow = ws.getRow(2);
-  const allHeaders = [...fixedHeaders, ...weekHeaders];
+  const allHeaders = [...fixedHeaders, ...periodHeaders];
   allHeaders.forEach((h, i) => {
     const cell = headerRow.getCell(i + 1);
     cell.value = h;
@@ -168,10 +231,10 @@ export const exportGanttToExcel = async (tasks: Task[], projectTitle?: string): 
     progressCell.border = thinBorder;
 
     // Colonnes Gantt temporelles
-    weekStarts.forEach((weekStart, wIdx) => {
-      const cell = row.getCell(6 + wIdx);
+    periodStarts.forEach((periodStart, pIdx) => {
+      const cell = row.getCell(6 + pIdx);
       cell.border = thinBorder;
-      if (isTaskActiveInWeek(task, weekStart)) {
+      if (isTaskActiveInPeriod(task, periodStart, viewMode)) {
         cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: statusInfo.color } };
       }
     });
@@ -183,8 +246,10 @@ export const exportGanttToExcel = async (tasks: Task[], projectTitle?: string): 
   ws.getColumn(3).width = 12;
   ws.getColumn(4).width = 12;
   ws.getColumn(5).width = 14;
-  weekStarts.forEach((_, i) => {
-    ws.getColumn(6 + i).width = 6;
+  // Largeur des colonnes temporelles selon le mode
+  const colWidth = viewMode === ViewMode.Day ? 8 : viewMode === ViewMode.Year ? 8 : viewMode === ViewMode.Month ? 10 : 8;
+  periodStarts.forEach((_, i) => {
+    ws.getColumn(6 + i).width = colWidth;
   });
 
   // --- Légende en bas ---
