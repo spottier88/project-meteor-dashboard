@@ -9,6 +9,8 @@ import { DateInputField } from "./DateInputField";
 import { ProjectLifecycleStatus, lifecycleStatusLabels } from "@/types/project";
 import { ProjectManagerDialog } from "./ProjectManagerDialog";
 import { PortfolioMultiSelect } from "./PortfolioMultiSelect";
+import { ProjectTagsInput } from "@/components/project/ProjectTagsInput";
+
 interface BasicProjectFieldsProps {
   title: string;
   setTitle: (value: string) => void;
@@ -33,6 +35,9 @@ interface BasicProjectFieldsProps {
   // Lien vers l'équipe Microsoft Teams
   teamsUrl: string;
   setTeamsUrl: (value: string) => void;
+  // Tags du projet
+  tags: string[];
+  setTags: (value: string[]) => void;
 }
 
 export const BasicProjectFields = ({
@@ -57,6 +62,8 @@ export const BasicProjectFields = ({
   projectManagers,
   teamsUrl,
   setTeamsUrl,
+  tags,
+  setTags,
 }: BasicProjectFieldsProps) => {
   const canEditProjectManager = Boolean(isAdmin) || Boolean(isManager);
   const [isManagerDialogOpen, setIsManagerDialogOpen] = useState(false);
@@ -203,6 +210,9 @@ export const BasicProjectFields = ({
           </SelectContent>
         </Select>
       </div>
+
+      {/* Tags du projet */}
+      <ProjectTagsInput tags={tags} onChange={setTags} />
 
       {/* Lien vers l'équipe Microsoft Teams */}
       <div className="grid gap-2">
