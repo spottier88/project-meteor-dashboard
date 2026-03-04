@@ -139,6 +139,10 @@ export const useProjectSubmit = ({
       await queryClient.invalidateQueries({ queryKey: ["project-portfolios"] });
       await queryClient.invalidateQueries({ queryKey: ["portfolios"] });
       await queryClient.invalidateQueries({ queryKey: ["portfolio"] });
+      // Invalider les caches de tags (filtre et autocomplétion)
+      await queryClient.invalidateQueries({ queryKey: ["all-project-tags"] });
+      await queryClient.invalidateQueries({ queryKey: ["all-project-tags-map"] });
+      await queryClient.invalidateQueries({ queryKey: ["project-tags"] });
       
       formState.resetHasUnsavedChanges();
       
