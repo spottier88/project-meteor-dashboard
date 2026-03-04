@@ -57,6 +57,9 @@ interface ProjectFormFieldsProps {
   // Lien vers l'équipe Microsoft Teams
   teamsUrl: string;
   setTeamsUrl: (value: string) => void;
+  // Tags du projet
+  tags: string[];
+  setTags: (value: string[]) => void;
 }
 
 export const ProjectFormFields = ({
@@ -94,7 +97,9 @@ export const ProjectFormFields = ({
   projectManagers,
   canEditOrganization = true,
   teamsUrl,
-  setTeamsUrl
+  setTeamsUrl,
+  tags,
+  setTags
 }: ProjectFormFieldsProps) => {
   // Ajouter un log pour vérifier les valeurs reçues
   // console.log("ProjectFormFields - permissions values:", {
@@ -131,6 +136,8 @@ export const ProjectFormFields = ({
         projectManagers={projectManagers}
         teamsUrl={teamsUrl}
         setTeamsUrl={setTeamsUrl}
+        tags={tags}
+        setTags={setTags}
       />
 
       {canEditOrganization && (
