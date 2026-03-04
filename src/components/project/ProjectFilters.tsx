@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { MonitoringFilter } from "@/components/monitoring/MonitoringFilter";
 import { LifecycleStatusFilter } from "@/components/project/LifecycleStatusFilter";
@@ -12,8 +13,8 @@ import { MonitoringLevel } from "@/types/monitoring";
 import { ProjectLifecycleStatus, lifecycleStatusLabels } from "@/types/project";
 import { RotateCcw, Filter, ChevronDown, ChevronUp } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import { useAllTags, getTagColor, getTagBgColor } from "@/hooks/useProjectTags";
 
 interface ProjectFiltersProps {
   searchQuery: string;
@@ -31,6 +32,8 @@ interface ProjectFiltersProps {
   onDirectionChange: (value: string) => void;
   serviceId: string;
   onServiceChange: (value: string) => void;
+  selectedTags: string[];
+  onTagsChange: (tags: string[]) => void;
 }
 
 export const ProjectFilters = ({
@@ -49,11 +52,15 @@ export const ProjectFilters = ({
   onDirectionChange,
   serviceId,
   onServiceChange,
+  selectedTags,
+  onTagsChange,
 }: ProjectFiltersProps) => {
   // État pour savoir si le panneau de filtres est ouvert ou fermé
   const [isOpen, setIsOpen] = useState(() => {
     return localStorage.getItem("filtersOpen") === "true" || false;
   });
+
+  const { data: allTags = [] } = useAllTags();
 
   // Sauvegarde de l'état d'ouverture dans localStorage
   useEffect(() => {
@@ -68,6 +75,7 @@ export const ProjectFilters = ({
     onPoleChange('all');
     onDirectionChange('all');
     onServiceChange('all');
+    onTagsChange([]);
   };
 
   // Compte le nombre de filtres actifs
@@ -78,7 +86,8 @@ export const ProjectFilters = ({
     showMyProjectsOnly,
     poleId !== 'all',
     directionId !== 'all',
-    serviceId !== 'all'
+    serviceId !== 'all',
+    selectedTags.length > 0
   ].filter(Boolean).length;
 
   return (
@@ -135,6 +144,11 @@ export const ProjectFilters = ({
                   {serviceId !== 'all' && (
                     <Badge variant="secondary" className="px-2 py-1 text-xs">
                       Service: {serviceId === 'none' ? 'Aucun' : 'Sélectionné'}
+                    </Badge>
+                   )}
+                  {selectedTags.length > 0 && (
+                    <Badge variant="secondary" className="px-2 py-1 text-xs">
+                      Tags: {selectedTags.join(', ')}
                     </Badge>
                   )}
                 </>
@@ -221,6 +235,46 @@ export const ProjectFilters = ({
               setServiceId={onServiceChange}
             />
           </div>
+
+          {/* Filtre par tags */}
+          {allTags.length > 0 && (
+            <div className="pt-4 border-t border-border">
+              <Label className="text-sm font-medium mb-2 block">
+                Tags
+              </Label>
+              <div className="flex flex-wrap gap-1.5">
+                {allTags.map((tag) => {
+                  const isSelected = selectedTags.includes(tag);
+                  return (
+                    <Badge
+                      key={tag}
+                      variant={isSelected ? "default" : "outline"}
+                      className="px-2 py-1 text-xs cursor-pointer transition-all hover:opacity-80"
+                      style={isSelected ? {
+                        backgroundColor: getTagColor(tag),
+                        color: 'white',
+                        borderColor: getTagColor(tag),
+                      } : {
+                        backgroundColor: getTagBgColor(tag),
+                        color: getTagColor(tag),
+                        borderColor: getTagColor(tag),
+                        borderWidth: '1px',
+                      }}
+                      onClick={() => {
+                        if (isSelected) {
+                          onTagsChange(selectedTags.filter(t => t !== tag));
+                        } else {
+                          onTagsChange([...selectedTags, tag]);
+                        }
+                      }}
+                    >
+                      {tag}
+                    </Badge>
+                  );
+                })}
+              </div>
+            </div>
+          )}
         </CollapsibleContent>
       </Collapsible>
     </div>
