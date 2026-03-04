@@ -5,6 +5,7 @@ import { ProjectFormState } from "@/components/form/useProjectFormState";
 import { createTasksFromTemplate } from "../utils/templateTasks";
 import { supabase } from "@/integrations/supabase/client";
 import { saveInnovationScores, saveMonitoring, saveFraming, savePortfolios } from "@/utils/projectSubmitHelpers";
+import { syncProjectTags } from "@/hooks/useProjectTags";
 
 interface UseProjectSubmitProps {
   project?: any;
@@ -78,6 +79,10 @@ export const useProjectSubmit = ({
           if (portfolioResult.warning) warnings.push(portfolioResult.warning);
         }
 
+        // Synchroniser les tags
+        const tagsResult = await syncProjectTags(project.id, formState.tags);
+        if (tagsResult.warning) warnings.push(tagsResult.warning);
+
         // Invalider les caches spécifiques au projet
         await queryClient.invalidateQueries({ queryKey: ["project", project.id] });
         await queryClient.invalidateQueries({ queryKey: ["projectInnovationScores", project.id] });
@@ -104,6 +109,10 @@ export const useProjectSubmit = ({
         if (frmResult.warning) warnings.push(frmResult.warning);
         const prtResult = await savePortfolios(projectId, formState.portfolioIds, formState.ownerId || null, "insert");
         if (prtResult.warning) warnings.push(prtResult.warning);
+
+        // Synchroniser les tags
+        const tagsResult = await syncProjectTags(projectId, formState.tags);
+        if (tagsResult.warning) warnings.push(tagsResult.warning);
 
         // Callback de compatibilité
         if (onSubmit) {

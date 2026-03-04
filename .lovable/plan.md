@@ -1,93 +1,77 @@
 
 
-# Implementation des tags sur les projets
+# Amelioration de l'export Excel Gantt : ajout de couleurs et mise en forme avancee
 
-## Architecture
+## Constat actuel
 
-Utilisation d'une table de liaison many-to-many entre projets et tags, avec une table de reference pour les tags disponibles. Les tags sont des chaines libres (pas de referentiel pre-defini par un admin), gerees directement par les utilisateurs ayant les droits d'edition du projet.
+L'export actuel utilise la bibliotheque `xlsx` (SheetJS community) qui ne supporte **pas** la mise en forme des cellules (couleurs de fond, bordures, polices). Le rendu repose sur des caracteres Unicode (`░`, `▓`, `■`) qui sont fonctionnels mais peu lisibles dans Excel.
 
-## 1. Schema de base de donnees
+## Solution proposee : migration vers ExcelJS
 
-### Table `project_tags`
+Remplacer `xlsx` par `exceljs` uniquement pour cet export Gantt. La bibliotheque `exceljs` supporte nativement :
+- Couleurs de fond des cellules
+- Bordures fines
+- Police en gras, taille, couleur
+- Fusion de cellules
+- Alignement
 
-```sql
-CREATE TABLE public.project_tags (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  project_id uuid NOT NULL REFERENCES public.projects(id) ON DELETE CASCADE,
-  tag text NOT NULL,
-  created_at timestamptz DEFAULT now(),
-  UNIQUE (project_id, tag)
-);
+### Rendu cible dans Excel
 
-ALTER TABLE public.project_tags ENABLE ROW LEVEL SECURITY;
-
--- Lecture : memes droits que les projets (via can_access_project)
-CREATE POLICY "Users can view project tags"
-  ON public.project_tags FOR SELECT
-  TO authenticated
-  USING (EXISTS (
-    SELECT 1 FROM projects p WHERE p.id = project_tags.project_id
-    AND can_access_project(auth.uid(), p.id)
-  ));
-
--- Ecriture : admin ou chef de projet (via can_manage_project)
-CREATE POLICY "Users can manage project tags"
-  ON public.project_tags FOR ALL
-  TO authenticated
-  USING (EXISTS (
-    SELECT 1 FROM projects p WHERE p.id = project_tags.project_id
-    AND can_manage_project(auth.uid(), p.id)
-  ))
-  WITH CHECK (EXISTS (
-    SELECT 1 FROM projects p WHERE p.id = project_tags.project_id
-    AND can_manage_project(auth.uid(), p.id)
-  ));
+```text
+| Nom           | Statut   | Debut      | Fin        | %   | 02/03 | 09/03 | 16/03 | 23/03 |
+|---------------|----------|------------|------------|-----|-------|-------|-------|-------|
+| Tache A       | En cours | 01/03      | 15/03      | 50  | [bleu]| [bleu]| [bleu]|       |
+| Tache B       | A faire  | 10/03      | 28/03      |  0  |       | [gris]| [gris]| [gris]|
+| Tache C       | Termine  | 01/03      | 08/03      | 100 | [vert]| [vert]|       |       |
 ```
 
-Pas de table de referentiel : les tags disponibles pour l'autocompletion seront simplement un `SELECT DISTINCT tag FROM project_tags ORDER BY tag`.
+Les cellules temporelles actives auront un **fond colore** (pas de texte) :
+- Gris clair (`#E2E8F0`) pour "A faire"
+- Bleu (`#3B82F6`) pour "En cours"
+- Vert (`#22C55E`) pour "Termine"
 
-## 2. Fichiers a creer
+### Ameliorations supplementaires
 
-| Fichier | Description |
-|---------|-------------|
-| `src/hooks/useProjectTags.ts` | Hook pour charger les tags d'un projet, les tags existants (autocompletion), et les fonctions add/remove |
-| `src/components/project/ProjectTagsInput.tsx` | Composant de saisie de tags (input avec autocompletion + badges cliquables pour suppression) |
-| `src/components/project/ProjectTagsBadges.tsx` | Composant d'affichage en lecture seule des tags (badges colores) |
+1. **Ligne d'en-tete stylee** : fond gris fonce, texte blanc, police en gras
+2. **Colonne Statut coloree** : texte colore selon le statut (rouge/orange/vert)
+3. **Bordures fines** sur toutes les cellules pour une meilleure lisibilite
+4. **Ligne de titre** : nom du projet en haut du fichier, fusionne sur plusieurs colonnes
+5. **Legende** en bas du tableau expliquant les couleurs
+6. **Gel des volets** : les 5 premieres colonnes et la ligne d'en-tete restent visibles au scroll
 
-## 3. Fichiers a modifier
+## Modifications techniques
 
-| Fichier | Modification |
-|---------|-------------|
-| `src/components/form/BasicProjectFields.tsx` | Ajouter le composant `ProjectTagsInput` apres le champ priorite (necessite le `projectId` pour les projets existants, ou un state local pour les nouveaux projets) |
-| `src/components/form/useProjectFormState.tsx` | Ajouter l'etat `tags: string[]` + `setTags` au form state, charger les tags existants a l'initialisation |
-| `src/components/form/ProjectFormStep1.tsx` | Propager `tags`/`setTags` vers `BasicProjectFields` |
-| `src/hooks/useProjectSubmit.tsx` | Apres creation/mise a jour du projet, synchroniser les tags (supprimer les anciens, inserer les nouveaux) |
-| `src/components/project/ProjectSummaryHeader.tsx` | Afficher les tags du projet sous forme de badges colores sous la description |
-| `src/components/project/ProjectFilters.tsx` | Ajouter un filtre par tag (multi-select ou input texte) |
-| `src/pages/Index.tsx` | Ajouter l'etat `selectedTags` et propager le filtre, filtrer les projets cote client |
-| `src/hooks/useProjectsListView.ts` | Optionnel : enrichir `ProjectListItem` avec un champ `tags` si la RPC le permet, sinon charger separement |
+### 1. Ajouter la dependance `exceljs`
 
-## 4. Comportement detaille
+Installation du package `exceljs` (compatible navigateur, ~200 Ko gzippe).
 
-### Saisie des tags (formulaire projet)
-- Champ texte avec autocompletion basee sur les tags existants dans la base
-- Touche Entree ou virgule pour valider un tag
-- Affichage des tags saisis sous forme de badges avec bouton X pour supprimer
-- Tags stockes dans le form state, synchronises a la sauvegarde du projet
+### 2. Reecrire `src/utils/ganttExcelExport.ts`
 
-### Affichage synthese projet
-- Badges colores affiches sous la description dans `ProjectSummaryHeader`
-- Couleur generee automatiquement a partir du hash du tag (pour coherence visuelle)
+Remplacement complet du contenu en utilisant l'API ExcelJS :
 
-### Filtre par tag (liste des projets)
-- Ajout d'un champ de filtre dans le panneau de filtres existant
-- Filtrage cote client : un projet correspond si au moins un de ses tags est dans la selection
-- Badge actif affiche dans la barre de filtres resume
+- **Workbook/Worksheet** : creation via `new ExcelJS.Workbook()` au lieu de `XLSX.utils`
+- **Ligne titre** : cellule A1 fusionnee avec le nom du projet, police 14pt gras
+- **En-tetes** : fond `#4B5563` (gris fonce), texte blanc, gras
+- **Cellules Gantt** : `cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF3B82F6' } }` pour les cellules actives
+- **Colonne Avancement** : barre de progression textuelle ou pourcentage colore
+- **Legende** : 3 lignes en bas avec un carre de couleur + libelle
+- **Gel des volets** : `worksheet.views = [{ state: 'frozen', xSplit: 5, ySplit: 2 }]`
+- **Telechargement** : `workbook.xlsx.writeBuffer()` puis creation d'un Blob pour le download cote navigateur
 
-## 5. Impact
+### 3. Aucune modification d'interface
 
-- Aucune modification des tables existantes
-- Nouvelle table `project_tags` avec RLS alignee sur les droits projets
-- Integration dans le flux existant du formulaire projet (etape 1)
-- Recherche textuelle existante inchangee (le filtre tag est additionnel)
+Le bouton "Export Gantt Excel" dans `TaskGantt.tsx` appelle deja `exportGanttToExcel(ganttTasks, projectTitle)`. La signature de la fonction reste identique, donc aucune modification de composant n'est necessaire.
+
+## Fichiers concernes
+
+| Fichier | Action |
+|---------|--------|
+| `package.json` | Ajout de la dependance `exceljs` |
+| `src/utils/ganttExcelExport.ts` | Reecriture complete avec ExcelJS et mise en forme avancee |
+
+## Compatibilite
+
+- ExcelJS fonctionne cote navigateur via `writeBuffer()` (pas besoin de Node.js)
+- La bibliotheque `xlsx` reste utilisee par les autres exports du projet (taches, activites, permissions, etc.) et n'est pas supprimee
+- Le fichier genere est compatible Excel, LibreOffice et Google Sheets
 

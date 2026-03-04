@@ -74,6 +74,9 @@ export interface ProjectFormState {
   // Lien vers l'équipe Microsoft Teams
   teamsUrl: string;
   setTeamsUrl: (value: string) => void;
+  // Tags du projet
+  tags: string[];
+  setTags: (value: string[]) => void;
 }
 
 export const useProjectFormState = (isOpen: boolean, project?: any) => {
@@ -112,6 +115,7 @@ export const useProjectFormState = (isOpen: boolean, project?: any) => {
   const [templateId, setTemplateId] = useState<string | undefined>(undefined);
   const [portfolioIds, setPortfolioIds] = useState<string[]>([]);
   const [teamsUrl, setTeamsUrl] = useState("");
+  const [tags, setTags] = useState<string[]>([]);
 
   const user = useUser();
 
@@ -280,6 +284,7 @@ export const useProjectFormState = (isOpen: boolean, project?: any) => {
         setTemplateId(undefined);
         setPortfolioIds([]);
         setTeamsUrl("");
+        setTags([]);
 
         if (user?.email) {
           setProjectManager(user.email);
@@ -313,6 +318,18 @@ export const useProjectFormState = (isOpen: boolean, project?: any) => {
           }
           // Charger le lien Teams si présent
           setTeamsUrl(project.teams_url || "");
+          // Charger les tags du projet
+          try {
+            const { data: tagsData } = await supabase
+              .from("project_tags")
+              .select("tag")
+              .eq("project_id", project.id)
+              .order("tag");
+            setTags(tagsData?.map(t => t.tag) || []);
+          } catch (error) {
+            console.error("Erreur chargement tags:", error);
+            setTags([]);
+          }
 
           await loadProjectManagerOrganization(project.project_manager);
 
@@ -395,7 +412,7 @@ export const useProjectFormState = (isOpen: boolean, project?: any) => {
     monitoringLevel, monitoringEntityId, 
     novateur, usager, ouverture, agilite, impact, lifecycleStatus,
     context, stakeholders, governance, objectives, timeline, deliverables,
-    forEntityType, forEntityId, templateId, portfolioIds, teamsUrl
+    forEntityType, forEntityId, templateId, portfolioIds, teamsUrl, tags
   ]);
 
   const resetHasUnsavedChanges = () => {
@@ -469,6 +486,8 @@ export const useProjectFormState = (isOpen: boolean, project?: any) => {
     portfolioIds,
     setPortfolioIds,
     teamsUrl,
-    setTeamsUrl
+    setTeamsUrl,
+    tags,
+    setTags
   };
 };

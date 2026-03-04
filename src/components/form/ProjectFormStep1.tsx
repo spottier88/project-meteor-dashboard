@@ -30,6 +30,9 @@ export interface ProjectFormStep1Props {
   // Lien vers l'équipe Microsoft Teams
   teamsUrl: string;
   setTeamsUrl: (value: string) => void;
+  // Tags du projet
+  tags: string[];
+  setTags: (value: string[]) => void;
 }
 
 export const ProjectFormStep1 = ({
@@ -55,7 +58,9 @@ export const ProjectFormStep1 = ({
   setOwnerId,
   projectManagers,
   teamsUrl,
-  setTeamsUrl
+  setTeamsUrl,
+  tags,
+  setTags
 }: ProjectFormStep1Props) => {
   return (
     <div className="space-y-6">
@@ -82,6 +87,8 @@ export const ProjectFormStep1 = ({
           projectManagers={projectManagers}
           teamsUrl={teamsUrl}
           setTeamsUrl={setTeamsUrl}
+          tags={tags}
+          setTags={setTags}
         />
       </div>
     </div>
