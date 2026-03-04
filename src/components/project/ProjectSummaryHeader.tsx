@@ -9,6 +9,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Badge } from "@/components/ui/badge";
+import { ProjectTagsBadges } from "@/components/project/ProjectTagsBadges";
 
 
 interface ProjectSummaryHeaderProps {
@@ -267,7 +268,10 @@ export const ProjectSummaryHeader = ({
           </div>
           {description && (
             <p className="text-sm text-muted-foreground">{description}</p>
-          )}
+           )}
+          
+          {/* Tags du projet */}
+          <ProjectTagsBadges projectId={id} />
           
           {forEntityName && (
             <div className="flex items-center gap-2">

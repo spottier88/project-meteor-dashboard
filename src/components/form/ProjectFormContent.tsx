@@ -54,6 +54,8 @@ export const ProjectFormContent = ({
             projectManagers={projectManagers}
             teamsUrl={formState.teamsUrl}
             setTeamsUrl={formState.setTeamsUrl}
+            tags={formState.tags}
+            setTags={formState.setTags}
           />
         );
       case 1:
