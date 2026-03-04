@@ -11,6 +11,8 @@ import { ProjectModals } from "@/components/project/ProjectModals";
 import { usePermissionsContext } from "@/contexts/PermissionsContext";
 import { useProjectsListView } from "@/hooks/useProjectsListView";
 import { useUserProjectMemberships } from "@/hooks/useUserProjectMemberships";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import { ProjectListItem } from "@/hooks/useProjectsListView";
 const LoadingSpinner = () => (
   <div className="flex justify-center items-center h-48">
@@ -55,6 +57,7 @@ const Index = () => {
   const [serviceId, setServiceId] = useState<string>(() => {
     return localStorage.getItem("projectServiceId") || "all";
   });
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
 
   useEffect(() => {
     localStorage.setItem("projectViewMode", view);
@@ -93,6 +96,27 @@ const Index = () => {
 
   // Récupérer les projets dont l'utilisateur est membre (via hook centralisé)
   const { data: userMemberships } = useUserProjectMemberships();
+
+  // Charger les tags de tous les projets pour le filtrage côté client
+  const { data: projectTagsMap } = useQuery({
+    queryKey: ["all-project-tags-map"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("project_tags")
+        .select("project_id, tag");
+      if (error) {
+        console.error("Erreur chargement tags projets:", error);
+        return new Map<string, string[]>();
+      }
+      const map = new Map<string, string[]>();
+      for (const row of data) {
+        const existing = map.get(row.project_id) || [];
+        existing.push(row.tag);
+        map.set(row.project_id, existing);
+      }
+      return map;
+    },
+  });
 
   const [accessibleProjectIds, setAccessibleProjectIds] = useState<string[]>([]);
 
@@ -157,7 +181,14 @@ const Index = () => {
       const matchesManager = project.project_manager?.toLowerCase().includes(query);
       const matchesManagerName = project.project_manager_name?.toLowerCase().includes(query);
       
-      return matchesTitle || matchesManager || matchesManagerName;
+      if (!matchesTitle && !matchesManager && !matchesManagerName) return false;
+    }
+
+    // Filtre par tags
+    if (selectedTags.length > 0 && projectTagsMap) {
+      const projectTags = projectTagsMap.get(project.id) || [];
+      const hasMatchingTag = selectedTags.some(t => projectTags.includes(t));
+      if (!hasMatchingTag) return false;
     }
 
     return true;
@@ -248,6 +279,8 @@ const Index = () => {
         onDirectionChange={setDirectionId}
         serviceId={serviceId}
         onServiceChange={setServiceId}
+        selectedTags={selectedTags}
+        onTagsChange={setSelectedTags}
       />
 
       <ProjectList
