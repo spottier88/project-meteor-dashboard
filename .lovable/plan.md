@@ -1,77 +1,52 @@
 
 
-# Amelioration de l'export Excel Gantt : ajout de couleurs et mise en forme avancee
+# Conserver la page de pagination au retour vers la liste des projets
 
-## Constat actuel
+## Constat
 
-L'export actuel utilise la bibliotheque `xlsx` (SheetJS community) qui ne supporte **pas** la mise en forme des cellules (couleurs de fond, bordures, polices). Le rendu repose sur des caracteres Unicode (`░`, `▓`, `■`) qui sont fonctionnels mais peu lisibles dans Excel.
+La pagination est deja sauvegardee dans `localStorage` (`projectsCurrentPage`). Cependant, le `useEffect` dans `ProjectList.tsx` (ligne 45-47) **remet systematiquement la page a 1** des que `projects.length` change — ce qui se produit a chaque chargement de la page Index, y compris au retour depuis la synthese projet.
 
-## Solution proposee : migration vers ExcelJS
+## Solution
 
-Remplacer `xlsx` par `exceljs` uniquement pour cet export Gantt. La bibliotheque `exceljs` supporte nativement :
-- Couleurs de fond des cellules
-- Bordures fines
-- Police en gras, taille, couleur
-- Fusion de cellules
-- Alignement
+Distinguer un changement de filtre actif (qui doit remettre a la page 1) d'un simple rechargement de page (qui doit conserver la page sauvegardee).
 
-### Rendu cible dans Excel
+### Modification unique : `src/components/project/ProjectList.tsx`
+
+Remplacer la dependance `projects.length` par un mecanisme qui ne se declenche qu'apres le premier rendu :
+
+- Utiliser un `useRef` pour stocker la longueur precedente des projets
+- Ne remettre a la page 1 que si la longueur change **apres le rendu initial** (= changement de filtre), pas au premier montage du composant
 
 ```text
-| Nom           | Statut   | Debut      | Fin        | %   | 02/03 | 09/03 | 16/03 | 23/03 |
-|---------------|----------|------------|------------|-----|-------|-------|-------|-------|
-| Tache A       | En cours | 01/03      | 15/03      | 50  | [bleu]| [bleu]| [bleu]|       |
-| Tache B       | A faire  | 10/03      | 28/03      |  0  |       | [gris]| [gris]| [gris]|
-| Tache C       | Termine  | 01/03      | 08/03      | 100 | [vert]| [vert]|       |       |
+Avant :
+  useEffect(() => { setCurrentPage(1); }, [projects.length]);
+
+Apres :
+  const isFirstRender = useRef(true);
+  const prevLength = useRef(projects.length);
+
+  useEffect(() => {
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      prevLength.current = projects.length;
+      return;
+    }
+    if (prevLength.current !== projects.length) {
+      setCurrentPage(1);
+      prevLength.current = projects.length;
+    }
+  }, [projects.length]);
 ```
 
-Les cellules temporelles actives auront un **fond colore** (pas de texte) :
-- Gris clair (`#E2E8F0`) pour "A faire"
-- Bleu (`#3B82F6`) pour "En cours"
-- Vert (`#22C55E`) pour "Termine"
+Ainsi :
+- **Premier montage** (retour depuis synthese) → page restauree depuis localStorage
+- **Changement de filtre** (nombre de projets change) → remise a page 1
 
-### Ameliorations supplementaires
+### Fichier concerne
 
-1. **Ligne d'en-tete stylee** : fond gris fonce, texte blanc, police en gras
-2. **Colonne Statut coloree** : texte colore selon le statut (rouge/orange/vert)
-3. **Bordures fines** sur toutes les cellules pour une meilleure lisibilite
-4. **Ligne de titre** : nom du projet en haut du fichier, fusionne sur plusieurs colonnes
-5. **Legende** en bas du tableau expliquant les couleurs
-6. **Gel des volets** : les 5 premieres colonnes et la ligne d'en-tete restent visibles au scroll
+| Fichier | Modification |
+|---------|-------------|
+| `src/components/project/ProjectList.tsx` | Ajouter `useRef` pour ignorer le reset au premier rendu |
 
-## Modifications techniques
-
-### 1. Ajouter la dependance `exceljs`
-
-Installation du package `exceljs` (compatible navigateur, ~200 Ko gzippe).
-
-### 2. Reecrire `src/utils/ganttExcelExport.ts`
-
-Remplacement complet du contenu en utilisant l'API ExcelJS :
-
-- **Workbook/Worksheet** : creation via `new ExcelJS.Workbook()` au lieu de `XLSX.utils`
-- **Ligne titre** : cellule A1 fusionnee avec le nom du projet, police 14pt gras
-- **En-tetes** : fond `#4B5563` (gris fonce), texte blanc, gras
-- **Cellules Gantt** : `cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF3B82F6' } }` pour les cellules actives
-- **Colonne Avancement** : barre de progression textuelle ou pourcentage colore
-- **Legende** : 3 lignes en bas avec un carre de couleur + libelle
-- **Gel des volets** : `worksheet.views = [{ state: 'frozen', xSplit: 5, ySplit: 2 }]`
-- **Telechargement** : `workbook.xlsx.writeBuffer()` puis creation d'un Blob pour le download cote navigateur
-
-### 3. Aucune modification d'interface
-
-Le bouton "Export Gantt Excel" dans `TaskGantt.tsx` appelle deja `exportGanttToExcel(ganttTasks, projectTitle)`. La signature de la fonction reste identique, donc aucune modification de composant n'est necessaire.
-
-## Fichiers concernes
-
-| Fichier | Action |
-|---------|--------|
-| `package.json` | Ajout de la dependance `exceljs` |
-| `src/utils/ganttExcelExport.ts` | Reecriture complete avec ExcelJS et mise en forme avancee |
-
-## Compatibilite
-
-- ExcelJS fonctionne cote navigateur via `writeBuffer()` (pas besoin de Node.js)
-- La bibliotheque `xlsx` reste utilisee par les autres exports du projet (taches, activites, permissions, etc.) et n'est pas supprimee
-- Le fichier genere est compatible Excel, LibreOffice et Google Sheets
+Aucune autre modification necessaire. La sauvegarde localStorage et la navigation existante restent inchangees.
 
