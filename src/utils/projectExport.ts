@@ -184,7 +184,7 @@ const createProjectSheet = (wb: XLSX.WorkBook, data: any) => {
   
   // Ajout de la feuille au classeur
   // Utiliser le titre du projet comme nom d'onglet (limité à 31 caractères pour Excel)
-  const sheetName = (data.project.title || 'Projet').substring(0, 31);
+  const sheetName = (data.project.title || 'Projet').replace(/[:\\\/\?\*\[\]]/g, '-').substring(0, 31);
   XLSX.utils.book_append_sheet(wb, ws, sheetName);
 };
 
