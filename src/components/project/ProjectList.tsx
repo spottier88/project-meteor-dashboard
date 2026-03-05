@@ -6,7 +6,7 @@
  * et les actions (édition, revue, historique) aux composants enfants.
  */
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { ViewMode } from "@/components/ViewToggle";
 import { ProjectGrid } from "@/components/ProjectGrid";
 import { ProjectTable } from "@/components/ProjectTable";
@@ -41,9 +41,20 @@ export const ProjectList = ({
     return parseInt(localStorage.getItem("projectsPageSize") || "10");
   });
 
-  // Remise à la première page lorsque les projets changent (filtrage)
+  // Remise à la première page uniquement lors d'un changement de filtre (pas au premier rendu)
+  const isFirstRender = useRef(true);
+  const prevLength = useRef(projects.length);
+
   useEffect(() => {
-    setCurrentPage(1);
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      prevLength.current = projects.length;
+      return;
+    }
+    if (prevLength.current !== projects.length) {
+      setCurrentPage(1);
+      prevLength.current = projects.length;
+    }
   }, [projects.length]);
 
   // Sauvegarde des préférences de pagination
