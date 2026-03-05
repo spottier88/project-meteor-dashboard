@@ -4,7 +4,7 @@ import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { Edit, Mail, Plus, Settings, Trash2, Users, AlertTriangle } from "lucide-react";
+import { Edit, Mail, Plus, Settings, ShieldCheck, Trash2, Users, AlertTriangle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { UserForm } from "@/components/UserForm";
@@ -21,6 +21,7 @@ import { SortableHeader, SortDirection } from "@/components/ui/sortable-header";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PermissionsReviewTab } from "@/components/admin/PermissionsReviewTab";
+import { BulkRoleWizard } from "@/components/admin/BulkRoleWizard";
 
 interface UserWithRoles extends UserProfile {
   roles: UserRole[];
@@ -52,6 +53,7 @@ export const UserManagement = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [sortKey, setSortKey] = useState<string | null>(null);
   const [sortDirection, setSortDirection] = useState<SortDirection>(null);
+  const [isBulkWizardOpen, setIsBulkWizardOpen] = useState(false);
 
   const { data: lastActivities } = useQuery({
     queryKey: ["lastActivities"],
@@ -188,6 +190,9 @@ export const UserManagement = () => {
             <p className="text-muted-foreground">Gérez les utilisateurs et leurs rôles</p>
           </div>
           <div className="flex space-x-2">
+            <Button onClick={() => setIsBulkWizardOpen(true)} variant="outline">
+              <ShieldCheck className="mr-2 h-4 w-4" /> Gestion en masse
+            </Button>
             <Button onClick={() => setIsInviteFormOpen(true)} variant="outline">
               <Mail className="mr-2 h-4 w-4" /> Inviter par email
             </Button>
@@ -299,6 +304,11 @@ export const UserManagement = () => {
       <InviteUserForm
         isOpen={isInviteFormOpen}
         onClose={() => setIsInviteFormOpen(false)}
+        onSuccess={handleFormSubmit}
+      />
+      <BulkRoleWizard
+        isOpen={isBulkWizardOpen}
+        onClose={() => setIsBulkWizardOpen(false)}
         onSuccess={handleFormSubmit}
       />
       <AlertDialog open={!!userToDelete} onOpenChange={() => setUserToDelete(null)}>
