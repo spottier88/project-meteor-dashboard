@@ -304,7 +304,7 @@ export const BulkRoleWizard = ({ isOpen, onClose, onSuccess }: BulkRoleWizardPro
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="max-w-2xl max-h-[85vh] flex flex-col">
+      <DialogContent className="max-w-2xl max-h-[85vh] flex flex-col overflow-hidden">
         <DialogHeader>
           <DialogTitle>Gestion des droits en masse</DialogTitle>
           <DialogDescription>
@@ -364,8 +364,8 @@ export const BulkRoleWizard = ({ isOpen, onClose, onSuccess }: BulkRoleWizardPro
 
         {/* ====== ÉTAPE 2 : Sélection des utilisateurs ====== */}
         {step === 2 && (
-          <div className="flex-1 min-h-0 flex flex-col space-y-4">
-            <Tabs defaultValue="nominatif" className="flex-1 min-h-0 flex flex-col">
+          <div className="flex-1 min-h-0 flex flex-col space-y-4 overflow-hidden">
+            <Tabs defaultValue="nominatif" className="flex-1 min-h-0 flex flex-col overflow-hidden">
               <TabsList>
                 <TabsTrigger value="nominatif">
                   <Users className="h-4 w-4 mr-1" /> Nominatif
@@ -390,7 +390,7 @@ export const BulkRoleWizard = ({ isOpen, onClose, onSuccess }: BulkRoleWizardPro
                     Tout désélectionner
                   </Button>
                 </div>
-                <ScrollArea className="flex-1 min-h-0 max-h-[300px] border rounded-md">
+                <ScrollArea className="flex-1 min-h-0 border rounded-md" style={{ maxHeight: "40vh" }}>
                   <div className="p-2 space-y-1">
                     {searchFilteredUsers.length === 0 ? (
                       <p className="text-sm text-muted-foreground p-2">Aucun utilisateur trouvé</p>
@@ -506,7 +506,8 @@ export const BulkRoleWizard = ({ isOpen, onClose, onSuccess }: BulkRoleWizardPro
 
         {/* ====== ÉTAPE 3 : Confirmation et exécution ====== */}
         {step === 3 && (
-          <div className="space-y-4">
+          <ScrollArea className="flex-1 min-h-0" style={{ maxHeight: "55vh" }}>
+          <div className="space-y-4 pr-3">
             {!executed ? (
               <>
                 {/* Résumé avant exécution */}
@@ -525,7 +526,7 @@ export const BulkRoleWizard = ({ isOpen, onClose, onSuccess }: BulkRoleWizardPro
                     <span className="text-sm font-medium">
                       {selectedUsers.length} utilisateur(s) concerné(s) :
                     </span>
-                    <ScrollArea className="max-h-[200px] mt-2">
+                    <ScrollArea className="mt-2" style={{ maxHeight: "35vh" }}>
                       <ul className="space-y-1 pl-4">
                         {selectedUsers.map((u) => (
                           <li key={u.id} className="text-sm list-disc">
@@ -581,6 +582,7 @@ export const BulkRoleWizard = ({ isOpen, onClose, onSuccess }: BulkRoleWizardPro
               </div>
             )}
           </div>
+          </ScrollArea>
         )}
 
         {/* Navigation */}
