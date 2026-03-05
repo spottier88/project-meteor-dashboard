@@ -1,77 +1,57 @@
 
 
-# Amelioration de l'export Excel Gantt : ajout de couleurs et mise en forme avancee
+# Assistant de gestion des droits en masse
 
-## Constat actuel
+## Objectif
 
-L'export actuel utilise la bibliotheque `xlsx` (SheetJS community) qui ne supporte **pas** la mise en forme des cellules (couleurs de fond, bordures, polices). Le rendu repose sur des caracteres Unicode (`░`, `▓`, `■`) qui sont fonctionnels mais peu lisibles dans Excel.
+Ajouter un bouton "Gestion en masse" dans la page UserManagement qui ouvre un assistant (wizard) en 3 etapes pour ajouter ou supprimer un role a un ensemble d'utilisateurs selectionnes par nom ou par appartenance organisationnelle.
 
-## Solution proposee : migration vers ExcelJS
+## Fichiers a creer
 
-Remplacer `xlsx` par `exceljs` uniquement pour cet export Gantt. La bibliotheque `exceljs` supporte nativement :
-- Couleurs de fond des cellules
-- Bordures fines
-- Police en gras, taille, couleur
-- Fusion de cellules
-- Alignement
+### `src/components/admin/BulkRoleWizard.tsx`
+Composant principal : Dialog multi-etapes avec un state machine simple (`step: 1 | 2 | 3`).
 
-### Rendu cible dans Excel
+**Etape 1 — Action et role**
+- Radio : "Ajouter un droit" / "Supprimer un droit"
+- Select : choix du role (admin, chef_projet, manager, membre, time_tracker, portfolio_manager, quality_manager)
+
+**Etape 2 — Selection des utilisateurs**
+- Deux modes via des Tabs :
+  - **Nominatif** : liste des profils avec checkboxes, barre de recherche, bouton tout selectionner / deselectionner. Affiche le role actuel de chaque utilisateur. En mode "Ajouter", masquer ceux qui ont deja le role. En mode "Supprimer", ne montrer que ceux qui ont le role.
+  - **Par organisation** : 3 selects en cascade (Pole → Direction → Service). Selectionner un niveau inclut tous les utilisateurs rattaches via `user_hierarchy_assignments` a ce niveau ou a ses sous-niveaux. Appel Supabase pour resoudre la liste d'utilisateurs concernes en temps reel (affichage du nombre d'utilisateurs trouves).
+- Preview en bas : nombre d'utilisateurs selectionnes
+
+**Etape 3 — Confirmation et execution**
+- Resume : action (ajout/suppression), role concerne, liste nominative des utilisateurs impactes
+- Bouton "Appliquer" : execution en batch (insert/delete sur `user_roles` pour chaque utilisateur)
+- Barre de progression pendant l'execution
+- Synthese finale : nombre de succes, erreurs eventuelles, bouton "Fermer"
+
+### `src/hooks/useBulkRoleAssignment.ts`
+Hook contenant la logique d'execution :
+- `applyBulkRole(action, role, userIds)` : boucle sur les user_ids, insert ou delete dans `user_roles`, gere les doublons (constraint unique), retourne `{success: number, errors: string[]}`
+- Invalidation des caches `users`, `userRoles` apres execution
+
+## Fichier a modifier
+
+### `src/pages/UserManagement.tsx`
+- Ajouter un state `isBulkWizardOpen` et un bouton "Gestion en masse des droits" (icone `UsersRound` ou `ShieldCheck`) dans la barre d'actions en haut
+- Importer et rendre `BulkRoleWizard`
+- Appeler `handleFormSubmit` au succes pour rafraichir la liste
+
+## Pas de modification de schema
+
+Les tables `user_roles`, `profiles`, `user_hierarchy_assignments`, `poles`, `directions`, `services` existent deja. Toute la logique se fait avec des requetes existantes. L'admin a deja les droits RLS pour inserer/supprimer dans `user_roles`.
+
+## Flux utilisateur
 
 ```text
-| Nom           | Statut   | Debut      | Fin        | %   | 02/03 | 09/03 | 16/03 | 23/03 |
-|---------------|----------|------------|------------|-----|-------|-------|-------|-------|
-| Tache A       | En cours | 01/03      | 15/03      | 50  | [bleu]| [bleu]| [bleu]|       |
-| Tache B       | A faire  | 10/03      | 28/03      |  0  |       | [gris]| [gris]| [gris]|
-| Tache C       | Termine  | 01/03      | 08/03      | 100 | [vert]| [vert]|       |       |
+[Bouton "Gestion en masse"]
+        |
+   Etape 1 : Ajouter/Supprimer  +  Choix du role
+        |
+   Etape 2 : Selection utilisateurs (nominatif OU par organisation)
+        |
+   Etape 3 : Resume → Appliquer → Synthese (X succes, Y erreurs)
 ```
-
-Les cellules temporelles actives auront un **fond colore** (pas de texte) :
-- Gris clair (`#E2E8F0`) pour "A faire"
-- Bleu (`#3B82F6`) pour "En cours"
-- Vert (`#22C55E`) pour "Termine"
-
-### Ameliorations supplementaires
-
-1. **Ligne d'en-tete stylee** : fond gris fonce, texte blanc, police en gras
-2. **Colonne Statut coloree** : texte colore selon le statut (rouge/orange/vert)
-3. **Bordures fines** sur toutes les cellules pour une meilleure lisibilite
-4. **Ligne de titre** : nom du projet en haut du fichier, fusionne sur plusieurs colonnes
-5. **Legende** en bas du tableau expliquant les couleurs
-6. **Gel des volets** : les 5 premieres colonnes et la ligne d'en-tete restent visibles au scroll
-
-## Modifications techniques
-
-### 1. Ajouter la dependance `exceljs`
-
-Installation du package `exceljs` (compatible navigateur, ~200 Ko gzippe).
-
-### 2. Reecrire `src/utils/ganttExcelExport.ts`
-
-Remplacement complet du contenu en utilisant l'API ExcelJS :
-
-- **Workbook/Worksheet** : creation via `new ExcelJS.Workbook()` au lieu de `XLSX.utils`
-- **Ligne titre** : cellule A1 fusionnee avec le nom du projet, police 14pt gras
-- **En-tetes** : fond `#4B5563` (gris fonce), texte blanc, gras
-- **Cellules Gantt** : `cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF3B82F6' } }` pour les cellules actives
-- **Colonne Avancement** : barre de progression textuelle ou pourcentage colore
-- **Legende** : 3 lignes en bas avec un carre de couleur + libelle
-- **Gel des volets** : `worksheet.views = [{ state: 'frozen', xSplit: 5, ySplit: 2 }]`
-- **Telechargement** : `workbook.xlsx.writeBuffer()` puis creation d'un Blob pour le download cote navigateur
-
-### 3. Aucune modification d'interface
-
-Le bouton "Export Gantt Excel" dans `TaskGantt.tsx` appelle deja `exportGanttToExcel(ganttTasks, projectTitle)`. La signature de la fonction reste identique, donc aucune modification de composant n'est necessaire.
-
-## Fichiers concernes
-
-| Fichier | Action |
-|---------|--------|
-| `package.json` | Ajout de la dependance `exceljs` |
-| `src/utils/ganttExcelExport.ts` | Reecriture complete avec ExcelJS et mise en forme avancee |
-
-## Compatibilite
-
-- ExcelJS fonctionne cote navigateur via `writeBuffer()` (pas besoin de Node.js)
-- La bibliotheque `xlsx` reste utilisee par les autres exports du projet (taches, activites, permissions, etc.) et n'est pas supprimee
-- Le fichier genere est compatible Excel, LibreOffice et Google Sheets
 
