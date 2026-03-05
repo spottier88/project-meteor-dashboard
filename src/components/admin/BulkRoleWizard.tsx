@@ -143,11 +143,11 @@ export const BulkRoleWizard = ({ isOpen, onClose, onSuccess }: BulkRoleWizardPro
     queryFn: async () => {
       // Déterminer le filtre le plus précis
       let entityId = "";
-      let entityType = "";
+      let entityType: "pole" | "direction" | "service" | "" = "";
       if (selectedServiceId) { entityId = selectedServiceId; entityType = "service"; }
       else if (selectedDirectionId) { entityId = selectedDirectionId; entityType = "direction"; }
       else if (selectedPoleId) { entityId = selectedPoleId; entityType = "pole"; }
-      if (!entityId) return [];
+      if (!entityId || !entityType) return [];
 
       // Récupérer les utilisateurs directement affectés à ce niveau
       const { data } = await supabase
@@ -553,7 +553,7 @@ export const BulkRoleWizard = ({ isOpen, onClose, onSuccess }: BulkRoleWizardPro
               /* Synthèse après exécution */
               <div className="space-y-4">
                 <div className="flex items-center gap-3 p-4 border rounded-md bg-muted/30">
-                  <Check className="h-8 w-8 text-green-600" />
+                  <Check className="h-8 w-8 text-primary" />
                   <div>
                     <p className="font-medium">Traitement terminé</p>
                     <p className="text-sm text-muted-foreground">
