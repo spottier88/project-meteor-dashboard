@@ -390,7 +390,7 @@ export const BulkRoleWizard = ({ isOpen, onClose, onSuccess }: BulkRoleWizardPro
                     Tout désélectionner
                   </Button>
                 </div>
-                <ScrollArea className="flex-1 min-h-0 border rounded-md" style={{ maxHeight: "40vh" }}>
+                <ScrollArea className="flex-1 min-h-0 border rounded-md h-[300px]">
                   <div className="p-2 space-y-1">
                     {searchFilteredUsers.length === 0 ? (
                       <p className="text-sm text-muted-foreground p-2">Aucun utilisateur trouvé</p>
@@ -398,24 +398,29 @@ export const BulkRoleWizard = ({ isOpen, onClose, onSuccess }: BulkRoleWizardPro
                       searchFilteredUsers.map((user) => (
                         <label
                           key={user.id}
-                          className="flex items-center gap-3 p-2 rounded-md hover:bg-muted cursor-pointer"
+                          className="flex items-start gap-3 p-2 rounded-md hover:bg-muted cursor-pointer"
                         >
                           <Checkbox
+                            className="mt-0.5"
                             checked={selectedUserIds.has(user.id)}
                             onCheckedChange={() => toggleUser(user.id)}
                           />
                           <div className="flex-1 min-w-0">
-                            <span className="text-sm font-medium">{formatUserName(user)}</span>
-                            {user.email && (
-                              <span className="text-xs text-muted-foreground ml-2">{user.email}</span>
+                            <div className="truncate">
+                              <span className="text-sm font-medium">{formatUserName(user)}</span>
+                              {user.email && (
+                                <span className="text-xs text-muted-foreground ml-2">{user.email}</span>
+                              )}
+                            </div>
+                            {user.roles.length > 0 && (
+                              <div className="flex gap-1 flex-wrap mt-1">
+                                {user.roles.map((r) => (
+                                  <Badge key={r} variant="secondary" className="text-xs">
+                                    {getRoleLabel(r)}
+                                  </Badge>
+                                ))}
+                              </div>
                             )}
-                          </div>
-                          <div className="flex gap-1 flex-wrap">
-                            {user.roles.map((r) => (
-                              <Badge key={r} variant="secondary" className="text-xs">
-                                {getRoleLabel(r)}
-                              </Badge>
-                            ))}
                           </div>
                         </label>
                       ))
@@ -506,7 +511,7 @@ export const BulkRoleWizard = ({ isOpen, onClose, onSuccess }: BulkRoleWizardPro
 
         {/* ====== ÉTAPE 3 : Confirmation et exécution ====== */}
         {step === 3 && (
-          <ScrollArea className="flex-1 min-h-0" style={{ maxHeight: "55vh" }}>
+          <ScrollArea className="flex-1 min-h-0 h-[350px]">
           <div className="space-y-4 pr-3">
             {!executed ? (
               <>
@@ -526,8 +531,8 @@ export const BulkRoleWizard = ({ isOpen, onClose, onSuccess }: BulkRoleWizardPro
                     <span className="text-sm font-medium">
                       {selectedUsers.length} utilisateur(s) concerné(s) :
                     </span>
-                    <ScrollArea className="mt-2" style={{ maxHeight: "35vh" }}>
-                      <ul className="space-y-1 pl-4">
+                    <ScrollArea className="mt-2 h-[200px]">
+                      <ul className="space-y-1 pl-4 pr-3">
                         {selectedUsers.map((u) => (
                           <li key={u.id} className="text-sm list-disc">
                             {formatUserName(u)}
