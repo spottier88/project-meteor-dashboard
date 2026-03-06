@@ -390,7 +390,7 @@ export const BulkRoleWizard = ({ isOpen, onClose, onSuccess }: BulkRoleWizardPro
                     Tout désélectionner
                   </Button>
                 </div>
-                <ScrollArea className="flex-1 min-h-0 border rounded-md h-[300px]">
+                <div className="border rounded-md max-h-[300px] overflow-y-auto">
                   <div className="p-2 space-y-1">
                     {searchFilteredUsers.length === 0 ? (
                       <p className="text-sm text-muted-foreground p-2">Aucun utilisateur trouvé</p>
@@ -426,7 +426,7 @@ export const BulkRoleWizard = ({ isOpen, onClose, onSuccess }: BulkRoleWizardPro
                       ))
                     )}
                   </div>
-                </ScrollArea>
+                </div>
               </TabsContent>
 
               {/* --- Mode par organisation --- */}
@@ -511,8 +511,8 @@ export const BulkRoleWizard = ({ isOpen, onClose, onSuccess }: BulkRoleWizardPro
 
         {/* ====== ÉTAPE 3 : Confirmation et exécution ====== */}
         {step === 3 && (
-          <ScrollArea className="flex-1 min-h-0 h-[350px]">
-          <div className="space-y-4 pr-3">
+          <div className="flex-1 min-h-0 max-h-[350px] overflow-y-auto">
+          <div className="space-y-4 pr-1">
             {!executed ? (
               <>
                 {/* Résumé avant exécution */}
@@ -531,7 +531,7 @@ export const BulkRoleWizard = ({ isOpen, onClose, onSuccess }: BulkRoleWizardPro
                     <span className="text-sm font-medium">
                       {selectedUsers.length} utilisateur(s) concerné(s) :
                     </span>
-                    <ScrollArea className="mt-2 h-[200px]">
+                    <div className="mt-2 max-h-[200px] overflow-y-auto">
                       <ul className="space-y-1 pl-4 pr-3">
                         {selectedUsers.map((u) => (
                           <li key={u.id} className="text-sm list-disc">
@@ -542,7 +542,7 @@ export const BulkRoleWizard = ({ isOpen, onClose, onSuccess }: BulkRoleWizardPro
                           </li>
                         ))}
                       </ul>
-                    </ScrollArea>
+                    </div>
                   </div>
                 </div>
 
@@ -575,19 +575,19 @@ export const BulkRoleWizard = ({ isOpen, onClose, onSuccess }: BulkRoleWizardPro
                         {result.errors.length} erreur(s)
                       </span>
                     </div>
-                    <ScrollArea className="max-h-[150px]">
+                    <div className="max-h-[150px] overflow-y-auto">
                       <ul className="space-y-1 text-xs text-destructive">
                         {result.errors.map((err, i) => (
                           <li key={i}>{err}</li>
                         ))}
                       </ul>
-                    </ScrollArea>
+                    </div>
                   </div>
                 )}
               </div>
             )}
           </div>
-          </ScrollArea>
+          </div>
         )}
 
         {/* Navigation */}
