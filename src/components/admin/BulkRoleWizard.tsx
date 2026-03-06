@@ -390,7 +390,7 @@ export const BulkRoleWizard = ({ isOpen, onClose, onSuccess }: BulkRoleWizardPro
                     Tout désélectionner
                   </Button>
                 </div>
-                <ScrollArea className="flex-1 min-h-0 border rounded-md h-[300px]">
+                <div className="border rounded-md max-h-[300px] overflow-y-auto">
                   <div className="p-2 space-y-1">
                     {searchFilteredUsers.length === 0 ? (
                       <p className="text-sm text-muted-foreground p-2">Aucun utilisateur trouvé</p>
@@ -426,7 +426,7 @@ export const BulkRoleWizard = ({ isOpen, onClose, onSuccess }: BulkRoleWizardPro
                       ))
                     )}
                   </div>
-                </ScrollArea>
+                </div>
               </TabsContent>
 
               {/* --- Mode par organisation --- */}
