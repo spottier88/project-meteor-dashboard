@@ -1,77 +1,59 @@
 
 
-# Amelioration de l'export Excel Gantt : ajout de couleurs et mise en forme avancee
+# Correctif : défilement et lisibilité dans le BulkRoleWizard
 
-## Constat actuel
+## Problèmes identifiés
 
-L'export actuel utilise la bibliotheque `xlsx` (SheetJS community) qui ne supporte **pas** la mise en forme des cellules (couleurs de fond, bordures, polices). Le rendu repose sur des caracteres Unicode (`░`, `▓`, `■`) qui sont fonctionnels mais peu lisibles dans Excel.
+1. **Pas de défilement visible** : Le `ScrollArea` avec `maxHeight: "40vh"` ne suffit pas car le conteneur parent (`DialogContent`) ne contraint pas correctement la hauteur. Le contenu déborde sans barre de défilement.
+2. **Noms tronqués par les badges de rôles** : La ligne utilisateur utilise `flex` avec les badges en fin de ligne. Quand un utilisateur a beaucoup de rôles, les badges poussent le nom hors de la zone visible.
 
-## Solution proposee : migration vers ExcelJS
+## Correctifs
 
-Remplacer `xlsx` par `exceljs` uniquement pour cet export Gantt. La bibliotheque `exceljs` supporte nativement :
-- Couleurs de fond des cellules
-- Bordures fines
-- Police en gras, taille, couleur
-- Fusion de cellules
-- Alignement
+### Fichier unique : `src/components/admin/BulkRoleWizard.tsx`
 
-### Rendu cible dans Excel
+**1. Layout de chaque ligne utilisateur (étape 2, lignes 399-420)**
+
+Passer d'un layout horizontal à un layout en deux lignes :
+- Ligne 1 : checkbox + nom complet + email
+- Ligne 2 : badges de rôles (en dessous, avec un léger padding à gauche pour aligner avec le nom)
 
 ```text
-| Nom           | Statut   | Debut      | Fin        | %   | 02/03 | 09/03 | 16/03 | 23/03 |
-|---------------|----------|------------|------------|-----|-------|-------|-------|-------|
-| Tache A       | En cours | 01/03      | 15/03      | 50  | [bleu]| [bleu]| [bleu]|       |
-| Tache B       | A faire  | 10/03      | 28/03      |  0  |       | [gris]| [gris]| [gris]|
-| Tache C       | Termine  | 01/03      | 08/03      | 100 | [vert]| [vert]|       |       |
+Avant :
+  <label className="flex items-center gap-3 ...">
+    <Checkbox />
+    <div className="flex-1 min-w-0">nom + email</div>
+    <div className="flex gap-1 flex-wrap">badges</div>
+  </label>
+
+Après :
+  <label className="flex items-start gap-3 p-2 ...">
+    <Checkbox className="mt-0.5" />
+    <div className="flex-1 min-w-0">
+      <div>nom + email (truncate)</div>
+      <div className="flex gap-1 flex-wrap mt-1">badges</div>
+    </div>
+  </label>
 ```
 
-Les cellules temporelles actives auront un **fond colore** (pas de texte) :
-- Gris clair (`#E2E8F0`) pour "A faire"
-- Bleu (`#3B82F6`) pour "En cours"
-- Vert (`#22C55E`) pour "Termine"
+**2. ScrollArea avec hauteur fixe en pixels (étape 2 et étape 3)**
 
-### Ameliorations supplementaires
+Remplacer `style={{ maxHeight: "40vh" }}` par une hauteur fixe calculée qui fonctionne mieux dans le contexte du Dialog :
+- Étape 2 : `h-[300px]` sur le ScrollArea (au lieu de `maxHeight: 40vh`)
+- Étape 3 : même approche `h-[350px]`
 
-1. **Ligne d'en-tete stylee** : fond gris fonce, texte blanc, police en gras
-2. **Colonne Statut coloree** : texte colore selon le statut (rouge/orange/vert)
-3. **Bordures fines** sur toutes les cellules pour une meilleure lisibilite
-4. **Ligne de titre** : nom du projet en haut du fichier, fusionne sur plusieurs colonnes
-5. **Legende** en bas du tableau expliquant les couleurs
-6. **Gel des volets** : les 5 premieres colonnes et la ligne d'en-tete restent visibles au scroll
+Cela garantit que le composant `ScrollArea` de Radix a une hauteur explicite et génère bien la barre de défilement.
 
-## Modifications techniques
+**3. Même correction pour la liste de l'étape 3 (synthèse)**
 
-### 1. Ajouter la dependance `exceljs`
+Les noms dans la liste de confirmation (étape 3) doivent aussi utiliser le layout en deux lignes si les badges sont affichés.
 
-Installation du package `exceljs` (compatible navigateur, ~200 Ko gzippe).
+### Résumé des modifications
 
-### 2. Reecrire `src/utils/ganttExcelExport.ts`
+| Élément | Modification |
+|---------|-------------|
+| Ligne utilisateur (étape 2) | Layout vertical : nom au-dessus, badges en dessous |
+| ScrollArea étape 2 | `className="h-[300px]"` au lieu de `style={{ maxHeight: "40vh" }}` |
+| ScrollArea étape 3 | `className="h-[350px]"` au lieu de `style={{ maxHeight: "55vh" }}` |
 
-Remplacement complet du contenu en utilisant l'API ExcelJS :
-
-- **Workbook/Worksheet** : creation via `new ExcelJS.Workbook()` au lieu de `XLSX.utils`
-- **Ligne titre** : cellule A1 fusionnee avec le nom du projet, police 14pt gras
-- **En-tetes** : fond `#4B5563` (gris fonce), texte blanc, gras
-- **Cellules Gantt** : `cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF3B82F6' } }` pour les cellules actives
-- **Colonne Avancement** : barre de progression textuelle ou pourcentage colore
-- **Legende** : 3 lignes en bas avec un carre de couleur + libelle
-- **Gel des volets** : `worksheet.views = [{ state: 'frozen', xSplit: 5, ySplit: 2 }]`
-- **Telechargement** : `workbook.xlsx.writeBuffer()` puis creation d'un Blob pour le download cote navigateur
-
-### 3. Aucune modification d'interface
-
-Le bouton "Export Gantt Excel" dans `TaskGantt.tsx` appelle deja `exportGanttToExcel(ganttTasks, projectTitle)`. La signature de la fonction reste identique, donc aucune modification de composant n'est necessaire.
-
-## Fichiers concernes
-
-| Fichier | Action |
-|---------|--------|
-| `package.json` | Ajout de la dependance `exceljs` |
-| `src/utils/ganttExcelExport.ts` | Reecriture complete avec ExcelJS et mise en forme avancee |
-
-## Compatibilite
-
-- ExcelJS fonctionne cote navigateur via `writeBuffer()` (pas besoin de Node.js)
-- La bibliotheque `xlsx` reste utilisee par les autres exports du projet (taches, activites, permissions, etc.) et n'est pas supprimee
-- Le fichier genere est compatible Excel, LibreOffice et Google Sheets
+Un seul fichier modifié.
 
