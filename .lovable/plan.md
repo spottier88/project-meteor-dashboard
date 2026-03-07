@@ -1,77 +1,59 @@
 
 
-# Amelioration de l'export Excel Gantt : ajout de couleurs et mise en forme avancee
+# Ajout des indicateurs de réussite au cadrage projet
 
-## Constat actuel
+## Objectif
+Ajouter un champ textuel "Indicateurs de réussite" (`success_indicators`) à la note de cadrage, intégré dans le formulaire, la vue détaillée, la génération IA et la sauvegarde en base.
 
-L'export actuel utilise la bibliotheque `xlsx` (SheetJS community) qui ne supporte **pas** la mise en forme des cellules (couleurs de fond, bordures, polices). Le rendu repose sur des caracteres Unicode (`░`, `▓`, `■`) qui sont fonctionnels mais peu lisibles dans Excel.
+## Modifications
 
-## Solution proposee : migration vers ExcelJS
-
-Remplacer `xlsx` par `exceljs` uniquement pour cet export Gantt. La bibliotheque `exceljs` supporte nativement :
-- Couleurs de fond des cellules
-- Bordures fines
-- Police en gras, taille, couleur
-- Fusion de cellules
-- Alignement
-
-### Rendu cible dans Excel
-
-```text
-| Nom           | Statut   | Debut      | Fin        | %   | 02/03 | 09/03 | 16/03 | 23/03 |
-|---------------|----------|------------|------------|-----|-------|-------|-------|-------|
-| Tache A       | En cours | 01/03      | 15/03      | 50  | [bleu]| [bleu]| [bleu]|       |
-| Tache B       | A faire  | 10/03      | 28/03      |  0  |       | [gris]| [gris]| [gris]|
-| Tache C       | Termine  | 01/03      | 08/03      | 100 | [vert]| [vert]|       |       |
+### 1. Migration base de données
+Ajouter une colonne `success_indicators` (text, nullable) à la table `project_framing` :
+```sql
+ALTER TABLE project_framing ADD COLUMN success_indicators text;
 ```
 
-Les cellules temporelles actives auront un **fond colore** (pas de texte) :
-- Gris clair (`#E2E8F0`) pour "A faire"
-- Bleu (`#3B82F6`) pour "En cours"
-- Vert (`#22C55E`) pour "Termine"
+### 2. Fichier `src/utils/framingAIHelpers.ts`
+- Ajouter `'success_indicators'` au type `FramingSectionKey`
+- Ajouter `'indicateurs'` au type `AITemplateSectionKey`
+- Ajouter l'entrée dans `FRAMING_SECTION_MAPPING` :
+  - label: "Indicateurs de réussite"
+  - aiSection: `'indicateurs'`
+  - placeholder: "Définissez les indicateurs permettant de mesurer le succès du projet"
 
-### Ameliorations supplementaires
+### 3. Fichier `src/components/form/useProjectFormState.tsx`
+- Ajouter le state `successIndicators` / `setSuccessIndicators` dans l'interface `ProjectFormState` et dans le hook
+- Charger la valeur depuis `framingData.success_indicators` en mode édition
 
-1. **Ligne d'en-tete stylee** : fond gris fonce, texte blanc, police en gras
-2. **Colonne Statut coloree** : texte colore selon le statut (rouge/orange/vert)
-3. **Bordures fines** sur toutes les cellules pour une meilleure lisibilite
-4. **Ligne de titre** : nom du projet en haut du fichier, fusionne sur plusieurs colonnes
-5. **Legende** en bas du tableau expliquant les couleurs
-6. **Gel des volets** : les 5 premieres colonnes et la ligne d'en-tete restent visibles au scroll
+### 4. Fichier `src/components/form/ProjectFormStep4.tsx`
+- Ajouter les props `successIndicators` / `setSuccessIndicators`
+- Ajouter le `FramingField` pour `success_indicators` (après les objectifs ou les livrables)
+- Intégrer dans les setters/currentValues pour la génération IA
 
-## Modifications techniques
+### 5. Fichier `src/components/form/ProjectFormContent.tsx`
+- Passer les nouvelles props `successIndicators` / `setSuccessIndicators` au Step 4
 
-### 1. Ajouter la dependance `exceljs`
+### 6. Fichier `src/utils/projectSubmitHelpers.ts`
+- Ajouter `success_indicators: formState.successIndicators` dans le payload de `saveFraming`
+- Ajouter dans la condition `hasFramingData`
 
-Installation du package `exceljs` (compatible navigateur, ~200 Ko gzippe).
+### 7. Fichier `src/components/framing/FramingDetails.tsx`
+- Ajouter `{ title: "Indicateurs de réussite", key: "success_indicators" }` dans le tableau `sections`
 
-### 2. Reecrire `src/utils/ganttExcelExport.ts`
+### 8. Fichier `src/components/framing/FramingSectionEditor.tsx`
+- Le composant est générique, pas de modification nécessaire (il utilise la clé dynamiquement)
 
-Remplacement complet du contenu en utilisant l'API ExcelJS :
+### 9. Template IA (optionnel, en base)
+- Insérer un template dans `ai_prompt_templates` avec `section = 'indicateurs'`, `type = 'framework_note'` pour guider la génération IA de cette section. Sans ce template, le fallback générique sera utilisé.
 
-- **Workbook/Worksheet** : creation via `new ExcelJS.Workbook()` au lieu de `XLSX.utils`
-- **Ligne titre** : cellule A1 fusionnee avec le nom du projet, police 14pt gras
-- **En-tetes** : fond `#4B5563` (gris fonce), texte blanc, gras
-- **Cellules Gantt** : `cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF3B82F6' } }` pour les cellules actives
-- **Colonne Avancement** : barre de progression textuelle ou pourcentage colore
-- **Legende** : 3 lignes en bas avec un carre de couleur + libelle
-- **Gel des volets** : `worksheet.views = [{ state: 'frozen', xSplit: 5, ySplit: 2 }]`
-- **Telechargement** : `workbook.xlsx.writeBuffer()` puis creation d'un Blob pour le download cote navigateur
-
-### 3. Aucune modification d'interface
-
-Le bouton "Export Gantt Excel" dans `TaskGantt.tsx` appelle deja `exportGanttToExcel(ganttTasks, projectTitle)`. La signature de la fonction reste identique, donc aucune modification de composant n'est necessaire.
-
-## Fichiers concernes
-
-| Fichier | Action |
-|---------|--------|
-| `package.json` | Ajout de la dependance `exceljs` |
-| `src/utils/ganttExcelExport.ts` | Reecriture complete avec ExcelJS et mise en forme avancee |
-
-## Compatibilite
-
-- ExcelJS fonctionne cote navigateur via `writeBuffer()` (pas besoin de Node.js)
-- La bibliotheque `xlsx` reste utilisee par les autres exports du projet (taches, activites, permissions, etc.) et n'est pas supprimee
-- Le fichier genere est compatible Excel, LibreOffice et Google Sheets
+## Fichiers impactés
+| Fichier | Modification |
+|---------|-------------|
+| Migration SQL | Ajout colonne `success_indicators` |
+| `framingAIHelpers.ts` | Types + mapping |
+| `useProjectFormState.tsx` | State + chargement |
+| `ProjectFormStep4.tsx` | Props + champ + IA |
+| `ProjectFormContent.tsx` | Passage des props |
+| `projectSubmitHelpers.ts` | Sauvegarde |
+| `FramingDetails.tsx` | Affichage en lecture |
 
