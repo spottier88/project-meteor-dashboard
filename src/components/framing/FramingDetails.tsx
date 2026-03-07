@@ -27,7 +27,7 @@ interface FramingDetailsProps {
   projectId: string;
 }
 
-type SectionKey = "context" | "stakeholders" | "governance" | "objectives" | "timeline" | "deliverables";
+type SectionKey = "context" | "stakeholders" | "governance" | "objectives" | "timeline" | "deliverables" | "success_indicators";
 
 interface Section {
   title: string;
