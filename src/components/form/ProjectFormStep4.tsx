@@ -19,6 +19,8 @@ export interface ProjectFormStep4Props {
   setTimeline: (value: string) => void;
   deliverables: string;
   setDeliverables: (value: string) => void;
+  successIndicators: string;
+  setSuccessIndicators: (value: string) => void;
   // Données du projet pour le contexte IA
   projectTitle?: string;
   projectDescription?: string;
@@ -42,6 +44,8 @@ export const ProjectFormStep4 = ({
   setTimeline,
   deliverables,
   setDeliverables,
+  successIndicators,
+  setSuccessIndicators,
   projectTitle,
   projectDescription,
   startDate,
@@ -64,6 +68,7 @@ export const ProjectFormStep4 = ({
       objectives: setObjectives,
       timeline: setTimeline,
       deliverables: setDeliverables,
+      success_indicators: setSuccessIndicators,
     };
 
     const currentValues: Record<FramingSectionKey, string> = {
@@ -73,6 +78,7 @@ export const ProjectFormStep4 = ({
       objectives,
       timeline,
       deliverables,
+      success_indicators: successIndicators,
     };
 
     const projectContext = {
@@ -107,6 +113,7 @@ export const ProjectFormStep4 = ({
       objectives,
       timeline,
       deliverables,
+      success_indicators: successIndicators,
     };
 
     const projectContext = {
@@ -131,6 +138,7 @@ export const ProjectFormStep4 = ({
       setObjectives(generated.objectives);
       setTimeline(generated.timeline);
       setDeliverables(generated.deliverables);
+      setSuccessIndicators(generated.success_indicators);
     }
   };
 
@@ -233,6 +241,16 @@ export const ProjectFormStep4 = ({
           section="deliverables"
           value={deliverables}
           onChange={setDeliverables}
+          onGenerate={handleGenerateSection}
+          isGenerating={isGenerating}
+          generatingSection={generatingSection}
+        />
+
+        <FramingField
+          id="success_indicators"
+          section="success_indicators"
+          value={successIndicators}
+          onChange={setSuccessIndicators}
           onGenerate={handleGenerateSection}
           isGenerating={isGenerating}
           generatingSection={generatingSection}

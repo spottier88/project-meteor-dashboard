@@ -58,6 +58,8 @@ export interface ProjectFormState {
   setTimeline: (value: string) => void;
   deliverables: string;
   setDeliverables: (value: string) => void;
+  successIndicators: string;
+  setSuccessIndicators: (value: string) => void;
   hasUnsavedChanges: boolean;
   setHasUnsavedChanges: (value: boolean) => void;
   resetHasUnsavedChanges: () => void;
@@ -108,6 +110,7 @@ export const useProjectFormState = (isOpen: boolean, project?: any) => {
   const [objectives, setObjectives] = useState("");
   const [timeline, setTimeline] = useState("");
   const [deliverables, setDeliverables] = useState("");
+  const [successIndicators, setSuccessIndicators] = useState("");
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [hasNoHierarchyAssignment, setHasNoHierarchyAssignment] = useState(false);
   const [forEntityType, setForEntityType] = useState<ForEntityType>(null);
@@ -278,6 +281,7 @@ export const useProjectFormState = (isOpen: boolean, project?: any) => {
         setObjectives("");
         setTimeline("");
         setDeliverables("");
+        setSuccessIndicators("");
         
         setForEntityType(null);
         setForEntityId(undefined);
@@ -385,6 +389,7 @@ export const useProjectFormState = (isOpen: boolean, project?: any) => {
               setObjectives(framingData.objectives || "");
               setTimeline(framingData.timeline || "");
               setDeliverables(framingData.deliverables || "");
+              setSuccessIndicators(framingData.success_indicators || "");
             }
           } catch (error) {
             console.error("Error in framing data fetch:", error);
@@ -411,7 +416,7 @@ export const useProjectFormState = (isOpen: boolean, project?: any) => {
     title, description, projectManager, startDate, endDate, priority, 
     monitoringLevel, monitoringEntityId, 
     novateur, usager, ouverture, agilite, impact, lifecycleStatus,
-    context, stakeholders, governance, objectives, timeline, deliverables,
+    context, stakeholders, governance, objectives, timeline, deliverables, successIndicators,
     forEntityType, forEntityId, templateId, portfolioIds, teamsUrl, tags
   ]);
 
@@ -473,6 +478,8 @@ export const useProjectFormState = (isOpen: boolean, project?: any) => {
     setTimeline,
     deliverables,
     setDeliverables,
+    successIndicators,
+    setSuccessIndicators,
     hasUnsavedChanges,
     setHasUnsavedChanges,
     resetHasUnsavedChanges,
