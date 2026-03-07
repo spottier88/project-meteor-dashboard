@@ -50,12 +50,13 @@ import { supabase } from "@/integrations/supabase/client";
  * Ces clés correspondent aux colonnes de la table project_framing
  */
 export type FramingSectionKey = 
-  | 'context'       // Colonne DB: context
-  | 'stakeholders'  // Colonne DB: stakeholders
-  | 'governance'    // Colonne DB: governance
-  | 'objectives'    // Colonne DB: objectives
-  | 'timeline'      // Colonne DB: timeline
-  | 'deliverables'; // Colonne DB: deliverables
+  | 'context'              // Colonne DB: context
+  | 'stakeholders'         // Colonne DB: stakeholders
+  | 'governance'           // Colonne DB: governance
+  | 'objectives'           // Colonne DB: objectives
+  | 'timeline'             // Colonne DB: timeline
+  | 'deliverables'         // Colonne DB: deliverables
+  | 'success_indicators';  // Colonne DB: success_indicators
 
 /**
  * Type pour les sections de templates IA dans ai_prompt_templates
@@ -68,7 +69,8 @@ export type AITemplateSectionKey =
   | 'organisation'       // Template pour "Gouvernance" (note: le nom 'organisation' est historique)
   | 'objectifs'          // Template pour "Objectifs"
   | 'planning'           // Template pour "Planning prévisionnel"
-  | 'livrables';         // Template pour "Livrables attendus"
+  | 'livrables'          // Template pour "Livrables attendus"
+  | 'indicateurs';       // Template pour "Indicateurs de réussite"
 
 /**
  * Configuration du mapping entre les sections du formulaire et les sections IA
@@ -112,6 +114,11 @@ export const FRAMING_SECTION_MAPPING: Record<FramingSectionKey, {
     aiSection: 'livrables',
     label: 'Livrables attendus',
     placeholder: 'Décrivez les résultats attendus du projet'
+  },
+  success_indicators: {
+    aiSection: 'indicateurs',
+    label: 'Indicateurs de réussite',
+    placeholder: 'Définissez les indicateurs permettant de mesurer le succès du projet (KPI, critères de réussite, métriques...)'
   }
 };
 

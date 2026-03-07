@@ -81,7 +81,7 @@ export const saveFraming = async (
   mode: "upsert" | "insert" = "upsert"
 ): Promise<SaveResult> => {
   const hasFramingData = formState.context || formState.objectives || formState.governance ||
-    formState.deliverables || formState.stakeholders || formState.timeline;
+    formState.deliverables || formState.stakeholders || formState.timeline || formState.successIndicators;
 
   if (!hasFramingData) return { success: true };
 
@@ -93,6 +93,7 @@ export const saveFraming = async (
     deliverables: formState.deliverables,
     stakeholders: formState.stakeholders,
     timeline: formState.timeline,
+    success_indicators: formState.successIndicators,
   };
 
   const { error } = mode === "upsert"

@@ -136,6 +136,7 @@ export const FramingDetails = ({ projectId }: FramingDetailsProps) => {
       objectives: framing?.objectives || "",
       timeline: framing?.timeline || "",
       deliverables: framing?.deliverables || "",
+      success_indicators: framing?.success_indicators || "",
     };
 
     const generated = await generateAllSections(
@@ -173,6 +174,7 @@ export const FramingDetails = ({ projectId }: FramingDetailsProps) => {
     { title: "Objectifs", key: "objectives" },
     { title: "Calendrier", key: "timeline" },
     { title: "Livrables", key: "deliverables" },
+    { title: "Indicateurs de réussite", key: "success_indicators" },
   ];
 
   if (!framing && !canEdit) {
