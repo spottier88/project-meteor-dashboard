@@ -1101,6 +1101,7 @@ export type Database = {
           objectives: string | null
           project_id: string | null
           stakeholders: string | null
+          success_indicators: string | null
           timeline: string | null
           updated_at: string | null
         }
@@ -1113,6 +1114,7 @@ export type Database = {
           objectives?: string | null
           project_id?: string | null
           stakeholders?: string | null
+          success_indicators?: string | null
           timeline?: string | null
           updated_at?: string | null
         }
@@ -1125,6 +1127,7 @@ export type Database = {
           objectives?: string | null
           project_id?: string | null
           stakeholders?: string | null
+          success_indicators?: string | null
           timeline?: string | null
           updated_at?: string | null
         }

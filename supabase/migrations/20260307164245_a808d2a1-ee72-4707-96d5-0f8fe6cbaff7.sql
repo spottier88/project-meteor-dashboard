@@ -1,0 +1,1 @@
+ALTER TABLE project_framing ADD COLUMN success_indicators text;
