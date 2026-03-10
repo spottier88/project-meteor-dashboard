@@ -209,7 +209,7 @@ const processInlineFormatting = (text: string): TextRun[] => {
  */
 export const generateProjectFramingDOCX = async (projectData: ProjectData): Promise<void> => {
   try {
-    const { project, framing, risks, tasks } = projectData;
+    const { project, framing, risks, tasks, members } = projectData;
 
     // Créer les sections du document
     const sections: Paragraph[] = [];
