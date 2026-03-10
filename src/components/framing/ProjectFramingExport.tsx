@@ -457,14 +457,19 @@ const ProjectFramingDocument = ({ projectData }: { projectData: ProjectData }) =
         <ProjectInfoSection project={projectData.project} />
         <FramingSection framing={projectData.framing} />
       </ContentPage>
-      
-      {/* Page 2: Risques */}
+
+      {/* Page 2: Équipe projet */}
       <ContentPage pageNumber={2}>
+        <MembersSection members={projectData.members} project={projectData.project} />
+      </ContentPage>
+      
+      {/* Page 3: Risques */}
+      <ContentPage pageNumber={3}>
         <RisksSection risks={projectData.risks} />
       </ContentPage>
       
-      {/* Page 3: Tâches */}
-      <ContentPage pageNumber={3}>
+      {/* Page 4: Tâches */}
+      <ContentPage pageNumber={4}>
         <TasksSection tasks={projectData.tasks} />
       </ContentPage>
     </Document>
