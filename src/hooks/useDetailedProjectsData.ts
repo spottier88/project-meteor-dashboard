@@ -68,6 +68,14 @@ export type ProjectData = {
     assignee: string | null;
     parent_task_id: string | null;
   }>;
+  members?: Array<{
+    id: string;
+    user_id: string;
+    role: string;
+    first_name: string | null;
+    last_name: string | null;
+    email: string | null;
+  }>;
 };
 
 export const useDetailedProjectsData = (projectIds: string[], enabled: boolean = false) => {

@@ -393,12 +393,10 @@ const RisksSection = ({ risks }: { risks: ProjectData['risks'] }) => (
 
 // Composant pour la section des tâches
 const TasksSection = ({ tasks }: { tasks: ProjectData['tasks'] }) => {
-  // Séparer les tâches par statut
   const todoTasks = tasks.filter(task => task.status === 'todo' && !task.parent_task_id);
   const inProgressTasks = tasks.filter(task => task.status === 'in_progress' && !task.parent_task_id);
   const doneTasks = tasks.filter(task => task.status === 'done' && !task.parent_task_id);
   
-  // Obtenir les sous-tâches par tâche parente
   const getSubtasks = (parentId: string) => {
     return tasks.filter(task => task.parent_task_id === parentId);
   };
@@ -500,6 +498,55 @@ const TasksSection = ({ tasks }: { tasks: ProjectData['tasks'] }) => {
   );
 };
 
+// Labels des rôles dans le projet
+const renderMemberRoleLabel = (role: string): string => {
+  const labels: Record<string, string> = {
+    secondary_manager: 'Chef de projet secondaire',
+    member: 'Membre',
+  };
+  return labels[role] || role;
+};
+
+// Composant pour la section des membres de l'équipe
+const MembersSection = ({ members, project }: { members: ProjectData['members'], project: ProjectData['project'] }) => (
+  <View style={styles.section} break>
+    <Text style={styles.sectionTitle}>Équipe projet</Text>
+    
+    {/* Chef de projet principal */}
+    <View style={styles.sectionContent}>
+      <Text style={styles.strong}>Chef de projet</Text>
+      <Text style={styles.paragraph}>
+        {project.project_manager_name || project.project_manager || 'Non défini'}
+      </Text>
+    </View>
+
+    {/* Membres */}
+    {(!members || members.length === 0) ? (
+      <View style={styles.sectionContent}>
+        <Text>Aucun membre supplémentaire dans l'équipe.</Text>
+      </View>
+    ) : (
+      <View style={styles.table}>
+        <View style={[styles.tableRow, styles.tableHeader]}>
+          <Text style={styles.tableCellLarge}>Nom</Text>
+          <Text style={styles.tableCell}>Rôle</Text>
+          <Text style={styles.tableCell}>Email</Text>
+        </View>
+        
+        {members.map((member, index) => (
+          <View key={index} style={styles.tableRow}>
+            <Text style={styles.tableCellLarge}>
+              {[member.first_name, member.last_name].filter(Boolean).join(' ') || 'Sans nom'}
+            </Text>
+            <Text style={styles.tableCell}>{renderMemberRoleLabel(member.role)}</Text>
+            <Text style={styles.tableCell}>{member.email || '-'}</Text>
+          </View>
+        ))}
+      </View>
+    )}
+  </View>
+);
+
 // Composant principal pour le document PDF
 const ProjectFramingDocument = ({ projectData }: { projectData: ProjectData }) => {
   return (
@@ -512,14 +559,19 @@ const ProjectFramingDocument = ({ projectData }: { projectData: ProjectData }) =
         <ProjectInfoSection project={projectData.project} />
         <FramingSection framing={projectData.framing} />
       </ContentPage>
-      
-      {/* Page 2: Risques */}
+
+      {/* Page 2: Équipe projet */}
       <ContentPage pageNumber={2}>
+        <MembersSection members={projectData.members} project={projectData.project} />
+      </ContentPage>
+      
+      {/* Page 3: Risques */}
+      <ContentPage pageNumber={3}>
         <RisksSection risks={projectData.risks} />
       </ContentPage>
       
-      {/* Page 3: Tâches */}
-      <ContentPage pageNumber={3}>
+      {/* Page 4: Tâches */}
+      <ContentPage pageNumber={4}>
         <TasksSection tasks={projectData.tasks} />
       </ContentPage>
     </Document>
