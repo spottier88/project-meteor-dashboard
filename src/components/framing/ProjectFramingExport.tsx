@@ -331,6 +331,15 @@ const FramingSection = ({ framing }: { framing: Record<string, string | null> | 
             </View>
           </View>
         )}
+
+        {framing.success_indicators && (
+          <View style={styles.section}>
+            <Text style={[styles.sectionTitle, { fontSize: 12 }]}>Indicateurs de réussite</Text>
+            <View style={styles.sectionContent}>
+              {markdownToPdfComponents(framing.success_indicators)}
+            </View>
+          </View>
+        )}
       </>
     )}
   </View>

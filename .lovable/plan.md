@@ -1,52 +1,77 @@
 
 
-# Plan : Compléter les exports de la note de cadrage (PDF et DOCX)
+# Amelioration de l'export Excel Gantt : ajout de couleurs et mise en forme avancee
 
-## Constat
+## Constat actuel
 
-Les deux fichiers d'export de la note de cadrage codent en dur 6 sections de cadrage et ignorent le champ `success_indicators` récemment ajouté. Plus largement, toute future section ajoutée au cadrage serait également oubliée.
+L'export actuel utilise la bibliotheque `xlsx` (SheetJS community) qui ne supporte **pas** la mise en forme des cellules (couleurs de fond, bordures, polices). Le rendu repose sur des caracteres Unicode (`░`, `▓`, `■`) qui sont fonctionnels mais peu lisibles dans Excel.
 
-**Sections actuellement exportées** : contexte, objectifs, parties prenantes, gouvernance, calendrier, livrables.
+## Solution proposee : migration vers ExcelJS
 
-**Section manquante** : indicateurs de réussite (`success_indicators`).
+Remplacer `xlsx` par `exceljs` uniquement pour cet export Gantt. La bibliotheque `exceljs` supporte nativement :
+- Couleurs de fond des cellules
+- Bordures fines
+- Police en gras, taille, couleur
+- Fusion de cellules
+- Alignement
 
-Les données sont déjà disponibles dans l'objet `framing` (type `Record<string, string | null>`), transmis aux fonctions d'export. Seul le rendu est absent.
+### Rendu cible dans Excel
 
-## Modifications
-
-### 1. `src/components/framing/ProjectFramingExport.tsx` (PDF)
-Dans le composant `FramingSection`, ajouter un bloc pour `success_indicators` après le bloc `deliverables` (même pattern que les autres sections) :
-```tsx
-{framing.success_indicators && (
-  <View style={styles.section}>
-    <Text style={[styles.sectionTitle, { fontSize: 12 }]}>Indicateurs de réussite</Text>
-    <View style={styles.sectionContent}>
-      {markdownToPdfComponents(framing.success_indicators)}
-    </View>
-  </View>
-)}
+```text
+| Nom           | Statut   | Debut      | Fin        | %   | 02/03 | 09/03 | 16/03 | 23/03 |
+|---------------|----------|------------|------------|-----|-------|-------|-------|-------|
+| Tache A       | En cours | 01/03      | 15/03      | 50  | [bleu]| [bleu]| [bleu]|       |
+| Tache B       | A faire  | 10/03      | 28/03      |  0  |       | [gris]| [gris]| [gris]|
+| Tache C       | Termine  | 01/03      | 08/03      | 100 | [vert]| [vert]|       |       |
 ```
 
-### 2. `src/components/framing/ProjectFramingExportDOCX.tsx` (DOCX)
-Dans la fonction `generateProjectFramingDOCX`, ajouter un bloc pour `success_indicators` après le bloc `deliverables` (même pattern) :
-```ts
-if (framing.success_indicators) {
-  sections.push(
-    new Paragraph({
-      text: 'Indicateurs de réussite',
-      heading: HeadingLevel.HEADING_2,
-      spacing: { before: 200, after: 100 },
-    })
-  );
-  sections.push(...parseMarkdownToParagraphs(framing.success_indicators));
-}
-```
+Les cellules temporelles actives auront un **fond colore** (pas de texte) :
+- Gris clair (`#E2E8F0`) pour "A faire"
+- Bleu (`#3B82F6`) pour "En cours"
+- Vert (`#22C55E`) pour "Termine"
 
-### Fichiers impactés
-| Fichier | Modification |
-|---------|-------------|
-| `ProjectFramingExport.tsx` | Ajout section "Indicateurs de réussite" dans `FramingSection` |
-| `ProjectFramingExportDOCX.tsx` | Ajout section "Indicateurs de réussite" dans le cadrage |
+### Ameliorations supplementaires
 
-Deux modifications ponctuelles, aucun impact sur les types ou la base de données.
+1. **Ligne d'en-tete stylee** : fond gris fonce, texte blanc, police en gras
+2. **Colonne Statut coloree** : texte colore selon le statut (rouge/orange/vert)
+3. **Bordures fines** sur toutes les cellules pour une meilleure lisibilite
+4. **Ligne de titre** : nom du projet en haut du fichier, fusionne sur plusieurs colonnes
+5. **Legende** en bas du tableau expliquant les couleurs
+6. **Gel des volets** : les 5 premieres colonnes et la ligne d'en-tete restent visibles au scroll
+
+## Modifications techniques
+
+### 1. Ajouter la dependance `exceljs`
+
+Installation du package `exceljs` (compatible navigateur, ~200 Ko gzippe).
+
+### 2. Reecrire `src/utils/ganttExcelExport.ts`
+
+Remplacement complet du contenu en utilisant l'API ExcelJS :
+
+- **Workbook/Worksheet** : creation via `new ExcelJS.Workbook()` au lieu de `XLSX.utils`
+- **Ligne titre** : cellule A1 fusionnee avec le nom du projet, police 14pt gras
+- **En-tetes** : fond `#4B5563` (gris fonce), texte blanc, gras
+- **Cellules Gantt** : `cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF3B82F6' } }` pour les cellules actives
+- **Colonne Avancement** : barre de progression textuelle ou pourcentage colore
+- **Legende** : 3 lignes en bas avec un carre de couleur + libelle
+- **Gel des volets** : `worksheet.views = [{ state: 'frozen', xSplit: 5, ySplit: 2 }]`
+- **Telechargement** : `workbook.xlsx.writeBuffer()` puis creation d'un Blob pour le download cote navigateur
+
+### 3. Aucune modification d'interface
+
+Le bouton "Export Gantt Excel" dans `TaskGantt.tsx` appelle deja `exportGanttToExcel(ganttTasks, projectTitle)`. La signature de la fonction reste identique, donc aucune modification de composant n'est necessaire.
+
+## Fichiers concernes
+
+| Fichier | Action |
+|---------|--------|
+| `package.json` | Ajout de la dependance `exceljs` |
+| `src/utils/ganttExcelExport.ts` | Reecriture complete avec ExcelJS et mise en forme avancee |
+
+## Compatibilite
+
+- ExcelJS fonctionne cote navigateur via `writeBuffer()` (pas besoin de Node.js)
+- La bibliotheque `xlsx` reste utilisee par les autres exports du projet (taches, activites, permissions, etc.) et n'est pas supprimee
+- Le fichier genere est compatible Excel, LibreOffice et Google Sheets
 
