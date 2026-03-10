@@ -393,7 +393,109 @@ const RisksSection = ({ risks }: { risks: ProjectData['risks'] }) => (
 
 // Composant pour la section des tâches
 const TasksSection = ({ tasks }: { tasks: ProjectData['tasks'] }) => {
-  // ... keep existing code
+  const todoTasks = tasks.filter(task => task.status === 'todo' && !task.parent_task_id);
+  const inProgressTasks = tasks.filter(task => task.status === 'in_progress' && !task.parent_task_id);
+  const doneTasks = tasks.filter(task => task.status === 'done' && !task.parent_task_id);
+  
+  const getSubtasks = (parentId: string) => {
+    return tasks.filter(task => task.parent_task_id === parentId);
+  };
+
+  return (
+    <View style={styles.section} break>
+      <Text style={styles.sectionTitle}>Tâches principales</Text>
+      
+      {tasks.length === 0 && (
+        <View style={styles.sectionContent}>
+          <Text>Aucune tâche définie pour ce projet.</Text>
+        </View>
+      )}
+      
+      {todoTasks.length > 0 && (
+        <View style={styles.section}>
+          <Text style={[styles.sectionTitle, { fontSize: 12 }]}>À faire</Text>
+          <View style={styles.table}>
+            {todoTasks.map((task, index) => (
+              <React.Fragment key={index}>
+                <View style={styles.tableRow}>
+                  <Text style={styles.tableCellLarge}>{task.title}</Text>
+                  <Text style={styles.tableCell}>Date d'échéance: {formatDate(task.due_date)}</Text>
+                </View>
+                {task.description && (
+                  <View style={styles.tableRow}>
+                    <Text style={styles.tableCellLarge}>{task.description}</Text>
+                    <Text style={styles.tableCell}></Text>
+                  </View>
+                )}
+                {getSubtasks(task.id).map((subtask, subIndex) => (
+                  <View key={`${index}-${subIndex}`} style={[styles.tableRow, { marginLeft: 20 }]}>
+                    <Text style={styles.tableCellLarge}>- {subtask.title}</Text>
+                    <Text style={styles.tableCell}>Status: {renderTaskStatusLabel(subtask.status)}</Text>
+                  </View>
+                ))}
+              </React.Fragment>
+            ))}
+          </View>
+        </View>
+      )}
+      
+      {inProgressTasks.length > 0 && (
+        <View style={styles.section}>
+          <Text style={[styles.sectionTitle, { fontSize: 12 }]}>En cours</Text>
+          <View style={styles.table}>
+            {inProgressTasks.map((task, index) => (
+              <React.Fragment key={index}>
+                <View style={styles.tableRow}>
+                  <Text style={styles.tableCellLarge}>{task.title}</Text>
+                  <Text style={styles.tableCell}>Date d'échéance: {formatDate(task.due_date)}</Text>
+                </View>
+                {task.description && (
+                  <View style={styles.tableRow}>
+                    <Text style={styles.tableCellLarge}>{task.description}</Text>
+                    <Text style={styles.tableCell}></Text>
+                  </View>
+                )}
+                {getSubtasks(task.id).map((subtask, subIndex) => (
+                  <View key={`${index}-${subIndex}`} style={[styles.tableRow, { marginLeft: 20 }]}>
+                    <Text style={styles.tableCellLarge}>- {subtask.title}</Text>
+                    <Text style={styles.tableCell}>Status: {renderTaskStatusLabel(subtask.status)}</Text>
+                  </View>
+                ))}
+              </React.Fragment>
+            ))}
+          </View>
+        </View>
+      )}
+      
+      {doneTasks.length > 0 && (
+        <View style={styles.section}>
+          <Text style={[styles.sectionTitle, { fontSize: 12 }]}>Terminées</Text>
+          <View style={styles.table}>
+            {doneTasks.map((task, index) => (
+              <React.Fragment key={index}>
+                <View style={styles.tableRow}>
+                  <Text style={styles.tableCellLarge}>{task.title}</Text>
+                  <Text style={styles.tableCell}>Date d'échéance: {formatDate(task.due_date)}</Text>
+                </View>
+                {task.description && (
+                  <View style={styles.tableRow}>
+                    <Text style={styles.tableCellLarge}>{task.description}</Text>
+                    <Text style={styles.tableCell}></Text>
+                  </View>
+                )}
+                {getSubtasks(task.id).map((subtask, subIndex) => (
+                  <View key={`${index}-${subIndex}`} style={[styles.tableRow, { marginLeft: 20 }]}>
+                    <Text style={styles.tableCellLarge}>- {subtask.title}</Text>
+                    <Text style={styles.tableCell}>Status: {renderTaskStatusLabel(subtask.status)}</Text>
+                  </View>
+                ))}
+              </React.Fragment>
+            ))}
+          </View>
+        </View>
+      )}
+    </View>
+  );
 };
 
 // Labels des rôles dans le projet
