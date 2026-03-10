@@ -107,7 +107,36 @@ const ProjectSummaryActions = ({
 
       // Parse les données JSON si nécessaire et retourner la première entrée
       const projectData = typeof data[0] === 'string' ? JSON.parse(data[0]) : data[0];
-      return projectData as ProjectData;
+
+      // Récupérer les membres de l'équipe projet
+      const { data: membersData } = await supabase
+        .from("project_members")
+        .select(`
+          id,
+          role,
+          user_id,
+          profiles:user_id (
+            id,
+            email,
+            first_name,
+            last_name
+          )
+        `)
+        .eq("project_id", projectId);
+
+      // Transformer les membres pour l'export
+      const members = (membersData || [])
+        .filter((m: any) => m.profiles)
+        .map((m: any) => ({
+          id: m.id,
+          user_id: m.user_id,
+          role: m.role,
+          first_name: m.profiles.first_name,
+          last_name: m.profiles.last_name,
+          email: m.profiles.email,
+        }));
+
+      return { ...projectData, members } as ProjectData;
     } catch (error) {
       console.error("Erreur lors de la récupération des données du projet:", error);
       throw error;
