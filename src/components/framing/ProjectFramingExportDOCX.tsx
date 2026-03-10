@@ -408,6 +408,18 @@ export const generateProjectFramingDOCX = async (projectData: ProjectData): Prom
         );
         sections.push(...parseMarkdownToParagraphs(framing.deliverables));
       }
+
+      // Indicateurs de réussite
+      if (framing.success_indicators) {
+        sections.push(
+          new Paragraph({
+            text: 'Indicateurs de réussite',
+            heading: HeadingLevel.HEADING_2,
+            spacing: { before: 200, after: 100 },
+          })
+        );
+        sections.push(...parseMarkdownToParagraphs(framing.success_indicators));
+      }
     }
 
     // Saut de page pour les risques
