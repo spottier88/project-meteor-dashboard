@@ -393,112 +393,57 @@ const RisksSection = ({ risks }: { risks: ProjectData['risks'] }) => (
 
 // Composant pour la section des tâches
 const TasksSection = ({ tasks }: { tasks: ProjectData['tasks'] }) => {
-  // Séparer les tâches par statut
-  const todoTasks = tasks.filter(task => task.status === 'todo' && !task.parent_task_id);
-  const inProgressTasks = tasks.filter(task => task.status === 'in_progress' && !task.parent_task_id);
-  const doneTasks = tasks.filter(task => task.status === 'done' && !task.parent_task_id);
-  
-  // Obtenir les sous-tâches par tâche parente
-  const getSubtasks = (parentId: string) => {
-    return tasks.filter(task => task.parent_task_id === parentId);
-  };
-
-  return (
-    <View style={styles.section} break>
-      <Text style={styles.sectionTitle}>Tâches principales</Text>
-      
-      {tasks.length === 0 && (
-        <View style={styles.sectionContent}>
-          <Text>Aucune tâche définie pour ce projet.</Text>
-        </View>
-      )}
-      
-      {todoTasks.length > 0 && (
-        <View style={styles.section}>
-          <Text style={[styles.sectionTitle, { fontSize: 12 }]}>À faire</Text>
-          <View style={styles.table}>
-            {todoTasks.map((task, index) => (
-              <React.Fragment key={index}>
-                <View style={styles.tableRow}>
-                  <Text style={styles.tableCellLarge}>{task.title}</Text>
-                  <Text style={styles.tableCell}>Date d'échéance: {formatDate(task.due_date)}</Text>
-                </View>
-                {task.description && (
-                  <View style={styles.tableRow}>
-                    <Text style={styles.tableCellLarge}>{task.description}</Text>
-                    <Text style={styles.tableCell}></Text>
-                  </View>
-                )}
-                {getSubtasks(task.id).map((subtask, subIndex) => (
-                  <View key={`${index}-${subIndex}`} style={[styles.tableRow, { marginLeft: 20 }]}>
-                    <Text style={styles.tableCellLarge}>- {subtask.title}</Text>
-                    <Text style={styles.tableCell}>Status: {renderTaskStatusLabel(subtask.status)}</Text>
-                  </View>
-                ))}
-              </React.Fragment>
-            ))}
-          </View>
-        </View>
-      )}
-      
-      {inProgressTasks.length > 0 && (
-        <View style={styles.section}>
-          <Text style={[styles.sectionTitle, { fontSize: 12 }]}>En cours</Text>
-          <View style={styles.table}>
-            {inProgressTasks.map((task, index) => (
-              <React.Fragment key={index}>
-                <View style={styles.tableRow}>
-                  <Text style={styles.tableCellLarge}>{task.title}</Text>
-                  <Text style={styles.tableCell}>Date d'échéance: {formatDate(task.due_date)}</Text>
-                </View>
-                {task.description && (
-                  <View style={styles.tableRow}>
-                    <Text style={styles.tableCellLarge}>{task.description}</Text>
-                    <Text style={styles.tableCell}></Text>
-                  </View>
-                )}
-                {getSubtasks(task.id).map((subtask, subIndex) => (
-                  <View key={`${index}-${subIndex}`} style={[styles.tableRow, { marginLeft: 20 }]}>
-                    <Text style={styles.tableCellLarge}>- {subtask.title}</Text>
-                    <Text style={styles.tableCell}>Status: {renderTaskStatusLabel(subtask.status)}</Text>
-                  </View>
-                ))}
-              </React.Fragment>
-            ))}
-          </View>
-        </View>
-      )}
-      
-      {doneTasks.length > 0 && (
-        <View style={styles.section}>
-          <Text style={[styles.sectionTitle, { fontSize: 12 }]}>Terminées</Text>
-          <View style={styles.table}>
-            {doneTasks.map((task, index) => (
-              <React.Fragment key={index}>
-                <View style={styles.tableRow}>
-                  <Text style={styles.tableCellLarge}>{task.title}</Text>
-                  <Text style={styles.tableCell}>Date d'échéance: {formatDate(task.due_date)}</Text>
-                </View>
-                {task.description && (
-                  <View style={styles.tableRow}>
-                    <Text style={styles.tableCellLarge}>{task.description}</Text>
-                    <Text style={styles.tableCell}></Text>
-                  </View>
-                )}
-                {getSubtasks(task.id).map((subtask, subIndex) => (
-                  <View key={`${index}-${subIndex}`} style={[styles.tableRow, { marginLeft: 20 }]}>
-                    <Text style={styles.tableCellLarge}>- {subtask.title}</Text>
-                    <Text style={styles.tableCell}>Status: {renderTaskStatusLabel(subtask.status)}</Text>
-                  </View>
-                ))}
-              </React.Fragment>
-            ))}
-          </View>
-        </View>
-      )}
-    </View>
-  );
+  // ... keep existing code
 };
+
+// Labels des rôles dans le projet
+const renderMemberRoleLabel = (role: string): string => {
+  const labels: Record<string, string> = {
+    secondary_manager: 'Chef de projet secondaire',
+    member: 'Membre',
+  };
+  return labels[role] || role;
+};
+
+// Composant pour la section des membres de l'équipe
+const MembersSection = ({ members, project }: { members: ProjectData['members'], project: ProjectData['project'] }) => (
+  <View style={styles.section} break>
+    <Text style={styles.sectionTitle}>Équipe projet</Text>
+    
+    {/* Chef de projet principal */}
+    <View style={styles.sectionContent}>
+      <Text style={styles.strong}>Chef de projet</Text>
+      <Text style={styles.paragraph}>
+        {project.project_manager_name || project.project_manager || 'Non défini'}
+      </Text>
+    </View>
+
+    {/* Membres */}
+    {(!members || members.length === 0) ? (
+      <View style={styles.sectionContent}>
+        <Text>Aucun membre supplémentaire dans l'équipe.</Text>
+      </View>
+    ) : (
+      <View style={styles.table}>
+        <View style={[styles.tableRow, styles.tableHeader]}>
+          <Text style={styles.tableCellLarge}>Nom</Text>
+          <Text style={styles.tableCell}>Rôle</Text>
+          <Text style={styles.tableCell}>Email</Text>
+        </View>
+        
+        {members.map((member, index) => (
+          <View key={index} style={styles.tableRow}>
+            <Text style={styles.tableCellLarge}>
+              {[member.first_name, member.last_name].filter(Boolean).join(' ') || 'Sans nom'}
+            </Text>
+            <Text style={styles.tableCell}>{renderMemberRoleLabel(member.role)}</Text>
+            <Text style={styles.tableCell}>{member.email || '-'}</Text>
+          </View>
+        ))}
+      </View>
+    )}
+  </View>
+);
 
 // Composant principal pour le document PDF
 const ProjectFramingDocument = ({ projectData }: { projectData: ProjectData }) => {
