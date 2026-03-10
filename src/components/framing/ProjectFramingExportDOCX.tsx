@@ -422,6 +422,62 @@ export const generateProjectFramingDOCX = async (projectData: ProjectData): Prom
       }
     }
 
+    // Saut de page pour l'équipe projet
+    sections.push(
+      new Paragraph({
+        text: '',
+        pageBreakBefore: true,
+      })
+    );
+
+    // Équipe projet
+    sections.push(
+      new Paragraph({
+        text: 'Équipe projet',
+        heading: HeadingLevel.HEADING_1,
+        spacing: { before: 240, after: 120 },
+      }),
+      new Paragraph({
+        children: [
+          new TextRun({ text: 'Chef de projet : ', bold: true }),
+          new TextRun(project.project_manager_name || project.project_manager || 'Non défini'),
+        ],
+        spacing: { after: 120 },
+      })
+    );
+
+    if (!members || members.length === 0) {
+      sections.push(
+        new Paragraph({
+          text: "Aucun membre supplémentaire dans l'équipe.",
+          spacing: { before: 120, after: 120 },
+        })
+      );
+    } else {
+      const renderMemberRole = (role: string): string => {
+        const labels: Record<string, string> = {
+          secondary_manager: 'Chef de projet secondaire',
+          member: 'Membre',
+        };
+        return labels[role] || role;
+      };
+
+      members.forEach((member) => {
+        const name = [member.first_name, member.last_name].filter(Boolean).join(' ') || 'Sans nom';
+        sections.push(
+          new Paragraph({
+            children: [
+              new TextRun({ text: name, bold: true }),
+              new TextRun(` — ${renderMemberRole(member.role)}`),
+              new TextRun(member.email ? ` (${member.email})` : ''),
+            ],
+            bullet: { level: 0 },
+            spacing: { after: 60 },
+          })
+        );
+      });
+    }
+
     // Saut de page pour les risques
     sections.push(
       new Paragraph({
