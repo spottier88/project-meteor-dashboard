@@ -1,5 +1,5 @@
 
-import { Settings, Users, Building2, Bell, Activity, BookOpenText, FileText, BarChart3, Target, Key, Mail, Star } from "lucide-react";
+import { Settings, Users, Building2, Bell, Activity, BookOpenText, FileText, BarChart3, Target, Key, Mail, Star, FileOutput } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 
