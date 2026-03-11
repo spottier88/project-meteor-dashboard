@@ -106,26 +106,10 @@ export const BasicProjectFields = ({
         />
       </div>
 
-      <div className="grid gap-2">
-        <label htmlFor="lifecycle-status" className="text-sm font-medium">
-          Statut
-        </label>
-        <Select value={lifecycleStatus} onValueChange={setLifecycleStatus}>
-          <SelectTrigger>
-            <SelectValue placeholder="Sélectionner un statut" />
-          </SelectTrigger>
-          <SelectContent>
-            {/* Exclure le statut "Terminé" - passage obligatoire par le processus de clôture */}
-            {Object.entries(lifecycleStatusLabels)
-              .filter(([value]) => value !== 'completed')
-              .map(([value, label]) => (
-                <SelectItem key={value} value={value}>
-                  {label}
-                </SelectItem>
-              ))}
-          </SelectContent>
-        </Select>
-      </div>
+      <LifecycleStatusButtons
+        status={lifecycleStatus}
+        onStatusChange={setLifecycleStatus}
+      />
 
       <div className="grid gap-2">
         <label htmlFor="portfolio" className="text-sm font-medium">
