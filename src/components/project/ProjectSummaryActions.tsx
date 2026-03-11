@@ -24,6 +24,8 @@ import { cn } from "@/lib/utils";
 import { generateProjectFramingPDF } from "@/components/framing/ProjectFramingExport";
 import { generateProjectFramingDOCX } from "@/components/framing/ProjectFramingExportDOCX";
 import { FramingExportDialog } from "@/components/framing/FramingExportDialog";
+import { executeMailMerge } from "@/utils/framingMailMerge";
+import { useFramingExportTemplates } from "@/hooks/useFramingExportTemplates";
 import { useProjectPermissions } from "@/hooks/useProjectPermissions";
 import { useReviewAccess } from "@/hooks/useReviewAccess";
 import { ProjectClosureDialog } from "./closure/ProjectClosureDialog";
