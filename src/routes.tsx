@@ -251,6 +251,14 @@ export const AppRoutes = () => {
             }
           />
           <Route
+            path="/admin/framing-export-templates"
+            element={
+              <ProtectedRoute>
+                <FramingExportTemplateManagement />
+              </ProtectedRoute>
+            }
+          />
+          <Route
             path="/admin/templates/:templateId"
             element={
               <ProtectedRoute>

@@ -127,6 +127,15 @@ export const AdminDashboard = () => {
           <Star className="h-8 w-8" />
           <span>Évaluations</span>
         </Button>
+
+        <Button
+          variant="outline"
+          className="h-32 flex flex-col items-center justify-center gap-2"
+          onClick={() => navigate("/admin/framing-export-templates")}
+        >
+          <FileOutput className="h-8 w-8" />
+          <span>Modèles d'export cadrage</span>
+        </Button>
       </div>
     </div>
   );

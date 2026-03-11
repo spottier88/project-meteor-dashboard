@@ -212,7 +212,7 @@ const ProjectSummaryActions = ({
     }
   };
 
-  const handleExportFraming = async (format: 'pdf' | 'docx') => {
+  const handleExportFraming = async (format: 'pdf' | 'docx', templateId?: string) => {
     try {
       setIsExportingFraming(true);
 
@@ -222,6 +222,28 @@ const ProjectSummaryActions = ({
       // Générer le document selon le format choisi
       if (format === 'pdf') {
         await generateProjectFramingPDF(detailedProjectData);
+      } else if (templateId) {
+        // Export DOCX avec modèle de publipostage
+        // Récupérer les données de cadrage pour enrichir le projectData
+        const { data: framingData } = await supabase
+          .from("project_framing")
+          .select("*")
+          .eq("project_id", project.id)
+          .maybeSingle();
+
+        const enrichedData = { ...detailedProjectData, framing: framingData || {} };
+
+        // Récupérer le template pour connaître le file_path
+        const { data: templateData } = await supabase
+          .from("framing_export_templates" as any)
+          .select("file_path, title")
+          .eq("id", templateId)
+          .single();
+
+        if (!templateData) throw new Error("Modèle introuvable");
+
+        const fileName = `Note-cadrage-${project.title || "projet"}.docx`;
+        await executeMailMerge((templateData as any).file_path, enrichedData, fileName);
       } else {
         await generateProjectFramingDOCX(detailedProjectData);
       }
