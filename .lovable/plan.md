@@ -1,77 +1,161 @@
 
 
-# Amelioration de l'export Excel Gantt : ajout de couleurs et mise en forme avancee
+# Plan : Modèles d'export de note de cadrage (publipostage / mail merge)
 
-## Constat actuel
+## Concept
 
-L'export actuel utilise la bibliotheque `xlsx` (SheetJS community) qui ne supporte **pas** la mise en forme des cellules (couleurs de fond, bordures, polices). Le rendu repose sur des caracteres Unicode (`░`, `▓`, `■`) qui sont fonctionnels mais peu lisibles dans Excel.
+L'administrateur charge un ou plusieurs fichiers DOCX "modèles" contenant des balises de type `{{titre_projet}}`, `{{contexte}}`, etc. Lors de l'export, l'utilisateur choisit un modèle (ou "sans modèle" pour l'export actuel) et le système remplace les balises par les données du projet, produisant un DOCX fidèle à la charte graphique de l'organisation.
 
-## Solution proposee : migration vers ExcelJS
+Le format PDF reste disponible sans modèle (génération programmatique actuelle). L'export DOCX avec modèle utilise la bibliothèque `docx-templates` (ou équivalent) pour effectuer le remplacement dans le fichier source.
 
-Remplacer `xlsx` par `exceljs` uniquement pour cet export Gantt. La bibliotheque `exceljs` supporte nativement :
-- Couleurs de fond des cellules
-- Bordures fines
-- Police en gras, taille, couleur
-- Fusion de cellules
-- Alignement
+---
 
-### Rendu cible dans Excel
+## 1. Base de données
 
-```text
-| Nom           | Statut   | Debut      | Fin        | %   | 02/03 | 09/03 | 16/03 | 23/03 |
-|---------------|----------|------------|------------|-----|-------|-------|-------|-------|
-| Tache A       | En cours | 01/03      | 15/03      | 50  | [bleu]| [bleu]| [bleu]|       |
-| Tache B       | A faire  | 10/03      | 28/03      |  0  |       | [gris]| [gris]| [gris]|
-| Tache C       | Termine  | 01/03      | 08/03      | 100 | [vert]| [vert]|       |       |
+### Table `framing_export_templates`
+
+```sql
+CREATE TABLE framing_export_templates (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  title text NOT NULL,
+  description text,
+  file_path text NOT NULL,        -- chemin dans le bucket Storage
+  file_name text NOT NULL,        -- nom original du fichier
+  is_default boolean DEFAULT false,
+  is_active boolean DEFAULT true,
+  created_by uuid REFERENCES auth.users(id),
+  created_at timestamptz DEFAULT now(),
+  updated_at timestamptz DEFAULT now()
+);
 ```
 
-Les cellules temporelles actives auront un **fond colore** (pas de texte) :
-- Gris clair (`#E2E8F0`) pour "A faire"
-- Bleu (`#3B82F6`) pour "En cours"
-- Vert (`#22C55E`) pour "Termine"
+**RLS** : SELECT pour tous les authentifiés ; INSERT/UPDATE/DELETE pour admins uniquement.
 
-### Ameliorations supplementaires
+### Bucket Storage `framing-export-templates`
 
-1. **Ligne d'en-tete stylee** : fond gris fonce, texte blanc, police en gras
-2. **Colonne Statut coloree** : texte colore selon le statut (rouge/orange/vert)
-3. **Bordures fines** sur toutes les cellules pour une meilleure lisibilite
-4. **Ligne de titre** : nom du projet en haut du fichier, fusionne sur plusieurs colonnes
-5. **Legende** en bas du tableau expliquant les couleurs
-6. **Gel des volets** : les 5 premieres colonnes et la ligne d'en-tete restent visibles au scroll
+Bucket privé pour stocker les fichiers DOCX modèles. RLS : lecture pour authentifiés, écriture pour admins.
 
-## Modifications techniques
+---
 
-### 1. Ajouter la dependance `exceljs`
+## 2. Balises disponibles dans les modèles
 
-Installation du package `exceljs` (compatible navigateur, ~200 Ko gzippe).
+Les administrateurs pourront utiliser ces balises dans leur document DOCX :
 
-### 2. Reecrire `src/utils/ganttExcelExport.ts`
+| Balise | Donnée |
+|--------|--------|
+| `{{titre_projet}}` | Titre du projet |
+| `{{code_projet}}` | Code projet |
+| `{{chef_projet}}` | Nom du chef de projet |
+| `{{etat}}` | Statut du cycle de vie |
+| `{{date_debut}}` | Date de début |
+| `{{date_fin}}` | Date de fin prévue |
+| `{{organisation}}` | Pôle > Direction > Service |
+| `{{description}}` | Description du projet |
+| `{{priorite}}` | Priorité |
+| `{{avancement}}` | % d'avancement |
+| `{{contexte}}` | Section cadrage : contexte |
+| `{{objectifs}}` | Section cadrage : objectifs |
+| `{{parties_prenantes}}` | Section cadrage : parties prenantes |
+| `{{gouvernance}}` | Section cadrage : gouvernance |
+| `{{calendrier}}` | Section cadrage : calendrier |
+| `{{livrables}}` | Section cadrage : livrables |
+| `{{indicateurs_reussite}}` | Section cadrage : indicateurs |
+| `{{equipe}}` | Liste des membres formatée |
+| `{{risques}}` | Liste des risques formatée |
+| `{{taches}}` | Liste des tâches formatée |
+| `{{date_generation}}` | Date de génération du document |
 
-Remplacement complet du contenu en utilisant l'API ExcelJS :
+---
 
-- **Workbook/Worksheet** : creation via `new ExcelJS.Workbook()` au lieu de `XLSX.utils`
-- **Ligne titre** : cellule A1 fusionnee avec le nom du projet, police 14pt gras
-- **En-tetes** : fond `#4B5563` (gris fonce), texte blanc, gras
-- **Cellules Gantt** : `cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF3B82F6' } }` pour les cellules actives
-- **Colonne Avancement** : barre de progression textuelle ou pourcentage colore
-- **Legende** : 3 lignes en bas avec un carre de couleur + libelle
-- **Gel des volets** : `worksheet.views = [{ state: 'frozen', xSplit: 5, ySplit: 2 }]`
-- **Telechargement** : `workbook.xlsx.writeBuffer()` puis creation d'un Blob pour le download cote navigateur
+## 3. Dépendance npm
 
-### 3. Aucune modification d'interface
+Ajout de **`docxtemplater`** + **`pizzip`** pour lire le DOCX modèle, remplacer les balises et produire le fichier final. Ces bibliothèques fonctionnent côté client (browser).
 
-Le bouton "Export Gantt Excel" dans `TaskGantt.tsx` appelle deja `exportGanttToExcel(ganttTasks, projectTitle)`. La signature de la fonction reste identique, donc aucune modification de composant n'est necessaire.
+---
 
-## Fichiers concernes
+## 4. Interface d'administration
 
-| Fichier | Action |
-|---------|--------|
-| `package.json` | Ajout de la dependance `exceljs` |
-| `src/utils/ganttExcelExport.ts` | Reecriture complete avec ExcelJS et mise en forme avancee |
+### Page `/admin/framing-export-templates`
 
-## Compatibilite
+- Liste des modèles (titre, description, fichier, défaut, actif)
+- Upload d'un nouveau modèle DOCX (file input + métadonnées titre/description)
+- Remplacement du fichier d'un modèle existant
+- Marquer un modèle comme "par défaut"
+- Supprimer un modèle
+- Affichage de la liste des balises disponibles (référence pour le créateur du modèle)
 
-- ExcelJS fonctionne cote navigateur via `writeBuffer()` (pas besoin de Node.js)
-- La bibliotheque `xlsx` reste utilisee par les autres exports du projet (taches, activites, permissions, etc.) et n'est pas supprimee
-- Le fichier genere est compatible Excel, LibreOffice et Google Sheets
+### Fichiers à créer
+
+| Fichier | Rôle |
+|---------|------|
+| `src/pages/FramingExportTemplateManagement.tsx` | Page admin |
+| `src/components/framing-export-templates/ExportTemplateList.tsx` | Liste des modèles |
+| `src/components/framing-export-templates/ExportTemplateDialog.tsx` | Dialog création/édition + upload |
+| `src/components/framing-export-templates/AvailablePlaceholders.tsx` | Référence des balises |
+| `src/hooks/useFramingExportTemplates.ts` | Hook CRUD react-query + supabase |
+
+### Intégration admin
+
+- Ajout d'un bouton dans `AdminDashboard.tsx` vers `/admin/framing-export-templates`
+- Ajout de la route dans le routeur
+
+---
+
+## 5. Impact sur le dialogue d'export
+
+### `FramingExportDialog.tsx` — modifications
+
+Le dialogue actuel propose PDF ou DOCX. Il sera enrichi :
+
+1. **Choix du format** (inchangé) : PDF / DOCX
+2. **Si DOCX sélectionné** : afficher un sélecteur de modèle (Select) listant les modèles actifs + option "Sans modèle (export standard)"
+3. Le callback `onExport` reçoit désormais `(format, templateId?)` au lieu de `(format)` seul
+
+### `ProjectSummaryActions.tsx` — modifications
+
+- `handleExportFraming` reçoit le `templateId` optionnel
+- Si un `templateId` est fourni :
+  1. Récupérer le fichier DOCX modèle depuis le bucket Storage
+  2. Charger le fichier avec PizZip + Docxtemplater
+  3. Construire l'objet de données (balises → valeurs) à partir de `ProjectData`
+  4. Exécuter le remplacement et télécharger le résultat
+- Sinon : appeler `generateProjectFramingDOCX` comme actuellement
+
+---
+
+## 6. Logique de remplacement (mail merge)
+
+### Nouveau fichier `src/utils/framingMailMerge.ts`
+
+```text
+1. Télécharger le fichier modèle depuis Supabase Storage
+2. Charger avec PizZip
+3. Instancier Docxtemplater avec le zip
+4. Construire les données :
+   - Champs simples : titre, code, dates, etc.
+   - Champs Markdown (contexte, objectifs...) : convertis en texte brut
+     (Docxtemplater ne gère pas le rich text nativement)
+   - Listes (équipe, risques, tâches) : formatées en texte lisible
+5. Appeler render() puis générer le blob
+6. Déclencher le téléchargement
+```
+
+> **Note** : Docxtemplater en version gratuite ne gère que le texte brut dans les balises. Le formatage Markdown (gras, listes) du contenu de cadrage sera aplati en texte. Pour du rich text dans les balises, il faudrait le module payant `docxtemplater-html-module`. On peut commencer en texte brut et évoluer si besoin.
+
+---
+
+## 7. Fichiers impactés (résumé)
+
+| Fichier | Modification |
+|---------|-------------|
+| Migration SQL | Table `framing_export_templates` + bucket Storage + RLS |
+| `src/utils/framingMailMerge.ts` | **Nouveau** — logique de remplacement |
+| `src/hooks/useFramingExportTemplates.ts` | **Nouveau** — hook CRUD |
+| `src/pages/FramingExportTemplateManagement.tsx` | **Nouveau** — page admin |
+| `src/components/framing-export-templates/*` | **Nouveau** — composants admin |
+| `src/pages/AdminDashboard.tsx` | Ajout bouton "Modèles d'export" |
+| `src/routes.tsx` | Ajout route |
+| `src/components/framing/FramingExportDialog.tsx` | Ajout sélecteur de modèle (DOCX) |
+| `src/components/project/ProjectSummaryActions.tsx` | Branchement mail merge |
+| `package.json` | Ajout `docxtemplater` + `pizzip` |
 
