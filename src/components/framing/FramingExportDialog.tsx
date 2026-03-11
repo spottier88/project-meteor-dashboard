@@ -1,10 +1,11 @@
 /**
  * @component FramingExportDialog
  * @description Dialogue permettant de choisir le format d'export (PDF ou DOCX)
- * pour la note de cadrage du projet.
+ * pour la note de cadrage du projet. Si DOCX est sélectionné et des modèles
+ * sont disponibles, permet de choisir un modèle de publipostage.
  */
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -16,12 +17,20 @@ import {
 import { Button } from "@/components/ui/button";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { FileText, File } from "lucide-react";
+import { useFramingExportTemplates } from "@/hooks/useFramingExportTemplates";
 
 interface FramingExportDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onExport: (format: 'pdf' | 'docx') => Promise<void>;
+  onExport: (format: 'pdf' | 'docx', templateId?: string) => Promise<void>;
   isExporting: boolean;
 }
 
@@ -32,9 +41,24 @@ export const FramingExportDialog = ({
   isExporting,
 }: FramingExportDialogProps) => {
   const [selectedFormat, setSelectedFormat] = useState<'pdf' | 'docx'>('pdf');
+  const [selectedTemplateId, setSelectedTemplateId] = useState<string>("none");
+
+  // Charger les modèles actifs
+  const { data: templates = [] } = useFramingExportTemplates(true);
+
+  // Sélectionner le modèle par défaut à l'ouverture
+  useEffect(() => {
+    if (open && templates.length > 0) {
+      const defaultTemplate = templates.find((t) => t.is_default);
+      setSelectedTemplateId(defaultTemplate?.id || "none");
+    }
+  }, [open, templates]);
 
   const handleExport = async () => {
-    await onExport(selectedFormat);
+    const templateId = selectedFormat === 'docx' && selectedTemplateId !== "none"
+      ? selectedTemplateId
+      : undefined;
+    await onExport(selectedFormat, templateId);
   };
 
   return (
@@ -47,7 +71,7 @@ export const FramingExportDialog = ({
           </DialogDescription>
         </DialogHeader>
         
-        <div className="py-4">
+        <div className="py-4 space-y-4">
           <RadioGroup
             value={selectedFormat}
             onValueChange={(value) => setSelectedFormat(value as 'pdf' | 'docx')}
@@ -85,6 +109,30 @@ export const FramingExportDialog = ({
               </Label>
             </div>
           </RadioGroup>
+
+          {/* Sélecteur de modèle si DOCX et des modèles existent */}
+          {selectedFormat === 'docx' && templates.length > 0 && (
+            <div className="space-y-2">
+              <Label>Modèle de document</Label>
+              <Select value={selectedTemplateId} onValueChange={setSelectedTemplateId}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Sélectionner un modèle" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">Sans modèle (export standard)</SelectItem>
+                  {templates.map((t) => (
+                    <SelectItem key={t.id} value={t.id}>
+                      {t.title}
+                      {t.is_default ? " ★" : ""}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">
+                Le modèle sera utilisé comme base et les balises seront remplacées par les données du projet.
+              </p>
+            </div>
+          )}
         </div>
 
         <DialogFooter>

@@ -43,6 +43,7 @@ import { PortfolioPresentation } from "./pages/PortfolioPresentation";
 import { EmailTemplateManagement } from "./pages/EmailTemplateManagement";
 import AppRatingsManagement from "./pages/AppRatingsManagement";
 import EvaluationsManagement from "./pages/EvaluationsManagement";
+import { FramingExportTemplateManagement } from "./pages/FramingExportTemplateManagement";
 
 export const AppRoutes = () => {
   const session = useSession();
@@ -246,6 +247,14 @@ export const AppRoutes = () => {
             element={
               <ProtectedRoute>
                 <AppRatingsManagement />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/framing-export-templates"
+            element={
+              <ProtectedRoute>
+                <FramingExportTemplateManagement />
               </ProtectedRoute>
             }
           />
