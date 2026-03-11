@@ -3,6 +3,7 @@ import { ChevronsUpDown, Users } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { LifecycleStatusButtons } from "@/components/project/LifecycleStatusButtons";
 import { Button } from "@/components/ui/button";
 import { UserProfile } from "@/types/user";
 import { DateInputField } from "./DateInputField";
