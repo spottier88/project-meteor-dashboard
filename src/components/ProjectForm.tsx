@@ -146,6 +146,8 @@ export const ProjectForm = ({ isOpen, onClose, onSubmit, project }: ProjectFormP
               isEditMode={!!project}
               title={formState.title}
               onStepClick={(step) => formState.setCurrentStep(step)}
+              isAssistedMode={formState.isAssistedMode}
+              onToggleMode={(assisted) => formState.setIsAssistedMode(assisted)}
             />
             
             <div className="flex-1 overflow-auto my-4">
@@ -158,21 +160,25 @@ export const ProjectForm = ({ isOpen, onClose, onSubmit, project }: ProjectFormP
                 onOpenProfile={handleOpenProfile}
                 isAdmin={validationValues.isAdmin}
                 isManager={validationValues.isManager}
+                onSubmit={handleSubmit}
               />
             </div>
             
-            <div className="border-t bg-background p-4 mt-auto">
-              <ProjectFormNavigation 
-                currentStep={formState.currentStep}
-                isSubmitting={formState.isSubmitting}
-                onPrevious={handlePrevious}
-                onNext={handleNext}
-                isEditMode={!!project}
-                onClose={handleCloseRequest}
-                isLastStep={formState.currentStep === 4}
-                canGoNext={formState.currentStep === 0 ? !!formState.title && !!formState.projectManager : true}
-              />
-            </div>
+            {/* Navigation classique masquée en mode assisté (le wizard gère sa propre navigation) */}
+            {!formState.isAssistedMode && (
+              <div className="border-t bg-background p-4 mt-auto">
+                <ProjectFormNavigation 
+                  currentStep={formState.currentStep}
+                  isSubmitting={formState.isSubmitting}
+                  onPrevious={handlePrevious}
+                  onNext={handleNext}
+                  isEditMode={!!project}
+                  onClose={handleCloseRequest}
+                  isLastStep={formState.currentStep === 4}
+                  canGoNext={formState.currentStep === 0 ? !!formState.title && !!formState.projectManager : true}
+                />
+              </div>
+            )}
           </div>
         </DialogContent>
       </Dialog>

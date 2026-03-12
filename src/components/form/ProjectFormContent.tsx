@@ -4,6 +4,7 @@ import { ProjectFormStep3 } from "./ProjectFormStep3";
 import { ProjectFormStep4 } from "./ProjectFormStep4";
 import { ProjectFormStep5 } from "./ProjectFormStep5";
 import { ProjectFormState } from "./useProjectFormState";
+import { AssistedProjectWizard } from "./assisted/AssistedProjectWizard";
 
 interface ProjectFormContentProps {
   formState: ProjectFormState;
@@ -14,6 +15,8 @@ interface ProjectFormContentProps {
   onOpenProfile: () => void;
   isAdmin: boolean;
   isManager: boolean;
+  /** Callback pour soumettre le formulaire (utilisé en mode assisté) */
+  onSubmit?: () => void;
 }
 
 export const ProjectFormContent = ({
@@ -25,7 +28,26 @@ export const ProjectFormContent = ({
   onOpenProfile,
   isAdmin,
   isManager,
+  onSubmit,
 }: ProjectFormContentProps) => {
+  // Mode assisté : rendre le wizard
+  if (formState.isAssistedMode && onSubmit) {
+    return (
+      <div className="h-full px-1">
+        <AssistedProjectWizard
+          formState={formState}
+          projectManagers={projectManagers}
+          project={project}
+          isEditMode={isEditMode}
+          isAdmin={isAdmin}
+          isManager={isManager}
+          onSubmit={onSubmit}
+        />
+      </div>
+    );
+  }
+
+  // Mode classique : rendu par étapes
   const renderStep = () => {
     switch (formState.currentStep) {
       case 0:
