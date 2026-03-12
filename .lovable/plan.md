@@ -1,86 +1,77 @@
 
 
-# Plan : Wizard "Mode Assisté" — questions guidées pas à pas
+# Amelioration de l'export Excel Gantt : ajout de couleurs et mise en forme avancee
 
-## Concept
+## Constat actuel
 
-Un bouton "Mode assisté" dans le header du formulaire projet bascule vers un parcours séquentiel affichant **une question (ou un petit groupe de 2-3 champs cohérents) par écran**, style Typeform. Barre de progression en haut, navigation Précédent/Suivant, récapitulatif final avant soumission.
+L'export actuel utilise la bibliotheque `xlsx` (SheetJS community) qui ne supporte **pas** la mise en forme des cellules (couleurs de fond, bordures, polices). Le rendu repose sur des caracteres Unicode (`░`, `▓`, `■`) qui sont fonctionnels mais peu lisibles dans Excel.
 
-Pas d'IA. On réutilise le `formState` existant et les composants de saisie existants (Select, DateInputField, LifecycleStatusButtons, etc.).
+## Solution proposee : migration vers ExcelJS
 
----
+Remplacer `xlsx` par `exceljs` uniquement pour cet export Gantt. La bibliotheque `exceljs` supporte nativement :
+- Couleurs de fond des cellules
+- Bordures fines
+- Police en gras, taille, couleur
+- Fusion de cellules
+- Alignement
 
-## Découpage en micro-étapes
-
-Les 5 onglets actuels (28+ champs) sont réorganisés en **10 micro-étapes** de 1-3 champs chacune, regroupées par cohérence :
-
-| Etape | Question / Titre | Champs |
-|-------|-----------------|--------|
-| 1 | "Comment s'appelle votre projet ?" | `title` + `description` |
-| 2 | "Qui pilote ce projet ?" | `projectManager` (sélecteur existant) |
-| 3 | "Quelles sont les dates prévisionnelles ?" | `startDate` + `endDate` |
-| 4 | "Quel est le statut et la priorité ?" | `lifecycleStatus` (boutons) + `priority` |
-| 5 | "Rattachement organisationnel" | `portfolioIds` + `tags` + `teamsUrl` |
-| 6 | "Niveau de suivi" | `monitoringLevel` (auto-déduit de l'org du chef de projet) |
-| 7 | "Score d'innovation" | Les 5 sliders + radar chart |
-| 8 | "Cadrage du projet" | Les 7 champs texte (contexte, objectifs, etc.) avec boutons IA |
-| 9 | "Entité bénéficiaire et modèle" | `forEntityType`/`forEntityId` + `templateId` |
-| 10 | **Récapitulatif** | Vue synthétique de toutes les données, bouton "Créer" |
-
-Les étapes 6 à 9 sont marquées **optionnelles** (l'utilisateur peut les sauter).
-
----
-
-## Architecture technique
-
-### Fichiers à créer
-
-| Fichier | Rôle |
-|---------|------|
-| `src/components/form/assisted/AssistedProjectWizard.tsx` | Conteneur principal du wizard |
-| `src/components/form/assisted/AssistedStep.tsx` | Layout d'une micro-étape (titre, sous-titre, contenu, navigation) |
-| `src/components/form/assisted/AssistedStepConfig.ts` | Configuration des 10 étapes (titre, sous-titre, champs, optionnel) |
-| `src/components/form/assisted/AssistedRecap.tsx` | Récapitulatif final (étape 10) |
-
-### Fichiers modifiés
-
-| Fichier | Modification |
-|---------|-------------|
-| `src/components/form/ProjectFormHeader.tsx` | Ajout toggle "Mode classique / Mode assisté" |
-| `src/components/form/ProjectFormContent.tsx` | Si mode assisté, rendre `AssistedProjectWizard` au lieu des steps classiques |
-| `src/components/form/useProjectFormState.tsx` | Ajout d'un état `isAssistedMode` + setter |
-| `src/components/ProjectForm.tsx` | Adapter la navigation (le wizard gère ses propres étapes) |
-
-### Principes d'implémentation
-
-- **Le `formState` reste identique** : le wizard utilise les mêmes setters (`setTitle`, `setDescription`, etc.). Pas de duplication d'état.
-- **`AssistedStep`** : composant layout qui affiche un titre centré, un sous-titre explicatif, le contenu (champ de saisie), et les boutons Précédent/Suivant/Passer.
-- **Chaque étape réutilise les composants existants** : `Input`, `Textarea`, `ProjectManagerDialog`, `DateInputField`, `LifecycleStatusButtons`, sliders du Step3, `FramingField` du Step4, etc.
-- **Barre de progression** : simple `Progress` en haut indiquant étape X/10.
-- **Bouton "Passer"** sur les étapes optionnelles (6-9) pour avancer sans remplir.
-- **Basculement** : à tout moment, l'utilisateur peut revenir en mode classique (les données saisies sont conservées car c'est le même `formState`).
-- **Récapitulatif** (étape 10) : affiche les données sous forme de sections résumées avec possibilité de cliquer sur une section pour revenir à l'étape correspondante.
-
----
-
-## Expérience utilisateur
+### Rendu cible dans Excel
 
 ```text
-┌─────────────────────────────────────────────┐
-│  Nouveau projet    [Classique] [● Assisté]  │
-│  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━  │
-│  ██████████░░░░░░░░░░░░░░░  Étape 4/10      │
-│                                             │
-│                                             │
-│     Quel est le statut et la priorité ?     │
-│     Définissez l'avancement et l'urgence    │
-│                                             │
-│     [À l'étude] [Validé] [En cours] ...     │
-│                                             │
-│     Priorité :  [Basse] [Moyenne] [Haute]   │
-│                                             │
-│                                             │
-│  [← Précédent]              [Suivant →]     │
-└─────────────────────────────────────────────┘
+| Nom           | Statut   | Debut      | Fin        | %   | 02/03 | 09/03 | 16/03 | 23/03 |
+|---------------|----------|------------|------------|-----|-------|-------|-------|-------|
+| Tache A       | En cours | 01/03      | 15/03      | 50  | [bleu]| [bleu]| [bleu]|       |
+| Tache B       | A faire  | 10/03      | 28/03      |  0  |       | [gris]| [gris]| [gris]|
+| Tache C       | Termine  | 01/03      | 08/03      | 100 | [vert]| [vert]|       |       |
 ```
+
+Les cellules temporelles actives auront un **fond colore** (pas de texte) :
+- Gris clair (`#E2E8F0`) pour "A faire"
+- Bleu (`#3B82F6`) pour "En cours"
+- Vert (`#22C55E`) pour "Termine"
+
+### Ameliorations supplementaires
+
+1. **Ligne d'en-tete stylee** : fond gris fonce, texte blanc, police en gras
+2. **Colonne Statut coloree** : texte colore selon le statut (rouge/orange/vert)
+3. **Bordures fines** sur toutes les cellules pour une meilleure lisibilite
+4. **Ligne de titre** : nom du projet en haut du fichier, fusionne sur plusieurs colonnes
+5. **Legende** en bas du tableau expliquant les couleurs
+6. **Gel des volets** : les 5 premieres colonnes et la ligne d'en-tete restent visibles au scroll
+
+## Modifications techniques
+
+### 1. Ajouter la dependance `exceljs`
+
+Installation du package `exceljs` (compatible navigateur, ~200 Ko gzippe).
+
+### 2. Reecrire `src/utils/ganttExcelExport.ts`
+
+Remplacement complet du contenu en utilisant l'API ExcelJS :
+
+- **Workbook/Worksheet** : creation via `new ExcelJS.Workbook()` au lieu de `XLSX.utils`
+- **Ligne titre** : cellule A1 fusionnee avec le nom du projet, police 14pt gras
+- **En-tetes** : fond `#4B5563` (gris fonce), texte blanc, gras
+- **Cellules Gantt** : `cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF3B82F6' } }` pour les cellules actives
+- **Colonne Avancement** : barre de progression textuelle ou pourcentage colore
+- **Legende** : 3 lignes en bas avec un carre de couleur + libelle
+- **Gel des volets** : `worksheet.views = [{ state: 'frozen', xSplit: 5, ySplit: 2 }]`
+- **Telechargement** : `workbook.xlsx.writeBuffer()` puis creation d'un Blob pour le download cote navigateur
+
+### 3. Aucune modification d'interface
+
+Le bouton "Export Gantt Excel" dans `TaskGantt.tsx` appelle deja `exportGanttToExcel(ganttTasks, projectTitle)`. La signature de la fonction reste identique, donc aucune modification de composant n'est necessaire.
+
+## Fichiers concernes
+
+| Fichier | Action |
+|---------|--------|
+| `package.json` | Ajout de la dependance `exceljs` |
+| `src/utils/ganttExcelExport.ts` | Reecriture complete avec ExcelJS et mise en forme avancee |
+
+## Compatibilite
+
+- ExcelJS fonctionne cote navigateur via `writeBuffer()` (pas besoin de Node.js)
+- La bibliotheque `xlsx` reste utilisee par les autres exports du projet (taches, activites, permissions, etc.) et n'est pas supprimee
+- Le fichier genere est compatible Excel, LibreOffice et Google Sheets
 

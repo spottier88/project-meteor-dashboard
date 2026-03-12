@@ -79,6 +79,9 @@ export interface ProjectFormState {
   // Tags du projet
   tags: string[];
   setTags: (value: string[]) => void;
+  // Mode assisté
+  isAssistedMode: boolean;
+  setIsAssistedMode: (value: boolean) => void;
 }
 
 export const useProjectFormState = (isOpen: boolean, project?: any) => {
@@ -119,6 +122,7 @@ export const useProjectFormState = (isOpen: boolean, project?: any) => {
   const [portfolioIds, setPortfolioIds] = useState<string[]>([]);
   const [teamsUrl, setTeamsUrl] = useState("");
   const [tags, setTags] = useState<string[]>([]);
+  const [isAssistedMode, setIsAssistedMode] = useState(false);
 
   const user = useUser();
 
@@ -495,6 +499,8 @@ export const useProjectFormState = (isOpen: boolean, project?: any) => {
     teamsUrl,
     setTeamsUrl,
     tags,
-    setTags
+    setTags,
+    isAssistedMode,
+    setIsAssistedMode
   };
 };
