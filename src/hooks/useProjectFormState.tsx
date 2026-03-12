@@ -461,6 +461,8 @@ export const useProjectFormState = (isOpen: boolean, project?: any) => {
     teamsUrl,
     setTeamsUrl,
     tags,
-    setTags
+    setTags,
+    isAssistedMode,
+    setIsAssistedMode
   };
 };
