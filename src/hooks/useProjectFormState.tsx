@@ -122,6 +122,7 @@ export const useProjectFormState = (isOpen: boolean, project?: any) => {
   const [portfolioIds, setPortfolioIds] = useState<string[]>([]);
   const [teamsUrl, setTeamsUrl] = useState("");
   const [tags, setTags] = useState<string[]>([]);
+  const [isAssistedMode, setIsAssistedMode] = useState(false);
 
   const user = useUser();
 
