@@ -79,6 +79,9 @@ export interface ProjectFormState {
   // Tags du projet
   tags: string[];
   setTags: (value: string[]) => void;
+  // Mode assisté
+  isAssistedMode: boolean;
+  setIsAssistedMode: (value: boolean) => void;
 }
 
 export const useProjectFormState = (isOpen: boolean, project?: any) => {
