@@ -1,77 +1,33 @@
 
+Constat d’analyse (projet `3d884915-4a55-45df-87f7-bf1ed578177d`)  
+- Les champs fusionnés ne contiennent pas de caractères de contrôle XML interdits (0x00–0x1F hors CR/LF/TAB) ni de bytes invalides UTF-8.  
+- En revanche, ce projet contient des caractères typographiques “exotiques” absents des autres projets testés, surtout dans `project_framing.governance`, `stakeholders`, `timeline` :  
+  - `U+202F` (espace fine insécable) : 11 occurrences  
+  - `U+8211` (tiret demi-cadratin), `U+8230` (ellipsis), et `&` dans certains blocs multi-lignes  
+- Ce profil de données est cohérent avec un DOCX qui peut devenir invalide selon le modèle Word (runs/encodage/linebreaks), même si d’autres projets passent.
 
-# Amelioration de l'export Excel Gantt : ajout de couleurs et mise en forme avancee
+Plan de correctif (implémentation)
+1) Durcir la sanitization avant `doc.render()` dans `src/utils/framingMailMerge.ts`
+- Ajouter une fonction unique `sanitizeForDocx(value: string)` appliquée à toutes les valeurs injectées :
+  - normalisation Unicode (`NFC`)
+  - `\r\n` / `\r` -> `\n`
+  - remplacement des espaces typographiques (`\u00A0`, `\u202F`, `\u2007`) par espace standard
+  - suppression des caractères non autorisés XML 1.0 (`[\u0000-\u0008\u000B\u000C\u000E-\u001F\uD800-\uDFFF\uFFFE\uFFFF]`)
+- Appliquer cette sanitization sur tout l’objet retourné par `buildMailMergeData`.
 
-## Constat actuel
+2) Ajouter une validation défensive
+- Avant rendu, scanner les valeurs et logger les champs contenant des codepoints “à risque” (diagnostic).
+- En cas de rendu/fichier invalide, remonter une erreur explicite avec le(s) champ(s) incriminé(s), au lieu d’un DOCX corrompu silencieux.
 
-L'export actuel utilise la bibliotheque `xlsx` (SheetJS community) qui ne supporte **pas** la mise en forme des cellules (couleurs de fond, bordures, polices). Le rendu repose sur des caracteres Unicode (`░`, `▓`, `■`) qui sont fonctionnels mais peu lisibles dans Excel.
+3) Corriger les données déjà stockées (one-shot)
+- Nettoyage ciblé du projet concerné (remplacement de `U+202F` par espace standard dans `project_framing`), puis ré-export.
+- Optionnel : script admin de nettoyage global sur tous les projets.
 
-## Solution proposee : migration vers ExcelJS
+4) Vérification
+- Reproduire export avec le modèle “complet” sur ce projet ID.
+- Ouvrir le DOCX dans Word desktop (poste utilisateur) + LibreOffice (contrôle).
+- Re-tester un projet “simple” pour s’assurer qu’il n’y a pas de régression.
 
-Remplacer `xlsx` par `exceljs` uniquement pour cet export Gantt. La bibliotheque `exceljs` supporte nativement :
-- Couleurs de fond des cellules
-- Bordures fines
-- Police en gras, taille, couleur
-- Fusion de cellules
-- Alignement
-
-### Rendu cible dans Excel
-
-```text
-| Nom           | Statut   | Debut      | Fin        | %   | 02/03 | 09/03 | 16/03 | 23/03 |
-|---------------|----------|------------|------------|-----|-------|-------|-------|-------|
-| Tache A       | En cours | 01/03      | 15/03      | 50  | [bleu]| [bleu]| [bleu]|       |
-| Tache B       | A faire  | 10/03      | 28/03      |  0  |       | [gris]| [gris]| [gris]|
-| Tache C       | Termine  | 01/03      | 08/03      | 100 | [vert]| [vert]|       |       |
-```
-
-Les cellules temporelles actives auront un **fond colore** (pas de texte) :
-- Gris clair (`#E2E8F0`) pour "A faire"
-- Bleu (`#3B82F6`) pour "En cours"
-- Vert (`#22C55E`) pour "Termine"
-
-### Ameliorations supplementaires
-
-1. **Ligne d'en-tete stylee** : fond gris fonce, texte blanc, police en gras
-2. **Colonne Statut coloree** : texte colore selon le statut (rouge/orange/vert)
-3. **Bordures fines** sur toutes les cellules pour une meilleure lisibilite
-4. **Ligne de titre** : nom du projet en haut du fichier, fusionne sur plusieurs colonnes
-5. **Legende** en bas du tableau expliquant les couleurs
-6. **Gel des volets** : les 5 premieres colonnes et la ligne d'en-tete restent visibles au scroll
-
-## Modifications techniques
-
-### 1. Ajouter la dependance `exceljs`
-
-Installation du package `exceljs` (compatible navigateur, ~200 Ko gzippe).
-
-### 2. Reecrire `src/utils/ganttExcelExport.ts`
-
-Remplacement complet du contenu en utilisant l'API ExcelJS :
-
-- **Workbook/Worksheet** : creation via `new ExcelJS.Workbook()` au lieu de `XLSX.utils`
-- **Ligne titre** : cellule A1 fusionnee avec le nom du projet, police 14pt gras
-- **En-tetes** : fond `#4B5563` (gris fonce), texte blanc, gras
-- **Cellules Gantt** : `cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF3B82F6' } }` pour les cellules actives
-- **Colonne Avancement** : barre de progression textuelle ou pourcentage colore
-- **Legende** : 3 lignes en bas avec un carre de couleur + libelle
-- **Gel des volets** : `worksheet.views = [{ state: 'frozen', xSplit: 5, ySplit: 2 }]`
-- **Telechargement** : `workbook.xlsx.writeBuffer()` puis creation d'un Blob pour le download cote navigateur
-
-### 3. Aucune modification d'interface
-
-Le bouton "Export Gantt Excel" dans `TaskGantt.tsx` appelle deja `exportGanttToExcel(ganttTasks, projectTitle)`. La signature de la fonction reste identique, donc aucune modification de composant n'est necessaire.
-
-## Fichiers concernes
-
-| Fichier | Action |
-|---------|--------|
-| `package.json` | Ajout de la dependance `exceljs` |
-| `src/utils/ganttExcelExport.ts` | Reecriture complete avec ExcelJS et mise en forme avancee |
-
-## Compatibilite
-
-- ExcelJS fonctionne cote navigateur via `writeBuffer()` (pas besoin de Node.js)
-- La bibliotheque `xlsx` reste utilisee par les autres exports du projet (taches, activites, permissions, etc.) et n'est pas supprimee
-- Le fichier genere est compatible Excel, LibreOffice et Google Sheets
-
+Détail technique clé
+- Le problème ne semble pas venir d’un champ vide ou d’un null, mais de la combinaison “caractères typographiques + texte multi-ligne + modèle Word complexe”.
+- Le correctif robuste est donc un pipeline de normalisation/sanitization systématique juste avant la fusion.
