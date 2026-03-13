@@ -252,8 +252,17 @@ export const executeMailMerge = async (
     delimiters: { start: "{{", end: "}}" },
   });
 
-  // 4. Construire les données et effectuer le remplacement
-  const data = buildMailMergeData(projectData);
+  // 4. Construire les données, sanitiser et effectuer le remplacement
+  const rawData = buildMailMergeData(projectData);
+  const data = sanitizeAllValues(rawData);
+
+  // 4b. Diagnostic : journaliser les champs contenant des codepoints à risque
+  for (const [key, val] of Object.entries(data)) {
+    if (typeof val === "string" && /[\u0000-\u0008\u000B\u000C\u000E-\u001F]/.test(val)) {
+      console.warn(`[framingMailMerge] Caractères de contrôle résiduels dans le champ "${key}"`);
+    }
+  }
+
   doc.render(data);
 
   // 5. Générer le blob final
