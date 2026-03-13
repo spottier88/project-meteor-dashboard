@@ -78,6 +78,40 @@ const translatePriority = (priority?: string): string => {
 };
 
 /**
+ * Sanitise une chaîne pour injection dans un DOCX via docxtemplater.
+ * - Normalise en NFC (caractères composés)
+ * - Uniformise les retours à la ligne
+ * - Remplace les espaces typographiques (insécable, fine insécable, etc.) par un espace standard
+ * - Supprime les caractères interdits par la spécification XML 1.0
+ */
+const sanitizeForDocx = (value: string): string => {
+  return value
+    // Normalisation Unicode NFC
+    .normalize("NFC")
+    // Uniformiser les fins de ligne
+    .replace(/\r\n/g, "\n")
+    .replace(/\r/g, "\n")
+    // Remplacer les espaces typographiques par un espace standard
+    .replace(/[\u00A0\u202F\u2007\u2008\u2009\u200A\u200B]/g, " ")
+    // Supprimer les caractères interdits XML 1.0
+    // (0x00-0x08, 0x0B, 0x0C, 0x0E-0x1F, surrogates, 0xFFFE, 0xFFFF)
+    .replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\uD800-\uDFFF\uFFFE\uFFFF]/g, "");
+};
+
+/**
+ * Applique sanitizeForDocx à toutes les valeurs string d'un objet
+ */
+const sanitizeAllValues = (data: MailMergeData): MailMergeData => {
+  const result = { ...data };
+  for (const key of Object.keys(result) as (keyof MailMergeData)[]) {
+    if (typeof result[key] === "string") {
+      result[key] = sanitizeForDocx(result[key]);
+    }
+  }
+  return result;
+};
+
+/**
  * Nettoie le contenu Markdown en texte brut
  * (Docxtemplater gratuit ne gère que le texte brut)
  */
@@ -218,8 +252,17 @@ export const executeMailMerge = async (
     delimiters: { start: "{{", end: "}}" },
   });
 
-  // 4. Construire les données et effectuer le remplacement
-  const data = buildMailMergeData(projectData);
+  // 4. Construire les données, sanitiser et effectuer le remplacement
+  const rawData = buildMailMergeData(projectData);
+  const data = sanitizeAllValues(rawData);
+
+  // 4b. Diagnostic : journaliser les champs contenant des codepoints à risque
+  for (const [key, val] of Object.entries(data)) {
+    if (typeof val === "string" && /[\u0000-\u0008\u000B\u000C\u000E-\u001F]/.test(val)) {
+      console.warn(`[framingMailMerge] Caractères de contrôle résiduels dans le champ "${key}"`);
+    }
+  }
+
   doc.render(data);
 
   // 5. Générer le blob final
