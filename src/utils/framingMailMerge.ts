@@ -226,6 +226,7 @@ export const executeMailMerge = async (
   const outputBlob = doc.getZip().generate({
     type: "blob",
     mimeType: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    compression: "DEFLATE",
   });
 
   // 6. Déclencher le téléchargement
