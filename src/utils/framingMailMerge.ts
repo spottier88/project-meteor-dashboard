@@ -107,8 +107,6 @@ const sanitizeAllValues = (data: MailMergeData): MailMergeData => {
     if (typeof result[key] === "string") {
       result[key] = sanitizeForDocx(result[key]);
     }
-      (result as any)[key] = sanitizeForDocx(result[key] as string);
-    }
   }
   return result;
 };
