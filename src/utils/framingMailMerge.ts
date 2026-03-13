@@ -94,6 +94,38 @@ const stripMarkdown = (md?: string | null): string => {
 };
 
 /**
+ * Fusionne les runs XML fragmentés contenant des balises {{...}}
+ * Word peut découper une balise comme {{titre_projet}} en plusieurs <w:r>/<w:t>,
+ * ce qui empêche docxtemplater de les reconnaître et corrompt le fichier final.
+ */
+const cleanSplitTags = (zip: PizZip): void => {
+  const xmlFiles = [
+    "word/document.xml",
+    "word/header1.xml", "word/header2.xml", "word/header3.xml",
+    "word/footer1.xml", "word/footer2.xml", "word/footer3.xml",
+  ];
+
+  for (const fileName of xmlFiles) {
+    const file = zip.file(fileName);
+    if (!file) continue;
+
+    let content = file.asText();
+
+    // Étape 1 : fusionner les runs consécutifs contenant des fragments de balises {{...}}
+    // On cherche les séquences qui commencent par {{ et finissent par }} mais contiennent
+    // des tags XML intermédiaires (<w:r>, <w:t>, etc.)
+    const tagRegex = /\{\{(?:[^}]|<[^>]+>)*\}\}/g;
+    content = content.replace(tagRegex, (match) => {
+      if (!match.includes("<")) return match; // pas de XML fragmenté
+      const textOnly = match.replace(/<[^>]+>/g, "");
+      return textOnly;
+    });
+
+    zip.file(fileName, content);
+  }
+};
+
+/**
  * Construit l'objet de données pour le publipostage à partir des données projet
  */
 export const buildMailMergeData = (projectData: any): MailMergeData => {
