@@ -99,12 +99,14 @@ const sanitizeForDocx = (value: string): string => {
 };
 
 /**
- * Applique sanitizeForDocx à toutes les valeurs string d'un objet plat
+ * Applique sanitizeForDocx à toutes les valeurs string d'un objet
  */
-const sanitizeAllValues = <T extends Record<string, string>>(data: T): T => {
+const sanitizeAllValues = (data: MailMergeData): MailMergeData => {
   const result = { ...data };
-  for (const key of Object.keys(result) as (keyof T)[]) {
+  for (const key of Object.keys(result) as (keyof MailMergeData)[]) {
     if (typeof result[key] === "string") {
+      result[key] = sanitizeForDocx(result[key]);
+    }
       (result as any)[key] = sanitizeForDocx(result[key] as string);
     }
   }
