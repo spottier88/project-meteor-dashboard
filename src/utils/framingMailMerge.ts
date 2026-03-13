@@ -208,6 +208,9 @@ export const executeMailMerge = async (
   const arrayBuffer = await fileData.arrayBuffer();
   const zip = new PizZip(arrayBuffer);
 
+  // 2b. Nettoyer les balises fractionnées dans le XML du template
+  cleanSplitTags(zip);
+
   // 3. Instancier Docxtemplater
   const doc = new Docxtemplater(zip, {
     paragraphLoop: true,
