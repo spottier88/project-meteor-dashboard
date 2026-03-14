@@ -1,77 +1,60 @@
 
+Objectif: traiter le bug persistant “Erreur lors de l’ouverture Word” en couvrant d’autres causes que la sanitization (volume, limites docxtemplater, structure template, intégrité fichier).
 
-# Amelioration de l'export Excel Gantt : ajout de couleurs et mise en forme avancee
+Constats déjà vérifiés
+- Le projet `3d884915-4a55-45df-87f7-bf1ed578177d` n’a pas un volume extrême (≈3 147 caractères de cadrage), donc le volume brut seul n’explique pas l’échec.
+- Les caractères “exotiques” existent (notamment U+202F) mais sont déjà traités côté sanitization.
+- Le problème restant est donc probablement lié à la combinaison **template complexe + rendu docxtemplater + contexte d’injection** (pas uniquement aux données).
 
-## Constat actuel
+Plan de correction efficace (en 4 lots)
 
-L'export actuel utilise la bibliotheque `xlsx` (SheetJS community) qui ne supporte **pas** la mise en forme des cellules (couleurs de fond, bordures, polices). Le rendu repose sur des caracteres Unicode (`░`, `▓`, `■`) qui sont fonctionnels mais peu lisibles dans Excel.
+1) Diagnostic technique instrumenté (priorité haute)
+- Fichier: `src/utils/framingMailMerge.ts`
+- Ajouter une validation post-render du DOCX (scan des `word/*.xml` dans le zip et parse XML).
+- Si XML invalide: remonter une erreur explicite (partie XML fautive) au lieu de télécharger un fichier corrompu.
+- Logger des métriques: `templateId`, taille template, taille output, nb de sauts de ligne par champ, champs longs.
 
-## Solution proposee : migration vers ExcelJS
+2) Isolation automatique du champ/format qui casse
+- Toujours dans `framingMailMerge.ts`, ajouter un mode debug:
+  - rendu “base” puis rendu incrémental par groupe de champs (`contexte`, `objectifs`, `gouvernance`, etc.)
+  - détection du premier groupe qui rend le XML invalide.
+- But: identifier rapidement si le problème vient des champs multi-lignes, des listes, ou d’un placeholder spécifique du modèle.
 
-Remplacer `xlsx` par `exceljs` uniquement pour cet export Gantt. La bibliotheque `exceljs` supporte nativement :
-- Couleurs de fond des cellules
-- Bordures fines
-- Police en gras, taille, couleur
-- Fusion de cellules
-- Alignement
+3) Durcissement du moteur de fusion (fallback robuste)
+- Ajouter options docxtemplater défensives:
+  - `nullGetter` (valeurs absentes => chaîne vide)
+  - module `fixDocPrCorruption` (cas connus de corruption avec objets Word/forme/images/template riche).
+- Stratégie de rendu en 2 passes:
+  - Pass 1: mode actuel (`linebreaks: true`)
+  - Pass 2 (fallback auto si invalide): mode “safe” pour champs longs (réduction sauts de ligne, suppression triples retours, éventuellement `linebreaks` neutralisé sur champs à risque).
+- Si les 2 passes échouent: bloquer le téléchargement + message d’erreur actionnable (pas de DOCX cassé).
 
-### Rendu cible dans Excel
+4) Contrôle qualité des templates (prévention)
+- Côté gestion des modèles (`framing-export-templates`):
+  - ajouter un “lint template” à l’upload (warning bloquant ou non):
+    - balises dans zones risquées (`w:txbxContent`/text boxes, suivi de révision `w:ins|w:del`, champs Word complexes, etc.)
+    - balises fragmentées non réparables.
+- Afficher un rapport de compatibilité du template dans l’UI admin.
 
-```text
-| Nom           | Statut   | Debut      | Fin        | %   | 02/03 | 09/03 | 16/03 | 23/03 |
-|---------------|----------|------------|------------|-----|-------|-------|-------|-------|
-| Tache A       | En cours | 01/03      | 15/03      | 50  | [bleu]| [bleu]| [bleu]|       |
-| Tache B       | A faire  | 10/03      | 28/03      |  0  |       | [gris]| [gris]| [gris]|
-| Tache C       | Termine  | 01/03      | 08/03      | 100 | [vert]| [vert]|       |       |
-```
+Tests de validation (obligatoires)
+- Reproduire avec:
+  - projet KO: `3d884915-4a55-45df-87f7-bf1ed578177d` + “Modèle complet”
+  - projet OK de contrôle + “Modèle complet”
+  - “Modèle démo”
+- Vérifier:
+  - ouverture Word desktop
+  - absence de fichier corrompu silencieux
+  - fallback déclenché correctement si mode principal échoue.
 
-Les cellules temporelles actives auront un **fond colore** (pas de texte) :
-- Gris clair (`#E2E8F0`) pour "A faire"
-- Bleu (`#3B82F6`) pour "En cours"
-- Vert (`#22C55E`) pour "Termine"
+Décisions produit à trancher (3 max)
+1. En cas d’échec du rendu “riche”, on préfère:
+   - A) fallback automatique (contenu un peu moins formaté)  
+   - B) blocage export avec message clair ?
+2. Le lint template doit-il être:
+   - A) bloquant à l’upload  
+   - B) avertissement non bloquant ?
+3. Souhaitez-vous un mode “diagnostic export” activable uniquement pour les admins (logs détaillés) ?
 
-### Ameliorations supplementaires
-
-1. **Ligne d'en-tete stylee** : fond gris fonce, texte blanc, police en gras
-2. **Colonne Statut coloree** : texte colore selon le statut (rouge/orange/vert)
-3. **Bordures fines** sur toutes les cellules pour une meilleure lisibilite
-4. **Ligne de titre** : nom du projet en haut du fichier, fusionne sur plusieurs colonnes
-5. **Legende** en bas du tableau expliquant les couleurs
-6. **Gel des volets** : les 5 premieres colonnes et la ligne d'en-tete restent visibles au scroll
-
-## Modifications techniques
-
-### 1. Ajouter la dependance `exceljs`
-
-Installation du package `exceljs` (compatible navigateur, ~200 Ko gzippe).
-
-### 2. Reecrire `src/utils/ganttExcelExport.ts`
-
-Remplacement complet du contenu en utilisant l'API ExcelJS :
-
-- **Workbook/Worksheet** : creation via `new ExcelJS.Workbook()` au lieu de `XLSX.utils`
-- **Ligne titre** : cellule A1 fusionnee avec le nom du projet, police 14pt gras
-- **En-tetes** : fond `#4B5563` (gris fonce), texte blanc, gras
-- **Cellules Gantt** : `cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF3B82F6' } }` pour les cellules actives
-- **Colonne Avancement** : barre de progression textuelle ou pourcentage colore
-- **Legende** : 3 lignes en bas avec un carre de couleur + libelle
-- **Gel des volets** : `worksheet.views = [{ state: 'frozen', xSplit: 5, ySplit: 2 }]`
-- **Telechargement** : `workbook.xlsx.writeBuffer()` puis creation d'un Blob pour le download cote navigateur
-
-### 3. Aucune modification d'interface
-
-Le bouton "Export Gantt Excel" dans `TaskGantt.tsx` appelle deja `exportGanttToExcel(ganttTasks, projectTitle)`. La signature de la fonction reste identique, donc aucune modification de composant n'est necessaire.
-
-## Fichiers concernes
-
-| Fichier | Action |
-|---------|--------|
-| `package.json` | Ajout de la dependance `exceljs` |
-| `src/utils/ganttExcelExport.ts` | Reecriture complete avec ExcelJS et mise en forme avancee |
-
-## Compatibilite
-
-- ExcelJS fonctionne cote navigateur via `writeBuffer()` (pas besoin de Node.js)
-- La bibliotheque `xlsx` reste utilisee par les autres exports du projet (taches, activites, permissions, etc.) et n'est pas supprimee
-- Le fichier genere est compatible Excel, LibreOffice et Google Sheets
-
+Portée de modification prévue
+- Principalement `src/utils/framingMailMerge.ts`
+- Secondairement composants d’admin templates (`src/components/framing-export-templates/*`) pour le lint/rapport.
