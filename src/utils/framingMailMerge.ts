@@ -3,6 +3,13 @@
  * @description Logique de publipostage (mail merge) pour l'export de la note de cadrage.
  * Charge un modèle DOCX depuis Supabase Storage, remplace les balises par les données
  * du projet, et génère le fichier final à télécharger.
+ *
+ * Fonctionnalités clés :
+ * - Sanitisation robuste (Unicode NFC, espaces typographiques, XML 1.0)
+ * - Nettoyage des balises fractionnées par Word (cleanSplitTags)
+ * - Validation XML post-rendu pour détecter les fichiers corrompus
+ * - Stratégie de rendu en 2 passes (riche → safe) avec fallback automatique
+ * - Journalisation diagnostique des champs à risque
  */
 
 import Docxtemplater from "docxtemplater";
@@ -10,6 +17,10 @@ import PizZip from "pizzip";
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
+
+/* ═══════════════════════════════════════════════════════════════
+   TYPES
+   ═══════════════════════════════════════════════════════════════ */
 
 /**
  * Données nécessaires pour le publipostage
@@ -38,9 +49,11 @@ interface MailMergeData {
   date_generation: string;
 }
 
-/**
- * Formate une date ISO en chaîne lisible
- */
+/* ═══════════════════════════════════════════════════════════════
+   UTILITAIRES DE FORMATAGE
+   ═══════════════════════════════════════════════════════════════ */
+
+/** Formate une date ISO en chaîne lisible */
 const formatDate = (dateStr?: string | null): string => {
   if (!dateStr) return "Non défini";
   try {
@@ -50,9 +63,7 @@ const formatDate = (dateStr?: string | null): string => {
   }
 };
 
-/**
- * Traduit le statut du cycle de vie en libellé français
- */
+/** Traduit le statut du cycle de vie en libellé français */
 const translateLifecycleStatus = (status?: string): string => {
   const map: Record<string, string> = {
     draft: "Brouillon",
@@ -64,9 +75,7 @@ const translateLifecycleStatus = (status?: string): string => {
   return map[status || ""] || status || "Non défini";
 };
 
-/**
- * Traduit la priorité en libellé français
- */
+/** Traduit la priorité en libellé français */
 const translatePriority = (priority?: string): string => {
   const map: Record<string, string> = {
     low: "Basse",
@@ -77,25 +86,30 @@ const translatePriority = (priority?: string): string => {
   return map[priority || ""] || priority || "Non définie";
 };
 
+/* ═══════════════════════════════════════════════════════════════
+   SANITISATION
+   ═══════════════════════════════════════════════════════════════ */
+
 /**
  * Sanitise une chaîne pour injection dans un DOCX via docxtemplater.
  * - Normalise en NFC (caractères composés)
  * - Uniformise les retours à la ligne
- * - Remplace les espaces typographiques (insécable, fine insécable, etc.) par un espace standard
+ * - Remplace les espaces typographiques par un espace standard
  * - Supprime les caractères interdits par la spécification XML 1.0
+ * - Collapse les retours à la ligne triples (prévention corruption)
  */
 const sanitizeForDocx = (value: string): string => {
   return value
-    // Normalisation Unicode NFC
     .normalize("NFC")
-    // Uniformiser les fins de ligne
     .replace(/\r\n/g, "\n")
     .replace(/\r/g, "\n")
-    // Remplacer les espaces typographiques par un espace standard
+    // Espaces typographiques → espace standard
     .replace(/[\u00A0\u202F\u2007\u2008\u2009\u200A\u200B]/g, " ")
-    // Supprimer les caractères interdits XML 1.0
-    // (0x00-0x08, 0x0B, 0x0C, 0x0E-0x1F, surrogates, 0xFFFE, 0xFFFF)
-    .replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\uD800-\uDFFF\uFFFE\uFFFF]/g, "");
+    // Caractères interdits XML 1.0
+    .replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\uD800-\uDFFF\uFFFE\uFFFF]/g, "")
+    // Réduire les triples sauts de ligne consécutifs
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
 };
 
 /**
@@ -113,31 +127,36 @@ const sanitizeAllValues = (data: MailMergeData): MailMergeData => {
 
 /**
  * Nettoie le contenu Markdown en texte brut
- * (Docxtemplater gratuit ne gère que le texte brut)
  */
 const stripMarkdown = (md?: string | null): string => {
   if (!md) return "";
   return md
-    .replace(/#{1,6}\s?/g, "")        // titres
-    .replace(/\*\*(.*?)\*\*/g, "$1")   // gras
-    .replace(/\*(.*?)\*/g, "$1")       // italique
-    .replace(/`(.*?)`/g, "$1")         // code inline
-    .replace(/\n- /g, "\n• ")          // listes à puces
-    .replace(/\n\d+\.\s/g, "\n• ")     // listes numérotées
+    .replace(/#{1,6}\s?/g, "")
+    .replace(/\*\*(.*?)\*\*/g, "$1")
+    .replace(/\*(.*?)\*/g, "$1")
+    .replace(/`(.*?)`/g, "$1")
+    .replace(/\n- /g, "\n• ")
+    .replace(/\n\d+\.\s/g, "\n• ")
     .trim();
 };
+
+/* ═══════════════════════════════════════════════════════════════
+   NETTOYAGE DU TEMPLATE (RUNS XML FRAGMENTÉS)
+   ═══════════════════════════════════════════════════════════════ */
 
 /**
  * Fusionne les runs XML fragmentés contenant des balises {{...}}
  * Word peut découper une balise comme {{titre_projet}} en plusieurs <w:r>/<w:t>,
- * ce qui empêche docxtemplater de les reconnaître et corrompt le fichier final.
+ * ce qui empêche docxtemplater de les reconnaître.
+ *
+ * Stratégie améliorée :
+ * 1. Extraire tout le texte brut pour trouver les balises {{...}}
+ * 2. Reconstruire les zones XML contenant ces balises en fusionnant les <w:r> intermédiaires
  */
 const cleanSplitTags = (zip: PizZip): void => {
-  const xmlFiles = [
-    "word/document.xml",
-    "word/header1.xml", "word/header2.xml", "word/header3.xml",
-    "word/footer1.xml", "word/footer2.xml", "word/footer3.xml",
-  ];
+  const xmlFiles = Object.keys(zip.files).filter(
+    (name) => name.startsWith("word/") && name.endsWith(".xml")
+  );
 
   for (const fileName of xmlFiles) {
     const file = zip.file(fileName);
@@ -145,19 +164,122 @@ const cleanSplitTags = (zip: PizZip): void => {
 
     let content = file.asText();
 
-    // Étape 1 : fusionner les runs consécutifs contenant des fragments de balises {{...}}
-    // On cherche les séquences qui commencent par {{ et finissent par }} mais contiennent
-    // des tags XML intermédiaires (<w:r>, <w:t>, etc.)
-    const tagRegex = /\{\{(?:[^}]|<[^>]+>)*\}\}/g;
+    // Stratégie 1 : regex directe sur les fragments {{...}} contenant du XML
+    // Capturer toute séquence commençant par {{ et finissant par }} potentiellement
+    // entrecoupée de tags XML (<w:r>, <w:rPr>, <w:t>, etc.)
+    const tagRegex = /\{(?:<[^>]*>)*\{(?:[^}]|<[^>]*>)*\}(?:<[^>]*>)*\}/g;
     content = content.replace(tagRegex, (match) => {
-      if (!match.includes("<")) return match; // pas de XML fragmenté
+      if (!match.includes("<")) return match;
       const textOnly = match.replace(/<[^>]+>/g, "");
       return textOnly;
     });
 
+    // Stratégie 2 : gérer les cas où {{ et }} sont dans des <w:t> séparés
+    // mais dans le même paragraphe <w:p>
+    content = content.replace(
+      /(<w:p\b[^>]*>)([\s\S]*?)(<\/w:p>)/g,
+      (_match, pOpen: string, pContent: string, pClose: string) => {
+        // Extraire le texte brut du paragraphe
+        const plainText = pContent.replace(/<[^>]+>/g, "");
+        // Vérifier s'il contient des balises {{ }}
+        if (!plainText.includes("{{") || !plainText.includes("}}")) {
+          return pOpen + pContent + pClose;
+        }
+
+        // Reconstruire : fusionner tous les <w:t> du paragraphe en conservant
+        // le premier <w:r> comme enveloppe
+        const allText = plainText;
+        // Capturer le premier <w:rPr> s'il existe pour conserver le formatage
+        const rPrMatch = pContent.match(/<w:rPr>[\s\S]*?<\/w:rPr>/);
+        const rPr = rPrMatch ? rPrMatch[0] : "";
+
+        const rebuiltContent = `<w:r>${rPr}<w:t xml:space="preserve">${allText}</w:t></w:r>`;
+        return pOpen + rebuiltContent + pClose;
+      }
+    );
+
     zip.file(fileName, content);
   }
 };
+
+/* ═══════════════════════════════════════════════════════════════
+   VALIDATION XML POST-RENDU
+   ═══════════════════════════════════════════════════════════════ */
+
+/**
+ * Valide la conformité XML des fichiers principaux du DOCX après rendu.
+ * Utilise DOMParser pour détecter les erreurs de parsing.
+ * @returns null si valide, sinon un objet décrivant l'erreur
+ */
+const validateDocxXml = (
+  zip: PizZip
+): { file: string; error: string; excerpt: string } | null => {
+  const criticalFiles = Object.keys(zip.files).filter(
+    (name) => name.startsWith("word/") && name.endsWith(".xml")
+  );
+
+  const parser = new DOMParser();
+
+  for (const fileName of criticalFiles) {
+    const file = zip.file(fileName);
+    if (!file) continue;
+
+    const xmlContent = file.asText();
+    const doc = parser.parseFromString(xmlContent, "application/xml");
+    const parseError = doc.querySelector("parsererror");
+
+    if (parseError) {
+      // Extraire un extrait autour de l'erreur pour diagnostic
+      const errorText = parseError.textContent || "Erreur XML inconnue";
+      // Essayer de trouver la position de l'erreur
+      const posMatch = errorText.match(/line (\d+)/i);
+      let excerpt = "";
+      if (posMatch) {
+        const lines = xmlContent.split("\n");
+        const lineNum = parseInt(posMatch[1], 10) - 1;
+        excerpt = lines.slice(Math.max(0, lineNum - 1), lineNum + 2).join("\n");
+      } else {
+        excerpt = xmlContent.substring(0, 500);
+      }
+
+      return { file: fileName, error: errorText.substring(0, 300), excerpt: excerpt.substring(0, 500) };
+    }
+  }
+
+  return null;
+};
+
+/* ═══════════════════════════════════════════════════════════════
+   JOURNALISATION DIAGNOSTIQUE
+   ═══════════════════════════════════════════════════════════════ */
+
+/**
+ * Journalise des métriques de diagnostic sur les données fusionnées
+ */
+const logDiagnostics = (data: MailMergeData, templateName: string): void => {
+  const metrics: Record<string, { length: number; newlines: number; hasRisk: boolean }> = {};
+
+  for (const [key, val] of Object.entries(data)) {
+    if (typeof val !== "string") continue;
+    const hasControlChars = /[\u0000-\u0008\u000B\u000C\u000E-\u001F]/.test(val);
+    metrics[key] = {
+      length: val.length,
+      newlines: (val.match(/\n/g) || []).length,
+      hasRisk: hasControlChars,
+    };
+
+    if (hasControlChars) {
+      console.warn(`[framingMailMerge] ⚠️ Caractères de contrôle résiduels dans "${key}"`);
+    }
+  }
+
+  const totalSize = Object.values(metrics).reduce((sum, m) => sum + m.length, 0);
+  console.info(`[framingMailMerge] Diagnostic — template: "${templateName}", taille totale: ${totalSize} chars`, metrics);
+};
+
+/* ═══════════════════════════════════════════════════════════════
+   CONSTRUCTION DES DONNÉES DE FUSION
+   ═══════════════════════════════════════════════════════════════ */
 
 /**
  * Construit l'objet de données pour le publipostage à partir des données projet
@@ -169,11 +291,9 @@ export const buildMailMergeData = (projectData: any): MailMergeData => {
   const risks = projectData.risks || [];
   const tasks = projectData.tasks || [];
 
-  // Construire la chaîne organisation
   const orgParts = [p.pole_name, p.direction_name, p.service_name].filter(Boolean);
   const organisation = orgParts.length > 0 ? orgParts.join(" > ") : "Non définie";
 
-  // Formater la liste des membres de l'équipe
   const equipe = members.length > 0
     ? members.map((m: any) => {
         const name = [m.first_name, m.last_name].filter(Boolean).join(" ") || m.email || "Inconnu";
@@ -181,14 +301,12 @@ export const buildMailMergeData = (projectData: any): MailMergeData => {
       }).join("\n")
     : "Aucun membre";
 
-  // Formater la liste des risques
   const risquesStr = risks.length > 0
-    ? risks.map((r: any, i: number) => 
+    ? risks.map((r: any, i: number) =>
         `${i + 1}. ${r.description || "Sans description"} - Probabilité: ${r.probability || "?"}, Sévérité: ${r.severity || "?"}, Statut: ${r.status || "?"}`
       ).join("\n")
     : "Aucun risque identifié";
 
-  // Formater la liste des tâches
   const tachesStr = tasks.length > 0
     ? tasks.map((t: any, i: number) => {
         const statusMap: Record<string, string> = { todo: "À faire", in_progress: "En cours", done: "Terminée" };
@@ -221,8 +339,86 @@ export const buildMailMergeData = (projectData: any): MailMergeData => {
   };
 };
 
+/* ═══════════════════════════════════════════════════════════════
+   MOTEUR DE RENDU (2 PASSES)
+   ═══════════════════════════════════════════════════════════════ */
+
 /**
- * Exécute le publipostage : télécharge le modèle, remplace les balises et déclenche le téléchargement
+ * Options pour une passe de rendu
+ */
+interface RenderPassOptions {
+  linebreaks: boolean;
+  label: string;
+  /** En mode safe, on aplatit les sauts de ligne en espaces */
+  flattenNewlines: boolean;
+}
+
+/**
+ * Tente un rendu docxtemplater avec les options données.
+ * @returns le blob résultant, ou null si le XML produit est invalide
+ */
+const attemptRender = (
+  templateZip: PizZip,
+  data: MailMergeData,
+  options: RenderPassOptions
+): { blob: Blob; validationError: null } | { blob: null; validationError: { file: string; error: string; excerpt: string } } => {
+  // Cloner le zip pour ne pas altérer l'original entre les passes
+  const zipClone = new PizZip(templateZip.generate({ type: "uint8array" }));
+
+  // Nettoyer les balises fractionnées
+  cleanSplitTags(zipClone);
+
+  // Préparer les données selon le mode
+  let renderData = { ...data };
+  if (options.flattenNewlines) {
+    for (const key of Object.keys(renderData) as (keyof MailMergeData)[]) {
+      if (typeof renderData[key] === "string") {
+        renderData[key] = (renderData[key] as string).replace(/\n/g, " — ");
+      }
+    }
+  }
+
+  // Instancier docxtemplater avec nullGetter défensif
+  const doc = new Docxtemplater(zipClone, {
+    paragraphLoop: true,
+    linebreaks: options.linebreaks,
+    delimiters: { start: "{{", end: "}}" },
+    // Retourner chaîne vide pour toute balise non trouvée dans les données
+    nullGetter: () => "",
+  });
+
+  doc.render(renderData);
+
+  // Récupérer le zip rendu et valider le XML
+  const outputZip = doc.getZip();
+  const xmlError = validateDocxXml(outputZip as unknown as PizZip);
+
+  if (xmlError) {
+    console.warn(`[framingMailMerge] ❌ Passe "${options.label}" — XML invalide dans ${xmlError.file}:`, xmlError.error);
+    return { blob: null, validationError: xmlError };
+  }
+
+  console.info(`[framingMailMerge] ✅ Passe "${options.label}" — XML valide`);
+
+  const blob = outputZip.generate({
+    type: "blob",
+    mimeType: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    compression: "DEFLATE",
+  });
+
+  return { blob, validationError: null };
+};
+
+/* ═══════════════════════════════════════════════════════════════
+   POINT D'ENTRÉE PRINCIPAL
+   ═══════════════════════════════════════════════════════════════ */
+
+/**
+ * Exécute le publipostage : télécharge le modèle, remplace les balises et déclenche le téléchargement.
+ * Utilise une stratégie en 2 passes :
+ *   1. Mode riche (linebreaks activés)
+ *   2. Fallback safe (linebreaks désactivés, sauts de ligne aplatis)
+ * Si les deux échouent, une erreur explicite est remontée.
  */
 export const executeMailMerge = async (
   templateFilePath: string,
@@ -240,40 +436,52 @@ export const executeMailMerge = async (
 
   // 2. Charger le fichier avec PizZip
   const arrayBuffer = await fileData.arrayBuffer();
-  const zip = new PizZip(arrayBuffer);
+  const templateZip = new PizZip(arrayBuffer);
 
-  // 2b. Nettoyer les balises fractionnées dans le XML du template
-  cleanSplitTags(zip);
-
-  // 3. Instancier Docxtemplater
-  const doc = new Docxtemplater(zip, {
-    paragraphLoop: true,
-    linebreaks: true,
-    delimiters: { start: "{{", end: "}}" },
-  });
-
-  // 4. Construire les données, sanitiser et effectuer le remplacement
+  // 3. Construire et sanitiser les données
   const rawData = buildMailMergeData(projectData);
   const data = sanitizeAllValues(rawData);
 
-  // 4b. Diagnostic : journaliser les champs contenant des codepoints à risque
-  for (const [key, val] of Object.entries(data)) {
-    if (typeof val === "string" && /[\u0000-\u0008\u000B\u000C\u000E-\u001F]/.test(val)) {
-      console.warn(`[framingMailMerge] Caractères de contrôle résiduels dans le champ "${key}"`);
+  // 4. Diagnostic
+  logDiagnostics(data, templateFilePath);
+
+  // 5. Stratégie de rendu en 2 passes
+  const passes: RenderPassOptions[] = [
+    { linebreaks: true, label: "riche", flattenNewlines: false },
+    { linebreaks: false, label: "safe (sans linebreaks)", flattenNewlines: true },
+  ];
+
+  let finalBlob: Blob | null = null;
+  let lastError: { file: string; error: string; excerpt: string } | null = null;
+
+  for (const pass of passes) {
+    try {
+      const result = attemptRender(templateZip, data, pass);
+      if (result.blob) {
+        finalBlob = result.blob;
+        break;
+      }
+      lastError = result.validationError;
+    } catch (err: any) {
+      console.error(`[framingMailMerge] ❌ Exception passe "${pass.label}":`, err);
+      lastError = { file: "N/A", error: err.message || String(err), excerpt: "" };
     }
   }
 
-  doc.render(data);
-
-  // 5. Générer le blob final
-  const outputBlob = doc.getZip().generate({
-    type: "blob",
-    mimeType: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-    compression: "DEFLATE",
-  });
+  if (!finalBlob) {
+    const detail = lastError
+      ? `Fichier: ${lastError.file}\nErreur: ${lastError.error}`
+      : "Erreur inconnue";
+    throw new Error(
+      `L'export a échoué : le document généré contient du XML invalide.\n\n` +
+      `Détails techniques :\n${detail}\n\n` +
+      `Veuillez vérifier le modèle DOCX (zones de texte, révisions, objets complexes) ` +
+      `ou contacter l'administrateur.`
+    );
+  }
 
   // 6. Déclencher le téléchargement
-  const url = URL.createObjectURL(outputBlob);
+  const url = URL.createObjectURL(finalBlob);
   const link = document.createElement("a");
   link.href = url;
   link.download = outputFileName;
