@@ -1,8 +1,13 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Sun, Cloud, CloudLightning } from "lucide-react";
+import { Sun, Cloud, CloudLightning, History } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useNavigate } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
 
 interface LastReviewProps {
+  /** Identifiant du projet pour la navigation vers l'historique */
+  projectId: string;
   review: {
     weather: "sunny" | "cloudy" | "stormy";
     progress: "better" | "stable" | "worse";
@@ -34,12 +39,36 @@ const progressLabels = {
   worse: "En dégradation",
 };
 
-export const LastReview = ({ review, previousReview }: LastReviewProps) => {
+export const LastReview = ({ projectId, review, previousReview }: LastReviewProps) => {
+  const navigate = useNavigate();
+
+  /** Bouton d'accès à l'historique des revues */
+  const historyButton = (
+    <TooltipProvider>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8"
+            onClick={() => navigate(`/projects/${projectId}/reviews`)}
+          >
+            <History className="h-4 w-4" />
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent>Historique des revues</TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
+  );
+
   if (!review) {
     return (
       <Card>
         <CardHeader className="pb-2">
-          <CardTitle>Dernière revue</CardTitle>
+          <CardTitle className="flex items-center justify-between">
+            <span>Dernière revue</span>
+            {historyButton}
+          </CardTitle>
         </CardHeader>
         <CardContent>
           <p className="text-muted-foreground text-center">Aucune revue disponible</p>
@@ -56,9 +85,12 @@ export const LastReview = ({ review, previousReview }: LastReviewProps) => {
       <CardHeader className="pb-2">
         <CardTitle className="flex items-center justify-between">
           <span>Dernière revue</span>
-          <span className="text-sm text-muted-foreground">
-            {new Date(review.created_at).toLocaleDateString("fr-FR")}
-          </span>
+          <div className="flex items-center gap-2">
+            {historyButton}
+            <span className="text-sm text-muted-foreground">
+              {new Date(review.created_at).toLocaleDateString("fr-FR")}
+            </span>
+          </div>
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
