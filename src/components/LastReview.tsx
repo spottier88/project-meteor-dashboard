@@ -39,12 +39,36 @@ const progressLabels = {
   worse: "En dégradation",
 };
 
-export const LastReview = ({ review, previousReview }: LastReviewProps) => {
+export const LastReview = ({ projectId, review, previousReview }: LastReviewProps) => {
+  const navigate = useNavigate();
+
+  /** Bouton d'accès à l'historique des revues */
+  const historyButton = (
+    <TooltipProvider>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8"
+            onClick={() => navigate(`/projects/${projectId}/reviews`)}
+          >
+            <History className="h-4 w-4" />
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent>Historique des revues</TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
+  );
+
   if (!review) {
     return (
       <Card>
         <CardHeader className="pb-2">
-          <CardTitle>Dernière revue</CardTitle>
+          <CardTitle className="flex items-center justify-between">
+            <span>Dernière revue</span>
+            {historyButton}
+          </CardTitle>
         </CardHeader>
         <CardContent>
           <p className="text-muted-foreground text-center">Aucune revue disponible</p>
