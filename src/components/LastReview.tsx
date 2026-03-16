@@ -51,7 +51,7 @@ export const LastReview = ({ projectId, review, previousReview }: LastReviewProp
             variant="ghost"
             size="icon"
             className="h-8 w-8"
-            onClick={() => navigate(`/projects/${projectId}/reviews`)}
+            onClick={() => navigate(`/reviews/${projectId}`)}
           >
             <History className="h-4 w-4" />
           </Button>
