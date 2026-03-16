@@ -1,9 +1,10 @@
+import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Sun, Cloud, CloudLightning, History } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
+import { ReviewHistoryDialog } from "@/components/review/ReviewHistoryDialog";
 
 interface LastReviewProps {
   /** Identifiant du projet pour la navigation vers l'historique */
@@ -40,9 +41,9 @@ const progressLabels = {
 };
 
 export const LastReview = ({ projectId, review, previousReview }: LastReviewProps) => {
-  const navigate = useNavigate();
+  const [showHistory, setShowHistory] = useState(false);
 
-  /** Bouton d'accès à l'historique des revues */
+  /** Bouton d'accès à l'historique des revues (ouvre une modale) */
   const historyButton = (
     <TooltipProvider>
       <Tooltip>
@@ -51,7 +52,7 @@ export const LastReview = ({ projectId, review, previousReview }: LastReviewProp
             variant="ghost"
             size="icon"
             className="h-8 w-8"
-            onClick={() => navigate(`/reviews/${projectId}`)}
+            onClick={() => setShowHistory(true)}
           >
             <History className="h-4 w-4" />
           </Button>
@@ -126,6 +127,13 @@ export const LastReview = ({ projectId, review, previousReview }: LastReviewProp
           </div>
         )}
       </CardContent>
+
+      {/* Modale d'historique des revues */}
+      <ReviewHistoryDialog
+        projectId={projectId}
+        isOpen={showHistory}
+        onClose={() => setShowHistory(false)}
+      />
     </Card>
   );
 };
