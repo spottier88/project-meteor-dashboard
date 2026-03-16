@@ -41,9 +41,9 @@ const progressLabels = {
 };
 
 export const LastReview = ({ projectId, review, previousReview }: LastReviewProps) => {
-  const navigate = useNavigate();
+  const [showHistory, setShowHistory] = useState(false);
 
-  /** Bouton d'accès à l'historique des revues */
+  /** Bouton d'accès à l'historique des revues (ouvre une modale) */
   const historyButton = (
     <TooltipProvider>
       <Tooltip>
@@ -52,7 +52,7 @@ export const LastReview = ({ projectId, review, previousReview }: LastReviewProp
             variant="ghost"
             size="icon"
             className="h-8 w-8"
-            onClick={() => navigate(`/reviews/${projectId}`)}
+            onClick={() => setShowHistory(true)}
           >
             <History className="h-4 w-4" />
           </Button>
