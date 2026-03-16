@@ -127,6 +127,13 @@ export const LastReview = ({ projectId, review, previousReview }: LastReviewProp
           </div>
         )}
       </CardContent>
+
+      {/* Modale d'historique des revues */}
+      <ReviewHistoryDialog
+        projectId={projectId}
+        isOpen={showHistory}
+        onClose={() => setShowHistory(false)}
+      />
     </Card>
   );
 };
