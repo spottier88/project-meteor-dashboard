@@ -67,7 +67,7 @@ export const LastReview = ({ projectId, review, previousReview }: LastReviewProp
         <CardHeader className="pb-2">
           <CardTitle className="flex items-center justify-between">
             <span>Dernière revue</span>
-            {historyButton}
+            {/* Pas de bouton historique si aucune revue */}
           </CardTitle>
         </CardHeader>
         <CardContent>
