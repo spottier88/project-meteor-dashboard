@@ -86,7 +86,8 @@ export const LastReview = ({ projectId, review, previousReview }: LastReviewProp
         <CardTitle className="flex items-center justify-between">
           <span>Dernière revue</span>
           <div className="flex items-center gap-2">
-            {historyButton}
+            {/* Afficher le bouton historique seulement s'il y a une revue précédente */}
+            {previousReview && historyButton}
             <span className="text-sm text-muted-foreground">
               {new Date(review.created_at).toLocaleDateString("fr-FR")}
             </span>
