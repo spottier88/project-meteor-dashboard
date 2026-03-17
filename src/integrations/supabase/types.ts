@@ -2088,6 +2088,7 @@ export type Database = {
       }
     }
     Functions: {
+      _sync_single_parent: { Args: { _parent_id: string }; Returns: undefined }
       can_access_project: {
         Args: { p_project_id: string; p_user_id: string }
         Returns: boolean
