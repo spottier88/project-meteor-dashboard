@@ -153,6 +153,15 @@ const Index = () => {
     setAccessibleProjectIds(projectIds);
   };
 
+  /** Réinitialiser les filtres dashboard */
+  const handleResetDashboardFilters = () => {
+    setDashboardRoleFilter(null);
+    setDashboardWeatherFilter(null);
+    setDashboardWithoutReviewFilter(false);
+  };
+
+  const hasDashboardFilters = !!(dashboardRoleFilter || dashboardWeatherFilter || dashboardWithoutReviewFilter);
+
   const filteredProjects = projects?.filter(project => {
     if (lifecycleStatus !== 'all' && project.lifecycle_status !== lifecycleStatus) {
       return false;
@@ -218,6 +227,34 @@ const Index = () => {
       const projectTags = projectTagsMap.get(project.id) || [];
       const hasMatchingTag = selectedTags.some(t => projectTags.includes(t));
       if (!hasMatchingTag) return false;
+    }
+
+    // --- Filtres dashboard one-shot ---
+
+    // Filtre par rôle (CP / Membre / Manager)
+    if (dashboardRoleFilter && userProfile) {
+      const isProjectManager = project.project_manager === userProfile.email;
+      const isMember = userMemberships?.has(project.id) || false;
+
+      if (dashboardRoleFilter === "cp" && !isProjectManager) return false;
+      if (dashboardRoleFilter === "member" && (!isMember || isProjectManager)) return false;
+      if (dashboardRoleFilter === "manager" && (isProjectManager || isMember)) return false;
+    }
+
+    // Filtre météo
+    if (dashboardWeatherFilter) {
+      const projectWeather = project.weather || 'null';
+      if (projectWeather !== dashboardWeatherFilter) return false;
+    }
+
+    // Filtre sans revue récente (projets actifs sans revue ou > 30 jours)
+    if (dashboardWithoutReviewFilter) {
+      const isActive = project.lifecycle_status === 'in_progress';
+      if (!isActive) return false;
+      if (project.last_review_date) {
+        const daysSince = differenceInDays(new Date(), new Date(project.last_review_date));
+        if (daysSince <= 30) return false;
+      }
     }
 
     return true;
