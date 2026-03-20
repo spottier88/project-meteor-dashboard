@@ -87,6 +87,28 @@ export const ProjectFilters = ({
     onTagsChange([]);
   };
 
+  const hasDashboardFilters = !!(dashboardRoleFilter || dashboardWeatherFilter || dashboardWithoutReviewFilter);
+
+  /** Labels pour les filtres dashboard */
+  const getDashboardRoleLabel = (role: string) => {
+    switch (role) {
+      case 'cp': return 'Chef de projet';
+      case 'member': return 'Membre';
+      case 'manager': return 'Vue Manager';
+      default: return role;
+    }
+  };
+
+  const getDashboardWeatherLabel = (weather: string) => {
+    switch (weather) {
+      case 'sunny': return 'Beau temps';
+      case 'cloudy': return 'Nuageux';
+      case 'stormy': return 'Orageux';
+      case 'null': return 'Non évalué';
+      default: return weather;
+    }
+  };
+
   // Compte le nombre de filtres actifs
   const activeFiltersCount = [
     searchQuery !== '',
@@ -96,7 +118,8 @@ export const ProjectFilters = ({
     poleId !== 'all',
     directionId !== 'all',
     serviceId !== 'all',
-    selectedTags.length > 0
+    selectedTags.length > 0,
+    hasDashboardFilters,
   ].filter(Boolean).length;
 
   return (
