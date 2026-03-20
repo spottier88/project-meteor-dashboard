@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { DashboardHeader } from "@/components/DashboardHeader";
 import { UserInfo } from "@/components/UserInfo";
@@ -14,11 +14,25 @@ import { useUserProjectMemberships } from "@/hooks/useUserProjectMemberships";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { ProjectListItem } from "@/hooks/useProjectsListView";
+import { differenceInDays } from "date-fns";
+
 const LoadingSpinner = () => (
   <div className="flex justify-center items-center h-48">
     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
   </div>
 );
+
+/**
+ * Lecture one-shot des filtres dashboard depuis localStorage.
+ * Les clés sont supprimées après lecture pour ne pas persister.
+ */
+const readAndClearDashboardFilter = (key: string): string | null => {
+  const value = localStorage.getItem(key);
+  if (value !== null) {
+    localStorage.removeItem(key);
+  }
+  return value;
+};
 
 const Index = () => {
   const navigate = useNavigate();
@@ -32,6 +46,21 @@ const Index = () => {
     title: string;
   } | null>(null);
   
+  // Filtres dashboard one-shot (lus une seule fois au montage)
+  const [dashboardRoleFilter, setDashboardRoleFilter] = useState<string | null>(null);
+  const [dashboardWeatherFilter, setDashboardWeatherFilter] = useState<string | null>(null);
+  const [dashboardWithoutReviewFilter, setDashboardWithoutReviewFilter] = useState<boolean>(false);
+
+  // Lecture one-shot au montage
+  useEffect(() => {
+    const role = readAndClearDashboardFilter("dashboardRoleFilter");
+    const weather = readAndClearDashboardFilter("dashboardWeatherFilter");
+    const withoutReview = readAndClearDashboardFilter("dashboardWithoutReviewFilter");
+    if (role) setDashboardRoleFilter(role);
+    if (weather) setDashboardWeatherFilter(weather);
+    if (withoutReview === "true") setDashboardWithoutReviewFilter(true);
+  }, []);
+
   const [searchQuery, setSearchQuery] = useState(() => {
     return localStorage.getItem("projectSearchQuery") || "";
   });
@@ -124,6 +153,15 @@ const Index = () => {
     setAccessibleProjectIds(projectIds);
   };
 
+  /** Réinitialiser les filtres dashboard */
+  const handleResetDashboardFilters = () => {
+    setDashboardRoleFilter(null);
+    setDashboardWeatherFilter(null);
+    setDashboardWithoutReviewFilter(false);
+  };
+
+  const hasDashboardFilters = !!(dashboardRoleFilter || dashboardWeatherFilter || dashboardWithoutReviewFilter);
+
   const filteredProjects = projects?.filter(project => {
     if (lifecycleStatus !== 'all' && project.lifecycle_status !== lifecycleStatus) {
       return false;
@@ -189,6 +227,34 @@ const Index = () => {
       const projectTags = projectTagsMap.get(project.id) || [];
       const hasMatchingTag = selectedTags.some(t => projectTags.includes(t));
       if (!hasMatchingTag) return false;
+    }
+
+    // --- Filtres dashboard one-shot ---
+
+    // Filtre par rôle (CP / Membre / Manager)
+    if (dashboardRoleFilter && userProfile) {
+      const isProjectManager = project.project_manager === userProfile.email;
+      const isMember = userMemberships?.has(project.id) || false;
+
+      if (dashboardRoleFilter === "cp" && !isProjectManager) return false;
+      if (dashboardRoleFilter === "member" && (!isMember || isProjectManager)) return false;
+      if (dashboardRoleFilter === "manager" && (isProjectManager || isMember)) return false;
+    }
+
+    // Filtre météo
+    if (dashboardWeatherFilter) {
+      const projectWeather = project.weather || 'null';
+      if (projectWeather !== dashboardWeatherFilter) return false;
+    }
+
+    // Filtre sans revue récente (projets actifs sans revue ou > 30 jours)
+    if (dashboardWithoutReviewFilter) {
+      const isActive = project.lifecycle_status === 'in_progress';
+      if (!isActive) return false;
+      if (project.last_review_date) {
+        const daysSince = differenceInDays(new Date(), new Date(project.last_review_date));
+        if (daysSince <= 30) return false;
+      }
     }
 
     return true;
@@ -281,6 +347,10 @@ const Index = () => {
         onServiceChange={setServiceId}
         selectedTags={selectedTags}
         onTagsChange={setSelectedTags}
+        dashboardRoleFilter={dashboardRoleFilter}
+        dashboardWeatherFilter={dashboardWeatherFilter}
+        dashboardWithoutReviewFilter={dashboardWithoutReviewFilter}
+        onResetDashboardFilters={handleResetDashboardFilters}
       />
 
       <ProjectList

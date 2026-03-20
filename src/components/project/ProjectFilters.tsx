@@ -34,6 +34,11 @@ interface ProjectFiltersProps {
   onServiceChange: (value: string) => void;
   selectedTags: string[];
   onTagsChange: (tags: string[]) => void;
+  /** Filtres one-shot depuis le dashboard */
+  dashboardRoleFilter?: string | null;
+  dashboardWeatherFilter?: string | null;
+  dashboardWithoutReviewFilter?: boolean;
+  onResetDashboardFilters?: () => void;
 }
 
 export const ProjectFilters = ({
@@ -54,6 +59,10 @@ export const ProjectFilters = ({
   onServiceChange,
   selectedTags,
   onTagsChange,
+  dashboardRoleFilter,
+  dashboardWeatherFilter,
+  dashboardWithoutReviewFilter,
+  onResetDashboardFilters,
 }: ProjectFiltersProps) => {
   // État pour savoir si le panneau de filtres est ouvert ou fermé
   const [isOpen, setIsOpen] = useState(() => {
@@ -78,6 +87,28 @@ export const ProjectFilters = ({
     onTagsChange([]);
   };
 
+  const hasDashboardFilters = !!(dashboardRoleFilter || dashboardWeatherFilter || dashboardWithoutReviewFilter);
+
+  /** Labels pour les filtres dashboard */
+  const getDashboardRoleLabel = (role: string) => {
+    switch (role) {
+      case 'cp': return 'Chef de projet';
+      case 'member': return 'Membre';
+      case 'manager': return 'Vue Manager';
+      default: return role;
+    }
+  };
+
+  const getDashboardWeatherLabel = (weather: string) => {
+    switch (weather) {
+      case 'sunny': return 'Beau temps';
+      case 'cloudy': return 'Nuageux';
+      case 'stormy': return 'Orageux';
+      case 'null': return 'Non évalué';
+      default: return weather;
+    }
+  };
+
   // Compte le nombre de filtres actifs
   const activeFiltersCount = [
     searchQuery !== '',
@@ -87,7 +118,8 @@ export const ProjectFilters = ({
     poleId !== 'all',
     directionId !== 'all',
     serviceId !== 'all',
-    selectedTags.length > 0
+    selectedTags.length > 0,
+    hasDashboardFilters,
   ].filter(Boolean).length;
 
   return (
@@ -150,6 +182,32 @@ export const ProjectFilters = ({
                     <Badge variant="secondary" className="px-2 py-1 text-xs">
                       Tags: {selectedTags.join(', ')}
                     </Badge>
+                  )}
+                  {dashboardRoleFilter && (
+                    <Badge variant="default" className="px-2 py-1 text-xs bg-primary">
+                      Rôle: {getDashboardRoleLabel(dashboardRoleFilter)}
+                    </Badge>
+                  )}
+                  {dashboardWeatherFilter && (
+                    <Badge variant="default" className="px-2 py-1 text-xs bg-primary">
+                      Météo: {getDashboardWeatherLabel(dashboardWeatherFilter)}
+                    </Badge>
+                  )}
+                  {dashboardWithoutReviewFilter && (
+                    <Badge variant="default" className="px-2 py-1 text-xs bg-primary">
+                      Sans revue récente
+                    </Badge>
+                  )}
+                  {hasDashboardFilters && onResetDashboardFilters && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={onResetDashboardFilters}
+                      className="h-5 px-1 text-xs"
+                    >
+                      <RotateCcw className="h-3 w-3 mr-1" />
+                      Effacer filtres dashboard
+                    </Button>
                   )}
                 </>
               ) : (
