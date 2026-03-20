@@ -2,8 +2,7 @@
 /**
  * @component ProjectsSummary
  * @description Affiche une synthèse des projets de l'utilisateur avec des métriques clés.
- * Catégorise les projets par type d'accès (CP, Membre, Manager), 
- * affiche les portefeuilles accessibles et les projets sans revue récente.
+ * Tous les indicateurs sont cliquables et redirigent vers la liste de projets filtrée.
  */
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -69,6 +68,36 @@ const getWeatherLabel = (weather: string) => {
   }
 };
 
+/**
+ * Écrit des filtres one-shot dans localStorage, réinitialise les filtres existants,
+ * puis navigue vers /projects.
+ */
+const navigateWithDashboardFilter = (
+  navigate: ReturnType<typeof useNavigate>,
+  filters: Record<string, string>
+) => {
+  // Réinitialiser les filtres classiques pour éviter les conflits
+  localStorage.removeItem("projectSearchQuery");
+  localStorage.setItem("projectLifecycleStatus", "all");
+  localStorage.setItem("projectMonitoringLevel", "all");
+  localStorage.setItem("showMyProjectsOnly", "false");
+  localStorage.setItem("projectPoleId", "all");
+  localStorage.setItem("projectDirectionId", "all");
+  localStorage.setItem("projectServiceId", "all");
+
+  // Supprimer les anciens filtres dashboard
+  localStorage.removeItem("dashboardRoleFilter");
+  localStorage.removeItem("dashboardWeatherFilter");
+  localStorage.removeItem("dashboardWithoutReviewFilter");
+
+  // Écrire les nouveaux filtres dashboard
+  Object.entries(filters).forEach(([key, value]) => {
+    localStorage.setItem(key, value);
+  });
+
+  navigate("/projects");
+};
+
 export const ProjectsSummary = () => {
   const { summary, isLoading } = useDashboardData();
   const navigate = useNavigate();
@@ -99,6 +128,15 @@ export const ProjectsSummary = () => {
 
   const reviewAlertStyle = getReviewAlertStyle(summary.withoutReview);
 
+  /** Handlers de navigation pour chaque indicateur */
+  const handleTotalClick = () => navigateWithDashboardFilter(navigate, {});
+  const handleCPClick = () => navigateWithDashboardFilter(navigate, { dashboardRoleFilter: "cp" });
+  const handleMemberClick = () => navigateWithDashboardFilter(navigate, { dashboardRoleFilter: "member" });
+  const handleManagerClick = () => navigateWithDashboardFilter(navigate, { dashboardRoleFilter: "manager" });
+  const handleWithoutReviewClick = () => navigateWithDashboardFilter(navigate, { dashboardWithoutReviewFilter: "true" });
+  const handleWeatherClick = (weather: string) => navigateWithDashboardFilter(navigate, { dashboardWeatherFilter: weather });
+  const handleLifecycleClick = (lifecycle: string) => navigateWithDashboardFilter(navigate, { projectLifecycleStatus: lifecycle });
+
   return (
     <Card>
       <CardHeader>
@@ -115,25 +153,28 @@ export const ProjectsSummary = () => {
             label="Total"
             value={summary.total}
             colorClass="bg-blue-50 dark:bg-blue-950 border-blue-200 dark:border-blue-800"
-            onClick={() => navigate('/projects')}
+            onClick={summary.total > 0 ? handleTotalClick : undefined}
           />
           <MetricCard
             icon={<User className="h-5 w-5 text-green-600" />}
             label="Chef de projet"
             value={summary.asProjectManager}
             colorClass="bg-green-50 dark:bg-green-950 border-green-200 dark:border-green-800"
+            onClick={summary.asProjectManager > 0 ? handleCPClick : undefined}
           />
           <MetricCard
             icon={<Users className="h-5 w-5 text-orange-600" />}
             label="Membre"
             value={summary.asMember}
             colorClass="bg-orange-50 dark:bg-orange-950 border-orange-200 dark:border-orange-800"
+            onClick={summary.asMember > 0 ? handleMemberClick : undefined}
           />
           <MetricCard
             icon={<Eye className="h-5 w-5 text-purple-600" />}
             label="Vue Manager"
             value={summary.asHierarchyManager}
             colorClass="bg-purple-50 dark:bg-purple-950 border-purple-200 dark:border-purple-800"
+            onClick={summary.asHierarchyManager > 0 ? handleManagerClick : undefined}
           />
         </div>
 
@@ -150,12 +191,14 @@ export const ProjectsSummary = () => {
           
           <div className="h-4 w-px bg-border" />
           
-          <div className={`flex items-center gap-2 px-2 py-1 rounded ${reviewAlertStyle.bg}`}>
+          <div 
+            className={`flex items-center gap-2 px-2 py-1 rounded ${reviewAlertStyle.bg} ${summary.withoutReview > 0 ? 'cursor-pointer hover:opacity-80 transition-opacity' : ''}`}
+            onClick={summary.withoutReview > 0 ? handleWithoutReviewClick : undefined}
+          >
             <AlertTriangle className={`h-4 w-4 ${reviewAlertStyle.text}`} />
             <span className="text-sm font-medium">Sans revue récente:</span>
             <Badge 
               variant={summary.withoutReview === 0 ? "secondary" : "destructive"}
-              className={summary.withoutReview === 0 ? "" : ""}
             >
               {summary.withoutReview}
             </Badge>
@@ -168,7 +211,12 @@ export const ProjectsSummary = () => {
             <h4 className="font-semibold mb-3 text-sm text-muted-foreground">Répartition par météo</h4>
             <div className="flex flex-wrap gap-2">
               {Object.entries(summary.byWeather).map(([weather, count]) => (
-                <Badge key={weather} variant="outline" className="flex items-center gap-1.5 py-1">
+                <Badge 
+                  key={weather} 
+                  variant="outline" 
+                  className="flex items-center gap-1.5 py-1 cursor-pointer hover:opacity-80 transition-opacity"
+                  onClick={() => handleWeatherClick(weather)}
+                >
                   <StatusIcon 
                     status={weather === 'sunny' || weather === 'cloudy' || weather === 'stormy' ? weather : null} 
                     className="h-3.5 w-3.5" 
@@ -187,7 +235,12 @@ export const ProjectsSummary = () => {
             <h4 className="font-semibold mb-3 text-sm text-muted-foreground">Répartition par cycle de vie</h4>
             <div className="flex flex-wrap gap-2">
               {Object.entries(summary.byLifecycle).map(([lifecycle, count]) => (
-                <Badge key={lifecycle} variant="secondary" className="py-1">
+                <Badge 
+                  key={lifecycle} 
+                  variant="secondary" 
+                  className="py-1 cursor-pointer hover:opacity-80 transition-opacity"
+                  onClick={() => handleLifecycleClick(lifecycle)}
+                >
                   {lifecycleStatusLabels[lifecycle as keyof typeof lifecycleStatusLabels] || lifecycle}
                   <span className="ml-1 font-semibold">({count})</span>
                 </Badge>
