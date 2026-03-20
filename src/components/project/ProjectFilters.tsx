@@ -59,6 +59,10 @@ export const ProjectFilters = ({
   onServiceChange,
   selectedTags,
   onTagsChange,
+  dashboardRoleFilter,
+  dashboardWeatherFilter,
+  dashboardWithoutReviewFilter,
+  onResetDashboardFilters,
 }: ProjectFiltersProps) => {
   // État pour savoir si le panneau de filtres est ouvert ou fermé
   const [isOpen, setIsOpen] = useState(() => {
