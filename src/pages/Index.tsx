@@ -347,6 +347,10 @@ const Index = () => {
         onServiceChange={setServiceId}
         selectedTags={selectedTags}
         onTagsChange={setSelectedTags}
+        dashboardRoleFilter={dashboardRoleFilter}
+        dashboardWeatherFilter={dashboardWeatherFilter}
+        dashboardWithoutReviewFilter={dashboardWithoutReviewFilter}
+        onResetDashboardFilters={handleResetDashboardFilters}
       />
 
       <ProjectList
