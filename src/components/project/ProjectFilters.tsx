@@ -34,6 +34,11 @@ interface ProjectFiltersProps {
   onServiceChange: (value: string) => void;
   selectedTags: string[];
   onTagsChange: (tags: string[]) => void;
+  /** Filtres one-shot depuis le dashboard */
+  dashboardRoleFilter?: string | null;
+  dashboardWeatherFilter?: string | null;
+  dashboardWithoutReviewFilter?: boolean;
+  onResetDashboardFilters?: () => void;
 }
 
 export const ProjectFilters = ({
