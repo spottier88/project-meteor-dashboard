@@ -183,6 +183,32 @@ export const ProjectFilters = ({
                       Tags: {selectedTags.join(', ')}
                     </Badge>
                   )}
+                  {dashboardRoleFilter && (
+                    <Badge variant="default" className="px-2 py-1 text-xs bg-primary">
+                      Rôle: {getDashboardRoleLabel(dashboardRoleFilter)}
+                    </Badge>
+                  )}
+                  {dashboardWeatherFilter && (
+                    <Badge variant="default" className="px-2 py-1 text-xs bg-primary">
+                      Météo: {getDashboardWeatherLabel(dashboardWeatherFilter)}
+                    </Badge>
+                  )}
+                  {dashboardWithoutReviewFilter && (
+                    <Badge variant="default" className="px-2 py-1 text-xs bg-primary">
+                      Sans revue récente
+                    </Badge>
+                  )}
+                  {hasDashboardFilters && onResetDashboardFilters && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={onResetDashboardFilters}
+                      className="h-5 px-1 text-xs"
+                    >
+                      <RotateCcw className="h-3 w-3 mr-1" />
+                      Effacer filtres dashboard
+                    </Button>
+                  )}
                 </>
               ) : (
                 <span className="text-sm text-muted-foreground">Aucun filtre actif</span>
