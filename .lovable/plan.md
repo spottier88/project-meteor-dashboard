@@ -1,33 +1,40 @@
 
 
-# Filtrer les tâches terminées dans la section de revue
+# Correction des bugs de navigation "Retour aux projets"
 
-## Fichier modifié unique : `src/components/review/TaskStatusUpdateSection.tsx`
+## Analyse
 
-### Modifications
+### Bug 1 : "Retour aux projets" ramène au dashboard (`/`) au lieu de la liste projets (`/projects`)
 
-1. **Ajouter un état `showDone`** (booléen, `false` par défaut).
+**Cause** : Les pages Tâches, Risques, Cadrage, Équipe, etc. utilisent toutes `navigate("/")` dans leur bouton retour. Or `/` pointe vers `Dashboard` et `/projects` pointe vers `Index` (liste des projets). Le libellé dit "Retour aux projets" mais la cible est le dashboard.
 
-2. **Filtrer l'affichage** : la liste rendue ne montre que les tâches dont `currentStatus !== "done"`, sauf si `showDone` est activé. Important : les tâches terminées restent dans `taskStatusUpdates` (transmises au parent) pour ne pas casser la logique de soumission.
+**Correction** : Remplacer `navigate("/")` par `navigate("/projects")` dans les boutons "Retour aux projets" des pages suivantes :
+- `src/pages/TaskManagement.tsx` (ligne 102)
+- `src/pages/RiskManagement.tsx` (lignes 69 et 87)
+- `src/pages/ProjectFraming.tsx` (ligne 64)
+- `src/pages/ProjectTeamManagement.tsx` (ligne 71)
+- `src/pages/TeamActivities.tsx` (ligne 33)
 
-3. **Ajouter un toggle Switch** dans le `CardHeader`, à côté du badge "modifiée(s)" :
-   - Label : "Afficher les tâches terminées"
-   - Composant `Switch` (déjà disponible dans le projet)
-   - Afficher un compteur de tâches terminées masquées (ex: `(3 terminées)`)
+Note : les pages Admin et EvaluationsManagement disent "Retour au tableau de bord" et pointent vers `/`, ce qui est correct — on ne les touche pas.
 
-4. **Cas particulier** : si une tâche est passée de "done" vers un autre statut dans le sélecteur, elle reste visible même si `showDone` est désactivé (car son `newStatus` n'est plus "done").
+### Bug 2 : L'historique des revues depuis la liste projets ouvre une page avec "Retour au projet"
 
-### Logique de filtrage
+**Cause** : `ProjectActions.tsx` navigue vers `/reviews/${projectId}` (page `ReviewHistory.tsx`), et le bouton retour de cette page pointe vers `/projects/${projectId}` (synthèse projet). Depuis la liste projets, ce comportement est incohérent.
 
-```ts
-const visibleTasks = taskStatusUpdates.filter(task => {
-  if (showDone) return true;
-  // Montrer si le statut actuel n'est pas "done" OU si l'utilisateur a changé le statut
-  return task.currentStatus !== "done" || task.currentStatus !== task.newStatus;
-});
-```
+**Solution** : Reproduire le pattern déjà en place dans `LastReview.tsx` — ouvrir l'historique dans un **Dialog** (`ReviewHistoryDialog`) au lieu de naviguer vers une page.
 
-### Import à ajouter
-- `Switch` depuis `@/components/ui/switch`
-- `Label` depuis `@/components/ui/label`
+**Modification dans `ProjectActions.tsx`** :
+- Remplacer `navigateToHistory` (qui fait `navigate('/reviews/...')`) par un état local `showReviewHistory` + rendu du composant `ReviewHistoryDialog` existant.
+- Le `ReviewHistoryDialog` gère déjà le focus, la suppression imbriquée, et le nettoyage des `pointer-events`.
+
+## Fichiers modifiés
+
+| Fichier | Modification |
+|---------|-------------|
+| `src/pages/TaskManagement.tsx` | `navigate("/")` → `navigate("/projects")` |
+| `src/pages/RiskManagement.tsx` | `navigate("/")` → `navigate("/projects")` (2 boutons retour) |
+| `src/pages/ProjectFraming.tsx` | `navigate("/")` → `navigate("/projects")` |
+| `src/pages/ProjectTeamManagement.tsx` | `navigate("/")` → `navigate("/projects")` |
+| `src/pages/TeamActivities.tsx` | `navigate("/")` → `navigate("/projects")` |
+| `src/components/project/ProjectActions.tsx` | Remplacer navigation `/reviews/...` par état local + `ReviewHistoryDialog` en popup |
 
