@@ -2,6 +2,7 @@
  * @file TaskStatusUpdateSection.tsx
  * @description Composant permettant de mettre à jour les statuts des tâches lors de la création d'une revue de projet.
  * Affiche la liste des tâches du projet avec la possibilité de modifier leur statut.
+ * Les tâches terminées sont masquées par défaut, un toggle permet de les afficher.
  */
 
 import { useState, useEffect } from "react";
@@ -11,6 +12,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 import { CheckCircle2, Circle, Clock } from "lucide-react";
 
 // Types pour les statuts des tâches
@@ -35,7 +38,7 @@ export const TaskStatusUpdateSection = ({
   disabled = false 
 }: TaskStatusUpdateSectionProps) => {
   const [taskStatusUpdates, setTaskStatusUpdates] = useState<TaskStatusUpdate[]>([]);
-
+  const [showDone, setShowDone] = useState(false);
   // Récupération des tâches du projet
   const { data: tasks, isLoading } = useQuery({
     queryKey: ["project-tasks-for-review", projectId],
@@ -147,23 +150,50 @@ export const TaskStatusUpdateSection = ({
   // Compter les tâches qui ont changé de statut
   const changedTasks = taskStatusUpdates.filter(task => task.currentStatus !== task.newStatus);
 
+  // Filtrage : masquer les tâches terminées sauf si le toggle est activé
+  // Une tâche terminée reste visible si l'utilisateur a changé son statut
+  const doneTasks = taskStatusUpdates.filter(
+    task => task.currentStatus === "done" && task.currentStatus === task.newStatus
+  );
+  const visibleTasks = taskStatusUpdates.filter(task => {
+    if (showDone) return true;
+    return task.currentStatus !== "done" || task.currentStatus !== task.newStatus;
+  });
+
   return (
     <Card>
       <CardHeader>
         <CardTitle className="text-sm flex items-center justify-between">
           Mise à jour des tâches
-          {changedTasks.length > 0 && (
-            <Badge variant="secondary" className="text-xs">
-              {changedTasks.length} modifiée(s)
-            </Badge>
-          )}
+          <div className="flex items-center gap-2">
+            {changedTasks.length > 0 && (
+              <Badge variant="secondary" className="text-xs">
+                {changedTasks.length} modifiée(s)
+              </Badge>
+            )}
+          </div>
         </CardTitle>
-        <div className="text-xs text-muted-foreground">
-          Mettez à jour le statut des tâches pour refléter l'avancement actuel du projet.
+        <div className="flex items-center justify-between">
+          <div className="text-xs text-muted-foreground">
+            Mettez à jour le statut des tâches pour refléter l'avancement actuel du projet.
+          </div>
+          {doneTasks.length > 0 && (
+            <div className="flex items-center space-x-2 flex-shrink-0">
+              <Switch
+                id="show-done-tasks"
+                checked={showDone}
+                onCheckedChange={setShowDone}
+                disabled={disabled}
+              />
+              <Label htmlFor="show-done-tasks" className="text-xs text-muted-foreground whitespace-nowrap">
+                Terminées ({doneTasks.length})
+              </Label>
+            </div>
+          )}
         </div>
       </CardHeader>
       <CardContent className="space-y-3">
-        {taskStatusUpdates.map((task, index) => (
+        {visibleTasks.map((task, index) => (
           <div key={task.id}>
             <div className="flex items-center justify-between space-x-3">
               <div className="flex-1 min-w-0">
@@ -195,13 +225,13 @@ export const TaskStatusUpdateSection = ({
                   <SelectContent>
                     <SelectItem value="todo">
                       <div className="flex items-center space-x-2">
-                        <Circle className="h-4 w-4 text-gray-400" />
+                        <Circle className="h-4 w-4 text-muted-foreground" />
                         <span>À faire</span>
                       </div>
                     </SelectItem>
                     <SelectItem value="in_progress">
                       <div className="flex items-center space-x-2">
-                        <Clock className="h-4 w-4 text-blue-600" />
+                        <Clock className="h-4 w-4 text-primary" />
                         <span>En cours</span>
                       </div>
                     </SelectItem>
@@ -215,7 +245,7 @@ export const TaskStatusUpdateSection = ({
                 </Select>
               </div>
             </div>
-            {index < taskStatusUpdates.length - 1 && <Separator className="mt-3" />}
+            {index < visibleTasks.length - 1 && <Separator className="mt-3" />}
           </div>
         ))}
       </CardContent>
