@@ -38,7 +38,7 @@ export const TaskStatusUpdateSection = ({
   disabled = false 
 }: TaskStatusUpdateSectionProps) => {
   const [taskStatusUpdates, setTaskStatusUpdates] = useState<TaskStatusUpdate[]>([]);
-
+  const [showDone, setShowDone] = useState(false);
   // Récupération des tâches du projet
   const { data: tasks, isLoading } = useQuery({
     queryKey: ["project-tasks-for-review", projectId],
