@@ -67,6 +67,7 @@ export const ProjectActions = ({
   const navigate = useNavigate();
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isLinkDialogOpen, setIsLinkDialogOpen] = useState(false);
+  const [showReviewHistory, setShowReviewHistory] = useState(false);
   
   // Utilisons les permissions passées en props plutôt que de les récupérer à nouveau
   // Si elles ne sont pas fournies, utilisons useProjectPermissions comme fallback
