@@ -191,6 +191,12 @@ export const ProjectActions = ({
         currentProjectId={projectId}
         currentProjectTitle={projectTitle}
       />
+
+      <ReviewHistoryDialog
+        projectId={projectId}
+        isOpen={showReviewHistory}
+        onClose={() => setShowReviewHistory(false)}
+      />
     </>
   );
 };
