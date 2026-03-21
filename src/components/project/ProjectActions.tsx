@@ -24,6 +24,7 @@ import { useNavigate } from "react-router-dom";
 import { DeleteProjectDialog } from "./DeleteProjectDialog";
 import { LinkProjectDialog } from "./LinkProjectDialog";
 import { useProjectPermissions } from "@/hooks/useProjectPermissions";
+import { ReviewHistoryDialog } from "@/components/review/ReviewHistoryDialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -66,6 +67,7 @@ export const ProjectActions = ({
   const navigate = useNavigate();
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isLinkDialogOpen, setIsLinkDialogOpen] = useState(false);
+  const [showReviewHistory, setShowReviewHistory] = useState(false);
   
   // Utilisons les permissions passées en props plutôt que de les récupérer à nouveau
   // Si elles ne sont pas fournies, utilisons useProjectPermissions comme fallback
@@ -88,15 +90,10 @@ export const ProjectActions = ({
     action();
   };
 
-  // Nouvelle fonction pour la navigation vers l'historique avec état
-  const navigateToHistory = (e: React.MouseEvent) => {
+  // Ouvrir l'historique des revues en popup
+  const handleShowHistory = (e: React.MouseEvent) => {
     e.stopPropagation();
-    navigate(`/reviews/${projectId}`, { 
-      state: { 
-        refresh: true, 
-        timestamp: Date.now() 
-      }
-    });
+    setShowReviewHistory(true);
   };
 
   return (
@@ -115,7 +112,7 @@ export const ProjectActions = ({
       <Button
         variant="ghost"
         size="icon"
-        onClick={navigateToHistory}
+        onClick={handleShowHistory}
         className="h-8 w-8"
         title="Historique des revues projets"
       >
@@ -193,6 +190,12 @@ export const ProjectActions = ({
         onClose={() => setIsLinkDialogOpen(false)}
         currentProjectId={projectId}
         currentProjectTitle={projectTitle}
+      />
+
+      <ReviewHistoryDialog
+        projectId={projectId}
+        isOpen={showReviewHistory}
+        onClose={() => setShowReviewHistory(false)}
       />
     </>
   );
