@@ -24,6 +24,7 @@ import { useNavigate } from "react-router-dom";
 import { DeleteProjectDialog } from "./DeleteProjectDialog";
 import { LinkProjectDialog } from "./LinkProjectDialog";
 import { useProjectPermissions } from "@/hooks/useProjectPermissions";
+import { ReviewHistoryDialog } from "@/components/review/ReviewHistoryDialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
