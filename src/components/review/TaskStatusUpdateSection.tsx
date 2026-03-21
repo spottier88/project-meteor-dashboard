@@ -2,6 +2,7 @@
  * @file TaskStatusUpdateSection.tsx
  * @description Composant permettant de mettre à jour les statuts des tâches lors de la création d'une revue de projet.
  * Affiche la liste des tâches du projet avec la possibilité de modifier leur statut.
+ * Les tâches terminées sont masquées par défaut, un toggle permet de les afficher.
  */
 
 import { useState, useEffect } from "react";
@@ -11,6 +12,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 import { CheckCircle2, Circle, Clock } from "lucide-react";
 
 // Types pour les statuts des tâches
