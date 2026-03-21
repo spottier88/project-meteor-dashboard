@@ -112,7 +112,7 @@ export const ProjectActions = ({
       <Button
         variant="ghost"
         size="icon"
-        onClick={navigateToHistory}
+        onClick={handleShowHistory}
         className="h-8 w-8"
         title="Historique des revues projets"
       >
