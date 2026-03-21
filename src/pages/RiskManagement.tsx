@@ -84,7 +84,7 @@ export const RiskManagement = () => {
       <div className="flex items-center gap-3 mb-6">
         <Button
           variant="ghost"
-          onClick={() => navigate("/")}
+          onClick={() => navigate("/projects")}
         >
           <ArrowLeft className="h-4 w-4 mr-2" />
           Retour aux projets
