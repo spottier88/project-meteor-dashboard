@@ -90,15 +90,10 @@ export const ProjectActions = ({
     action();
   };
 
-  // Nouvelle fonction pour la navigation vers l'historique avec état
-  const navigateToHistory = (e: React.MouseEvent) => {
+  // Ouvrir l'historique des revues en popup
+  const handleShowHistory = (e: React.MouseEvent) => {
     e.stopPropagation();
-    navigate(`/reviews/${projectId}`, { 
-      state: { 
-        refresh: true, 
-        timestamp: Date.now() 
-      }
-    });
+    setShowReviewHistory(true);
   };
 
   return (
