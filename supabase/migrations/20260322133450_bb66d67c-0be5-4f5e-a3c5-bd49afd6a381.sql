@@ -1,0 +1,1 @@
+DROP POLICY IF EXISTS "Simple portfolio select policy" ON project_portfolios;
