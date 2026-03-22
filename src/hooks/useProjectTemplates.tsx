@@ -26,15 +26,33 @@ interface ProjectTemplateTask {
   updated_at: string;
 }
 
-export const useProjectTemplates = (templateId?: string) => {
+export const useProjectTemplates = (templateId?: string, filterByUserId?: string) => {
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const [currentTemplateId, setCurrentTemplateId] = useState<string | undefined>(templateId);
 
-  // Récupérer tous les modèles
+  // Récupérer les modèles (filtrés par visibilité si filterByUserId est fourni)
   const { data: templates = [], isLoading: isLoadingTemplates } = useQuery({
-    queryKey: ['projectTemplates'],
+    queryKey: ['projectTemplates', filterByUserId || 'all'],
     queryFn: async () => {
+      // Si un userId est fourni, utiliser la fonction RPC pour filtrer par visibilité
+      if (filterByUserId) {
+        const { data, error } = await supabase
+          .rpc('get_accessible_templates', { p_user_id: filterByUserId });
+
+        if (error) {
+          console.error("Erreur lors de la récupération des modèles accessibles:", error);
+          toast({
+            title: "Erreur",
+            description: "Impossible de récupérer les modèles de projets",
+            variant: "destructive",
+          });
+          throw error;
+        }
+        return data as ProjectTemplate[];
+      }
+
+      // Sans filtre : récupérer tous les modèles (contexte admin)
       const { data, error } = await supabase
         .from('project_templates')
         .select('*')
