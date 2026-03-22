@@ -1,30 +1,48 @@
 
 
-# Correction de la récursion infinie sur `project_portfolios`
+# Correction de la récursion mutuelle entre `project_portfolios` et `portfolio_managers`
 
 ## Diagnostic
 
-L'erreur réseau est : `42P17 - infinite recursion detected in policy for relation "project_portfolios"`.
+Le problème est une **récursion mutuelle entre deux tables** :
 
-**Cause** : La migration précédente a tenté de supprimer les politiques SELECT `"Users can view portfolios they have access to"` et `"portfolio_select_policy"`, mais la politique existante en base s'appelle en réalité `"Simple portfolio select policy"`. Elle n'a donc **jamais été supprimée**.
+1. La politique SELECT sur `project_portfolios` (`portfolio_select_direct`) fait :
+   ```
+   EXISTS (SELECT 1 FROM portfolio_managers WHERE portfolio_id = project_portfolios.id ...)
+   ```
 
-Résultat : deux politiques SELECT coexistent :
-1. `Simple portfolio select policy` → appelle `can_view_portfolio()` qui fait un `SELECT` sur `project_portfolios` → **récursion infinie**
-2. `portfolio_select_direct` → politique directe (ajoutée par la migration)
+2. La politique SELECT sur `portfolio_managers` (`Simple portfolio managers select policy`) fait :
+   ```
+   portfolio_id IN (SELECT id FROM project_portfolios WHERE created_by = auth.uid())
+   ```
 
-Même si `can_view_portfolio` est `SECURITY DEFINER`, PostgreSQL évalue toutes les politiques permissives et détecte la récursion dans la politique n°1.
+Quand on lit `project_portfolios`, PostgreSQL évalue la politique qui lit `portfolio_managers`, dont la politique lit `project_portfolios` → **récursion infinie** (erreur 42P17, masquée par un message vide côté client).
 
 ## Correction
 
-**Migration SQL unique** : supprimer la politique `"Simple portfolio select policy"` qui n'a plus lieu d'être, car `portfolio_select_direct` la remplace avec une expression directe sans récursion.
+Remplacer la politique SELECT de `portfolio_managers` pour **casser la boucle** en supprimant la référence à `project_portfolios` :
 
 ```sql
-DROP POLICY IF EXISTS "Simple portfolio select policy" ON project_portfolios;
+DROP POLICY IF EXISTS "Simple portfolio managers select policy" ON portfolio_managers;
+
+CREATE POLICY "portfolio_managers_select" ON portfolio_managers
+  FOR SELECT TO authenticated
+  USING (
+    -- Admin voit tout
+    EXISTS (SELECT 1 FROM user_roles WHERE user_id = auth.uid() AND role = 'admin')
+    OR
+    -- L'utilisateur voit ses propres lignes
+    user_id = auth.uid()
+  );
 ```
 
-Aucune modification frontend.
+La clause `portfolio_id IN (SELECT id FROM project_portfolios WHERE created_by = auth.uid())` qui causait la récursion est remplacée par `user_id = auth.uid()`, ce qui couvre le même besoin (un utilisateur voit ses propres assignations de portefeuille) sans requêter `project_portfolios`.
 
-## Vérification post-correction
-- La politique `portfolio_select_direct` reste en place et couvre tous les cas : admin, créateur, membre de `portfolio_managers`.
-- Les pages `/portfolios` et le dashboard ne devraient plus retourner d'erreur 500.
+## Fichier impacté
+
+Migration SQL uniquement. Aucune modification frontend.
+
+## Vérification
+- La page `/portfolios` se charge pour tous les rôles (admin, portfolio_manager, etc.)
+- Le dashboard ne logue plus d'erreur "Erreur récupération portefeuilles"
 
