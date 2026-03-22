@@ -20,6 +20,7 @@ interface ProjectFormStep5Props {
   templateId: string | undefined;
   setTemplateId: (value: string | undefined) => void;
   isEditMode?: boolean;
+  projectManagerEmail?: string;
 }
 
 export const ProjectFormStep5 = ({
@@ -29,20 +30,37 @@ export const ProjectFormStep5 = ({
   setForEntityId,
   templateId,
   setTemplateId,
-  isEditMode = false
+  isEditMode = false,
+  projectManagerEmail
 }: ProjectFormStep5Props) => {
   // États pour gérer la sélection hiérarchique
   const [selectedPoleId, setSelectedPoleId] = useState<string | undefined>(undefined);
   const [selectedDirectionId, setSelectedDirectionId] = useState<string | undefined>(undefined);
   
-  // Utilisation du hook pour récupérer les modèles de projet et leurs tâches
+  // Résoudre l'userId du chef de projet à partir de son email pour filtrer les modèles
+  const { data: projectManagerId } = useQuery({
+    queryKey: ["projectManagerId", projectManagerEmail],
+    queryFn: async () => {
+      if (!projectManagerEmail) return null;
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("id")
+        .eq("email", projectManagerEmail)
+        .single();
+      if (error || !data) return null;
+      return data.id;
+    },
+    enabled: !!projectManagerEmail,
+  });
+
+  // Utilisation du hook pour récupérer les modèles filtrés par visibilité
   const { 
     templates,
     isLoadingTemplates,
     templateTasks,
     isLoadingTemplateTasks,
     setCurrentTemplateId
-  } = useProjectTemplates(templateId);
+  } = useProjectTemplates(templateId, projectManagerId || undefined);
 
   // Chargement des pôles - toujours activé
   const { data: poles, isLoading: isLoadingPoles } = useQuery({

@@ -142,6 +142,7 @@ export const ProjectFormContent = ({
             templateId={formState.templateId}
             setTemplateId={formState.setTemplateId}
             isEditMode={isEditMode}
+            projectManagerEmail={formState.projectManager}
           />
         );
       default:

@@ -1514,6 +1514,38 @@ export type Database = {
           },
         ]
       }
+      project_template_visibility: {
+        Row: {
+          created_at: string | null
+          entity_id: string
+          entity_type: Database["public"]["Enums"]["user_hierarchy_level"]
+          id: string
+          template_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          entity_id: string
+          entity_type: Database["public"]["Enums"]["user_hierarchy_level"]
+          id?: string
+          template_id: string
+        }
+        Update: {
+          created_at?: string | null
+          entity_id?: string
+          entity_type?: Database["public"]["Enums"]["user_hierarchy_level"]
+          id?: string
+          template_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_template_visibility_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "project_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       project_templates: {
         Row: {
           created_at: string
@@ -2199,6 +2231,24 @@ export type Database = {
       get_accessible_projects_list_view_with_admin_mode: {
         Args: { p_admin_mode_disabled?: boolean; p_user_id: string }
         Returns: Json
+      }
+      get_accessible_templates: {
+        Args: { p_user_id: string }
+        Returns: {
+          created_at: string
+          created_by: string | null
+          description: string | null
+          id: string
+          is_active: boolean
+          title: string
+          updated_at: string
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "project_templates"
+          isOneToOne: false
+          isSetofReturn: true
+        }
       }
       get_detailed_projects: {
         Args: { p_project_ids: string[] }
