@@ -92,6 +92,11 @@ export const ReviewHistoryDialog = ({ projectId, isOpen, onClose }: ReviewHistor
     }
   };
 
+  /** Empêche la propagation des clics sur l'overlay vers les éléments parents (ex: carte projet) */
+  const handleOverlayClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+  };
+
   return (
     <>
       <Dialog open={isOpen} onOpenChange={handleOpenChange}>
