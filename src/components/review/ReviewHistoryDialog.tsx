@@ -98,9 +98,9 @@ export const ReviewHistoryDialog = ({ projectId, isOpen, onClose }: ReviewHistor
   };
 
   return (
-      {/* Wrapper pour empêcher la propagation des clics vers la carte projet parente */}
-      <div onClick={handleOverlayClick}>
+    <div onClick={handleOverlayClick}>
       <Dialog open={isOpen} onOpenChange={handleOpenChange}>
+        <DialogContent className="max-w-2xl max-h-[85vh] flex flex-col" onClick={handleOverlayClick}>
           <DialogHeader>
             <DialogTitle>Historique des revues</DialogTitle>
           </DialogHeader>
@@ -187,6 +187,6 @@ export const ReviewHistoryDialog = ({ projectId, isOpen, onClose }: ReviewHistor
           onReviewDeleted={handleReviewDeleted}
         />
       )}
-    </>
+    </div>
   );
 };
