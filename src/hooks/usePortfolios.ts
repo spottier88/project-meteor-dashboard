@@ -99,21 +99,17 @@ export const useCreatePortfolio = () => {
 
       console.log("Création du portefeuille avec utilisateur:", user.id);
       
-      const { data: result, error } = await supabase
+      const { error } = await supabase
         .from("project_portfolios")
         .insert([{
           ...data,
           created_by: user.id,
-        }])
-        .select()
-        .single();
+        }]);
 
       if (error) {
-        console.error("Erreur lors de la création du portefeuille:", error);
+        console.error("Erreur création portefeuille:", error.code, error.message, error.details, error.hint);
         throw error;
       }
-      
-      return result;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["portfolios"] });
