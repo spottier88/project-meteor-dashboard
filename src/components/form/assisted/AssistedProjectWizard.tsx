@@ -306,6 +306,7 @@ export const AssistedProjectWizard = ({
             templateId={formState.templateId}
             setTemplateId={formState.setTemplateId}
             isEditMode={isEditMode}
+            projectManagerEmail={formState.projectManager}
           />
         );
 
