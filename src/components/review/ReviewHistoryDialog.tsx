@@ -92,10 +92,15 @@ export const ReviewHistoryDialog = ({ projectId, isOpen, onClose }: ReviewHistor
     }
   };
 
+  /** Empêche la propagation des clics sur l'overlay vers les éléments parents (ex: carte projet) */
+  const handleOverlayClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+  };
+
   return (
-    <>
+    <div onClick={handleOverlayClick}>
       <Dialog open={isOpen} onOpenChange={handleOpenChange}>
-        <DialogContent className="max-w-2xl max-h-[85vh] flex flex-col">
+        <DialogContent className="max-w-2xl max-h-[85vh] flex flex-col" onClick={handleOverlayClick}>
           <DialogHeader>
             <DialogTitle>Historique des revues</DialogTitle>
           </DialogHeader>
@@ -182,6 +187,6 @@ export const ReviewHistoryDialog = ({ projectId, isOpen, onClose }: ReviewHistor
           onReviewDeleted={handleReviewDeleted}
         />
       )}
-    </>
+    </div>
   );
 };
