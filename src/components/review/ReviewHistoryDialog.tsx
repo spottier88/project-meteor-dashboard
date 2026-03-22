@@ -98,9 +98,9 @@ export const ReviewHistoryDialog = ({ projectId, isOpen, onClose }: ReviewHistor
   };
 
   return (
-    <>
+      {/* Wrapper pour empêcher la propagation des clics vers la carte projet parente */}
+      <div onClick={handleOverlayClick}>
       <Dialog open={isOpen} onOpenChange={handleOpenChange}>
-        <DialogContent className="max-w-2xl max-h-[85vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
           <DialogHeader>
             <DialogTitle>Historique des revues</DialogTitle>
           </DialogHeader>
