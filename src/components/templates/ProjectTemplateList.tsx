@@ -8,7 +8,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Edit, Trash2, FileSearch } from "lucide-react";
+import { Edit, Trash2, FileSearch, Eye } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -21,6 +21,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Skeleton } from "@/components/ui/skeleton";
+import { TemplateVisibilityBadges } from "./TemplateVisibilityBadges";
 
 export interface ProjectTemplate {
   id: string;
@@ -35,6 +36,7 @@ interface ProjectTemplateListProps {
   onEdit: (template: ProjectTemplate) => void;
   onDelete: (id: string) => void;
   onViewDetails: (id: string) => void;
+  onManageVisibility?: (template: ProjectTemplate) => void;
 }
 
 export const ProjectTemplateList = ({
@@ -43,6 +45,7 @@ export const ProjectTemplateList = ({
   onEdit,
   onDelete,
   onViewDetails,
+  onManageVisibility,
 }: ProjectTemplateListProps) => {
   if (isLoading) {
     return (
@@ -85,16 +88,23 @@ export const ProjectTemplateList = ({
         <Card key={template.id} className="overflow-hidden">
           <CardHeader>
             <CardTitle>{template.title}</CardTitle>
-            <CardDescription>
-              {new Date(template.created_at || "").toLocaleDateString("fr-FR", {
-                day: "numeric",
-                month: "short",
-                year: "numeric",
-              })}
+            <CardDescription className="flex items-center justify-between">
+              <span>
+                {new Date(template.created_at || "").toLocaleDateString("fr-FR", {
+                  day: "numeric",
+                  month: "short",
+                  year: "numeric",
+                })}
+              </span>
             </CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="space-y-3">
             <p className="text-sm line-clamp-3">{template.description || "Aucune description"}</p>
+            {/* Badges de visibilité organisationnelle */}
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-muted-foreground">Visibilité :</span>
+              <TemplateVisibilityBadges templateId={template.id} />
+            </div>
           </CardContent>
           <CardFooter className="gap-2 flex-wrap">
             <Button
@@ -106,6 +116,17 @@ export const ProjectTemplateList = ({
               <FileSearch className="mr-2 h-4 w-4" />
               Détails
             </Button>
+            {onManageVisibility && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => onManageVisibility(template)}
+                className="flex-1"
+              >
+                <Eye className="mr-2 h-4 w-4" />
+                Visibilité
+              </Button>
+            )}
             <Button
               variant="outline"
               size="sm"

@@ -5,6 +5,7 @@ import { PlusCircle, Settings } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { ProjectTemplateList } from '@/components/templates/ProjectTemplateList';
 import { ProjectTemplateDialog } from '@/components/templates/ProjectTemplateDialog';
+import { TemplateVisibilityDialog } from '@/components/templates/TemplateVisibilityDialog';
 import { useToast } from "@/components/ui/use-toast";
 import { useProjectTemplates } from '@/hooks/useProjectTemplates';
 
@@ -13,6 +14,8 @@ export const ProjectTemplateManagement = () => {
   const { toast } = useToast();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingTemplate, setEditingTemplate] = useState<{id: string, title: string, description: string} | null>(null);
+  // État pour le dialog de visibilité organisationnelle
+  const [visibilityTemplate, setVisibilityTemplate] = useState<{id: string, title: string} | null>(null);
   
   const { 
     templates,
@@ -114,6 +117,7 @@ export const ProjectTemplateManagement = () => {
         }}
         onDelete={handleDeleteTemplate}
         onViewDetails={openTemplateDetails}
+        onManageVisibility={(template) => setVisibilityTemplate({ id: template.id, title: template.title })}
       />
 
       <ProjectTemplateDialog
@@ -126,6 +130,18 @@ export const ProjectTemplateManagement = () => {
         defaultValues={editingTemplate || undefined}
         title={editingTemplate ? "Modifier le modèle" : "Créer un modèle"}
       />
+
+      {/* Dialog de gestion de la visibilité organisationnelle */}
+      {visibilityTemplate && (
+        <TemplateVisibilityDialog
+          open={!!visibilityTemplate}
+          onOpenChange={(open) => {
+            if (!open) setVisibilityTemplate(null);
+          }}
+          templateId={visibilityTemplate.id}
+          templateTitle={visibilityTemplate.title}
+        />
+      )}
     </div>
   );
 };
