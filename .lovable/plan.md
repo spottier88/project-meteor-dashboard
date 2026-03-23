@@ -1,48 +1,78 @@
 
 
-# Correction de la récursion mutuelle entre `project_portfolios` et `portfolio_managers`
+# Mise à jour de `projects` après suppression de la dernière revue
 
 ## Diagnostic
 
-Le problème est une **récursion mutuelle entre deux tables** :
+Lors de la **création** d'une revue, le frontend met à jour directement la table `projects` (colonnes `status`, `progress`, `last_review_date`) avec les valeurs de la revue (lignes 161-169 de `ReviewSheet.tsx`).
 
-1. La politique SELECT sur `project_portfolios` (`portfolio_select_direct`) fait :
-   ```
-   EXISTS (SELECT 1 FROM portfolio_managers WHERE portfolio_id = project_portfolios.id ...)
-   ```
+Lors de la **suppression** d'une revue via `DeleteReviewDialog`, seules les tables `reviews` et `review_actions` sont nettoyées. **La table `projects` n'est jamais mise à jour**, donc les anciennes valeurs de météo, progression et date restent affichées.
 
-2. La politique SELECT sur `portfolio_managers` (`Simple portfolio managers select policy`) fait :
-   ```
-   portfolio_id IN (SELECT id FROM project_portfolios WHERE created_by = auth.uid())
-   ```
+## Solution
 
-Quand on lit `project_portfolios`, PostgreSQL évalue la politique qui lit `portfolio_managers`, dont la politique lit `project_portfolios` → **récursion infinie** (erreur 42P17, masquée par un message vide côté client).
+Créer un **trigger PostgreSQL** `AFTER DELETE` sur la table `reviews` qui recalcule automatiquement `status`, `progress` et `last_review_date` du projet concerné à partir de la revue précédente (ou NULL s'il n'en reste plus).
 
-## Correction
+Cette approche est préférable à une correction frontend car :
+- Elle couvre tous les points de suppression (DeleteReviewDialog, ReactivateProjectButton, clôture)
+- Elle garantit la cohérence quelle que soit l'origine de la suppression
 
-Remplacer la politique SELECT de `portfolio_managers` pour **casser la boucle** en supprimant la référence à `project_portfolios` :
+## Migration SQL
 
 ```sql
-DROP POLICY IF EXISTS "Simple portfolio managers select policy" ON portfolio_managers;
+CREATE OR REPLACE FUNCTION sync_project_after_review_delete()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+DECLARE
+  _prev_review RECORD;
+BEGIN
+  -- Chercher la revue la plus récente restante pour ce projet
+  SELECT weather, progress, created_at
+  INTO _prev_review
+  FROM reviews
+  WHERE project_id = OLD.project_id
+  ORDER BY created_at DESC
+  LIMIT 1;
 
-CREATE POLICY "portfolio_managers_select" ON portfolio_managers
-  FOR SELECT TO authenticated
-  USING (
-    -- Admin voit tout
-    EXISTS (SELECT 1 FROM user_roles WHERE user_id = auth.uid() AND role = 'admin')
-    OR
-    -- L'utilisateur voit ses propres lignes
-    user_id = auth.uid()
-  );
+  IF FOUND THEN
+    -- Mettre à jour avec les données de la revue précédente
+    UPDATE projects SET
+      status = _prev_review.weather,
+      progress = _prev_review.progress,
+      last_review_date = _prev_review.created_at
+    WHERE id = OLD.project_id;
+  ELSE
+    -- Plus aucune revue : remettre à NULL
+    UPDATE projects SET
+      status = NULL,
+      progress = NULL,
+      last_review_date = NULL
+    WHERE id = OLD.project_id;
+  END IF;
+
+  RETURN OLD;
+END;
+$$;
+
+CREATE TRIGGER trg_sync_project_after_review_delete
+AFTER DELETE ON reviews
+FOR EACH ROW
+EXECUTE FUNCTION sync_project_after_review_delete();
 ```
 
-La clause `portfolio_id IN (SELECT id FROM project_portfolios WHERE created_by = auth.uid())` qui causait la récursion est remplacée par `user_id = auth.uid()`, ce qui couvre le même besoin (un utilisateur voit ses propres assignations de portefeuille) sans requêter `project_portfolios`.
+## Rafraîchissement de la vue matérialisée
 
-## Fichier impacté
+La vue `latest_reviews` doit aussi être rafraîchie. Ajouter dans le trigger :
 
-Migration SQL uniquement. Aucune modification frontend.
+```sql
+REFRESH MATERIALIZED VIEW CONCURRENTLY latest_reviews;
+```
 
-## Vérification
-- La page `/portfolios` se charge pour tous les rôles (admin, portfolio_manager, etc.)
-- Le dashboard ne logue plus d'erreur "Erreur récupération portefeuilles"
+Ou, si un trigger de refresh existe déjà sur `reviews`, vérifier qu'il couvre le `DELETE`.
+
+## Fichiers impactés
+
+- **Migration SQL uniquement** : 1 fonction + 1 trigger
+- **Aucune modification frontend** : le `DeleteReviewDialog` invalide déjà les query keys nécessaires, le cache React Query se rafraîchira avec les bonnes données une fois la table `projects` mise à jour par le trigger
 
