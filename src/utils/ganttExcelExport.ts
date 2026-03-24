@@ -3,18 +3,30 @@
  * @description Export Excel avec visualisation Gantt colorée pour les tâches d'un projet.
  * Utilise ExcelJS pour générer un fichier Excel avec mise en forme avancée :
  * couleurs de fond, bordures, gel des volets, légende, etc.
+ * Compatible avec le format SVAR Gantt.
  */
 
 import ExcelJS from 'exceljs';
-import { Task, ViewMode } from 'gantt-task-react';
 import { startOfWeek, startOfMonth, startOfYear, addWeeks, addMonths, addYears, addDays, format, endOfMonth, endOfYear } from 'date-fns';
 import { fr } from 'date-fns/locale';
 
+/** Format simplifié des tâches pour l'export */
+export interface ExportableTask {
+  name: string;
+  start: Date;
+  end: Date;
+  progress: number;
+  type: string;
+}
+
+/** Mode de vue pour l'export */
+type ViewModeKey = 'day' | 'week' | 'month' | 'year';
+
 /** Couleurs ARGB pour les statuts des tâches */
 const STATUS_COLORS = {
-  done: 'FF22C55E',      // Vert
-  inProgress: 'FF3B82F6', // Bleu
-  todo: 'FFE2E8F0',       // Gris clair
+  done: 'FF22C55E',
+  inProgress: 'FF3B82F6',
+  todo: 'FFE2E8F0',
 } as const;
 
 /** Couleurs de texte pour la colonne Statut */
@@ -24,11 +36,9 @@ const STATUS_TEXT_COLORS = {
   todo: 'FF64748B',
 } as const;
 
-/** Couleur d'en-tête */
 const HEADER_BG = 'FF4B5563';
 const HEADER_FG = 'FFFFFFFF';
 
-/** Bordure fine standard */
 const thinBorder: Partial<ExcelJS.Borders> = {
   top: { style: 'thin', color: { argb: 'FFD1D5DB' } },
   left: { style: 'thin', color: { argb: 'FFD1D5DB' } },
@@ -37,18 +47,18 @@ const thinBorder: Partial<ExcelJS.Borders> = {
 };
 
 /**
- * Retourne le libellé français et la couleur selon le statut
+ * Retourne le libellé français et la couleur selon la progression
  */
-const getStatusInfo = (task: Task) => {
+const getStatusInfo = (task: ExportableTask) => {
   if (task.progress === 100) return { label: 'Terminé', color: STATUS_COLORS.done, textColor: STATUS_TEXT_COLORS.done };
   if (task.progress > 0) return { label: 'En cours', color: STATUS_COLORS.inProgress, textColor: STATUS_TEXT_COLORS.inProgress };
   return { label: 'À faire', color: STATUS_COLORS.todo, textColor: STATUS_TEXT_COLORS.todo };
 };
 
 /**
- * Calcule la plage temporelle globale avec marge d'une semaine
+ * Calcule la plage temporelle globale avec marge
  */
-const getDateRange = (tasks: Task[]): { start: Date; end: Date } => {
+const getDateRange = (tasks: ExportableTask[]): { start: Date; end: Date } => {
   if (tasks.length === 0) {
     const now = new Date();
     return { start: now, end: addWeeks(now, 4) };
@@ -66,14 +76,14 @@ const getDateRange = (tasks: Task[]): { start: Date; end: Date } => {
 };
 
 /**
- * Génère la liste des périodes couvrant la plage temporelle selon le mode de vue
+ * Génère la liste des périodes couvrant la plage temporelle
  */
-const generatePeriodStarts = (start: Date, end: Date, viewMode: ViewMode): Date[] => {
+const generatePeriodStarts = (start: Date, end: Date, viewMode: ViewModeKey): Date[] => {
   const periods: Date[] = [];
   let current: Date;
 
   switch (viewMode) {
-    case ViewMode.Day:
+    case 'day':
       current = new Date(start);
       current.setHours(0, 0, 0, 0);
       while (current <= end) {
@@ -81,21 +91,21 @@ const generatePeriodStarts = (start: Date, end: Date, viewMode: ViewMode): Date[
         current = addDays(current, 1);
       }
       break;
-    case ViewMode.Month:
+    case 'month':
       current = startOfMonth(start);
       while (current <= end) {
         periods.push(new Date(current));
         current = addMonths(current, 1);
       }
       break;
-    case ViewMode.Year:
+    case 'year':
       current = startOfYear(start);
       while (current <= end) {
         periods.push(new Date(current));
         current = addYears(current, 1);
       }
       break;
-    case ViewMode.Week:
+    case 'week':
     default:
       current = startOfWeek(start, { weekStartsOn: 1 });
       while (current <= end) {
@@ -108,22 +118,22 @@ const generatePeriodStarts = (start: Date, end: Date, viewMode: ViewMode): Date[
 };
 
 /**
- * Vérifie si une tâche est active durant une période donnée selon le mode de vue
+ * Vérifie si une tâche est active durant une période donnée
  */
-const isTaskActiveInPeriod = (task: Task, periodStart: Date, viewMode: ViewMode): boolean => {
+const isTaskActiveInPeriod = (task: ExportableTask, periodStart: Date, viewMode: ViewModeKey): boolean => {
   let periodEnd: Date;
   switch (viewMode) {
-    case ViewMode.Day:
+    case 'day':
       periodEnd = new Date(periodStart);
       periodEnd.setHours(23, 59, 59, 999);
       break;
-    case ViewMode.Month:
+    case 'month':
       periodEnd = endOfMonth(periodStart);
       break;
-    case ViewMode.Year:
+    case 'year':
       periodEnd = endOfYear(periodStart);
       break;
-    case ViewMode.Week:
+    case 'week':
     default:
       periodEnd = addDays(periodStart, 6);
       break;
@@ -132,17 +142,17 @@ const isTaskActiveInPeriod = (task: Task, periodStart: Date, viewMode: ViewMode)
 };
 
 /**
- * Formate l'en-tête d'une période selon le mode de vue
+ * Formate l'en-tête d'une période
  */
-const formatPeriodHeader = (date: Date, viewMode: ViewMode): string => {
+const formatPeriodHeader = (date: Date, viewMode: ViewModeKey): string => {
   switch (viewMode) {
-    case ViewMode.Day:
+    case 'day':
       return format(date, 'dd/MM/yy', { locale: fr });
-    case ViewMode.Month:
+    case 'month':
       return format(date, 'MMM yyyy', { locale: fr });
-    case ViewMode.Year:
+    case 'year':
       return format(date, 'yyyy', { locale: fr });
-    case ViewMode.Week:
+    case 'week':
     default:
       return format(date, 'dd/MM/yy', { locale: fr });
   }
@@ -150,19 +160,23 @@ const formatPeriodHeader = (date: Date, viewMode: ViewMode): string => {
 
 /**
  * Exporte les tâches du Gantt vers un fichier Excel avec mise en forme avancée
- * @param tasks - Liste des tâches au format gantt-task-react
- * @param projectTitle - Titre du projet pour le nom du fichier et la ligne de titre
- * @param viewMode - Mode de vue sélectionné (Day, Week, Month, Year)
+ * @param tasks - Liste des tâches au format simplifié
+ * @param projectTitle - Titre du projet pour le nom du fichier
+ * @param viewMode - Mode de vue sélectionné
  */
-export const exportGanttToExcel = async (tasks: Task[], projectTitle?: string, viewMode: ViewMode = ViewMode.Week): Promise<void> => {
+export const exportGanttToExcel = async (
+  tasks: ExportableTask[],
+  projectTitle?: string,
+  viewMode: ViewModeKey = 'week'
+): Promise<void> => {
   if (tasks.length === 0) return;
 
   const title = projectTitle || 'Projet';
   const { start, end } = getDateRange(tasks);
   const periodStarts = generatePeriodStarts(start, end, viewMode);
-  const filteredTasks = tasks.filter(t => t.type !== 'project');
+  // Filtrer les projets (type summary) pour ne garder que les tâches
+  const filteredTasks = tasks.filter(t => t.type !== 'summary');
 
-  // Création du workbook et de la feuille
   const workbook = new ExcelJS.Workbook();
   const ws = workbook.addWorksheet('Gantt', {
     views: [{ state: 'frozen' as const, xSplit: 5, ySplit: 2 }],
@@ -172,7 +186,7 @@ export const exportGanttToExcel = async (tasks: Task[], projectTitle?: string, v
   const periodHeaders = periodStarts.map(p => formatPeriodHeader(p, viewMode));
   const totalCols = fixedHeaders.length + periodHeaders.length;
 
-  // --- Ligne 1 : Titre du projet fusionné ---
+  // --- Ligne 1 : Titre ---
   ws.mergeCells(1, 1, 1, totalCols);
   const titleCell = ws.getCell(1, 1);
   titleCell.value = `📊 Gantt – ${title}`;
@@ -193,13 +207,12 @@ export const exportGanttToExcel = async (tasks: Task[], projectTitle?: string, v
   });
   headerRow.height = 22;
 
-  // --- Lignes de données (à partir de la ligne 3) ---
+  // --- Lignes de données ---
   filteredTasks.forEach((task, idx) => {
     const rowNum = idx + 3;
     const row = ws.getRow(rowNum);
     const statusInfo = getStatusInfo(task);
 
-    // Colonnes fixes
     const nameCell = row.getCell(1);
     nameCell.value = task.name;
     nameCell.font = { size: 10 };
@@ -246,13 +259,12 @@ export const exportGanttToExcel = async (tasks: Task[], projectTitle?: string, v
   ws.getColumn(3).width = 12;
   ws.getColumn(4).width = 12;
   ws.getColumn(5).width = 14;
-  // Largeur des colonnes temporelles selon le mode
-  const colWidth = viewMode === ViewMode.Day ? 8 : viewMode === ViewMode.Year ? 8 : viewMode === ViewMode.Month ? 10 : 8;
+  const colWidth = viewMode === 'day' ? 8 : viewMode === 'year' ? 8 : viewMode === 'month' ? 10 : 8;
   periodStarts.forEach((_, i) => {
     ws.getColumn(6 + i).width = colWidth;
   });
 
-  // --- Légende en bas ---
+  // --- Légende ---
   const legendStart = filteredTasks.length + 4;
   ws.getCell(legendStart, 1).value = 'Légende :';
   ws.getCell(legendStart, 1).font = { bold: true, size: 10 };
@@ -271,7 +283,7 @@ export const exportGanttToExcel = async (tasks: Task[], projectTitle?: string, v
     ws.getCell(r, 2).font = { size: 10 };
   });
 
-  // --- Génération et téléchargement du fichier ---
+  // --- Téléchargement ---
   const buffer = await workbook.xlsx.writeBuffer();
   const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
   const url = URL.createObjectURL(blob);
