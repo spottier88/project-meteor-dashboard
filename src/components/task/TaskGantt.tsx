@@ -35,19 +35,19 @@ type ViewModeKey = 'day' | 'week' | 'month' | 'year';
 
 const SCALES_CONFIG: Record<ViewModeKey, Array<{ unit: string; step: number; format: string }>> = {
   day: [
-    { unit: 'month', step: 1, format: 'MMMM yyyy' },
-    { unit: 'day', step: 1, format: 'd' },
+    { unit: 'month', step: 1, format: '%F %Y' },   // Janvier 2025
+    { unit: 'day',   step: 1, format: '%j' },        // 1, 2, 3...
   ],
   week: [
-    { unit: 'month', step: 1, format: 'MMMM yyyy' },
-    { unit: 'week', step: 1, format: 'dd MMM' },
+    { unit: 'month', step: 1, format: '%F %Y' },   // Janvier 2025
+    { unit: 'week',  step: 1, format: '%d %M' },    // 06 Jan
   ],
   month: [
-    { unit: 'year', step: 1, format: 'yyyy' },
-    { unit: 'month', step: 1, format: 'MMMM' },
+    { unit: 'year',  step: 1, format: '%Y' },        // 2025
+    { unit: 'month', step: 1, format: '%F' },         // Janvier
   ],
   year: [
-    { unit: 'year', step: 1, format: 'yyyy' },
+    { unit: 'year',  step: 1, format: '%Y' },        // 2025
   ],
 };
 
