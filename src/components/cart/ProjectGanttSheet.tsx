@@ -1,10 +1,13 @@
+/**
+ * @file ProjectGanttSheet.tsx
+ * @description Sheet affichant la vue Gantt des projets sélectionnés dans le panier.
+ * Utilise SVAR React Gantt pour le rendu du diagramme.
+ */
 
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { TaskGantt } from "@/components/task/TaskGantt";
-import { useState } from "react";
-import { Task } from "gantt-task-react";
 
 interface ProjectGanttSheetProps {
   isOpen: boolean;
@@ -13,8 +16,6 @@ interface ProjectGanttSheetProps {
 }
 
 export const ProjectGanttSheet = ({ isOpen, onClose, projectIds }: ProjectGanttSheetProps) => {
-  const [collapsedProjects, setCollapsedProjects] = useState<Set<string>>(new Set());
-
   const { data: projectsData } = useQuery({
     queryKey: ["projectsGantt", projectIds],
     queryFn: async () => {
@@ -47,9 +48,9 @@ export const ProjectGanttSheet = ({ isOpen, onClose, projectIds }: ProjectGanttS
     enabled: projectIds.length > 0,
   });
 
-  // Transformer les données des projets et tâches en un format plat pour le Gantt
+  // Transformer les données en format plat pour le Gantt
   const allTasks = projectsData?.reduce((acc: any[], project) => {
-    // Ajouter le projet comme une tâche parent
+    // Ajouter le projet comme tâche parent (type summary)
     acc.push({
       id: project.id,
       title: project.title,
@@ -58,8 +59,7 @@ export const ProjectGanttSheet = ({ isOpen, onClose, projectIds }: ProjectGanttS
       status: project.lifecycle_status,
       project_id: project.id,
       parent_task_id: null,
-      hideChildren: collapsedProjects.has(project.id),
-      type: 'project'
+      type: 'project',
     });
 
     // Ajouter les tâches du projet
@@ -76,23 +76,6 @@ export const ProjectGanttSheet = ({ isOpen, onClose, projectIds }: ProjectGanttS
     return acc;
   }, []) || [];
 
-  // Mise à jour de la fonction handleExpanderClick pour modifier la propriété hideChildren
-  const handleExpanderClick = (task: Task) => {
-    // Ne traite que les tâches de type projet
-    if (task.type === 'project') {
-      // Inverse l'état d'expansion pour ce projet
-      setCollapsedProjects(prev => {
-        const newSet = new Set(prev);
-        if (newSet.has(task.id)) {
-          newSet.delete(task.id);
-        } else {
-          newSet.add(task.id);
-        }
-        return newSet;
-      });
-    }
-  };
-
   return (
     <Sheet open={isOpen} onOpenChange={onClose}>
       <SheetContent side="bottom" className="h-[80vh] w-full">
@@ -106,7 +89,6 @@ export const ProjectGanttSheet = ({ isOpen, onClose, projectIds }: ProjectGanttS
               projectId={projectIds[0]}
               onEdit={undefined}
               onUpdate={undefined}
-              onExpanderClick={handleExpanderClick}
             />
           ) : (
             <div className="flex justify-center items-center h-48">

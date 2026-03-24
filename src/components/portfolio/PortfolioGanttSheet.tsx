@@ -1,15 +1,13 @@
 /**
  * @file PortfolioGanttSheet.tsx
  * @description Sheet affichant la vue Gantt des projets d'un portefeuille.
- * Permet de visualiser le planning des projets et de leurs tâches.
+ * Utilise SVAR React Gantt via le composant TaskGantt.
  */
 
-import { useState } from "react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { TaskGantt } from "@/components/task/TaskGantt";
-import { Task } from "gantt-task-react";
 
 interface PortfolioGanttSheetProps {
   /** Indique si le sheet est ouvert */
@@ -23,14 +21,11 @@ interface PortfolioGanttSheetProps {
 /**
  * Composant affichant une vue Gantt des projets d'un portefeuille
  */
-export const PortfolioGanttSheet = ({ 
-  isOpen, 
-  onClose, 
-  projectIds 
+export const PortfolioGanttSheet = ({
+  isOpen,
+  onClose,
+  projectIds,
 }: PortfolioGanttSheetProps) => {
-  // État pour gérer les projets repliés dans le Gantt
-  const [collapsedProjects, setCollapsedProjects] = useState<Set<string>>(new Set());
-
   // Récupération des données des projets et de leurs tâches
   const { data: projectsData } = useQuery({
     queryKey: ["portfolioGantt", projectIds],
@@ -64,9 +59,8 @@ export const PortfolioGanttSheet = ({
     enabled: isOpen && projectIds.length > 0,
   });
 
-  // Transformer les données des projets et tâches en format plat pour le Gantt
+  // Transformer les données en format plat pour le Gantt
   const allTasks = projectsData?.reduce((acc: any[], project) => {
-    // Ajouter le projet comme une tâche parent
     acc.push({
       id: project.id,
       title: project.title,
@@ -75,11 +69,9 @@ export const PortfolioGanttSheet = ({
       status: project.lifecycle_status,
       project_id: project.id,
       parent_task_id: null,
-      hideChildren: collapsedProjects.has(project.id),
-      type: 'project'
+      type: 'project',
     });
 
-    // Ajouter les tâches du projet
     if (project.tasks) {
       project.tasks.forEach((task: any) => {
         acc.push({
@@ -92,23 +84,6 @@ export const PortfolioGanttSheet = ({
 
     return acc;
   }, []) || [];
-
-  /**
-   * Gère le clic sur l'expandeur pour replier/déplier un projet
-   */
-  const handleExpanderClick = (task: Task) => {
-    if (task.type === 'project') {
-      setCollapsedProjects(prev => {
-        const newSet = new Set(prev);
-        if (newSet.has(task.id)) {
-          newSet.delete(task.id);
-        } else {
-          newSet.add(task.id);
-        }
-        return newSet;
-      });
-    }
-  };
 
   return (
     <Sheet open={isOpen} onOpenChange={onClose}>
@@ -123,7 +98,6 @@ export const PortfolioGanttSheet = ({
               projectId={projectIds[0]}
               onEdit={undefined}
               onUpdate={undefined}
-              onExpanderClick={handleExpanderClick}
             />
           ) : (
             <div className="flex justify-center items-center h-48">
