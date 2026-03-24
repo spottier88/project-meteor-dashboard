@@ -78,11 +78,11 @@ export const ProjectGanttSheet = ({ isOpen, onClose, projectIds }: ProjectGanttS
 
   return (
     <Sheet open={isOpen} onOpenChange={onClose}>
-      <SheetContent side="bottom" className="h-[80vh] w-full">
-        <SheetHeader>
+      <SheetContent side="bottom" className="h-[80vh] w-fullflex flex-col">
+        <SheetHeader className="flex-shrink-0">
           <SheetTitle>Vue Gantt des projets sélectionnés</SheetTitle>
         </SheetHeader>
-        <div className="mt-6">
+        <div className="mt-6 flex-1 overflow-y-auto min-h-0">
           {allTasks.length > 0 ? (
             <TaskGantt
               tasks={allTasks}
