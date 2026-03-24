@@ -181,6 +181,7 @@ export const TaskGantt: React.FC<TaskGanttProps> = ({
           <Willow>
             <Gantt
               tasks={svarTasks}
+              links={[]}
               scales={SCALES_CONFIG[viewMode]}
               readonly={isProjectClosed}
               cellHeight={38}

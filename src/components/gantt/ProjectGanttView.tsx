@@ -183,6 +183,7 @@ export const ProjectGanttView = ({ projects }: ProjectGanttViewProps) => {
         <Willow>
           <Gantt
             tasks={svarTasks}
+            links={[]}
             scales={SCALES_CONFIG[viewMode]}
             readonly={true}
             cellHeight={36}
