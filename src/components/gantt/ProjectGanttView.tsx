@@ -14,7 +14,7 @@ import { CalendarDays, CalendarRange, Calendar, List } from "lucide-react";
 import { GanttExportButtons } from './GanttExportButtons';
 import { GanttLegend } from './GanttLegend';
 import { ProjectGanttViewProps } from './types';
-import { getColorForStatus } from '@/utils/gantt-helpers';
+
 import type { ITask } from '@svar-ui/react-gantt';
 
 /** Modes de vue disponibles */
