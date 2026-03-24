@@ -9,6 +9,8 @@ import React, { useState, useRef, useCallback } from 'react';
 import { Gantt, Willow } from '@svar-ui/react-gantt';
 import "@svar-ui/react-gantt/all.css";
 import "@/styles/gantt.css";
+import { Locale } from "@svar-ui/react-core";
+import { fr } from "@/locales/fr"; // chemin vers le fichier créé précédemment
 import { Button } from "@/components/ui/button";
 import { CalendarDays, CalendarRange, Calendar, FileSpreadsheet } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -178,17 +180,19 @@ export const TaskGantt: React.FC<TaskGanttProps> = ({
       {/* Diagramme de Gantt SVAR */}
       {svarTasks.length > 0 ? (
         <div className="svar-gantt-wrapper">
-          <Willow>
-            <Gantt
-              tasks={svarTasks}
-              links={[]}
-              scales={SCALES_CONFIG[viewMode]}
-              readonly={isProjectClosed}
-              cellHeight={38}
-              init={handleInit}
-              onupdatetask={handleUpdateTask}
-            />
-          </Willow>
+          <Locale words={fr}>
+            <Willow>
+              <Gantt
+                tasks={svarTasks}
+                links={[]}
+                scales={SCALES_CONFIG[viewMode]}
+                readonly={isProjectClosed}
+                cellHeight={38}
+                init={handleInit}
+                onupdatetask={handleUpdateTask}
+              />
+            </Willow>
+          </Locale>
         </div>
       ) : (
         <div className="text-center py-8 text-muted-foreground">
