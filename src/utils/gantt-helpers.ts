@@ -1,108 +1,103 @@
+/**
+ * @file gantt-helpers.ts
+ * @description Fonctions utilitaires pour transformer les données vers le format SVAR Gantt.
+ * Centralise le mapping des tâches et projets vers le format ITask de @svar-ui/react-gantt.
+ */
 
-import { Task } from 'gantt-task-react';
+import type { ITask } from '@svar-ui/react-gantt';
 
-// Fonction pour obtenir une couleur en fonction du statut de la tâche
-const getColorForStatus = (status: string) => {
-  switch (status) {
-    case 'todo':
-      return '#e2e8f0'; // Gris clair
-    case 'in_progress':
-      return '#3b82f6'; // Bleu
-    case 'done':
-      return '#22c55e'; // Vert
-    default:
-      return '#94a3b8'; // Gris par défaut
-  }
+/**
+ * Type de tâche interne (données brutes provenant de la base)
+ */
+export interface RawGanttTask {
+  id: string;
+  title: string;
+  start_date?: string;
+  due_date?: string;
+  end_date?: string;
+  status?: string;
+  project_id?: string;
+  parent_task_id?: string | null;
+  type?: string;
+  hideChildren?: boolean;
+  dependencies?: string[];
+}
+
+/**
+ * Couleurs associées aux statuts des tâches
+ */
+const STATUS_COLORS: Record<string, string> = {
+  todo: '#e2e8f0',
+  in_progress: '#3b82f6',
+  done: '#22c55e',
 };
 
-// Définir le type TaskType manuellement puisqu'il n'est pas exporté par la bibliothèque
-type TaskType = 'task' | 'milestone' | 'project';
+/**
+ * Obtient la couleur CSS pour un statut donné
+ */
+export const getColorForStatus = (status?: string): string => {
+  return STATUS_COLORS[status || ''] || '#94a3b8';
+};
 
-// Fonction pour convertir les tâches au format attendu par le composant Gantt
-export const mapTasksToGanttFormat = (tasks: any[]): Task[] => {
+/**
+ * Calcule la progression (0-100) selon le statut de la tâche
+ */
+const getProgressForStatus = (status?: string): number => {
+  if (status === 'done') return 100;
+  if (status === 'in_progress') return 50;
+  return 0;
+};
+
+/**
+ * Convertit un tableau de tâches brutes au format SVAR ITask
+ * Utilisé par TaskGantt (vue tâches d'un seul projet)
+ */
+export const mapTasksToSvarFormat = (tasks: RawGanttTask[]): ITask[] => {
   if (!tasks || tasks.length === 0) return [];
-  
-  // On crée d'abord un dictionnaire des tâches par ID pour faciliter la recherche
-  const tasksById = tasks.reduce((acc, task) => {
-    acc[task.id] = task;
-    return acc;
-  }, {} as Record<string, any>);
-  
+
   return tasks.map(task => {
-    // Définir les dates de début et de fin
+    // Dates de début et fin avec fallback
     let start = task.start_date ? new Date(task.start_date) : new Date();
-    let end = task.due_date ? new Date(task.due_date) : new Date();
-    
-    // Si pas de date de fin, définir à start + 1 jour
-    if (!task.due_date) {
-      end.setDate(start.getDate() + 1);
-    }
-    
-    // S'assurer que la date de fin est après la date de début
+    let end = task.due_date
+      ? new Date(task.due_date)
+      : task.end_date
+        ? new Date(task.end_date)
+        : new Date(start);
+
+    // S'assurer que la date de fin est après le début
     if (end <= start) {
-      end.setDate(start.getDate() + 1);
+      end = new Date(start);
+      end.setDate(end.getDate() + 1);
     }
-    
-    // Calculer le pourcentage de progression
-    let progress = 0;
-    if (task.status === 'in_progress') progress = 50;
-    if (task.status === 'done') progress = 100;
-    
-    // Déterminer si c'est un jalon (milestone) ou une tâche normale
-    const isMilestone = !task.start_date || !task.due_date || 
-      (new Date(task.start_date).setHours(0, 0, 0, 0) === new Date(task.due_date).setHours(0, 0, 0, 0));
-    
-    // Déterminer le type (projet, tâche ou sous-tâche)
-    let type: TaskType = 'task';
-    let hideChildren = false;
-    
-    // Si c'est un projet (pas de parent_task_id et a un project_id qui est égal à son id)
-    if (!task.parent_task_id && task.project_id === task.id) {
-      type = 'project';
-      hideChildren = false; // Le projet peut être plié/déplié
-    } 
-    // Si c'est un jalon
-    else if (isMilestone) {
-      type = 'milestone';
-    }
-    
-    // Construire les dépendances entre les tâches
-    let dependencies: string[] = [];
-    if (task.parent_task_id && tasksById[task.parent_task_id]) {
-      dependencies.push(task.parent_task_id);
-    }
-    
-    // Ajouter également les dépendances explicites si elles existent
-    if (task.dependencies && Array.isArray(task.dependencies)) {
-      dependencies = [...dependencies, ...task.dependencies];
-    }
-    
-    // Créer l'objet de tâche au format attendu par le composant Gantt
-    return {
+
+    const progress = getProgressForStatus(task.status);
+
+    // Déterminer le type SVAR
+    const isProject = task.type === 'project' || (!task.parent_task_id && task.project_id === task.id);
+    const type = isProject ? 'summary' : 'task';
+
+    const svarTask: ITask = {
       id: task.id,
-      name: task.title,
+      text: task.title,
       start,
       end,
       progress,
       type,
-      styles: { 
-        backgroundColor: type === 'project' ? '#9b87f5' : getColorForStatus(task.status),
-        progressColor: '#4d7c0f',
-        progressSelectedColor: '#84cc16',
-      },
-      isDisabled: false,
-      hideChildren, // Ajout de la propriété hideChildren
-      project: task.parent_task_id || undefined,
-      dependencies: dependencies.length > 0 ? dependencies : undefined,
+      open: !task.hideChildren,
+      parent: task.parent_task_id || (isProject ? 0 : undefined),
     };
+
+    return svarTask;
   });
 };
 
-// Fonction pour formater les dates en français
+/**
+ * Formate une date en français
+ */
 export const formatDateFr = (date: Date): string => {
   return date.toLocaleDateString('fr-FR', {
     year: 'numeric',
     month: 'long',
-    day: 'numeric'
+    day: 'numeric',
   });
 };

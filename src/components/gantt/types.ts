@@ -1,27 +1,10 @@
 /**
  * @file types.ts
  * @description Définit les interfaces TypeScript pour le diagramme de Gantt.
- * Ces types sont utilisés pour la vue multi-projets avec gantt-task-react.
+ * Types utilisés pour la vue multi-projets avec SVAR React Gantt.
  */
 
 import { ProjectStatus, ProgressStatus, ProjectLifecycleStatus } from '@/types/project';
-import { Task } from 'gantt-task-react';
-
-/**
- * Extension du type Task de gantt-task-react pour notre utilisation
- */
-export interface ExtendedGanttTask extends Task {
-  /** Indique si c'est un jalon */
-  _isMilestone?: boolean;
-  /** ID du projet parent pour les tâches */
-  project?: string;
-  /** Statut du projet */
-  lifecycle_status?: ProjectLifecycleStatus;
-  /** Statut de la tâche */
-  status?: string;
-  /** Taux de complétion */
-  completion?: number;
-}
 
 /**
  * Props du composant ProjectGanttView
