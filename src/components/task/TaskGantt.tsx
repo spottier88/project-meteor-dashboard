@@ -186,18 +186,7 @@ export const TaskGantt: React.FC<TaskGanttProps> = ({
               cellHeight={38}
               init={handleInit}
               onupdatetask={handleUpdateTask}
-            >
-              <Tooltip
-                content={({ data }: { data: ITask }) => (
-                  <div className="bg-white p-2 rounded shadow-lg border">
-                    <h3 className="font-medium">{data.text}</h3>
-                    {data.start && <p>Début: {data.start.toLocaleDateString('fr-FR')}</p>}
-                    {data.end && <p>Fin: {data.end.toLocaleDateString('fr-FR')}</p>}
-                    <p>Progression: {data.progress || 0}%</p>
-                  </div>
-                )}
-              />
-            </Gantt>
+            />
           </Willow>
         </div>
       ) : (

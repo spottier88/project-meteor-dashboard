@@ -186,21 +186,7 @@ export const ProjectGanttView = ({ projects }: ProjectGanttViewProps) => {
             scales={SCALES_CONFIG[viewMode]}
             readonly={true}
             cellHeight={36}
-          >
-            <Tooltip
-              content={({ data }: { data: ITask }) => (
-                <div className="p-2 bg-popover text-popover-foreground rounded shadow-lg border text-sm">
-                  <p className="font-semibold">{data.text}</p>
-                  {data.start && data.end && (
-                    <p className="text-muted-foreground">
-                      {data.start.toLocaleDateString('fr-FR')} - {data.end.toLocaleDateString('fr-FR')}
-                    </p>
-                  )}
-                  <p>Progression: {Math.round(data.progress || 0)}%</p>
-                </div>
-              )}
-            />
-          </Gantt>
+          />
         </Willow>
       </div>
     </div>
