@@ -6,7 +6,7 @@
  */
 
 import React, { useState, useRef } from 'react';
-import { Gantt, Willow, Tooltip } from '@svar-ui/react-gantt';
+import { Gantt, Willow } from '@svar-ui/react-gantt';
 import "@svar-ui/react-gantt/all.css";
 import "@/styles/gantt.css";
 import { Button } from "@/components/ui/button";
