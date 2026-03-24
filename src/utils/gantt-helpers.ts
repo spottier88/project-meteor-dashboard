@@ -55,6 +55,14 @@ const getProgressForStatus = (status?: string): number => {
 export const mapTasksToSvarFormat = (tasks: RawGanttTask[]): ITask[] => {
   if (!tasks || tasks.length === 0) return [];
 
+  // Identifier les tâches qui possèdent réellement des enfants.
+  // SVAR attend qu'une tâche "open" ou de type "summary" ait une hiérarchie valide.
+  const parentTaskIds = new Set(
+    tasks
+      .map(task => task.parent_task_id)
+      .filter((parentTaskId): parentTaskId is string => Boolean(parentTaskId))
+  );
+
   return tasks.map(task => {
     // Dates de début et fin avec fallback
     let start = task.start_date ? new Date(task.start_date) : new Date();
@@ -72,9 +80,13 @@ export const mapTasksToSvarFormat = (tasks: RawGanttTask[]): ITask[] => {
 
     const progress = getProgressForStatus(task.status);
 
-    // Déterminer le type SVAR
+    // Déterminer le type SVAR.
+    // Une tâche parente doit être exposée comme "summary" pour éviter
+    // les incohérences internes de la librairie sur les nœuds hiérarchiques.
+    const hasChildren = parentTaskIds.has(task.id);
     const isProject = task.type === 'project' || (!task.parent_task_id && task.project_id === task.id);
-    const type = isProject ? 'summary' : 'task';
+    const isSummary = isProject || hasChildren;
+    const type = isSummary ? 'summary' : 'task';
 
     const svarTask: ITask = {
       id: task.id,
@@ -83,8 +95,10 @@ export const mapTasksToSvarFormat = (tasks: RawGanttTask[]): ITask[] => {
       end,
       progress,
       type,
-      open: !task.hideChildren,
-      parent: task.parent_task_id || (isProject ? 0 : undefined),
+      // Une tâche sans enfants ne doit jamais être ouverte, sinon SVAR
+      // tente d'itérer sur une collection interne nulle.
+      open: hasChildren ? !task.hideChildren : false,
+      parent: task.parent_task_id || (isSummary ? 0 : undefined),
     };
 
     return svarTask;
