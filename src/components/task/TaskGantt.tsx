@@ -140,7 +140,7 @@ export const TaskGantt: React.FC<TaskGanttProps> = ({
   }));
 
   return (
-    <div className="space-y-4 rounded-md border">
+    <div className="space-y-4 rounded-md border flex flex-col h-full">
       {/* Barre d'outils */}
       <div className="flex justify-between items-center p-4 border-b">
         <div className="flex gap-2">
@@ -179,7 +179,7 @@ export const TaskGantt: React.FC<TaskGanttProps> = ({
 
       {/* Diagramme de Gantt SVAR */}
       {svarTasks.length > 0 ? (
-        <div className="svar-gantt-wrapper">
+        <div className="svar-gantt-wrapper flex-1 overflow-y-auto min-h-0">
           <Locale words={fr}>
             <Willow>
               <Gantt
