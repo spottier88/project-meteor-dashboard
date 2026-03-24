@@ -1,31 +1,43 @@
 
-# Migration Gantt : gantt-task-react → SVAR React Gantt
 
-## Statut : ✅ Terminé
+# Correction de l'erreur SVAR Gantt "Cannot read properties of null (reading 'forEach')"
 
-## Résumé
+## Cause
 
-Remplacement complet de `gantt-task-react` (non maintenu depuis 2021) par `@svar-ui/react-gantt` (MIT, activement maintenu, TypeScript natif, pure React).
+Le composant `<Gantt>` de SVAR requiert une prop `links` (tableau de dépendances entre tâches). Quand elle n'est pas fournie, la bibliothèque tente d'itérer sur `null` en interne, provoquant le crash.
 
-## Fichiers modifiés
+## Correction
 
-| Fichier | Action |
+Ajouter `links={[]}` sur chaque instance de `<Gantt>` dans les 3 fichiers concernés :
+
+| Fichier | Ligne |
 |---|---|
-| `package.json` | `gantt-task-react` supprimé, `@svar-ui/react-gantt` ajouté |
-| `src/utils/gantt-helpers.ts` | Nouveau mapping `mapTasksToSvarFormat` (format ITask SVAR) |
-| `src/utils/ganttExcelExport.ts` | Interface `ExportableTask` autonome, plus de dépendance gantt-task-react |
-| `src/components/task/TaskGantt.tsx` | Réécrit avec composant SVAR `<Gantt>` + thème `<Willow>` |
-| `src/components/gantt/ProjectGanttView.tsx` | Réécrit avec SVAR en mode readonly |
-| `src/components/cart/ProjectGanttSheet.tsx` | Simplifié (plus de gestion manuelle expand/collapse) |
-| `src/components/portfolio/PortfolioGanttSheet.tsx` | Simplifié idem |
-| `src/components/gantt/GanttExportButtons.tsx` | Interface `GanttExportTask` autonome |
-| `src/components/gantt/types.ts` | Nettoyé (plus de dépendance gantt-task-react) |
-| `src/styles/gantt.css` | Remplacé par styles minimaux pour SVAR |
+| `src/components/task/TaskGantt.tsx` | L.182-189 |
+| `src/components/gantt/ProjectGanttView.tsx` | L.184-189 |
 
-## Améliorations obtenues
+Et les 2 sheets qui utilisent `TaskGantt` (aucun changement car ils passent par `TaskGantt`).
 
-- Drag & drop natif (déplacement, redimensionnement)
-- Hiérarchie projet/tâche native (expand/collapse intégré)
-- Échelles de temps configurables
-- TypeScript complet
-- Bibliothèque activement maintenue
+### Modification concrète
+
+Dans `TaskGantt.tsx` :
+```tsx
+<Gantt
+  tasks={svarTasks}
+  links={[]}
+  scales={SCALES_CONFIG[viewMode]}
+  ...
+/>
+```
+
+Dans `ProjectGanttView.tsx` :
+```tsx
+<Gantt
+  tasks={svarTasks}
+  links={[]}
+  scales={SCALES_CONFIG[viewMode]}
+  ...
+/>
+```
+
+2 lignes ajoutées, 2 fichiers modifiés. Aucun impact fonctionnel.
+
