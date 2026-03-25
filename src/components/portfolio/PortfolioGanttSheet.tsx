@@ -49,31 +49,17 @@ export const PortfolioGanttSheet = ({
     enabled: isOpen && projectIds.length > 0,
   });
 
-  // Transformer les données en format plat pour le Gantt
-  const allTasks = projectsData?.reduce((acc: any[], project) => {
-    acc.push({
-      id: project.id,
-      title: project.title,
-      start_date: project.start_date,
-      end_date: project.end_date,
-      status: project.lifecycle_status,
-      project_id: project.id,
-      parent_task_id: null,
-      type: 'project',
-    });
-
-    if (project.tasks) {
-      project.tasks.forEach((task: any) => {
-        acc.push({
-          ...task,
-          project_id: project.id,
-          parent_task_id: task.parent_task_id || project.id,
-        });
-      });
-    }
-
-    return acc;
-  }, []) || [];
+  // Transformer les projets en format plat pour le Gantt (projets uniquement)
+  const allTasks = projectsData?.map((project) => ({
+    id: project.id,
+    title: project.title,
+    start_date: project.start_date,
+    end_date: project.end_date,
+    status: project.lifecycle_status,
+    project_id: project.id,
+    parent_task_id: null,
+    type: 'project' as const,
+  })) || [];
 
   return (
     <Sheet open={isOpen} onOpenChange={onClose}>
