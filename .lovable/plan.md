@@ -1,43 +1,34 @@
 
 
-# Correction de l'erreur SVAR Gantt "Cannot read properties of null (reading 'forEach')"
+# Ajustement des vues Gantt : projets-only pour panier/portefeuille + scroll vertical
 
-## Cause
+## Probleme
 
-Le composant `<Gantt>` de SVAR requiert une prop `links` (tableau de dépendances entre tâches). Quand elle n'est pas fournie, la bibliothèque tente d'itérer sur `null` en interne, provoquant le crash.
+Les sheets Gantt du panier (`ProjectGanttSheet`) et du portefeuille (`PortfolioGanttSheet`) chargent et affichent les tâches des projets alors qu'ils ne devraient montrer que les barres de projets. De plus, le conteneur ne gere pas correctement le scroll vertical pour les longues listes.
 
-## Correction
+## Plan
 
-Ajouter `links={[]}` sur chaque instance de `<Gantt>` dans les 3 fichiers concernés :
+### 1. Simplifier les requetes Supabase (2 fichiers)
 
-| Fichier | Ligne |
+Dans `ProjectGanttSheet.tsx` et `PortfolioGanttSheet.tsx` :
+- Supprimer la jointure `tasks (...)` du `select` — on ne charge que les colonnes du projet
+- Supprimer le bloc qui itere sur `project.tasks` pour les ajouter au tableau plat
+- Ne garder que les entrees de type `project` dans `allTasks`
+
+### 2. Scroll vertical dans les sheets (2 fichiers)
+
+Dans les deux sheets :
+- S'assurer que le `SheetContent` utilise `flex flex-col` et que le conteneur du Gantt a `flex-1 overflow-y-auto min-h-0`
+- Corriger le typo CSS dans `ProjectGanttSheet` (`w-fullflex` → `w-full flex`)
+
+### 3. Aucune modification sur TaskGantt
+
+Le composant `TaskGantt.tsx` reste inchange — il continue d'afficher taches et sous-taches pour la vue projet.
+
+### Fichiers impactes
+
+| Fichier | Modification |
 |---|---|
-| `src/components/task/TaskGantt.tsx` | L.182-189 |
-| `src/components/gantt/ProjectGanttView.tsx` | L.184-189 |
-
-Et les 2 sheets qui utilisent `TaskGantt` (aucun changement car ils passent par `TaskGantt`).
-
-### Modification concrète
-
-Dans `TaskGantt.tsx` :
-```tsx
-<Gantt
-  tasks={svarTasks}
-  links={[]}
-  scales={SCALES_CONFIG[viewMode]}
-  ...
-/>
-```
-
-Dans `ProjectGanttView.tsx` :
-```tsx
-<Gantt
-  tasks={svarTasks}
-  links={[]}
-  scales={SCALES_CONFIG[viewMode]}
-  ...
-/>
-```
-
-2 lignes ajoutées, 2 fichiers modifiés. Aucun impact fonctionnel.
+| `src/components/cart/ProjectGanttSheet.tsx` | Retirer jointure tasks, retirer ajout des taches, corriger classes CSS |
+| `src/components/portfolio/PortfolioGanttSheet.tsx` | Retirer jointure tasks, retirer ajout des taches, ajouter flex/scroll |
 
