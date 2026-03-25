@@ -39,17 +39,7 @@ export const PortfolioGanttSheet = ({
           title,
           start_date,
           end_date,
-          status,
-          progress,
-          lifecycle_status,
-          tasks (
-            id,
-            title,
-            start_date,
-            due_date,
-            status,
-            parent_task_id
-          )
+          lifecycle_status
         `)
         .in("id", projectIds);
 
