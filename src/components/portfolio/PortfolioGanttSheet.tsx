@@ -39,17 +39,7 @@ export const PortfolioGanttSheet = ({
           title,
           start_date,
           end_date,
-          status,
-          progress,
-          lifecycle_status,
-          tasks (
-            id,
-            title,
-            start_date,
-            due_date,
-            status,
-            parent_task_id
-          )
+          lifecycle_status
         `)
         .in("id", projectIds);
 
@@ -59,39 +49,25 @@ export const PortfolioGanttSheet = ({
     enabled: isOpen && projectIds.length > 0,
   });
 
-  // Transformer les données en format plat pour le Gantt
-  const allTasks = projectsData?.reduce((acc: any[], project) => {
-    acc.push({
-      id: project.id,
-      title: project.title,
-      start_date: project.start_date,
-      end_date: project.end_date,
-      status: project.lifecycle_status,
-      project_id: project.id,
-      parent_task_id: null,
-      type: 'project',
-    });
-
-    if (project.tasks) {
-      project.tasks.forEach((task: any) => {
-        acc.push({
-          ...task,
-          project_id: project.id,
-          parent_task_id: task.parent_task_id || project.id,
-        });
-      });
-    }
-
-    return acc;
-  }, []) || [];
+  // Transformer les projets en format plat pour le Gantt (projets uniquement)
+  const allTasks = projectsData?.map((project) => ({
+    id: project.id,
+    title: project.title,
+    start_date: project.start_date,
+    end_date: project.end_date,
+    status: project.lifecycle_status,
+    project_id: project.id,
+    parent_task_id: null,
+    type: 'project' as const,
+  })) || [];
 
   return (
     <Sheet open={isOpen} onOpenChange={onClose}>
-      <SheetContent side="bottom" className="h-[80vh] w-full">
-        <SheetHeader>
+      <SheetContent side="bottom" className="h-[80vh] w-full flex flex-col">
+        <SheetHeader className="flex-shrink-0">
           <SheetTitle>Vue Gantt des projets du portefeuille</SheetTitle>
         </SheetHeader>
-        <div className="mt-6">
+        <div className="mt-6 flex-1 overflow-y-auto min-h-0">
           {allTasks.length > 0 ? (
             <TaskGantt
               tasks={allTasks}
