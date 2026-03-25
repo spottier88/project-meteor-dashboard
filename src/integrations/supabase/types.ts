@@ -2133,6 +2133,15 @@ export type Database = {
         Args: { p_portfolio_id: string; p_user_id: string }
         Returns: boolean
       }
+      can_insert_portfolio_manager: {
+        Args: {
+          p_portfolio_id: string
+          p_role: string
+          p_target_user_id: string
+          p_user_id: string
+        }
+        Returns: boolean
+      }
       can_manage_portfolio_simple: {
         Args: { p_portfolio_id: string; p_user_id: string }
         Returns: boolean
