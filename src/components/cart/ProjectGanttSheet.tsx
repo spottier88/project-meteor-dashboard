@@ -52,7 +52,7 @@ export const ProjectGanttSheet = ({ isOpen, onClose, projectIds }: ProjectGanttS
 
   return (
     <Sheet open={isOpen} onOpenChange={onClose}>
-      <SheetContent side="bottom" className="h-[80vh] w-fullflex flex-col">
+      <SheetContent side="bottom" className="h-[80vh] w-full flex flex-col">
         <SheetHeader className="flex-shrink-0">
           <SheetTitle>Vue Gantt des projets sélectionnés</SheetTitle>
         </SheetHeader>
@@ -66,7 +66,7 @@ export const ProjectGanttSheet = ({ isOpen, onClose, projectIds }: ProjectGanttS
             />
           ) : (
             <div className="flex justify-center items-center h-48">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
             </div>
           )}
         </div>
