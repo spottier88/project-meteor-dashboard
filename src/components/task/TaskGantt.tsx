@@ -91,7 +91,7 @@ export const TaskGantt: React.FC<TaskGanttProps> = ({
    * Masque la colonne "+" si le projet est clôturé ou sans droits de création.
    */
   const columns = useMemo(() => {
-    const cols: Array<{ id: string; header: string; flexgrow?: number; width?: number; align?: string; sort?: boolean }> = [
+    const cols: Array<{ id: string; header: string; flexgrow?: number; width?: number; align?: "left" | "right" | "center"; sort?: boolean }> = [
       { id: 'text', header: 'Tâche', flexgrow: 2, sort: true },
       { id: 'start', header: 'Début', flexgrow: 1, align: 'center', sort: true },
       { id: 'end', header: 'Fin', flexgrow: 1, align: 'center', sort: true },
