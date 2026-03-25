@@ -2,15 +2,16 @@
  * @file TaskGantt.tsx
  * @description Composant Gantt pour les tâches d'un projet.
  * Utilise SVAR React Gantt pour le rendu interactif avec drag & drop.
- * Permet la modification des dates par glisser-déposer et l'édition par double-clic.
+ * Intègre : interception du double-clic (→ TaskForm), menu contextuel,
+ * colonnes personnalisées, blocage du reordonnancement et de la progression.
  */
 
-import React, { useState, useRef, useCallback } from 'react';
+import React, { useState, useRef, useCallback, useMemo } from 'react';
 import { Gantt, Willow } from '@svar-ui/react-gantt';
 import "@svar-ui/react-gantt/all.css";
 import "@/styles/gantt.css";
 import { Locale } from "@svar-ui/react-core";
-import { fr } from "@/locales/fr"; // chemin vers le fichier créé précédemment
+import { fr } from "@/locales/fr";
 import { Button } from "@/components/ui/button";
 import { CalendarDays, CalendarRange, Calendar, FileSpreadsheet } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -23,11 +24,21 @@ import type { ITask, IApi } from '@svar-ui/react-gantt';
 interface TaskGanttProps {
   tasks: Array<any>;
   projectId: string;
+  /** Callback d'édition d'une tâche (ouvre TaskForm) */
   onEdit?: (task: any) => void;
+  /** Callback de rafraîchissement après modification */
   onUpdate?: () => void;
+  /** Callback d'ajout d'une tâche (ouvre TaskForm en création) */
+  onAdd?: (parentTaskId?: string | null) => void;
+  /** Callback de suppression d'une tâche (ouvre la confirmation) */
+  onDelete?: (task: any) => void;
   onExpanderClick?: (task: any) => void;
   isProjectClosed?: boolean;
   projectTitle?: string;
+  /** L'utilisateur peut-il créer des tâches ? */
+  canCreateTask?: boolean;
+  /** L'utilisateur peut-il supprimer des tâches ? */
+  canDeleteTask?: boolean;
 }
 
 /** Configuration des échelles de temps selon le mode de vue */
@@ -35,19 +46,19 @@ type ViewModeKey = 'day' | 'week' | 'month' | 'year';
 
 const SCALES_CONFIG: Record<ViewModeKey, Array<{ unit: string; step: number; format: string }>> = {
   day: [
-    { unit: 'month', step: 1, format: '%F %Y' },   // Janvier 2025
-    { unit: 'day',   step: 1, format: '%j' },        // 1, 2, 3...
+    { unit: 'month', step: 1, format: '%F %Y' },
+    { unit: 'day',   step: 1, format: '%j' },
   ],
   week: [
-    { unit: 'month', step: 1, format: '%F %Y' },   // Janvier 2025
-    { unit: 'week',  step: 1, format: '%d %M' },    // 06 Jan
+    { unit: 'month', step: 1, format: '%F %Y' },
+    { unit: 'week',  step: 1, format: '%d %M' },
   ],
   month: [
-    { unit: 'year',  step: 1, format: '%Y' },        // 2025
-    { unit: 'month', step: 1, format: '%F' },         // Janvier
+    { unit: 'year',  step: 1, format: '%Y' },
+    { unit: 'month', step: 1, format: '%F' },
   ],
   year: [
-    { unit: 'year',  step: 1, format: '%Y' },        // 2025
+    { unit: 'year',  step: 1, format: '%Y' },
   ],
 };
 
@@ -56,9 +67,13 @@ export const TaskGantt: React.FC<TaskGanttProps> = ({
   projectId,
   onEdit,
   onUpdate,
+  onAdd,
+  onDelete,
   onExpanderClick,
   isProjectClosed = false,
   projectTitle,
+  canCreateTask = false,
+  canDeleteTask = false,
 }) => {
   const [viewMode, setViewMode] = useState<ViewModeKey>('week');
   const [localTasks, setLocalTasks] = useState<Array<any>>(tasks);
@@ -72,7 +87,28 @@ export const TaskGantt: React.FC<TaskGanttProps> = ({
   const svarTasks = mapTasksToSvarFormat(localTasks);
 
   /**
-   * Gère la mise à jour d'une tâche (drag & drop des dates)
+   * Configuration des colonnes de la grille.
+   * Masque la colonne "+" si le projet est clôturé ou sans droits de création.
+   */
+  const columns = useMemo(() => {
+    const cols: Array<{ id: string; header: string; flexgrow?: number; width?: number; align?: "left" | "right" | "center"; sort?: boolean }> = [
+      { id: 'text', header: 'Tâche', flexgrow: 2, sort: true },
+      { id: 'start', header: 'Début', flexgrow: 1, align: 'center', sort: true },
+      { id: 'end', header: 'Fin', flexgrow: 1, align: 'center', sort: true },
+      { id: 'progress', header: '%', width: 60, align: 'center' },
+    ];
+
+    // Ajouter la colonne "+" uniquement si l'utilisateur peut créer des tâches
+    if (canCreateTask && !isProjectClosed) {
+      cols.push({ id: 'add-task', header: '', width: 50, align: 'center' });
+    }
+
+    return cols;
+  }, [canCreateTask, isProjectClosed]);
+
+  /**
+   * Gère la mise à jour d'une tâche (drag & drop des dates uniquement).
+   * Bloque la modification de la progression par drag.
    */
   const handleUpdateTask = useCallback(async (ev: { id: string | number; task: Partial<ITask>; inProgress?: boolean }) => {
     // Ignorer les mises à jour intermédiaires (pendant le drag)
@@ -80,6 +116,11 @@ export const TaskGantt: React.FC<TaskGanttProps> = ({
 
     const taskId = String(ev.id);
     const updatedFields = ev.task;
+
+    // Bloquer la modification de la progression par drag (le statut pilote la progression)
+    if (updatedFields.progress !== undefined && !updatedFields.start && !updatedFields.end) {
+      return false;
+    }
 
     // Si les dates ont changé, persister en base
     if (updatedFields.start || updatedFields.end) {
@@ -124,11 +165,43 @@ export const TaskGantt: React.FC<TaskGanttProps> = ({
   }, [onUpdate]);
 
   /**
-   * Initialise l'API SVAR pour capturer les événements
+   * Initialise l'API SVAR et configure les interceptions d'actions.
+   * - show-editor : redirige vers le TaskForm existant
+   * - add-task : redirige vers le TaskForm en mode création
+   * - drag-task : bloque le reordonnancement dans la grille
    */
   const handleInit = useCallback((api: IApi) => {
     apiRef.current = api;
-  }, []);
+
+    // Intercepter le double-clic → ouvrir le TaskForm existant au lieu de l'éditeur SVAR
+    api.intercept("show-editor", (data: { id: string | number }) => {
+      if (onEdit) {
+        const task = localTasks.find(t => t.id === String(data.id));
+        if (task) {
+          onEdit(task);
+        }
+      }
+      return false; // Toujours bloquer l'éditeur SVAR natif
+    });
+
+    // Intercepter l'ajout de tâche via le bouton "+" → ouvrir le TaskForm en mode création
+    api.intercept("add-task", (data: { id?: string | number; task?: Partial<ITask> }) => {
+      if (onAdd) {
+        // Si la tâche parente est de type summary/projet, créer une tâche racine
+        const parentId = data.id ? String(data.id) : null;
+        const parentTask = localTasks.find(t => t.id === parentId);
+        const isParentProject = parentTask?.type === 'project' || (!parentTask?.parent_task_id && parentTask?.project_id === parentTask?.id);
+        onAdd(isParentProject ? null : parentId);
+      }
+      return false; // Bloquer la création SVAR native
+    });
+
+    // Bloquer le reordonnancement par drag dans la grille
+    // (la hiérarchie est gérée via le formulaire)
+    api.intercept("drag-task", (ev: { top?: number }) => {
+      if (typeof ev.top !== "undefined") return false;
+    });
+  }, [onEdit, onAdd, localTasks]);
 
   /** Données pour l'export Excel (format simplifié) */
   const exportData = svarTasks.map(t => ({
@@ -186,6 +259,7 @@ export const TaskGantt: React.FC<TaskGanttProps> = ({
                 tasks={svarTasks}
                 links={[]}
                 scales={SCALES_CONFIG[viewMode]}
+                columns={columns}
                 readonly={isProjectClosed}
                 cellHeight={38}
                 init={handleInit}

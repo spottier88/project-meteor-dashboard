@@ -191,8 +191,19 @@ export const TaskList = ({
                 setIsTaskFormOpen(true);
               }
             }}
+            onAdd={(parentTaskId) => {
+              setSelectedTask(parentTaskId ? { parent_task_id: parentTaskId } : null);
+              setIsTaskFormOpen(true);
+            }}
+            onDelete={(task) => {
+              if (canDeleteTask) {
+                setTaskToDelete(task);
+              }
+            }}
             onUpdate={refreshTasks}
             isProjectClosed={isProjectClosed}
+            canCreateTask={canCreateTask}
+            canDeleteTask={canDeleteTask}
           />
         ) : null
       ) : (
