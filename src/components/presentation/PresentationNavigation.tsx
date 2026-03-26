@@ -13,6 +13,7 @@ import {
   Minimize,
   X,
   Home,
+  StickyNote,
 } from "lucide-react";
 
 interface PresentationNavigationProps {
@@ -26,6 +27,8 @@ interface PresentationNavigationProps {
   onNext: () => void;
   onToggleFullscreen: () => void;
   onExit: () => void;
+  /** Callback pour ajouter une note — masqué si non fourni (slide de synthèse) */
+  onAddNote?: () => void;
 }
 
 export const PresentationNavigation = ({
