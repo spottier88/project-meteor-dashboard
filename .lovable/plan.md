@@ -1,48 +1,57 @@
 
 
-# Ajout de notes depuis le mode présentation
+# Amelioration visuelle de la presentation des revues de projets
 
-## Objectif
+## Modifications prevues
 
-Permettre au présentateur d'ajouter une note (compte-rendu, décision, mémo) sur le projet affiché, directement depuis la slide de présentation, en réutilisant le système de notes existant (`project_notes`).
+### 1. Blocs de taches colores avec icones (Web + PPTX)
 
-## Approche
+Remplacer les en-tetes noirs uniformes des 3 blocs de taches par des couleurs et icones distinctes selon le statut :
 
-Ajouter un bouton dans la barre de navigation de la présentation qui ouvre un dialogue modal contenant un formulaire simplifié de note. La note est enregistrée via le hook `useProjectNotes` existant, ce qui déclenche automatiquement les notifications email aux membres du projet.
+| Bloc | Couleur en-tete | Icone |
+|---|---|---|
+| Taches terminees | Vert (`#22c55e`) | `CheckCircle` |
+| Taches en cours | Bleu (`#3b82f6`) | `Clock` |
+| Taches a venir | Gris (`#6b7280`) | `CircleDot` |
 
-## Plan
+**Web** : Modifier le composant `Section` pour accepter une prop `headerColor` et une prop `icon`. Appliquer sur les 3 blocs de taches dans `PresentationSlide.tsx`.
 
-### 1. Nouveau composant `PresentationNoteDialog`
+**PPTX** : Modifier `addTasksSection` dans `slideGenerators.ts` pour passer la couleur de fond du titre (`fill.color`) correspondante a chaque bloc au lieu du noir uniforme. Ajouter les emojis equivalents dans le titre (✅, 🔄, 📋).
 
-Créer `src/components/presentation/PresentationNoteDialog.tsx` :
-- Un `Dialog` contenant un sélecteur de type de note et un `Textarea`
-- Props : `projectId`, `projectTitle`, `isOpen`, `onClose`
-- Utilise `useProjectNotes(projectId)` en interne pour appeler `createNote.mutate`
-- Affiche un toast de confirmation à la soumission
-- Pré-sélectionner le type "meeting" (cas d'usage principal : revue de projet)
+### 2. Affichage du % d'avancement dans l'en-tete (Web + PPTX)
 
-### 2. Modifier `PresentationView.tsx`
+Le champ `completion` est deja disponible dans `data.project.completion` (et `data.lastReview?.completion`).
 
-- Ajouter un state `isNoteDialogOpen`
-- Passer le `projectId` et le `projectTitle` du projet courant au dialogue
-- Passer un callback `onAddNote` à `PresentationNavigation`
-- Masquer le bouton si on est sur la slide de synthèse (pas de projet courant)
+**Web** : Ajouter dans l'en-tete rouge de `PresentationSlide.tsx` un indicateur visuel d'avancement — une barre de progression circulaire ou lineaire avec le pourcentage affiche.
 
-### 3. Modifier `PresentationNavigation.tsx`
+**PPTX** : Ajouter dans `addProjectHeader` de `slideGenerators.ts` un texte "Avancement : XX%" dans l'en-tete.
 
-- Ajouter une prop optionnelle `onAddNote?: () => void`
-- Afficher un bouton (icône `StickyNote` ou `MessageSquarePlus`) dans la barre, entre les contrôles existants
-- Le bouton n'apparaît que si `onAddNote` est fourni (masqué sur la slide de synthèse)
+**Summary (Web)** : Ajouter une colonne "Avancement" dans le tableau de `PresentationSummary.tsx`.
 
-### Fichiers impactés
+**Summary (PPTX)** : Ajouter une colonne "%" dans `addSummaryTable` de `slideGenerators.ts`.
 
-| Fichier | Action |
+### 3. Ordonnancement des projets dans la presentation web
+
+Actuellement le tri est fixe (orageux en premier) dans `ProjectPresentation.tsx`. Ajouter un selecteur de tri dans la barre de navigation (`PresentationNavigation.tsx`) avec les options :
+
+- Meteo (orageux d'abord) — tri actuel par defaut
+- Avancement (du plus faible au plus eleve)
+- Alphabetique (A→Z)
+- Statut du cycle de vie (a l'etude → en cours → suspendu)
+
+**Mecanisme** : Remonter le state de tri dans `PresentationView.tsx`. Le tri s'applique sur la liste `projects` via un `useMemo`. Le selecteur est un `Select` compact dans la barre de navigation, visible uniquement quand il y a plus d'un projet.
+
+Cette fonctionnalite est limitee a l'interface web (pas d'impact PPTX — l'ordre d'export reste celui du panier/portefeuille).
+
+### Fichiers impactes
+
+| Fichier | Modifications |
 |---|---|
-| `src/components/presentation/PresentationNoteDialog.tsx` | Nouveau |
-| `src/components/presentation/PresentationView.tsx` | Ajout state + dialogue |
-| `src/components/presentation/PresentationNavigation.tsx` | Ajout bouton |
-
-### Aucune modification base de données
-
-Le système réutilise intégralement la table `project_notes` et le hook `useProjectNotes` existants, y compris les notifications email.
+| `src/components/presentation/PresentationSlide.tsx` | Ajout couleurs/icones sur blocs taches, ajout % avancement en-tete, props `headerColor`/`icon` sur `Section` |
+| `src/components/presentation/PresentationSummary.tsx` | Ajout colonne avancement dans le tableau |
+| `src/components/presentation/PresentationNavigation.tsx` | Ajout selecteur de tri |
+| `src/components/presentation/PresentationView.tsx` | State de tri + `useMemo` pour trier les projets |
+| `src/components/pptx/slideGenerators.ts` | Couleurs des en-tetes taches, emojis, colonne/texte avancement |
+| `src/components/pptx/PPTXStyles.ts` | Ajout des couleurs de statut de taches |
+| `src/pages/ProjectPresentation.tsx` | Retirer le tri fixe (delegue a `PresentationView`) |
 
