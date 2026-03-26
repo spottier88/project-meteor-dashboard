@@ -1,57 +1,70 @@
 
 
-# Amelioration visuelle de la presentation des revues de projets
+# Ordonnancement des taches dans un projet
 
-## Modifications prevues
+## Objectif
 
-### 1. Blocs de taches colores avec icones (Web + PPTX)
+Ajouter un champ `order_index` a la table `tasks` pour permettre un tri manuel des taches. Ce tri devient le tri par defaut dans tous les affichages (tableau, kanban, Gantt, export Excel, slides de presentation).
 
-Remplacer les en-tetes noirs uniformes des 3 blocs de taches par des couleurs et icones distinctes selon le statut :
+## Plan
 
-| Bloc | Couleur en-tete | Icone |
-|---|---|---|
-| Taches terminees | Vert (`#22c55e`) | `CheckCircle` |
-| Taches en cours | Bleu (`#3b82f6`) | `Clock` |
-| Taches a venir | Gris (`#6b7280`) | `CircleDot` |
+### 1. Migration SQL — ajout de `order_index`
 
-**Web** : Modifier le composant `Section` pour accepter une prop `headerColor` et une prop `icon`. Appliquer sur les 3 blocs de taches dans `PresentationSlide.tsx`.
+Ajouter une colonne `order_index integer NOT NULL DEFAULT 0` a la table `tasks`. Initialiser les valeurs existantes avec un index base sur `created_at` (les plus anciennes en premier) pour conserver un ordre coherent.
 
-**PPTX** : Modifier `addTasksSection` dans `slideGenerators.ts` pour passer la couleur de fond du titre (`fill.color`) correspondante a chaque bloc au lieu du noir uniforme. Ajouter les emojis equivalents dans le titre (✅, 🔄, 📋).
+```sql
+ALTER TABLE tasks ADD COLUMN order_index integer NOT NULL DEFAULT 0;
 
-### 2. Affichage du % d'avancement dans l'en-tete (Web + PPTX)
+-- Initialiser l'ordre existant base sur la date de creation
+WITH numbered AS (
+  SELECT id, ROW_NUMBER() OVER (PARTITION BY project_id ORDER BY created_at ASC) AS rn
+  FROM tasks
+)
+UPDATE tasks SET order_index = numbered.rn FROM numbered WHERE tasks.id = numbered.id;
+```
 
-Le champ `completion` est deja disponible dans `data.project.completion` (et `data.lastReview?.completion`).
+### 2. Interface de reordonnancement — drag & drop dans `TaskTable`
 
-**Web** : Ajouter dans l'en-tete rouge de `PresentationSlide.tsx` un indicateur visuel d'avancement — une barre de progression circulaire ou lineaire avec le pourcentage affiche.
+- Integrer `@dnd-kit/core` + `@dnd-kit/sortable` (deja dans l'ecosysteme React) pour rendre les lignes du tableau reordonnables par glisser-deposer
+- Ajouter une colonne "poignee" (icone `GripVertical`) en premiere position, visible uniquement si l'utilisateur a le droit d'edition et que le tri n'est pas actif sur une autre colonne
+- Au drop, mettre a jour les `order_index` des taches concernees via un batch `UPDATE` Supabase
+- Le drag & drop ne s'applique qu'aux taches parentes entre elles et aux sous-taches au sein de leur parent
 
-**PPTX** : Ajouter dans `addProjectHeader` de `slideGenerators.ts` un texte "Avancement : XX%" dans l'en-tete.
+### 3. Tri par defaut dans toutes les requetes
 
-**Summary (Web)** : Ajouter une colonne "Avancement" dans le tableau de `PresentationSummary.tsx`.
+Remplacer `.order("created_at", { ascending: false })` par `.order("order_index", { ascending: true })` dans :
 
-**Summary (PPTX)** : Ajouter une colonne "%" dans `addSummaryTable` de `slideGenerators.ts`.
+| Fichier | Requete |
+|---|---|
+| `src/components/TaskList.tsx` | Query principale des taches |
+| `src/pages/TaskManagement.tsx` | Query d'export |
+| `src/components/KanbanBoard.tsx` | Query des taches kanban |
+| `src/components/review/TaskStatusUpdateSection.tsx` | Taches dans la revue |
+| `src/pages/ProjectSummary.tsx` | Taches du resume projet |
 
-### 3. Ordonnancement des projets dans la presentation web
+### 4. Tri par defaut dans les affichages non-requete
 
-Actuellement le tri est fixe (orageux en premier) dans `ProjectPresentation.tsx`. Ajouter un selecteur de tri dans la barre de navigation (`PresentationNavigation.tsx`) avec les options :
+- `TaskTable.tsx` : quand aucun tri par colonne n'est actif (`sortKey === null`), trier par `order_index` au lieu de ne pas trier
+- `TaskGantt.tsx` : trier les taches par `order_index` avant de les passer au composant Gantt
+- `PresentationSlide.tsx` : les taches arrivent deja triees par la requete, rien a changer
+- `exportTasksToExcel` : les taches arrivent deja triees, rien a changer
 
-- Meteo (orageux d'abord) — tri actuel par defaut
-- Avancement (du plus faible au plus eleve)
-- Alphabetique (A→Z)
-- Statut du cycle de vie (a l'etude → en cours → suspendu)
+### 5. Attribution automatique de l'ordre a la creation
 
-**Mecanisme** : Remonter le state de tri dans `PresentationView.tsx`. Le tri s'applique sur la liste `projects` via un `useMemo`. Le selecteur est un `Select` compact dans la barre de navigation, visible uniquement quand il y a plus d'un projet.
-
-Cette fonctionnalite est limitee a l'interface web (pas d'impact PPTX — l'ordre d'export reste celui du panier/portefeuille).
+- Dans `TaskForm.tsx` (ou le hook de creation de tache), lors de l'insertion d'une nouvelle tache, calculer `order_index = MAX(order_index) + 1` pour le `project_id` concerne (ou pour le `parent_task_id` si sous-tache)
+- Alternative plus simple : un trigger SQL `BEFORE INSERT` qui attribue automatiquement le prochain `order_index`
 
 ### Fichiers impactes
 
-| Fichier | Modifications |
+| Fichier | Modification |
 |---|---|
-| `src/components/presentation/PresentationSlide.tsx` | Ajout couleurs/icones sur blocs taches, ajout % avancement en-tete, props `headerColor`/`icon` sur `Section` |
-| `src/components/presentation/PresentationSummary.tsx` | Ajout colonne avancement dans le tableau |
-| `src/components/presentation/PresentationNavigation.tsx` | Ajout selecteur de tri |
-| `src/components/presentation/PresentationView.tsx` | State de tri + `useMemo` pour trier les projets |
-| `src/components/pptx/slideGenerators.ts` | Couleurs des en-tetes taches, emojis, colonne/texte avancement |
-| `src/components/pptx/PPTXStyles.ts` | Ajout des couleurs de statut de taches |
-| `src/pages/ProjectPresentation.tsx` | Retirer le tri fixe (delegue a `PresentationView`) |
+| Migration SQL | Ajout colonne + initialisation |
+| `src/components/task/TaskTable.tsx` | Drag & drop + colonne poignee + tri par defaut |
+| `src/components/TaskList.tsx` | Ordre de requete |
+| `src/pages/TaskManagement.tsx` | Ordre de requete |
+| `src/components/KanbanBoard.tsx` | Ordre de requete |
+| `src/components/review/TaskStatusUpdateSection.tsx` | Ordre de requete |
+| `src/pages/ProjectSummary.tsx` | Ordre de requete |
+| `src/components/task/TaskForm.tsx` | Calcul order_index a l'insertion |
+| `src/components/task/TaskGantt.tsx` | Tri par order_index |
 
