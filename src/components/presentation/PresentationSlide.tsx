@@ -8,8 +8,9 @@
 import { useState } from "react";
 import { ProjectData } from "@/hooks/useDetailedProjectsData";
 import { lifecycleStatusLabels } from "@/types/project";
-import { Sun, Cloud, CloudRain, TrendingUp, TrendingDown, Minus, Expand } from "lucide-react";
+import { Sun, Cloud, CloudRain, TrendingUp, TrendingDown, Minus, Expand, CheckCircle, Clock, CircleDot, type LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Progress } from "@/components/ui/progress";
 import { SectionDetailDialog } from "./SectionDetailDialog";
 
 interface PresentationSlideProps {
@@ -35,6 +36,7 @@ export const PresentationSlide = ({ data }: PresentationSlideProps) => {
   const progress = data.lastReview?.progress || "stable";
   const WeatherIcon = weatherIcons[weather].icon;
   const ProgressIcon = progressIcons[progress].icon;
+  const completion = data.lastReview?.completion ?? data.project.completion ?? 0;
 
   // Formatage de la date
   const formatDate = (dateStr: string | undefined | null) => {
@@ -70,6 +72,17 @@ export const PresentationSlide = ({ data }: PresentationSlideProps) => {
               <p className="text-sm opacity-90 mt-1 line-clamp-1">{data.project.description}</p>
             )}
           </div>
+          {/* Indicateur d'avancement */}
+          <div className="flex items-center gap-3 flex-shrink-0">
+            <div className="flex flex-col items-center gap-0.5">
+              <span className="text-xs opacity-80">Avancement</span>
+              <div className="flex items-center gap-2">
+                <Progress value={completion} className="w-20 h-2 bg-white/30" indicatorClassName="bg-white" />
+                <span className="text-sm font-bold">{completion}%</span>
+              </div>
+            </div>
+          </div>
+
           <div className="text-right text-sm flex-shrink-0">
             {data.lastReview?.created_at && (
               <p className="font-medium text-base">{new Date(data.lastReview.created_at).toLocaleDateString("fr-FR")}</p>
@@ -146,6 +159,8 @@ export const PresentationSlide = ({ data }: PresentationSlideProps) => {
         <div className="grid grid-cols-3 gap-1.5" style={{ height: '40%', minHeight: 0 }}>
           <Section 
             title="TÂCHES TERMINÉES" 
+            headerColor="bg-green-500"
+            icon={CheckCircle}
             expandable
             fullContent={<TaskListFull tasks={tasksDone} />}
           >
@@ -153,6 +168,8 @@ export const PresentationSlide = ({ data }: PresentationSlideProps) => {
           </Section>
           <Section 
             title="TÂCHES EN COURS" 
+            headerColor="bg-blue-500"
+            icon={Clock}
             expandable
             fullContent={<TaskListFull tasks={tasksInProgress} />}
           >
@@ -160,6 +177,8 @@ export const PresentationSlide = ({ data }: PresentationSlideProps) => {
           </Section>
           <Section 
             title="TÂCHES À VENIR" 
+            headerColor="bg-gray-500"
+            icon={CircleDot}
             expandable
             fullContent={<TaskListFull tasks={tasksTodo} />}
           >
@@ -213,7 +232,7 @@ export const PresentationSlide = ({ data }: PresentationSlideProps) => {
   );
 };
 
-// Composant Section avec titre noir, détection de débordement et bouton loupe
+// Composant Section avec titre coloré, icône optionnelle et bouton loupe
 interface SectionProps {
   title: string;
   children: React.ReactNode;
@@ -221,19 +240,22 @@ interface SectionProps {
   expandable?: boolean;
   /** Contenu complet à afficher dans le dialogue (si différent de children) */
   fullContent?: React.ReactNode;
+  /** Classe Tailwind pour la couleur de fond de l'en-tête (défaut : bg-black) */
+  headerColor?: string;
+  /** Icône Lucide à afficher dans l'en-tête */
+  icon?: LucideIcon;
 }
 
-const Section = ({ title, children, expandable = false, fullContent }: SectionProps) => {
+const Section = ({ title, children, expandable = false, fullContent, headerColor = "bg-black", icon: Icon }: SectionProps) => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
-  // Afficher le bouton loupe pour toutes les sections expandables
-  // (le line-clamp CSS masque le débordement réel, donc on affiche toujours le bouton)
   const showExpandButton = expandable;
 
   return (
     <>
       <div className="bg-muted/50 rounded overflow-hidden h-full flex flex-col">
-        <div className="bg-black text-white text-[10px] font-bold py-0.5 px-1.5 text-center flex-shrink-0 relative">
+        <div className={cn("text-white text-[10px] font-bold py-0.5 px-1.5 text-center flex-shrink-0 relative flex items-center justify-center gap-1", headerColor)}>
+          {Icon && <Icon className="h-3 w-3" />}
           {title}
           {showExpandButton && (
             <button

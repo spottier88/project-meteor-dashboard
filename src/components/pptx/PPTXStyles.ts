@@ -39,6 +39,10 @@ export const pptxColors = {
   secondary: "000000",
   text: "363636",
   muted: "666666",
+  /** Couleurs d'en-tête des blocs de tâches par statut */
+  taskDone: "22c55e",
+  taskInProgress: "3b82f6",
+  taskTodo: "6b7280",
 };
 
 export const pptxLayout = {
