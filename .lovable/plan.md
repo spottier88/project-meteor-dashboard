@@ -1,91 +1,48 @@
 
 
-# Correction de la recursion infinie RLS sur `portfolio_managers`
+# Ajout de notes depuis le mode présentation
 
-## Cause racine
+## Objectif
 
-La politique INSERT sur `portfolio_managers` contient un sous-select sur `project_portfolios`. Or la politique SELECT de `project_portfolios` (`portfolio_select_direct`) contient elle-meme un sous-select sur `portfolio_managers`. PostgreSQL detecte cette boucle et leve l'erreur 42P17.
+Permettre au présentateur d'ajouter une note (compte-rendu, décision, mémo) sur le projet affiché, directement depuis la slide de présentation, en réutilisant le système de notes existant (`project_notes`).
 
-```text
-INSERT portfolio_managers
-  └─ with_check → SELECT project_portfolios
-       └─ RLS SELECT → SELECT portfolio_managers
-            └─ RLS SELECT → deja en cours → RECURSION
-```
+## Approche
 
-## Correction
+Ajouter un bouton dans la barre de navigation de la présentation qui ouvre un dialogue modal contenant un formulaire simplifié de note. La note est enregistrée via le hook `useProjectNotes` existant, ce qui déclenche automatiquement les notifications email aux membres du projet.
 
-Creer une fonction SECURITY DEFINER qui verifie si l'utilisateur peut inserer dans `portfolio_managers` sans passer par les politiques RLS, puis remplacer la politique INSERT actuelle.
+## Plan
 
-### 1. Nouvelle fonction SECURITY DEFINER
+### 1. Nouveau composant `PresentationNoteDialog`
 
-```sql
-CREATE OR REPLACE FUNCTION public.can_insert_portfolio_manager(
-  p_user_id uuid,
-  p_portfolio_id uuid,
-  p_target_user_id uuid,
-  p_role text
-)
-RETURNS boolean
-LANGUAGE plpgsql
-SECURITY DEFINER
-SET search_path = public
-AS $$
-BEGIN
-    -- Admin peut tout faire
-    IF EXISTS (
-        SELECT 1 FROM user_roles
-        WHERE user_id = p_user_id AND role = 'admin'
-    ) THEN RETURN true; END IF;
+Créer `src/components/presentation/PresentationNoteDialog.tsx` :
+- Un `Dialog` contenant un sélecteur de type de note et un `Textarea`
+- Props : `projectId`, `projectTitle`, `isOpen`, `onClose`
+- Utilise `useProjectNotes(projectId)` en interne pour appeler `createNote.mutate`
+- Affiche un toast de confirmation à la soumission
+- Pré-sélectionner le type "meeting" (cas d'usage principal : revue de projet)
 
-    -- Createur du portefeuille
-    IF EXISTS (
-        SELECT 1 FROM project_portfolios
-        WHERE id = p_portfolio_id AND created_by = p_user_id
-    ) THEN RETURN true; END IF;
+### 2. Modifier `PresentationView.tsx`
 
-    -- Insertion automatique du owner (trigger auto_add_portfolio_owner)
-    IF p_role = 'owner' AND EXISTS (
-        SELECT 1 FROM project_portfolios
-        WHERE id = p_portfolio_id AND created_by = p_target_user_id
-    ) THEN RETURN true; END IF;
+- Ajouter un state `isNoteDialogOpen`
+- Passer le `projectId` et le `projectTitle` du projet courant au dialogue
+- Passer un callback `onAddNote` à `PresentationNavigation`
+- Masquer le bouton si on est sur la slide de synthèse (pas de projet courant)
 
-    RETURN false;
-END;
-$$;
-```
+### 3. Modifier `PresentationNavigation.tsx`
 
-### 2. Remplacer la politique INSERT
+- Ajouter une prop optionnelle `onAddNote?: () => void`
+- Afficher un bouton (icône `StickyNote` ou `MessageSquarePlus`) dans la barre, entre les contrôles existants
+- Le bouton n'apparaît que si `onAddNote` est fourni (masqué sur la slide de synthèse)
 
-```sql
-DROP POLICY "Simple portfolio managers insert policy" ON portfolio_managers;
+### Fichiers impactés
 
-CREATE POLICY "portfolio_managers_insert"
-ON portfolio_managers FOR INSERT TO authenticated
-WITH CHECK (
-    can_insert_portfolio_manager(auth.uid(), portfolio_id, user_id, role)
-);
-```
+| Fichier | Action |
+|---|---|
+| `src/components/presentation/PresentationNoteDialog.tsx` | Nouveau |
+| `src/components/presentation/PresentationView.tsx` | Ajout state + dialogue |
+| `src/components/presentation/PresentationNavigation.tsx` | Ajout bouton |
 
-### 3. Securiser aussi la politique SELECT de `project_portfolios`
+### Aucune modification base de données
 
-La politique SELECT de `project_portfolios` (`portfolio_select_direct`) utilise un sous-select direct sur `portfolio_managers`. Il faut la remplacer par un appel a `can_view_portfolio` (qui est deja SECURITY DEFINER et existe) :
-
-```sql
-DROP POLICY "portfolio_select_direct" ON project_portfolios;
-
-CREATE POLICY "portfolio_select_via_function"
-ON project_portfolios FOR SELECT TO authenticated
-USING (can_view_portfolio(auth.uid(), id));
-```
-
-Cela coupe la chaine de recursion a la source : plus aucune politique RLS ne fera de sous-select direct sur une table dont les politiques referencent la table d'origine.
-
-### Fichiers impactes
-
-Aucun fichier applicatif a modifier — le correctif est purement SQL (1 migration).
-
-### Risque
-
-Faible. Les fonctions SECURITY DEFINER `can_view_portfolio` et `can_manage_portfolio_simple` existent deja et implementent la meme logique que les politiques actuelles.
+Le système réutilise intégralement la table `project_notes` et le hook `useProjectNotes` existants, y compris les notifications email.
 
