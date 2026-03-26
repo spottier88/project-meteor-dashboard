@@ -273,14 +273,13 @@ export const TaskTable = ({ tasks, onEdit, onDelete, isProjectClosed = false }: 
     } else {
       toast({ title: "Ordre mis à jour" });
     }
-    await queryClient.invalidateQueries({ queryKey: ["tasks", tasks[0]?.project_id] });
+    await queryClient.refetchQueries({ queryKey: ["tasks", tasks[0]?.project_id] });
   }, [sortedParentTasks, queryClient, tasks, toast]);
 
   // Rendu d'une ligne de tâche (parent ou enfant)
   const renderTaskCells = (task: Task, isChild: boolean = false) => (
     <>
       <TableCell className={cn("font-medium", isChild && "pl-10")}>
-        {isDragEnabled && !isChild && <DragHandle taskId={task.id} />}
         {!isChild && task.id in childTasksByParent && (
           <Button
             variant="ghost"
@@ -361,7 +360,7 @@ export const TaskTable = ({ tasks, onEdit, onDelete, isProjectClosed = false }: 
     <Table>
       <TableHeader>
         <TableRow>
-          {isDragEnabled && <TableHead className="w-8" />}
+          {isDragEnabled && <TableHead className="w-8"></TableHead>}
           <SortableHeader label="Titre" sortKey="title" currentSort={sortKey} currentDirection={sortDirection} onSort={handleSort} />
           <SortableHeader label="Description" sortKey="description" currentSort={sortKey} currentDirection={sortDirection} onSort={handleSort} />
           <SortableHeader label="Statut" sortKey="status" currentSort={sortKey} currentDirection={sortDirection} onSort={handleSort} />
@@ -376,6 +375,7 @@ export const TaskTable = ({ tasks, onEdit, onDelete, isProjectClosed = false }: 
           <>
       {isDragEnabled ? (
               <SortableRow key={task.id} task={task}>
+                <TableCell className="w-8"><DragHandle taskId={task.id} /></TableCell>
                 {renderTaskCells(task)}
               </SortableRow>
             ) : (
