@@ -2,16 +2,33 @@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { SortableHeader, SortDirection } from "@/components/ui/sortable-header";
 import { Button } from "@/components/ui/button";
-import { ChevronDown, ChevronRight, Pencil, Trash2, FileText, ClipboardCheck } from "lucide-react";
+import { ChevronDown, ChevronRight, Pencil, Trash2, FileText, ClipboardCheck, GripVertical } from "lucide-react";
 import { useTaskPermissions } from "@/hooks/useTaskPermissions";
 import { formatUserName } from "@/utils/formatUserName";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 
 interface Task {
   id: string;
@@ -25,13 +42,14 @@ interface Task {
   parent_task_id?: string;
   document_url?: string;
   completion_comment?: string;
+  order_index?: number;
 }
 
 interface TaskTableProps {
   tasks: Task[];
   onEdit?: (task: Task) => void;
   onDelete?: (task: Task) => void;
-  isProjectClosed?: boolean; // Prop pour forcer le mode lecture seule si projet clôturé
+  isProjectClosed?: boolean;
 }
 
 const statusColors = {
@@ -46,6 +64,45 @@ const statusLabels = {
   done: "Terminé",
 };
 
+/** Ligne de tableau réordonnançable via drag & drop */
+const SortableRow = ({ task, children }: { task: Task; children: React.ReactNode }) => {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: task.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+
+  return (
+    <TableRow ref={setNodeRef} style={style} {...attributes}>
+      {children}
+    </TableRow>
+  );
+};
+
+/** Poignée de drag & drop */
+const DragHandle = ({ taskId }: { taskId: string }) => {
+  const { listeners, setActivatorNodeRef } = useSortable({ id: taskId });
+  return (
+    <button
+      ref={setActivatorNodeRef}
+      {...listeners}
+      className="cursor-grab active:cursor-grabbing p-1 text-muted-foreground hover:text-foreground"
+      title="Glisser pour réordonner"
+    >
+      <GripVertical className="h-4 w-4" />
+    </button>
+  );
+};
+
 export const TaskTable = ({ tasks, onEdit, onDelete, isProjectClosed = false }: TaskTableProps) => {
   const [sortKey, setSortKey] = useState<string | null>(null);
   const [sortDirection, setSortDirection] = useState<SortDirection>(null);
@@ -54,11 +111,20 @@ export const TaskTable = ({ tasks, onEdit, onDelete, isProjectClosed = false }: 
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
-  // Forcer lecture seule si projet clôturé (override synchrone des permissions async)
+  // Forcer lecture seule si projet clôturé
   const canEditTask = (assignee?: string) => isProjectClosed ? false : hookCanEdit(assignee);
   const canDeleteTask = isProjectClosed ? false : hookCanDelete;
 
-  // Fonction de changement rapide de statut (cycle : todo -> in_progress -> done -> todo)
+  // Le drag & drop est actif si aucun tri par colonne n'est sélectionné et que l'utilisateur peut éditer
+  const isDragEnabled = !sortKey && !sortDirection && !isProjectClosed;
+
+  // Capteurs pour le drag & drop
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+  );
+
+  // Fonction de changement rapide de statut
   const cycleTaskStatus = async (taskId: string, currentStatus: string, assignee?: string) => {
     if (!canEditTask(assignee)) return;
     const nextStatus: Record<string, "todo" | "in_progress" | "done"> = { todo: "in_progress", in_progress: "done", done: "todo" };
@@ -93,7 +159,6 @@ export const TaskTable = ({ tasks, onEdit, onDelete, isProjectClosed = false }: 
 
       if (error) throw error;
       
-      // Récupérer aussi le chef de projet
       const { data: project } = await supabase
         .from("projects")
         .select("project_manager")
@@ -108,7 +173,6 @@ export const TaskTable = ({ tasks, onEdit, onDelete, isProjectClosed = false }: 
           .maybeSingle();
           
         if (pmProfile) {
-          // Vérifier que le chef de projet n'est pas déjà dans la liste
           const isAlreadyInList = data?.some(m => m.profiles?.email === pmProfile.email);
           if (!isAlreadyInList) {
             data?.push({
@@ -146,17 +210,14 @@ export const TaskTable = ({ tasks, onEdit, onDelete, isProjectClosed = false }: 
   };
 
   const toggleTaskExpanded = (taskId: string) => {
-    setExpandedTasks(prev => ({
-      ...prev,
-      [taskId]: !prev[taskId]
-    }));
+    setExpandedTasks(prev => ({ ...prev, [taskId]: !prev[taskId] }));
   };
 
   // Séparer les tâches en tâches parentes et sous-tâches
   const parentTasks = tasks.filter(task => !task.parent_task_id);
   const childTasks = tasks.filter(task => task.parent_task_id);
   
-  // Créer un index des sous-tâches par tâche parente
+  // Index des sous-tâches par parent
   const childTasksByParent: Record<string, Task[]> = {};
   childTasks.forEach(task => {
     if (task.parent_task_id) {
@@ -167,242 +228,164 @@ export const TaskTable = ({ tasks, onEdit, onDelete, isProjectClosed = false }: 
     }
   });
 
-  // Extraire les profils pour les passer à formatUserName
   const profiles = projectMembers?.map(member => member.profiles) || [];
 
-  // Trier les tâches parentes
+  // Trier les tâches parentes : par order_index si aucun tri actif, sinon par colonne
   const sortedParentTasks = [...parentTasks].sort((a: any, b: any) => {
-    if (!sortKey || !sortDirection) return 0;
-
+    if (!sortKey || !sortDirection) {
+      // Tri par défaut : order_index
+      return (a.order_index ?? 0) - (b.order_index ?? 0);
+    }
     const aValue = a[sortKey];
     const bValue = b[sortKey];
-
     if (aValue === null) return 1;
     if (bValue === null) return -1;
-
-    if (sortDirection === "asc") {
-      return aValue > bValue ? 1 : -1;
-    } else {
-      return aValue < bValue ? 1 : -1;
-    }
+    if (sortDirection === "asc") return aValue > bValue ? 1 : -1;
+    return aValue < bValue ? 1 : -1;
   });
 
-  return (
+  // Gestion du drag & drop — mise à jour de l'ordre en base
+  const handleDragEnd = useCallback(async (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+
+    const oldIndex = sortedParentTasks.findIndex(t => t.id === active.id);
+    const newIndex = sortedParentTasks.findIndex(t => t.id === over.id);
+    if (oldIndex === -1 || newIndex === -1) return;
+
+    const reordered = arrayMove(sortedParentTasks, oldIndex, newIndex);
+
+    // Mise à jour batch des order_index
+    const updates = reordered.map((task, index) => ({
+      id: task.id,
+      order_index: index + 1,
+    }));
+
+    // Mettre à jour en parallèle
+    const promises = updates.map(u =>
+      supabase.from("tasks").update({ order_index: u.order_index }).eq("id", u.id)
+    );
+    
+    await Promise.all(promises);
+    queryClient.invalidateQueries({ queryKey: ["tasks", tasks[0]?.project_id] });
+    toast({ title: "Ordre mis à jour" });
+  }, [sortedParentTasks, queryClient, tasks, toast]);
+
+  // Rendu d'une ligne de tâche (parent ou enfant)
+  const renderTaskCells = (task: Task, isChild: boolean = false) => (
+    <>
+      <TableCell className={cn("font-medium", isChild && "pl-10")}>
+        {isDragEnabled && !isChild && <DragHandle taskId={task.id} />}
+        {!isChild && task.id in childTasksByParent && (
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-6 w-6 mr-1 p-0"
+            onClick={() => toggleTaskExpanded(task.id)}
+          >
+            {expandedTasks[task.id] ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+          </Button>
+        )}
+        {task.title}
+        {task.document_url && (
+          <a href={task.document_url} target="_blank" rel="noopener noreferrer"
+            className="inline-flex ml-1 text-primary hover:text-primary/80" title="Document lié"
+            onClick={(e) => e.stopPropagation()}>
+            <FileText className="h-4 w-4" />
+          </a>
+        )}
+        {task.completion_comment && (
+          <span title={task.completion_comment} className="inline-flex ml-1 text-green-600">
+            <ClipboardCheck className="h-4 w-4" />
+          </span>
+        )}
+        {!isChild && task.id in childTasksByParent && (
+          <Badge variant="outline" className="ml-2 text-xs">
+            {childTasksByParent[task.id].length} sous-tâche(s)
+          </Badge>
+        )}
+      </TableCell>
+      <TableCell>{task.description || "-"}</TableCell>
+      <TableCell>
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Badge
+                className={cn(
+                  statusColors[task.status],
+                  canEditTask(task.assignee) && "cursor-pointer hover:opacity-80 transition-opacity"
+                )}
+                onClick={() => canEditTask(task.assignee) && cycleTaskStatus(task.id, task.status, task.assignee)}
+              >
+                {statusLabels[task.status]}
+              </Badge>
+            </TooltipTrigger>
+            {canEditTask(task.assignee) && (
+              <TooltipContent>Cliquer pour avancer le statut</TooltipContent>
+            )}
+          </Tooltip>
+        </TooltipProvider>
+      </TableCell>
+      <TableCell>{formatUserName(task.assignee, profiles)}</TableCell>
+      <TableCell>
+        {task.start_date ? new Date(task.start_date).toLocaleDateString("fr-FR") : "-"}
+      </TableCell>
+      <TableCell>
+        <span className={cn(isTaskOverdue(task) ? "text-red-600 font-medium" : "")}>
+          {task.due_date ? new Date(task.due_date).toLocaleDateString("fr-FR") : "-"}
+        </span>
+      </TableCell>
+      {(canEditTask || canDeleteTask) && (
+        <TableCell className="text-right">
+          {canEditTask(task.assignee) && (
+            <Button variant="ghost" size="icon" onClick={() => onEdit?.(task)}>
+              <Pencil className="h-4 w-4" />
+            </Button>
+          )}
+          {canDeleteTask && (
+            <Button variant="ghost" size="icon" onClick={() => onDelete?.(task)}>
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          )}
+        </TableCell>
+      )}
+    </>
+  );
+
+  const tableContent = (
     <Table>
       <TableHeader>
         <TableRow>
-          <SortableHeader
-            label="Titre"
-            sortKey="title"
-            currentSort={sortKey}
-            currentDirection={sortDirection}
-            onSort={handleSort}
-          />
-          <SortableHeader
-            label="Description"
-            sortKey="description"
-            currentSort={sortKey}
-            currentDirection={sortDirection}
-            onSort={handleSort}
-          />
-          <SortableHeader
-            label="Statut"
-            sortKey="status"
-            currentSort={sortKey}
-            currentDirection={sortDirection}
-            onSort={handleSort}
-          />
-          <SortableHeader
-            label="Assigné à"
-            sortKey="assignee"
-            currentSort={sortKey}
-            currentDirection={sortDirection}
-            onSort={handleSort}
-          />
-          <SortableHeader
-            label="Date de début"
-            sortKey="start_date"
-            currentSort={sortKey}
-            currentDirection={sortDirection}
-            onSort={handleSort}
-          />
-          <SortableHeader
-            label="Date limite"
-            sortKey="due_date"
-            currentSort={sortKey}
-            currentDirection={sortDirection}
-            onSort={handleSort}
-          />
-          {(canEditTask || canDeleteTask) && (
-            <TableHead className="text-right">Actions</TableHead>
-          )}
+          {isDragEnabled && <TableHead className="w-8" />}
+          <SortableHeader label="Titre" sortKey="title" currentSort={sortKey} currentDirection={sortDirection} onSort={handleSort} />
+          <SortableHeader label="Description" sortKey="description" currentSort={sortKey} currentDirection={sortDirection} onSort={handleSort} />
+          <SortableHeader label="Statut" sortKey="status" currentSort={sortKey} currentDirection={sortDirection} onSort={handleSort} />
+          <SortableHeader label="Assigné à" sortKey="assignee" currentSort={sortKey} currentDirection={sortDirection} onSort={handleSort} />
+          <SortableHeader label="Date de début" sortKey="start_date" currentSort={sortKey} currentDirection={sortDirection} onSort={handleSort} />
+          <SortableHeader label="Date limite" sortKey="due_date" currentSort={sortKey} currentDirection={sortDirection} onSort={handleSort} />
+          {(canEditTask || canDeleteTask) && <TableHead className="text-right">Actions</TableHead>}
         </TableRow>
       </TableHeader>
       <TableBody>
         {sortedParentTasks.map((task) => (
           <>
-            <TableRow key={task.id} className={task.id in childTasksByParent ? "border-b-0" : ""}>
-              <TableCell className="font-medium">
-                {task.id in childTasksByParent && (
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-6 w-6 mr-1 p-0"
-                    onClick={() => toggleTaskExpanded(task.id)}
-                  >
-                    {expandedTasks[task.id] ? (
-                      <ChevronDown className="h-4 w-4" />
-                    ) : (
-                      <ChevronRight className="h-4 w-4" />
-                    )}
-                  </Button>
-                )}
-                {task.title}
-                {task.document_url && (
-                  <a
-                    href={task.document_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex ml-1 text-primary hover:text-primary/80"
-                    title="Document lié"
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    <FileText className="h-4 w-4" />
-                  </a>
-                )}
-                {task.completion_comment && (
-                  <span title={task.completion_comment} className="inline-flex ml-1 text-green-600">
-                    <ClipboardCheck className="h-4 w-4" />
-                  </span>
-                )}
-                {task.id in childTasksByParent && (
-                  <Badge variant="outline" className="ml-2 text-xs">
-                    {childTasksByParent[task.id].length} sous-tâche(s)
-                  </Badge>
-                )}
-              </TableCell>
-              <TableCell>{task.description || "-"}</TableCell>
-              <TableCell>
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Badge
-                        className={cn(
-                          statusColors[task.status],
-                          canEditTask(task.assignee) && "cursor-pointer hover:opacity-80 transition-opacity"
-                        )}
-                        onClick={() => canEditTask(task.assignee) && cycleTaskStatus(task.id, task.status, task.assignee)}
-                      >
-                        {statusLabels[task.status]}
-                      </Badge>
-                    </TooltipTrigger>
-                    {canEditTask(task.assignee) && (
-                      <TooltipContent>Cliquer pour avancer le statut</TooltipContent>
-                    )}
-                  </Tooltip>
-                </TooltipProvider>
-              </TableCell>
-              <TableCell>{formatUserName(task.assignee, profiles)}</TableCell>
-              <TableCell>
-                {task.start_date
-                  ? new Date(task.start_date).toLocaleDateString("fr-FR")
-                  : "-"}
-              </TableCell>
-              <TableCell>
-                <span className={cn(
-                  isTaskOverdue(task) ? "text-red-600 font-medium" : ""
-                )}>
-                  {task.due_date
-                    ? new Date(task.due_date).toLocaleDateString("fr-FR")
-                    : "-"}
-                </span>
-              </TableCell>
-              {(canEditTask || canDeleteTask) && (
-                <TableCell className="text-right">
-                  {canEditTask(task.assignee) && (
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => onEdit?.(task)}
-                    >
-                      <Pencil className="h-4 w-4" />
-                    </Button>
-                  )}
-                  {canDeleteTask && (
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => onDelete?.(task)}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  )}
-                </TableCell>
-              )}
-            </TableRow>
+            {isDragEnabled ? (
+              <SortableRow key={task.id} task={task}>
+                {isDragEnabled && <TableCell className="w-8 p-1"><DragHandle taskId={task.id} /></TableCell>}
+                {renderTaskCells(task)}
+              </SortableRow>
+            ) : (
+              <TableRow key={task.id} className={task.id in childTasksByParent ? "border-b-0" : ""}>
+                {renderTaskCells(task)}
+              </TableRow>
+            )}
             
-            {/* Afficher les sous-tâches si la tâche parente est étendue */}
+            {/* Sous-tâches */}
             {task.id in childTasksByParent && expandedTasks[task.id] && (
               childTasksByParent[task.id].map(childTask => (
                 <TableRow key={childTask.id} className="bg-muted/30">
-                  <TableCell className="font-medium pl-10">
-                    {childTask.title}
-                    {childTask.document_url && (
-                      <a
-                        href={childTask.document_url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex ml-1 text-primary hover:text-primary/80"
-                        title="Document lié"
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        <FileText className="h-4 w-4" />
-                      </a>
-                    )}
-                  </TableCell>
-                  <TableCell>{childTask.description || "-"}</TableCell>
-                  <TableCell>
-                    <Badge className={cn(statusColors[childTask.status])}>
-                      {statusLabels[childTask.status]}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>{formatUserName(childTask.assignee, profiles)}</TableCell>
-                  <TableCell>
-                    {childTask.start_date
-                      ? new Date(childTask.start_date).toLocaleDateString("fr-FR")
-                      : "-"}
-                  </TableCell>
-                  <TableCell>
-                    <span className={cn(
-                      isTaskOverdue(childTask) ? "text-red-600 font-medium" : ""
-                    )}>
-                      {childTask.due_date
-                        ? new Date(childTask.due_date).toLocaleDateString("fr-FR")
-                        : "-"}
-                    </span>
-                  </TableCell>
-                  {(canEditTask || canDeleteTask) && (
-                    <TableCell className="text-right">
-                      {canEditTask(childTask.assignee) && (
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => onEdit?.(childTask)}
-                        >
-                          <Pencil className="h-4 w-4" />
-                        </Button>
-                      )}
-                      {canDeleteTask && (
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => onDelete?.(childTask)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      )}
-                    </TableCell>
-                  )}
+                  {isDragEnabled && <TableCell className="w-8" />}
+                  {renderTaskCells(childTask, true)}
                 </TableRow>
               ))
             )}
@@ -411,4 +394,17 @@ export const TaskTable = ({ tasks, onEdit, onDelete, isProjectClosed = false }: 
       </TableBody>
     </Table>
   );
+
+  // Envelopper dans DndContext uniquement si le drag est actif
+  if (isDragEnabled) {
+    return (
+      <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+        <SortableContext items={sortedParentTasks.map(t => t.id)} strategy={verticalListSortingStrategy}>
+          {tableContent}
+        </SortableContext>
+      </DndContext>
+    );
+  }
+
+  return tableContent;
 };
