@@ -266,9 +266,14 @@ export const TaskTable = ({ tasks, onEdit, onDelete, isProjectClosed = false }: 
       supabase.from("tasks").update({ order_index: u.order_index }).eq("id", u.id)
     );
     
-    await Promise.all(promises);
-    queryClient.invalidateQueries({ queryKey: ["tasks", tasks[0]?.project_id] });
-    toast({ title: "Ordre mis à jour" });
+    const results = await Promise.all(promises);
+    const hasError = results.some(r => r.error);
+    if (hasError) {
+      toast({ title: "Erreur", description: "Impossible de mettre à jour l'ordre", variant: "destructive" });
+    } else {
+      toast({ title: "Ordre mis à jour" });
+    }
+    await queryClient.invalidateQueries({ queryKey: ["tasks", tasks[0]?.project_id] });
   }, [sortedParentTasks, queryClient, tasks, toast]);
 
   // Rendu d'une ligne de tâche (parent ou enfant)
@@ -369,9 +374,8 @@ export const TaskTable = ({ tasks, onEdit, onDelete, isProjectClosed = false }: 
       <TableBody>
         {sortedParentTasks.map((task) => (
           <>
-            {isDragEnabled ? (
+      {isDragEnabled ? (
               <SortableRow key={task.id} task={task}>
-                {isDragEnabled && <TableCell className="w-8 p-1"><DragHandle taskId={task.id} /></TableCell>}
                 {renderTaskCells(task)}
               </SortableRow>
             ) : (
