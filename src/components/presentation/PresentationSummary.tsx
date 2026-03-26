@@ -5,6 +5,7 @@
  */
 
 import { ProjectData } from "@/hooks/useDetailedProjectsData";
+import { Progress } from "@/components/ui/progress";
 import { Sun, Cloud, CloudRain, TrendingUp, TrendingDown, Minus } from "lucide-react";
 import {
   Table,
@@ -61,6 +62,7 @@ export const PresentationSummary = ({
               <TableHead className="text-white font-bold">Projet</TableHead>
               <TableHead className="text-white font-bold text-center w-24">Météo</TableHead>
               <TableHead className="text-white font-bold text-center w-24">Évolution</TableHead>
+              <TableHead className="text-white font-bold text-center w-28">Avancement</TableHead>
               <TableHead className="text-white font-bold">Commentaire</TableHead>
             </TableRow>
           </TableHeader>
@@ -68,6 +70,7 @@ export const PresentationSummary = ({
             {projects.map((project, index) => {
               const weather = project.lastReview?.weather || "cloudy";
               const progress = project.lastReview?.progress || "stable";
+              const completion = project.lastReview?.completion ?? project.project.completion ?? 0;
               const WeatherIcon = weatherIcons[weather].icon;
               const ProgressIcon = progressIcons[progress].icon;
 
@@ -94,6 +97,12 @@ export const PresentationSummary = ({
                       <ProgressIcon
                         className={`h-6 w-6 ${progressIcons[progress].color}`}
                       />
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex items-center gap-2">
+                      <Progress value={completion} className="h-2 flex-1" />
+                      <span className="text-xs font-medium w-8 text-right">{completion}%</span>
                     </div>
                   </TableCell>
                   <TableCell className="text-muted-foreground text-sm max-w-md truncate">

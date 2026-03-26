@@ -26,21 +26,26 @@ const addSummaryTable = (slide: pptxgen.Slide, projectsData: ProjectData[]) => {
       { text: "Projet", options: { bold: true, fill: { color: pptxColors.secondary }, color: "FFFFFF" } },
       { text: "Météo", options: { bold: true, fill: { color: pptxColors.secondary }, color: "FFFFFF" } },
       { text: "Évolution", options: { bold: true, fill: { color: pptxColors.secondary }, color: "FFFFFF" } },
+      { text: "%", options: { bold: true, fill: { color: pptxColors.secondary }, color: "FFFFFF" } },
       { text: "Commentaire", options: { bold: true, fill: { color: pptxColors.secondary }, color: "FFFFFF" } }
     ],
-    ...projectsData.map((data, idx) => [
-      { text: data.project.title, options: { fill: { color: idx % 2 === 0 ? "F5F5F5" : "FFFFFF" }, fontSize: 11 } },
-      { text: weatherIcons[data.lastReview?.weather || "cloudy"], options: { fill: { color: idx % 2 === 0 ? "F5F5F5" : "FFFFFF" }, fontSize: 11, align: "center" as pptxgen.HAlign } },
-      { text: progressIcons[data.lastReview?.progress || "stable"], options: { fill: { color: idx % 2 === 0 ? "F5F5F5" : "FFFFFF" }, fontSize: 11, align: "center" as pptxgen.HAlign } },
-      { text: data.lastReview?.comment || "-", options: { fill: { color: idx % 2 === 0 ? "F5F5F5" : "FFFFFF" }, fontSize: 11 } }
-    ])
+    ...projectsData.map((data, idx) => {
+      const completion = data.lastReview?.completion ?? data.project.completion ?? 0;
+      return [
+        { text: data.project.title, options: { fill: { color: idx % 2 === 0 ? "F5F5F5" : "FFFFFF" }, fontSize: 11 } },
+        { text: weatherIcons[data.lastReview?.weather || "cloudy"], options: { fill: { color: idx % 2 === 0 ? "F5F5F5" : "FFFFFF" }, fontSize: 11, align: "center" as pptxgen.HAlign } },
+        { text: progressIcons[data.lastReview?.progress || "stable"], options: { fill: { color: idx % 2 === 0 ? "F5F5F5" : "FFFFFF" }, fontSize: 11, align: "center" as pptxgen.HAlign } },
+        { text: `${completion}%`, options: { fill: { color: idx % 2 === 0 ? "F5F5F5" : "FFFFFF" }, fontSize: 11, align: "center" as pptxgen.HAlign } },
+        { text: data.lastReview?.comment || "-", options: { fill: { color: idx % 2 === 0 ? "F5F5F5" : "FFFFFF" }, fontSize: 11 } }
+      ];
+    })
   ];
 
   slide.addTable(tableRows, {
     x: 0.5,
     y: 1.0,
     w: 9,
-    colW: [3, 1, 1, 4],
+    colW: [2.5, 1, 1, 0.8, 3.7],
   });
 };
 
@@ -52,10 +57,13 @@ export const generateProjectSlide = (pptx: pptxgen, data: ProjectData) => {
 };
 
 const addProjectHeader = (slide: pptxgen.Slide, data: ProjectData) => {
+  const completion = data.lastReview?.completion ?? data.project.completion ?? 0;
+
   slide.addText([
     { text: data.project.title, options: { bold: true, color: "FFFFFF", fontSize: 16 } },
     { text: " - ", options: { color: "FFFFFF", fontSize: 16 } },
     { text: lifecycleStatusLabels[data.project.lifecycle_status], options: { color: "FFFFFF", fontSize: 12, italic: true } },
+    { text: `   |   Avancement : ${completion}%`, options: { color: "FFFFFF", fontSize: 12 } },
     { text: "\n" },
     { text: data.project.description || "", options: { color: "FFFFFF", fontSize: 10 } },
     { text: "\n" }
@@ -176,20 +184,20 @@ const addTasksSections = (slide: pptxgen.Slide, data: ProjectData, grid: any) =>
   const columnWidth = 3;
   const spacing = 0.1;
   
-  // Tâches terminées (1/3 de la largeur)
-  addTasksSection(slide, "TÂCHES TERMINÉES", 
+  // Tâches terminées — en-tête vert
+  addTasksSection(slide, "✅ TÂCHES TERMINÉES", 
     data.tasks.filter(t => t.status === "done"),
-    grid.x, tasksY, columnWidth, taskBoxHeight, titleHeight);
+    grid.x, tasksY, columnWidth, taskBoxHeight, titleHeight, pptxColors.taskDone);
   
-  // Tâches en cours (1/3 de la largeur)
-  addTasksSection(slide, "TÂCHES EN COURS",
+  // Tâches en cours — en-tête bleu
+  addTasksSection(slide, "🔄 TÂCHES EN COURS",
     data.tasks.filter(t => t.status === "in_progress"),
-    grid.x + columnWidth + spacing, tasksY, columnWidth, taskBoxHeight, titleHeight);
+    grid.x + columnWidth + spacing, tasksY, columnWidth, taskBoxHeight, titleHeight, pptxColors.taskInProgress);
   
-  // Tâches à venir (1/3 de la largeur)
-  addTasksSection(slide, "TÂCHES À VENIR",
+  // Tâches à venir — en-tête gris
+  addTasksSection(slide, "📋 TÂCHES À VENIR",
     data.tasks.filter(t => t.status === "todo"),
-    grid.x + (columnWidth + spacing) * 2, tasksY, columnWidth, taskBoxHeight, titleHeight);
+    grid.x + (columnWidth + spacing) * 2, tasksY, columnWidth, taskBoxHeight, titleHeight, pptxColors.taskTodo);
 };
 
 const addDifficultiesAndActionsSection = (slide: pptxgen.Slide, data: ProjectData, grid: any) => {
@@ -227,14 +235,15 @@ const addDifficultiesAndActionsSection = (slide: pptxgen.Slide, data: ProjectDat
     grid.x + 4.8, sectionY + titleHeight, 4.3, boxHeight - titleHeight);
 };
 
-const addSection = (slide: pptxgen.Slide, title: string, x: number, y: number, w: number, h: number) => {
+/** Dessine une section avec titre coloré */
+const addSection = (slide: pptxgen.Slide, title: string, x: number, y: number, w: number, h: number, headerColor?: string) => {
   slide.addShape("rect", { x, y, w, h, fill: { color: "F5F5F5" } });
   slide.addText(title, {
     x, y, w, h: 0.3,
     fontSize: 11,
     bold: true,
     color: "FFFFFF",
-    fill: { color: "000000" },
+    fill: { color: headerColor || "000000" },
     align: "center",
   });
 };
@@ -247,9 +256,10 @@ const addTasksSection = (
   y: number, 
   w: number, 
   h: number,
-  titleHeight: number
+  titleHeight: number,
+  headerColor?: string
 ) => {
-  addSection(slide, title, x, y, w, h);
+  addSection(slide, title, x, y, w, h, headerColor);
   addBulletList(slide, tasks.map(t => t.title), x + 0.2, y + titleHeight, w - 0.4, h - titleHeight);
 };
 

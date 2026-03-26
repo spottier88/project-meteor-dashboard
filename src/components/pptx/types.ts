@@ -28,6 +28,7 @@ export interface ProjectData {
   lastReview?: {
     weather: "sunny" | "cloudy" | "stormy";
     progress: "better" | "stable" | "worse";
+    completion?: number;
     comment?: string;
     difficulties?: string;
     created_at: string;
