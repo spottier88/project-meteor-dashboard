@@ -25,6 +25,7 @@ interface Task {
   parent_task_id?: string;
   document_url?: string;
   completion_comment?: string;
+  order_index?: number;
 }
 
 interface TaskTableProps {

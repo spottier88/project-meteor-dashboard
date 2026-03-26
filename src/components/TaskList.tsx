@@ -67,7 +67,7 @@ export const TaskList = ({
         .from("tasks")
         .select("*")
         .eq("project_id", projectId)
-        .order("created_at", { ascending: false });
+        .order("order_index", { ascending: true });
 
       if (error) throw error;
       return data;
