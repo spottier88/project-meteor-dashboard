@@ -12,33 +12,6 @@ import { LoadingOverlay } from "@/components/ui/loading-overlay";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, ShoppingCart } from "lucide-react";
 
-/**
- * Fonction pour obtenir l'ordre de priorité de la météo
- */
-const getWeatherPriority = (weather: string | null | undefined): number => {
-  switch (weather) {
-    case "sunny":
-      return 1;
-    case "cloudy":
-      return 2;
-    case "stormy":
-      return 3;
-    default:
-      return 4;
-  }
-};
-
-/**
- * Fonction de tri des projets détaillés selon la météo (orageux en premier)
- */
-const sortProjectsByWeather = (projects: ProjectData[]): ProjectData[] => {
-  return [...projects].sort((a, b) => {
-    const weatherA = a.lastReview?.weather;
-    const weatherB = b.lastReview?.weather;
-    // Tri décroissant : stormy (3) > cloudy (2) > sunny (1)
-    return getWeatherPriority(weatherB) - getWeatherPriority(weatherA);
-  });
-};
 
 export const ProjectPresentation = () => {
   const navigate = useNavigate();
@@ -50,8 +23,8 @@ export const ProjectPresentation = () => {
     cartItems.length > 0
   );
 
-  // Trier les projets par météo (orageux en premier)
-  const sortedProjects = projectsData ? sortProjectsByWeather(projectsData) : [];
+  // Les projets sont triés dynamiquement dans PresentationView
+  const projectsList = projectsData || [];
 
   // Fonction de sortie du mode présentateur
   const handleExit = () => {
@@ -87,9 +60,9 @@ export const ProjectPresentation = () => {
 
   return (
     <PresentationView
-      projects={sortedProjects}
+      projects={projectsList}
       onExit={handleExit}
-      showSummary={sortedProjects.length > 1}
+      showSummary={projectsList.length > 1}
     />
   );
 };
