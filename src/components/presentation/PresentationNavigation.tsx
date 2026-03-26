@@ -42,6 +42,7 @@ export const PresentationNavigation = ({
   onNext,
   onToggleFullscreen,
   onExit,
+  onAddNote,
 }: PresentationNavigationProps) => {
   return (
     <div className="bg-background/95 backdrop-blur border-t px-4 py-2 flex items-center gap-4">
