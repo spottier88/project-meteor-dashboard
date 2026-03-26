@@ -4,11 +4,13 @@
  * l'affichage des slides et la navigation.
  */
 
+import { useState } from "react";
 import { ProjectData } from "@/hooks/useDetailedProjectsData";
 import { usePresentationMode } from "@/hooks/usePresentationMode";
 import { PresentationSlide } from "./PresentationSlide";
 import { PresentationNavigation } from "./PresentationNavigation";
 import { PresentationSummary } from "./PresentationSummary";
+import { PresentationNoteDialog } from "./PresentationNoteDialog";
 
 interface PresentationViewProps {
   projects: ProjectData[];
@@ -21,8 +23,8 @@ export const PresentationView = ({
   onExit,
   showSummary = true,
 }: PresentationViewProps) => {
-  // Nombre total de slides (synthèse optionnelle + projets)
   const totalSlides = showSummary ? projects.length + 1 : projects.length;
+  const [isNoteDialogOpen, setIsNoteDialogOpen] = useState(false);
 
   const {
     currentIndex,
@@ -39,7 +41,6 @@ export const PresentationView = ({
     onExit,
   });
 
-  // Déterminer si on affiche la synthèse ou un projet
   const isSummarySlide = showSummary && currentIndex === 0;
   const projectIndex = showSummary ? currentIndex - 1 : currentIndex;
   const currentProject = isSummarySlide ? null : projects[projectIndex];
@@ -70,7 +71,18 @@ export const PresentationView = ({
         onNext={goToNext}
         onToggleFullscreen={toggleFullscreen}
         onExit={onExit}
+        onAddNote={currentProject ? () => setIsNoteDialogOpen(true) : undefined}
       />
+
+      {/* Dialogue d'ajout de note */}
+      {currentProject && (
+        <PresentationNoteDialog
+          projectId={currentProject.project.id}
+          projectTitle={currentProject.project.title}
+          isOpen={isNoteDialogOpen}
+          onClose={() => setIsNoteDialogOpen(false)}
+        />
+      )}
     </div>
   );
 };
