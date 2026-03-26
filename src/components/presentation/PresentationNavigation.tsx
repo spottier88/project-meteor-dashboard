@@ -87,6 +87,20 @@ export const PresentationNavigation = ({
         <Progress value={progress} className="h-2" />
       </div>
 
+      {/* Bouton ajout de note */}
+      {onAddNote && (
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={onAddNote}
+          className="gap-2"
+          title="Ajouter une note"
+        >
+          <StickyNote className="h-4 w-4" />
+          <span className="hidden sm:inline">Note</span>
+        </Button>
+      )}
+
       {/* Contrôles */}
       <div className="flex items-center gap-2">
         <Button
