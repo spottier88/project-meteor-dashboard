@@ -1882,6 +1882,7 @@ export type Database = {
           document_url: string | null
           due_date: string | null
           id: string
+          order_index: number
           parent_task_id: string | null
           project_id: string
           start_date: string | null
@@ -1897,6 +1898,7 @@ export type Database = {
           document_url?: string | null
           due_date?: string | null
           id?: string
+          order_index?: number
           parent_task_id?: string | null
           project_id: string
           start_date?: string | null
@@ -1912,6 +1914,7 @@ export type Database = {
           document_url?: string | null
           due_date?: string | null
           id?: string
+          order_index?: number
           parent_task_id?: string | null
           project_id?: string
           start_date?: string | null
