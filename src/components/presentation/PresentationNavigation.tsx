@@ -53,6 +53,7 @@ interface PresentationNavigationProps {
   onSortChange?: (sort: SortOption) => void;
   /** Afficher le sélecteur de tri (> 1 projet) */
   showSort?: boolean;
+}
 
 export const PresentationNavigation = ({
   currentIndex,
