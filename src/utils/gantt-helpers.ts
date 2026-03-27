@@ -21,6 +21,7 @@ export interface RawGanttTask {
   type?: string;
   hideChildren?: boolean;
   dependencies?: string[];
+  order_index?: number;
 }
 
 /**
@@ -55,15 +56,18 @@ const getProgressForStatus = (status?: string): number => {
 export const mapTasksToSvarFormat = (tasks: RawGanttTask[]): ITask[] => {
   if (!tasks || tasks.length === 0) return [];
 
+  // Trier les tâches par order_index croissant avant le mapping
+  const sorted = [...tasks].sort((a, b) => (a.order_index ?? 0) - (b.order_index ?? 0));
+
   // Identifier les tâches qui possèdent réellement des enfants.
   // SVAR attend qu'une tâche "open" ou de type "summary" ait une hiérarchie valide.
   const parentTaskIds = new Set(
-    tasks
+    sorted
       .map(task => task.parent_task_id)
       .filter((parentTaskId): parentTaskId is string => Boolean(parentTaskId))
   );
 
-  return tasks.map(task => {
+  return sorted.map(task => {
     // Dates de début et fin avec fallback
     let start = task.start_date ? new Date(task.start_date) : new Date();
     let end = task.due_date
