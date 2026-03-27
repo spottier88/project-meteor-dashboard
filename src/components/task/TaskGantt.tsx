@@ -210,6 +210,7 @@ export const TaskGantt: React.FC<TaskGanttProps> = ({
     end: t.end || new Date(),
     progress: t.progress || 0,
     type: t.type || 'task',
+    isParent: t.type === 'summary',
   }));
 
   return (
