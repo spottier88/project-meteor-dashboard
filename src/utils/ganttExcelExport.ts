@@ -17,6 +17,8 @@ export interface ExportableTask {
   end: Date;
   progress: number;
   type: string;
+  /** Indique si la tâche est une tâche parente (possède des sous-tâches) */
+  isParent?: boolean;
 }
 
 /** Mode de vue pour l'export */
@@ -174,8 +176,8 @@ export const exportGanttToExcel = async (
   const title = projectTitle || 'Projet';
   const { start, end } = getDateRange(tasks);
   const periodStarts = generatePeriodStarts(start, end, viewMode);
-  // Filtrer les projets (type summary) pour ne garder que les tâches
-  const filteredTasks = tasks.filter(t => t.type !== 'summary');
+  // Exclure uniquement les projets (type 'project'), conserver les tâches parentes (summary)
+  const filteredTasks = tasks.filter(t => t.type !== 'project');
 
   const workbook = new ExcelJS.Workbook();
   const ws = workbook.addWorksheet('Gantt', {
@@ -214,10 +216,14 @@ export const exportGanttToExcel = async (
     const statusInfo = getStatusInfo(task);
 
     const nameCell = row.getCell(1);
-    nameCell.value = task.name;
-    nameCell.font = { size: 10 };
+    nameCell.value = task.isParent ? `▸ ${task.name}` : task.name;
+    nameCell.font = { size: 10, bold: !!task.isParent };
     nameCell.alignment = { vertical: 'middle' };
     nameCell.border = thinBorder;
+    // Fond gris clair pour les tâches parentes
+    if (task.isParent) {
+      nameCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF1F5F9' } };
+    }
 
     const statusCell = row.getCell(2);
     statusCell.value = statusInfo.label;
