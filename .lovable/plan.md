@@ -1,114 +1,46 @@
 
 
-# Analyse approfondie du non-rafraîchissement après réordonnancement
+# Corrections Gantt : ordre des tâches et export Excel des tâches parentes
 
-## Cause probable principale
+## Problèmes identifiés
 
-Le problème ne vient pas seulement du `refetchQueries` dans `TaskTable.tsx`. L’analyse du flux montre que le composant affiche des données provenant de plusieurs sources selon le contexte :
+### 1. Ordre des tâches non respecté dans le Gantt
 
-- `TaskList.tsx` utilise soit :
-  - sa propre query `["tasks", projectId]`
-  - soit `preloadedTasks` si elles sont fournies
-- `ProjectSummaryContent.tsx` passe justement `preloadedTasks={tasks}`
-- `ProjectSummary.tsx` alimente ces `tasks` depuis sa propre query `["tasks", projectId]`
-- pour les projets maîtres, l’écran peut aussi utiliser `aggregatedTasks`
+Dans `src/utils/gantt-helpers.ts`, la fonction `mapTasksToSvarFormat` (ligne 55) traite les tâches dans l'ordre du tableau reçu, sans tri par `order_index`. Le champ `order_index` est présent dans les données brutes mais n'est jamais utilisé pour ordonner les tâches avant le mapping SVAR.
 
-En pratique, `TaskTable` refetch bien une query locale, mais l’affichage peut rester figé si la source réellement rendue est un prop déjà résolu plus haut dans l’arbre, sans mise à jour optimiste locale.
+### 2. Tâches parentes absentes de l'export Excel
 
-## Deuxième cause identifiée
-
-`TaskTable.tsx` calcule `sortedParentTasks` directement depuis les props. Après un drag & drop :
-
-- l’ordre est bien persisté en base
-- mais il n’y a pas d’état local de liste réordonnée
-- on dépend donc entièrement du retour React Query / du parent
-- si le parent ne rerend pas immédiatement avec de nouvelles références, l’utilisateur ne voit aucun changement instantané
-
-## Troisième point à corriger
-
-Dans le `map` des lignes de `TaskTable.tsx`, le retour se fait via un fragment `<>...</>` sans clé au niveau top-level, alors que les lignes internes ont leurs propres clés. Lors d’un changement d’ordre, cela peut perturber la réconciliation React et empêcher un rerendu propre de la séquence parent + sous-tâches.
+Dans `src/utils/ganttExcelExport.ts`, ligne 178 :
+```typescript
+const filteredTasks = tasks.filter(t => t.type !== 'summary');
+```
+Ce filtre exclut toutes les tâches de type `summary`. Or, `mapTasksToSvarFormat` attribue le type `summary` à toute tâche ayant des enfants (ligne 88 de `gantt-helpers.ts`). Résultat : les tâches parentes sont supprimées de l'export.
 
 ## Plan de correction
 
-### 1. Rendre `TaskTable` immédiatement réactif après drag
+### A. Tri par `order_index` dans `gantt-helpers.ts`
 
-Introduire un état local dédié dans `TaskTable.tsx` pour l’ordre affiché des tâches parentes :
+Ajouter `order_index` au type `RawGanttTask` et trier les tâches par `order_index` croissant au début de `mapTasksToSvarFormat`, avant le mapping.
 
-- initialiser cet état depuis `tasks`
-- le resynchroniser quand `tasks` change
-- lors du `handleDragEnd`, appliquer immédiatement `arrayMove(...)` sur cet état local avant même le refetch
+```typescript
+// Ajouter au type RawGanttTask
+order_index?: number;
 
-Ainsi, l’utilisateur voit instantanément le nouvel ordre, même si le parent met un peu de temps à recharger.
-
-### 2. Corriger la source de vérité dans `TaskList`
-
-Faire évoluer `TaskList.tsx` pour mieux gérer le cas `preloadedTasks` :
-
-- conserver un état local `displayTasks` quand `preloadedTasks` est utilisé
-- exposer un callback `onTasksReordered` vers `TaskTable`
-- après drag & drop, mettre à jour cet état local immédiatement
-- si `TaskList` utilise sa propre query, continuer à appeler `refetch()`
-
-But : ne plus dépendre uniquement du parent quand les tâches sont injectées par props.
-
-### 3. Gérer explicitement le cas des données préchargées dans l’écran projet
-
-Dans `ProjectSummaryContent.tsx` / `ProjectSummary.tsx`, vérifier le comportement cible :
-
-- si on veut garder `preloadedTasks`, alors il faut propager le nouvel ordre jusqu’au parent
-- sinon, simplifier en laissant `TaskList` requêter elle-même les tâches dans l’onglet Tâches
-
-Approche recommandée : conserver `preloadedTasks`, mais ajouter un mécanisme de synchronisation locale dans `TaskList`, plus modulaire et moins risqué pour les autres usages.
-
-### 4. Corriger la réconciliation React sur les lignes
-
-Dans `TaskTable.tsx` :
-
-- remplacer le fragment anonyme `<>...</>` du `map` par un `React.Fragment key={task.id}`
-- garantir une clé stable au niveau du bloc parent + sous-tâches
-
-Cela évitera les artefacts de rendu lors du changement d’ordre.
-
-### 5. Uniformiser le rafraîchissement des queries liées
-
-Après réordonnancement, déclencher un rafraîchissement cohérent de toutes les sources susceptibles d’alimenter l’écran :
-
-- `["tasks", projectId]`
-- `aggregatedTasks`
-- éventuellement `project-tasks-for-parent` si le formulaire est ouvert
-
-Le plus propre est d’utiliser la même stratégie que `useTaskSubmit.ts` : un `refetchQueries` avec `predicate` sur les clés liées aux tâches.
-
-## Fichiers impactés
-
-| Fichier | Correction |
-|---|---|
-| `src/components/task/TaskTable.tsx` | état local d’ordre, mise à jour optimiste, clé React correcte, refetch élargi |
-| `src/components/TaskList.tsx` | gestion locale des `preloadedTasks`, synchronisation après réordonnancement |
-| `src/components/project/ProjectSummaryContent.tsx` | adaptation éventuelle du passage des tâches si nécessaire |
-| `src/pages/ProjectSummary.tsx` | vérification du flux `tasks` / `aggregatedTasks` pour garantir le rerendu |
-
-## Résultat attendu
-
-Après déplacement d’une tâche :
-
-- la liste se réordonne immédiatement à l’écran
-- l’ordre est persisté en base
-- le parent est ensuite resynchronisé proprement
-- le comportement est identique en affichage standard et dans les écrans utilisant des tâches préchargées
-
-## Détail technique
-
-```text
-Etat actuel
-TaskTable -> update base -> refetch query locale
-             mais l'écran peut afficher preloadedTasks venant du parent
-             donc aucun changement visible immédiat
-
-Etat cible
-TaskTable -> update optimiste locale immédiate
-          -> persistence Supabase
-          -> refetch de toutes les queries liées
-          -> resynchronisation propre du parent
+// Trier en début de fonction
+const sorted = [...tasks].sort((a, b) => (a.order_index ?? 0) - (b.order_index ?? 0));
 ```
+
+### B. Inclure les tâches parentes dans l'export Excel (`ganttExcelExport.ts`)
+
+Supprimer le filtre `t.type !== 'summary'` (ligne 178) et le remplacer par un filtre qui exclut uniquement les projets (type `project` passé depuis `TaskGantt`). Ajouter une mise en forme distincte (gras, fond gris clair) pour les tâches parentes afin de les distinguer visuellement.
+
+Modifier aussi le type `ExportableTask` pour inclure un champ `isParent` optionnel, et adapter `TaskGantt.tsx` pour passer cette information dans `exportData`.
+
+### Fichiers impactés
+
+| Fichier | Modification |
+|---|---|
+| `src/utils/gantt-helpers.ts` | Ajout `order_index` au type + tri avant mapping |
+| `src/utils/ganttExcelExport.ts` | Retrait du filtre `summary`, mise en forme des tâches parentes |
+| `src/components/task/TaskGantt.tsx` | Propagation de `isParent` dans `exportData` |
 
