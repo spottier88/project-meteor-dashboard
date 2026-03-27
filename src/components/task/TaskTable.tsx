@@ -2,7 +2,7 @@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { SortableHeader, SortDirection } from "@/components/ui/sortable-header";
 import { Button } from "@/components/ui/button";
 import { ChevronDown, ChevronRight, Pencil, Trash2, FileText, ClipboardCheck, GripVertical } from "lucide-react";
@@ -231,20 +231,31 @@ export const TaskTable = ({ tasks, onEdit, onDelete, isProjectClosed = false }: 
   const profiles = projectMembers?.map(member => member.profiles) || [];
 
   // Trier les tâches parentes : par order_index si aucun tri actif, sinon par colonne
-  const sortedParentTasks = [...parentTasks].sort((a: any, b: any) => {
-    if (!sortKey || !sortDirection) {
-      // Tri par défaut : order_index
-      return (a.order_index ?? 0) - (b.order_index ?? 0);
-    }
-    const aValue = a[sortKey];
-    const bValue = b[sortKey];
-    if (aValue === null) return 1;
-    if (bValue === null) return -1;
-    if (sortDirection === "asc") return aValue > bValue ? 1 : -1;
-    return aValue < bValue ? 1 : -1;
-  });
+  const computeSortedTasks = useCallback((source: Task[]) => {
+    return [...source].sort((a: any, b: any) => {
+      if (!sortKey || !sortDirection) {
+        return (a.order_index ?? 0) - (b.order_index ?? 0);
+      }
+      const aValue = a[sortKey];
+      const bValue = b[sortKey];
+      if (aValue === null) return 1;
+      if (bValue === null) return -1;
+      if (sortDirection === "asc") return aValue > bValue ? 1 : -1;
+      return aValue < bValue ? 1 : -1;
+    });
+  }, [sortKey, sortDirection]);
 
-  // Gestion du drag & drop — mise à jour de l'ordre en base
+  // État local pour mise à jour optimiste après drag & drop
+  const [localParentTasks, setLocalParentTasks] = useState<Task[]>(() => computeSortedTasks(parentTasks));
+
+  // Resynchroniser quand les props changent (nouveau fetch, tri, etc.)
+  useEffect(() => {
+    setLocalParentTasks(computeSortedTasks(parentTasks));
+  }, [parentTasks, computeSortedTasks]);
+
+  const sortedParentTasks = localParentTasks;
+
+  // Gestion du drag & drop — mise à jour optimiste puis persistence
   const handleDragEnd = useCallback(async (event: DragEndEvent) => {
     const { active, over } = event;
     if (!over || active.id === over.id) return;
@@ -253,17 +264,17 @@ export const TaskTable = ({ tasks, onEdit, onDelete, isProjectClosed = false }: 
     const newIndex = sortedParentTasks.findIndex(t => t.id === over.id);
     if (oldIndex === -1 || newIndex === -1) return;
 
+    // Mise à jour optimiste immédiate de l'affichage
     const reordered = arrayMove(sortedParentTasks, oldIndex, newIndex);
-
-    // Mise à jour batch des order_index
-    const updates = reordered.map((task, index) => ({
-      id: task.id,
+    const reorderedWithIndex = reordered.map((task, index) => ({
+      ...task,
       order_index: index + 1,
     }));
+    setLocalParentTasks(reorderedWithIndex);
 
-    // Mettre à jour en parallèle
-    const promises = updates.map(u =>
-      supabase.from("tasks").update({ order_index: u.order_index }).eq("id", u.id)
+    // Persistence en base
+    const promises = reorderedWithIndex.map(t =>
+      supabase.from("tasks").update({ order_index: t.order_index }).eq("id", t.id)
     );
     
     const results = await Promise.all(promises);
@@ -273,8 +284,15 @@ export const TaskTable = ({ tasks, onEdit, onDelete, isProjectClosed = false }: 
     } else {
       toast({ title: "Ordre mis à jour" });
     }
-    await queryClient.refetchQueries({ queryKey: ["tasks", tasks[0]?.project_id] });
-  }, [sortedParentTasks, queryClient, tasks, toast]);
+
+    // Rafraîchir toutes les queries liées aux tâches pour resynchroniser le parent
+    await queryClient.refetchQueries({
+      predicate: (query) => {
+        const key = query.queryKey[0];
+        return key === "tasks" || key === "aggregatedTasks";
+      },
+    });
+  }, [sortedParentTasks, queryClient, toast]);
 
   // Rendu d'une ligne de tâche (parent ou enfant)
   const renderTaskCells = (task: Task, isChild: boolean = false) => (
@@ -372,14 +390,14 @@ export const TaskTable = ({ tasks, onEdit, onDelete, isProjectClosed = false }: 
       </TableHeader>
       <TableBody>
         {sortedParentTasks.map((task) => (
-          <>
-      {isDragEnabled ? (
-              <SortableRow key={task.id} task={task}>
+          <React.Fragment key={task.id}>
+            {isDragEnabled ? (
+              <SortableRow task={task}>
                 <TableCell className="w-8"><DragHandle taskId={task.id} /></TableCell>
                 {renderTaskCells(task)}
               </SortableRow>
             ) : (
-              <TableRow key={task.id} className={task.id in childTasksByParent ? "border-b-0" : ""}>
+              <TableRow className={task.id in childTasksByParent ? "border-b-0" : ""}>
                 {renderTaskCells(task)}
               </TableRow>
             )}
@@ -393,7 +411,7 @@ export const TaskTable = ({ tasks, onEdit, onDelete, isProjectClosed = false }: 
                 </TableRow>
               ))
             )}
-          </>
+          </React.Fragment>
         ))}
       </TableBody>
     </Table>
