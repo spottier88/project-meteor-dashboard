@@ -12,6 +12,8 @@ import { fr } from 'date-fns/locale';
 
 /** Format simplifié des tâches pour l'export */
 export interface ExportableTask {
+  id?: string;
+  parentId?: string | null;
   name: string;
   start: Date;
   end: Date;
@@ -19,7 +21,41 @@ export interface ExportableTask {
   type: string;
   /** Indique si la tâche est une tâche parente (possède des sous-tâches) */
   isParent?: boolean;
+  /** Niveau hiérarchique (0 = racine, 1 = enfant) – calculé automatiquement */
+  level?: number;
 }
+
+/**
+ * Ordonne les tâches en arborescence : chaque parent est suivi de ses enfants.
+ * Conserve l'ordre d'origine (déjà trié par order_index) au sein de chaque niveau.
+ */
+const buildHierarchicalOrder = (tasks: ExportableTask[]): ExportableTask[] => {
+  const roots: ExportableTask[] = [];
+  const childrenMap = new Map<string, ExportableTask[]>();
+
+  // Séparer racines et enfants
+  tasks.forEach(t => {
+    if (t.parentId) {
+      const siblings = childrenMap.get(t.parentId) || [];
+      siblings.push({ ...t, level: 1 });
+      childrenMap.set(t.parentId, siblings);
+    } else {
+      roots.push({ ...t, level: 0 });
+    }
+  });
+
+  // Intercaler les enfants juste après leur parent
+  const result: ExportableTask[] = [];
+  roots.forEach(root => {
+    result.push(root);
+    const children = root.id ? childrenMap.get(root.id) : undefined;
+    if (children) {
+      result.push(...children);
+    }
+  });
+
+  return result;
+};
 
 /** Mode de vue pour l'export */
 type ViewModeKey = 'day' | 'week' | 'month' | 'year';
@@ -176,8 +212,8 @@ export const exportGanttToExcel = async (
   const title = projectTitle || 'Projet';
   const { start, end } = getDateRange(tasks);
   const periodStarts = generatePeriodStarts(start, end, viewMode);
-  // Exclure uniquement les projets (type 'project'), conserver les tâches parentes (summary)
-  const filteredTasks = tasks.filter(t => t.type !== 'project');
+  // Exclure les projets, puis ordonner en arborescence parent → enfants
+  const filteredTasks = buildHierarchicalOrder(tasks.filter(t => t.type !== 'project'));
 
   const workbook = new ExcelJS.Workbook();
   const ws = workbook.addWorksheet('Gantt', {
@@ -216,7 +252,8 @@ export const exportGanttToExcel = async (
     const statusInfo = getStatusInfo(task);
 
     const nameCell = row.getCell(1);
-    nameCell.value = task.isParent ? `▸ ${task.name}` : task.name;
+    const isChild = (task.level ?? 0) > 0;
+    nameCell.value = task.isParent ? `▸ ${task.name}` : isChild ? `    ↳ ${task.name}` : task.name;
     nameCell.font = { size: 10, bold: !!task.isParent };
     nameCell.alignment = { vertical: 'middle' };
     nameCell.border = thinBorder;

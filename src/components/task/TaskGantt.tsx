@@ -205,6 +205,8 @@ export const TaskGantt: React.FC<TaskGanttProps> = ({
 
   /** Données pour l'export Excel (format simplifié) */
   const exportData = svarTasks.map(t => ({
+    id: String(t.id),
+    parentId: t.parent ? String(t.parent) : null,
     name: t.text || '',
     start: t.start || new Date(),
     end: t.end || new Date(),
