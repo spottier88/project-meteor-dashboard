@@ -39,6 +39,8 @@ interface TaskGanttProps {
   canCreateTask?: boolean;
   /** L'utilisateur peut-il supprimer des tâches ? */
   canDeleteTask?: boolean;
+  /** Contexte d'export : projet, portefeuille ou panier */
+  exportContext?: 'project' | 'portfolio' | 'cart';
 }
 
 /** Configuration des échelles de temps selon le mode de vue */
@@ -74,6 +76,7 @@ export const TaskGantt: React.FC<TaskGanttProps> = ({
   projectTitle,
   canCreateTask = false,
   canDeleteTask = false,
+  exportContext = 'project',
 }) => {
   const [viewMode, setViewMode] = useState<ViewModeKey>('week');
   const [localTasks, setLocalTasks] = useState<Array<any>>(tasks);
@@ -241,7 +244,7 @@ export const TaskGantt: React.FC<TaskGanttProps> = ({
             size="sm"
             variant="outline"
             onClick={() =>
-              exportGanttToExcel(exportData, projectTitle, viewMode).catch(() =>
+              exportGanttToExcel(exportData, projectTitle, viewMode, exportContext).catch(() =>
                 toast.error("Erreur lors de l'export Excel")
               )
             }

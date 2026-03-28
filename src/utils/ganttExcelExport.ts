@@ -205,7 +205,8 @@ const formatPeriodHeader = (date: Date, viewMode: ViewModeKey): string => {
 export const exportGanttToExcel = async (
   tasks: ExportableTask[],
   projectTitle?: string,
-  viewMode: ViewModeKey = 'week'
+  viewMode: ViewModeKey = 'week',
+  exportContext: 'project' | 'portfolio' | 'cart' = 'project'
 ): Promise<void> => {
   if (tasks.length === 0) return;
 
@@ -332,8 +333,10 @@ export const exportGanttToExcel = async (
   const url = URL.createObjectURL(blob);
   const link = document.createElement('a');
   const dateStr = format(new Date(), 'yyyy-MM-dd');
+  const sanitizedTitle = title.replace(/[^a-zA-Z0-9àâäéèêëïîôùûüÿçÀÂÄÉÈÊËÏÎÔÙÛÜŸÇ -]/g, '');
+  const filePrefix = exportContext === 'project' ? `gantt-${sanitizedTitle}` : 'gantt-projets';
   link.href = url;
-  link.download = `gantt-${title.replace(/[^a-zA-Z0-9àâäéèêëïîôùûüÿçÀÂÄÉÈÊËÏÎÔÙÛÜŸÇ -]/g, '')}-${dateStr}.xlsx`;
+  link.download = `${filePrefix}-${dateStr}.xlsx`;
   link.click();
   URL.revokeObjectURL(url);
 };
