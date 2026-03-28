@@ -212,8 +212,8 @@ export const exportGanttToExcel = async (
   const title = projectTitle || 'Projet';
   const { start, end } = getDateRange(tasks);
   const periodStarts = generatePeriodStarts(start, end, viewMode);
-  // Exclure uniquement les projets (type 'project'), conserver les tâches parentes (summary)
-  const filteredTasks = tasks.filter(t => t.type !== 'project');
+  // Exclure les projets, puis ordonner en arborescence parent → enfants
+  const filteredTasks = buildHierarchicalOrder(tasks.filter(t => t.type !== 'project'));
 
   const workbook = new ExcelJS.Workbook();
   const ws = workbook.addWorksheet('Gantt', {
@@ -252,7 +252,8 @@ export const exportGanttToExcel = async (
     const statusInfo = getStatusInfo(task);
 
     const nameCell = row.getCell(1);
-    nameCell.value = task.isParent ? `▸ ${task.name}` : task.name;
+    const isChild = (task.level ?? 0) > 0;
+    nameCell.value = task.isParent ? `▸ ${task.name}` : isChild ? `    ↳ ${task.name}` : task.name;
     nameCell.font = { size: 10, bold: !!task.isParent };
     nameCell.alignment = { vertical: 'middle' };
     nameCell.border = thinBorder;
