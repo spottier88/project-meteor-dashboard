@@ -1,46 +1,74 @@
 
 
-# Corrections Gantt : ordre des tâches et export Excel des tâches parentes
+# Export Excel Gantt : arborescence parent-enfant
 
-## Problèmes identifiés
+## Probleme
 
-### 1. Ordre des tâches non respecté dans le Gantt
+L'export Excel produit une liste plate triee par `order_index` global. Les taches filles ne sont pas regroupees sous leur tache mere — elles apparaissent a leur position d'index sans lien visuel avec le parent.
 
-Dans `src/utils/gantt-helpers.ts`, la fonction `mapTasksToSvarFormat` (ligne 55) traite les tâches dans l'ordre du tableau reçu, sans tri par `order_index`. Le champ `order_index` est présent dans les données brutes mais n'est jamais utilisé pour ordonner les tâches avant le mapping SVAR.
+## Cause
 
-### 2. Tâches parentes absentes de l'export Excel
+Dans `TaskGantt.tsx` (ligne 207), `exportData` est construit par un simple `svarTasks.map(...)` qui conserve l'ordre plat du tri par `order_index`. Il n'y a aucune logique de regroupement hierarchique ni d'indentation pour les sous-taches.
 
-Dans `src/utils/ganttExcelExport.ts`, ligne 178 :
-```typescript
-const filteredTasks = tasks.filter(t => t.type !== 'summary');
-```
-Ce filtre exclut toutes les tâches de type `summary`. Or, `mapTasksToSvarFormat` attribue le type `summary` à toute tâche ayant des enfants (ligne 88 de `gantt-helpers.ts`). Résultat : les tâches parentes sont supprimées de l'export.
+De plus, `ExportableTask` ne porte pas l'information `parent` ni `id`, ce qui empeche tout tri hierarchique dans `ganttExcelExport.ts`.
 
 ## Plan de correction
 
-### A. Tri par `order_index` dans `gantt-helpers.ts`
+### 1. Enrichir `ExportableTask` avec les champs hierarchiques
 
-Ajouter `order_index` au type `RawGanttTask` et trier les tâches par `order_index` croissant au début de `mapTasksToSvarFormat`, avant le mapping.
+Dans `ganttExcelExport.ts`, ajouter a l'interface :
 
 ```typescript
-// Ajouter au type RawGanttTask
-order_index?: number;
-
-// Trier en début de fonction
-const sorted = [...tasks].sort((a, b) => (a.order_index ?? 0) - (b.order_index ?? 0));
+export interface ExportableTask {
+  id?: string;
+  parentId?: string | null;
+  // ... champs existants
+  level?: number; // 0 = racine, 1 = enfant
+}
 ```
 
-### B. Inclure les tâches parentes dans l'export Excel (`ganttExcelExport.ts`)
+### 2. Ordonner les taches en arborescence avant le rendu Excel
 
-Supprimer le filtre `t.type !== 'summary'` (ligne 178) et le remplacer par un filtre qui exclut uniquement les projets (type `project` passé depuis `TaskGantt`). Ajouter une mise en forme distincte (gras, fond gris clair) pour les tâches parentes afin de les distinguer visuellement.
+Ajouter une fonction `buildHierarchicalOrder` dans `ganttExcelExport.ts` qui :
+- Separe les taches racines (sans `parentId`) des taches filles
+- Trie les racines par leur position dans le tableau (deja triees par `order_index`)
+- Insere les enfants juste apres leur parent, tries par `order_index`
+- Attribue un `level` (0 pour parent, 1 pour enfant)
 
-Modifier aussi le type `ExportableTask` pour inclure un champ `isParent` optionnel, et adapter `TaskGantt.tsx` pour passer cette information dans `exportData`.
+### 3. Indenter visuellement les taches filles dans l'Excel
 
-### Fichiers impactés
+Dans la boucle de rendu des lignes :
+- Taches de niveau 0 (parentes) : prefixe `▸`, gras, fond gris clair (comportement actuel)
+- Taches de niveau 1 (filles) : prefixe avec espaces d'indentation (`    ↳ nom`), police normale
+
+### 4. Propager `id` et `parentId` depuis `TaskGantt.tsx`
+
+Modifier `exportData` dans `TaskGantt.tsx` pour inclure :
+
+```typescript
+const exportData = svarTasks.map(t => ({
+  id: String(t.id),
+  parentId: t.parent ? String(t.parent) : null,
+  name: t.text || '',
+  // ... reste inchange
+}));
+```
+
+## Fichiers impactes
 
 | Fichier | Modification |
 |---|---|
-| `src/utils/gantt-helpers.ts` | Ajout `order_index` au type + tri avant mapping |
-| `src/utils/ganttExcelExport.ts` | Retrait du filtre `summary`, mise en forme des tâches parentes |
-| `src/components/task/TaskGantt.tsx` | Propagation de `isParent` dans `exportData` |
+| `src/utils/ganttExcelExport.ts` | Interface enrichie, tri hierarchique, indentation visuelle |
+| `src/components/task/TaskGantt.tsx` | Propagation de `id` et `parentId` dans `exportData` |
+
+## Resultat attendu
+
+```text
+▸ Tache parente A          (gras, fond gris)
+    ↳ Sous-tache A.1       (indentee)
+    ↳ Sous-tache A.2       (indentee)
+▸ Tache parente B          (gras, fond gris)
+    ↳ Sous-tache B.1       (indentee)
+Tache simple C             (normal)
+```
 
