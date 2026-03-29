@@ -7,6 +7,7 @@ import { useTaskPermissions } from "@/hooks/useTaskPermissions";
 import { formatUserName } from "@/utils/formatUserName";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { Link } from "react-router-dom";
 
 interface TaskCardProps {
   task: {
@@ -108,7 +109,15 @@ export const TaskCard = ({ task, onEdit, onDelete, showActions = true }: TaskCar
   return (
     <TableRow>
       <TableCell className="font-medium">
-        {task.projects?.title || "-"}
+        {task.projects?.id ? (
+          <Link
+            to={`/project/${task.projects.id}`}
+            className="text-primary hover:underline"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {task.projects.title}
+          </Link>
+        ) : "-"}
       </TableCell>
       <TableCell>
         <span className="flex items-center gap-1">

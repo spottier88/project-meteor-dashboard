@@ -1,9 +1,9 @@
 
-import { LayoutGrid, Table2, GanttChart } from "lucide-react";
+import { LayoutGrid, Table2, GanttChart, Calendar } from "lucide-react";
 import { Button } from "./ui/button";
 import { cn } from "@/lib/utils";
 
-export type ViewMode = "grid" | "table" | "gantt";
+export type ViewMode = "grid" | "table" | "gantt" | "calendar";
 
 interface ViewToggleProps {
   currentView: ViewMode;
@@ -58,6 +58,20 @@ export const ViewToggle = ({
         >
           <GanttChart className="h-4 w-4" />
           Vue Gantt
+        </Button>
+      )}
+      {availableViews.includes("calendar") && (
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => onViewChange("calendar")}
+          className={cn(
+            "flex items-center gap-2",
+            currentView === "calendar" && "bg-primary text-primary-foreground"
+          )}
+        >
+          <Calendar className="h-4 w-4" />
+          Calendrier
         </Button>
       )}
     </div>

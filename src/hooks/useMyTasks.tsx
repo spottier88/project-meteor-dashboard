@@ -45,5 +45,6 @@ export const useMyTasks = (showOverdueOnly: boolean = false) => {
       return data || [];
     },
     enabled: !!userProfile?.email,
+    refetchInterval: 30000, // Auto-refresh toutes les 30 secondes
   });
 };
