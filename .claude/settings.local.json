@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(find /c/Users/Utilisateur/OneDrive/Documents/05_Developpement/meteor/Meteor_Git/project-meteor-dashboard/src -maxdepth 2 -name main.tsx -o -name index.tsx -o -name *supabase*)",
+      "Bash(find /c/Users/Utilisateur/OneDrive/Documents/05_Developpement/meteor/Meteor_Git/project-meteor-dashboard -name *.config.* -o -name .env*)",
+      "Bash(grep -E \"\\\\.\\(ts|tsx\\)$\")"
+    ]
+  }
+}
