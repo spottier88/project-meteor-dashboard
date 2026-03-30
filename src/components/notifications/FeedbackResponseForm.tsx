@@ -136,7 +136,7 @@ export function FeedbackResponseForm({
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="space-y-2">
         <h3 className="font-semibold">Feedback original :</h3>
-        <div className="bg-muted p-4 rounded-md">
+        <div className="bg-muted p-4 rounded-md max-h-[30vh] overflow-y-auto">
           <p className="font-medium">{feedback.title}</p>
           <p className="whitespace-pre-wrap mt-2">{feedback.content}</p>
         </div>
