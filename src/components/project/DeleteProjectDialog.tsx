@@ -22,6 +22,16 @@ import { useNavigate } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 
+/**
+ * Nettoie les pointer-events résiduels après fermeture de modale
+ */
+const unlockPointerEvents = () => {
+  document.body.style.pointerEvents = "";
+  document.body.style.removeProperty("pointer-events");
+  document.documentElement.style.pointerEvents = "";
+  document.documentElement.style.removeProperty("pointer-events");
+};
+
 interface DeleteProjectDialogProps {
   isOpen: boolean;
   onClose: () => void;
