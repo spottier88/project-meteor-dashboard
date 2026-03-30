@@ -70,7 +70,7 @@ export const DeleteProjectDialog = ({
           description: "Le projet n'existe plus ou a déjà été supprimé",
           variant: "destructive",
         });
-        onClose();
+        handleClose();
         return;
       }
 
