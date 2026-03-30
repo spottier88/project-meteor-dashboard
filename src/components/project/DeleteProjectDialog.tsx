@@ -22,6 +22,16 @@ import { useNavigate } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 
+/**
+ * Nettoie les pointer-events résiduels après fermeture de modale
+ */
+const unlockPointerEvents = () => {
+  document.body.style.pointerEvents = "";
+  document.body.style.removeProperty("pointer-events");
+  document.documentElement.style.pointerEvents = "";
+  document.documentElement.style.removeProperty("pointer-events");
+};
+
 interface DeleteProjectDialogProps {
   isOpen: boolean;
   onClose: () => void;
@@ -41,6 +51,13 @@ export const DeleteProjectDialog = ({
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [isDeleting, setIsDeleting] = useState(false);
+
+  // Fermeture avec nettoyage du focus
+  const handleClose = () => {
+    unlockPointerEvents();
+    document.body.focus();
+    onClose();
+  };
 
   const handleDelete = async () => {
     try {
@@ -63,7 +80,7 @@ export const DeleteProjectDialog = ({
           description: "Le projet n'existe plus ou a déjà été supprimé",
           variant: "destructive",
         });
-        onClose();
+        handleClose();
         return;
       }
 
@@ -93,7 +110,7 @@ export const DeleteProjectDialog = ({
       }
 
       // Fermer le dialogue
-      onClose();
+      handleClose();
 
       // Afficher le toast de confirmation
       toast({
@@ -114,8 +131,14 @@ export const DeleteProjectDialog = ({
   };
 
   return (
-    <AlertDialog open={isOpen} onOpenChange={onClose}>
-      <AlertDialogContent>
+    <AlertDialog open={isOpen} onOpenChange={(open) => !open && handleClose()}>
+      <AlertDialogContent
+        onCloseAutoFocus={(event) => {
+          event.preventDefault();
+          unlockPointerEvents();
+          document.body.focus();
+        }}
+      >
         <AlertDialogHeader>
           <AlertDialogTitle>Êtes-vous sûr ?</AlertDialogTitle>
           <AlertDialogDescription>
@@ -126,7 +149,7 @@ export const DeleteProjectDialog = ({
         <AlertDialogFooter>
           <AlertDialogCancel 
             disabled={isDeleting}
-            onClick={(e) => { e.preventDefault(); e.stopPropagation(); onClose(); }}
+            onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleClose(); }}
             onPointerDown={(e) => e.stopPropagation()}
             onMouseDown={(e) => e.stopPropagation()}
             onMouseUp={(e) => e.stopPropagation()}
