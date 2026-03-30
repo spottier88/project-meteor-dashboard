@@ -139,7 +139,7 @@ export const DeleteProjectDialog = ({
         <AlertDialogFooter>
           <AlertDialogCancel 
             disabled={isDeleting}
-            onClick={(e) => { e.preventDefault(); e.stopPropagation(); onClose(); }}
+            onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleClose(); }}
             onPointerDown={(e) => e.stopPropagation()}
             onMouseDown={(e) => e.stopPropagation()}
             onMouseUp={(e) => e.stopPropagation()}
