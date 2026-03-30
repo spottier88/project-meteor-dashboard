@@ -100,7 +100,7 @@ export const DeleteProjectDialog = ({
       }
 
       // Fermer le dialogue
-      onClose();
+      handleClose();
 
       // Afficher le toast de confirmation
       toast({
