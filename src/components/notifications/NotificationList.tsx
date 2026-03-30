@@ -204,7 +204,9 @@ export function NotificationList({ onDelete }: NotificationListProps) {
             <div className="mt-8 space-y-4">
               <div>
                 <h3 className="font-semibold mb-2">Contenu :</h3>
-                <p className="whitespace-pre-wrap">{selectedContent.content}</p>
+                <div className="max-h-[50vh] overflow-y-auto">
+                  <p className="whitespace-pre-wrap">{selectedContent.content}</p>
+                </div>
               </div>
               <div>
                 <h3 className="font-semibold mb-2">Informations :</h3>
