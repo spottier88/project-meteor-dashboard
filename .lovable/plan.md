@@ -1,83 +1,48 @@
 
 
-# Refonte de la page "Mes taches" : vues multiples, lien projet, rafraichissement
+# Correction : perte de focus après fermeture du dialogue de suppression
 
-## Contexte
+## Problème
 
-La page actuelle affiche uniquement un tableau avec des filtres. L'utilisateur souhaite :
-1. Plusieurs vues : tableau (existant), kanban, calendrier mensuel, timeline/Gantt
-2. Un raccourci vers le projet depuis chaque tache
-3. Un rafraichissement automatique (polling, conformement a la contrainte du projet d'eviter les WebSockets)
+Le `DeleteProjectDialog` utilise un `AlertDialog` (Radix UI) qui, à la fermeture, laisse `pointer-events: none` sur le `body`. Ce problème est connu dans le projet (cf. `ProjectClosureDialog` qui applique déjà un correctif avec `unlockPointerEvents`). Le `DeleteProjectDialog` ne gère ni le nettoyage de `pointer-events`, ni la restauration du focus via `onCloseAutoFocus`.
 
-**Note** : Le projet utilise le polling au lieu de Supabase Realtime pour supporter les deployments auto-heberges. On implementera donc un auto-refresh periodique (30s) plutot que du temps reel.
+## Correction
 
-## Plan d'implementation
+### Fichier : `src/components/project/DeleteProjectDialog.tsx`
 
-### 1. Reorganiser la barre d'outils et ajouter le `ViewToggle`
+1. **Ajouter la fonction `unlockPointerEvents`** (même pattern que `ProjectClosureDialog`) pour réinitialiser `pointer-events` sur `body` et `documentElement`.
 
-Reutiliser le composant `ViewToggle` existant avec une nouvelle valeur `"calendar"` ajoutee au type `ViewMode`. Reorganiser la barre de filtres pour la rendre plus compacte : grouper les filtres sur une ligne, le toggle de vue sur une autre.
+2. **Ajouter `onCloseAutoFocus`** sur `AlertDialogContent` pour intercepter la fermeture et :
+   - Appeler `event.preventDefault()`
+   - Appeler `unlockPointerEvents()`
+   - Redonner le focus au `body`
 
-**Fichier** : `src/components/ViewToggle.tsx`
-- Ajouter `"calendar"` au type `ViewMode`
-- Ajouter le bouton calendrier avec une icone `Calendar`
+3. **Appeler `unlockPointerEvents`** dans `onClose` et après `handleDelete` pour couvrir tous les cas de fermeture (annulation, suppression réussie, erreur).
 
-### 2. Ajouter un lien vers le projet dans le tableau
+### Détail technique
 
-Dans `TaskCard.tsx`, rendre le nom du projet cliquable avec un lien vers `/project/{project_id}`.
+```typescript
+// Fonction de nettoyage (identique à ProjectClosureDialog)
+const unlockPointerEvents = () => {
+  document.body.style.pointerEvents = "";
+  document.body.style.removeProperty("pointer-events");
+  document.documentElement.style.pointerEvents = "";
+  document.documentElement.style.removeProperty("pointer-events");
+};
 
-**Fichier** : `src/components/task/TaskCard.tsx`
+// Sur AlertDialogContent
+<AlertDialogContent
+  onCloseAutoFocus={(event) => {
+    event.preventDefault();
+    unlockPointerEvents();
+    document.body.focus();
+  }}
+>
+```
 
-### 3. Creer un composant `MyTasksKanban`
-
-Composant adapte au contexte "mes taches" (multi-projets), affichant les taches en 3 colonnes (A faire / En cours / Termine). Chaque carte affiche le nom du projet (cliquable), le titre, la date. Permettre le changement de statut rapide via les fleches comme dans le Kanban existant.
-
-**Fichier** : `src/components/task/MyTasksKanban.tsx`
-
-### 4. Creer un composant `MyTasksCalendar`
-
-Vue calendrier mensuel simple : grille de jours avec les taches positionnees sur leur `due_date`. Chaque cellule montre les taches sous forme de pastilles colorees par statut, cliquables pour ouvrir l'edition. Navigation mois precedent/suivant.
-
-**Fichier** : `src/components/task/MyTasksCalendar.tsx`
-
-### 5. Creer un composant `MyTasksTimeline`
-
-Reutiliser le composant `TaskGantt` existant en l'adaptant au contexte multi-projets. Passer les taches filtrees et grouper par projet.
-
-**Fichier** : integration dans `MyTasks.tsx` avec `TaskGantt` ou un wrapper dedie
-
-### 6. Ajouter le polling auto-refresh
-
-Dans `useMyTasks.tsx`, ajouter l'option `refetchInterval: 30000` a la query pour un rafraichissement automatique toutes les 30 secondes. Retirer le bouton "Actualiser" manuel devenu inutile (ou le conserver en complement).
-
-**Fichier** : `src/hooks/useMyTasks.tsx`
-
-### 7. Refactorer `MyTasks.tsx`
-
-Integrer le `ViewToggle`, les 4 vues conditionnelles, le lien projet, et le polling.
-
-**Fichier** : `src/pages/MyTasks.tsx`
-
-## Fichiers impactes
+### Fichier unique impacté
 
 | Fichier | Modification |
 |---|---|
-| `src/components/ViewToggle.tsx` | Ajout `"calendar"` au type `ViewMode` |
-| `src/components/task/TaskCard.tsx` | Nom du projet cliquable (lien vers le projet) |
-| `src/components/task/MyTasksKanban.tsx` | Nouveau composant Kanban multi-projets |
-| `src/components/task/MyTasksCalendar.tsx` | Nouveau composant calendrier mensuel |
-| `src/hooks/useMyTasks.tsx` | Ajout `refetchInterval: 30000` |
-| `src/pages/MyTasks.tsx` | Integration des vues, reorganisation de la toolbar |
-
-## Resultat attendu
-
-```text
-[Tableau] [Kanban] [Calendrier] [Timeline]     Filtres...
-
-Vue tableau :  Projet (lien) | Titre | Statut | Date | Actions
-Vue kanban  :  3 colonnes avec cartes groupees par projet
-Vue calendrier : Grille mensuelle avec pastilles de taches
-Vue timeline : Gantt simplifie multi-projets
-```
-
-Auto-refresh toutes les 30 secondes, transparent pour l'utilisateur.
+| `src/components/project/DeleteProjectDialog.tsx` | Ajout `unlockPointerEvents` + `onCloseAutoFocus` |
 
