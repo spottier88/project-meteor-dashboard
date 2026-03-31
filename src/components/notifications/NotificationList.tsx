@@ -112,6 +112,22 @@ export function NotificationList({ onDelete, typeFilter = "all" }: NotificationL
     });
   }, [notifications, typeFilter]);
 
+  /** Ouvrir le dialog de création de tâche depuis un feedback évolution */
+  const handleCreateTask = (notification: NotificationWithProfile) => {
+    const subType = getFeedbackSubType(notification.title);
+    if (subType !== "evolution") return;
+    // Nettoyer le titre et préparer la description
+    const cleanedTitle = notification.title.replace(/^\[Évolution\]\s*/, "");
+    setTaskFeedback({ title: cleanedTitle, description: notification.content });
+    setTaskDialogOpen(true);
+  };
+
+  /** Ouvrir le dialog de suppression de projet depuis un feedback suppression */
+  const handleDeleteProject = (notification: NotificationWithProfile) => {
+    setDeleteProjectContent(notification.content);
+    setDeleteProjectDialogOpen(true);
+  };
+
   /** Suppression d'une notification */
   const handleDelete = async (id: string) => {
     try {
