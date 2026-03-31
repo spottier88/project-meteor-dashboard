@@ -2,6 +2,7 @@
  * @component NotificationList
  * @description Liste des notifications avec badges visuels, filtre par type,
  * et affichage en cartes pour les feedbacks avec lien question/réponse.
+ * Intègre les actions contextuelles : suppression de projet, création de tâche.
  */
 
 import { useState, useMemo } from "react";
@@ -30,7 +31,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { Notification } from "@/types/notification";
 import { PublishNotificationForm } from "./PublishNotificationForm";
 import { FeedbackResponseForm } from "./FeedbackResponseForm";
-import { FeedbackCard } from "./FeedbackCard";
+import { FeedbackCard, getFeedbackSubType } from "./FeedbackCard";
+import { CreateTaskFromFeedbackDialog } from "./CreateTaskFromFeedbackDialog";
+import { DeleteProjectFromFeedbackDialog } from "./DeleteProjectFromFeedbackDialog";
 
 type NotificationWithProfile = Notification & { profiles: { email: string } | null };
 
@@ -46,6 +49,12 @@ export function NotificationList({ onDelete, typeFilter = "all" }: NotificationL
   const [selectedNotification, setSelectedNotification] = useState<string | null>(null);
   const [selectedContent, setSelectedContent] = useState<NotificationWithProfile | null>(null);
   const [feedbackToRespond, setFeedbackToRespond] = useState<NotificationWithProfile | null>(null);
+
+  // État pour les actions contextuelles
+  const [taskDialogOpen, setTaskDialogOpen] = useState(false);
+  const [taskFeedback, setTaskFeedback] = useState<{ title: string; description: string }>({ title: "", description: "" });
+  const [deleteProjectDialogOpen, setDeleteProjectDialogOpen] = useState(false);
+  const [deleteProjectContent, setDeleteProjectContent] = useState("");
 
   const { data: notifications, isLoading } = useQuery({
     queryKey: ["notifications"],
@@ -102,6 +111,22 @@ export function NotificationList({ onDelete, typeFilter = "all" }: NotificationL
       return { feedback: fb, response: matchedResponse };
     });
   }, [notifications, typeFilter]);
+
+  /** Ouvrir le dialog de création de tâche depuis un feedback évolution */
+  const handleCreateTask = (notification: NotificationWithProfile) => {
+    const subType = getFeedbackSubType(notification.title);
+    if (subType !== "evolution") return;
+    // Nettoyer le titre et préparer la description
+    const cleanedTitle = notification.title.replace(/^\[Évolution\]\s*/, "");
+    setTaskFeedback({ title: cleanedTitle, description: notification.content });
+    setTaskDialogOpen(true);
+  };
+
+  /** Ouvrir le dialog de suppression de projet depuis un feedback suppression */
+  const handleDeleteProject = (notification: NotificationWithProfile) => {
+    setDeleteProjectContent(notification.content);
+    setDeleteProjectDialogOpen(true);
+  };
 
   /** Suppression d'une notification */
   const handleDelete = async (id: string) => {
@@ -176,6 +201,8 @@ export function NotificationList({ onDelete, typeFilter = "all" }: NotificationL
                 onViewDetail={setSelectedContent}
                 onRespond={setFeedbackToRespond}
                 onDelete={handleDelete}
+                onCreateTask={handleCreateTask}
+                onDeleteProject={handleDeleteProject}
               />
             ))}
           </div>
@@ -185,6 +212,19 @@ export function NotificationList({ onDelete, typeFilter = "all" }: NotificationL
         {renderDetailSheet()}
         {renderPublishSheet()}
         {renderFeedbackResponseSheet()}
+
+        {/* Dialogs d'actions contextuelles */}
+        <CreateTaskFromFeedbackDialog
+          open={taskDialogOpen}
+          onOpenChange={setTaskDialogOpen}
+          defaultTitle={taskFeedback.title}
+          defaultDescription={taskFeedback.description}
+        />
+        <DeleteProjectFromFeedbackDialog
+          open={deleteProjectDialogOpen}
+          onOpenChange={setDeleteProjectDialogOpen}
+          feedbackContent={deleteProjectContent}
+        />
       </>
     );
   }
