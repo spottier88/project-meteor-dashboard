@@ -122,7 +122,7 @@ export function DeleteProjectFromFeedbackDialog({
                   className="flex items-center justify-between p-3 border rounded-lg"
                 >
                   <div className="flex items-center gap-2">
-                    {isDeleted && <CheckCircle2 className="h-4 w-4 text-green-500" />}
+                    {isDeleted && <CheckCircle2 className="h-4 w-4 text-primary" />}
                     <span className={isDeleted ? "line-through text-muted-foreground" : ""}>
                       {project.title}
                     </span>

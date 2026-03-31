@@ -52,7 +52,7 @@ export function CreateTaskFromFeedbackDialog({
       const { data, error } = await supabase
         .from("projects")
         .select("id, title")
-        .in("lifecycle_status", ["active", "framing"])
+        .in("lifecycle_status", ["in_progress", "study", "validated"])
         .order("title");
       if (error) throw error;
       return data;
