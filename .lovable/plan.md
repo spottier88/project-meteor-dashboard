@@ -1,47 +1,84 @@
 
 
-# Correction : défilement manquant pour les feedbacks longs
+# Refonte de l'affichage des notifications (administration)
 
-## Problème
+## Problemes actuels
 
-Deux zones affichent du contenu de feedback sans contrainte de hauteur ni barre de défilement :
+1. **Liste plate** : tous les types (systeme, utilisateur, feedback) sont melanges dans un seul tableau sans distinction visuelle.
+2. **Pas de lien question/reponse** : quand un admin repond a un feedback, la reponse est creee comme notification separee sans lien visible avec le feedback d'origine.
+3. **Pas de filtre par type** : l'admin doit parcourir toute la liste pour trouver les feedbacks non traites.
+4. **Pas d'indicateur de traitement** : impossible de savoir si un feedback a deja recu une reponse.
 
-1. **Consultation du feedback** (Sheet de lecture, ligne 199-234 de `NotificationList.tsx`) : le contenu s'affiche via `<p className="whitespace-pre-wrap">` sans limite de hauteur — un texte long déborde hors de la zone visible.
+## Plan d'implementation
 
-2. **Réponse au feedback** (`FeedbackResponseForm.tsx`, ligne 139-142) : la zone "Feedback original" (`<div className="bg-muted p-4 rounded-md">`) affiche le texte intégral sans défilement.
+### 1. Ajouter des onglets par type de notification
 
-## Plan de correction
+Remplacer le tableau unique par une interface a onglets (Tabs) : **Toutes** | **Systeme** | **Feedback** | **Utilisateur**. Cela permet a l'admin de se concentrer sur un type a la fois, notamment les feedbacks a traiter.
 
-### 1. Sheet de consultation (`NotificationList.tsx`)
+**Fichier** : `src/pages/NotificationManagement.tsx`
 
-Ajouter `overflow-y-auto` et `max-h-[50vh]` sur le conteneur du contenu textuel (ligne 207) pour permettre le défilement quand le texte est long.
+### 2. Ajouter des badges visuels par type et statut
 
-```tsx
-// Avant
-<p className="whitespace-pre-wrap">{selectedContent.content}</p>
+Dans la liste, remplacer le texte brut du type et du statut par des `Badge` colores :
+- Systeme : bleu
+- Feedback : orange
+- Utilisateur : vert
+- Statut publie/non publie : badge distinct
 
-// Après
-<div className="max-h-[50vh] overflow-y-auto">
-  <p className="whitespace-pre-wrap">{selectedContent.content}</p>
-</div>
-```
+**Fichier** : `src/components/notifications/NotificationList.tsx`
 
-### 2. Zone feedback original dans le formulaire de réponse (`FeedbackResponseForm.tsx`)
+### 3. Lier visuellement feedbacks et reponses
 
-Ajouter `max-h-[30vh] overflow-y-auto` sur le conteneur `bg-muted` (ligne 139) pour limiter la hauteur du feedback cité et permettre le défilement.
+La reponse a un feedback est creee avec le titre `"Reponse a votre demande: {titre}"`. Exploiter ce pattern pour :
+- Dans l'onglet Feedback, afficher chaque feedback avec sa reponse associee en dessous (sous-ligne indentee ou section depliable).
+- Ajouter un indicateur "Repondu" / "En attente" sur chaque feedback.
 
-```tsx
-// Avant
-<div className="bg-muted p-4 rounded-md">
+La detection se fait cote requete : joindre les notifications de type `user` dont le titre commence par `"Reponse a votre demande:"` et correspond au titre du feedback.
 
-// Après
-<div className="bg-muted p-4 rounded-md max-h-[30vh] overflow-y-auto">
-```
+**Fichier** : `src/components/notifications/NotificationList.tsx`
 
-### Fichiers impactés
+### 4. Passer d'un tableau a des cartes pour les feedbacks
+
+Dans l'onglet Feedback, utiliser un affichage en cartes plutot qu'un tableau pour une meilleure lisibilite :
+- Carte avec : auteur, date, contenu tronque, badge statut (repondu/en attente)
+- Clic pour ouvrir le detail avec la reponse eventuelle
+
+**Fichier** : nouveau composant `src/components/notifications/FeedbackCard.tsx`
+
+### 5. Conserver le tableau pour les notifications systeme/utilisateur
+
+Les notifications systeme et utilisateur restent en tableau classique mais avec les badges visuels.
+
+## Fichiers impactes
 
 | Fichier | Modification |
 |---|---|
-| `src/components/notifications/NotificationList.tsx` | Ajout `max-h-[50vh] overflow-y-auto` sur le contenu de la sheet de lecture |
-| `src/components/notifications/FeedbackResponseForm.tsx` | Ajout `max-h-[30vh] overflow-y-auto` sur la zone feedback original |
+| `src/pages/NotificationManagement.tsx` | Ajout des Tabs (onglets par type) |
+| `src/components/notifications/NotificationList.tsx` | Badges, filtre par type, detection des reponses aux feedbacks, indicateur repondu/en attente |
+| `src/components/notifications/FeedbackCard.tsx` | Nouveau : carte feedback avec lien vers reponse |
+
+## Resultat attendu
+
+```text
+Gestion des notifications
+[Toutes] [Systeme] [Feedback (3)] [Utilisateur]
+
+Onglet Feedback :
+┌─────────────────────────────────────────┐
+│ 🟠 En attente                           │
+│ Bug sur la page projets                 │
+│ par jean@mail.com · 28/03/2026          │
+│ "Quand je clique sur..."               │
+│                          [Repondre] [🗑] │
+├─────────────────────────────────────────┤
+│ ✅ Repondu                              │
+│ Suggestion d'amelioration               │
+│ par marie@mail.com · 25/03/2026         │
+│  └─ Reponse de admin · 26/03 : "Merci" │
+│                                    [🗑] │
+└─────────────────────────────────────────┘
+
+Onglet Systeme / Utilisateur :
+Tableau classique avec badges colores
+```
 
