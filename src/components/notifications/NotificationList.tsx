@@ -50,6 +50,12 @@ export function NotificationList({ onDelete, typeFilter = "all" }: NotificationL
   const [selectedContent, setSelectedContent] = useState<NotificationWithProfile | null>(null);
   const [feedbackToRespond, setFeedbackToRespond] = useState<NotificationWithProfile | null>(null);
 
+  // État pour les actions contextuelles
+  const [taskDialogOpen, setTaskDialogOpen] = useState(false);
+  const [taskFeedback, setTaskFeedback] = useState<{ title: string; description: string }>({ title: "", description: "" });
+  const [deleteProjectDialogOpen, setDeleteProjectDialogOpen] = useState(false);
+  const [deleteProjectContent, setDeleteProjectContent] = useState("");
+
   const { data: notifications, isLoading } = useQuery({
     queryKey: ["notifications"],
     queryFn: async () => {
