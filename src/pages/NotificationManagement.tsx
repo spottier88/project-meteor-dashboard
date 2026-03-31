@@ -1,3 +1,8 @@
+/**
+ * @page NotificationManagement
+ * @description Page d'administration des notifications avec onglets par type.
+ */
+
 import { useState } from "react";
 import { Plus, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -9,6 +14,7 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useNavigate } from "react-router-dom";
 
 export function NotificationManagement() {
@@ -25,14 +31,35 @@ export function NotificationManagement() {
         <h1 className="text-3xl font-bold">Gestion des notifications</h1>
       </div>
 
-      <div className="flex justify-end mb-8">
+      <div className="flex justify-end mb-4">
         <Button onClick={() => setIsFormOpen(true)}>
           <Plus className="h-4 w-4 mr-2" />
           Nouvelle notification
         </Button>
       </div>
 
-      <NotificationList onDelete={() => null} />
+      {/* Onglets par type de notification */}
+      <Tabs defaultValue="all">
+        <TabsList>
+          <TabsTrigger value="all">Toutes</TabsTrigger>
+          <TabsTrigger value="system">Système</TabsTrigger>
+          <TabsTrigger value="feedback">Feedback</TabsTrigger>
+          <TabsTrigger value="user">Utilisateur</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="all">
+          <NotificationList onDelete={() => null} typeFilter="all" />
+        </TabsContent>
+        <TabsContent value="system">
+          <NotificationList onDelete={() => null} typeFilter="system" />
+        </TabsContent>
+        <TabsContent value="feedback">
+          <NotificationList onDelete={() => null} typeFilter="feedback" />
+        </TabsContent>
+        <TabsContent value="user">
+          <NotificationList onDelete={() => null} typeFilter="user" />
+        </TabsContent>
+      </Tabs>
 
       <Sheet open={isFormOpen} onOpenChange={setIsFormOpen}>
         <SheetContent>
