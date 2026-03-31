@@ -153,7 +153,8 @@ export function FeedbackForm({ onSuccess, onCancel }: FeedbackFormProps) {
               ?.filter(p => selectedProjectIds.includes(p.id))
               .map(p => p.title)
               .join(", ");
-            content = `Projets à supprimer: ${projectTitles}\n\n${data.description}`;
+            // Inclure les IDs au format parsable pour l'action de suppression admin
+            content = `project_ids:${selectedProjectIds.join(",")}\nProjets à supprimer: ${projectTitles}\n\n${data.description}`;
           }
           break;
       }
