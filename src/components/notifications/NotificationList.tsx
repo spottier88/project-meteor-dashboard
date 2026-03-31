@@ -2,6 +2,7 @@
  * @component NotificationList
  * @description Liste des notifications avec badges visuels, filtre par type,
  * et affichage en cartes pour les feedbacks avec lien question/réponse.
+ * Intègre les actions contextuelles : suppression de projet, création de tâche.
  */
 
 import { useState, useMemo } from "react";
@@ -30,7 +31,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { Notification } from "@/types/notification";
 import { PublishNotificationForm } from "./PublishNotificationForm";
 import { FeedbackResponseForm } from "./FeedbackResponseForm";
-import { FeedbackCard } from "./FeedbackCard";
+import { FeedbackCard, getFeedbackSubType } from "./FeedbackCard";
+import { CreateTaskFromFeedbackDialog } from "./CreateTaskFromFeedbackDialog";
+import { DeleteProjectFromFeedbackDialog } from "./DeleteProjectFromFeedbackDialog";
 
 type NotificationWithProfile = Notification & { profiles: { email: string } | null };
 
