@@ -201,6 +201,8 @@ export function NotificationList({ onDelete, typeFilter = "all" }: NotificationL
                 onViewDetail={setSelectedContent}
                 onRespond={setFeedbackToRespond}
                 onDelete={handleDelete}
+                onCreateTask={handleCreateTask}
+                onDeleteProject={handleDeleteProject}
               />
             ))}
           </div>
@@ -210,6 +212,19 @@ export function NotificationList({ onDelete, typeFilter = "all" }: NotificationL
         {renderDetailSheet()}
         {renderPublishSheet()}
         {renderFeedbackResponseSheet()}
+
+        {/* Dialogs d'actions contextuelles */}
+        <CreateTaskFromFeedbackDialog
+          open={taskDialogOpen}
+          onOpenChange={setTaskDialogOpen}
+          defaultTitle={taskFeedback.title}
+          defaultDescription={taskFeedback.description}
+        />
+        <DeleteProjectFromFeedbackDialog
+          open={deleteProjectDialogOpen}
+          onOpenChange={setDeleteProjectDialogOpen}
+          feedbackContent={deleteProjectContent}
+        />
       </>
     );
   }
