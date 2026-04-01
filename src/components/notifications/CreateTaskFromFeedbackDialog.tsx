@@ -45,6 +45,14 @@ export function CreateTaskFromFeedbackDialog({
   const [description, setDescription] = useState(defaultDescription);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  /** Synchronise les champs avec les props à chaque ouverture du dialog */
+  useEffect(() => {
+    if (open) {
+      setTitle(defaultTitle);
+      setDescription(defaultDescription);
+    }
+  }, [open, defaultTitle, defaultDescription]);
+
   /** Récupération de la liste des projets actifs */
   const { data: projects } = useQuery({
     queryKey: ["projects-for-task"],
