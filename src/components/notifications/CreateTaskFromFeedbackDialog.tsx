@@ -4,7 +4,7 @@
  * Étape 1 : sélection du projet avec recherche. Étape 2 : formulaire de tâche pré-rempli.
  */
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Search } from "lucide-react";
 import {
@@ -44,6 +44,14 @@ export function CreateTaskFromFeedbackDialog({
   const [title, setTitle] = useState(defaultTitle);
   const [description, setDescription] = useState(defaultDescription);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  /** Synchronise les champs avec les props à chaque ouverture du dialog */
+  useEffect(() => {
+    if (open) {
+      setTitle(defaultTitle);
+      setDescription(defaultDescription);
+    }
+  }, [open, defaultTitle, defaultDescription]);
 
   /** Récupération de la liste des projets actifs */
   const { data: projects } = useQuery({
