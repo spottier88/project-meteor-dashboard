@@ -1,34 +1,55 @@
 
 
-# Correction : pré-remplissage du formulaire de création de tâche depuis un feedback évolution
+# Refonte de la page Administration — Regroupement par catégories
 
-## Problème
+## Problème actuel
 
-Le `CreateTaskFromFeedbackDialog` initialise `title` et `description` via `useState(defaultTitle)` et `useState(defaultDescription)`. Or `useState` ne prend en compte la valeur initiale qu'au premier rendu. Quand le dialog s'ouvre avec de nouvelles props, les champs restent vides (valeurs du premier montage).
+13 boutons affichés dans une grille plate sans distinction. L'administrateur doit scanner visuellement tous les éléments pour trouver la fonction recherchée.
 
-## Correction
+## Proposition
 
-Ajouter un `useEffect` qui synchronise `title` et `description` quand le dialog s'ouvre (`open` passe à `true`) ou quand `defaultTitle`/`defaultDescription` changent.
+Regrouper les boutons en **5 sections thématiques**, chacune avec un titre et une description courte, séparées visuellement par des `Card` shadcn. La grille de boutons est conservée à l'intérieur de chaque section.
 
-### Fichier impacté
+### Catégories proposées
 
-| Fichier | Modification |
-|---|---|
-| `src/components/notifications/CreateTaskFromFeedbackDialog.tsx` | Ajout d'un `useEffect` pour synchroniser les champs avec les props à l'ouverture |
+```text
+┌─ Droits & Organisation ─────────────────────┐
+│  Gestion des utilisateurs                    │
+│  Gestion de l'organisation                   │
+│  Évaluations                                 │
+└──────────────────────────────────────────────┘
 
-### Code
+┌─ Paramétrage ────────────────────────────────┐
+│  Paramètres généraux                         │
+│  Types d'activités                           │
+│  Points d'activités                          │
+│  Tokens API                                  │
+└──────────────────────────────────────────────┘
 
-```tsx
-// Ajouter après les useState (ligne 46)
-import { useState, useEffect } from "react";
+┌─ Modèles & Exports ─────────────────────────┐
+│  Modèles de projet                           │
+│  Modèles d'email                             │
+│  Modèles d'export cadrage                    │
+└──────────────────────────────────────────────┘
 
-useEffect(() => {
-  if (open) {
-    setTitle(defaultTitle);
-    setDescription(defaultDescription);
-  }
-}, [open, defaultTitle, defaultDescription]);
+┌─ Intelligence Artificielle ──────────────────┐
+│  Templates IA                                │
+│  Monitoring IA                               │
+└──────────────────────────────────────────────┘
+
+┌─ Communication ──────────────────────────────┐
+│  Gestion des notifications                   │
+└──────────────────────────────────────────────┘
 ```
 
-Cela garantit que chaque ouverture du dialog reflète les données du feedback sélectionné.
+## Implémentation
+
+### Fichier unique impacté : `src/pages/AdminDashboard.tsx`
+
+1. Définir un tableau de catégories, chacune avec `title`, `description`, `icon` et `items[]`
+2. Remplacer la grille plate par un `map` sur les catégories, chaque catégorie rendue dans un composant `Card` (CardHeader + CardContent)
+3. À l'intérieur de chaque Card, conserver la grille de boutons existante (md:grid-cols-2 lg:grid-cols-3)
+4. Ajouter une légère couleur d'accent sur l'icône de la catégorie pour la différencier des boutons
+
+Aucun nouveau composant, aucune nouvelle dépendance. Changement purement visuel dans un seul fichier.
 
