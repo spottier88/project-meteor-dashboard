@@ -4,7 +4,7 @@
  * Étape 1 : sélection du projet avec recherche. Étape 2 : formulaire de tâche pré-rempli.
  */
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Search } from "lucide-react";
 import {
