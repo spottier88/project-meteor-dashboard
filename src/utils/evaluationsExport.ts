@@ -1,20 +1,19 @@
 /**
- * Utilitaire d'export des évaluations de projets au format Excel
+ * Utilitaire d'export des évaluations de projets au format Excel via ExcelJS
  */
-
-import * as XLSX from "xlsx";
+import ExcelJS from 'exceljs';
 import { EvaluationWithProject } from "@/hooks/useAllEvaluations";
+import { downloadWorkbook, addJsonSheet } from './excelDownload';
 
 /**
  * Exporte les évaluations au format Excel
  * @param evaluations - Liste des évaluations à exporter
  * @param filename - Nom du fichier (sans extension)
  */
-export const exportEvaluationsToExcel = (
+export const exportEvaluationsToExcel = async (
   evaluations: EvaluationWithProject[],
   filename: string = "evaluations-projets"
-): void => {
-  // Préparation des données pour l'export
+): Promise<void> => {
   const exportData = evaluations.map((evaluation) => ({
     "Titre du projet": evaluation.project?.title || "Projet inconnu",
     "Chef de projet": evaluation.project?.project_manager || "-",
@@ -33,30 +32,9 @@ export const exportEvaluationsToExcel = (
     "Leçons apprises": evaluation.lessons_learned || "",
   }));
 
-  // Création du classeur Excel
-  const worksheet = XLSX.utils.json_to_sheet(exportData);
+  const wb = new ExcelJS.Workbook();
+  addJsonSheet(wb, "Évaluations", exportData, [40, 30, 20, 25, 25, 15, 15, 50, 50, 50, 50]);
 
-  // Ajustement de la largeur des colonnes
-  const columnWidths = [
-    { wch: 40 }, // Titre du projet
-    { wch: 30 }, // Chef de projet
-    { wch: 20 }, // Pôle
-    { wch: 25 }, // Direction
-    { wch: 25 }, // Service
-    { wch: 15 }, // Date de clôture
-    { wch: 15 }, // Date d'évaluation
-    { wch: 50 }, // Ce qui a fonctionné
-    { wch: 50 }, // Ce qui a manqué
-    { wch: 50 }, // Améliorations proposées
-    { wch: 50 }, // Leçons apprises
-  ];
-  worksheet["!cols"] = columnWidths;
-
-  // Création du classeur et ajout de la feuille
-  const workbook = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(workbook, worksheet, "Évaluations");
-
-  // Génération du fichier avec date dans le nom
   const dateStr = new Date().toISOString().split("T")[0];
-  XLSX.writeFile(workbook, `${filename}_${dateStr}.xlsx`);
+  await downloadWorkbook(wb, `${filename}_${dateStr}.xlsx`);
 };

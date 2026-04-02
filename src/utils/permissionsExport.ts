@@ -1,11 +1,12 @@
 /**
- * Export Excel de la revue des droits utilisateurs.
+ * Export Excel de la revue des droits utilisateurs via ExcelJS.
  * Génère un fichier .xlsx avec deux onglets :
  * - Synthèse des droits (une ligne par utilisateur)
  * - Détail affectations managers (une ligne par affectation)
  */
-import * as XLSX from "xlsx";
+import ExcelJS from 'exceljs';
 import type { PermissionsReviewUser } from "@/components/admin/PermissionsReviewTable";
+import { downloadWorkbook, addJsonSheet } from './excelDownload';
 
 /** Labels lisibles pour chaque rôle */
 const getRoleLabel = (role: string): string => {
@@ -31,8 +32,8 @@ const formatDate = (date?: Date): string => {
  * Exporte la revue des droits en fichier Excel (.xlsx).
  * @param users - Liste consolidée des utilisateurs avec rôles et affectations
  */
-export const exportPermissionsReview = (users: PermissionsReviewUser[]) => {
-  const wb = XLSX.utils.book_new();
+export const exportPermissionsReview = async (users: PermissionsReviewUser[]) => {
+  const wb = new ExcelJS.Workbook();
 
   // --- Onglet 1 : Synthèse des droits ---
   const syntheseData = users.map((u) => ({
@@ -46,13 +47,7 @@ export const exportPermissionsReview = (users: PermissionsReviewUser[]) => {
     "Dernière activité": formatDate(u.lastActivity),
   }));
 
-  const wsSynthese = XLSX.utils.json_to_sheet(syntheseData);
-  // Ajuster largeurs de colonnes
-  wsSynthese["!cols"] = [
-    { wch: 20 }, { wch: 20 }, { wch: 30 },
-    { wch: 35 }, { wch: 40 }, { wch: 20 },
-  ];
-  XLSX.utils.book_append_sheet(wb, wsSynthese, "Synthèse des droits");
+  addJsonSheet(wb, "Synthèse des droits", syntheseData, [20, 20, 30, 35, 40, 20]);
 
   // --- Onglet 2 : Détail affectations managers ---
   const detailData: { Nom: string; Prénom: string; Email: string; "Chemin hiérarchique": string }[] = [];
@@ -77,11 +72,9 @@ export const exportPermissionsReview = (users: PermissionsReviewUser[]) => {
     }
   });
 
-  const wsDetail = XLSX.utils.json_to_sheet(detailData);
-  wsDetail["!cols"] = [{ wch: 20 }, { wch: 20 }, { wch: 30 }, { wch: 50 }];
-  XLSX.utils.book_append_sheet(wb, wsDetail, "Détail managers");
+  addJsonSheet(wb, "Détail managers", detailData, [20, 20, 30, 50]);
 
   // Téléchargement
   const dateStr = new Date().toISOString().slice(0, 10);
-  XLSX.writeFile(wb, `Revue_droits_${dateStr}.xlsx`);
+  await downloadWorkbook(wb, `Revue_droits_${dateStr}.xlsx`);
 };
