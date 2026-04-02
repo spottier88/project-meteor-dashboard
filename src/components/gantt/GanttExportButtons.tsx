@@ -2,14 +2,14 @@
  * @component GanttExportButtons
  * @description Boutons d'exportation pour le diagramme de Gantt.
  * Permet d'exporter le diagramme au format Excel ou image (PNG).
- * Compatible avec le format SVAR Gantt.
  */
 
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { FileSpreadsheet, Image } from 'lucide-react';
 import html2canvas from 'html2canvas';
-import * as XLSX from 'xlsx';
+import ExcelJS from 'exceljs';
+import { downloadWorkbook, addJsonSheet } from '@/utils/excelDownload';
 
 /** Format simplifié pour les données d'export */
 export interface GanttExportTask {
@@ -34,7 +34,7 @@ export const GanttExportButtons = ({ tasks, ganttRef }: GanttExportButtonsProps)
   /**
    * Exporte les données du Gantt vers un fichier Excel
    */
-  const handleExportToExcel = () => {
+  const handleExportToExcel = async () => {
     const data = tasks.map(task => ({
       'Nom': task.name,
       'Date de début': task.start.toLocaleDateString('fr-FR'),
@@ -43,20 +43,9 @@ export const GanttExportButtons = ({ tasks, ganttRef }: GanttExportButtonsProps)
       'Avancement (%)': Math.round(task.progress) || 0,
     }));
 
-    const ws = XLSX.utils.json_to_sheet(data);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Planning");
-
-    const colWidths = [
-      { wch: 40 },
-      { wch: 15 },
-      { wch: 15 },
-      { wch: 10 },
-      { wch: 15 },
-    ];
-    ws['!cols'] = colWidths;
-
-    XLSX.writeFile(wb, "planning-projets.xlsx");
+    const wb = new ExcelJS.Workbook();
+    addJsonSheet(wb, "Planning", data, [40, 15, 15, 10, 15]);
+    await downloadWorkbook(wb, "planning-projets.xlsx");
   };
 
   /**

@@ -1,37 +1,34 @@
-
-import * as XLSX from 'xlsx';
+/**
+ * Export des données de projets au format Excel via ExcelJS
+ */
+import ExcelJS from 'exceljs';
 import { format } from 'date-fns';
-import { fr } from 'date-fns/locale';
 import { lifecycleStatusLabels } from '@/types/project';
+import { downloadWorkbook, addJsonSheet, addArraySheet } from './excelDownload';
 
 /**
- * Fonction pour exporter les données de projets au format Excel
+ * Exporte les données de projets au format Excel
  * @param projectsData Les données des projets à exporter
  */
-export const exportProjectsToExcel = (projectsData: any[]) => {
+export const exportProjectsToExcel = async (projectsData: any[]) => {
   if (!projectsData || projectsData.length === 0) return;
 
-  // Création d'un nouveau classeur Excel
-  const wb = XLSX.utils.book_new();
-  
-  // Création de l'onglet de sommaire des projets
+  const wb = new ExcelJS.Workbook();
+
+  // Onglet sommaire
   createSummarySheet(wb, projectsData);
-  
-  // Création d'un onglet par projet
+
+  // Un onglet par projet
   projectsData.forEach(data => {
     createProjectSheet(wb, data);
   });
-  
-  // Génération du fichier Excel
+
   const fileName = `projets-export-${format(new Date(), 'yyyy-MM-dd')}.xlsx`;
-  XLSX.writeFile(wb, fileName);
+  await downloadWorkbook(wb, fileName);
 };
 
-/**
- * Crée l'onglet de sommaire des projets
- */
-const createSummarySheet = (wb: XLSX.WorkBook, projectsData: any[]) => {
-  // Données pour le sommaire
+/** Crée l'onglet de sommaire des projets */
+const createSummarySheet = (wb: ExcelJS.Workbook, projectsData: any[]) => {
   const summaryData = projectsData.map(data => ({
     'Code': data.project.code || '-',
     'Titre': data.project.title || '',
@@ -39,43 +36,19 @@ const createSummarySheet = (wb: XLSX.WorkBook, projectsData: any[]) => {
     'Avancement': `${data.project.completion || 0}%`,
     'Chef de projet': formatProjectManager(data.project),
     'Organisation': formatOrganization(data.project),
-    'Pour': formatForEntity(data.project), // Ajout de l'information "Pour qui"
+    'Pour': formatForEntity(data.project),
     'Date de début': data.project.start_date ? format(new Date(data.project.start_date), 'dd/MM/yyyy') : '-',
     'Date de fin': data.project.end_date ? format(new Date(data.project.end_date), 'dd/MM/yyyy') : '-',
     'Météo': formatWeather(data.lastReview?.weather),
     'Évolution': formatProgress(data.lastReview?.progress),
   }));
 
-  // Création de la feuille
-  const ws = XLSX.utils.json_to_sheet(summaryData);
-  
-  // Ajustement des largeurs de colonnes
-  const colWidths = [
-    { wch: 10 },  // Code
-    { wch: 35 },  // Titre
-    { wch: 15 },  // Statut
-    { wch: 12 },  // Avancement
-    { wch: 25 },  // Chef de projet
-    { wch: 35 },  // Organisation
-    { wch: 35 },  // Pour
-    { wch: 15 },  // Date de début
-    { wch: 15 },  // Date de fin
-    { wch: 10 },  // Météo
-    { wch: 10 },  // Évolution
-  ];
-  ws['!cols'] = colWidths;
-  
-  // Ajout de la feuille au classeur
-  XLSX.utils.book_append_sheet(wb, ws, "Sommaire");
+  addJsonSheet(wb, "Sommaire", summaryData, [10, 35, 15, 12, 25, 35, 35, 15, 15, 10, 10]);
 };
 
-/**
- * Crée un onglet pour un projet spécifique
- */
-const createProjectSheet = (wb: XLSX.WorkBook, data: any) => {
-  // Données du projet formatées pour l'export
-  const projectData = [
-    // Informations générales
+/** Crée un onglet pour un projet spécifique */
+const createProjectSheet = (wb: ExcelJS.Workbook, data: any) => {
+  const projectData: any[][] = [
     ['Informations générales', ''],
     ['Titre', data.project.title || ''],
     ['Code', data.project.code || '-'],
@@ -86,18 +59,14 @@ const createProjectSheet = (wb: XLSX.WorkBook, data: any) => {
     ['Priorité', data.project.priority || '-'],
     ['Avancement', `${data.project.completion || 0}%`],
     ['', ''],
-    
-    // Organisation et suivi
     ['Organisation et suivi', ''],
     ['Pôle', data.project.pole_name || '-'],
     ['Direction', data.project.direction_name || '-'],
     ['Service', data.project.service_name || '-'],
     ['Chef de projet', formatProjectManager(data.project)],
     ['Suivi DGS', data.project.suivi_dgs ? 'Oui' : 'Non'],
-    ['Pour qui', formatForEntity(data.project)], // Ajout de l'information "Pour qui"
+    ['Pour qui', formatForEntity(data.project)],
     ['', ''],
-    
-    // Dernière revue
     ['Dernière revue', ''],
     ['Date', data.lastReview?.created_at ? format(new Date(data.lastReview.created_at), 'dd/MM/yyyy') : '-'],
     ['Météo', formatWeather(data.lastReview?.weather)],
@@ -105,8 +74,7 @@ const createProjectSheet = (wb: XLSX.WorkBook, data: any) => {
     ['Commentaire', data.lastReview?.comment || ''],
     ['', ''],
   ];
-  
-  // Ajouter les informations de cadrage si disponibles
+
   if (data.framing) {
     projectData.push(
       ['Informations de cadrage', ''],
@@ -119,8 +87,7 @@ const createProjectSheet = (wb: XLSX.WorkBook, data: any) => {
       ['', '']
     );
   }
-  
-  // Ajouter les scores d'innovation si disponibles
+
   if (data.innovation) {
     projectData.push(
       ['Scores d\'innovation', ''],
@@ -132,12 +99,10 @@ const createProjectSheet = (wb: XLSX.WorkBook, data: any) => {
       ['', '']
     );
   }
-  
-  // Ajouter les tâches si disponibles
+
   if (data.tasks && data.tasks.length > 0) {
     projectData.push(['Tâches', '']);
     projectData.push(['Titre', 'Statut', 'Date début', 'Date fin', 'Assigné à']);
-    
     data.tasks.forEach((task: any) => {
       projectData.push([
         task.title || '',
@@ -147,15 +112,12 @@ const createProjectSheet = (wb: XLSX.WorkBook, data: any) => {
         task.assignee || '-'
       ]);
     });
-    
     projectData.push(['', '']);
   }
-  
-  // Ajouter les risques si disponibles
+
   if (data.risks && data.risks.length > 0) {
     projectData.push(['Risques', '']);
     projectData.push(['Description', 'Probabilité', 'Sévérité', 'Statut', 'Plan d\'atténuation']);
-    
     data.risks.forEach((risk: any) => {
       projectData.push([
         risk.description || '',
@@ -165,37 +127,18 @@ const createProjectSheet = (wb: XLSX.WorkBook, data: any) => {
         risk.mitigation_plan || '-'
       ]);
     });
-    
     projectData.push(['', '']);
   }
-  
-  // Création d'une feuille de calcul à partir des données
-  const ws = XLSX.utils.aoa_to_sheet(projectData);
-  
-  // Ajuster les largeurs des colonnes
-  const colWidths = [
-    { wch: 25 },  // Première colonne (labels)
-    { wch: 60 },  // Deuxième colonne (valeurs)
-    { wch: 15 },  // Colonne supplémentaire pour les tableaux
-    { wch: 15 },  // Colonne supplémentaire pour les tableaux
-    { wch: 20 },  // Colonne supplémentaire pour les tableaux
-  ];
-  ws['!cols'] = colWidths;
-  
-  // Ajout de la feuille au classeur
-  // Utiliser le titre du projet comme nom d'onglet (limité à 31 caractères pour Excel)
+
   const sheetName = (data.project.title || 'Projet').replace(/[:\\\/\?\*\[\]]/g, '-').substring(0, 31);
-  XLSX.utils.book_append_sheet(wb, ws, sheetName);
+  addArraySheet(wb, sheetName, projectData, [25, 60, 15, 15, 20]);
 };
 
 // Fonctions utilitaires de formatage
 
 const formatProjectManager = (project: any): string => {
   if (!project.project_manager) return '-';
-  if (project.project_manager_name) {
-    return project.project_manager_name;
-  }
-  return project.project_manager;
+  return project.project_manager_name || project.project_manager;
 };
 
 const formatOrganization = (project: any): string => {
@@ -206,61 +149,28 @@ const formatOrganization = (project: any): string => {
   return parts.length > 0 ? parts.join(' / ') : '-';
 };
 
-// Nouvelle fonction pour formater l'entité pour laquelle le projet est réalisé
 const formatForEntity = (project: any): string => {
   if (!project.for_entity_type || !project.for_entity_name) return '-';
-  
-  const entityTypeLabels: Record<string, string> = {
-    'pole': 'Pôle',
-    'direction': 'Direction',
-    'service': 'Service'
-  };
-  
-  const entityTypeLabel = entityTypeLabels[project.for_entity_type] || project.for_entity_type;
-  return `${entityTypeLabel} ${project.for_entity_name}`;
+  const entityTypeLabels: Record<string, string> = { 'pole': 'Pôle', 'direction': 'Direction', 'service': 'Service' };
+  return `${entityTypeLabels[project.for_entity_type] || project.for_entity_type} ${project.for_entity_name}`;
 };
 
 const formatWeather = (weather: string | null | undefined): string => {
-  switch (weather) {
-    case 'sunny': return 'Ensoleillé';
-    case 'cloudy': return 'Nuageux';
-    case 'stormy': return 'Orageux';
-    default: return '-';
-  }
+  switch (weather) { case 'sunny': return 'Ensoleillé'; case 'cloudy': return 'Nuageux'; case 'stormy': return 'Orageux'; default: return '-'; }
 };
 
 const formatProgress = (progress: string | null | undefined): string => {
-  switch (progress) {
-    case 'better': return 'Amélioration';
-    case 'stable': return 'Stable';
-    case 'worse': return 'Dégradation';
-    default: return '-';
-  }
+  switch (progress) { case 'better': return 'Amélioration'; case 'stable': return 'Stable'; case 'worse': return 'Dégradation'; default: return '-'; }
 };
 
 const formatTaskStatus = (status: string | null | undefined): string => {
-  switch (status) {
-    case 'todo': return 'À faire';
-    case 'in_progress': return 'En cours';
-    case 'done': return 'Terminé';
-    default: return status || '-';
-  }
+  switch (status) { case 'todo': return 'À faire'; case 'in_progress': return 'En cours'; case 'done': return 'Terminé'; default: return status || '-'; }
 };
 
 const formatRiskLevel = (level: string | null | undefined): string => {
-  switch (level) {
-    case 'low': return 'Faible';
-    case 'medium': return 'Moyen';
-    case 'high': return 'Élevé';
-    default: return level || '-';
-  }
+  switch (level) { case 'low': return 'Faible'; case 'medium': return 'Moyen'; case 'high': return 'Élevé'; default: return level || '-'; }
 };
 
 const formatRiskStatus = (status: string | null | undefined): string => {
-  switch (status) {
-    case 'open': return 'Ouvert';
-    case 'in_progress': return 'En cours';
-    case 'resolved': return 'Résolu';
-    default: return status || '-';
-  }
+  switch (status) { case 'open': return 'Ouvert'; case 'in_progress': return 'En cours'; case 'resolved': return 'Résolu'; default: return status || '-'; }
 };
