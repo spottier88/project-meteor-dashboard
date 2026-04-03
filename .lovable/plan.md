@@ -1,111 +1,236 @@
 
-# Plan de correction — navigation bloquée sur l’écran “Tous les projets”
+# Correction définitive du bug de navigation sur `/projects`
 
-## Diagnostic retenu
-Ce n’est très probablement plus un bug React Router pur.
+## Diagnostic complété
 
-Sur `/projects`, trois mécanismes différents cassent en même temps :
-- `Link` : bouton `Retour` dans `DashboardHeader`
-- `navigate()` : bouton `Administration` dans `UserInfo`
-- clic ligne/carte : `useProjectNavigation` depuis `ProjectTableRow` / `ProjectCard`
+La configuration de routage n’est probablement plus la cause principale :
 
-Comme ces 3 chemins sont différents, le point commun n’est pas le helper de navigation mais l’écran lui-même : un verrou d’interaction laissé par les composants Radix de cette page (overlay invisible, focus-lock, `pointer-events` résiduels).
+- `src/routes.tsx` contient bien une route valide pour `/`, `/admin`, `/projects/:projectId` et les autres cibles concernées.
+- une seule instance de `BrowserRouter` est bien présente ;
+- le fait que **l’URL change correctement** prouve que `Link` et `navigate()` s’exécutent.
 
-La page `/projects` est la plus exposée car elle cumule :
-- `ProjectCart` (sheet) dans `DashboardHeader`
-- `ProjectForm`, `ProjectSelectionSheet`, `ReviewSheet` via `ProjectModals`
-- un `ProjectActions` par ligne/carte, avec `DropdownMenu` + dialogs associés
+Le symptôme exact est donc plutôt celui-ci :
 
-Plusieurs de ces composants n’ont pas de nettoyage homogène à la fermeture, alors que le projet contient déjà des correctifs manuels du même type ailleurs (`pointer-events` / focus). Avec React Router v7 et ses transitions asynchrones, ce verrou devient plus visible.
+```text
+clic -> navigate()/Link met à jour l'URL
+     -> React Router v7 lance une transition
+     -> la page /projects continue à produire des mises à jour React synchrones
+     -> la transition ne commit pas visuellement
+     -> l'ancienne page reste affichée
+```
 
-Je ne prévois donc pas de réécrire la logique de `ProjectTableRow`, `ProjectCard`, `DashboardHeader` ou `UserInfo` : ils ne sont pas la cause racine.
+## Cause racine retenue
 
-## Modifications à mettre en œuvre
+Le point le plus critique est un **cycle de rendu propre à la page `/projects`**.
 
-### 1. Centraliser le nettoyage des verrous d’interaction
-Créer un helper partagé de type `resetInteractionLocks()` pour :
-- vider `document.body.style.pointerEvents`
-- vider `document.documentElement.style.pointerEvents`
-- restaurer le focus sur `document.body`
+### Boucle identifiée
+Dans `src/pages/Index.tsx` :
 
-L’appliquer dans les primitives de base :
-- `src/components/ui/dialog.tsx`
-- `src/components/ui/sheet.tsx`
-- `src/components/ui/alert-dialog.tsx`
+- `handleFilteredProjectsChange` est recréé à chaque rendu ;
+- ce callback fait `setAccessibleProjectIds(...)`.
 
-Objectif : ne plus dépendre de correctifs dispersés composant par composant.
+Dans `src/components/ProjectGrid.tsx` et `src/components/ProjectTable.tsx` :
 
-### 2. Corriger les composants montés sur `/projects`
-Remplacer les `onOpenChange={onClose}` trop implicites par un handler explicite :
-- `onOpenChange={(open) => { if (!open) { resetInteractionLocks(); onClose(); } }}`
+- un `useEffect` dépend de `onFilteredProjectsChange` ;
+- cet effet rappelle le parent avec un **nouveau tableau d’IDs**.
 
-À faire en priorité sur :
-- `src/components/cart/ProjectCart.tsx`
-- `src/components/ProjectSelectionSheet.tsx`
-- `src/components/review/ReviewSheet.tsx`
-- `src/components/profile/ProfileForm.tsx`
-- `src/components/project/LinkProjectDialog.tsx`
-- `src/components/notifications/RequiredNotificationDialog.tsx`
+Résultat :
 
-### 3. Rendre les dropdowns non bloquants
-Configurer `modal={false}` là où le menu sert surtout à lancer des actions/navigation :
-- `src/components/project/ProjectActions.tsx`
-- `src/components/notifications/UserNotificationsDropdown.tsx`
+```text
+Index render
+-> nouveau callback onFilteredProjectsChange
+-> ProjectGrid/ProjectTable useEffect se relance
+-> setAccessibleProjectIds(newArray)
+-> Index re-render
+-> nouveau callback
+-> effet relancé
+-> etc.
+```
 
-C’est cohérent avec le pattern déjà utilisé dans le projet pour éviter les blocages de `pointer-events`.
+Même si l’écran semble “stable”, cette boucle suffit à saturer `/projects` et à empêcher React Router v7 de finaliser ses transitions.
 
-### 4. Ajouter un filet de sécurité au niveau route
-Ajouter un cleanup léger au changement de `pathname` :
-- dans `src/components/ProtectedRoute.tsx` ou un petit composant dédié monté sous le Router
+### Facteur aggravant
+`src/components/ProjectTable.tsx` calcule `filteredProjects` via `useQuery`, alors qu’il s’agit d’un **filtrage local pur**.
 
-But :
-- nettoyer tout verrou résiduel laissé par une fermeture incomplète
-- sécuriser les transitions RRv7
+La `queryKey` inclut des dépendances instables (`userProfile`, `projectAccess`, etc.), ce qui augmente les recalculs et rend le rendu encore plus nerveux sur cette page.
 
-### 5. Harmoniser les derniers handlers de navigation
-Appliquer le nettoyage secondaire restant :
-- `src/hooks/useProjectNavigation.ts` : `void navigate(projectUrl)` sur la navigation interne
-- vérifier les derniers `navigate(...)` appelés depuis les actions projets
+## Pourquoi cela explique parfaitement le bug
 
-Ce n’est pas la cause principale, mais cela enlève un facteur parasite.
+Cela colle avec tous les symptômes signalés :
 
-## Pourquoi cela explique bien le bug
-- `Retour`, `Administration` et clic projet utilisent des mécanismes différents mais échouent tous sur le même écran ;
-- le seul point commun solide est la couche d’interaction locale à `/projects` ;
-- cette page monte beaucoup plus de sheets/dialogs/dropdowns que les autres, donc c’est le meilleur candidat pour un verrou UI résiduel.
+- **bouton Retour** : l’URL passe à `/`, mais la transition ne commit pas ;
+- **bouton Administration** : l’URL passe à `/admin`, mais l’écran courant reste affiché ;
+- **clic carte projet / ligne tableau** : l’URL passe à `/projects/:id`, mais l’ancienne page reste présente ;
+- **bug circonscrit à `/projects`** : c’est la seule page inspectée où cette boucle parent/enfant existe clairement.
 
-## Écrans à auditer aussi
-Le même bug peut se reproduire ailleurs sur des pages qui utilisent les mêmes primitives :
-- tableau de bord (`UserInfo`, profil, notifications)
-- pages portefeuille avec dialogs/forms
-- pages projet avec suppression / liaison / clôture
-- pages tâches / notes
+Les correctifs précédents sur `ProtectedRoute` et `pointer-events` peuvent rester, mais ils ne traitent pas cette cause racine.
 
-## Vérifications à faire après correction
-1. Depuis `/projects` :
-   - bouton `Retour`
-   - bouton `Administration`
-   - clic sur une carte projet
-   - clic sur une ligne du tableau
-   - actions du menu projet (`tâches`, `risques`, `cadrage`, `équipe`)
-2. Refaire ces tests après :
-   - ouverture/fermeture du panier
-   - ouverture/fermeture du profil
-   - ouverture/fermeture d’une notification
-   - ouverture/fermeture d’un historique de revue
-3. Vérifier que le dashboard et les pages portefeuille restent navigables.
+## Plan de correction
 
-## Fichiers principalement impactés
-- `src/components/ui/dialog.tsx`
-- `src/components/ui/sheet.tsx`
-- `src/components/ui/alert-dialog.tsx`
-- `src/components/cart/ProjectCart.tsx`
-- `src/components/project/ProjectActions.tsx`
-- `src/components/project/LinkProjectDialog.tsx`
-- `src/components/ProjectSelectionSheet.tsx`
-- `src/components/review/ReviewSheet.tsx`
-- `src/components/profile/ProfileForm.tsx`
-- `src/components/notifications/UserNotificationsDropdown.tsx`
-- `src/components/notifications/RequiredNotificationDialog.tsx`
+### 1. Supprimer la synchronisation enfant -> parent qui crée la boucle
+Fichiers :
+- `src/pages/Index.tsx`
+- `src/components/project/ProjectList.tsx`
+- `src/components/ProjectGrid.tsx`
+- `src/components/ProjectTable.tsx`
+
+Action :
+- supprimer le pattern `onFilteredProjectsChange` tel qu’il existe aujourd’hui ;
+- ne plus faire remonter les IDs visibles au parent depuis un `useEffect` enfant.
+
+Objectif :
+- casser définitivement la boucle de rendu sur `/projects`.
+
+### 2. Centraliser le calcul des projets réellement visibles
+Fichier conseillé :
+- nouveau hook partagé, par ex. `src/hooks/useVisibleProjects.ts`
+
+Action :
+- calculer en un seul endroit :
+  - les filtres métier de `Index.tsx` ;
+  - les droits d’accès projet ;
+  - la liste finale des projets visibles ;
+  - la liste finale des IDs visibles.
+
+Le hook devra réutiliser les briques déjà présentes :
+- `usePermissionsContext`
+- `useUserProjectMemberships`
+- `useManagerProjectAccess`
+
+Objectif :
+- éviter que `ProjectGrid` et `ProjectTable` recodent chacun leur logique d’accès ;
+- fournir directement à `Index.tsx` :
+  - `visibleProjects`
+  - `visibleProjectIds`
+
+### 3. Refactorer `Index.tsx` pour devenir la source unique de vérité
+Fichier :
+- `src/pages/Index.tsx`
+
+Action :
+- supprimer l’état `accessibleProjectIds` ;
+- supprimer `handleFilteredProjectsChange` ;
+- utiliser directement `visibleProjectIds` issus du hook partagé ;
+- passer `visibleProjects` à `ProjectList`.
+
+Objectif :
+- plus aucun `setState` déclenché en boucle depuis les enfants ;
+- `AddFilteredToCartButton` continue de recevoir les bons IDs, mais sans aller-retour parent/enfant.
+
+### 4. Simplifier `ProjectGrid` en composant purement présentatif
+Fichier :
+- `src/components/ProjectGrid.tsx`
+
+Action :
+- retirer :
+  - la logique de filtrage d’accès ;
+  - l’effet qui notifie le parent ;
+  - l’état `isPermissionsLoaded` si non indispensable ;
+  - les requêtes qui ne servent qu’à recalculer une visibilité déjà connue du parent.
+
+Le composant doit seulement :
+- recevoir la liste finale de projets à afficher ;
+- paginer ;
+- rendre les cartes.
+
+Objectif :
+- réduire fortement les rerenders ;
+- rendre la vue grille triviale et stable.
+
+### 5. Simplifier `ProjectTable` et retirer le `useQuery` local inadapté
+Fichier :
+- `src/components/ProjectTable.tsx`
+
+Action :
+- supprimer le `useQuery` utilisé pour `filteredProjects` ;
+- remplacer ce calcul par `useMemo` ;
+- retirer la logique de remontée d’IDs au parent ;
+- conserver uniquement :
+  - tri ;
+  - pagination ;
+  - rendu des lignes.
+
+Objectif :
+- éliminer les dépendances instables dans `queryKey` ;
+- supprimer une source majeure de rerenders inutiles ;
+- éviter que la vue tableau soit plus fragile que la vue grille.
+
+### 6. Nettoyage d’architecture pour éviter une régression
+Fichiers :
+- `src/components/project/ProjectList.tsx`
+- éventuellement hooks liés à la liste projets
+
+Action :
+- retirer la prop `onFilteredProjectsChange` de la chaîne de composants ;
+- documenter que les composants de liste sont désormais “présentation only” ;
+- réserver les calculs d’accès/visibilité au niveau hook/page.
+
+Objectif :
+- rendre le bug difficile à réintroduire plus tard.
+
+## Fichiers impactés
+
+### À modifier
+- `src/pages/Index.tsx`
+- `src/components/project/ProjectList.tsx`
+- `src/components/ProjectGrid.tsx`
+- `src/components/ProjectTable.tsx`
+
+### À créer
+- `src/hooks/useVisibleProjects.ts`  
+  ou un hook équivalent de centralisation de la visibilité projets
+
+### À conserver sans re-travailler en priorité
+- `src/routes.tsx`
 - `src/components/ProtectedRoute.tsx`
-- `src/hooks/useProjectNavigation.ts`
+- `src/utils/resetInteractionLocks.ts`
+
+Ces fichiers ne semblent plus être le cœur du bug actuel.
+
+## Risques
+
+### Risque principal
+La zone sensible est la logique de “projets visibles” utilisée pour :
+- l’affichage réel de la liste ;
+- les droits manager/membre/admin ;
+- l’ajout des projets filtrés au panier.
+
+### Réduction du risque
+Le refactor proposé réduit le risque global car il :
+- supprime la duplication Grid/Table ;
+- supprime les effets de synchronisation fragiles ;
+- remplace des calculs répartis par une source unique de vérité.
+
+## Vérifications à réaliser après correction
+
+### Navigation depuis `/projects`
+Tester en vue grille et en vue tableau :
+- bouton `Retour`
+- bouton `Administration`
+- clic sur une carte projet
+- clic sur une ligne du tableau
+- actions du menu projet :
+  - tâches
+  - risques
+  - cadrage
+  - équipe
+
+### Régression fonctionnelle
+Vérifier aussi :
+- filtres texte / statut / organisation / tags
+- pagination
+- bascule grille/tableau
+- ajout au panier des projets filtrés
+- respect des droits admin / manager / membre / chef de projet
+
+## Conclusion
+
+La meilleure piste n’est plus un bug de route matching, mais un **render loop local à `/projects`**.  
+Le correctif durable consiste à :
+
+1. **supprimer la remontée d’état enfant -> parent via `useEffect`** ;
+2. **centraliser le calcul des projets visibles** ;
+3. **rendre `ProjectGrid` et `ProjectTable` purement présentatifs** ;
+4. **sortir le filtrage local de React Query**.
+
+C’est cette refonte ciblée qui a le plus de chances de résoudre définitivement le fait que l’URL change mais que l’écran reste bloqué sur la liste des projets.
