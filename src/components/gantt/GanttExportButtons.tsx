@@ -7,7 +7,7 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { FileSpreadsheet, Image } from 'lucide-react';
-import html2canvas from 'html2canvas';
+import { toPng } from 'html-to-image';
 import ExcelJS from 'exceljs';
 import { downloadWorkbook, addJsonSheet } from '@/utils/excelDownload';
 
