@@ -4,6 +4,9 @@
  * @description Composant principal pour l'affichage des listes de projets.
  * Gère la bascule entre les vues grille et tableau, et transmet les projets
  * et les actions (édition, revue, historique) aux composants enfants.
+ * 
+ * Ce composant est purement présentatif : il reçoit la liste finale de projets
+ * déjà filtrés et ne remonte aucun état au parent.
  */
 
 import { useState, useEffect, useRef } from "react";
@@ -20,7 +23,6 @@ interface ProjectListProps {
   onProjectReview: (id: string, title: string) => void;
   onViewHistory: (id: string, title: string) => void;
   onProjectDeleted: () => void;
-  onFilteredProjectsChange?: (projectIds: string[]) => void;
 }
 
 export const ProjectList = ({
@@ -31,7 +33,6 @@ export const ProjectList = ({
   onProjectReview,
   onViewHistory,
   onProjectDeleted,
-  onFilteredProjectsChange,
 }: ProjectListProps) => {
   // État pour la pagination
   const [currentPage, setCurrentPage] = useState(() => {
@@ -72,7 +73,7 @@ export const ProjectList = ({
         <ViewToggle 
           currentView={view} 
           onViewChange={onViewChange} 
-          availableViews={["grid", "table"]} // Limiter aux vues grille et tableau uniquement
+          availableViews={["grid", "table"]}
         />
       </div>
       {view === "grid" ? (
@@ -81,7 +82,6 @@ export const ProjectList = ({
           onProjectEdit={onProjectEdit}
           onProjectReview={onProjectReview}
           onViewHistory={onViewHistory}
-          onFilteredProjectsChange={onFilteredProjectsChange}
           currentPage={currentPage}
           pageSize={pageSize}
           onPageChange={setCurrentPage}
@@ -93,7 +93,6 @@ export const ProjectList = ({
           onProjectEdit={onProjectEdit}
           onViewHistory={onViewHistory}
           onProjectDeleted={onProjectDeleted}
-          onFilteredProjectsChange={onFilteredProjectsChange}
           currentPage={currentPage}
           pageSize={pageSize}
           onPageChange={setCurrentPage}
