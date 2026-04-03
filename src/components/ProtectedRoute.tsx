@@ -60,7 +60,16 @@ export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
 
   // Effect 3 : nettoyage des verrous d'interaction à chaque changement de route
   useEffect(() => {
+    // Nettoyage immédiat
     resetInteractionLocks();
+    
+    // Nettoyage différé pour rattraper les verrous ré-appliqués
+    // par les animations de fermeture Radix (durée max: 500ms)
+    const timer = setTimeout(() => {
+      resetInteractionLocks();
+    }, 600);
+    
+    return () => clearTimeout(timer);
   }, [pathname]);
 
   // Effect 4 : vérification des routes admin (synchrone, pas d'interférence)
