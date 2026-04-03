@@ -43,7 +43,7 @@ export const useProjectNavigation = () => {
         if (!newWindow) {
           console.warn('Le navigateur a bloqué l\'ouverture du nouvel onglet');
           // Fallback : navigation normale
-          navigate(projectUrl);
+        void navigate(projectUrl);
           // Nettoyer les données stockées
           sessionStorage.removeItem(newTabKey);
         }

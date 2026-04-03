@@ -1,5 +1,5 @@
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useNavigate, useLocation } from "react-router";
 import { supabase } from "@/integrations/supabase/client";
 import { usePermissionsContext } from "@/contexts/PermissionsContext";
@@ -11,43 +11,57 @@ export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { isAdmin } = usePermissionsContext();
   const [sessionChecked, setSessionChecked] = useState(false);
 
+  // Refs pour éviter les re-exécutions des effects lors des changements de route
+  const navigateRef = useRef(navigate);
+  const pathnameRef = useRef(pathname);
+
+  // Synchroniser les refs à chaque render sans déclencher d'effects
+  useEffect(() => {
+    navigateRef.current = navigate;
+    pathnameRef.current = pathname;
+  });
+
+  // Effect 1 : vérification initiale de la session, une seule fois au montage
   useEffect(() => {
     const initializeAuth = async () => {
-      // Nettoyer les anciennes données de navigation
       cleanupOldNavigationData();
       
       const { data: { session } } = await supabase.auth.getSession();
       
       if (!session) {
-        // Si pas de session, sauvegarder l'URL actuelle si ce n'est pas une page d'authentification
-        if (pathname !== '/login' && pathname !== '/auth/callback') {
-          setRedirectUrl(pathname);
+        const p = pathnameRef.current;
+        if (p !== '/login' && p !== '/auth/callback') {
+          setRedirectUrl(p);
         }
-        navigate("/login");
+        navigateRef.current("/login");
       }
       
       setSessionChecked(true);
     };
 
     initializeAuth();
-  }, [navigate, pathname]);
+  }, []); // Montage uniquement — les refs couvrent les valeurs dynamiques
 
+  // Effect 2 : listener auth, monté une seule fois
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      // Ne rediriger vers login que si déconnexion explicite
-      if (sessionChecked && !session && pathname !== '/login' && pathname !== '/auth/callback' && event === 'SIGNED_OUT') {
-        setRedirectUrl(pathname);
-        navigate("/login");
+      if (!session && event === 'SIGNED_OUT') {
+        const p = pathnameRef.current;
+        if (p !== '/login' && p !== '/auth/callback') {
+          setRedirectUrl(p);
+        }
+        navigateRef.current("/login");
       }
     });
 
     return () => subscription.unsubscribe();
-  }, [navigate, pathname, sessionChecked]);
+  }, []); // Montage uniquement — évite de recréer l'abonnement à chaque navigation
 
+  // Effect 3 : vérification des routes admin (synchrone, pas d'interférence)
   useEffect(() => {
     const isAdminRoute = pathname.startsWith("/admin");
     if (isAdminRoute && !isAdmin) {
-      navigate("/");
+      void navigate("/");
     }
   }, [pathname, isAdmin, navigate]);
 

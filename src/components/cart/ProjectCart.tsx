@@ -326,7 +326,7 @@ export const ProjectCart = ({ isOpen, onClose }: ProjectCartProps) => {
                   <Button 
                     onClick={() => {
                       onClose();
-                      navigate("/presentation");
+                      void navigate("/presentation");
                     }}
                     className="w-full"
                   >
