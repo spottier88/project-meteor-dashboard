@@ -1,60 +1,69 @@
 
 
-# Montée de version : react-google-charts v4→v5 et @svar-ui/react-gantt 2.5→2.6
+# Migration React Router v6 → v7
 
-## 1. react-google-charts v4 → v5
+## Contexte
 
-### Constat
-La dépendance `react-google-charts@^4.0.7` est présente dans `package.json` mais **n'est importée dans aucun fichier** du projet. Tous les graphiques utilisent `recharts`. C'est une dépendance morte.
+Le projet utilise `react-router-dom@^6.11.2` avec le pattern classique `BrowserRouter` + `Routes` + `Route`. **53 fichiers** importent depuis `react-router-dom`. Aucun usage de data routers, loaders ou actions — la migration est donc simple.
 
-### Action
-- **Supprimer** `react-google-charts` de `package.json` au lieu de la monter en v5
-- Aucun fichier à modifier, aucun impact fonctionnel
+## Stratégie en 2 étapes
 
-### Fichier impacté
-- `package.json` uniquement
+### Étape 1 — Activer les future flags sur v6 (filet de sécurité)
 
----
+Mettre à jour vers la dernière v6 (`6.30.x`) et activer les future flags dans `routes.tsx` sur le `<Router>` :
 
-## 2. @svar-ui/react-gantt 2.5 → 2.6
-
-### Nouveautés v2.6
-- Action `filter-tasks` pour filtrer les tâches
-- Correction du scroll via `scroll-chart`
-- Fix de positionnement des liens dans les exports PNG/PDF
-- Aucun breaking change documenté entre 2.5 et 2.6
-
-### Fichiers utilisant SVAR Gantt (3 fichiers)
-
-| Fichier | Usage |
-|---|---|
-| `src/components/task/TaskGantt.tsx` | Gantt interactif (projet) |
-| `src/components/gantt/ProjectGanttView.tsx` | Gantt multi-projets (lecture seule) |
-| `src/utils/gantt-helpers.ts` | Helpers de transformation (`ITask`) |
-
-### Modifications nécessaires
-
-**Aucune modification de code requise** pour la montée en v2.6 — pas de breaking changes.
-
-**Correction opportuniste** : `ProjectGanttView.tsx` utilise le format date-fns (`MMMM yyyy`, `dd MMM`) dans `SCALES_CONFIG`, alors que le format SVAR locale (`%F %Y`, `%d %M`) est requis depuis v2.4.3. `TaskGantt.tsx` utilise déjà le bon format. Il faut aligner `ProjectGanttView.tsx` :
-
-```
-Avant : format: 'MMMM yyyy'  →  Après : format: '%F %Y'
-Avant : format: 'd'          →  Après : format: '%j'
-Avant : format: 'dd MMM'     →  Après : format: '%d %M'
-Avant : format: 'yyyy'       →  Après : format: '%Y'
-Avant : format: 'MMMM'       →  Après : format: '%F'
+```tsx
+<Router future={{
+  v7_relativeSplatPath: true,
+  v7_startTransition: true,
+}}>
 ```
 
-### Étapes
+Cela permet de valider la compatibilité avant la montée.
 
-1. Mettre à jour `@svar-ui/react-gantt` de `^2.5.2` à `^2.6.0` dans `package.json`
-2. Corriger les formats de scales dans `ProjectGanttView.tsx` (aligner sur le format SVAR utilisé dans `TaskGantt.tsx`)
-3. Supprimer `react-google-charts` de `package.json`
+### Étape 2 — Monter en v7
 
-### Impact
+1. **Dépendances** : remplacer `react-router-dom` par `react-router` dans `package.json`
+   ```bash
+   bun remove react-router-dom
+   bun add react-router
+   ```
 
-- Aucun breaking change pour la montée SVAR
-- La correction des formats de scales dans `ProjectGanttView` corrige un bug potentiel d'affichage des labels de dates
-- La suppression de `react-google-charts` réduit le bundle (~270 KB)
+2. **Imports** : dans les **53 fichiers**, remplacer :
+   ```typescript
+   // Avant
+   import { ... } from "react-router-dom";
+   // Après
+   import { ... } from "react-router";
+   ```
+   C'est un find-and-replace global. Tous les hooks (`useNavigate`, `useParams`, `useLocation`, `useSearchParams`) et composants (`BrowserRouter`, `Routes`, `Route`, `Link`) restent identiques en v7.
+
+3. **`routes.tsx`** : retirer les future flags devenues le comportement par défaut :
+   ```tsx
+   <Router> // plus besoin de future={{...}}
+   ```
+
+4. **Type `navigate`** : en v7, `navigate()` retourne `Promise<void>` au lieu de `void`. Ajouter `void navigate(...)` dans les cas où TypeScript se plaint (callbacks `onClick` etc.) — impact mineur.
+
+## Fichiers impactés
+
+| Catégorie | Fichiers | Modification |
+|---|---|---|
+| Routes principal | `src/routes.tsx` | Future flags → suppression |
+| Pages | ~20 fichiers (`pages/*.tsx`) | Import path |
+| Composants | ~25 fichiers (`components/**/*.tsx`) | Import path |
+| Hooks | ~8 fichiers (`hooks/*.ts`) | Import path |
+| Utils/contexts | ~3 fichiers | Import path |
+| `package.json` | 1 | Swap dépendance |
+
+**Total : 53 fichiers** — modification identique partout (changement d'import), aucun changement de logique.
+
+## Risques
+
+- **Aucun breaking change fonctionnel** pour un projet utilisant le pattern BrowserRouter classique sans data routers
+- Le seul point d'attention est le type de retour de `navigate()` (`Promise<void>`) qui peut générer des warnings TypeScript
+
+## Impact
+
+Migration transparente pour les utilisateurs. Aucun changement de comportement, bundle légèrement réduit, accès aux futures améliorations de React Router.
 
