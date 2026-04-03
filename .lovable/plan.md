@@ -1,123 +1,111 @@
 
+# Plan de correction — navigation bloquée sur l’écran “Tous les projets”
 
-# Résolution du bug de navigation sur la page `/projects`
+## Diagnostic retenu
+Ce n’est très probablement plus un bug React Router pur.
 
-## Analyse de la cause racine
+Sur `/projects`, trois mécanismes différents cassent en même temps :
+- `Link` : bouton `Retour` dans `DashboardHeader`
+- `navigate()` : bouton `Administration` dans `UserInfo`
+- clic ligne/carte : `useProjectNavigation` depuis `ProjectTableRow` / `ProjectCard`
 
-Après inspection approfondie du code, la cause la plus probable est dans `ProtectedRoute.tsx`. Le premier `useEffect` a `[navigate, pathname]` comme dépendances :
+Comme ces 3 chemins sont différents, le point commun n’est pas le helper de navigation mais l’écran lui-même : un verrou d’interaction laissé par les composants Radix de cette page (overlay invisible, focus-lock, `pointer-events` résiduels).
 
-```tsx
-useEffect(() => {
-    const initializeAuth = async () => {
-      cleanupOldNavigationData();
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        setRedirectUrl(pathname);
-        navigate("/login");
-      }
-      setSessionChecked(true);
-    };
-    initializeAuth();
-}, [navigate, pathname]);  // ← problème ici
-```
+La page `/projects` est la plus exposée car elle cumule :
+- `ProjectCart` (sheet) dans `DashboardHeader`
+- `ProjectForm`, `ProjectSelectionSheet`, `ReviewSheet` via `ProjectModals`
+- un `ProjectActions` par ligne/carte, avec `DropdownMenu` + dialogs associés
 
-En React Router v7, **toutes les navigations sont wrappées dans `React.startTransition`**. Quand l'utilisateur clique sur une carte projet :
+Plusieurs de ces composants n’ont pas de nettoyage homogène à la fermeture, alors que le projet contient déjà des correctifs manuels du même type ailleurs (`pointer-events` / focus). Avec React Router v7 et ses transitions asynchrones, ce verrou devient plus visible.
 
-1. `navigate('/projects/123')` est appelé, React Router démarre une transition
-2. Le `useLocation()` du ProtectedRoute actuel change de `pathname`
-3. Cela relance `initializeAuth()` avec un appel async `getSession()`
-4. Le `setSessionChecked(true)` qui en résulte déclenche un state update **pendant la transition**
-5. React peut abandonner ou différer la transition de navigation en cours
+Je ne prévois donc pas de réécrire la logique de `ProjectTableRow`, `ProjectCard`, `DashboardHeader` ou `UserInfo` : ils ne sont pas la cause racine.
 
-Le même problème touche le deuxième `useEffect` (listener `onAuthStateChange`) qui a aussi `pathname` en dépendance, recréant l'abonnement à chaque changement de route.
+## Modifications à mettre en œuvre
 
-De plus, `useNavigate()` en v7 peut retourner une référence instable (dépendant de l'état interne du Router), ce qui amplifie le problème.
+### 1. Centraliser le nettoyage des verrous d’interaction
+Créer un helper partagé de type `resetInteractionLocks()` pour :
+- vider `document.body.style.pointerEvents`
+- vider `document.documentElement.style.pointerEvents`
+- restaurer le focus sur `document.body`
 
-## Pourquoi c'est limité à `/projects`
+L’appliquer dans les primitives de base :
+- `src/components/ui/dialog.tsx`
+- `src/components/ui/sheet.tsx`
+- `src/components/ui/alert-dialog.tsx`
 
-Le Dashboard utilise des `Link` sans ProtectedRoute entre les composants et la navigation. Sur `/projects`, chaque clic passe par `navigateToProject()` ou `void navigate()` dans des composants enfants profondément imbriqués dans le ProtectedRoute, ce qui accentue le conflit entre transition et effects.
+Objectif : ne plus dépendre de correctifs dispersés composant par composant.
 
-## Plan de correction
+### 2. Corriger les composants montés sur `/projects`
+Remplacer les `onOpenChange={onClose}` trop implicites par un handler explicite :
+- `onOpenChange={(open) => { if (!open) { resetInteractionLocks(); onClose(); } }}`
 
-### 1. `src/components/ProtectedRoute.tsx` — Stabiliser les effects
+À faire en priorité sur :
+- `src/components/cart/ProjectCart.tsx`
+- `src/components/ProjectSelectionSheet.tsx`
+- `src/components/review/ReviewSheet.tsx`
+- `src/components/profile/ProfileForm.tsx`
+- `src/components/project/LinkProjectDialog.tsx`
+- `src/components/notifications/RequiredNotificationDialog.tsx`
 
-- **Effect 1 (initializeAuth)** : exécuter uniquement au montage (dépendances vides). Utiliser une ref pour `pathname` et `navigate` afin d'éviter les re-exécutions.
-- **Effect 2 (onAuthStateChange)** : monter le listener une seule fois au montage. Utiliser des refs pour les valeurs dynamiques (`pathname`, `sessionChecked`).
-- **Effect 3 (admin check)** : garder tel quel (synchrone, pas d'interférence avec les transitions).
+### 3. Rendre les dropdowns non bloquants
+Configurer `modal={false}` là où le menu sert surtout à lancer des actions/navigation :
+- `src/components/project/ProjectActions.tsx`
+- `src/components/notifications/UserNotificationsDropdown.tsx`
 
-```tsx
-const navigateRef = useRef(navigate);
-const pathnameRef = useRef(pathname);
+C’est cohérent avec le pattern déjà utilisé dans le projet pour éviter les blocages de `pointer-events`.
 
-useEffect(() => {
-  navigateRef.current = navigate;
-  pathnameRef.current = pathname;
-});
+### 4. Ajouter un filet de sécurité au niveau route
+Ajouter un cleanup léger au changement de `pathname` :
+- dans `src/components/ProtectedRoute.tsx` ou un petit composant dédié monté sous le Router
 
-// Effect 1 : vérification initiale, une seule fois au montage
-useEffect(() => {
-  const initializeAuth = async () => {
-    cleanupOldNavigationData();
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) {
-      const p = pathnameRef.current;
-      if (p !== '/login' && p !== '/auth/callback') {
-        setRedirectUrl(p);
-      }
-      navigateRef.current("/login");
-    }
-    setSessionChecked(true);
-  };
-  initializeAuth();
-}, []); // ← montage uniquement
+But :
+- nettoyer tout verrou résiduel laissé par une fermeture incomplète
+- sécuriser les transitions RRv7
 
-// Effect 2 : listener auth, monté une seule fois
-useEffect(() => {
-  const { data: { subscription } } = supabase.auth.onAuthStateChange(
-    (event, session) => {
-      if (!session && event === 'SIGNED_OUT') {
-        const p = pathnameRef.current;
-        if (p !== '/login' && p !== '/auth/callback') {
-          setRedirectUrl(p);
-        }
-        navigateRef.current("/login");
-      }
-    }
-  );
-  return () => subscription.unsubscribe();
-}, []); // ← montage uniquement
-```
+### 5. Harmoniser les derniers handlers de navigation
+Appliquer le nettoyage secondaire restant :
+- `src/hooks/useProjectNavigation.ts` : `void navigate(projectUrl)` sur la navigation interne
+- vérifier les derniers `navigate(...)` appelés depuis les actions projets
 
-### 2. `src/hooks/useProjectNavigation.ts` — Ajouter `void` au navigate
+Ce n’est pas la cause principale, mais cela enlève un facteur parasite.
 
-La ligne 58 appelle `navigate(projectUrl)` sans `void`, ce qui est le seul fichier manqué lors du correctif précédent :
+## Pourquoi cela explique bien le bug
+- `Retour`, `Administration` et clic projet utilisent des mécanismes différents mais échouent tous sur le même écran ;
+- le seul point commun solide est la couche d’interaction locale à `/projects` ;
+- cette page monte beaucoup plus de sheets/dialogs/dropdowns que les autres, donc c’est le meilleur candidat pour un verrou UI résiduel.
 
-```tsx
-// Avant
-navigate(projectUrl);
-// Après
-void navigate(projectUrl);
-```
+## Écrans à auditer aussi
+Le même bug peut se reproduire ailleurs sur des pages qui utilisent les mêmes primitives :
+- tableau de bord (`UserInfo`, profil, notifications)
+- pages portefeuille avec dialogs/forms
+- pages projet avec suppression / liaison / clôture
+- pages tâches / notes
 
-### 3. `src/components/cart/ProjectCart.tsx` — Ajouter `void` au navigate
+## Vérifications à faire après correction
+1. Depuis `/projects` :
+   - bouton `Retour`
+   - bouton `Administration`
+   - clic sur une carte projet
+   - clic sur une ligne du tableau
+   - actions du menu projet (`tâches`, `risques`, `cadrage`, `équipe`)
+2. Refaire ces tests après :
+   - ouverture/fermeture du panier
+   - ouverture/fermeture du profil
+   - ouverture/fermeture d’une notification
+   - ouverture/fermeture d’un historique de revue
+3. Vérifier que le dashboard et les pages portefeuille restent navigables.
 
-Ligne 329 :
-```tsx
-// Avant
-navigate("/presentation");
-// Après
-void navigate("/presentation");
-```
-
-## Fichiers impactés
-
-| Fichier | Modification |
-|---|---|
-| `src/components/ProtectedRoute.tsx` | Stabilisation des effects avec refs |
-| `src/hooks/useProjectNavigation.ts` | Ajout `void navigate()` |
-| `src/components/cart/ProjectCart.tsx` | Ajout `void navigate()` |
-
-## Risque
-
-Faible. Les refs préservent le comportement existant tout en éliminant les re-exécutions parasites. La vérification de session au montage suffit car le listener `onAuthStateChange` couvre les changements de session post-montage.
-
+## Fichiers principalement impactés
+- `src/components/ui/dialog.tsx`
+- `src/components/ui/sheet.tsx`
+- `src/components/ui/alert-dialog.tsx`
+- `src/components/cart/ProjectCart.tsx`
+- `src/components/project/ProjectActions.tsx`
+- `src/components/project/LinkProjectDialog.tsx`
+- `src/components/ProjectSelectionSheet.tsx`
+- `src/components/review/ReviewSheet.tsx`
+- `src/components/profile/ProfileForm.tsx`
+- `src/components/notifications/UserNotificationsDropdown.tsx`
+- `src/components/notifications/RequiredNotificationDialog.tsx`
+- `src/components/ProtectedRoute.tsx`
+- `src/hooks/useProjectNavigation.ts`
