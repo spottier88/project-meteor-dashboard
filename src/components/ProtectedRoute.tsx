@@ -58,7 +58,12 @@ export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
     return () => subscription.unsubscribe();
   }, []); // Montage uniquement — évite de recréer l'abonnement à chaque navigation
 
-  // Effect 3 : vérification des routes admin (synchrone, pas d'interférence)
+  // Effect 3 : nettoyage des verrous d'interaction à chaque changement de route
+  useEffect(() => {
+    resetInteractionLocks();
+  }, [pathname]);
+
+  // Effect 4 : vérification des routes admin (synchrone, pas d'interférence)
   useEffect(() => {
     const isAdminRoute = pathname.startsWith("/admin");
     if (isAdminRoute && !isAdmin) {
