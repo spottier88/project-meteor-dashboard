@@ -129,15 +129,15 @@ export const ProjectActions = ({
           <DropdownMenuContent align="end">
             {(effectiveCanEdit || effectiveIsMember) && (
               <>
-                <DropdownMenuItem onClick={(e) => { e.stopPropagation(); navigate(`/tasks/${projectId}`); }}>
+                <DropdownMenuItem onClick={(e) => { e.stopPropagation(); void navigate(`/tasks/${projectId}`); }}>
                   <ListTodo className="mr-2 h-4 w-4" />
                   Gérer les tâches
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={(e) => { e.stopPropagation(); navigate(`/risks/${projectId}`); }}>
+                <DropdownMenuItem onClick={(e) => { e.stopPropagation(); void navigate(`/risks/${projectId}`); }}>
                   <ShieldAlert className="mr-2 h-4 w-4" />
                   Gérer les risques
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={(e) => { e.stopPropagation(); navigate(`/framing/${projectId}`); }}>
+                <DropdownMenuItem onClick={(e) => { e.stopPropagation(); void navigate(`/framing/${projectId}`); }}>
                   <FileText className="mr-2 h-4 w-4" />
                   Cadrage du projet
                 </DropdownMenuItem>
@@ -146,7 +146,7 @@ export const ProjectActions = ({
             {effectiveCanManageTeam && (
               <>
                 {(effectiveCanEdit || effectiveIsMember) && <DropdownMenuSeparator />}
-                <DropdownMenuItem onClick={(e) => { e.stopPropagation(); navigate(`/projects/${projectId}/team`); }}>
+                <DropdownMenuItem onClick={(e) => { e.stopPropagation(); void navigate(`/projects/${projectId}/team`); }}>
                   <Users className="mr-2 h-4 w-4" />
                   Gérer l'équipe
                 </DropdownMenuItem>
