@@ -4,6 +4,7 @@ import { X } from "lucide-react"
 import * as React from "react"
 
 import { cn } from "@/lib/utils"
+import { resetInteractionLocks } from "@/utils/resetInteractionLocks"
 
 const Sheet = SheetPrimitive.Root
 
@@ -59,6 +60,13 @@ const SheetContent = React.forwardRef<
     <SheetOverlay />
     <SheetPrimitive.Content
       ref={ref}
+      onCloseAutoFocus={(e) => {
+        e.preventDefault();
+        resetInteractionLocks();
+      }}
+      onAnimationEnd={() => {
+        resetInteractionLocks();
+      }}
       className={cn(sheetVariants({ side }), className)}
       {...props}
     >
@@ -128,4 +136,3 @@ export {
   Sheet, SheetClose,
   SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetOverlay, SheetPortal, SheetTitle, SheetTrigger
 }
-
