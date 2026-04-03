@@ -23,19 +23,19 @@ type ViewModeKey = 'day' | 'week' | 'month' | 'year';
 /** Configuration des échelles selon le mode */
 const SCALES_CONFIG: Record<ViewModeKey, Array<{ unit: string; step: number; format: string }>> = {
   day: [
-    { unit: 'month', step: 1, format: 'MMMM yyyy' },
-    { unit: 'day', step: 1, format: 'd' },
+    { unit: 'month', step: 1, format: '%F %Y' },
+    { unit: 'day', step: 1, format: '%j' },
   ],
   week: [
-    { unit: 'month', step: 1, format: 'MMMM yyyy' },
-    { unit: 'week', step: 1, format: 'dd MMM' },
+    { unit: 'month', step: 1, format: '%F %Y' },
+    { unit: 'week', step: 1, format: '%d %M' },
   ],
   month: [
-    { unit: 'year', step: 1, format: 'yyyy' },
-    { unit: 'month', step: 1, format: 'MMMM' },
+    { unit: 'year', step: 1, format: '%Y' },
+    { unit: 'month', step: 1, format: '%F' },
   ],
   year: [
-    { unit: 'year', step: 1, format: 'yyyy' },
+    { unit: 'year', step: 1, format: '%Y' },
   ],
 };
 
