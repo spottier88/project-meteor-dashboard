@@ -137,7 +137,7 @@ export const ProjectTemplateDetails = () => {
   return (
     <div className="container mx-auto py-8 px-4">
       <div className="mb-8">
-        <Button variant="ghost" onClick={() => navigate("/admin/templates")} className="mb-4">
+        <Button variant="ghost" onClick={() => void navigate("/admin/templates")} className="mb-4">
           <ArrowLeft className="mr-2 h-4 w-4" />
           Retour aux modèles
         </Button>

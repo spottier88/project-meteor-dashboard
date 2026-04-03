@@ -83,7 +83,7 @@ export const AppRatingsManagement = () => {
     <div className="container mx-auto py-8 px-4">
       {/* En-tête */}
       <div className="mb-8">
-        <Button variant="ghost" onClick={() => navigate("/admin")} className="mb-4">
+        <Button variant="ghost" onClick={() => void navigate("/admin")} className="mb-4">
           <ArrowLeft className="mr-2 h-4 w-4" />
           Retour à l'administration
         </Button>

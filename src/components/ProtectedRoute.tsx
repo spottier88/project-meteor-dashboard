@@ -1,13 +1,13 @@
 
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router";
+import { useNavigate, useLocation } from "react-router";
 import { supabase } from "@/integrations/supabase/client";
 import { usePermissionsContext } from "@/contexts/PermissionsContext";
 import { setRedirectUrl, cleanupOldNavigationData } from "@/utils/redirectionUtils";
 
 export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const navigate = useNavigate();
-  const pathname = window.location.pathname;
+  const { pathname } = useLocation();
   const { isAdmin } = usePermissionsContext();
   const [sessionChecked, setSessionChecked] = useState(false);
 

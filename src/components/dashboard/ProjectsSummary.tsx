@@ -182,7 +182,7 @@ export const ProjectsSummary = () => {
         <div className="flex flex-wrap items-center gap-4 py-3 px-4 bg-muted/50 rounded-lg">
           <div 
             className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity"
-            onClick={() => navigate('/portfolios')}
+            onClick={() => void navigate('/portfolios')}
           >
             <Briefcase className="h-4 w-4 text-muted-foreground" />
             <span className="text-sm font-medium">Portefeuilles:</span>

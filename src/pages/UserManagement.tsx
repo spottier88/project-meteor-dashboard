@@ -180,7 +180,7 @@ export const UserManagement = () => {
   return (
     <div className="container mx-auto py-8 px-4">
       <div className="mb-8">
-        <Button variant="ghost" onClick={() => navigate("/admin")} className="mb-4">
+        <Button variant="ghost" onClick={() => void navigate("/admin")} className="mb-4">
           <Settings className="mr-2 h-4 w-4" />
           Retour à l'administration
         </Button>
@@ -274,7 +274,7 @@ export const UserManagement = () => {
                           <Edit className="h-4 w-4" />
                         </Button>
                         {user.roles.includes("manager") && (
-                          <Button variant="ghost" size="icon" onClick={() => navigate(`/admin/users/${user.id}/assignments`)}>
+                          <Button variant="ghost" size="icon" onClick={() => void navigate(`/admin/users/${user.id}/assignments`)}>
                             <Users className="h-4 w-4" />
                           </Button>
                         )}

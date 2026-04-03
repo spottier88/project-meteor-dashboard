@@ -77,7 +77,7 @@ export const AdminDashboard = () => {
   return (
     <div className="container mx-auto py-8 px-4">
       <div className="mb-8">
-        <Button variant="ghost" onClick={() => navigate("/")} className="mb-4">
+        <Button variant="ghost" onClick={() => void navigate("/")} className="mb-4">
           <Settings className="mr-2 h-4 w-4" />
           Retour au tableau de bord
         </Button>
@@ -107,7 +107,7 @@ export const AdminDashboard = () => {
                     key={item.route}
                     variant="outline"
                     className="h-24 flex flex-col items-center justify-center gap-2"
-                    onClick={() => navigate(item.route)}
+                    onClick={() => void navigate(item.route)}
                   >
                     <item.icon className="h-6 w-6" />
                     <span className="text-sm text-center">{item.label}</span>

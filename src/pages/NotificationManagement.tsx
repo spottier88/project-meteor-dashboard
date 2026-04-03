@@ -24,7 +24,7 @@ export function NotificationManagement() {
   return (
     <div className="container mx-auto py-8">
       <div className="mb-8">
-        <Button variant="ghost" onClick={() => navigate("/admin")} className="mb-4">
+        <Button variant="ghost" onClick={() => void navigate("/admin")} className="mb-4">
           <Settings className="mr-2 h-4 w-4" />
           Retour à l'administration
         </Button>

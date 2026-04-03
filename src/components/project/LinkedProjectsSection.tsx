@@ -61,7 +61,7 @@ export const LinkedProjectsSection = ({
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={() => navigate(`/projects/${project.id}?fromMaster=true`)}
+                  onClick={() => void navigate(`/projects/${project.id}?fromMaster=true`)}
                 >
                   Voir
                 </Button>

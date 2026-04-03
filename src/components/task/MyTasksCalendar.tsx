@@ -64,13 +64,13 @@ export const MyTasksCalendar = ({ tasks, onEdit }: MyTasksCalendarProps) => {
     <div>
       {/* Navigation du mois */}
       <div className="flex items-center justify-between mb-4">
-        <Button variant="outline" size="icon" onClick={() => navigate(-1)}>
+        <Button variant="outline" size="icon" onClick={() => void navigate(-1)}>
           <ChevronLeft className="h-4 w-4" />
         </Button>
         <h3 className="text-lg font-semibold">
           {MONTHS[month]} {year}
         </h3>
-        <Button variant="outline" size="icon" onClick={() => navigate(1)}>
+        <Button variant="outline" size="icon" onClick={() => void navigate(1)}>
           <ChevronRight className="h-4 w-4" />
         </Button>
       </div>

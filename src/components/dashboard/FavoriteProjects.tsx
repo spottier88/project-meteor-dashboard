@@ -56,7 +56,7 @@ export const FavoriteProjects = () => {
             <Button
               variant="link"
               size="sm"
-              onClick={() => navigate("/projects")}
+              onClick={() => void navigate("/projects")}
               className="mt-2"
             >
               Parcourir les projets
@@ -71,7 +71,7 @@ export const FavoriteProjects = () => {
                   "flex items-center justify-between p-2 rounded-lg",
                   "hover:bg-muted/50 transition-colors cursor-pointer group"
                 )}
-                onClick={() => navigate(`/projects/${favorite.project_id}`)}
+                onClick={() => void navigate(`/projects/${favorite.project_id}`)}
               >
                 <div className="flex items-center gap-2 min-w-0 flex-1">
                   <StatusIcon 
@@ -106,7 +106,7 @@ export const FavoriteProjects = () => {
                 variant="ghost"
                 size="sm"
                 className="w-full mt-2 text-muted-foreground"
-                onClick={() => navigate("/projects")}
+                onClick={() => void navigate("/projects")}
               >
                 Voir tous les favoris ({favorites.length})
               </Button>
