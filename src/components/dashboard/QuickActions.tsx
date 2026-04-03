@@ -9,7 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { usePermissionsContext } from "@/contexts/PermissionsContext";
-import { Link } from "react-router-dom";
+import { Link } from "react-router";
 import { useMyTasks } from "@/hooks/useMyTasks";
 import { 
   Plus, 

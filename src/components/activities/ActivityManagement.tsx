@@ -7,7 +7,7 @@ import { WeeklyPointsEntry } from './WeeklyPointsEntry';
 import { IndividualPointsDashboard } from './IndividualPointsDashboard';
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Clock, Target, BarChart3 } from "lucide-react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router";
 import { usePermissionsContext } from '@/contexts/PermissionsContext';
 import { useToast } from "@/components/ui/use-toast";
 import { useQueryClient } from "@tanstack/react-query";

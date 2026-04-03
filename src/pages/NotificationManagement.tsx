@@ -15,7 +15,7 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router";
 
 export function NotificationManagement() {
   const [isFormOpen, setIsFormOpen] = useState(false);

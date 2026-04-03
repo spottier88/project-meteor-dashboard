@@ -5,7 +5,7 @@
  */
 
 import { useEffect } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { ArrowRight, Link as LinkIcon } from "lucide-react";
 import { useProjectLinks } from "@/hooks/useProjectLinks";

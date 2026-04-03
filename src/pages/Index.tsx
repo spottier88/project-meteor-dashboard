@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router";
 import { DashboardHeader } from "@/components/DashboardHeader";
 import { UserInfo } from "@/components/UserInfo";
 import { ViewMode } from "@/components/ViewToggle";

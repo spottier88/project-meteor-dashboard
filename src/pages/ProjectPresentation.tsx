@@ -4,7 +4,7 @@
  * Charge les projets du panier et affiche une présentation navigable.
  */
 
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router";
 import { useProjectCart } from "@/hooks/useProjectCart";
 import { useDetailedProjectsData, ProjectData } from "@/hooks/useDetailedProjectsData";
 import { PresentationView } from "@/components/presentation/PresentationView";

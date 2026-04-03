@@ -1,5 +1,5 @@
 
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router";
 import { Badge } from "@/components/ui/badge";
 import { useMyTasks } from "@/hooks/useMyTasks";
 import { ListChecks } from "lucide-react";

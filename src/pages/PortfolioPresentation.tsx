@@ -4,7 +4,7 @@
  * Affiche les projets sous forme de slides navigables, triés par météo.
  */
 
-import { useParams, useNavigate, Link } from "react-router-dom";
+import { useParams, useNavigate, Link } from "react-router";
 import { usePortfolioDetails } from "@/hooks/usePortfolioDetails";
 import { useDetailedProjectsData, ProjectData } from "@/hooks/useDetailedProjectsData";
 import { PresentationView } from "@/components/presentation/PresentationView";

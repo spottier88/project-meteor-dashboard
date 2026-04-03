@@ -1,6 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import { useState, useEffect, useRef } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router";
 import { useToast } from "@/components/ui/use-toast";
 import { setRedirectUrl, performPostAuthRedirect, cleanupOldNavigationData } from "@/utils/redirectionUtils";
 

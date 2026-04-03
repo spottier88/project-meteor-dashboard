@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { PlusCircle, Settings } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router";
 import { ProjectTemplateList } from '@/components/templates/ProjectTemplateList';
 import { ProjectTemplateDialog } from '@/components/templates/ProjectTemplateDialog';
 import { TemplateVisibilityDialog } from '@/components/templates/TemplateVisibilityDialog';

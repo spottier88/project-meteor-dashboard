@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Link as LinkIcon, Trash2 } from "lucide-react";
 import { useProjectLinks } from "@/hooks/useProjectLinks";
 import { Badge } from "@/components/ui/badge";
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router";
 import { lifecycleStatusLabels } from "@/types/project";
 
 interface LinkedProjectsSectionProps {

@@ -9,7 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useFavoriteProjects } from "@/hooks/useFavoriteProjects";
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router";
 import { Star, StarOff, ExternalLink, Folder } from "lucide-react";
 import { StatusIcon } from "@/components/project/StatusIcon";
 import { ProjectStatus } from "@/types/project";

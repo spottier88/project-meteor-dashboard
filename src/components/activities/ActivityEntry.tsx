@@ -5,7 +5,7 @@ import { Plus } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import QuickActivityForm from './QuickActivityForm';
 import { BulkActivityEntryDrawer } from './BulkActivityEntry';
-import { useLocation } from 'react-router-dom';
+import { useLocation } from 'react-router';
 
 export const ActivityEntry = () => {
   const [open, setOpen] = React.useState(false);

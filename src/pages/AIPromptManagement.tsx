@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { ChevronLeft, Plus, Edit, Trash2, Copy, Check, AlertTriangle, Loader2, Download, Filter, CheckCircle2, XCircle, Eye } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link } from "react-router";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
