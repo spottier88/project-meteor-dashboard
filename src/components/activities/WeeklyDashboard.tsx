@@ -11,7 +11,7 @@ import { ProjectTimeChart } from './ProjectTimeChart';
 import { TeamActivityFilters } from './TeamActivityFilters';
 import { TeamActivityHeader } from './TeamActivityHeader';
 import { IndividualActivityHeader } from './IndividualActivityHeader';
-import { useLocation } from 'react-router-dom';
+import { useLocation } from 'react-router';
 import { useActivityPeriod } from '@/hooks/useActivityPeriod';
 import { useActivityData, processActivityData } from '@/hooks/useActivityData';
 import { exportActivitiesToExcel } from '@/utils/activityExport';
