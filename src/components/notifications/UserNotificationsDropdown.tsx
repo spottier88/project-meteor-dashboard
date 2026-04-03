@@ -132,7 +132,7 @@ export const UserNotificationsDropdown = () => {
 
   return (
     <>
-      <DropdownMenu open={dropdownOpen} onOpenChange={setDropdownOpen}>
+      <DropdownMenu open={dropdownOpen} onOpenChange={setDropdownOpen} modal={false}>
         <DropdownMenuTrigger asChild>
           <Button variant="ghost" size="icon" className="relative">
             <Bell className="h-5 w-5" />

@@ -4,6 +4,7 @@ import { useNavigate, useLocation } from "react-router";
 import { supabase } from "@/integrations/supabase/client";
 import { usePermissionsContext } from "@/contexts/PermissionsContext";
 import { setRedirectUrl, cleanupOldNavigationData } from "@/utils/redirectionUtils";
+import { resetInteractionLocks } from "@/utils/resetInteractionLocks";
 
 export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const navigate = useNavigate();
