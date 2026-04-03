@@ -54,14 +54,13 @@ export const GanttExportButtons = ({ tasks, ganttRef }: GanttExportButtonsProps)
   const handleExportToPng = async () => {
     if (ganttRef.current) {
       try {
-        const canvas = await html2canvas(ganttRef.current, {
+        const dataUrl = await toPng(ganttRef.current, {
           height: ganttRef.current.scrollHeight,
-          windowHeight: ganttRef.current.scrollHeight,
           backgroundColor: '#ffffff',
         });
         const link = document.createElement('a');
         link.download = 'gantt-projets.png';
-        link.href = canvas.toDataURL('image/png');
+        link.href = dataUrl;
         link.click();
       } catch (error) {
         console.error("Erreur lors de l'export PNG:", error);
