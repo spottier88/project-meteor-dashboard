@@ -130,7 +130,7 @@ export const EvaluationsManagement = () => {
             Seuls les administrateurs et les responsables qualité peuvent consulter les évaluations.
           </AlertDescription>
         </Alert>
-        <Button variant="outline" onClick={() => navigate("/")} className="mt-4">
+        <Button variant="outline" onClick={() => void navigate("/")} className="mt-4">
           <ArrowLeft className="mr-2 h-4 w-4" />
           Retour au tableau de bord
         </Button>
@@ -181,7 +181,7 @@ export const EvaluationsManagement = () => {
     <div className="container mx-auto py-8 px-4">
       {/* En-tête */}
       <div className="mb-8">
-        <Button variant="ghost" onClick={() => navigate("/")} className="mb-4">
+        <Button variant="ghost" onClick={() => void navigate("/")} className="mb-4">
           <ArrowLeft className="mr-2 h-4 w-4" />
           Retour au tableau de bord
         </Button>

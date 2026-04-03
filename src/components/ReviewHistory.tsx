@@ -94,7 +94,7 @@ export const ReviewHistory = () => {
     <div className="container mx-auto py-8 space-y-6 animate-fade-in">
       <Button
         variant="ghost"
-        onClick={() => navigate(`/projects/${projectId}`)}
+        onClick={() => void navigate(`/projects/${projectId}`)}
         className="mb-4"
       >
         <ArrowLeft className="h-4 w-4 mr-2" />

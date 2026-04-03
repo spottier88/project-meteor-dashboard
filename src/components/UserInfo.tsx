@@ -202,7 +202,7 @@ export const UserInfo = ({ onOpenTutorial }: UserInfoProps) => {
           )}
           
           {isAdmin && (
-            <Button variant="ghost" size="sm" onClick={() => navigate("/admin")}>
+            <Button variant="ghost" size="sm" onClick={() => void navigate("/admin")}>
               <Settings className="h-4 w-4 mr-2" />
               Administration
             </Button>

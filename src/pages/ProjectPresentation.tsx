@@ -41,7 +41,7 @@ export const ProjectPresentation = () => {
           Ajoutez des projets à votre panier depuis la liste des projets pour
           démarrer une présentation.
         </p>
-        <Button onClick={() => navigate("/projects")} className="mt-4">
+        <Button onClick={() => void navigate("/projects")} className="mt-4">
           <ArrowLeft className="h-4 w-4 mr-2" />
           Retour aux projets
         </Button>

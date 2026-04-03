@@ -18,7 +18,7 @@ export const TasksIndicator = () => {
       variant="ghost" 
       size="sm" 
       className="relative"
-      onClick={() => navigate("/my-tasks?filter=overdue")}
+      onClick={() => void navigate("/my-tasks?filter=overdue")}
     >
       <ListChecks className="h-5 w-5" />
       <Badge 

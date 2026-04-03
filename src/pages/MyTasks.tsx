@@ -110,7 +110,7 @@ export const MyTasks = () => {
   return (
     <div className="container mx-auto py-8 px-4">
       {/* Bouton retour */}
-      <Button variant="ghost" className="mb-6" onClick={() => navigate("/")}>
+      <Button variant="ghost" className="mb-6" onClick={() => void navigate("/")}>
         <ArrowLeft className="h-4 w-4 mr-2" />
         Retour au tableau de bord
       </Button>
