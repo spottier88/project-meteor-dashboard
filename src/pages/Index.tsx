@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { useNavigate } from "react-router";
 import { DashboardHeader } from "@/components/DashboardHeader";
 import { UserInfo } from "@/components/UserInfo";
@@ -11,6 +11,7 @@ import { ProjectModals } from "@/components/project/ProjectModals";
 import { usePermissionsContext } from "@/contexts/PermissionsContext";
 import { useProjectsListView } from "@/hooks/useProjectsListView";
 import { useUserProjectMemberships } from "@/hooks/useUserProjectMemberships";
+import { useVisibleProjects } from "@/hooks/useVisibleProjects";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { ProjectListItem } from "@/hooks/useProjectsListView";
@@ -147,12 +148,6 @@ const Index = () => {
     },
   });
 
-  const [accessibleProjectIds, setAccessibleProjectIds] = useState<string[]>([]);
-
-  const handleFilteredProjectsChange = (projectIds: string[]) => {
-    setAccessibleProjectIds(projectIds);
-  };
-
   /** Réinitialiser les filtres dashboard */
   const handleResetDashboardFilters = () => {
     setDashboardRoleFilter(null);
@@ -162,103 +157,105 @@ const Index = () => {
 
   const hasDashboardFilters = !!(dashboardRoleFilter || dashboardWeatherFilter || dashboardWithoutReviewFilter);
 
-  const filteredProjects = projects?.filter(project => {
-    if (lifecycleStatus !== 'all' && project.lifecycle_status !== lifecycleStatus) {
-      return false;
-    }
+  // Appliquer les filtres métier sur tous les projets
+  const filteredProjects = useMemo(() => {
+    return (projects || []).filter(project => {
+      if (lifecycleStatus !== 'all' && project.lifecycle_status !== lifecycleStatus) {
+        return false;
+      }
 
-    if (monitoringLevel !== 'all') {
-      if (monitoringLevel === 'none') {
-        const hasNoMonitoring = !project.monitoring_level || 
-                              project.monitoring_level === 'none';
-        if (!hasNoMonitoring) return false;
-      } else {
-        if (!project.monitoring_level || project.monitoring_level !== monitoringLevel) {
+      if (monitoringLevel !== 'all') {
+        if (monitoringLevel === 'none') {
+          const hasNoMonitoring = !project.monitoring_level || 
+                                project.monitoring_level === 'none';
+          if (!hasNoMonitoring) return false;
+        } else {
+          if (!project.monitoring_level || project.monitoring_level !== monitoringLevel) {
+            return false;
+          }
+        }
+      }
+
+      // Filtre "Mes projets" : chef de projet OU membre
+      if (showMyProjectsOnly && userProfile) {
+        const isProjectManager = project.project_manager === userProfile.email;
+        const isMember = userMemberships?.has(project.id) || false;
+        
+        if (!isProjectManager && !isMember) {
           return false;
         }
       }
-    }
-
-    // Filtre "Mes projets" : chef de projet OU membre
-    if (showMyProjectsOnly && userProfile) {
-      const isProjectManager = project.project_manager === userProfile.email;
-      const isMember = userMemberships?.has(project.id) || false;
       
-      if (!isProjectManager && !isMember) {
-        return false;
+      if (poleId !== "all") {
+        if (poleId === "none") {
+          if (project.pole_id !== null) return false;
+        } else {
+          if (project.pole_id !== poleId) return false;
+        }
       }
-    }
-    
-    if (poleId !== "all") {
-      if (poleId === "none") {
-        if (project.pole_id !== null) return false;
-      } else {
-        if (project.pole_id !== poleId) return false;
-      }
-    }
-    
-    if (directionId !== "all") {
-      if (directionId === "none") {
-        if (project.direction_id !== null) return false;
-      } else {
-        if (project.direction_id !== directionId) return false;
-      }
-    }
-    
-    if (serviceId !== "all") {
-      if (serviceId === "none") {
-        if (project.service_id !== null) return false;
-      } else {
-        if (project.service_id !== serviceId) return false;
-      }
-    }
-
-    if (searchQuery) {
-      const query = searchQuery.toLowerCase();
-      const matchesTitle = project.title?.toLowerCase().includes(query);
-      const matchesManager = project.project_manager?.toLowerCase().includes(query);
-      const matchesManagerName = project.project_manager_name?.toLowerCase().includes(query);
       
-      if (!matchesTitle && !matchesManager && !matchesManagerName) return false;
-    }
-
-    // Filtre par tags
-    if (selectedTags.length > 0 && projectTagsMap) {
-      const projectTags = projectTagsMap.get(project.id) || [];
-      const hasMatchingTag = selectedTags.some(t => projectTags.includes(t));
-      if (!hasMatchingTag) return false;
-    }
-
-    // --- Filtres dashboard one-shot ---
-
-    // Filtre par rôle (CP / Membre / Manager)
-    if (dashboardRoleFilter && userProfile) {
-      const isProjectManager = project.project_manager === userProfile.email;
-      const isMember = userMemberships?.has(project.id) || false;
-
-      if (dashboardRoleFilter === "cp" && !isProjectManager) return false;
-      if (dashboardRoleFilter === "member" && (!isMember || isProjectManager)) return false;
-      if (dashboardRoleFilter === "manager" && (isProjectManager || isMember)) return false;
-    }
-
-    // Filtre météo
-    if (dashboardWeatherFilter) {
-      const projectWeather = project.weather || 'null';
-      if (projectWeather !== dashboardWeatherFilter) return false;
-    }
-
-    // Filtre sans revue récente (projets actifs sans revue ou > 30 jours)
-    if (dashboardWithoutReviewFilter) {
-      const isActive = project.lifecycle_status === 'in_progress';
-      if (!isActive) return false;
-      if (project.last_review_date) {
-        const daysSince = differenceInDays(new Date(), new Date(project.last_review_date));
-        if (daysSince <= 30) return false;
+      if (directionId !== "all") {
+        if (directionId === "none") {
+          if (project.direction_id !== null) return false;
+        } else {
+          if (project.direction_id !== directionId) return false;
+        }
       }
-    }
+      
+      if (serviceId !== "all") {
+        if (serviceId === "none") {
+          if (project.service_id !== null) return false;
+        } else {
+          if (project.service_id !== serviceId) return false;
+        }
+      }
 
-    return true;
-  }) || [];
+      if (searchQuery) {
+        const query = searchQuery.toLowerCase();
+        const matchesTitle = project.title?.toLowerCase().includes(query);
+        const matchesManager = project.project_manager?.toLowerCase().includes(query);
+        const matchesManagerName = project.project_manager_name?.toLowerCase().includes(query);
+        
+        if (!matchesTitle && !matchesManager && !matchesManagerName) return false;
+      }
+
+      // Filtre par tags
+      if (selectedTags.length > 0 && projectTagsMap) {
+        const projectTags = projectTagsMap.get(project.id) || [];
+        const hasMatchingTag = selectedTags.some(t => projectTags.includes(t));
+        if (!hasMatchingTag) return false;
+      }
+
+      // --- Filtres dashboard one-shot ---
+      if (dashboardRoleFilter && userProfile) {
+        const isProjectManager = project.project_manager === userProfile.email;
+        const isMember = userMemberships?.has(project.id) || false;
+
+        if (dashboardRoleFilter === "cp" && !isProjectManager) return false;
+        if (dashboardRoleFilter === "member" && (!isMember || isProjectManager)) return false;
+        if (dashboardRoleFilter === "manager" && (isProjectManager || isMember)) return false;
+      }
+
+      if (dashboardWeatherFilter) {
+        const projectWeather = project.weather || 'null';
+        if (projectWeather !== dashboardWeatherFilter) return false;
+      }
+
+      if (dashboardWithoutReviewFilter) {
+        const isActive = project.lifecycle_status === 'in_progress';
+        if (!isActive) return false;
+        if (project.last_review_date) {
+          const daysSince = differenceInDays(new Date(), new Date(project.last_review_date));
+          if (daysSince <= 30) return false;
+        }
+      }
+
+      return true;
+    });
+  }, [projects, lifecycleStatus, monitoringLevel, showMyProjectsOnly, userProfile, userMemberships, poleId, directionId, serviceId, searchQuery, selectedTags, projectTagsMap, dashboardRoleFilter, dashboardWeatherFilter, dashboardWithoutReviewFilter]);
+
+  // Calcul centralisé des projets visibles (permissions d'accès)
+  const { visibleProjects, visibleProjectIds } = useVisibleProjects(filteredProjects);
 
   const handleEditProject = (projectId: string) => {
     const project = projects?.find(p => p.id === projectId);
@@ -298,7 +295,7 @@ const Index = () => {
   };
 
   const handleViewHistory = (projectId: string, projectTitle: string) => {
-    navigate(`/reviews/${projectId}`);
+    void navigate(`/reviews/${projectId}`);
   };
 
   const handleNewFrameworkNote = () => {
@@ -338,7 +335,7 @@ const Index = () => {
         onMonitoringLevelChange={setMonitoringLevel}
         showMyProjectsOnly={showMyProjectsOnly}
         onMyProjectsToggle={setShowMyProjectsOnly}
-        filteredProjectIds={accessibleProjectIds}
+        filteredProjectIds={visibleProjectIds}
         poleId={poleId}
         onPoleChange={setPoleId}
         directionId={directionId}
@@ -356,12 +353,11 @@ const Index = () => {
       <ProjectList
         view={view}
         onViewChange={setView}
-        projects={filteredProjects}
+        projects={visibleProjects}
         onProjectEdit={handleEditProject}
         onProjectReview={handleProjectSelect}
         onViewHistory={handleViewHistory}
         onProjectDeleted={refetchProjects}
-        onFilteredProjectsChange={handleFilteredProjectsChange}
       />
 
       <ProjectModals
