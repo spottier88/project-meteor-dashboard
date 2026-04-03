@@ -7,7 +7,7 @@
 import { useProjectPortfolios } from "@/hooks/useProjectPortfolios";
 import { Badge } from "@/components/ui/badge";
 import { FolderOpen } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router";
 import { Skeleton } from "@/components/ui/skeleton";
 
 interface ProjectPortfoliosBadgesProps {

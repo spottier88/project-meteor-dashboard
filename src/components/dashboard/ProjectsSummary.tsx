@@ -19,7 +19,7 @@ import {
   AlertTriangle,
   BarChart3
 } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router";
 
 /**
  * Carte d'indicateur principal avec icône et couleur

@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, PlusCircle } from "lucide-react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router";
 import { useProjectTemplates } from '@/hooks/useProjectTemplates';
 import { TemplateTaskList } from '@/components/templates/TemplateTaskList';
 import { TemplateTaskDialog } from '@/components/templates/TemplateTaskDialog';

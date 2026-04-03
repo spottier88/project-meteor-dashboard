@@ -8,7 +8,7 @@ import { Trash2, Presentation, GanttChartSquare, FileSpreadsheet, ArrowUpDown, P
 import { useToast } from "@/hooks/use-toast";
 import { generateProjectPPTX } from "../pptx/ProjectPPTX";
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router";
 import { ProjectGanttSheet } from "./ProjectGanttSheet";
 import { exportProjectsToExcel } from "@/utils/projectExport";
 import { LoadingOverlay } from "../ui/loading-overlay";

@@ -4,7 +4,7 @@
  * Permet de gérer les modèles DOCX utilisés pour le publipostage.
  */
 
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 import { ExportTemplateList } from "@/components/framing-export-templates/ExportTemplateList";

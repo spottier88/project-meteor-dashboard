@@ -5,7 +5,7 @@
  */
 
 import { useState, useEffect } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router";
 import { Button } from "@/components/ui/button";
 import { useMyTasks } from "@/hooks/useMyTasks";
 import { Table, TableBody, TableHead, TableHeader, TableRow } from "@/components/ui/table";

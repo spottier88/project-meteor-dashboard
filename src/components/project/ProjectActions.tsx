@@ -20,7 +20,7 @@ import {
   Link as LinkIcon
 } from "lucide-react";
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router";
 import { DeleteProjectDialog } from "./DeleteProjectDialog";
 import { LinkProjectDialog } from "./LinkProjectDialog";
 import { useProjectPermissions } from "@/hooks/useProjectPermissions";

@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus, Search, Filter, ArrowLeft } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link } from "react-router";
 import { PortfolioCard } from "@/components/portfolio/PortfolioCard";
 import { PortfolioForm } from "@/components/portfolio/PortfolioForm";
 import { usePortfolios, useDeletePortfolio } from "@/hooks/usePortfolios";
