@@ -22,16 +22,6 @@ import { useNavigate } from "react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 
-/**
- * Nettoie les pointer-events résiduels après fermeture de modale
- */
-const unlockPointerEvents = () => {
-  document.body.style.pointerEvents = "";
-  document.body.style.removeProperty("pointer-events");
-  document.documentElement.style.pointerEvents = "";
-  document.documentElement.style.removeProperty("pointer-events");
-};
-
 interface DeleteProjectDialogProps {
   isOpen: boolean;
   onClose: () => void;
@@ -52,10 +42,8 @@ export const DeleteProjectDialog = ({
   const queryClient = useQueryClient();
   const [isDeleting, setIsDeleting] = useState(false);
 
-  // Fermeture avec nettoyage du focus
+  // Fermeture du dialogue
   const handleClose = () => {
-    unlockPointerEvents();
-    document.body.focus();
     onClose();
   };
 
@@ -132,13 +120,7 @@ export const DeleteProjectDialog = ({
 
   return (
     <AlertDialog open={isOpen} onOpenChange={(open) => !open && handleClose()}>
-      <AlertDialogContent
-        onCloseAutoFocus={(event) => {
-          event.preventDefault();
-          unlockPointerEvents();
-          document.body.focus();
-        }}
-      >
+      <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>Êtes-vous sûr ?</AlertDialogTitle>
           <AlertDialogDescription>

@@ -55,7 +55,7 @@ interface SheetContentProps
 const SheetContent = React.forwardRef<
   React.ElementRef<typeof SheetPrimitive.Content>,
   SheetContentProps
->(({ side = "right", className, children, ...props }, ref) => (
+>(({ side = "right", className, children, onCloseAutoFocus, onAnimationEnd, ...props }, ref) => (
   <SheetPortal>
     <SheetOverlay />
     <SheetPrimitive.Content
@@ -63,9 +63,11 @@ const SheetContent = React.forwardRef<
       onCloseAutoFocus={(e) => {
         e.preventDefault();
         resetInteractionLocks();
+        onCloseAutoFocus?.(e);
       }}
-      onAnimationEnd={() => {
+      onAnimationEnd={(e) => {
         resetInteractionLocks();
+        onAnimationEnd?.(e);
       }}
       className={cn(sheetVariants({ side }), className)}
       {...props}
