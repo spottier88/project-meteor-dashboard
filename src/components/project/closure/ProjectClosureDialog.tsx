@@ -12,17 +12,6 @@ import { ClosureStepFinalReview } from "./ClosureStepFinalReview";
 import { ClosureStepMethodEvaluation } from "./ClosureStepMethodEvaluation";
 import { ClosureStepConfirmation } from "./ClosureStepConfirmation";
 
-/**
- * Nettoie les pointer-events résiduels après fermeture de modale
- * Radix UI peut parfois laisser pointer-events: none après fermeture
- */
-const unlockPointerEvents = () => {
-  document.body.style.pointerEvents = "";
-  document.body.style.removeProperty("pointer-events");
-  document.documentElement.style.pointerEvents = "";
-  document.documentElement.style.removeProperty("pointer-events");
-};
-
 interface ProjectClosureDialogProps {
   projectId: string;
   projectTitle: string;
