@@ -320,7 +320,6 @@ export const ProjectSummaryContent = ({
                 {teamManagement ? (
                   <div className="space-y-6">
                     <div className="flex items-center justify-between">
-                      <h2 className="text-2xl font-bold">Équipe projet</h2>
                       {effectiveCanManageTeam && (
                         <div className="flex space-x-2">
                           {/* Les boutons d'ajout seront gérés par TeamMembersTable */}

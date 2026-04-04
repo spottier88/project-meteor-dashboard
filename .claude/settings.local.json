@@ -6,7 +6,11 @@
       "Bash(grep -E \"\\\\.\\(ts|tsx\\)$\")",
       "Bash(xargs grep:*)",
       "Bash(grep -rn \"useEffect.*\\\\[\\\\]$\\\\|useEffect.*\\\\[dependency\" /c/Users/Utilisateur/OneDrive/Documents/05_Developpement/meteor/Meteor_Git/project-meteor-dashboard/src/components/activities --include=\"*.tsx\")",
-      "Bash(grep -l \"forwardRef\" \"/c/Users/Utilisateur/OneDrive/Documents/05_Developpement/meteor/Meteor_Git/project-meteor-dashboard/src/components/ui\"/*.tsx)"
+      "Bash(grep -l \"forwardRef\" \"/c/Users/Utilisateur/OneDrive/Documents/05_Developpement/meteor/Meteor_Git/project-meteor-dashboard/src/components/ui\"/*.tsx)",
+      "Bash(wc -l /c/Users/Utilisateur/OneDrive/Documents/05_Developpement/meteor/Meteor_Git/project-meteor-dashboard/src/hooks/*.ts*)",
+      "Bash(grep -c \"forwardRef\" \"/c/Users/Utilisateur/OneDrive/Documents/05_Developpement/meteor/Meteor_Git/project-meteor-dashboard/src/components/ui\"/*.tsx)",
+      "Bash(find \"/c/Users/Utilisateur/OneDrive/Documents/05_Developpement/meteor/Meteor_Git/project-meteor-dashboard/src\" -name \"*.tsx\" -exec grep -l \"React\\\\.FC\" {} \\\\;)",
+      "Bash(python3 -c \"import json,sys; p=json.load\\(sys.stdin\\); print\\(json.dumps\\(p.get\\('peerDependencies', {}\\), indent=2\\)\\)\")"
     ]
   }
 }
