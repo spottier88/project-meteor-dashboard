@@ -24,16 +24,6 @@ import {
 import { FileText } from "lucide-react";
 import type { ProjectNote, ProjectNoteType } from "@/types/project-notes";
 
-/**
- * Utilitaire pour déverrouiller les pointer-events sur body et html
- * Radix UI peut parfois laisser pointer-events: none après fermeture de modales
- */
-const unlockPointerEvents = () => {
-  document.body.style.pointerEvents = "";
-  document.body.style.removeProperty("pointer-events");
-  document.documentElement.style.pointerEvents = "";
-  document.documentElement.style.removeProperty("pointer-events");
-};
 
 interface ProjectNotesListProps {
   projectId: string;
