@@ -58,18 +58,30 @@ export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
     return () => subscription.unsubscribe();
   }, []); // Montage uniquement — évite de recréer l'abonnement à chaque navigation
 
-  // Effect 3 : nettoyage des verrous d'interaction à chaque changement de route
+  // Effect 3 : MutationObserver pour nettoyer les verrous d'interaction orphelins
+  // Radix applique pointer-events: none pendant les animations de fermeture.
+  // Au lieu d'un setTimeout fragile, on observe les mutations de style sur body
+  // et on nettoie quand aucun overlay n'est réellement ouvert.
   useEffect(() => {
-    // Nettoyage immédiat
     resetInteractionLocks();
-    
-    // Nettoyage différé pour rattraper les verrous ré-appliqués
-    // par les animations de fermeture Radix (durée max: 500ms)
-    const timer = setTimeout(() => {
-      resetInteractionLocks();
-    }, 600);
-    
-    return () => clearTimeout(timer);
+
+    const observer = new MutationObserver(() => {
+      if (document.body.style.pointerEvents === 'none') {
+        const hasOpenOverlay = document.querySelector(
+          '[data-state="open"][role="dialog"]'
+        );
+        if (!hasOpenOverlay) {
+          resetInteractionLocks();
+        }
+      }
+    });
+
+    observer.observe(document.body, {
+      attributes: true,
+      attributeFilter: ['style'],
+    });
+
+    return () => observer.disconnect();
   }, [pathname]);
 
   // Effect 4 : vérification des routes admin (synchrone, pas d'interférence)
