@@ -42,10 +42,8 @@ export const DeleteProjectDialog = ({
   const queryClient = useQueryClient();
   const [isDeleting, setIsDeleting] = useState(false);
 
-  // Fermeture avec nettoyage du focus
+  // Fermeture du dialogue
   const handleClose = () => {
-    unlockPointerEvents();
-    document.body.focus();
     onClose();
   };
 
