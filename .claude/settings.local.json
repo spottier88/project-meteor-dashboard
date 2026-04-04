@@ -3,7 +3,10 @@
     "allow": [
       "Bash(find /c/Users/Utilisateur/OneDrive/Documents/05_Developpement/meteor/Meteor_Git/project-meteor-dashboard/src -maxdepth 2 -name main.tsx -o -name index.tsx -o -name *supabase*)",
       "Bash(find /c/Users/Utilisateur/OneDrive/Documents/05_Developpement/meteor/Meteor_Git/project-meteor-dashboard -name *.config.* -o -name .env*)",
-      "Bash(grep -E \"\\\\.\\(ts|tsx\\)$\")"
+      "Bash(grep -E \"\\\\.\\(ts|tsx\\)$\")",
+      "Bash(xargs grep:*)",
+      "Bash(grep -rn \"useEffect.*\\\\[\\\\]$\\\\|useEffect.*\\\\[dependency\" /c/Users/Utilisateur/OneDrive/Documents/05_Developpement/meteor/Meteor_Git/project-meteor-dashboard/src/components/activities --include=\"*.tsx\")",
+      "Bash(grep -l \"forwardRef\" \"/c/Users/Utilisateur/OneDrive/Documents/05_Developpement/meteor/Meteor_Git/project-meteor-dashboard/src/components/ui\"/*.tsx)"
     ]
   }
 }

@@ -137,18 +137,26 @@ export const useCalendarImport = () => {
             (event.projectCode !== null && event.projectCode !== undefined) || 
             (event.activityTypeCode !== null && event.activityTypeCode !== undefined);
 
+          const startTime = new Date(event.startTime);
+          const endTime = new Date(event.endTime);
+          if (isNaN(startTime.getTime()) || isNaN(endTime.getTime())) {
+            console.warn(`Événement avec date invalide ignoré: ${event.startTime} / ${event.endTime}`);
+            return null;
+          }
+
           return {
             ...event,
-            startTime: new Date(event.startTime),
-            endTime: new Date(event.endTime),
+            startTime,
+            endTime,
             selected: shouldBeSelected,
             projectId: projectId,
             activityType: activityType
           };
         });
         
-        // Trier les événements par date de début (du plus ancien au plus récent)
-        const sortedEvents = transformedEvents.sort((a, b) => 
+        // Filtrer les événements avec des dates invalides et trier par date de début
+        const validEvents = transformedEvents.filter((e): e is NonNullable<typeof e> => e !== null);
+        const sortedEvents = validEvents.sort((a, b) =>
           a.startTime.getTime() - b.startTime.getTime()
         );
         

@@ -71,8 +71,10 @@ export const CalendarEventSelection = ({
   const { data: projects, isLoading: isLoadingProjects } = useQuery({
     queryKey: ['accessible-projects'],
     queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('User not authenticated');
       const { data, error } = await supabase
-        .rpc('get_accessible_projects', { p_user_id: (await supabase.auth.getUser()).data.user?.id });
+        .rpc('get_accessible_projects', { p_user_id: user.id });
 
       if (error) throw error;
       return data as Project[];

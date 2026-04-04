@@ -59,7 +59,7 @@ export const DailyPointsEntry: React.FC<DailyPointsEntryProps> = ({
     addPoints({
       ...data,
       user_id: user?.id || "",
-      activity_date: selectedDate ? selectedDate.toISOString().split("T")[0] : null,
+      activity_date: selectedDate ? format(selectedDate, 'yyyy-MM-dd') : null,
     });
     setShowForm(false);
     setSelectedDate(null);
@@ -67,7 +67,7 @@ export const DailyPointsEntry: React.FC<DailyPointsEntryProps> = ({
 
   // Calculer les points déjà saisis pour le jour sélectionné
   const dailyPointsUsed = selectedDate 
-    ? pointsByDay[selectedDate.toISOString().split("T")[0]] || 0
+    ? pointsByDay[format(selectedDate, 'yyyy-MM-dd')] || 0
     : 0;
 
   const handleQuickAdd = () => {

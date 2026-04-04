@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -110,7 +110,7 @@ export const TaskList = ({
     }
   };
 
-  const filteredTasks = tasks?.filter(task => {
+  const filteredTasks = useMemo(() => tasks?.filter(task => {
     if (!searchQuery) return true;
     const query = searchQuery.toLowerCase();
     return (
@@ -118,7 +118,7 @@ export const TaskList = ({
       task.description?.toLowerCase().includes(query) ||
       task.assignee?.toLowerCase().includes(query)
     );
-  });
+  }), [tasks, searchQuery]);
 
   return (
     <div className="space-y-4">

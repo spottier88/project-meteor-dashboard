@@ -64,10 +64,9 @@ export const useWeeklyPointsData = ({
 
       // Récupérer les profils des utilisateurs concernés
       const userIds = [...new Set(data?.map(p => p.user_id) || [])];
-      const { data: profiles } = await supabase
-        .from('profiles')
-        .select('id, first_name, last_name, email')
-        .in('id', userIds);
+      const profiles = userIds.length > 0
+        ? (await supabase.from('profiles').select('id, first_name, last_name, email').in('id', userIds)).data
+        : [];
 
       // Enrichir avec les labels des types d'activités
       const { data: activityTypes } = await supabase

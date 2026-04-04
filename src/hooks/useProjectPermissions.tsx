@@ -29,13 +29,24 @@ export const useProjectPermissions = (projectId: string) => {
         projectOrganization: undefined
       };
 
-const { data: project } = await supabase
+const { data: project, error: projectError } = await supabase
         .from("projects")
         .select("project_manager, pole_id, direction_id, service_id, lifecycle_status, closure_status")
         .eq("id", projectId)
         .single();
 
-      const isProjectManager = project?.project_manager === userProfile.email;
+      if (projectError || !project) return {
+        canEdit: false,
+        isProjectManager: false,
+        isSecondaryProjectManager: false,
+        isMember: false,
+        hasRegularAccess: false,
+        lifecycleStatus: undefined,
+        closureStatus: undefined,
+        projectOrganization: undefined
+      };
+
+      const isProjectManager = project.project_manager === userProfile.email;
 
       if (isAdmin || isProjectManager) {
       return {

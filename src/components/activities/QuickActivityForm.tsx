@@ -23,7 +23,7 @@ import { useSession } from "@supabase/auth-helpers-react";
 import { useActivityTypes } from "@/hooks/useActivityTypes";
 import { AlertTriangle } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -49,6 +49,7 @@ const QuickActivityForm = ({ onSuccess }: { onSuccess?: () => void }) => {
   const { data: activityTypes, isLoading: isLoadingTypes } = useActivityTypes(true, true);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [showUnsavedChangesAlert, setShowUnsavedChangesAlert] = useState(false);
+  const isResettingRef = useRef(false);
   
   // Fonction pour demander confirmation avant fermeture
   const requestClose = () => {
@@ -104,9 +105,11 @@ const QuickActivityForm = ({ onSuccess }: { onSuccess?: () => void }) => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["activities"] });
       toast({ title: "Activité ajoutée avec succès" });
+      isResettingRef.current = true;
       setHasUnsavedChanges(false);
-      onSuccess?.();
       form.reset();
+      setTimeout(() => { isResettingRef.current = false; }, 0);
+      onSuccess?.();
     },
     onError: () => {
       toast({ 
@@ -120,7 +123,7 @@ const QuickActivityForm = ({ onSuccess }: { onSuccess?: () => void }) => {
   // Surveiller les changements dans le formulaire
   useEffect(() => {
     const subscription = form.watch(() => {
-      if (!isLoading) {
+      if (!isLoading && !isResettingRef.current) {
         setHasUnsavedChanges(true);
       }
     });

@@ -66,7 +66,7 @@ export const ActivityList = ({ dailyActivities, onDelete, showDeleteButton = fal
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
       {dailyActivities.map(({ date, day, activities: dayActivities, total }) => (
-        <Card key={day} className={dayActivities.length === 0 ? 'opacity-50' : ''}>
+        <Card key={format(date, 'yyyy-MM-dd')} className={dayActivities.length === 0 ? 'opacity-50' : ''}>
           <CardHeader>
             <CardTitle className="capitalize flex justify-between items-center">
               <span>

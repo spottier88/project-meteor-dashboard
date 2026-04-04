@@ -1,5 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
+import { format } from 'date-fns';
 import { v4 as uuidv4 } from 'uuid';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -56,7 +57,7 @@ export const BulkActivityEntryDrawer = () => {
       activity_type: '',
       description: '',
       duration_minutes: 60,
-      start_time: new Date().toISOString().slice(0, 16),
+      start_time: format(new Date(), "yyyy-MM-dd'T'HH:mm"),
       isValid: false
     };
   };

@@ -132,7 +132,7 @@ export function PermissionsProvider({ children }: { children: React.ReactNode })
     }
 
     loadAccessibleOrganizations();
-  }, [user?.id, hasAdminRole, adminRoleDisabled, isManager, isLoading, isError, userRoles]); // Ajout de hasAdminRole et adminRoleDisabled comme dépendances
+  }, [user?.id, hasAdminRole, adminRoleDisabled, isManager, isLoading, isError]);
 
 
   if (!session) {

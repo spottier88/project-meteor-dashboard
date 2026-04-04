@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
@@ -27,6 +27,13 @@ const AuthCallback = () => {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    };
+  }, []);
 
   useEffect(() => {
     const handleAuthCallback = async () => {
@@ -102,8 +109,7 @@ const AuthCallback = () => {
         }
 
         // En cas d'erreur, redirection vers la page de login après un court délai
-        setTimeout(() => {
-          // Redirection vers /login depuis AuthCallback suite à une erreur
+        timeoutRef.current = setTimeout(() => {
           window.location.href = "/login";
         }, 2000);
       }
@@ -149,7 +155,7 @@ const AuthCallback = () => {
       });
       
       // Laisser un peu de temps pour voir le message de succès puis rediriger
-      setTimeout(() => {
+      timeoutRef.current = setTimeout(() => {
         performPostAuthRedirect(navigate);
       }, 1500);
       

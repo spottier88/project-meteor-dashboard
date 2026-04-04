@@ -56,9 +56,9 @@ export const TeamPointsDashboard = () => {
   const { data: teamUsers } = useQuery({
     queryKey: ['team-users'],
     queryFn: async () => {
-      const { data } = await supabase.rpc('get_team_view_users', {
-        p_user_id: (await supabase.auth.getUser()).data.user?.id
-      });
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('User not authenticated');
+      const { data } = await supabase.rpc('get_team_view_users', { p_user_id: user.id });
       return data || [];
     }
   });
@@ -67,9 +67,9 @@ export const TeamPointsDashboard = () => {
   const { data: projects } = useQuery({
     queryKey: ['team-projects'],
     queryFn: async () => {
-      const { data } = await supabase.rpc('get_team_view_projects', {
-        p_user_id: (await supabase.auth.getUser()).data.user?.id
-      });
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('User not authenticated');
+      const { data } = await supabase.rpc('get_team_view_projects', { p_user_id: user.id });
       return data || [];
     }
   });

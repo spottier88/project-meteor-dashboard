@@ -244,6 +244,7 @@ export const useProjectFormState = (isOpen: boolean, project?: any) => {
   };
 
   useEffect(() => {
+    let isMounted = true;
     const initializeForm = async () => {
       if (isOpen) {
         setHasUnsavedChanges(false);
@@ -311,17 +312,21 @@ export const useProjectFormState = (isOpen: boolean, project?: any) => {
               .eq("project_id", project.id)
               .maybeSingle();
 
-            if (!error && monitoringData) {
-              setMonitoringLevel(monitoringData.monitoring_level);
-              setMonitoringEntityId(monitoringData.monitoring_entity_id);
-            } else {
+            if (isMounted) {
+              if (!error && monitoringData) {
+                setMonitoringLevel(monitoringData.monitoring_level);
+                setMonitoringEntityId(monitoringData.monitoring_entity_id);
+              } else {
+                setMonitoringLevel("none");
+                setMonitoringEntityId(null);
+              }
+            }
+          } catch (error) {
+            if (isMounted) {
+              console.error("Error in monitoring data fetch:", error);
               setMonitoringLevel("none");
               setMonitoringEntityId(null);
             }
-          } catch (error) {
-            console.error("Error in monitoring data fetch:", error);
-            setMonitoringLevel("none");
-            setMonitoringEntityId(null);
           }
 
           try {
@@ -331,7 +336,7 @@ export const useProjectFormState = (isOpen: boolean, project?: any) => {
               .eq("project_id", project.id)
               .maybeSingle();
 
-            if (!innovationError && innovationScores) {
+            if (isMounted && !innovationError && innovationScores) {
               setNovateur(innovationScores.novateur);
               setUsager(innovationScores.usager);
               setOuverture(innovationScores.ouverture);
@@ -339,7 +344,7 @@ export const useProjectFormState = (isOpen: boolean, project?: any) => {
               setImpact(innovationScores.impact);
             }
           } catch (error) {
-            console.error("Error in innovation scores fetch:", error);
+            if (isMounted) console.error("Error in innovation scores fetch:", error);
           }
 
           try {
@@ -349,7 +354,7 @@ export const useProjectFormState = (isOpen: boolean, project?: any) => {
               .eq("project_id", project.id)
               .maybeSingle();
 
-            if (!framingError && framingData) {
+            if (isMounted && !framingError && framingData) {
               setContext(framingData.context || "");
               setStakeholders(framingData.stakeholders || "");
               setGovernance(framingData.governance || "");
@@ -359,13 +364,14 @@ export const useProjectFormState = (isOpen: boolean, project?: any) => {
               setSuccessIndicators(framingData.success_indicators || "");
             }
           } catch (error) {
-            console.error("Error in framing data fetch:", error);
+            if (isMounted) console.error("Error in framing data fetch:", error);
           }
         }
       }
     };
 
     initializeForm();
+    return () => { isMounted = false; };
   }, [isOpen, project, user?.email, user?.id]);
 
   useEffect(() => {

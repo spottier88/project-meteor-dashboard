@@ -3,7 +3,7 @@
  * @description Calendrier hebdomadaire affichant les points par jour
  */
 import React from "react";
-import { startOfWeek, addDays, isSameDay } from "date-fns";
+import { startOfWeek, addDays, isSameDay, format } from "date-fns";
 import { DayPointsCell } from "./DayPointsCell";
 
 interface DailyPointsCalendarProps {
@@ -28,7 +28,7 @@ export const DailyPointsCalendar: React.FC<DailyPointsCalendarProps> = ({
   return (
     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
       {days.map((day) => {
-        const dayKey = day.toISOString().split("T")[0];
+        const dayKey = format(day, 'yyyy-MM-dd');
         const points = pointsByDay[dayKey] || 0;
         const isToday = isSameDay(day, today);
 

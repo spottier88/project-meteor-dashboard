@@ -42,11 +42,11 @@ export const useWeeklyPoints = (userId: string, weekStartDate: Date) => {
               .from("activity_types")
               .select("code, label, color")
               .eq("code", point.activity_type)
-              .single();
-            
+              .maybeSingle();
+
             return {
               ...point,
-              activity_types: activityTypeData,
+              activity_types: activityTypeData ?? null,
             };
           }
           return point;

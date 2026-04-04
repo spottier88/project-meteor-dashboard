@@ -76,15 +76,17 @@ export const WeeklyPointsEntry: React.FC = () => {
 
   // Gestion de l'ajout de points via formulaire modal
   const handleAddPoints = (values: any) => {
-    addPoints({
-      user_id: session?.user?.id || "",
-      project_id: values.project_id || null,
-      activity_type: values.activity_type || null,
-      points: values.points,
-      description: values.description || null,
-      week_start_date: format(currentWeek, "yyyy-MM-dd"),
-    });
-    setIsFormOpen(false);
+    addPoints(
+      {
+        user_id: session?.user?.id || "",
+        project_id: values.project_id || null,
+        activity_type: values.activity_type || null,
+        points: values.points,
+        description: values.description || null,
+        week_start_date: format(currentWeek, "yyyy-MM-dd"),
+      },
+      { onSuccess: () => setIsFormOpen(false) }
+    );
   };
 
 

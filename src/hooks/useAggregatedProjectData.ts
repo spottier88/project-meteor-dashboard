@@ -68,7 +68,7 @@ export const useAggregatedProjectData = (masterProjectId: string) => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("activity_points")
-        .select("*, profile:profiles(*), project:projects(title)")
+        .select("*, project:projects(title)")
         .in("project_id", allProjectIds);
 
       if (error) throw error;
