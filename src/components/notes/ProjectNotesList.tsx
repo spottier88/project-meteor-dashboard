@@ -88,24 +88,11 @@ export const ProjectNotesList = ({
     if (!noteToDelete) return;
     
     const noteId = noteToDelete.id;
-    // Fermer le dialogue d'abord pour laisser Radix nettoyer correctement
     setNoteToDelete(null);
     
-    // Déverrouiller immédiatement
-    unlockPointerEvents();
-    
-    // Exécuter la suppression au tick suivant pour éviter les conflits
     setTimeout(() => {
       deleteNote.mutate(noteId, {
-        onSettled: () => {
-          // Triple filet de sécurité : déverrouiller à différents moments
-          // pour couvrir les animations Radix et le re-render de la query
-          unlockPointerEvents();
-          requestAnimationFrame(unlockPointerEvents);
-          setTimeout(unlockPointerEvents, 250);
-        },
         onSuccess: () => {
-          // Restaurer le focus sur le conteneur après suppression
           setTimeout(() => focusContainer(), 0);
         },
       });
@@ -116,17 +103,8 @@ export const ProjectNotesList = ({
   const handleDeleteDialogChange = useCallback((open: boolean) => {
     if (!open) {
       setNoteToDelete(null);
-      // Filet de sécurité : déverrouiller pointer-events sur body et html
-      unlockPointerEvents();
-      // Double sécurité avec requestAnimationFrame
-      requestAnimationFrame(unlockPointerEvents);
     }
   }, []);
-
-  // Effet de sécurité : déverrouiller après chaque changement de notes (refetch)
-  useEffect(() => {
-    unlockPointerEvents();
-  }, [notes.length]);
 
   // Épingler/désépingler une note
   const handleTogglePin = (noteId: string, isPinned: boolean) => {

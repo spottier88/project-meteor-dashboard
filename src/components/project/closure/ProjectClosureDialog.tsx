@@ -150,11 +150,6 @@ export const ProjectClosureDialog = ({
     <Dialog open={isOpen} onOpenChange={(open) => !open && handleClose()}>
       <DialogContent 
         className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto"
-        onCloseAutoFocus={(event) => {
-          event.preventDefault();
-          unlockPointerEvents();
-          document.body.focus();
-        }}
       >
         <DialogHeader>
           <DialogTitle className="sr-only">
