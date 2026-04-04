@@ -1,45 +1,107 @@
 
 
-# Correctif — Bouton "retour" inopérant au chargement de la page synthèse projet
+# Correction systémique des blocages de navigation
 
-## Cause racine
+## Diagnostic final
 
-Le nettoyage `resetInteractionLocks()` dans `ProtectedRoute` s'exécute **immédiatement** au changement de `pathname`. Mais les composants Radix (Sheet, Dialog) de la page **précédente** se démontent avec une animation de 200-500ms. Pendant cette animation, Radix **ré-applique** `pointer-events: none` sur le `body`, écrasant le nettoyage déjà effectué.
+Deux bugs combinés expliquent pourquoi le correctif ne tient pas au-delà du premier accès :
 
-C'est pourquoi :
-- le bouton "retour" ne fonctionne pas dès l'arrivée sur la page ;
-- n'importe quel clic ultérieur débloque la page (l'animation Radix est alors terminée) ;
-- le problème se manifeste surtout quand on vient d'une page riche en overlays (`/projects`).
-
-## Correction
-
-### Fichier unique : `src/components/ProtectedRoute.tsx`
-
-Modifier l'effect 3 (nettoyage des verrous) pour ajouter un **second nettoyage différé** après la fin des animations Radix :
+### Bug 1 : `dialog.tsx` laisse ses props écraser le nettoyage
 
 ```tsx
-// Effect 3 : nettoyage des verrous d'interaction à chaque changement de route
+// dialog.tsx actuel — BUG
+<DialogPrimitive.Content
+  onCloseAutoFocus={(e) => { resetInteractionLocks(); }} // posé en premier
+  {...props}  // ← tout onCloseAutoFocus passé en prop ÉCRASE le nettoyage
+>
+```
+
+6 composants passent leur propre `onCloseAutoFocus` à `DialogContent` et ne nettoient jamais `pointer-events` : `ProjectClosureDialog`, `PortfolioReviewForm`, `PortfolioReviewNotificationDialog` (×2), `PortfolioReviewList`, etc. Chaque fermeture de ces dialogs laisse le verrou actif.
+
+`alert-dialog.tsx` gère correctement ce cas (destructure + appelle les deux), mais `dialog.tsx` et `sheet.tsx` ne le font pas.
+
+### Bug 2 : le `setTimeout(600ms)` est une course impossible à gagner
+
+Il nettoie pile une fois, 600ms après le changement de route. Mais Radix peut ré-appliquer `pointer-events: none` à n'importe quel moment pendant le démontage (stacked dialogs, animations chaînées). Sur les navigations suivantes, le timing change et le verrou persiste.
+
+## Plan de correction
+
+### 1. Corriger `dialog.tsx` et `sheet.tsx` — même pattern que `alert-dialog.tsx`
+
+Destructurer `onCloseAutoFocus` et `onAnimationEnd` des props, appeler le nettoyage PUIS le handler utilisateur :
+
+```tsx
+// dialog.tsx — CORRIGÉ
+const DialogContent = React.forwardRef<...>(
+  ({ className, children, onCloseAutoFocus, onAnimationEnd, ...props }, ref) => (
+    <DialogPrimitive.Content
+      onCloseAutoFocus={(e) => {
+        e.preventDefault();
+        resetInteractionLocks();
+        onCloseAutoFocus?.(e);
+      }}
+      onAnimationEnd={(e) => {
+        resetInteractionLocks();
+        onAnimationEnd?.(e);
+      }}
+      {...props}
+    >
+```
+
+Même modification pour `sheet.tsx`.
+
+### 2. Remplacer le `setTimeout` par un `MutationObserver` dans `ProtectedRoute`
+
+Au lieu de deviner un délai, observer les mutations de style sur `body` et nettoyer automatiquement quand `pointer-events: none` est appliqué alors qu'aucun overlay Radix n'est ouvert :
+
+```tsx
 useEffect(() => {
-  // Nettoyage immédiat
   resetInteractionLocks();
-  
-  // Nettoyage différé pour rattraper les verrous ré-appliqués
-  // par les animations de fermeture Radix (durée max: 500ms)
-  const timer = setTimeout(() => {
-    resetInteractionLocks();
-  }, 600);
-  
-  return () => clearTimeout(timer);
+
+  const observer = new MutationObserver(() => {
+    if (document.body.style.pointerEvents === 'none') {
+      // Vérifier si un overlay Radix est réellement ouvert
+      const hasOpenOverlay = document.querySelector('[data-state="open"][role="dialog"]');
+      if (!hasOpenOverlay) {
+        resetInteractionLocks();
+      }
+    }
+  });
+
+  observer.observe(document.body, { 
+    attributes: true, 
+    attributeFilter: ['style'] 
+  });
+
+  return () => observer.disconnect();
 }, [pathname]);
 ```
 
-C'est la solution la plus ciblée et la moins risquée : pas de MutationObserver, pas de CSS global, pas de modification des primitives Radix.
+Cela couvre tous les cas de timing sans délai arbitraire.
 
-## Impact
+### 3. Harmoniser les handlers `onCloseAutoFocus` existants dans les composants métier
+
+Maintenant que les primitives appellent toujours `resetInteractionLocks()` en interne, les handlers custom dans les composants métier n'ont plus besoin de gérer `pointer-events` eux-mêmes. Nettoyage optionnel mais recommandé dans :
+- `DeleteProjectDialog.tsx`
+- `ProjectClosureDialog.tsx`
+- `PortfolioReviewForm.tsx`
+- `PortfolioReviewNotificationDialog.tsx`
+- `PortfolioReviewList.tsx`
+- `ProjectNotesList.tsx`
+- `TaskForm.tsx`
+
+On y retire les lignes `unlockPointerEvents()` / `document.body.style.pointerEvents = ""` devenues redondantes.
+
+## Fichiers impactés
 
 | Fichier | Modification |
 |---|---|
-| `src/components/ProtectedRoute.tsx` | Ajout d'un `setTimeout` de 600ms dans l'effect existant |
+| `src/components/ui/dialog.tsx` | Destructurer `onCloseAutoFocus`/`onAnimationEnd` pour garantir le nettoyage |
+| `src/components/ui/sheet.tsx` | Idem |
+| `src/components/ProtectedRoute.tsx` | Remplacer `setTimeout` par `MutationObserver` |
+| 7 composants métier | Retirer les nettoyages manuels redondants (optionnel, réduction de dette) |
 
-Aucune régression possible : le nettoyage est idempotent (remettre des chaînes vides sur des propriétés déjà vides est sans effet).
+## Risque
+
+Faible. Le `MutationObserver` ne bloque que les verrous orphelins (aucun dialog ouvert). Quand un modal est réellement ouvert, `pointer-events: none` est légitime et conservé. Les primitives UI garantissent le nettoyage à la fermeture quel que soit le handler passé par le composant parent.
 
