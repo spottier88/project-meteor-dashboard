@@ -6,7 +6,7 @@
  * de pointer-events lock avec Radix UI (quand le composant enfant est démonté).
  */
 
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useCallback } from "react";
 import { useProjectNotes } from "@/hooks/useProjectNotes";
 import { ProjectNoteForm } from "./ProjectNoteForm";
 import { ProjectNoteCard } from "./ProjectNoteCard";
