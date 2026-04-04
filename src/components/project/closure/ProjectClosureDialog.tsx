@@ -56,10 +56,8 @@ export const ProjectClosureDialog = ({
     },
   });
 
-  // Fonction de fermeture avec nettoyage du focus
+  // Fonction de fermeture
   const handleClose = () => {
-    unlockPointerEvents();
-    document.body.focus();
     onClose();
   };
 
