@@ -1,107 +1,48 @@
 
 
-# Correction systémique des blocages de navigation
+# Correctif — Flèches de navigation du calendrier superposées aux jours
 
-## Diagnostic final
+## Diagnostic
 
-Deux bugs combinés expliquent pourquoi le correctif ne tient pas au-delà du premier accès :
+Les boutons de navigation (flèches mois précédent/suivant) sont positionnés en `absolute` avec `left-1` et `right-1` (lignes 41-48). Ils sont rendus à l'intérieur du conteneur `nav`, mais leur positionnement absolu les fait déborder sur la grille des jours en dessous.
 
-### Bug 1 : `dialog.tsx` laisse ses props écraser le nettoyage
+Le problème vient de la structure v9 de `react-day-picker` : le `nav` et le `month_caption` ne forment pas un conteneur isolé. Les boutons absolus se positionnent par rapport au `month` (qui a `position: relative` implicite via `space-y-4`), et chevauchent donc la première ligne de jours — visible sur le "12" et le dimanche en général.
 
-```tsx
-// dialog.tsx actuel — BUG
-<DialogPrimitive.Content
-  onCloseAutoFocus={(e) => { resetInteractionLocks(); }} // posé en premier
-  {...props}  // ← tout onCloseAutoFocus passé en prop ÉCRASE le nettoyage
->
-```
+## Correction
 
-6 composants passent leur propre `onCloseAutoFocus` à `DialogContent` et ne nettoient jamais `pointer-events` : `ProjectClosureDialog`, `PortfolioReviewForm`, `PortfolioReviewNotificationDialog` (×2), `PortfolioReviewList`, etc. Chaque fermeture de ces dialogs laisse le verrou actif.
+### Fichier : `src/components/ui/calendar.tsx`
 
-`alert-dialog.tsx` gère correctement ce cas (destructure + appelle les deux), mais `dialog.tsx` et `sheet.tsx` ne le font pas.
+Deux modifications :
 
-### Bug 2 : le `setTimeout(600ms)` est une course impossible à gagner
+1. **Rendre `month_caption` le contexte de positionnement** en ajoutant `relative` (déjà présent) mais aussi une hauteur suffisante et un z-index supérieur pour que les boutons restent au-dessus de la grille sans la chevaucher.
 
-Il nettoie pile une fois, 600ms après le changement de route. Mais Radix peut ré-appliquer `pointer-events: none` à n'importe quel moment pendant le démontage (stacked dialogs, animations chaînées). Sur les navigations suivantes, le timing change et le verrou persiste.
+2. **Ajouter `z-10`** aux boutons `button_previous` et `button_next` pour qu'ils passent au-dessus, et surtout **changer le conteneur `nav`** pour utiliser un layout flex entre les flèches et le label, supprimant le positionnement absolu fragile.
 
-## Plan de correction
-
-### 1. Corriger `dialog.tsx` et `sheet.tsx` — même pattern que `alert-dialog.tsx`
-
-Destructurer `onCloseAutoFocus` et `onAnimationEnd` des props, appeler le nettoyage PUIS le handler utilisateur :
+Approche retenue — **remplacer le positionnement absolu par un layout flex** :
 
 ```tsx
-// dialog.tsx — CORRIGÉ
-const DialogContent = React.forwardRef<...>(
-  ({ className, children, onCloseAutoFocus, onAnimationEnd, ...props }, ref) => (
-    <DialogPrimitive.Content
-      onCloseAutoFocus={(e) => {
-        e.preventDefault();
-        resetInteractionLocks();
-        onCloseAutoFocus?.(e);
-      }}
-      onAnimationEnd={(e) => {
-        resetInteractionLocks();
-        onAnimationEnd?.(e);
-      }}
-      {...props}
-    >
+month_caption: "flex justify-center pt-1 relative items-center h-10",
+nav: "flex items-center justify-between absolute inset-x-0 top-0 h-10 px-1 z-10",
+button_previous: cn(
+  buttonVariants({ variant: "outline" }),
+  "h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100"
+),
+button_next: cn(
+  buttonVariants({ variant: "outline" }),
+  "h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100"
+),
 ```
 
-Même modification pour `sheet.tsx`.
+Changements clés :
+- `nav` devient le conteneur positionné en absolu avec `inset-x-0` et `z-10`, couvrant toute la largeur du header sans déborder sur la grille
+- `button_previous` et `button_next` perdent leur `absolute` individuel — ils sont positionnés par le flex du `nav`
+- Le `z-10` sur `nav` garantit que les flèches sont cliquables sans chevaucher visuellement les cellules de jours
 
-### 2. Remplacer le `setTimeout` par un `MutationObserver` dans `ProtectedRoute`
-
-Au lieu de deviner un délai, observer les mutations de style sur `body` et nettoyer automatiquement quand `pointer-events: none` est appliqué alors qu'aucun overlay Radix n'est ouvert :
-
-```tsx
-useEffect(() => {
-  resetInteractionLocks();
-
-  const observer = new MutationObserver(() => {
-    if (document.body.style.pointerEvents === 'none') {
-      // Vérifier si un overlay Radix est réellement ouvert
-      const hasOpenOverlay = document.querySelector('[data-state="open"][role="dialog"]');
-      if (!hasOpenOverlay) {
-        resetInteractionLocks();
-      }
-    }
-  });
-
-  observer.observe(document.body, { 
-    attributes: true, 
-    attributeFilter: ['style'] 
-  });
-
-  return () => observer.disconnect();
-}, [pathname]);
-```
-
-Cela couvre tous les cas de timing sans délai arbitraire.
-
-### 3. Harmoniser les handlers `onCloseAutoFocus` existants dans les composants métier
-
-Maintenant que les primitives appellent toujours `resetInteractionLocks()` en interne, les handlers custom dans les composants métier n'ont plus besoin de gérer `pointer-events` eux-mêmes. Nettoyage optionnel mais recommandé dans :
-- `DeleteProjectDialog.tsx`
-- `ProjectClosureDialog.tsx`
-- `PortfolioReviewForm.tsx`
-- `PortfolioReviewNotificationDialog.tsx`
-- `PortfolioReviewList.tsx`
-- `ProjectNotesList.tsx`
-- `TaskForm.tsx`
-
-On y retire les lignes `unlockPointerEvents()` / `document.body.style.pointerEvents = ""` devenues redondantes.
-
-## Fichiers impactés
+## Impact
 
 | Fichier | Modification |
 |---|---|
-| `src/components/ui/dialog.tsx` | Destructurer `onCloseAutoFocus`/`onAnimationEnd` pour garantir le nettoyage |
-| `src/components/ui/sheet.tsx` | Idem |
-| `src/components/ProtectedRoute.tsx` | Remplacer `setTimeout` par `MutationObserver` |
-| 7 composants métier | Retirer les nettoyages manuels redondants (optionnel, réduction de dette) |
+| `src/components/ui/calendar.tsx` | Remplacement du positionnement absolu des boutons par un layout flex dans `nav` |
 
-## Risque
-
-Faible. Le `MutationObserver` ne bloque que les verrous orphelins (aucun dialog ouvert). Quand un modal est réellement ouvert, `pointer-events: none` est légitime et conservé. Les primitives UI garantissent le nettoyage à la fermeture quel que soit le handler passé par le composant parent.
+Aucune régression attendue : le changement est purement CSS/layout, limité au composant calendrier.
 
