@@ -1,113 +1,130 @@
 
+## Plan de correction — Persistance des dates Gantt non exécutée
 
-# Correctif — Persistance des dates lors du drag & drop dans le Gantt
+### Diagnostic retenu
 
-## Diagnostic
+Le problème ne semble plus être côté callback `onUpdate` : il est bien appelé dans `persistTaskDates`.
 
-Le handler `handleUpdateTask` (ligne 116-168 de `TaskGantt.tsx`) contient deux problèmes probables :
+Les indices lus dans le code et le runtime pointent vers un blocage plus en amont :
 
-### Problème 1 : le guard `inProgress` filtre potentiellement l'événement final
+1. Dans `TaskGantt.tsx`, l’écriture DB ne part que si `ev.inProgress` est faux :
+   ```ts
+   if (ev.inProgress) return true;
+   ```
+2. Le snapshot réseau au moment du problème montre uniquement des `GET /tasks` et aucune requête d’update sur `tasks`.
+3. Donc la mise à jour n’atteint probablement jamais Supabase : le souci est dans la capture/finalisation de l’événement SVAR, pas dans l’update SQL elle-même.
+4. Le composant dépend aujourd’hui d’un “événement final” implicite du drag, qui n’est manifestement pas fiable pour tous les cas (déplacement complet, resize gauche/droite).
+5. En plus, `TaskGantt` reste éditable dès que `isProjectClosed` est faux, même dans des contextes transverses où aucune persistance n’est souhaitée.
 
-```tsx
-if (ev.inProgress) return;  // ligne 118
-```
+Conclusion : l’UI bouge localement, mais le pipeline “fin de drag → persistance DB” n’est pas suffisamment robuste.
 
-SVAR émet `onupdatetask` pendant le drag (intermédiaire, `inProgress: true`) **et** à la fin. Selon la version de SVAR, l'événement final peut avoir `inProgress: true` aussi (indiquant que c'est le dernier d'une séquence de drag), ce qui fait que le handler **ignore toutes les mises à jour** sans jamais atteindre le code de persistance.
+---
 
-### Problème 2 : le handler est `async` mais SVAR attend un retour synchrone
+## Correction proposée
 
-Le handler est déclaré `async` (ligne 116). SVAR appelle la fonction et vérifie le retour pour valider ou annuler le changement. Un handler `async` retourne une `Promise` (truthy), donc SVAR accepte visuellement le changement, mais si l'événement est mal intercepté, la persistance n'a jamais lieu.
+### 1. Rebrancher la persistance sur l’API SVAR, pas uniquement sur la prop JSX
+Dans `TaskGantt.tsx`, centraliser l’écoute des mises à jour via `api.on("update-task", ...)` dans `handleInit`, comme c’est déjà fait pour `show-editor`, `add-task` et `drag-task`.
 
-### Problème 3 : la condition de blocage progression est trop large
+Objectif :
+- écouter la vraie source d’événements SVAR ;
+- ne plus dépendre d’un comportement ambigu de `onupdatetask`.
 
-```tsx
-if (updatedFields.progress !== undefined && !updatedFields.start && !updatedFields.end) {
-  return false;  // ligne 124-126
-}
-```
+### 2. Supprimer la dépendance au seul `inProgress === false`
+Remplacer la logique actuelle par une finalisation robuste :
 
-Lors d'un resize (modification d'une extrémité), SVAR peut envoyer `progress` recalculé en même temps que `start`/`end`. Si seul `end` est défini (sans `start`), la condition passe mais `updatedFields.start` est `undefined`, ce qui fait que `startDate` n'est pas inclus dans le payload — comportement correct mais fragile.
+- à chaque update contenant `start` ou `end` :
+  - mettre à jour `localTasks` immédiatement pour garder une UI fluide ;
+  - stocker la dernière valeur reçue dans une ref par `taskId`.
+- lancer un debounce court (ex. 250–400 ms) par tâche ;
+- à la fin du drag/resize, persister uniquement la dernière valeur reçue.
 
-## Plan de correction
+Ainsi :
+- si SVAR envoie bien un événement final : on flush tout de suite ;
+- s’il n’envoie que des événements “in progress” : le debounce sauve quand même la dernière position.
 
-### Fichier unique : `src/components/task/TaskGantt.tsx`
+### 3. Sécuriser les contextes réellement éditables
+Ajouter une prop explicite de type :
+- `canEditTaskDates?: boolean`
+ou
+- `isReadOnly?: boolean`
 
-1. **Supprimer le guard `inProgress`** et le remplacer par une logique qui accepte tous les événements mais ne persiste qu'au final — ou simplement retirer le guard car SVAR gère déjà l'état visuel intermédiaire en interne.
+Puis l’utiliser pour piloter :
+- `readonly` du composant Gantt ;
+- le déclenchement ou non de la persistance.
 
-2. **Rendre le handler synchrone** : déplacer l'appel Supabase dans une fonction séparée non-bloquante (fire-and-forget avec gestion d'erreur), pour que le handler retourne `true` immédiatement à SVAR.
+À passer ensuite dans :
+- `TaskList.tsx` : édition autorisée ;
+- `PortfolioGanttSheet.tsx` : lecture seule ;
+- `ProjectGanttSheet.tsx` : lecture seule ;
+- `MyTasks.tsx` : à confirmer selon le comportement métier voulu.
 
-3. **Ajouter des logs de diagnostic** pour confirmer que l'événement est bien reçu.
+Cela évitera des déplacements visuels “non persistables”.
 
-```tsx
-const persistTaskDates = useCallback(async (taskId: string, start?: Date, end?: Date) => {
-  try {
-    const updatePayload: Record<string, string> = {
-      updated_at: new Date().toISOString(),
-    };
-    if (start) updatePayload.start_date = start.toISOString().split('T')[0];
-    if (end) updatePayload.due_date = end.toISOString().split('T')[0];
+### 4. Fiabiliser la sérialisation des dates
+Ne plus utiliser `toISOString().split("T")[0]` pour écrire les dates si la source est locale.
 
-    const { error } = await supabase
-      .from('tasks')
-      .update(updatePayload)
-      .eq('id', taskId)
-      .select();
+Risque actuel : décalage d’un jour selon le fuseau horaire.
 
-    if (error) throw error;
+Correction prévue :
+- formatter en date locale `yyyy-MM-dd` avant envoi.
 
-    toast.success('Dates de la tâche mises à jour');
-    onUpdate?.();
-  } catch (error) {
-    logger.error('Erreur mise à jour dates: ' + error);
-    toast.error("Erreur lors de la mise à jour des dates");
-  }
-}, [onUpdate]);
+### 5. Durcir la gestion d’erreur
+En cas d’échec DB :
+- logger le `taskId` et le payload réellement envoyé ;
+- afficher un toast d’erreur unique ;
+- relancer `onUpdate?.()` ou restaurer la valeur précédente pour éviter un affichage faux.
 
-const handleUpdateTask = useCallback((ev: { id: string | number; task: Partial<ITask>; inProgress?: boolean }) => {
-  // Ignorer les mises à jour intermédiaires pendant le drag
-  if (ev.inProgress) return true;
+---
 
-  const taskId = String(ev.id);
-  const updatedFields = ev.task;
+## Détail technique
 
-  // Bloquer la modification de la progression seule
-  if (updatedFields.progress !== undefined && !updatedFields.start && !updatedFields.end) {
-    return false;
-  }
+### Fichiers impactés
+- `src/components/task/TaskGantt.tsx`  
+  Refonte du flux d’update Gantt.
+- `src/components/TaskList.tsx`  
+  Transmission explicite du droit d’édition des dates.
+- `src/components/portfolio/PortfolioGanttSheet.tsx`  
+  Passage en lecture seule explicite.
+- `src/components/cart/ProjectGanttSheet.tsx`  
+  Passage en lecture seule explicite.
+- `src/pages/MyTasks.tsx`  
+  Alignement avec la règle métier voulue.
+- Éventuellement une migration Supabase  
+  uniquement si l’audit confirme qu’une policy `UPDATE` sur `tasks` est absente ou trop restrictive.
 
-  // Persister les dates si modifiées (fire-and-forget)
-  if (updatedFields.start || updatedFields.end) {
-    persistTaskDates(taskId, updatedFields.start, updatedFields.end);
+### Risques principaux et actions de levée
 
-    // Mettre à jour le state local immédiatement
-    setLocalTasks(prev =>
-      prev.map(t =>
-        t.id === taskId
-          ? {
-              ...t,
-              ...(updatedFields.start && { start_date: updatedFields.start.toISOString().split('T')[0] }),
-              ...(updatedFields.end && { due_date: updatedFields.end.toISOString().split('T')[0] }),
-            }
-          : t
-      )
-    );
-  }
+**Risque 1 — Toujours aucun write DB après correction**
+- Action : basculer l’écoute sur `api.on("update-task", ...)` et ne plus dépendre du seul handler prop.
 
-  return true; // Confirmer le changement à SVAR
-}, [persistTaskDates]);
-```
+**Risque 2 — Multiplication des updates pendant le drag**
+- Action : debounce par tâche + persistance de la dernière valeur uniquement.
 
-Changements clés :
-- Handler **synchrone** retournant `true` (accepté) ou `false` (rejeté)
-- Persistance DB en **fire-and-forget** (pas de blocage du rendu)
-- Le `return true` après `if (ev.inProgress)` valide les états intermédiaires visuels sans persister
-- Retour explicite `true` à la fin pour confirmer à SVAR
+**Risque 3 — Écart entre affichage local et base si erreur**
+- Action : snapshot avant modification + refetch/revert sur erreur.
 
-## Impact
+**Risque 4 — Éditions autorisées dans des vues non persistables**
+- Action : introduire un mode lecture seule explicite, indépendant de `isProjectClosed`.
 
-| Fichier | Modification |
-|---|---|
-| `src/components/task/TaskGantt.tsx` | Refonte du handler `handleUpdateTask` + extraction de `persistTaskDates` |
+**Risque 5 — Décalage de date d’un jour**
+- Action : formatter les dates en local avant envoi, pas en UTC ISO.
 
-Aucune régression : le comportement visuel reste identique, seule la persistance DB est corrigée.
+**Risque 6 — Blocage RLS silencieux**
+- Action : vérifier la policy `UPDATE` de `tasks` avant clôture du correctif ; si nécessaire, l’aligner sur la logique existante de gestion projet.
+
+---
+
+## Ordre d’implémentation recommandé
+
+1. Refondre `TaskGantt.tsx` pour écouter les updates via l’API SVAR.
+2. Mettre en place le stockage du dernier état + debounce de persistance.
+3. Corriger la sérialisation locale des dates.
+4. Introduire une prop explicite de lecture seule / droit d’édition.
+5. Propager cette prop aux vues projet / panier / portefeuille / mes tâches.
+6. Vérifier ensuite la policy `UPDATE` de `tasks` uniquement comme filet de sécurité.
+7. Tester les 3 cas :
+   - déplacement complet de barre ;
+   - resize gauche ;
+   - resize droite ;
+   avec confirmation visuelle + confirmation en base après refetch.
 
