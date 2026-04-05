@@ -21,7 +21,10 @@
       "Bash(echo \"EXIT:$?\")",
       "Bash(sed -i 's/^import React, { useState } from '\"'\"'react'\"'\"';$/import { useState } from '\"'\"'react'\"'\"';/' src/pages/ProjectTemplateDetails.tsx)",
       "Bash(sed -i 's/^import React, { useState } from '\"'\"'react'\"'\"';$/import { useState } from '\"'\"'react'\"'\"';/' src/pages/ProjectTemplateManagement.tsx)",
-      "Bash(sed -i 's/^import React, { useState } from '\"'\"'react'\"'\"';$/import { useState } from '\"'\"'react'\"'\"';/' src/pages/TeamActivities.tsx)"
+      "Bash(sed -i 's/^import React, { useState } from '\"'\"'react'\"'\"';$/import { useState } from '\"'\"'react'\"'\"';/' src/pages/TeamActivities.tsx)",
+      "Read(//c/Users/Utilisateur/.claude/projects/c--Users-Utilisateur-OneDrive-Documents-05-Developpement-meteor-Meteor-Git-project-meteor-dashboard/39a3e452-700e-4d6c-9fd7-7227b1659b9d/tool-results/**)",
+      "Bash(python3 -c ':*)",
+      "Bash(node -e ':*)"
     ]
   }
 }
