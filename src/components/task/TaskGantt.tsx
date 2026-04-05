@@ -110,62 +110,70 @@ export const TaskGantt = ({
   }, [canCreateTask, isProjectClosed]);
 
   /**
-   * Gère la mise à jour d'une tâche (drag & drop des dates uniquement).
-   * Bloque la modification de la progression par drag.
+   * Persiste les dates d'une tâche en base (fire-and-forget).
+   * Appelé après validation synchrone du changement par SVAR.
    */
-  const handleUpdateTask = useCallback(async (ev: { id: string | number; task: Partial<ITask>; inProgress?: boolean }) => {
-    // Ignorer les mises à jour intermédiaires (pendant le drag)
-    if (ev.inProgress) return;
+  const persistTaskDates = useCallback(async (taskId: string, start?: Date, end?: Date) => {
+    try {
+      const updatePayload: Record<string, string> = {
+        updated_at: new Date().toISOString(),
+      };
+      if (start) updatePayload.start_date = start.toISOString().split('T')[0];
+      if (end) updatePayload.due_date = end.toISOString().split('T')[0];
+
+      const { error } = await supabase
+        .from('tasks')
+        .update(updatePayload)
+        .eq('id', taskId)
+        .select();
+
+      if (error) throw error;
+
+      toast.success('Dates de la tâche mises à jour');
+      onUpdate?.();
+    } catch (error) {
+      logger.error('Erreur mise à jour dates: ' + error);
+      toast.error("Erreur lors de la mise à jour des dates");
+    }
+  }, [onUpdate]);
+
+  /**
+   * Gère la mise à jour d'une tâche (drag & drop des dates uniquement).
+   * Handler synchrone : retourne true/false immédiatement pour SVAR.
+   * La persistance DB est déléguée à persistTaskDates (fire-and-forget).
+   */
+  const handleUpdateTask = useCallback((ev: { id: string | number; task: Partial<ITask>; inProgress?: boolean }) => {
+    // Valider visuellement les états intermédiaires sans persister
+    if (ev.inProgress) return true;
 
     const taskId = String(ev.id);
     const updatedFields = ev.task;
 
-    // Bloquer la modification de la progression par drag (le statut pilote la progression)
+    // Bloquer la modification de la progression seule (le statut pilote la progression)
     if (updatedFields.progress !== undefined && !updatedFields.start && !updatedFields.end) {
       return false;
     }
 
-    // Si les dates ont changé, persister en base
+    // Persister les dates si modifiées (fire-and-forget)
     if (updatedFields.start || updatedFields.end) {
-      try {
-        const startDate = updatedFields.start
-          ? updatedFields.start.toISOString().split('T')[0]
-          : undefined;
-        const endDate = updatedFields.end
-          ? updatedFields.end.toISOString().split('T')[0]
-          : undefined;
+      persistTaskDates(taskId, updatedFields.start, updatedFields.end);
 
-        const updatePayload: Record<string, string> = {
-          updated_at: new Date().toISOString(),
-        };
-        if (startDate) updatePayload.start_date = startDate;
-        if (endDate) updatePayload.due_date = endDate;
-
-        const { error } = await supabase
-          .from('tasks')
-          .update(updatePayload)
-          .eq('id', taskId)
-          .select();
-
-        if (error) throw error;
-
-        // Mettre à jour le state local
-        setLocalTasks(prev =>
-          prev.map(t =>
-            t.id === taskId
-              ? { ...t, ...(startDate && { start_date: startDate }), ...(endDate && { due_date: endDate }) }
-              : t
-          )
-        );
-
-        toast.success('Dates de la tâche mises à jour');
-        onUpdate?.();
-      } catch (error) {
-        logger.error('Erreur lors de la mise à jour des dates: ' + error);
-        toast.error("Erreur lors de la mise à jour des dates");
-      }
+      // Mettre à jour le state local immédiatement pour la réactivité
+      setLocalTasks(prev =>
+        prev.map(t =>
+          t.id === taskId
+            ? {
+                ...t,
+                ...(updatedFields.start && { start_date: updatedFields.start.toISOString().split('T')[0] }),
+                ...(updatedFields.end && { due_date: updatedFields.end.toISOString().split('T')[0] }),
+              }
+            : t
+        )
+      );
     }
-  }, [onUpdate]);
+
+    return true; // Confirmer le changement à SVAR
+  }, [persistTaskDates]);
 
   /**
    * Initialise l'API SVAR et configure les interceptions d'actions.
