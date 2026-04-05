@@ -4,6 +4,10 @@
  * Utilise SVAR React Gantt pour le rendu interactif avec drag & drop.
  * Intègre : interception du double-clic (→ TaskForm), menu contextuel,
  * colonnes personnalisées, blocage du reordonnancement et de la progression.
+ * 
+ * La persistance des dates lors du drag & drop utilise un debounce
+ * par tâche pour garantir la sauvegarde même si SVAR n'émet pas
+ * d'événement final explicite (inProgress: false).
  */
 
 import { useState, useRef, useCallback, useMemo, useEffect } from 'react';
@@ -20,6 +24,7 @@ import { toast } from "sonner";
 import { logger } from "@/utils/logger";
 import { mapTasksToSvarFormat } from '@/utils/gantt-helpers';
 import type { ITask, IApi } from '@svar-ui/react-gantt';
+import { format } from "date-fns";
 
 interface TaskGanttProps {
   tasks: Array<any>;
@@ -41,6 +46,8 @@ interface TaskGanttProps {
   canDeleteTask?: boolean;
   /** Contexte d'export : projet, portefeuille ou panier */
   exportContext?: 'project' | 'portfolio' | 'cart';
+  /** Mode lecture seule explicite (désactive le drag & drop et la persistance) */
+  isReadOnly?: boolean;
 }
 
 /** Configuration des échelles de temps selon le mode de vue */
@@ -64,6 +71,13 @@ const SCALES_CONFIG: Record<ViewModeKey, Array<{ unit: string; step: number; for
   ],
 };
 
+/**
+ * Formate une date en yyyy-MM-dd en heure locale (évite le décalage UTC)
+ */
+const formatLocalDate = (date: Date): string => {
+  return format(date, 'yyyy-MM-dd');
+};
+
 export const TaskGantt = ({
   tasks,
   projectId,
@@ -77,10 +91,19 @@ export const TaskGantt = ({
   canCreateTask = false,
   canDeleteTask = false,
   exportContext = 'project',
+  isReadOnly = false,
 }: TaskGanttProps) => {
   const [viewMode, setViewMode] = useState<ViewModeKey>('week');
   const [localTasks, setLocalTasks] = useState<Array<any>>(tasks);
   const apiRef = useRef<IApi | null>(null);
+
+  /** Ref stockant les dernières dates reçues par taskId (pour le debounce) */
+  const pendingUpdatesRef = useRef<Map<string, { start?: Date; end?: Date }>>(new Map());
+  /** Ref stockant les timers de debounce par taskId */
+  const debounceTimersRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
+
+  /** Le composant est effectivement en lecture seule si le projet est clôturé OU si isReadOnly est passé */
+  const effectiveReadOnly = isProjectClosed || isReadOnly;
 
   useEffect(() => {
     setLocalTasks(tasks);
@@ -102,24 +125,26 @@ export const TaskGantt = ({
     ];
 
     // Ajouter la colonne "+" uniquement si l'utilisateur peut créer des tâches
-    if (canCreateTask && !isProjectClosed) {
+    if (canCreateTask && !effectiveReadOnly) {
       cols.push({ id: 'add-task', header: '', width: 50, align: 'center' });
     }
 
     return cols;
-  }, [canCreateTask, isProjectClosed]);
+  }, [canCreateTask, effectiveReadOnly]);
 
   /**
-   * Persiste les dates d'une tâche en base (fire-and-forget).
-   * Appelé après validation synchrone du changement par SVAR.
+   * Persiste les dates d'une tâche en base de données.
+   * Utilise le formatage local pour éviter les décalages UTC.
    */
   const persistTaskDates = useCallback(async (taskId: string, start?: Date, end?: Date) => {
     try {
       const updatePayload: Record<string, string> = {
         updated_at: new Date().toISOString(),
       };
-      if (start) updatePayload.start_date = start.toISOString().split('T')[0];
-      if (end) updatePayload.due_date = end.toISOString().split('T')[0];
+      if (start) updatePayload.start_date = formatLocalDate(start);
+      if (end) updatePayload.due_date = formatLocalDate(end);
+
+      logger.info(`[Gantt] Persistance tâche ${taskId} : ${JSON.stringify(updatePayload)}`);
 
       const { error } = await supabase
         .from('tasks')
@@ -132,54 +157,57 @@ export const TaskGantt = ({
       toast.success('Dates de la tâche mises à jour');
       onUpdate?.();
     } catch (error) {
-      logger.error('Erreur mise à jour dates: ' + error);
+      logger.error(`[Gantt] Erreur mise à jour tâche ${taskId}: ${error}`);
       toast.error("Erreur lors de la mise à jour des dates");
+      // Refetch pour corriger l'état local en cas d'erreur
+      onUpdate?.();
     }
   }, [onUpdate]);
 
   /**
-   * Gère la mise à jour d'une tâche (drag & drop des dates uniquement).
-   * Handler synchrone : retourne true/false immédiatement pour SVAR.
-   * La persistance DB est déléguée à persistTaskDates (fire-and-forget).
+   * Programme un flush debounced pour une tâche donnée.
+   * Stocke les dernières dates et lance la persistance après 300ms d'inactivité.
    */
-  const handleUpdateTask = useCallback((ev: { id: string | number; task: Partial<ITask>; inProgress?: boolean }) => {
-    // Valider visuellement les états intermédiaires sans persister
-    if (ev.inProgress) return true;
+  const schedulePersist = useCallback((taskId: string, start?: Date, end?: Date) => {
+    if (effectiveReadOnly) return;
 
-    const taskId = String(ev.id);
-    const updatedFields = ev.task;
+    // Stocker les dernières valeurs
+    const existing = pendingUpdatesRef.current.get(taskId) || {};
+    pendingUpdatesRef.current.set(taskId, {
+      start: start || existing.start,
+      end: end || existing.end,
+    });
 
-    // Bloquer la modification de la progression seule (le statut pilote la progression)
-    if (updatedFields.progress !== undefined && !updatedFields.start && !updatedFields.end) {
-      return false;
-    }
+    // Annuler le timer précédent
+    const existingTimer = debounceTimersRef.current.get(taskId);
+    if (existingTimer) clearTimeout(existingTimer);
 
-    // Persister les dates si modifiées (fire-and-forget)
-    if (updatedFields.start || updatedFields.end) {
-      persistTaskDates(taskId, updatedFields.start, updatedFields.end);
+    // Programmer le flush
+    const timer = setTimeout(() => {
+      const pending = pendingUpdatesRef.current.get(taskId);
+      if (pending) {
+        pendingUpdatesRef.current.delete(taskId);
+        debounceTimersRef.current.delete(taskId);
+        persistTaskDates(taskId, pending.start, pending.end);
+      }
+    }, 300);
 
-      // Mettre à jour le state local immédiatement pour la réactivité
-      setLocalTasks(prev =>
-        prev.map(t =>
-          t.id === taskId
-            ? {
-                ...t,
-                ...(updatedFields.start && { start_date: updatedFields.start.toISOString().split('T')[0] }),
-                ...(updatedFields.end && { due_date: updatedFields.end.toISOString().split('T')[0] }),
-              }
-            : t
-        )
-      );
-    }
+    debounceTimersRef.current.set(taskId, timer);
+  }, [effectiveReadOnly, persistTaskDates]);
 
-    return true; // Confirmer le changement à SVAR
-  }, [persistTaskDates]);
+  // Nettoyer les timers au démontage
+  useEffect(() => {
+    return () => {
+      debounceTimersRef.current.forEach(timer => clearTimeout(timer));
+    };
+  }, []);
 
   /**
    * Initialise l'API SVAR et configure les interceptions d'actions.
    * - show-editor : redirige vers le TaskForm existant
    * - add-task : redirige vers le TaskForm en mode création
    * - drag-task : bloque le reordonnancement dans la grille
+   * - update-task : écoute les mises à jour de dates via l'API SVAR
    */
   const handleInit = useCallback((api: IApi) => {
     apiRef.current = api;
@@ -208,11 +236,52 @@ export const TaskGantt = ({
     });
 
     // Bloquer le reordonnancement par drag dans la grille
-    // (la hiérarchie est gérée via le formulaire)
     api.intercept("drag-task", (ev: { top?: number }) => {
       if (typeof ev.top !== "undefined") return false;
     });
-  }, [onEdit, onAdd, localTasks]);
+
+    // Écouter les mises à jour de tâches via l'API SVAR (source fiable)
+    api.on("update-task", (ev: { id: string | number; task: Partial<ITask>; inProgress?: boolean }) => {
+      const taskId = String(ev.id);
+      const updatedFields = ev.task;
+
+      // Bloquer la modification de la progression seule
+      if (updatedFields.progress !== undefined && !updatedFields.start && !updatedFields.end) {
+        return false;
+      }
+
+      // Mettre à jour le state local immédiatement pour la réactivité UI
+      if (updatedFields.start || updatedFields.end) {
+        setLocalTasks(prev =>
+          prev.map(t =>
+            t.id === taskId
+              ? {
+                  ...t,
+                  ...(updatedFields.start && { start_date: formatLocalDate(updatedFields.start) }),
+                  ...(updatedFields.end && { due_date: formatLocalDate(updatedFields.end) }),
+                }
+              : t
+          )
+        );
+
+        // Programmer la persistance via debounce
+        // Si c'est l'événement final (inProgress false/undefined), flush immédiat
+        if (!ev.inProgress) {
+          // Annuler tout debounce en cours et persister immédiatement
+          const existingTimer = debounceTimersRef.current.get(taskId);
+          if (existingTimer) clearTimeout(existingTimer);
+          pendingUpdatesRef.current.delete(taskId);
+          debounceTimersRef.current.delete(taskId);
+          persistTaskDates(taskId, updatedFields.start, updatedFields.end);
+        } else {
+          // Événement intermédiaire → debounce (filet de sécurité)
+          schedulePersist(taskId, updatedFields.start, updatedFields.end);
+        }
+      }
+
+      return true;
+    });
+  }, [onEdit, onAdd, localTasks, effectiveReadOnly, persistTaskDates, schedulePersist]);
 
   /** Données pour l'export Excel (format simplifié) */
   const exportData = svarTasks.map(t => ({
@@ -274,10 +343,9 @@ export const TaskGantt = ({
                 links={[]}
                 scales={SCALES_CONFIG[viewMode]}
                 columns={columns}
-                readonly={isProjectClosed}
+                readonly={effectiveReadOnly}
                 cellHeight={38}
                 init={handleInit}
-                onupdatetask={handleUpdateTask}
               />
             </Willow>
           </Locale>
