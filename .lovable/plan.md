@@ -1,48 +1,113 @@
 
 
-# Correctif — Flèches de navigation du calendrier superposées aux jours
+# Correctif — Persistance des dates lors du drag & drop dans le Gantt
 
 ## Diagnostic
 
-Les boutons de navigation (flèches mois précédent/suivant) sont positionnés en `absolute` avec `left-1` et `right-1` (lignes 41-48). Ils sont rendus à l'intérieur du conteneur `nav`, mais leur positionnement absolu les fait déborder sur la grille des jours en dessous.
+Le handler `handleUpdateTask` (ligne 116-168 de `TaskGantt.tsx`) contient deux problèmes probables :
 
-Le problème vient de la structure v9 de `react-day-picker` : le `nav` et le `month_caption` ne forment pas un conteneur isolé. Les boutons absolus se positionnent par rapport au `month` (qui a `position: relative` implicite via `space-y-4`), et chevauchent donc la première ligne de jours — visible sur le "12" et le dimanche en général.
-
-## Correction
-
-### Fichier : `src/components/ui/calendar.tsx`
-
-Deux modifications :
-
-1. **Rendre `month_caption` le contexte de positionnement** en ajoutant `relative` (déjà présent) mais aussi une hauteur suffisante et un z-index supérieur pour que les boutons restent au-dessus de la grille sans la chevaucher.
-
-2. **Ajouter `z-10`** aux boutons `button_previous` et `button_next` pour qu'ils passent au-dessus, et surtout **changer le conteneur `nav`** pour utiliser un layout flex entre les flèches et le label, supprimant le positionnement absolu fragile.
-
-Approche retenue — **remplacer le positionnement absolu par un layout flex** :
+### Problème 1 : le guard `inProgress` filtre potentiellement l'événement final
 
 ```tsx
-month_caption: "flex justify-center pt-1 relative items-center h-10",
-nav: "flex items-center justify-between absolute inset-x-0 top-0 h-10 px-1 z-10",
-button_previous: cn(
-  buttonVariants({ variant: "outline" }),
-  "h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100"
-),
-button_next: cn(
-  buttonVariants({ variant: "outline" }),
-  "h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100"
-),
+if (ev.inProgress) return;  // ligne 118
+```
+
+SVAR émet `onupdatetask` pendant le drag (intermédiaire, `inProgress: true`) **et** à la fin. Selon la version de SVAR, l'événement final peut avoir `inProgress: true` aussi (indiquant que c'est le dernier d'une séquence de drag), ce qui fait que le handler **ignore toutes les mises à jour** sans jamais atteindre le code de persistance.
+
+### Problème 2 : le handler est `async` mais SVAR attend un retour synchrone
+
+Le handler est déclaré `async` (ligne 116). SVAR appelle la fonction et vérifie le retour pour valider ou annuler le changement. Un handler `async` retourne une `Promise` (truthy), donc SVAR accepte visuellement le changement, mais si l'événement est mal intercepté, la persistance n'a jamais lieu.
+
+### Problème 3 : la condition de blocage progression est trop large
+
+```tsx
+if (updatedFields.progress !== undefined && !updatedFields.start && !updatedFields.end) {
+  return false;  // ligne 124-126
+}
+```
+
+Lors d'un resize (modification d'une extrémité), SVAR peut envoyer `progress` recalculé en même temps que `start`/`end`. Si seul `end` est défini (sans `start`), la condition passe mais `updatedFields.start` est `undefined`, ce qui fait que `startDate` n'est pas inclus dans le payload — comportement correct mais fragile.
+
+## Plan de correction
+
+### Fichier unique : `src/components/task/TaskGantt.tsx`
+
+1. **Supprimer le guard `inProgress`** et le remplacer par une logique qui accepte tous les événements mais ne persiste qu'au final — ou simplement retirer le guard car SVAR gère déjà l'état visuel intermédiaire en interne.
+
+2. **Rendre le handler synchrone** : déplacer l'appel Supabase dans une fonction séparée non-bloquante (fire-and-forget avec gestion d'erreur), pour que le handler retourne `true` immédiatement à SVAR.
+
+3. **Ajouter des logs de diagnostic** pour confirmer que l'événement est bien reçu.
+
+```tsx
+const persistTaskDates = useCallback(async (taskId: string, start?: Date, end?: Date) => {
+  try {
+    const updatePayload: Record<string, string> = {
+      updated_at: new Date().toISOString(),
+    };
+    if (start) updatePayload.start_date = start.toISOString().split('T')[0];
+    if (end) updatePayload.due_date = end.toISOString().split('T')[0];
+
+    const { error } = await supabase
+      .from('tasks')
+      .update(updatePayload)
+      .eq('id', taskId)
+      .select();
+
+    if (error) throw error;
+
+    toast.success('Dates de la tâche mises à jour');
+    onUpdate?.();
+  } catch (error) {
+    logger.error('Erreur mise à jour dates: ' + error);
+    toast.error("Erreur lors de la mise à jour des dates");
+  }
+}, [onUpdate]);
+
+const handleUpdateTask = useCallback((ev: { id: string | number; task: Partial<ITask>; inProgress?: boolean }) => {
+  // Ignorer les mises à jour intermédiaires pendant le drag
+  if (ev.inProgress) return true;
+
+  const taskId = String(ev.id);
+  const updatedFields = ev.task;
+
+  // Bloquer la modification de la progression seule
+  if (updatedFields.progress !== undefined && !updatedFields.start && !updatedFields.end) {
+    return false;
+  }
+
+  // Persister les dates si modifiées (fire-and-forget)
+  if (updatedFields.start || updatedFields.end) {
+    persistTaskDates(taskId, updatedFields.start, updatedFields.end);
+
+    // Mettre à jour le state local immédiatement
+    setLocalTasks(prev =>
+      prev.map(t =>
+        t.id === taskId
+          ? {
+              ...t,
+              ...(updatedFields.start && { start_date: updatedFields.start.toISOString().split('T')[0] }),
+              ...(updatedFields.end && { due_date: updatedFields.end.toISOString().split('T')[0] }),
+            }
+          : t
+      )
+    );
+  }
+
+  return true; // Confirmer le changement à SVAR
+}, [persistTaskDates]);
 ```
 
 Changements clés :
-- `nav` devient le conteneur positionné en absolu avec `inset-x-0` et `z-10`, couvrant toute la largeur du header sans déborder sur la grille
-- `button_previous` et `button_next` perdent leur `absolute` individuel — ils sont positionnés par le flex du `nav`
-- Le `z-10` sur `nav` garantit que les flèches sont cliquables sans chevaucher visuellement les cellules de jours
+- Handler **synchrone** retournant `true` (accepté) ou `false` (rejeté)
+- Persistance DB en **fire-and-forget** (pas de blocage du rendu)
+- Le `return true` après `if (ev.inProgress)` valide les états intermédiaires visuels sans persister
+- Retour explicite `true` à la fin pour confirmer à SVAR
 
 ## Impact
 
 | Fichier | Modification |
 |---|---|
-| `src/components/ui/calendar.tsx` | Remplacement du positionnement absolu des boutons par un layout flex dans `nav` |
+| `src/components/task/TaskGantt.tsx` | Refonte du handler `handleUpdateTask` + extraction de `persistTaskDates` |
 
-Aucune régression attendue : le changement est purement CSS/layout, limité au composant calendrier.
+Aucune régression : le comportement visuel reste identique, seule la persistance DB est corrigée.
 
