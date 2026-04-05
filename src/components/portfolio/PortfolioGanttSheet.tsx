@@ -75,6 +75,7 @@ export const PortfolioGanttSheet = ({
               onEdit={undefined}
               onUpdate={undefined}
               exportContext="portfolio"
+              isReadOnly={true}
             />
           ) : (
             <div className="flex justify-center items-center h-48">

@@ -64,6 +64,7 @@ export const ProjectGanttSheet = ({ isOpen, onClose, projectIds }: ProjectGanttS
               onEdit={undefined}
               onUpdate={undefined}
               exportContext="cart"
+              isReadOnly={true}
             />
           ) : (
             <div className="flex justify-center items-center h-48">
