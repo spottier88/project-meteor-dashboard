@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -44,12 +44,12 @@ interface BulkPointsEntryProps {
 /**
  * Composant Drawer pour la saisie en masse de points sur les projets
  */
-export const BulkPointsEntry: React.FC<BulkPointsEntryProps> = ({
+export const BulkPointsEntry = ({
   weekStartDate,
   quotaRemaining,
   onSuccess,
   onBulkSave,
-}) => {
+}: BulkPointsEntryProps) => {
   const [open, setOpen] = useState(false);
   const [entries, setEntries] = useState<BulkPointEntry[]>([]);
   const [initialEntries, setInitialEntries] = useState<BulkPointEntry[]>([]);

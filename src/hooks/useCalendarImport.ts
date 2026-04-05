@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { useUser } from '@supabase/auth-helpers-react';
+import { useUser } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { CalendarEvent } from '@/types/activity';
 import { useMicrosoftAuth } from './useMicrosoftAuth';

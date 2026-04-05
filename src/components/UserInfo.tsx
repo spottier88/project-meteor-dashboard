@@ -8,7 +8,8 @@
  */
 
 import { useState, useEffect } from "react";
-import { useSupabaseClient, useUser } from "@supabase/auth-helpers-react";
+import { useUser } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
 import { Button } from "./ui/button";
 import { useNavigate } from "react-router";
 import { LogOut, Settings, AlertCircle, BookOpen } from "lucide-react";
@@ -43,7 +44,6 @@ interface UserInfoProps {
 
 export const UserInfo = ({ onOpenTutorial }: UserInfoProps) => {
   const user = useUser();
-  const supabase = useSupabaseClient();
   const navigate = useNavigate();
   const { toast } = useToast();
   const queryClient = useQueryClient();

@@ -1,5 +1,3 @@
-
-import React from 'react';
 import {
   Table,
   TableBody,
@@ -27,14 +25,14 @@ interface EventTableProps {
   onEventChange: (eventId: string, updates: Partial<CalendarEvent>) => void;
 }
 
-export const EventTable: React.FC<EventTableProps> = ({
+export const EventTable = ({
   events,
   projects,
   activityTypes,
   onToggleSelection,
   onToggleAllEvents,
   onEventChange,
-}) => {
+}: EventTableProps) => {
   const allEventsSelected = events.every(event => event.selected);
 
   return (

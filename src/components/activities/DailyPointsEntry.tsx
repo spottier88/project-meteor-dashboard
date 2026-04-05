@@ -2,14 +2,14 @@
  * @component DailyPointsEntry
  * @description Interface de saisie quotidienne des points avec vue calendaire
  */
-import React, { useState, useMemo } from "react";
+import { useState, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { DailyPointsCalendar } from "./DailyPointsCalendar";
 import { PointsEntryForm } from "./PointsEntryForm";
 import { useActivityPointsQuota } from "@/hooks/useActivityPointsQuota";
 import { useWeeklyPoints } from "@/hooks/useWeeklyPoints";
-import { useUser } from "@supabase/auth-helpers-react";
+import { useUser } from "@/contexts/AuthContext";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { Plus } from "lucide-react";
@@ -19,9 +19,9 @@ interface DailyPointsEntryProps {
   weekStartDate: Date;
 }
 
-export const DailyPointsEntry: React.FC<DailyPointsEntryProps> = ({
+export const DailyPointsEntry = ({
   weekStartDate,
-}) => {
+}: DailyPointsEntryProps) => {
   const user = useUser();
   const { quota } = useActivityPointsQuota();
   const [showForm, setShowForm] = useState(false);

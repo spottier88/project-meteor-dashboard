@@ -1,7 +1,6 @@
 /**
  * Composant graphique affichant la distribution des points par jour et par type d'activité
  */
-import React from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { useActivityTypes } from '@/hooks/useActivityTypes';
 

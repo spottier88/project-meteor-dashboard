@@ -2,7 +2,6 @@
  * @component DayPointsCell
  * @description Cellule représentant les points d'un jour spécifique avec indicateurs visuels
  */
-import React from "react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { PointsVisualization } from "./PointsVisualization";
@@ -19,13 +18,13 @@ interface DayPointsCellProps {
   onClick?: () => void;
 }
 
-export const DayPointsCell: React.FC<DayPointsCellProps> = ({
+export const DayPointsCell = ({
   date,
   points,
   dailyQuota,
   isToday = false,
   onClick,
-}) => {
+}: DayPointsCellProps) => {
   const percentageUsed = (points / dailyQuota) * 100;
   const isOverQuota = points > dailyQuota;
   const isComplete = points >= dailyQuota;

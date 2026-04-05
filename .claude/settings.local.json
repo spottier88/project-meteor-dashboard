@@ -10,7 +10,18 @@
       "Bash(wc -l /c/Users/Utilisateur/OneDrive/Documents/05_Developpement/meteor/Meteor_Git/project-meteor-dashboard/src/hooks/*.ts*)",
       "Bash(grep -c \"forwardRef\" \"/c/Users/Utilisateur/OneDrive/Documents/05_Developpement/meteor/Meteor_Git/project-meteor-dashboard/src/components/ui\"/*.tsx)",
       "Bash(find \"/c/Users/Utilisateur/OneDrive/Documents/05_Developpement/meteor/Meteor_Git/project-meteor-dashboard/src\" -name \"*.tsx\" -exec grep -l \"React\\\\.FC\" {} \\\\;)",
-      "Bash(python3 -c \"import json,sys; p=json.load\\(sys.stdin\\); print\\(json.dumps\\(p.get\\('peerDependencies', {}\\), indent=2\\)\\)\")"
+      "Bash(python3 -c \"import json,sys; p=json.load\\(sys.stdin\\); print\\(json.dumps\\(p.get\\('peerDependencies', {}\\), indent=2\\)\\)\")",
+      "Bash(npm run:*)",
+      "Bash(npm install:*)",
+      "Bash(node -e \"const r=require\\('./node_modules/react/package.json'\\);console.log\\('React version:',r.version\\)\")",
+      "Bash(grep -rn \"<Input\\\\s*$\" \"/c/Users/Utilisateur/OneDrive/Documents/05_Developpement/meteor/Meteor_Git/project-meteor-dashboard/src\" --include=\"*.tsx\" -A 1)",
+      "Bash(grep -rn \"<Input$\" \"/c/Users/Utilisateur/OneDrive/Documents/05_Developpement/meteor/Meteor_Git/project-meteor-dashboard/src\" --include=\"*.tsx\" -A 5)",
+      "Bash(grep -rn \"<Input\\\\s\\\\|<Input$\" \"/c/Users/Utilisateur/OneDrive/Documents/05_Developpement/meteor/Meteor_Git/project-meteor-dashboard/src\" --include=\"*.tsx\")",
+      "Bash(npm uninstall:*)",
+      "Bash(echo \"EXIT:$?\")",
+      "Bash(sed -i 's/^import React, { useState } from '\"'\"'react'\"'\"';$/import { useState } from '\"'\"'react'\"'\"';/' src/pages/ProjectTemplateDetails.tsx)",
+      "Bash(sed -i 's/^import React, { useState } from '\"'\"'react'\"'\"';$/import { useState } from '\"'\"'react'\"'\"';/' src/pages/ProjectTemplateManagement.tsx)",
+      "Bash(sed -i 's/^import React, { useState } from '\"'\"'react'\"'\"';$/import { useState } from '\"'\"'react'\"'\"';/' src/pages/TeamActivities.tsx)"
     ]
   }
 }

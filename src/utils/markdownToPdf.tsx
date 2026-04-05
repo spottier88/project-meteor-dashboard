@@ -4,7 +4,7 @@
  * pour l'export PDF avec formatage préservé.
  */
 
-import React from 'react';
+import { type ReactNode } from 'react';
 import { Text, View, StyleSheet } from '@react-pdf/renderer';
 
 // Styles pour les éléments markdown dans le PDF
@@ -145,8 +145,8 @@ const parseMarkdown = (content: string): MarkdownElement[] => {
 /**
  * Traite le texte inline (gras, italique) et retourne un tableau de composants Text
  */
-const processInlineFormatting = (text: string): React.ReactNode[] => {
-  const parts: React.ReactNode[] = [];
+const processInlineFormatting = (text: string): ReactNode[] => {
+  const parts: ReactNode[] = [];
   let currentIndex = 0;
   const regex = /(\*\*([^*]+)\*\*)|(\*([^*]+)\*)/g;
   let match;
@@ -192,7 +192,7 @@ const processInlineFormatting = (text: string): React.ReactNode[] => {
 /**
  * Convertit un élément markdown en composant react-pdf
  */
-const renderMarkdownElement = (element: MarkdownElement, index: number): React.ReactNode => {
+const renderMarkdownElement = (element: MarkdownElement, index: number): ReactNode => {
   switch (element.type) {
     case 'heading2':
       return (
@@ -246,7 +246,7 @@ const renderMarkdownElement = (element: MarkdownElement, index: number): React.R
  * @param content - Le contenu markdown à convertir
  * @returns Un tableau de composants react-pdf
  */
-export const markdownToPdfComponents = (content: string): React.ReactNode[] => {
+export const markdownToPdfComponents = (content: string): ReactNode[] => {
   if (!content) return [];
 
   const elements = parseMarkdown(content);

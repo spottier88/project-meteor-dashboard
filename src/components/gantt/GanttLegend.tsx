@@ -5,8 +5,6 @@
  * d'éléments (projets, tâches) dans le diagramme.
  */
 
-import React from 'react';
-
 interface GanttLegendProps {
   /** Indique si les tâches sont affichées */
   showTasks: boolean;

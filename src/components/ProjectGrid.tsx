@@ -6,7 +6,7 @@
  * la pagination et le rendu des cartes.
  */
 
-import React, { useMemo } from 'react';
+import { useMemo } from 'react';
 import { ProjectCard } from "./ProjectCard";
 import { ProjectListItem } from '@/hooks/useProjectsListView';
 import { ProjectPagination } from "./project/ProjectPagination";

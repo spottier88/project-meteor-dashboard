@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useSession } from "@supabase/auth-helpers-react";
+import { useSession } from "@/contexts/AuthContext";
 
 /**
  * Hook pour récupérer les projets récemment utilisés par l'utilisateur

@@ -1,7 +1,6 @@
 /**
  * Composant graphique affichant la distribution des points par type d'activité (diagramme circulaire)
  */
-import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from "recharts";
 import { useActivityTypes } from '@/hooks/useActivityTypes';

@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { ChevronLeft, Plus, Edit, Trash2, Copy, Check, AlertTriangle, Loader2, Download, Filter, CheckCircle2, XCircle, Eye } from "lucide-react";
 import { Link } from "react-router";
@@ -478,7 +478,7 @@ export const AIPromptManagement = () => {
   };
 
   // Group templates by type and section with filters
-  const groupedTemplates = React.useMemo(() => {
+  const groupedTemplates = useMemo(() => {
     if (!templates) return {};
     
     // Filtrer les templates selon les critères

@@ -4,7 +4,7 @@
  * Permet d'exporter le diagramme au format Excel ou image (PNG).
  */
 
-import React from 'react';
+import { type RefObject } from 'react';
 import { Button } from '@/components/ui/button';
 import { FileSpreadsheet, Image } from 'lucide-react';
 import { toPng } from 'html-to-image';
@@ -24,7 +24,7 @@ interface GanttExportButtonsProps {
   /** Liste des tâches au format simplifié */
   tasks: GanttExportTask[];
   /** Référence vers le conteneur du Gantt pour l'export image */
-  ganttRef: React.RefObject<HTMLDivElement>;
+  ganttRef: RefObject<HTMLDivElement>;
 }
 
 /**

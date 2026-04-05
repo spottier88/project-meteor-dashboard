@@ -1,4 +1,4 @@
-import React from "react";
+import { useEffect } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -33,7 +33,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useSession } from "@supabase/auth-helpers-react";
+import { useSession } from "@/contexts/AuthContext";
 import { useActivityPointsQuota } from "@/hooks/useActivityPointsQuota";
 import { PointsCookieSlider } from "./PointsCookieSlider";
 import { useUserPreferences } from "@/hooks/useUserPreferences";
@@ -70,7 +70,7 @@ interface PointsEntryFormProps {
 /**
  * Formulaire modal pour saisir des points sur un projet
  */
-export const PointsEntryForm: React.FC<PointsEntryFormProps> = ({
+export const PointsEntryForm = ({
   open,
   onOpenChange,
   onSubmit,
@@ -79,7 +79,7 @@ export const PointsEntryForm: React.FC<PointsEntryFormProps> = ({
   selectedDate = null,
   mode = 'weekly',
   dailyPointsUsed = 0,
-}) => {
+}: PointsEntryFormProps) => {
   const session = useSession();
   const { quota } = useActivityPointsQuota();
   const { getPreference } = useUserPreferences();
@@ -146,7 +146,7 @@ export const PointsEntryForm: React.FC<PointsEntryFormProps> = ({
   });
 
   // Réinitialiser le formulaire quand le mode change ou quand on ouvre
-  React.useEffect(() => {
+  useEffect(() => {
     if (open) {
       form.reset({
         points: 1,

@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { ActivityType } from "@/types/activity";
 import { useUserActivityTypePermissions } from "./useUserActivityTypePermissions";
-import { useSession } from "@supabase/auth-helpers-react";
+import { useSession } from "@/contexts/AuthContext";
 
 export const useActivityTypes = (activeOnly: boolean = true, respectPermissions: boolean = true) => {
   const session = useSession();

@@ -1,5 +1,3 @@
-
-import React from 'react';
 import { Button } from '@/components/ui/button';
 import { CalendarEvent } from '@/types/activity';
 import { Info } from 'lucide-react';
@@ -14,14 +12,14 @@ interface EventSelectionFooterProps {
   events: CalendarEvent[];
 }
 
-export const EventSelectionFooter: React.FC<EventSelectionFooterProps> = ({ 
-  selectedCount, 
-  canImport, 
-  isLoading, 
-  onCancel, 
+export const EventSelectionFooter = ({
+  selectedCount,
+  canImport,
+  isLoading,
+  onCancel,
   onImport,
   events
-}) => {
+}: EventSelectionFooterProps) => {
   const eventsWithProjectCodes = events.filter(event => event.projectCode);
   const eventsWithActivityTypeCodes = events.filter(event => event.activityTypeCode);
   

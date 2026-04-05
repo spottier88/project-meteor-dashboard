@@ -5,7 +5,7 @@ import { useState } from "react";
 import { AccessibleOrganizations } from "@/types/user";
 import { useProjectAccessValidation } from "./useProjectAccessValidation";
 import { useProjectSubmit } from "./useProjectSubmit";
-import { useUser } from "@supabase/auth-helpers-react";
+import { useUser } from "@/contexts/AuthContext";
 
 interface UseProjectFormSubmitProps {
   project?: any;

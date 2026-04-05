@@ -1,8 +1,8 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Plus, Trash2, Edit, ChevronLeft, ChevronRight } from "lucide-react";
-import { useSession } from "@supabase/auth-helpers-react";
+import { useSession } from "@/contexts/AuthContext";
 import { useWeeklyPoints } from "@/hooks/useWeeklyPoints";
 import { useActivityPointsQuota } from "@/hooks/useActivityPointsQuota";
 import { WeeklyPointsDistribution } from "./WeeklyPointsDistribution";
@@ -38,7 +38,7 @@ import {
  * Composant principal pour la saisie des points hebdomadaires
  * Permet de distribuer des points sur les projets par semaine
  */
-export const WeeklyPointsEntry: React.FC = () => {
+export const WeeklyPointsEntry = () => {
   const session = useSession();
   const [currentWeek, setCurrentWeek] = useState(
     startOfWeek(new Date(), { weekStartsOn: 1 })

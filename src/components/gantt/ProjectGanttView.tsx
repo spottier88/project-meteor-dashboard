@@ -5,7 +5,7 @@
  * Lecture seule — pas de modification des dates depuis cette vue.
  */
 
-import React, { useState, useRef } from 'react';
+import { useState, useRef } from 'react';
 import { Gantt, Willow } from '@svar-ui/react-gantt';
 import "@svar-ui/react-gantt/all.css";
 import "@/styles/gantt.css";

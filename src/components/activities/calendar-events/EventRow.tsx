@@ -1,5 +1,3 @@
-
-import React from 'react';
 import {
   TableRow,
   TableCell,
@@ -33,13 +31,13 @@ interface EventRowProps {
   onEventChange: (eventId: string, updates: Partial<CalendarEvent>) => void;
 }
 
-export const EventRow: React.FC<EventRowProps> = ({
+export const EventRow = ({
   event,
   projects,
   activityTypes,
   onToggleSelection,
   onEventChange,
-}) => {
+}: EventRowProps) => {
   return (
     <TableRow key={event.id}>
       <TableCell>

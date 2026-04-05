@@ -2,7 +2,6 @@
  * Composant graphique affichant l'évolution des points sur plusieurs semaines
  * avec répartition par type d'activité
  */
-import React from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { useActivityTypes } from '@/hooks/useActivityTypes';
 

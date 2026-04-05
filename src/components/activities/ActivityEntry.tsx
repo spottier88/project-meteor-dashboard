@@ -1,5 +1,4 @@
-
-import React from 'react';
+import { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -8,7 +7,7 @@ import { BulkActivityEntryDrawer } from './BulkActivityEntry';
 import { useLocation } from 'react-router';
 
 export const ActivityEntry = () => {
-  const [open, setOpen] = React.useState(false);
+  const [open, setOpen] = useState(false);
   const location = useLocation();
   const isPersonalActivityPage = location.pathname === '/activities';
 

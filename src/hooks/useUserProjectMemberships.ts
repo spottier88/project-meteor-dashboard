@@ -5,7 +5,7 @@
  * Utilisé pour distinguer les projets accessibles via adhésion explicite vs droits hiérarchiques.
  */
 
-import { useUser } from "@supabase/auth-helpers-react";
+import { useUser } from "@/contexts/AuthContext";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 

@@ -69,22 +69,29 @@ export const useMicrosoftAuth = () => {
       },
     };
 
+    let cancelled = false;
+
     try {
       const newMsalInstance = new PublicClientApplication(msalConfig);
       newMsalInstance.initialize().then(() => {
+        if (cancelled) return;
         logger.info("useMicrosoftAuth: MSAL initialized successfully", "auth");
         setMsalInstance(newMsalInstance);
-        
+
         const accounts = newMsalInstance.getAllAccounts();
         const initialAuthState = accounts.length > 0;
-        
+
         logger.debug(`useMicrosoftAuth: Initial auth state: ${initialAuthState ? "authenticated" : "not authenticated"}`, "auth");
         setIsAuthenticated(initialAuthState);
       });
     } catch (err) {
-      console.error("useMicrosoftAuth: MSAL initialization error:", err);
-      setError("Erreur d'initialisation Microsoft");
+      if (!cancelled) {
+        console.error("useMicrosoftAuth: MSAL initialization error:", err);
+        setError("Erreur d'initialisation Microsoft");
+      }
     }
+
+    return () => { cancelled = true; };
   }, [settings]);
 
   const login = useCallback(async () => {

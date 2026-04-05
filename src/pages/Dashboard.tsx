@@ -11,7 +11,7 @@ import { OnboardingTutorial } from "@/components/onboarding/OnboardingTutorial";
 import { useOnboarding } from "@/hooks/useOnboarding";
 import { IncompleteProfileDialog } from "@/components/profile/IncompleteProfileDialog";
 import { ProfileForm } from "@/components/profile/ProfileForm";
-import { useUser } from "@supabase/auth-helpers-react";
+import { useUser } from "@/contexts/AuthContext";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 

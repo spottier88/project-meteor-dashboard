@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useUser } from "@supabase/auth-helpers-react";
+import { useUser } from "@/contexts/AuthContext";
 import { MonitoringLevel } from "@/types/monitoring";
 import { ForEntityType, ProjectLifecycleStatus } from "@/types/project";
 import { supabase } from "@/integrations/supabase/client";
@@ -244,135 +244,135 @@ export const useProjectFormState = (isOpen: boolean, project?: any) => {
   };
 
   useEffect(() => {
-    let isMounted = true;
+    const controller = new AbortController();
+    const { signal } = controller;
+
     const initializeForm = async () => {
-      if (isOpen) {
-        setHasUnsavedChanges(false);
-        
-        setCurrentStep(0);
-        setTitle("");
-        setDescription("");
-        setStartDate(undefined);
-        setEndDate(undefined);
-        setPriority("medium");
-        setMonitoringLevel("none");
-        setMonitoringEntityId(null);
-        setProjectManagerOrganization({});
-        setNovateur(0);
-        setUsager(0);
-        setOuverture(0);
-        setAgilite(0);
-        setImpact(0);
-        setLifecycleStatus("study");
-        
-        setContext("");
-        setStakeholders("");
-        setGovernance("");
-        setObjectives("");
-        setTimeline("");
-        setDeliverables("");
-        setSuccessIndicators("");
-        
-        setForEntityType(null);
-        setForEntityId(undefined);
-        setTemplateId(undefined);
-        setPortfolioIds([]);
-        setTeamsUrl("");
-        setTags([]);
+      if (!isOpen) return;
 
-        if (user?.email) {
-          setProjectManager(user.email);
-          setOwnerId(user.id);
-          await loadProjectManagerOrganization(user.email);
-        }
+      setHasUnsavedChanges(false);
+      setCurrentStep(0);
+      setTitle("");
+      setDescription("");
+      setStartDate(undefined);
+      setEndDate(undefined);
+      setPriority("medium");
+      setMonitoringLevel("none");
+      setMonitoringEntityId(null);
+      setProjectManagerOrganization({});
+      setNovateur(0);
+      setUsager(0);
+      setOuverture(0);
+      setAgilite(0);
+      setImpact(0);
+      setLifecycleStatus("study");
+      setContext("");
+      setStakeholders("");
+      setGovernance("");
+      setObjectives("");
+      setTimeline("");
+      setDeliverables("");
+      setSuccessIndicators("");
+      setForEntityType(null);
+      setForEntityId(undefined);
+      setTemplateId(undefined);
+      setPortfolioIds([]);
+      setTeamsUrl("");
+      setTags([]);
 
-        if (project) {
-          setTitle(project.title || "");
-          setDescription(project.description || "");
-          setProjectManager(project.project_manager || "");
-          setStartDate(project.start_date ? new Date(project.start_date) : undefined);
-          setEndDate(project.end_date ? new Date(project.end_date) : undefined);
-          setPriority(project.priority || "medium");
-          setOwnerId(project.owner_id || "");
-          setLifecycleStatus(project.lifecycle_status as ProjectLifecycleStatus || "study");
-          setForEntityType(project.for_entity_type as ForEntityType || null);
-          setForEntityId(project.for_entity_id || undefined);
-          setTemplateId(project.template_id);
-          // Gérer la compatibilité : si portfolio_id existe, l'ajouter au tableau
-          setPortfolioIds(project.portfolio_id ? [project.portfolio_id] : []);
-          // Charger le lien Teams si présent
-          setTeamsUrl(project.teams_url || "");
+      if (user?.email) {
+        setProjectManager(user.email);
+        setOwnerId(user.id);
+        await loadProjectManagerOrganization(user.email);
+      }
 
-          await loadProjectManagerOrganization(project.project_manager);
+      if (project) {
+        setTitle(project.title || "");
+        setDescription(project.description || "");
+        setProjectManager(project.project_manager || "");
+        setStartDate(project.start_date ? new Date(project.start_date) : undefined);
+        setEndDate(project.end_date ? new Date(project.end_date) : undefined);
+        setPriority(project.priority || "medium");
+        setOwnerId(project.owner_id || "");
+        setLifecycleStatus(project.lifecycle_status as ProjectLifecycleStatus || "study");
+        setForEntityType(project.for_entity_type as ForEntityType || null);
+        setForEntityId(project.for_entity_id || undefined);
+        setTemplateId(project.template_id);
+        setPortfolioIds(project.portfolio_id ? [project.portfolio_id] : []);
+        setTeamsUrl(project.teams_url || "");
 
-          try {
-            const { data: monitoringData, error } = await supabase
-              .from("project_monitoring")
-              .select("monitoring_level, monitoring_entity_id")
-              .eq("project_id", project.id)
-              .maybeSingle();
+        await loadProjectManagerOrganization(project.project_manager);
 
-            if (isMounted) {
-              if (!error && monitoringData) {
-                setMonitoringLevel(monitoringData.monitoring_level);
-                setMonitoringEntityId(monitoringData.monitoring_entity_id);
-              } else {
-                setMonitoringLevel("none");
-                setMonitoringEntityId(null);
-              }
-            }
-          } catch (error) {
-            if (isMounted) {
-              console.error("Error in monitoring data fetch:", error);
+        try {
+          const { data: monitoringData, error } = await supabase
+            .from("project_monitoring")
+            .select("monitoring_level, monitoring_entity_id")
+            .eq("project_id", project.id)
+            .abortSignal(signal)
+            .maybeSingle();
+
+          if (!signal.aborted) {
+            if (!error && monitoringData) {
+              setMonitoringLevel(monitoringData.monitoring_level);
+              setMonitoringEntityId(monitoringData.monitoring_entity_id);
+            } else {
               setMonitoringLevel("none");
               setMonitoringEntityId(null);
             }
           }
-
-          try {
-            const { data: innovationScores, error: innovationError } = await supabase
-              .from("project_innovation_scores")
-              .select("*")
-              .eq("project_id", project.id)
-              .maybeSingle();
-
-            if (isMounted && !innovationError && innovationScores) {
-              setNovateur(innovationScores.novateur);
-              setUsager(innovationScores.usager);
-              setOuverture(innovationScores.ouverture);
-              setAgilite(innovationScores.agilite);
-              setImpact(innovationScores.impact);
-            }
-          } catch (error) {
-            if (isMounted) console.error("Error in innovation scores fetch:", error);
+        } catch (error) {
+          if (!signal.aborted) {
+            console.error("Error in monitoring data fetch:", error);
+            setMonitoringLevel("none");
+            setMonitoringEntityId(null);
           }
+        }
 
-          try {
-            const { data: framingData, error: framingError } = await supabase
-              .from("project_framing")
-              .select("*")
-              .eq("project_id", project.id)
-              .maybeSingle();
+        try {
+          const { data: innovationScores, error: innovationError } = await supabase
+            .from("project_innovation_scores")
+            .select("*")
+            .eq("project_id", project.id)
+            .abortSignal(signal)
+            .maybeSingle();
 
-            if (isMounted && !framingError && framingData) {
-              setContext(framingData.context || "");
-              setStakeholders(framingData.stakeholders || "");
-              setGovernance(framingData.governance || "");
-              setObjectives(framingData.objectives || "");
-              setTimeline(framingData.timeline || "");
-              setDeliverables(framingData.deliverables || "");
-              setSuccessIndicators(framingData.success_indicators || "");
-            }
-          } catch (error) {
-            if (isMounted) console.error("Error in framing data fetch:", error);
+          if (!signal.aborted && !innovationError && innovationScores) {
+            setNovateur(innovationScores.novateur);
+            setUsager(innovationScores.usager);
+            setOuverture(innovationScores.ouverture);
+            setAgilite(innovationScores.agilite);
+            setImpact(innovationScores.impact);
           }
+        } catch (error) {
+          if (!signal.aborted) console.error("Error in innovation scores fetch:", error);
+        }
+
+        try {
+          const { data: framingData, error: framingError } = await supabase
+            .from("project_framing")
+            .select("*")
+            .eq("project_id", project.id)
+            .abortSignal(signal)
+            .maybeSingle();
+
+          if (!signal.aborted && !framingError && framingData) {
+            setContext(framingData.context || "");
+            setStakeholders(framingData.stakeholders || "");
+            setGovernance(framingData.governance || "");
+            setObjectives(framingData.objectives || "");
+            setTimeline(framingData.timeline || "");
+            setDeliverables(framingData.deliverables || "");
+            setSuccessIndicators(framingData.success_indicators || "");
+          }
+        } catch (error) {
+          if (!signal.aborted) console.error("Error in framing data fetch:", error);
         }
       }
     };
 
     initializeForm();
-    return () => { isMounted = false; };
-  }, [isOpen, project, user?.email, user?.id]);
+    return () => controller.abort();
+  }, [isOpen, project?.id, user?.email, user?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (projectManager) {

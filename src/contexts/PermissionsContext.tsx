@@ -1,8 +1,8 @@
 
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { useUser, useSession } from '@supabase/auth-helpers-react';
+import { useUser, useSession } from '@/contexts/AuthContext';
 import { UserRole, AccessibleOrganizations } from '@/types/user';
 import { getUserAccessibleOrganizations } from '@/utils/organizationAccess';
 
@@ -33,7 +33,7 @@ const PermissionsContext = createContext<PermissionsState | undefined>(undefined
 
 const roleHierarchy: UserRole[] = ['admin', 'manager', 'chef_projet', 'membre', 'time_tracker'];
 
-export function PermissionsProvider({ children }: { children: React.ReactNode }) {
+export function PermissionsProvider({ children }: { children: ReactNode }) {
   const user = useUser();
   const session = useSession();
   const [accessibleOrganizations, setAccessibleOrganizations] = useState<AccessibleOrganizations | null>(null);
@@ -116,23 +116,25 @@ export function PermissionsProvider({ children }: { children: React.ReactNode })
   };
 
   // Chargement des organisations accessibles
+  // Note : isLoading et isError sont utilisés comme conditions dans l'effet,
+  // pas comme dépendances réactives, pour éviter des re-exécutions inutiles.
   useEffect(() => {
-        async function loadAccessibleOrganizations() {
-      if (user?.id && !isLoading && !isError) {
-        setIsLoadingOrganizations(true);
-        try {
-          const organizations = await getUserAccessibleOrganizations(user.id, hasAdminRole && !adminRoleDisabled, isManager);
-          setAccessibleOrganizations(organizations);
-        } catch (error) {
-          console.error("[PermissionsProvider] Error loading accessible organizations:", error);
-        } finally {
-          setIsLoadingOrganizations(false);
-        }
+    if (!user?.id || isLoading || isError) return;
+
+    async function loadAccessibleOrganizations() {
+      setIsLoadingOrganizations(true);
+      try {
+        const organizations = await getUserAccessibleOrganizations(user.id, hasAdminRole && !adminRoleDisabled, isManager);
+        setAccessibleOrganizations(organizations);
+      } catch (error) {
+        console.error("[PermissionsProvider] Error loading accessible organizations:", error);
+      } finally {
+        setIsLoadingOrganizations(false);
       }
     }
 
     loadAccessibleOrganizations();
-  }, [user?.id, hasAdminRole, adminRoleDisabled, isManager, isLoading, isError]);
+  }, [user?.id, hasAdminRole, adminRoleDisabled, isManager]); // eslint-disable-line react-hooks/exhaustive-deps
 
 
   if (!session) {

@@ -6,7 +6,7 @@
  * colonnes personnalisées, blocage du reordonnancement et de la progression.
  */
 
-import React, { useState, useRef, useCallback, useMemo } from 'react';
+import { useState, useRef, useCallback, useMemo, useEffect } from 'react';
 import { Gantt, Willow } from '@svar-ui/react-gantt';
 import "@svar-ui/react-gantt/all.css";
 import "@/styles/gantt.css";
@@ -64,7 +64,7 @@ const SCALES_CONFIG: Record<ViewModeKey, Array<{ unit: string; step: number; for
   ],
 };
 
-export const TaskGantt: React.FC<TaskGanttProps> = ({
+export const TaskGantt = ({
   tasks,
   projectId,
   onEdit,
@@ -77,12 +77,12 @@ export const TaskGantt: React.FC<TaskGanttProps> = ({
   canCreateTask = false,
   canDeleteTask = false,
   exportContext = 'project',
-}) => {
+}: TaskGanttProps) => {
   const [viewMode, setViewMode] = useState<ViewModeKey>('week');
   const [localTasks, setLocalTasks] = useState<Array<any>>(tasks);
   const apiRef = useRef<IApi | null>(null);
 
-  React.useEffect(() => {
+  useEffect(() => {
     setLocalTasks(tasks);
   }, [tasks]);
 

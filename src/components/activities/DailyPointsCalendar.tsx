@@ -2,7 +2,6 @@
  * @component DailyPointsCalendar
  * @description Calendrier hebdomadaire affichant les points par jour
  */
-import React from "react";
 import { startOfWeek, addDays, isSameDay, format } from "date-fns";
 import { DayPointsCell } from "./DayPointsCell";
 
@@ -13,12 +12,12 @@ interface DailyPointsCalendarProps {
   onDayClick: (date: Date) => void;
 }
 
-export const DailyPointsCalendar: React.FC<DailyPointsCalendarProps> = ({
+export const DailyPointsCalendar = ({
   weekStartDate,
   pointsByDay,
   dailyQuota,
   onDayClick,
-}) => {
+}: DailyPointsCalendarProps) => {
   const today = new Date();
   const weekStart = startOfWeek(weekStartDate, { weekStartsOn: 1 });
 

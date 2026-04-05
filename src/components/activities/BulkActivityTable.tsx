@@ -1,5 +1,3 @@
-
-import React from 'react';
 import { BulkActivityEntry } from '@/types/activity';
 import { ActivityType } from '@/types/activity';
 import { 
@@ -30,14 +28,14 @@ interface BulkActivityTableProps {
   duplicateEntry: (id: string) => void;
 }
 
-export const BulkActivityTable: React.FC<BulkActivityTableProps> = ({
+export const BulkActivityTable = ({
   entries,
   projects,
   activityTypes,
   updateEntry,
   removeEntry,
   duplicateEntry
-}) => {
+}: BulkActivityTableProps) => {
   return (
     <div className="w-full overflow-auto">
       <Table>

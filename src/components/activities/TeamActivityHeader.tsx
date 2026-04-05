@@ -1,5 +1,3 @@
-
-import React from 'react';
 import { CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { BarChartIcon, List, FileSpreadsheet } from "lucide-react";

@@ -2,7 +2,7 @@
  * Dashboard équipe pour la visualisation des points hebdomadaires de l'équipe
  * Accessible aux managers, chefs de projet et administrateurs
  */
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight, Download, Users } from "lucide-react";

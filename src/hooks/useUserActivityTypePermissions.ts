@@ -1,7 +1,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useSession } from "@supabase/auth-helpers-react";
+import { useSession } from "@/contexts/AuthContext";
 import { ActivityType } from "@/types/activity";
 
 /**

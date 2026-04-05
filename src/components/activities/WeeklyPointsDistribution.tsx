@@ -1,4 +1,3 @@
-import React from "react";
 import { Progress } from "@/components/ui/progress";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -15,10 +14,10 @@ interface WeeklyPointsDistributionProps {
  * Composant affichant la progression de distribution des points hebdomadaires
  * Affiche une barre de progression et des indicateurs visuels
  */
-export const WeeklyPointsDistribution: React.FC<WeeklyPointsDistributionProps> = ({
+export const WeeklyPointsDistribution = ({
   totalPointsUsed,
   weekStartDate,
-}) => {
+}: WeeklyPointsDistributionProps) => {
   const { quota } = useActivityPointsQuota();
   const percentageUsed = (totalPointsUsed / quota) * 100;
   const pointsRemaining = Math.max(0, quota - totalPointsUsed);

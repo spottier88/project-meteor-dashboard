@@ -1,5 +1,5 @@
 
-import React from 'react';
+import { Fragment } from 'react';
 import { 
   Table,
   TableBody,
@@ -120,7 +120,7 @@ export const TemplateTaskList = ({
         </TableHeader>
         <TableBody>
           {parentTasks.map(task => (
-            <React.Fragment key={task.id}>
+            <Fragment key={task.id}>
               <TableRow>
                 <TableCell className="font-medium">{task.title}</TableCell>
                 <TableCell className="max-w-xs truncate">{task.description || "-"}</TableCell>
@@ -198,7 +198,7 @@ export const TemplateTaskList = ({
                   </TableCell>
                 </TableRow>
               ))}
-            </React.Fragment>
+            </Fragment>
           ))}
         </TableBody>
       </Table>

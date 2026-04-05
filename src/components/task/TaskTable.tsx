@@ -1,5 +1,5 @@
 
-import React from "react";
+import { type ReactNode } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
@@ -66,7 +66,7 @@ const statusLabels = {
 };
 
 /** Ligne de tableau réordonnançable via drag & drop */
-const SortableRow = ({ task, children }: { task: Task; children: React.ReactNode }) => {
+const SortableRow = ({ task, children }: { task: Task; children: ReactNode }) => {
   const {
     attributes,
     listeners,

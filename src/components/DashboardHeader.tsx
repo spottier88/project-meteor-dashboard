@@ -7,7 +7,7 @@
  * l'utilisateur connecté.
  */
 
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Link, useLocation } from "react-router";
 import { usePermissionsContext } from '@/contexts/PermissionsContext';
@@ -22,10 +22,10 @@ interface DashboardHeaderProps {
   onNewFrameworkNote?: () => void;
 }
 
-export const DashboardHeader: React.FC<DashboardHeaderProps> = ({ 
-  onNewProject, 
+export const DashboardHeader = ({
+  onNewProject,
   onNewReview
-}) => {
+}: DashboardHeaderProps) => {
   const location = useLocation();
   const { isAdmin, isManager, hasRole, isTimeTracker } = usePermissionsContext();
   const { cartItems } = useProjectCart();

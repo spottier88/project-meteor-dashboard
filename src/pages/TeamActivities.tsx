@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router';
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Clock, BarChart3 } from "lucide-react";

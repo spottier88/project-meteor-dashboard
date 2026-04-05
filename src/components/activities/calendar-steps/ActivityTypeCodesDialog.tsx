@@ -1,5 +1,4 @@
-
-import React from 'react';
+import { useState } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -16,7 +15,7 @@ import { useToast } from '@/hooks/use-toast';
 export const ActivityTypeCodesDialog = () => {
   const { data: activityTypes, isLoading } = useActivityTypes(true, true);
   const { toast } = useToast();
-  const [copiedCode, setCopiedCode] = React.useState<string | null>(null);
+  const [copiedCode, setCopiedCode] = useState<string | null>(null);
 
   const handleCopyCode = (code: string) => {
     const formattedCode = `#A-${code}#`;

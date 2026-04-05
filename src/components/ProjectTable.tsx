@@ -6,7 +6,7 @@
  * le tri, la pagination et le rendu des lignes.
  */
 
-import React from 'react';
+import { useState, useMemo } from 'react';
 import { Table, TableBody } from "@/components/ui/table";
 import { ProjectTableHeader } from "./project/ProjectTableHeader";
 import { ProjectTableRow } from "./project/ProjectTableRow";
@@ -34,8 +34,8 @@ export const ProjectTable = ({
   pageSize,
   onPageChange,
 }: ProjectTableProps) => {
-  const [sortKey, setSortKey] = React.useState<string | null>(null);
-  const [sortDirection, setSortDirection] = React.useState<SortDirection>(null);
+  const [sortKey, setSortKey] = useState<string | null>(null);
+  const [sortDirection, setSortDirection] = useState<SortDirection>(null);
 
   const handleSort = (key: string) => {
     if (sortKey === key) {
@@ -51,7 +51,7 @@ export const ProjectTable = ({
   };
 
   // Tri local synchrone via useMemo
-  const sortedProjects = React.useMemo(() => {
+  const sortedProjects = useMemo(() => {
     if (!sortKey || !sortDirection) return projects;
     
     return [...projects].sort((a: any, b: any) => {
@@ -70,14 +70,14 @@ export const ProjectTable = ({
   }, [projects, sortKey, sortDirection]);
 
   // Paginer les projets après tri
-  const paginatedProjects = React.useMemo(() => {
+  const paginatedProjects = useMemo(() => {
     const startIndex = (currentPage - 1) * pageSize;
     const endIndex = startIndex + pageSize;
     return sortedProjects.slice(startIndex, endIndex);
   }, [sortedProjects, currentPage, pageSize]);
 
   // Calculer le nombre total de pages
-  const totalPages = React.useMemo(() => {
+  const totalPages = useMemo(() => {
     return Math.max(1, Math.ceil(sortedProjects.length / pageSize));
   }, [sortedProjects.length, pageSize]);
 

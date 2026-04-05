@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState, KeyboardEvent } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -46,12 +46,12 @@ interface QuickPointsEntryProps {
  * Composant de saisie rapide de points sur les projets récents
  * Affiche un tableau avec les projets favoris/récents pour une saisie rapide
  */
-export const QuickPointsEntry: React.FC<QuickPointsEntryProps> = ({
+export const QuickPointsEntry = ({
   onSubmit,
   onOpenFullForm,
   pointsRemaining,
   isSubmitting,
-}) => {
+}: QuickPointsEntryProps) => {
   const { data: recentProjects, isLoading } = useRecentProjects();
   const [entries, setEntries] = useState<Map<string, Partial<QuickEntry>>>(new Map());
   const { getPreference } = useUserPreferences();
@@ -107,7 +107,7 @@ export const QuickPointsEntry: React.FC<QuickPointsEntryProps> = ({
   };
 
   // Gestion de la touche Enter pour soumettre
-  const handleKeyPress = (e: React.KeyboardEvent, projectId: string, projectTitle: string) => {
+  const handleKeyPress = (e: KeyboardEvent<Element>, projectId: string, projectTitle: string) => {
     if (e.key === "Enter") {
       e.preventDefault();
       handleSubmitEntry(projectId, projectTitle);

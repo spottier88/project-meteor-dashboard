@@ -1,7 +1,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useUser } from '@supabase/auth-helpers-react';
+import { useUser } from '@/contexts/AuthContext';
 import { Database } from "@/integrations/supabase/types";
 import { addDays, format, isSameDay } from "date-fns";
 import { fr } from "date-fns/locale";

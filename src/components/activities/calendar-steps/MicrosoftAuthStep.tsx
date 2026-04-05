@@ -1,5 +1,5 @@
 
-import React, { useEffect } from 'react';
+import { useEffect } from 'react';
 import { MicrosoftAuthButton } from '../MicrosoftAuthButton';
 import { useMicrosoftAuth } from '@/hooks/useMicrosoftAuth';
 import { logger } from '@/utils/logger';
@@ -10,9 +10,9 @@ interface MicrosoftAuthStepProps {
   onAuthSuccess: () => void;
 }
 
-export const MicrosoftAuthStep: React.FC<MicrosoftAuthStepProps> = ({ 
-  onAuthSuccess 
-}) => {
+export const MicrosoftAuthStep = ({
+  onAuthSuccess
+}: MicrosoftAuthStepProps) => {
   const { isAuthenticated } = useMicrosoftAuth();
 
   // Effet pour journaliser l'état d'authentification

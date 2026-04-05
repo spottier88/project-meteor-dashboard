@@ -5,7 +5,7 @@
  * Utilise react-pdf/renderer pour créer un document PDF structuré.
  */
 
-import React from 'react';
+import { Fragment, type ReactNode } from 'react';
 import { 
   Document, 
   Page, 
@@ -237,7 +237,7 @@ const CoverPage = ({ project }: { project: ProjectData['project'] }) => (
 );
 
 // Composant pour les pages de contenu
-const ContentPage = ({ children, pageNumber }: { children: React.ReactNode, pageNumber: number }) => (
+const ContentPage = ({ children, pageNumber }: { children: ReactNode, pageNumber: number }) => (
   <Page size="A4" style={styles.page}>
     <View style={styles.header}>
       <Text>Page {pageNumber}</Text>
@@ -416,7 +416,7 @@ const TasksSection = ({ tasks }: { tasks: ProjectData['tasks'] }) => {
           <Text style={[styles.sectionTitle, { fontSize: 12 }]}>À faire</Text>
           <View style={styles.table}>
             {todoTasks.map((task, index) => (
-              <React.Fragment key={index}>
+              <Fragment key={index}>
                 <View style={styles.tableRow}>
                   <Text style={styles.tableCellLarge}>{task.title}</Text>
                   <Text style={styles.tableCell}>Date d'échéance: {formatDate(task.due_date)}</Text>
@@ -433,7 +433,7 @@ const TasksSection = ({ tasks }: { tasks: ProjectData['tasks'] }) => {
                     <Text style={styles.tableCell}>Status: {renderTaskStatusLabel(subtask.status)}</Text>
                   </View>
                 ))}
-              </React.Fragment>
+              </Fragment>
             ))}
           </View>
         </View>
@@ -444,7 +444,7 @@ const TasksSection = ({ tasks }: { tasks: ProjectData['tasks'] }) => {
           <Text style={[styles.sectionTitle, { fontSize: 12 }]}>En cours</Text>
           <View style={styles.table}>
             {inProgressTasks.map((task, index) => (
-              <React.Fragment key={index}>
+              <Fragment key={index}>
                 <View style={styles.tableRow}>
                   <Text style={styles.tableCellLarge}>{task.title}</Text>
                   <Text style={styles.tableCell}>Date d'échéance: {formatDate(task.due_date)}</Text>
@@ -461,7 +461,7 @@ const TasksSection = ({ tasks }: { tasks: ProjectData['tasks'] }) => {
                     <Text style={styles.tableCell}>Status: {renderTaskStatusLabel(subtask.status)}</Text>
                   </View>
                 ))}
-              </React.Fragment>
+              </Fragment>
             ))}
           </View>
         </View>
@@ -472,7 +472,7 @@ const TasksSection = ({ tasks }: { tasks: ProjectData['tasks'] }) => {
           <Text style={[styles.sectionTitle, { fontSize: 12 }]}>Terminées</Text>
           <View style={styles.table}>
             {doneTasks.map((task, index) => (
-              <React.Fragment key={index}>
+              <Fragment key={index}>
                 <View style={styles.tableRow}>
                   <Text style={styles.tableCellLarge}>{task.title}</Text>
                   <Text style={styles.tableCell}>Date d'échéance: {formatDate(task.due_date)}</Text>
@@ -489,7 +489,7 @@ const TasksSection = ({ tasks }: { tasks: ProjectData['tasks'] }) => {
                     <Text style={styles.tableCell}>Status: {renderTaskStatusLabel(subtask.status)}</Text>
                   </View>
                 ))}
-              </React.Fragment>
+              </Fragment>
             ))}
           </View>
         </View>

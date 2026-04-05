@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import { useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Calendar } from '@/components/ui/calendar';
@@ -16,14 +16,14 @@ interface DateSelectionStepProps {
   isAuthenticated: boolean;
 }
 
-export const DateSelectionStep: React.FC<DateSelectionStepProps> = ({
+export const DateSelectionStep = ({
   onDateSelect,
   onFetchEvents,
   importDate,
   endDate,
   isFetchingEvents,
   isAuthenticated
-}) => {
+}: DateSelectionStepProps) => {
   // Effet pour journaliser l'état d'authentification
   useEffect(() => {
     // console.log("DateSelectionStep: isAuthenticated =", isAuthenticated);

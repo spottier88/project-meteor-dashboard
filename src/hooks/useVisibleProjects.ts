@@ -10,7 +10,7 @@
  */
 
 import { useMemo } from "react";
-import { useUser } from "@supabase/auth-helpers-react";
+import { useUser } from "@/contexts/AuthContext";
 import { usePermissionsContext } from "@/contexts/PermissionsContext";
 import { useUserProjectMemberships } from "./useUserProjectMemberships";
 import { useManagerProjectAccess } from "./useManagerProjectAccess";

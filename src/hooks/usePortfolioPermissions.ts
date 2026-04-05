@@ -1,7 +1,7 @@
 
 import { usePermissionsContext } from "@/contexts/PermissionsContext";
 import { useAdminModeAwareData } from "./useAdminModeAwareData";
-import { useUser } from "@supabase/auth-helpers-react";
+import { useUser } from "@/contexts/AuthContext";
 import { useQuery } from "@tanstack/react-query";
 import { checkUserCanCreatePortfolio } from "@/utils/portfolioPermissions";
 

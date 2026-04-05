@@ -7,7 +7,7 @@
  * Affiche un tooltip explicatif au survol.
  */
 
-import React, { useState } from "react";
+import { useState } from "react";
 import { HelpCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useQuery } from "@tanstack/react-query";

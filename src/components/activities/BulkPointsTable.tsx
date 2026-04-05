@@ -1,4 +1,3 @@
-import React from "react";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -46,12 +45,12 @@ interface BulkPointsTableProps {
 /**
  * Tableau de saisie en masse des points sur les projets
  */
-export const BulkPointsTable: React.FC<BulkPointsTableProps> = ({
+export const BulkPointsTable = ({
   entries,
   activityTypes,
   updateEntry,
   quotaRemaining,
-}) => {
+}: BulkPointsTableProps) => {
   const { getPreference } = useUserPreferences();
   const useCookieMode = getPreference('points_visualization_mode', 'classic') === 'cookies';
 

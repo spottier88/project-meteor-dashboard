@@ -2,7 +2,6 @@
  * Composant graphique affichant la répartition des points par type d'activité
  * pour la semaine en cours
  */
-import React from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import { useActivityTypes } from '@/hooks/useActivityTypes';
 

@@ -5,7 +5,7 @@
  * Calcule les statistiques sur les projets de l'utilisateur avec catégorisation par type d'accès.
  */
 
-import { useUser } from "@supabase/auth-helpers-react";
+import { useUser } from "@/contexts/AuthContext";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { usePermissionsContext } from "@/contexts/PermissionsContext";

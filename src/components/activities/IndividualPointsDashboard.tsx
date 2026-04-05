@@ -1,7 +1,7 @@
 /**
  * Dashboard individuel pour la visualisation des points hebdomadaires d'un utilisateur
  */
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight, Download } from "lucide-react";
@@ -15,7 +15,7 @@ import { WeeklyPointsDistribution } from './WeeklyPointsDistribution';
 import { useWeeklyPointsData } from '@/hooks/useWeeklyPointsData';
 import { useWeeklyTrend, processWeeklyTrendData } from "@/hooks/useWeeklyTrend";
 import { useWeeklyPointsTotal } from '@/hooks/useWeeklyPoints';
-import { useUser } from '@supabase/auth-helpers-react';
+import { useUser } from '@/contexts/AuthContext';
 import { exportWeeklyPointsToExcel } from '@/utils/weeklyPointsExport';
 import {
   Select,

@@ -1,9 +1,7 @@
-
-import React from 'react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useUser } from '@supabase/auth-helpers-react';
+import { useUser } from '@/contexts/AuthContext';
 import { useActivityTypes } from '@/hooks/useActivityTypes';
 
 interface TeamActivityFiltersProps {

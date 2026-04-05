@@ -5,7 +5,7 @@
  * Détecte les projets sans revue depuis 3 mois ou sans activité récente.
  */
 
-import { useUser } from "@supabase/auth-helpers-react";
+import { useUser } from "@/contexts/AuthContext";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
