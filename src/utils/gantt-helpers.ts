@@ -83,7 +83,10 @@ export const mapTasksToSvarFormat = (tasks: RawGanttTask[]): ITask[] => {
       end.setDate(end.getDate() + 1);
     }
 
-    const progress = getProgressForStatus(task.status);
+    // Utiliser completion si disponible (revue réelle), sinon fallback sur le statut
+    const progress = task.completion !== undefined && task.completion !== null
+      ? task.completion
+      : getProgressForStatus(task.status);
 
     // Déterminer le type SVAR.
     // Une tâche parente doit être exposée comme "summary" pour éviter

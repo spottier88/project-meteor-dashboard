@@ -26,25 +26,37 @@ export const PortfolioGanttSheet = ({
   onClose,
   projectIds,
 }: PortfolioGanttSheetProps) => {
-  // Récupération des données des projets et de leurs tâches
+  // Récupération des données des projets et de leurs taux d'avancement
   const { data: projectsData } = useQuery({
     queryKey: ["portfolioGantt", projectIds],
     queryFn: async () => {
       if (projectIds.length === 0) return [];
 
-      const { data: projects, error: projectsError } = await supabase
-        .from("projects")
-        .select(`
-          id,
-          title,
-          start_date,
-          end_date,
-          lifecycle_status
-        `)
-        .in("id", projectIds);
+      // Récupérer les projets et leurs dernières revues en parallèle
+      const [projectsRes, reviewsRes] = await Promise.all([
+        supabase
+          .from("projects")
+          .select(`id, title, start_date, end_date, lifecycle_status`)
+          .in("id", projectIds),
+        supabase
+          .from("latest_reviews")
+          .select("project_id, completion")
+          .in("project_id", projectIds),
+      ]);
 
-      if (projectsError) throw projectsError;
-      return projects || [];
+      if (projectsRes.error) throw projectsRes.error;
+
+      // Construire une map project_id → completion
+      const completionMap = new Map<string, number>();
+      if (reviewsRes.data) {
+        for (const r of reviewsRes.data) {
+          if (r.project_id && r.completion !== null) {
+            completionMap.set(r.project_id, r.completion);
+          }
+        }
+      }
+
+      return (projectsRes.data || []).map((p) => ({ ...p, completion: completionMap.get(p.id) ?? null }));
     },
     enabled: isOpen && projectIds.length > 0,
   });
@@ -59,6 +71,7 @@ export const PortfolioGanttSheet = ({
     project_id: project.id,
     parent_task_id: null,
     type: 'project' as const,
+    completion: project.completion,
   })) || [];
 
   return (
