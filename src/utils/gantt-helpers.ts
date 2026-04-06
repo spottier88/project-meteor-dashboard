@@ -22,6 +22,7 @@ export interface RawGanttTask {
   hideChildren?: boolean;
   dependencies?: string[];
   order_index?: number;
+  completion?: number | null;
 }
 
 /**
