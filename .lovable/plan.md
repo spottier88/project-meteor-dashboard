@@ -1,68 +1,87 @@
 
 
-# Correctif — Erreur lors de la suppression d'une revue de projet
+# Afficher le taux d'avancement réel dans les Gantt projets (panier & portefeuille)
 
-## Diagnostic
+## Situation actuelle
 
-L'erreur Supabase est : **`function uuid_nil() does not exist`**.
-
-La chaîne d'exécution est la suivante :
-
-```text
-DELETE review_actions (OK)
-  → DELETE reviews
-    → TRIGGER trg_sync_project_after_review_delete
-      → UPDATE projects SET status=..., progress=..., last_review_date=...
-        → TRIGGER sync_portfolio_stats_trigger
-          → FUNCTION sync_portfolio_stats()
-            → appelle uuid_nil()  ← ERREUR ICI
-```
-
-La fonction `sync_portfolio_stats` contient cette ligne :
-
-```sql
-IF TG_OP = 'UPDATE' AND OLD.portfolio_id IS NOT NULL
-   AND OLD.portfolio_id != COALESCE(NEW.portfolio_id, uuid_nil()) THEN
-```
-
-`uuid_nil()` est une fonction de l'extension `uuid-ossp` qui n'est pas activée (ou pas accessible dans ce schéma). L'erreur se produit à chaque suppression de revue car le trigger de synchronisation projet déclenche à son tour le trigger portfolio sur la table `projects`.
+Dans les vues Gantt panier et portefeuille, la progression affichée est **déduite du statut** via `getProgressForStatus()` (todo→0%, in_progress→50%, done→100%). Or, chaque projet possède un **taux d'avancement réel** (`completion`) issu de sa dernière revue, stocké dans la vue `latest_reviews`.
 
 ## Correction
 
-### Migration SQL unique
+### 1. Requêtes Supabase — ajouter `completion` depuis `latest_reviews`
 
-Remplacer l'appel à `uuid_nil()` par la valeur littérale équivalente `'00000000-0000-0000-0000-000000000000'::uuid` dans la fonction `sync_portfolio_stats` :
+**Fichiers** : `ProjectGanttSheet.tsx` et `PortfolioGanttSheet.tsx`
+
+Modifier la requête pour joindre `latest_reviews` et récupérer `completion` :
 
 ```sql
-CREATE OR REPLACE FUNCTION sync_portfolio_stats()
-RETURNS TRIGGER AS $$
-BEGIN
-    IF NEW.portfolio_id IS NOT NULL THEN
-        PERFORM update_portfolio_stats(NEW.portfolio_id);
-    END IF;
-
-    IF TG_OP = 'UPDATE' AND OLD.portfolio_id IS NOT NULL
-       AND OLD.portfolio_id != COALESCE(NEW.portfolio_id, '00000000-0000-0000-0000-000000000000'::uuid) THEN
-        PERFORM update_portfolio_stats(OLD.portfolio_id);
-    END IF;
-
-    IF TG_OP = 'DELETE' AND OLD.portfolio_id IS NOT NULL THEN
-        PERFORM update_portfolio_stats(OLD.portfolio_id);
-        RETURN OLD;
-    END IF;
-
-    RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
+SELECT id, title, start_date, end_date, lifecycle_status
+FROM projects WHERE id IN (...)
 ```
 
-### Impact
+Devient (via Supabase JS) :
 
-| Élément | Détail |
+```ts
+const { data: projects } = await supabase
+  .from("projects")
+  .select(`id, title, start_date, end_date, lifecycle_status`)
+  .in("id", projectIds);
+
+// + requête complémentaire sur latest_reviews
+const { data: reviews } = await supabase
+  .from("latest_reviews")
+  .select("project_id, completion")
+  .in("project_id", projectIds);
+```
+
+Puis fusionner le `completion` dans chaque projet lors du mapping vers `allTasks`.
+
+### 2. Interface `RawGanttTask` — ajouter le champ `completion`
+
+**Fichier** : `src/utils/gantt-helpers.ts`
+
+Ajouter `completion?: number` à `RawGanttTask`.
+
+### 3. Fonction `mapTasksToSvarFormat` — utiliser `completion` en priorité
+
+**Fichier** : `src/utils/gantt-helpers.ts`
+
+Modifier la ligne de calcul de la progression :
+
+```ts
+// Avant
+const progress = getProgressForStatus(task.status);
+
+// Après : utiliser completion si disponible, sinon fallback sur le statut
+const progress = task.completion !== undefined && task.completion !== null
+  ? task.completion
+  : getProgressForStatus(task.status);
+```
+
+Cela garantit que les tâches individuelles (sans `completion`) continuent d'utiliser le fallback par statut, tandis que les projets affichent leur avancement réel.
+
+### 4. Mapping dans les sheets — transmettre `completion`
+
+**Fichiers** : `ProjectGanttSheet.tsx` et `PortfolioGanttSheet.tsx`
+
+Dans le mapping `allTasks`, ajouter le champ `completion` issu de la jointure :
+
+```ts
+const allTasks = projectsData?.map((project) => ({
+  ...existingFields,
+  completion: reviewsMap.get(project.id) ?? 0,
+})) || [];
+```
+
+## Fichiers impactés
+
+| Fichier | Modification |
 |---|---|
-| Fichier modifié | Aucun fichier source — migration SQL uniquement |
-| Fonction corrigée | `sync_portfolio_stats()` |
-| Risque | Nul — remplacement d'un appel de fonction manquante par sa valeur littérale équivalente |
+| `src/utils/gantt-helpers.ts` | Ajout `completion` à `RawGanttTask` + priorité dans le calcul de `progress` |
+| `src/components/cart/ProjectGanttSheet.tsx` | Requête `latest_reviews` + transmission `completion` |
+| `src/components/portfolio/PortfolioGanttSheet.tsx` | Requête `latest_reviews` + transmission `completion` |
 
-Aucune modification du code frontend n'est nécessaire. Le composant `DeleteReviewDialog` fonctionne correctement ; c'est le trigger SQL en cascade qui échouait.
+## Risques
+
+Aucun risque identifié : le fallback par statut reste actif pour les tâches sans `completion`, et les vues en lecture seule ne sont pas affectées fonctionnellement.
 
