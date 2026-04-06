@@ -1,24 +1,35 @@
 /**
  * @file MyTasksCalendar.tsx
  * @description Vue calendrier mensuel pour la page "Mes tâches".
- * Affiche les tâches sur une grille mensuelle selon leur date d'échéance.
+ * Affiche les tâches sur une grille mensuelle selon leur période (start_date / due_date).
+ * - start_date uniquement : badge teal sur le jour de début
+ * - start_date + due_date : badge purple sur toute la période
+ * - due_date uniquement   : badge orange sur le jour d'échéance
  */
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { Link } from "react-router";
 
 interface MyTasksCalendarProps {
   tasks: any[];
   onEdit: (task: any) => void;
 }
 
-const statusColors: Record<string, string> = {
-  todo: "bg-yellow-500",
-  in_progress: "bg-blue-500",
-  done: "bg-green-500",
+type TaskScenario = "start_only" | "period" | "due_only";
+
+interface TaskWithScenario {
+  task: any;
+  scenario: TaskScenario;
+  isStart: boolean;
+  isEnd: boolean;
+}
+
+const scenarioColors: Record<TaskScenario, string> = {
+  start_only: "bg-teal-500",
+  period:     "bg-purple-500",
+  due_only:   "bg-orange-500",
 };
 
 const DAYS = ["Lun", "Mar", "Mer", "Jeu", "Ven", "Sam", "Dim"];
@@ -26,6 +37,21 @@ const MONTHS = [
   "Janvier", "Février", "Mars", "Avril", "Mai", "Juin",
   "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"
 ];
+
+const getRoundingClass = (item: TaskWithScenario, dateStr: string): string => {
+  if (item.scenario !== "period") return "rounded";
+  const dayOfWeek = new Date(dateStr + "T12:00:00").getDay(); // 0=dim, 1=lun
+  const isWeekEnd = dayOfWeek === 0;
+  const isWeekStart = dayOfWeek === 1;
+
+  const roundLeft = item.isStart || isWeekStart;
+  const roundRight = item.isEnd || isWeekEnd;
+
+  if (roundLeft && roundRight) return "rounded";
+  if (roundLeft)  return "rounded-l rounded-r-none";
+  if (roundRight) return "rounded-r rounded-l-none";
+  return "rounded-none";
+};
 
 export const MyTasksCalendar = ({ tasks, onEdit }: MyTasksCalendarProps) => {
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -42,15 +68,29 @@ export const MyTasksCalendar = ({ tasks, onEdit }: MyTasksCalendarProps) => {
   const daysInMonth = lastDay.getDate();
   const totalCells = Math.ceil((startOffset + daysInMonth) / 7) * 7;
 
-  // Indexer les tâches par date d'échéance
-  const tasksByDate: Record<string, any[]> = {};
-  tasks.forEach(task => {
-    if (task.due_date) {
-      const key = task.due_date.split("T")[0];
-      if (!tasksByDate[key]) tasksByDate[key] = [];
-      tasksByDate[key].push(task);
-    }
-  });
+  // Retourne les tâches à afficher pour un jour donné, avec leur scénario
+  const getTasksForDate = (dateStr: string): TaskWithScenario[] => {
+    const result: TaskWithScenario[] = [];
+    tasks.forEach(task => {
+      const start = task.start_date?.split("T")[0];
+      const due = task.due_date?.split("T")[0];
+
+      if (start && due) {
+        if (dateStr >= start && dateStr <= due) {
+          result.push({ task, scenario: "period", isStart: dateStr === start, isEnd: dateStr === due });
+        }
+      } else if (start && !due) {
+        if (dateStr === start) {
+          result.push({ task, scenario: "start_only", isStart: true, isEnd: true });
+        }
+      } else if (!start && due) {
+        if (dateStr === due) {
+          result.push({ task, scenario: "due_only", isStart: true, isEnd: true });
+        }
+      }
+    });
+    return result;
+  };
 
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -92,7 +132,7 @@ export const MyTasksCalendar = ({ tasks, onEdit }: MyTasksCalendarProps) => {
           const dateStr = isCurrentMonth
             ? `${year}-${String(month + 1).padStart(2, "0")}-${String(dayNum).padStart(2, "0")}`
             : null;
-          const dayTasks = dateStr ? (tasksByDate[dateStr] || []) : [];
+          const dayTasks = dateStr ? getTasksForDate(dateStr) : [];
           const isToday = dateStr === todayStr;
 
           return (
@@ -116,17 +156,18 @@ export const MyTasksCalendar = ({ tasks, onEdit }: MyTasksCalendarProps) => {
                     ) : dayNum}
                   </div>
                   <div className="space-y-0.5 overflow-y-auto max-h-[60px]">
-                    {dayTasks.map(task => (
+                    {dayTasks.map(item => (
                       <div
-                        key={task.id}
+                        key={item.task.id}
                         className={cn(
-                          "rounded px-1 py-0.5 cursor-pointer text-white truncate hover:opacity-80",
-                          statusColors[task.status] || "bg-muted"
+                          "px-1 py-0.5 cursor-pointer text-white truncate hover:opacity-80",
+                          scenarioColors[item.scenario],
+                          getRoundingClass(item, dateStr!)
                         )}
-                        title={`${task.title} — ${task.projects?.title || ""}`}
-                        onClick={() => onEdit(task)}
+                        title={`${item.task.title} — ${item.task.projects?.title || ""} (${item.task.status})`}
+                        onClick={() => onEdit(item.task)}
                       >
-                        {task.title}
+                        {item.task.title}
                       </div>
                     ))}
                   </div>
@@ -139,9 +180,9 @@ export const MyTasksCalendar = ({ tasks, onEdit }: MyTasksCalendarProps) => {
 
       {/* Légende */}
       <div className="flex gap-4 mt-3 text-xs text-muted-foreground">
-        <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-yellow-500" /> À faire</span>
-        <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-blue-500" /> En cours</span>
-        <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-green-500" /> Terminé</span>
+        <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-teal-500" /> Date de début uniquement</span>
+        <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-purple-500" /> Période (début → échéance)</span>
+        <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-orange-500" /> Date d'échéance uniquement</span>
       </div>
     </div>
   );
