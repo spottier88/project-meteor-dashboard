@@ -204,35 +204,58 @@ const addDifficultiesAndActionsSection = (slide: pptxgen.Slide, data: ProjectDat
   const sectionY = grid.y + 3.0;
   const boxHeight = 1.4;
   const titleHeight = 0.3;
-  
-  // Section Difficultés en cours (remplace Risques identifiés)
-  addSection(slide, "DIFFICULTÉS EN COURS", grid.x, sectionY, 4.5, boxHeight);
-  
-  // Afficher les difficultés si présentes, sinon afficher les risques (rétrocompatibilité)
+  const colW = 3.0;
+  const gap = 0.1;
+
+  // Colonne 1 — Risques identifiés (données projet)
+  addSection(slide, "RISQUES IDENTIFIÉS", grid.x, sectionY, colW, boxHeight);
+  const riskItems = data.risks.map(r => {
+    const level = getRiskLevel(r.probability, r.severity);
+    return `[${level}] ${r.description}`;
+  });
+  addBulletList(slide, riskItems, 
+    grid.x + 0.2, sectionY + titleHeight, colW - 0.4, boxHeight - titleHeight);
+
+  // Colonne 2 — Difficultés en cours (données revue uniquement)
+  const col2X = grid.x + colW + gap;
+  addSection(slide, "DIFFICULTÉS EN COURS", col2X, sectionY, colW, boxHeight);
   if (data.lastReview?.difficulties) {
     slide.addText(data.lastReview.difficulties, {
-      x: grid.x + 0.2,
+      x: col2X + 0.2,
       y: sectionY + titleHeight,
-      w: 4.1,
+      w: colW - 0.4,
       h: boxHeight - titleHeight,
       fontSize: 10,
       color: "363636",
       valign: "top"
     });
   } else {
-    // Fallback sur les risques si pas de difficultés renseignées
-    addBulletList(slide, data.risks.map(r => r.description), 
-      grid.x + 0.2, sectionY + titleHeight, 4.1, boxHeight - titleHeight);
+    slide.addText("Aucune difficulté signalée", {
+      x: col2X + 0.2,
+      y: sectionY + titleHeight,
+      w: colW - 0.4,
+      h: boxHeight - titleHeight,
+      fontSize: 10,
+      color: "666666",
+      valign: "top"
+    });
   }
-    
-  // Section Actions correctives (inchangée)
-  addSection(slide, "ACTIONS CORRECTIVES", grid.x + 4.6, sectionY, 4.7, boxHeight);
 
-  // Récupérer les descriptions des actions correctives s'il y en a
+  // Colonne 3 — Actions correctives (inchangé)
+  const col3X = col2X + colW + gap;
+  const col3W = 9 - (col3X - grid.x);
+  addSection(slide, "ACTIONS CORRECTIVES", col3X, sectionY, col3W, boxHeight);
   const actionDescriptions = data.lastReview?.actions?.map(a => a.description) || [];
-  
   addBulletList(slide, actionDescriptions, 
-    grid.x + 4.8, sectionY + titleHeight, 4.3, boxHeight - titleHeight);
+    col3X + 0.2, sectionY + titleHeight, col3W - 0.4, boxHeight - titleHeight);
+};
+
+/** Détermine le niveau de risque à partir de la probabilité et sévérité */
+const getRiskLevel = (probability: string, severity: string): string => {
+  const high = ["high"];
+  if (high.includes(probability) || high.includes(severity)) return "E";
+  if (probability === "medium" || severity === "medium") return "M";
+  return "F";
 };
 
 /** Dessine une section avec titre coloré */

@@ -186,16 +186,34 @@ export const PresentationSlide = ({ data }: PresentationSlideProps) => {
           </Section>
         </div>
 
-        {/* Troisième ligne : Difficultés et Actions */}
-        <div className="grid grid-cols-2 gap-1.5" style={{ height: '35%', minHeight: 0 }}>
+        {/* Troisième ligne : Risques, Difficultés et Actions */}
+        <div className="grid grid-cols-3 gap-1.5" style={{ height: '35%', minHeight: 0 }}>
+          {/* Bloc Risques identifiés — données projet */}
+          <Section 
+            title="RISQUES IDENTIFIÉS" 
+            expandable
+            fullContent={
+              data.risks.length > 0 ? (
+                <RiskListFull risks={data.risks} />
+              ) : (
+                <p className="italic">Aucun risque identifié</p>
+              )
+            }
+          >
+            {data.risks.length > 0 ? (
+              <RiskList risks={data.risks} maxItems={4} />
+            ) : (
+              <p className="text-xs text-muted-foreground italic">Aucun risque identifié</p>
+            )}
+          </Section>
+
+          {/* Bloc Difficultés — données revue uniquement */}
           <Section 
             title="DIFFICULTÉS EN COURS" 
             expandable
             fullContent={
               data.lastReview?.difficulties ? (
                 <p className="whitespace-pre-wrap">{data.lastReview.difficulties}</p>
-              ) : data.risks.length > 0 ? (
-                <BulletListFull items={data.risks.map((r) => r.description)} />
               ) : (
                 <p className="italic">Aucune difficulté signalée</p>
               )
@@ -203,12 +221,12 @@ export const PresentationSlide = ({ data }: PresentationSlideProps) => {
           >
             {data.lastReview?.difficulties ? (
               <p className="text-xs text-muted-foreground line-clamp-4">{data.lastReview.difficulties}</p>
-            ) : data.risks.length > 0 ? (
-              <BulletList items={data.risks.map((r) => r.description)} maxItems={4} />
             ) : (
               <p className="text-xs text-muted-foreground italic">Aucune difficulté signalée</p>
             )}
           </Section>
+
+          {/* Bloc Actions correctives — inchangé */}
           <Section 
             title="ACTIONS CORRECTIVES" 
             expandable
@@ -374,5 +392,69 @@ const BulletListFull = ({ items }: { items: string[] }) => {
         </li>
       ))}
     </ol>
+  );
+};
+
+/** Détermine le badge de niveau de risque (combinaison probabilité × sévérité) */
+const getRiskBadge = (probability: string, severity: string) => {
+  if (probability === "high" || severity === "high") {
+    return { label: "Élevé", className: "bg-red-500 text-white" };
+  }
+  if (probability === "medium" || severity === "medium") {
+    return { label: "Moyen", className: "bg-orange-400 text-white" };
+  }
+  return { label: "Faible", className: "bg-green-500 text-white" };
+};
+
+// Composant liste de risques avec badge de niveau
+interface RiskItem {
+  description: string;
+  probability: string;
+  severity: string;
+}
+
+const RiskList = ({ risks, maxItems = 4 }: { risks: RiskItem[]; maxItems?: number }) => {
+  if (risks.length === 0) {
+    return <p className="text-xs text-muted-foreground italic">Aucun risque identifié</p>;
+  }
+  const displayed = risks.slice(0, maxItems);
+  const remaining = risks.length - maxItems;
+
+  return (
+    <ul className="text-xs space-y-0.5">
+      {displayed.map((risk, i) => {
+        const badge = getRiskBadge(risk.probability, risk.severity);
+        return (
+          <li key={i} className="flex items-start gap-1 leading-tight">
+            <span className={cn("text-[9px] px-1 rounded flex-shrink-0 mt-0.5", badge.className)}>{badge.label}</span>
+            <span className="text-muted-foreground line-clamp-1">{risk.description}</span>
+          </li>
+        );
+      })}
+      {remaining > 0 && (
+        <li className="text-muted-foreground/60 italic">+{remaining} autre{remaining > 1 ? 's' : ''}...</li>
+      )}
+    </ul>
+  );
+};
+
+// Composant liste de risques complète pour le dialogue
+const RiskListFull = ({ risks }: { risks: RiskItem[] }) => {
+  if (risks.length === 0) {
+    return <p className="italic">Aucun risque identifié</p>;
+  }
+
+  return (
+    <ul className="space-y-2">
+      {risks.map((risk, i) => {
+        const badge = getRiskBadge(risk.probability, risk.severity);
+        return (
+          <li key={i} className="flex items-start gap-2">
+            <span className={cn("text-xs px-1.5 py-0.5 rounded flex-shrink-0", badge.className)}>{badge.label}</span>
+            <span className="leading-relaxed">{risk.description}</span>
+          </li>
+        );
+      })}
+    </ul>
   );
 };
