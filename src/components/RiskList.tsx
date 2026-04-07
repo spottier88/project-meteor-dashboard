@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
@@ -32,6 +32,7 @@ export const RiskList = ({
   preloadedRisks,
 }: RiskListProps) => {
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [selectedRisk, setSelectedRisk] = useState<any>(null);
   
@@ -83,7 +84,8 @@ export const RiskList = ({
         description: "Le risque a été supprimé",
       });
 
-      refetch();
+      // Invalider le cache pour rafraîchir la liste (y compris les données pré-chargées du parent)
+      queryClient.invalidateQueries({ queryKey: ["risks", projectId] });
       
       // Appel de la fonction onUpdate après la suppression
       if (onUpdate) {
@@ -105,7 +107,8 @@ export const RiskList = ({
   };
 
   const handleFormSubmit = () => {
-    refetch();
+    // Invalider le cache pour rafraîchir la liste (y compris les données pré-chargées du parent)
+    queryClient.invalidateQueries({ queryKey: ["risks", projectId] });
     // Appel de la fonction onUpdate après la soumission du formulaire
     if (onUpdate) {
       onUpdate();
