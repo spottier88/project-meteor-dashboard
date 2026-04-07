@@ -86,6 +86,8 @@ export const RiskList = ({
 
       // Invalider le cache pour rafraîchir la liste (y compris les données pré-chargées du parent)
       queryClient.invalidateQueries({ queryKey: ["risks", projectId] });
+      // Invalider aussi les risques agrégés (utilisés par ProjectSummary via useAggregatedProjectData)
+      queryClient.invalidateQueries({ queryKey: ["aggregatedRisks"] });
       
       // Appel de la fonction onUpdate après la suppression
       if (onUpdate) {
@@ -109,6 +111,8 @@ export const RiskList = ({
   const handleFormSubmit = () => {
     // Invalider le cache pour rafraîchir la liste (y compris les données pré-chargées du parent)
     queryClient.invalidateQueries({ queryKey: ["risks", projectId] });
+    // Invalider aussi les risques agrégés (utilisés par ProjectSummary via useAggregatedProjectData)
+    queryClient.invalidateQueries({ queryKey: ["aggregatedRisks"] });
     // Appel de la fonction onUpdate après la soumission du formulaire
     if (onUpdate) {
       onUpdate();
