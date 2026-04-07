@@ -1,48 +1,42 @@
 
 
-# Séparer Risques et Difficultés dans les présentations
+# Correctif — La liste des risques ne se rafraîchit pas après ajout
 
 ## Diagnostic
 
-Actuellement, le bloc "DIFFICULTÉS EN COURS" mélange deux sources de données :
-- Si `lastReview.difficulties` est renseigné → affiche les difficultés de la revue
-- Sinon → fallback sur `data.risks` (les risques du projet)
+Le problème est dans `RiskList.tsx`, ligne 58 :
 
-Ce comportement masque les risques quand des difficultés existent, et affiche les risques sous un titre trompeur quand il n'y en a pas.
+```ts
+enabled: !!projectId && !preloadedRisks,
+```
 
-## Plan : passer de 2 blocs à 3 blocs en dernière ligne
+Quand `preloadedRisks` est fourni (ce qui est le cas dans `ProjectSummaryContent.tsx`, ligne 304), la requête interne de `RiskList` est **désactivée**. Par conséquent, `refetch()` ne fonctionne pas — la query n'a jamais été activée.
 
-La dernière ligne contiendra :
-- **RISQUES IDENTIFIÉS** (gauche) — risques du projet avec indicateur de niveau (probabilité/sévérité)
-- **DIFFICULTÉS EN COURS** (centre) — texte libre issu exclusivement de `lastReview.difficulties`
-- **ACTIONS CORRECTIVES** (droite) — inchangé
+Après un ajout/modification/suppression, `handleFormSubmit` appelle `refetch()`, mais comme la query est désactivée, rien ne se passe. Et `preloadedRisks` vient de la query `["risks", projectId]` définie dans `ProjectSummary.tsx`, qui n'est pas invalidée non plus.
 
-### 1. Vue écran — `PresentationSlide.tsx`
+## Correction
 
-Transformer la grille `grid-cols-2` de la dernière ligne en `grid-cols-3` :
+### Fichier unique : `src/components/RiskList.tsx`
 
-- **Bloc 1 — RISQUES IDENTIFIÉS** : liste les risques avec un badge coloré par niveau (combinaison probabilité × sévérité : 🔴 haute, 🟠 moyenne, 🟢 basse)
-- **Bloc 2 — DIFFICULTÉS EN COURS** : affiche uniquement `data.lastReview?.difficulties` (texte libre), sans fallback sur les risques
-- **Bloc 3 — ACTIONS CORRECTIVES** : inchangé
+Après chaque mutation (ajout, modification, suppression), invalider la query `["risks", projectId]` dans le cache React Query global, ce qui rafraîchira aussi bien la query locale que celle du parent (`ProjectSummary`).
 
-### 2. Export PPTX — `slideGenerators.ts`
+```ts
+import { useQueryClient } from "@tanstack/react-query";
 
-Modifier `addDifficultiesAndActionsSection` pour générer 3 colonnes :
+// Dans le composant :
+const queryClient = useQueryClient();
 
-| Bloc | Position X | Largeur | Contenu |
-|------|-----------|---------|---------|
-| RISQUES IDENTIFIÉS | `grid.x` | 3.0 | Liste des risques avec niveau (ex: `[H] Description`) |
-| DIFFICULTÉS EN COURS | `grid.x + 3.1` | 3.0 | `lastReview.difficulties` uniquement |
-| ACTIONS CORRECTIVES | `grid.x + 6.2` | 3.1 | Inchangé |
+// Dans handleFormSubmit et handleDelete (après succès) :
+queryClient.invalidateQueries({ queryKey: ["risks", projectId] });
+```
 
-Les risques seront formatés avec un préfixe indiquant le niveau : `[E]` élevé, `[M]` moyen, `[F]` faible, déterminé par la combinaison probabilité/sévérité.
+Cela force le rechargement de la query quel que soit le composant qui la possède, y compris `ProjectSummary.tsx` qui fournit `preloadedRisks`.
 
-### 3. Fichiers impactés
+### Impact
 
 | Fichier | Modification |
 |---|---|
-| `src/components/presentation/PresentationSlide.tsx` | Dernière ligne : `grid-cols-2` → `grid-cols-3`, ajout bloc Risques, suppression fallback risques dans Difficultés |
-| `src/components/pptx/slideGenerators.ts` | Fonction `addDifficultiesAndActionsSection` → 3 colonnes au lieu de 2 |
+| `src/components/RiskList.tsx` | Ajout `useQueryClient` + `invalidateQueries` dans `handleFormSubmit` et `handleDelete` |
 
-Aucune modification de type ni de requête nécessaire — les données `risks` et `lastReview.difficulties` sont déjà présentes dans `ProjectData`.
+Aucune autre fonctionnalité modifiée.
 
