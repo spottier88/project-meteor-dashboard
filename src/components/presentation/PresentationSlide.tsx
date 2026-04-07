@@ -394,3 +394,67 @@ const BulletListFull = ({ items }: { items: string[] }) => {
     </ol>
   );
 };
+
+/** Détermine le badge de niveau de risque (combinaison probabilité × sévérité) */
+const getRiskBadge = (probability: string, severity: string) => {
+  if (probability === "high" || severity === "high") {
+    return { label: "Élevé", className: "bg-red-500 text-white" };
+  }
+  if (probability === "medium" || severity === "medium") {
+    return { label: "Moyen", className: "bg-orange-400 text-white" };
+  }
+  return { label: "Faible", className: "bg-green-500 text-white" };
+};
+
+// Composant liste de risques avec badge de niveau
+interface RiskItem {
+  description: string;
+  probability: string;
+  severity: string;
+}
+
+const RiskList = ({ risks, maxItems = 4 }: { risks: RiskItem[]; maxItems?: number }) => {
+  if (risks.length === 0) {
+    return <p className="text-xs text-muted-foreground italic">Aucun risque identifié</p>;
+  }
+  const displayed = risks.slice(0, maxItems);
+  const remaining = risks.length - maxItems;
+
+  return (
+    <ul className="text-xs space-y-0.5">
+      {displayed.map((risk, i) => {
+        const badge = getRiskBadge(risk.probability, risk.severity);
+        return (
+          <li key={i} className="flex items-start gap-1 leading-tight">
+            <span className={cn("text-[9px] px-1 rounded flex-shrink-0 mt-0.5", badge.className)}>{badge.label}</span>
+            <span className="text-muted-foreground line-clamp-1">{risk.description}</span>
+          </li>
+        );
+      })}
+      {remaining > 0 && (
+        <li className="text-muted-foreground/60 italic">+{remaining} autre{remaining > 1 ? 's' : ''}...</li>
+      )}
+    </ul>
+  );
+};
+
+// Composant liste de risques complète pour le dialogue
+const RiskListFull = ({ risks }: { risks: RiskItem[] }) => {
+  if (risks.length === 0) {
+    return <p className="italic">Aucun risque identifié</p>;
+  }
+
+  return (
+    <ul className="space-y-2">
+      {risks.map((risk, i) => {
+        const badge = getRiskBadge(risk.probability, risk.severity);
+        return (
+          <li key={i} className="flex items-start gap-2">
+            <span className={cn("text-xs px-1.5 py-0.5 rounded flex-shrink-0", badge.className)}>{badge.label}</span>
+            <span className="leading-relaxed">{risk.description}</span>
+          </li>
+        );
+      })}
+    </ul>
+  );
+};
