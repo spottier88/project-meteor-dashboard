@@ -1,42 +1,36 @@
 
 
-# Correctif — La liste des risques ne se rafraîchit pas après ajout
+# Correctif — Rafraîchissement des risques après mutation
 
 ## Diagnostic
 
-Le problème est dans `RiskList.tsx`, ligne 58 :
+Le problème a **deux causes** :
 
-```ts
-enabled: !!projectId && !preloadedRisks,
-```
+1. **Mauvaise clé de cache invalidée** : Dans `RiskList.tsx`, après ajout/modification/suppression, on invalide `["risks", projectId]`. Or, dans `ProjectSummary.tsx` (ligne 305), les risques passés à `ProjectSummaryContent` sont `aggregatedRisks || risks || []`. Le hook `useAggregatedProjectData` est **toujours actif** (même pour les projets non-maîtres, car `allProjectIds` contient au minimum le projet courant). Sa query key est `["aggregatedRisks", allProjectIds]` — qui n'est **jamais invalidée** par `RiskList`.
 
-Quand `preloadedRisks` est fourni (ce qui est le cas dans `ProjectSummaryContent.tsx`, ligne 304), la requête interne de `RiskList` est **désactivée**. Par conséquent, `refetch()` ne fonctionne pas — la query n'a jamais été activée.
+2. **Query locale désactivée** : La query interne de `RiskList` a `enabled: false` quand `preloadedRisks` est fourni. Même si on invalidait la bonne clé parente, la query locale ne se relancerait pas.
 
-Après un ajout/modification/suppression, `handleFormSubmit` appelle `refetch()`, mais comme la query est désactivée, rien ne se passe. Et `preloadedRisks` vient de la query `["risks", projectId]` définie dans `ProjectSummary.tsx`, qui n'est pas invalidée non plus.
+En résumé : `aggregatedRisks` gagne toujours sur `risks`, et son cache n'est jamais invalidé après une mutation.
 
 ## Correction
 
-### Fichier unique : `src/components/RiskList.tsx`
+### Fichier : `src/components/RiskList.tsx`
 
-Après chaque mutation (ajout, modification, suppression), invalider la query `["risks", projectId]` dans le cache React Query global, ce qui rafraîchira aussi bien la query locale que celle du parent (`ProjectSummary`).
+Ajouter l'invalidation de la clé `["aggregatedRisks"]` (invalidation partielle par préfixe) dans `handleFormSubmit` et `handleDelete`, en plus de `["risks", projectId]` :
 
 ```ts
-import { useQueryClient } from "@tanstack/react-query";
-
-// Dans le composant :
-const queryClient = useQueryClient();
-
-// Dans handleFormSubmit et handleDelete (après succès) :
+// Dans handleFormSubmit et handleDelete :
 queryClient.invalidateQueries({ queryKey: ["risks", projectId] });
+queryClient.invalidateQueries({ queryKey: ["aggregatedRisks"] });
 ```
 
-Cela force le rechargement de la query quel que soit le composant qui la possède, y compris `ProjectSummary.tsx` qui fournit `preloadedRisks`.
+L'invalidation par préfixe `["aggregatedRisks"]` cible toutes les variantes de cette query, quel que soit le contenu de `allProjectIds`.
 
 ### Impact
 
 | Fichier | Modification |
 |---|---|
-| `src/components/RiskList.tsx` | Ajout `useQueryClient` + `invalidateQueries` dans `handleFormSubmit` et `handleDelete` |
+| `src/components/RiskList.tsx` | Ajout d'une invalidation `["aggregatedRisks"]` dans `handleFormSubmit` et `handleDelete` |
 
-Aucune autre fonctionnalité modifiée.
+Aucune autre fonctionnalité impactée — on ajoute simplement une invalidation de cache supplémentaire.
 
