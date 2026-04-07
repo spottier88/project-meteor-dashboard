@@ -23,52 +23,52 @@ export const usePortfolioProjectAccess = (projectId: string) => {
     queryFn: async (): Promise<PortfolioAccessInfo | null> => {
       if (!userProfile?.id || !projectId) return null;
 
-      // Récupérer les portefeuilles contenant ce projet où l'utilisateur est gestionnaire
-      const { data: portfolioManagerAccess } = await supabase
+      // Étape 1 : récupérer les portefeuilles contenant ce projet
+      const { data: links } = await supabase
         .from("portfolio_projects")
-        .select(`
-          portfolio_id,
-          project_portfolios!inner (
-            id,
-            name,
-            created_by
-          ),
-          portfolio_managers!inner (
-            user_id,
-            role
-          )
-        `)
-        .eq("project_id", projectId)
-        .eq("portfolio_managers.user_id", userProfile.id);
+        .select("portfolio_id")
+        .eq("project_id", projectId);
 
-      if (portfolioManagerAccess && portfolioManagerAccess.length > 0) {
-        const access = portfolioManagerAccess[0];
+      if (!links || links.length === 0) return null;
+
+      const portfolioIds = links.map(l => l.portfolio_id);
+
+      // Étape 2 : l'utilisateur est-il gestionnaire/viewer d'un de ces portefeuilles ?
+      const { data: membership } = await supabase
+        .from("portfolio_managers")
+        .select("portfolio_id, role")
+        .eq("user_id", userProfile.id)
+        .in("portfolio_id", portfolioIds)
+        .limit(1)
+        .maybeSingle();
+
+      // Étape 3 : vérifier aussi si l'utilisateur est le créateur d'un portefeuille
+      const { data: ownedPortfolio } = await supabase
+        .from("project_portfolios")
+        .select("id, name")
+        .in("id", portfolioIds)
+        .eq("created_by", userProfile.id)
+        .limit(1)
+        .maybeSingle();
+
+      // Résolution : priorité au rôle explicite, sinon owner
+      if (membership) {
+        const { data: pf } = await supabase
+          .from("project_portfolios")
+          .select("name")
+          .eq("id", membership.portfolio_id)
+          .single();
         return {
-          portfolioId: access.portfolio_id,
-          portfolioName: (access.project_portfolios as any)?.name || "",
-          role: (access.portfolio_managers as any)?.role || 'viewer'
+          portfolioId: membership.portfolio_id,
+          portfolioName: pf?.name || "",
+          role: (membership.role as 'owner' | 'manager' | 'viewer') || 'viewer'
         };
       }
 
-      // Vérifier si l'utilisateur est le créateur d'un portefeuille contenant ce projet
-      const { data: ownerAccess } = await supabase
-        .from("portfolio_projects")
-        .select(`
-          portfolio_id,
-          project_portfolios!inner (
-            id,
-            name,
-            created_by
-          )
-        `)
-        .eq("project_id", projectId)
-        .eq("project_portfolios.created_by", userProfile.id);
-
-      if (ownerAccess && ownerAccess.length > 0) {
-        const access = ownerAccess[0];
+      if (ownedPortfolio) {
         return {
-          portfolioId: access.portfolio_id,
-          portfolioName: (access.project_portfolios as any)?.name || "",
+          portfolioId: ownedPortfolio.id,
+          portfolioName: ownedPortfolio.name || "",
           role: 'owner'
         };
       }
