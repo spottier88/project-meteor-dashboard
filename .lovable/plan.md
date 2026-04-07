@@ -1,77 +1,48 @@
 
 
-# Correctif — Erreur 400 sur la requête `portfolio_projects` avec jointure `portfolio_managers`
+# Séparer Risques et Difficultés dans les présentations
 
 ## Diagnostic
 
-**Cause** : Dans `usePortfolioProjectAccess.ts` (ligne 28-42), la requête Supabase tente une jointure `!inner` entre `portfolio_projects` et `portfolio_managers`. Or ces deux tables n'ont pas de relation directe (pas de FK entre elles) — elles sont reliées indirectement via `project_portfolios.id`. PostgREST ne peut pas résoudre cette jointure et retourne une erreur 400.
+Actuellement, le bloc "DIFFICULTÉS EN COURS" mélange deux sources de données :
+- Si `lastReview.difficulties` est renseigné → affiche les difficultés de la revue
+- Sinon → fallback sur `data.risks` (les risques du projet)
 
-**Pourquoi cet appel existe** : Ce hook détermine si un utilisateur peut voir un projet en lecture seule via un portefeuille. Il est utilisé par `useProjectPermissions`, `useTaskPermissions`, `useRiskAccess` et `useReviewAccess` — donc essentiel au système de permissions. L'erreur 400 fait que la première requête échoue silencieusement, mais le fallback (2e requête, lignes 54-65, qui vérifie `created_by`) rattrape partiellement le cas du propriétaire. Les gestionnaires et lecteurs de portefeuille ne sont donc **pas détectés** actuellement.
+Ce comportement masque les risques quand des difficultés existent, et affiche les risques sous un titre trompeur quand il n'y en a pas.
 
-**Impact réel** : Les utilisateurs ajoutés comme `manager` ou `viewer` dans un portefeuille ne bénéficient probablement pas de leur accès lecture seule aux projets du portefeuille.
+## Plan : passer de 2 blocs à 3 blocs en dernière ligne
 
-## Correction
+La dernière ligne contiendra :
+- **RISQUES IDENTIFIÉS** (gauche) — risques du projet avec indicateur de niveau (probabilité/sévérité)
+- **DIFFICULTÉS EN COURS** (centre) — texte libre issu exclusivement de `lastReview.difficulties`
+- **ACTIONS CORRECTIVES** (droite) — inchangé
 
-### Fichier unique : `src/hooks/usePortfolioProjectAccess.ts`
+### 1. Vue écran — `PresentationSlide.tsx`
 
-Remplacer la requête invalide par deux requêtes séquentielles valides :
+Transformer la grille `grid-cols-2` de la dernière ligne en `grid-cols-3` :
 
-1. Récupérer les `portfolio_id` des portefeuilles contenant le projet (depuis `portfolio_projects`)
-2. Chercher dans `portfolio_managers` si l'utilisateur est membre d'un de ces portefeuilles
-3. Récupérer le nom du portefeuille depuis `project_portfolios`
+- **Bloc 1 — RISQUES IDENTIFIÉS** : liste les risques avec un badge coloré par niveau (combinaison probabilité × sévérité : 🔴 haute, 🟠 moyenne, 🟢 basse)
+- **Bloc 2 — DIFFICULTÉS EN COURS** : affiche uniquement `data.lastReview?.difficulties` (texte libre), sans fallback sur les risques
+- **Bloc 3 — ACTIONS CORRECTIVES** : inchangé
 
-```ts
-// Étape 1 : portefeuilles contenant ce projet
-const { data: links } = await supabase
-  .from("portfolio_projects")
-  .select("portfolio_id")
-  .eq("project_id", projectId);
+### 2. Export PPTX — `slideGenerators.ts`
 
-if (!links || links.length === 0) return null;
+Modifier `addDifficultiesAndActionsSection` pour générer 3 colonnes :
 
-const portfolioIds = links.map(l => l.portfolio_id);
+| Bloc | Position X | Largeur | Contenu |
+|------|-----------|---------|---------|
+| RISQUES IDENTIFIÉS | `grid.x` | 3.0 | Liste des risques avec niveau (ex: `[H] Description`) |
+| DIFFICULTÉS EN COURS | `grid.x + 3.1` | 3.0 | `lastReview.difficulties` uniquement |
+| ACTIONS CORRECTIVES | `grid.x + 6.2` | 3.1 | Inchangé |
 
-// Étape 2 : l'utilisateur est-il gestionnaire/viewer d'un de ces portefeuilles ?
-const { data: membership } = await supabase
-  .from("portfolio_managers")
-  .select("portfolio_id, role")
-  .eq("user_id", userProfile.id)
-  .in("portfolio_id", portfolioIds)
-  .limit(1)
-  .maybeSingle();
+Les risques seront formatés avec un préfixe indiquant le niveau : `[E]` élevé, `[M]` moyen, `[F]` faible, déterminé par la combinaison probabilité/sévérité.
 
-// Étape 3 : vérifier aussi si l'utilisateur est le créateur
-const { data: ownedPortfolio } = await supabase
-  .from("project_portfolios")
-  .select("id, name")
-  .in("id", portfolioIds)
-  .eq("created_by", userProfile.id)
-  .limit(1)
-  .maybeSingle();
-
-// Résolution : priorité au rôle explicite, sinon owner
-if (membership) {
-  // Récupérer le nom du portefeuille
-  const { data: pf } = await supabase
-    .from("project_portfolios")
-    .select("name")
-    .eq("id", membership.portfolio_id)
-    .single();
-  return { portfolioId: membership.portfolio_id, portfolioName: pf?.name || "", role: membership.role };
-}
-if (ownedPortfolio) {
-  return { portfolioId: ownedPortfolio.id, portfolioName: ownedPortfolio.name, role: 'owner' };
-}
-return null;
-```
-
-## Impact
+### 3. Fichiers impactés
 
 | Fichier | Modification |
 |---|---|
-| `src/hooks/usePortfolioProjectAccess.ts` | Remplacement de la jointure invalide par des requêtes séparées valides |
+| `src/components/presentation/PresentationSlide.tsx` | Dernière ligne : `grid-cols-2` → `grid-cols-3`, ajout bloc Risques, suppression fallback risques dans Difficultés |
+| `src/components/pptx/slideGenerators.ts` | Fonction `addDifficultiesAndActionsSection` → 3 colonnes au lieu de 2 |
 
-- Supprime l'erreur 400 en console
-- Rétablit la détection correcte des gestionnaires et lecteurs de portefeuille
-- Aucune régression : le hook est consommé en lecture seule par les hooks de permissions existants
+Aucune modification de type ni de requête nécessaire — les données `risks` et `lastReview.difficulties` sont déjà présentes dans `ProjectData`.
 
