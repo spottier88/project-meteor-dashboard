@@ -101,6 +101,7 @@ export const DeleteReviewDialog = ({
       // Invalider le cache des revues pour forcer un rafraîchissement
       await queryClient.invalidateQueries({ queryKey: ["reviews", projectId] });
       await queryClient.invalidateQueries({ queryKey: ["lastReview", projectId] });
+      await queryClient.invalidateQueries({ queryKey: ["lastReviews", projectId] });
       await queryClient.invalidateQueries({ queryKey: ["projects"] });
 
       // Attendre un court instant pour s'assurer que la requête est bien invalidée
