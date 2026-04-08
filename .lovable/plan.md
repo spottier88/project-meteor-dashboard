@@ -1,36 +1,33 @@
 
 
-# Correctif — Rafraîchissement des risques après mutation
+# Correctif — Rafraîchissement du bloc dernière revue après suppression
 
 ## Diagnostic
 
-Le problème a **deux causes** :
+La clé de cache ne correspond pas :
 
-1. **Mauvaise clé de cache invalidée** : Dans `RiskList.tsx`, après ajout/modification/suppression, on invalide `["risks", projectId]`. Or, dans `ProjectSummary.tsx` (ligne 305), les risques passés à `ProjectSummaryContent` sont `aggregatedRisks || risks || []`. Le hook `useAggregatedProjectData` est **toujours actif** (même pour les projets non-maîtres, car `allProjectIds` contient au minimum le projet courant). Sa query key est `["aggregatedRisks", allProjectIds]` — qui n'est **jamais invalidée** par `RiskList`.
+- `DeleteReviewDialog.tsx` invalide `["lastReview", projectId]` (singulier)
+- `ProjectSummary.tsx` utilise `["lastReviews", projectId]` (pluriel)
 
-2. **Query locale désactivée** : La query interne de `RiskList` a `enabled: false` quand `preloadedRisks` est fourni. Même si on invalidait la bonne clé parente, la query locale ne se relancerait pas.
-
-En résumé : `aggregatedRisks` gagne toujours sur `risks`, et son cache n'est jamais invalidé après une mutation.
+La query qui alimente le bloc "dernière revue" dans ProjectSummary n'est donc **jamais invalidée** lors d'une suppression.
 
 ## Correction
 
-### Fichier : `src/components/RiskList.tsx`
+### Fichier : `src/components/review/DeleteReviewDialog.tsx`
 
-Ajouter l'invalidation de la clé `["aggregatedRisks"]` (invalidation partielle par préfixe) dans `handleFormSubmit` et `handleDelete`, en plus de `["risks", projectId]` :
+Ajouter l'invalidation de la clé `["lastReviews", projectId]` dans le bloc de succès de `handleDelete`, à côté des invalidations existantes :
 
 ```ts
-// Dans handleFormSubmit et handleDelete :
-queryClient.invalidateQueries({ queryKey: ["risks", projectId] });
-queryClient.invalidateQueries({ queryKey: ["aggregatedRisks"] });
+await queryClient.invalidateQueries({ queryKey: ["lastReviews", projectId] });
 ```
 
-L'invalidation par préfixe `["aggregatedRisks"]` cible toutes les variantes de cette query, quel que soit le contenu de `allProjectIds`.
+Aucune autre modification nécessaire. Le `refetchLastReview` callback dans `ProjectSummary` sera aussi déclenché automatiquement par l'invalidation du cache.
 
 ### Impact
 
 | Fichier | Modification |
 |---|---|
-| `src/components/RiskList.tsx` | Ajout d'une invalidation `["aggregatedRisks"]` dans `handleFormSubmit` et `handleDelete` |
+| `src/components/review/DeleteReviewDialog.tsx` | Ajout d'une invalidation `["lastReviews", projectId]` |
 
-Aucune autre fonctionnalité impactée — on ajoute simplement une invalidation de cache supplémentaire.
+Aucune autre fonctionnalité impactée.
 
