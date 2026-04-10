@@ -30,11 +30,13 @@ export const LifecycleStatusFilter = ({
         </SelectTrigger>
         <SelectContent>
           <SelectItem value="all">Tous les statuts</SelectItem>
-          {Object.entries(lifecycleStatusLabels).map(([value, label]) => (
-            <SelectItem key={value} value={value}>
-              {label}
-            </SelectItem>
-          ))}
+          {Object.entries(lifecycleStatusLabels)
+            .filter(([value]) => value !== 'completed')
+            .map(([value, label]) => (
+              <SelectItem key={value} value={value}>
+                {label}
+              </SelectItem>
+            ))}
         </SelectContent>
       </Select>
     </div>
