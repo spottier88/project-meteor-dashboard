@@ -88,6 +88,10 @@ const Index = () => {
     return localStorage.getItem("projectServiceId") || "all";
   });
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
+  // Toggle pour afficher/masquer les projets terminés (masqués par défaut)
+  const [showCompletedProjects, setShowCompletedProjects] = useState(() => {
+    return localStorage.getItem("showCompletedProjects") === "true";
+  });
 
   useEffect(() => {
     localStorage.setItem("projectViewMode", view);
@@ -120,6 +124,10 @@ const Index = () => {
   useEffect(() => {
     localStorage.setItem("projectServiceId", serviceId);
   }, [serviceId]);
+
+  useEffect(() => {
+    localStorage.setItem("showCompletedProjects", showCompletedProjects.toString());
+  }, [showCompletedProjects]);
 
   // Utilisation du hook optimisé
   const { data: projects, isLoading: isProjectsLoading, refetch: refetchProjects } = useProjectsListView();
@@ -160,6 +168,11 @@ const Index = () => {
   // Appliquer les filtres métier sur tous les projets
   const filteredProjects = useMemo(() => {
     return (projects || []).filter(project => {
+      // Masquer les projets terminés sauf si le toggle est activé
+      if (!showCompletedProjects && project.lifecycle_status === 'completed') {
+        return false;
+      }
+
       if (lifecycleStatus !== 'all' && project.lifecycle_status !== lifecycleStatus) {
         return false;
       }
@@ -252,7 +265,7 @@ const Index = () => {
 
       return true;
     });
-  }, [projects, lifecycleStatus, monitoringLevel, showMyProjectsOnly, userProfile, userMemberships, poleId, directionId, serviceId, searchQuery, selectedTags, projectTagsMap, dashboardRoleFilter, dashboardWeatherFilter, dashboardWithoutReviewFilter]);
+  }, [projects, lifecycleStatus, monitoringLevel, showMyProjectsOnly, showCompletedProjects, userProfile, userMemberships, poleId, directionId, serviceId, searchQuery, selectedTags, projectTagsMap, dashboardRoleFilter, dashboardWeatherFilter, dashboardWithoutReviewFilter]);
 
   // Calcul centralisé des projets visibles (permissions d'accès)
   const { visibleProjects, visibleProjectIds } = useVisibleProjects(filteredProjects);
@@ -344,6 +357,8 @@ const Index = () => {
         onServiceChange={setServiceId}
         selectedTags={selectedTags}
         onTagsChange={setSelectedTags}
+        showCompletedProjects={showCompletedProjects}
+        onShowCompletedToggle={setShowCompletedProjects}
         dashboardRoleFilter={dashboardRoleFilter}
         dashboardWeatherFilter={dashboardWeatherFilter}
         dashboardWithoutReviewFilter={dashboardWithoutReviewFilter}
