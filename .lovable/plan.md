@@ -1,46 +1,52 @@
 
 
-# Masquer par défaut les projets terminés — Plan d'implémentation
+# Réponse automatique au feedback après suppression de projet — Plan d'implémentation
 
 ## Objectif
 
-Ajouter un toggle "Afficher les projets terminés" dans la zone de filtres. Par défaut désactivé, les projets au statut `completed` sont masqués. L'utilisateur peut les réafficher en activant le toggle.
+Lorsqu'un administrateur supprime un projet depuis le `DeleteProjectFromFeedbackDialog`, l'application crée automatiquement une notification de réponse au feedback pour informer l'utilisateur demandeur que la suppression a été effectuée.
+
+## Principe
+
+Réutiliser exactement la même logique que `FeedbackResponseForm.handleSubmit` (création notification + cible + user_notification), mais de manière automatique après chaque suppression réussie, avec un message pré-rédigé.
 
 ## Fichiers impactés
 
 | Fichier | Modification |
 |---|---|
-| `src/pages/Index.tsx` | Nouvel état `showCompletedProjects` (défaut `false`), persisté en localStorage. Ajout du filtre dans le `useMemo` de `filteredProjects`. Passage de la prop à `ProjectFilters`. |
-| `src/components/project/ProjectFilters.tsx` | Nouvelle prop `showCompletedProjects` + `onShowCompletedToggle`. Affichage d'un toggle Switch dans la zone de filtres (à côté de "Mes projets"). Badge "Projets terminés masqués" quand le toggle est désactivé. Prise en compte dans `handleResetFilters` (remet à `false`) et dans le compteur `activeFiltersCount`. |
+| `src/components/notifications/NotificationList.tsx` | Passer le feedback complet (notification) au `DeleteProjectFromFeedbackDialog` au lieu du seul `feedbackContent` |
+| `src/components/notifications/DeleteProjectFromFeedbackDialog.tsx` | Recevoir le feedback complet. Après chaque suppression réussie, créer automatiquement une réponse ciblée à l'utilisateur demandeur |
 
 ## Détail technique
 
-### 1. `Index.tsx` — État et filtrage
+### 1. `NotificationList.tsx`
 
-```ts
-// Nouvel état, défaut false
-const [showCompletedProjects, setShowCompletedProjects] = useState(() => {
-  return localStorage.getItem("showCompletedProjects") === "true";
-});
+- Stocker la notification complète au lieu du seul `content` :
+  ```ts
+  const [deleteProjectFeedback, setDeleteProjectFeedback] = useState<NotificationWithProfile | null>(null);
+  ```
+- Passer `feedback={deleteProjectFeedback}` au composant.
 
-// Persistance localStorage
-useEffect(() => {
-  localStorage.setItem("showCompletedProjects", showCompletedProjects.toString());
-}, [showCompletedProjects]);
+### 2. `DeleteProjectFromFeedbackDialog.tsx`
 
-// Dans le useMemo filteredProjects, ajouter en premier :
-if (!showCompletedProjects && project.lifecycle_status === 'completed') {
-  return false;
-}
-```
+- Changer la prop `feedbackContent: string` en `feedback: Notification` (le type existant).
+- Extraire `feedbackContent` depuis `feedback.content` pour le parsing des IDs.
+- Dans `handleDeleteProject`, après la suppression réussie, ajouter une fonction `sendAutoResponse` qui :
+  1. Crée une notification avec titre `Réponse à votre demande: {feedback.title}` et contenu indiquant que le projet "{projectTitle}" a été supprimé.
+  2. Crée un `notification_target` de type `specific`.
+  3. Crée un `notification_target_users` ciblant `feedback.created_by`.
+  4. Crée un `user_notifications` pour que l'utilisateur voie la réponse.
+- La réponse automatique n'est envoyée qu'une seule fois à la fermeture du dialogue (ou après chaque suppression individuelle — à la fermeture est préférable pour regrouper les noms de projets supprimés dans un seul message).
 
-### 2. `ProjectFilters.tsx` — Toggle UI
+### 3. Comportement choisi : réponse groupée à la fermeture
 
-Ajout d'un Switch avec label "Afficher les projets terminés" dans la grille de filtres, à côté du toggle "Mes projets". Le badge dans la barre affichera "Terminés masqués" quand le filtre est actif (toggle désactivé). La réinitialisation remet le toggle à `false`.
+- Collecter les noms des projets supprimés dans un état local.
+- À la fermeture du dialogue (`handleClose`), si au moins un projet a été supprimé, envoyer une unique réponse automatique listant tous les projets supprimés.
+- Contenu type : `Votre demande de suppression a été traitée. Les projets suivants ont été supprimés : Projet A, Projet B.`
 
 ## Ce qui ne change pas
 
-- Le filtre `LifecycleStatusFilter` existant (par statut spécifique) reste intact et indépendant
-- Les portefeuilles, le dashboard, le panier, et toutes les autres vues ne sont pas impactés
-- La logique de permissions (`useVisibleProjects`) n'est pas modifiée
+- Le `FeedbackResponseForm` (réponse manuelle) reste intact et indépendant.
+- Les autres fonctionnalités de notification ne sont pas impactées.
+- La logique de parsing des IDs et de suppression Supabase reste identique.
 
