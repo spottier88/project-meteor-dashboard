@@ -2,10 +2,11 @@
  * @component DeleteProjectFromFeedbackDialog
  * @description Modale de suppression de projet(s) à partir d'un feedback de type suppression.
  * Parse le contenu du feedback pour extraire les IDs de projets, puis propose leur suppression
- * un par un via le DeleteProjectDialog existant.
+ * un par un. À la fermeture, envoie automatiquement une réponse groupée au demandeur
+ * listant les projets supprimés.
  */
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Trash2, CheckCircle2 } from "lucide-react";
 import {
@@ -18,12 +19,14 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { Notification } from "@/types/notification";
+import { useUser } from "@/contexts/AuthContext";
 
 interface DeleteProjectFromFeedbackDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  /** Contenu brut du feedback */
-  feedbackContent: string;
+  /** Feedback complet (notification) contenant les IDs de projets */
+  feedback: Notification | null;
 }
 
 /**
@@ -41,13 +44,17 @@ function parseProjectIds(content: string): string[] {
 export function DeleteProjectFromFeedbackDialog({
   open,
   onOpenChange,
-  feedbackContent,
+  feedback,
 }: DeleteProjectFromFeedbackDialogProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const user = useUser();
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [deletedIds, setDeletedIds] = useState<Set<string>>(new Set());
+  /** Noms des projets supprimés, pour la réponse automatique */
+  const deletedTitlesRef = useRef<string[]>([]);
 
+  const feedbackContent = feedback?.content ?? "";
   const projectIds = useMemo(() => parseProjectIds(feedbackContent), [feedbackContent]);
 
   /** Récupérer les projets correspondants aux IDs */
@@ -65,14 +72,92 @@ export function DeleteProjectFromFeedbackDialog({
     enabled: open && projectIds.length > 0,
   });
 
+  /**
+   * Envoyer une réponse automatique groupée au demandeur du feedback.
+   * Réutilise la même logique que FeedbackResponseForm.
+   */
+  const sendAutoResponse = async (deletedProjectTitles: string[]) => {
+    if (!feedback?.created_by || !user || deletedProjectTitles.length === 0) return;
+
+    try {
+      const responseTitle = `Réponse à votre demande: ${feedback.title}`;
+      const responseContent = `Votre demande de suppression a été traitée.\n\nLes projets suivants ont été supprimés :\n- ${deletedProjectTitles.join("\n- ")}`;
+
+      // 1. Créer la notification de réponse
+      const { data: notificationData, error: notificationError } = await supabase
+        .from("notifications")
+        .insert({
+          title: responseTitle,
+          content: responseContent,
+          type: "user",
+          publication_date: new Date().toISOString(),
+          published: true,
+          created_by: user.id,
+          required: false,
+        })
+        .select("id")
+        .single();
+
+      if (notificationError) throw notificationError;
+
+      // 2. Créer une cible de notification spécifique
+      const { data: targetData, error: targetError } = await supabase
+        .from("notification_targets")
+        .insert({
+          notification_id: notificationData.id,
+          target_type: "specific",
+        })
+        .select("id")
+        .single();
+
+      if (targetError) throw targetError;
+
+      // 3. Associer cette cible à l'utilisateur demandeur
+      const { error: targetUserError } = await supabase
+        .from("notification_target_users")
+        .insert({
+          notification_target_id: targetData.id,
+          user_id: feedback.created_by,
+        });
+
+      if (targetUserError) throw targetUserError;
+
+      // 4. Créer l'entrée user_notifications pour que l'utilisateur voie la réponse
+      const { error: userNotificationError } = await supabase
+        .from("user_notifications")
+        .insert({
+          notification_id: notificationData.id,
+          user_id: feedback.created_by,
+          read_at: null,
+        });
+
+      if (userNotificationError) throw userNotificationError;
+
+      // Rafraîchir les notifications
+      await queryClient.invalidateQueries({ queryKey: ["notifications"] });
+    } catch (error) {
+      console.error("Erreur lors de l'envoi de la réponse automatique:", error);
+      toast({
+        title: "Avertissement",
+        description: "Les projets ont été supprimés mais la réponse automatique au feedback n'a pas pu être envoyée.",
+        variant: "destructive",
+      });
+    }
+  };
+
   /** Supprimer un projet */
   const handleDeleteProject = async (projectId: string) => {
     setDeletingId(projectId);
     try {
+      // Trouver le titre du projet pour la réponse automatique
+      const projectTitle = projects?.find((p) => p.id === projectId)?.title ?? projectId;
+
       const { error } = await supabase.from("projects").delete().eq("id", projectId);
       if (error) throw error;
 
       setDeletedIds((prev) => new Set(prev).add(projectId));
+      deletedTitlesRef.current.push(projectTitle);
+
       await queryClient.invalidateQueries({ queryKey: ["projects"] });
       toast({
         title: "Projet supprimé",
@@ -90,8 +175,14 @@ export function DeleteProjectFromFeedbackDialog({
     }
   };
 
-  const handleClose = () => {
+  /** Fermeture du dialogue : envoi de la réponse automatique groupée si nécessaire */
+  const handleClose = async () => {
+    if (deletedTitlesRef.current.length > 0) {
+      await sendAutoResponse(deletedTitlesRef.current);
+    }
+    // Réinitialiser les états
     setDeletedIds(new Set());
+    deletedTitlesRef.current = [];
     onOpenChange(false);
   };
 

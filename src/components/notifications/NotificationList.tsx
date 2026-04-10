@@ -54,7 +54,7 @@ export function NotificationList({ onDelete, typeFilter = "all" }: NotificationL
   const [taskDialogOpen, setTaskDialogOpen] = useState(false);
   const [taskFeedback, setTaskFeedback] = useState<{ title: string; description: string }>({ title: "", description: "" });
   const [deleteProjectDialogOpen, setDeleteProjectDialogOpen] = useState(false);
-  const [deleteProjectContent, setDeleteProjectContent] = useState("");
+  const [deleteProjectFeedback, setDeleteProjectFeedback] = useState<NotificationWithProfile | null>(null);
 
   const { data: notifications, isLoading } = useQuery({
     queryKey: ["notifications"],
@@ -124,7 +124,7 @@ export function NotificationList({ onDelete, typeFilter = "all" }: NotificationL
 
   /** Ouvrir le dialog de suppression de projet depuis un feedback suppression */
   const handleDeleteProject = (notification: NotificationWithProfile) => {
-    setDeleteProjectContent(notification.content);
+    setDeleteProjectFeedback(notification);
     setDeleteProjectDialogOpen(true);
   };
 
@@ -223,7 +223,7 @@ export function NotificationList({ onDelete, typeFilter = "all" }: NotificationL
         <DeleteProjectFromFeedbackDialog
           open={deleteProjectDialogOpen}
           onOpenChange={setDeleteProjectDialogOpen}
-          feedbackContent={deleteProjectContent}
+          feedback={deleteProjectFeedback}
         />
       </>
     );
