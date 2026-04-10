@@ -1,6 +1,7 @@
 
 import { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
+import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -34,6 +35,9 @@ interface ProjectFiltersProps {
   onServiceChange: (value: string) => void;
   selectedTags: string[];
   onTagsChange: (tags: string[]) => void;
+  /** Toggle pour afficher les projets terminés */
+  showCompletedProjects: boolean;
+  onShowCompletedToggle: (checked: boolean) => void;
   /** Filtres one-shot depuis le dashboard */
   dashboardRoleFilter?: string | null;
   dashboardWeatherFilter?: string | null;
@@ -59,6 +63,8 @@ export const ProjectFilters = ({
   onServiceChange,
   selectedTags,
   onTagsChange,
+  showCompletedProjects,
+  onShowCompletedToggle,
   dashboardRoleFilter,
   dashboardWeatherFilter,
   dashboardWithoutReviewFilter,
@@ -81,6 +87,7 @@ export const ProjectFilters = ({
     onLifecycleStatusChange('all');
     onMonitoringLevelChange('all');
     onMyProjectsToggle(false);
+    onShowCompletedToggle(false);
     onPoleChange('all');
     onDirectionChange('all');
     onServiceChange('all');
@@ -115,6 +122,7 @@ export const ProjectFilters = ({
     lifecycleStatus !== 'all',
     monitoringLevel !== 'all',
     showMyProjectsOnly,
+    !showCompletedProjects, // Actif quand les terminés sont masqués (comportement par défaut)
     poleId !== 'all',
     directionId !== 'all',
     serviceId !== 'all',
@@ -161,6 +169,11 @@ export const ProjectFilters = ({
                   {showMyProjectsOnly && (
                     <Badge variant="secondary" className="px-2 py-1 text-xs">
                       Mes projets
+                    </Badge>
+                  )}
+                  {!showCompletedProjects && (
+                    <Badge variant="secondary" className="px-2 py-1 text-xs">
+                      Terminés masqués
                     </Badge>
                   )}
                   {poleId !== 'all' && (
@@ -271,11 +284,22 @@ export const ProjectFilters = ({
             </div>
 
             {/* My Projects Toggle */}
-            <div className="flex items-end">
+            <div className="flex flex-col justify-end gap-3">
               <MyProjectsToggle
                 showMyProjectsOnly={showMyProjectsOnly}
                 onToggle={onMyProjectsToggle}
               />
+              {/* Toggle projets terminés */}
+              <div className="flex items-center space-x-2">
+                <Switch
+                  id="show-completed"
+                  checked={showCompletedProjects}
+                  onCheckedChange={onShowCompletedToggle}
+                />
+                <Label htmlFor="show-completed" className="text-sm cursor-pointer">
+                  Afficher les projets terminés
+                </Label>
+              </div>
             </div>
           </div>
 
