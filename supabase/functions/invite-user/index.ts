@@ -1,3 +1,15 @@
+/**
+ * Edge Function : invite-user
+ * @description Invite un utilisateur dans l'application.
+ * Crée le compte via Supabase Auth, attribue un rôle,
+ * et envoie un email d'invitation via le microservice smtp-api.
+ *
+ * Configuration :
+ * - EDGE_SMTP_API_URL : URL de l'API d'envoi (ex: http://smtp-api:3000/send)
+ * - EDGE_SMTP_API_KEY : Clé API pour l'authentification
+ * - EDGE_SMTP_FROM : Adresse expéditeur
+ * - EDGE_APP_URL : URL de l'application (pour le lien dans l'email)
+ */
 
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.42.0";
@@ -12,12 +24,132 @@ const corsHeaders = {
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
+// Configuration API d'envoi d'email via variables d'environnement
+const SMTP_API_URL = Deno.env.get("EDGE_SMTP_API_URL");
+const SMTP_API_KEY = Deno.env.get("EDGE_SMTP_API_KEY");
+const SMTP_FROM = Deno.env.get("EDGE_SMTP_FROM");
+const APP_URL = Deno.env.get("EDGE_APP_URL") || "https://meteor.app";
+
 interface InviteUserBody {
   email: string;
   firstName?: string;
   lastName?: string;
   role: UserRole;
   projectId?: string; // ID du projet pour l'ajout automatique
+}
+
+// Interface pour la réponse de l'API smtp-api
+interface SmtpApiResponse {
+  status?: string;
+  error?: string;
+}
+
+/**
+ * Envoie un email via l'API HTTP smtp-api
+ */
+async function sendEmailViaApi(params: {
+  from: string;
+  to: string;
+  subject: string;
+  html: string;
+  text?: string;
+}): Promise<void> {
+  console.log(`[invite-user] Appel API smtp-api pour ${params.to}...`);
+
+  const response = await fetch(SMTP_API_URL!, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "x-api-key": SMTP_API_KEY!,
+    },
+    body: JSON.stringify({
+      from: params.from,
+      to: params.to,
+      subject: params.subject,
+      html: params.html,
+      text: params.text || "",
+    }),
+  });
+
+  const result: SmtpApiResponse = await response.json();
+
+  if (!response.ok || result.error) {
+    throw new Error(result.error || `Erreur API smtp-api: ${response.status}`);
+  }
+
+  console.log(`[invite-user] Email envoyé via API à ${params.to}`);
+}
+
+/**
+ * Construit le contenu HTML de l'email d'invitation
+ */
+function buildInvitationEmailHtml(params: {
+  firstName?: string;
+  lastName?: string;
+  actionLink: string;
+}): string {
+  const displayName = [params.firstName, params.lastName].filter(Boolean).join(" ") || "Utilisateur";
+
+  return `
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Invitation - Meteor</title>
+</head>
+<body style="margin:0;padding:0;background-color:#f4f4f5;font-family:Arial,Helvetica,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#f4f4f5;padding:40px 0;">
+    <tr>
+      <td align="center">
+        <table width="600" cellpadding="0" cellspacing="0" style="background-color:#ffffff;border-radius:8px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.08);">
+          <!-- En-tête -->
+          <tr>
+            <td style="background-color:#1e40af;padding:32px;text-align:center;">
+              <h1 style="margin:0;color:#ffffff;font-size:24px;">Meteor</h1>
+            </td>
+          </tr>
+          <!-- Contenu -->
+          <tr>
+            <td style="padding:32px;">
+              <h2 style="margin:0 0 16px;color:#1e293b;font-size:20px;">Bonjour ${displayName},</h2>
+              <p style="margin:0 0 16px;color:#475569;font-size:16px;line-height:1.5;">
+                Vous avez été invité(e) à rejoindre l'application <strong>Meteor</strong>.
+              </p>
+              <p style="margin:0 0 24px;color:#475569;font-size:16px;line-height:1.5;">
+                Cliquez sur le bouton ci-dessous pour accéder à votre compte :
+              </p>
+              <!-- Bouton CTA -->
+              <table width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td align="center">
+                    <a href="${params.actionLink}" 
+                       style="display:inline-block;background-color:#1e40af;color:#ffffff;text-decoration:none;padding:14px 32px;border-radius:6px;font-size:16px;font-weight:bold;">
+                      Accéder à Meteor
+                    </a>
+                  </td>
+                </tr>
+              </table>
+              <p style="margin:24px 0 0;color:#94a3b8;font-size:13px;line-height:1.5;">
+                Si le bouton ne fonctionne pas, copiez-collez ce lien dans votre navigateur&nbsp;:<br>
+                <a href="${params.actionLink}" style="color:#1e40af;word-break:break-all;">${params.actionLink}</a>
+              </p>
+            </td>
+          </tr>
+          <!-- Pied de page -->
+          <tr>
+            <td style="background-color:#f8fafc;padding:20px 32px;text-align:center;">
+              <p style="margin:0;color:#94a3b8;font-size:12px;">
+                Cet email a été envoyé automatiquement par Meteor.
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`;
 }
 
 const handler = async (req: Request): Promise<Response> => {
@@ -155,14 +287,39 @@ const handler = async (req: Request): Promise<Response> => {
       }
     }
 
-    // Envoyer un email de réinitialisation de mot de passe
-    const { error: resetError } = await supabase.auth.admin.generateLink({
+    // Générer un magic link pour l'invitation
+    const { data: linkData, error: linkError } = await supabase.auth.admin.generateLink({
       type: "magiclink",
       email,
+      options: {
+        redirectTo: APP_URL,
+      },
     });
 
-    if (resetError) {
-      throw resetError;
+    if (linkError) {
+      throw linkError;
+    }
+
+    // Extraire le lien d'action depuis la réponse
+    const actionLink = linkData?.properties?.action_link || APP_URL;
+
+    // Envoyer l'email d'invitation via le microservice smtp-api
+    if (SMTP_API_URL && SMTP_API_KEY && SMTP_FROM) {
+      const htmlContent = buildInvitationEmailHtml({
+        firstName,
+        lastName,
+        actionLink,
+      });
+
+      await sendEmailViaApi({
+        from: SMTP_FROM,
+        to: email,
+        subject: "Invitation à rejoindre Meteor",
+        html: htmlContent,
+        text: `Bonjour ${[firstName, lastName].filter(Boolean).join(" ") || "Utilisateur"}, vous avez été invité(e) à rejoindre Meteor. Accédez à votre compte via ce lien : ${actionLink}`,
+      });
+    } else {
+      console.warn("[invite-user] Configuration smtp-api manquante — email d'invitation non envoyé");
     }
 
     return new Response(JSON.stringify({ success: true, user: authUser.user }), {
