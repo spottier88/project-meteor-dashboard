@@ -1,6 +1,8 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+//import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { createClient } from "npm:@supabase/supabase-js@2";
+
 
 // Définition des headers CORS
 const corsHeaders = {
@@ -10,7 +12,7 @@ const corsHeaders = {
 
 // Templates de secours par défaut pour les sections de note de cadrage
 // Alignés avec les champs du formulaire ProjectFormStep4
-const fallbackTemplates: Record<string, Record<string, string>> = {
+const fallbackTemplates = {
   framework_note: {
     general: `Vous êtes un assistant spécialisé dans la rédaction de notes de cadrage de projets. Votre mission est de générer une note de cadrage complète et professionnelle en vous basant sur les informations fournies par l'utilisateur.
     
@@ -438,12 +440,12 @@ serve(async (req) => {
           },
         }
       );
-    } catch (openaiError: unknown) {
+    } catch (openaiError) {
       console.error('Erreur lors de l\'appel à l\'API OpenAI:', openaiError);
       return new Response(
         JSON.stringify({ 
           error: 'Erreur lors de l\'appel à l\'API OpenAI', 
-          details: openaiError instanceof Error ? openaiError.message : 'Erreur inconnue'
+          details: openaiError.message || 'Erreur inconnue'
         }),
         { 
           status: 500, 
@@ -451,13 +453,13 @@ serve(async (req) => {
         }
       );
     }
-  } catch (error: unknown) {
+  } catch (error) {
     console.error('Erreur lors du traitement de la requête:', error);
     
     return new Response(
       JSON.stringify({
         error: 'Erreur serveur',
-        details: error instanceof Error ? error.message : 'Une erreur est survenue lors du traitement de la requête',
+        details: error.message || 'Une erreur est survenue lors du traitement de la requête',
       }),
       {
         status: 500,
