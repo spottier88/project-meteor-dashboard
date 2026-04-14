@@ -62,13 +62,13 @@ serve(async (req) => {
         },
       }
     );
-  } catch (error: unknown) {
+  } catch (error) {
     console.error('Erreur lors du test de connexion:', error);
     
     return new Response(
       JSON.stringify({
         success: false,
-        message: error instanceof Error ? error.message : 'Une erreur est survenue lors du test de connexion',
+        message: error.message || 'Une erreur est survenue lors du test de connexion',
       }),
       {
         status: 400,
