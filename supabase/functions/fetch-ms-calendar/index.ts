@@ -1,6 +1,7 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1'
+//import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1'
+import { createClient } from "npm:@supabase/supabase-js@2.7.1";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -131,10 +132,10 @@ serve(async (req) => {
         status: 200,
       },
     )
-  } catch (error: unknown) {
-    console.error('❌ Erreur:', error instanceof Error ? error.message : 'Unknown error')
+  } catch (error) {
+    console.error('❌ Erreur:', error.message)
     return new Response(
-      JSON.stringify({ error: error instanceof Error ? error.message : 'Unknown error' }),
+      JSON.stringify({ error: error.message }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 500,

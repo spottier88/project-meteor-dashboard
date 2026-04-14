@@ -1,6 +1,7 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.38.0';
+//import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.38.0';
+import { createClient } from "npm:@supabase/supabase-js@2.38.0";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -26,7 +27,7 @@ serve(async (req) => {
       throw new Error('Calendar URL is required');
     }
 
-    // Pas de console.log ici, c'est une fonction serverless
+    console.log('Fetching calendar from:', calendarUrl);
     
     const response = await fetch(calendarUrl);
     
@@ -35,6 +36,7 @@ serve(async (req) => {
     }
     
     const icsData = await response.text();
+    console.log('Calendar data fetched successfully');
 
     return new Response(JSON.stringify({ icsData }), {
       headers: { 
@@ -43,9 +45,9 @@ serve(async (req) => {
       },
     });
 
-  } catch (error: unknown) {
-    // On garde un message d'erreur minimal pour le débogage
-    return new Response(JSON.stringify({ error: error instanceof Error ? error.message : 'Unknown error' }), { 
+  } catch (error) {
+    console.error('Error:', error.message);
+    return new Response(JSON.stringify({ error: error.message }), { 
       status: 400,
       headers: { 
         ...corsHeaders,
