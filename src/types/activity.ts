@@ -1,3 +1,6 @@
+/**
+ * Types pour le système de suivi d'activités par points
+ */
 
 export interface ActivityType {
   id: string;
@@ -8,6 +11,7 @@ export interface ActivityType {
   display_order: number;
 }
 
+// Interfaces conservées pour l'import calendrier Microsoft
 export interface CalendarEvent {
   id: string;
   title: string;
@@ -18,54 +22,11 @@ export interface CalendarEvent {
   selected: boolean;
   projectId?: string;
   activityType?: string;
-  projectCode?: string; // Code projet extrait de la description
-  activityTypeCode?: string; // Code type d'activité extrait de la description
+  projectCode?: string;
+  activityTypeCode?: string;
 }
 
-export interface Activity {
-  id: string;
-  user_id: string;
-  project_id?: string; // Maintenant optionnel
-  activity_type: string;
-  description?: string;
-  start_time: string;
-  duration_minutes: number;
-  created_at: string;
-}
-
-export interface ActivityWithDetails extends Activity {
-  project_title?: string; // Maintenant optionnel
-  activity_type_label: string;
-  activity_type_color: string;
-}
-
-// Interface pour la saisie en masse d'activités
-export interface BulkActivityEntry {
-  id: string; // ID temporaire pour gérer les lignes dans l'UI
-  project_id?: string; // Maintenant optionnel
-  activity_type: string;
-  description: string;
-  duration_minutes: number;
-  start_time: string;
-  isValid?: boolean;
-}
-
-// Nouvelles interfaces pour les permissions des types d'activités
-export interface ActivityTypePermission {
-  id: string;
-  activity_type_code: string;
-  entity_type: 'pole' | 'direction' | 'service';
-  entity_id: string;
-  created_at: string;
-}
-
-export interface HierarchyEntity {
-  id: string;
-  name: string;
-  selected?: boolean;
-}
-
-// Interface pour le nouveau système de points hebdomadaires
+// Interface pour le système de points hebdomadaires
 export interface ActivityPoint {
   id: string;
   user_id: string;
@@ -78,9 +39,23 @@ export interface ActivityPoint {
   updated_at: string;
 }
 
-// Interface enrichie avec les détails du projet et type d'activité
 export interface ActivityPointWithDetails extends ActivityPoint {
   project_title?: string;
   activity_type_label?: string;
   activity_type_color?: string;
+}
+
+// Permissions des types d'activités
+export interface ActivityTypePermission {
+  id: string;
+  activity_type_code: string;
+  entity_type: 'pole' | 'direction' | 'service';
+  entity_id: string;
+  created_at: string;
+}
+
+export interface HierarchyEntity {
+  id: string;
+  name: string;
+  selected?: boolean;
 }

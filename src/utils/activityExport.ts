@@ -1,30 +1,9 @@
 /**
- * Utilitaire d'export des activités et tâches au format Excel via ExcelJS
+ * Utilitaire d'export des tâches au format Excel via ExcelJS
  */
 import { format } from "date-fns";
 import ExcelJS from 'exceljs';
 import { downloadWorkbook, addJsonSheet } from './excelDownload';
-
-/**
- * Exporte les activités au format Excel
- */
-export const exportActivitiesToExcel = async (activities: any[], periodStart: Date) => {
-  if (!activities) return;
-
-  const exportData = activities.map(activity => ({
-    'Date': format(new Date(activity.start_time), 'dd/MM/yyyy'),
-    'Utilisateur': activity.profiles ? `${activity.profiles.first_name} ${activity.profiles.last_name}` : 'N/A',
-    'Projet': activity.projects?.title || 'N/A',
-    'Type d\'activité': activity.activity_type,
-    'Durée (heures)': Math.round((activity.duration_minutes / 60) * 100) / 100,
-    'Description': activity.description || ''
-  }));
-
-  const wb = new ExcelJS.Workbook();
-  addJsonSheet(wb, "Activités", exportData, [12, 30, 30, 15, 15, 50]);
-
-  await downloadWorkbook(wb, `activites_${format(periodStart, 'yyyy-MM-dd')}.xlsx`);
-};
 
 /**
  * Exporte les tâches d'un projet au format Excel
