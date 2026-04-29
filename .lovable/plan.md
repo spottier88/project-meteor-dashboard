@@ -1,97 +1,70 @@
 
+# Mise à jour de @xmldom/xmldom (0.9.8 → 0.9.10)
 
-# Refonte du suivi d'activités — Plan d'implémentation
+## Constat
 
-## Résumé
+La bibliothèque concernée est **`@xmldom/xmldom`** (le successeur officiel maintenu de l'ancien package `xmldom`, déprécié depuis 2021). Elle est bien présente dans le projet :
 
-Supprimer l'ancien système de suivi horaire, simplifier la navigation (suppression des onglets redondants), rendre la saisie de points plus directe et le dashboard plus lisible, tout en conservant l'import calendrier Microsoft et les deux granularités (hebdomadaire/quotidienne).
-
-## Architecture cible
+- **Version actuelle installée** : `0.9.8` (visible dans `bun.lock` et `package-lock.json`)
+- **Version cible** : `0.9.10` (publiée le 18 avril 2026)
+- **Présence dans le code applicatif** : aucune. `rg "xmldom"` ne renvoie aucun résultat dans `src/`.
+- **Origine** : dépendance **transitive** introduite par **`docxtemplater@3.68.3`**, qui déclare `"@xmldom/xmldom": "^0.9.8"`.
 
 ```text
-/activities (utilisateur)
-┌─────────────────────────────────────────────┐
-│  En-tête : "Mes activités" + nav semaine    │
-│  Barre quota : [████████░░] 7/10 points     │
-├────────────┬────────────────────────────────┤
-│ Vue semaine│  Vue jour (toggle)             │
-│ (défaut)   │                                │
-├────────────┴────────────────────────────────┤
-│  Saisie inline (tableau éditable)           │
-│  + Boutons : Saisie rapide / Import cal.    │
-├─────────────────────────────────────────────┤
-│  Graphiques : répartition + tendance 6 sem  │
-│  (intégrés dans la même page, pas un onglet)│
-└─────────────────────────────────────────────┘
-
-/team-activities (manager)
-┌─────────────────────────────────────────────┐
-│  En-tête : "Activités équipe" + nav semaine │
-│  Filtres : utilisateur / projet / type      │
-├─────────────────────────────────────────────┤
-│  KPIs : total / contributeurs / moyenne     │
-├─────────────────────────────────────────────┤
-│  Graphiques unifiés                         │
-└─────────────────────────────────────────────┘
+docxtemplater 3.68.3
+└── @xmldom/xmldom ^0.9.8   ← satisfait par 0.9.10 (semver compatible)
 ```
 
-## Étapes d'implémentation
+## Où docxtemplater est utilisé
 
-### 1. Corriger l'erreur de build existante
-- **`supabase/functions/api-gateway/index.ts` ligne 483** : caster `error` en `(error as Error).message` pour résoudre le TS18046.
+Une seule chaîne d'utilisation, l'export DOCX du cadrage projet :
 
-### 2. Supprimer l'ancien système de suivi horaire
-**Composants supprimés** (plus aucune référence) :
-- `ActivityEntry.tsx`, `QuickActivityForm.tsx` (formulaire heures)
-- `BulkActivityEntry.tsx`, `BulkActivityTable.tsx` (saisie en masse heures)
-- `ActivityList.tsx`, `ActivityChart.tsx`, `ActivityTypeChart.tsx`, `ProjectTimeChart.tsx` (graphiques heures)
-- `ActivityFilters.tsx`, `TeamActivityFilters.tsx`, `TeamActivityHeader.tsx`, `IndividualActivityHeader.tsx`
+- `src/utils/framingMailMerge.ts` — moteur de fusion (mail merge) DOCX
+- `src/components/framing/ProjectFramingExportDOCX.tsx` — bouton d'export
+- `src/components/framing-export-templates/*` — gestion des modèles DOCX
+- `src/utils/templateLinter.ts` — lint des modèles uploadés (utilise `pizzip`, pas xmldom directement)
 
-**Hooks supprimés** :
-- `useActivityData.ts`, `useActivityPeriod.ts`
-- Les utilitaires `activityExport.ts` (si dédiés aux heures)
+Aucun autre composant ne dépend transitivement de xmldom.
 
-**Types nettoyés dans `activity.ts`** : retirer `Activity`, `ActivityWithDetails`, `BulkActivityEntry`, `CalendarEvent` (si plus utilisés).
+## Impacts d'une montée de version
 
-### 3. Refondre la page utilisateur (`ActivityManagement.tsx`)
-**Supprimer les Tabs** (plus de bascule heures/points/dashboard). Une seule vue unifiée :
-- **Section haute** : navigation semaine + barre de quota visuelle (progress bar)
-- **Section saisie** : tableau des points distribués avec suppression inline. Boutons "Ajouter" et "Saisie en masse" et "Import calendrier". Toggle hebdo/quotidien intégré comme sous-vue (pas un onglet séparé).
-- **Section dashboard** : graphiques de répartition et tendance directement en dessous (fusionner `IndividualPointsDashboard` dans la même page au lieu d'un onglet séparé). Filtres projet/type au-dessus des graphiques.
+La montée 0.9.8 → 0.9.10 est un **bump patch** dans la même branche mineure 0.9.x. D'après le changelog public de xmldom :
 
-### 4. Refondre la page manager (`TeamActivities.tsx`)
-**Supprimer les Tabs** (plus d'onglet "Suivi horaire ancien"). Une seule vue :
-- Navigation semaine + filtres (utilisateur, projet, type d'activité)
-- KPIs en cartes (total, contributeurs, moyenne)
-- Graphiques (répartition, tendance, détails par type et par projet)
-- Export Excel
+- **0.9.9** et **0.9.10** : corrections de bugs et durcissements de sécurité (parsing XML / XHTML), aucune rupture d'API documentée.
+- Aucun changement d'API publique consommée par docxtemplater (DOMParser, XMLSerializer).
+- Compatible Node ≥ 14.6 (déjà respecté par le projet).
 
-### 5. Simplifier le formulaire de saisie de points
-- `PointsEntryForm` : réduire les champs obligatoires. Projet et type d'activité en sélecteurs inline, description optionnelle.
-- Rendre la saisie plus rapide : pré-sélection du projet le plus utilisé, raccourcis clavier.
+**Risques fonctionnels attendus** : très faibles.
+- Le parsing XML peut devenir plus strict sur des modèles DOCX malformés. Or `templateLinter.ts` valide déjà les modèles en amont (révisions, balises fragmentées, text-boxes), ce qui réduit le risque.
+- L'export DOCX (cadrage projet) est la seule fonctionnalité utilisateur concernée.
 
-### 6. Conserver et intégrer l'import calendrier
-- Déplacer `CalendarImport` pour qu'il soit accessible directement depuis la page unifiée (bouton dans la section saisie).
-- L'import crée des entrées de points (il faudra vérifier/adapter le mapping événement → points si nécessaire).
+## Comment forcer la mise à jour (la version cible n'étant pas encore exigée par docxtemplater)
 
-## Fichiers impactés
+`docxtemplater@3.68.3` accepte `^0.9.8` donc `0.9.10` est compatible, mais sans intervention bun/npm garderont éventuellement `0.9.8` figé par le lockfile. Deux options :
 
-| Action | Fichiers |
-|---|---|
-| Correction build | `supabase/functions/api-gateway/index.ts` |
-| Refonte majeure | `src/components/activities/ActivityManagement.tsx` |
-| Refonte majeure | `src/pages/TeamActivities.tsx` |
-| Conservés/adaptés | `WeeklyPointsEntry.tsx`, `DailyPointsEntry.tsx`, `BulkPointsEntry.tsx`, `PointsEntryForm.tsx`, `CalendarImport.tsx` |
-| Conservés tels quels | `WeeklyPointsDistribution.tsx`, `PointsVisualization.tsx`, `ActivityTypeDistributionChart.tsx`, `WeeklyTrendChart.tsx`, `ProjectPointsChart.tsx`, `ActivityTypePointsChart.tsx`, `CookieSlider.tsx`, `PointsCookieSlider.tsx` |
-| Supprimés | ~15 composants et ~3 hooks liés au suivi horaire (listés ci-dessus) |
-| Nettoyage types | `src/types/activity.ts` |
+1. **Override dans `package.json`** (recommandé, déclaratif et persistant) :
+   ```json
+   "overrides": {
+     "@xmldom/xmldom": "^0.9.10"
+   },
+   "resolutions": {
+     "@xmldom/xmldom": "^0.9.10"
+   }
+   ```
+   `overrides` est lu par npm, `resolutions` par bun/yarn — on met les deux pour rester compatible avec le double lockfile présent (`bun.lock` + `package-lock.json`).
 
-## Ce qui ne change pas
+2. **Réinstallation simple** : supprimer l'entrée xmldom des lockfiles puis relancer `bun install` — moins fiable car la résolution peut retomber sur 0.9.8.
 
-- Tables Supabase (`activity_points`, `activity_types`, `activity_type_permissions`) : aucune modification de schéma
-- Hooks conservés : `useWeeklyPoints`, `useWeeklyPointsData`, `useWeeklyTrend`, `useActivityPointsQuota`, `useActivityTypes`, `useUserActivityTypePermissions`
-- RLS et permissions
-- La table `activities` (heures) reste en base mais n'est plus utilisée côté front
-- L'import calendrier Microsoft (OAuth) est conservé
-- Le reste de l'application (projets, portefeuilles, etc.)
+L'option 1 sera retenue.
 
+## Plan d'action (à exécuter en mode build)
+
+1. Ajouter les blocs `overrides` et `resolutions` dans `package.json` pour forcer `@xmldom/xmldom@^0.9.10`.
+2. Relancer l'installation pour régénérer les lockfiles.
+3. Vérifier dans `bun.lock` et `package-lock.json` que la version résolue est bien `0.9.10`.
+4. Test fumée manuel à signaler à l'utilisateur : exporter un cadrage projet en DOCX (via `ProjectFramingExportDOCX`) avec un modèle existant pour valider que le rendu reste identique.
+
+## Hors périmètre
+
+- Aucune modification du code applicatif (`src/`) n'est nécessaire.
+- L'erreur de build préexistante sur `src/components/task/TaskGantt.tsx` (`@svar-ui/react-core` introuvable) n'est pas liée à xmldom et sera traitée séparément si besoin.
