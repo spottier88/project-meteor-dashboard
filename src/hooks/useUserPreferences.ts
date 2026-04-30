@@ -116,7 +116,7 @@ export const useUserPreferences = () => {
         description: "Vos préférences ont été mises à jour",
       });
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       console.error("Erreur lors de la mise à jour des préférences:", error);
       
       toast({
@@ -133,9 +133,10 @@ export const useUserPreferences = () => {
   };
 
   // Fonction helper pour obtenir une préférence spécifique avec valeur par défaut
-  const getPreference = (key: keyof UserPreferencesInput, defaultValue: any) => {
+  const getPreference = <T>(key: keyof UserPreferencesInput, defaultValue: T): T => {
     if (!preferences) return defaultValue;
-    return preferences[key] ?? defaultValue;
+    const value = preferences[key];
+    return (value !== undefined && value !== null ? value : defaultValue) as T;
   };
 
   return {

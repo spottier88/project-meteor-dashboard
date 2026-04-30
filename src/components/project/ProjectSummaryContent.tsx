@@ -1,4 +1,21 @@
 import { ProjectStatus, ProgressStatus } from "@/types/project";
+import { ProjectWithExtendedData } from "@/types/project";
+import { Risk } from "@/types/risk";
+import { TaskRecord, ReviewRecord } from "@/types/supabase-models";
+
+interface ProjectMember {
+  id: string;
+  user_id?: string;
+  role?: string;
+  project_id?: string;
+  profiles?: {
+    id?: string;
+    email?: string | null;
+    first_name?: string | null;
+    last_name?: string | null;
+    roles?: string[];
+  } | null;
+}
 import { StatusIcon } from "./StatusIcon";
 import { ProjectMetrics } from "./ProjectMetrics";
 import { LastReview } from "@/components/LastReview";
@@ -21,11 +38,11 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Users, ExternalLink, ClipboardCheck } from "lucide-react";
 interface ProjectSummaryContentProps {
-  project: any;
-  lastReview: any;
+  project: ProjectWithExtendedData;
+  lastReview: ReviewRecord | null;
   previousReview?: { weather: "sunny" | "cloudy" | "stormy" } | null;
-  risks: any[];
-  tasks: any[];
+  risks: Risk[];
+  tasks: TaskRecord[];
   innovationScores?: {
     novateur: number;
     usager: number;
@@ -54,8 +71,8 @@ interface ProjectSummaryContentProps {
     } | null;
   };
   teamManagement?: {
-    project: any;
-    members: any[];
+    project: ProjectWithExtendedData;
+    members: ProjectMember[];
     handleDelete: (id: string, email?: string) => void;
     handlePromoteToSecondaryManager: (id: string, roles: string[], isAdmin: boolean) => void;
     handleDemoteToMember: (id: string) => void;

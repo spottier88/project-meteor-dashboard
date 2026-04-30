@@ -74,7 +74,7 @@ export const exportTeamWeeklyPointsToExcel = async (
   const avgPointsPerUser = uniqueUsers > 0 ? Math.round(totalPoints / uniqueUsers) : 0;
 
   // Lignes de statistiques
-  const emptyRow = { 'Utilisateur': '', 'Email': '', 'Date': '', 'Projet': '', 'Type d\'activité': '', 'Points': null as any, 'Description': '', 'Créé le': '' };
+  const emptyRow: { 'Utilisateur': string; 'Email': string; 'Date': string; 'Projet': string; 'Type d\'activité': string; 'Points': number | null; 'Description': string; 'Créé le': string } = { 'Utilisateur': '', 'Email': '', 'Date': '', 'Projet': '', 'Type d\'activité': '', 'Points': null, 'Description': '', 'Créé le': '' };
   data.push(
     { ...emptyRow },
     { ...emptyRow, 'Utilisateur': 'STATISTIQUES' },
@@ -97,6 +97,14 @@ export const exportUserPointsStats = async (
   points: ActivityPointWithDetails[],
   weekStartDate: Date
 ) => {
+  interface UserStat {
+    name: string;
+    email: string;
+    totalPoints: number;
+    projectCount: Set<string>;
+    activityTypeCount: Set<string>;
+  }
+
   const userStats = points.reduce((acc, point) => {
     const userId = point.user_id;
     if (!acc[userId]) {
@@ -112,9 +120,9 @@ export const exportUserPointsStats = async (
     if (point.project_id) acc[userId].projectCount.add(point.project_id);
     if (point.activity_type) acc[userId].activityTypeCount.add(point.activity_type);
     return acc;
-  }, {} as Record<string, any>);
+  }, {} as Record<string, UserStat>);
 
-  const data = Object.values(userStats).map((stat: any) => ({
+  const data = Object.values(userStats).map((stat: UserStat) => ({
     'Utilisateur': stat.name,
     'Email': stat.email,
     'Total points': stat.totalPoints,

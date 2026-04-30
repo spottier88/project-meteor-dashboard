@@ -27,7 +27,7 @@ export const useRecentProjects = () => {
 
       // Dédupliquer et garder les 5 premiers projets uniques
       const uniqueProjects = new Map();
-      recentPoints?.forEach((point: any) => {
+      recentPoints?.forEach((point) => {
         if (point.projects && !uniqueProjects.has(point.project_id)) {
           uniqueProjects.set(point.project_id, point.projects);
         }

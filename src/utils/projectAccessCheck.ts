@@ -102,7 +102,7 @@ export const willUserStillHaveAccess = async (
       if (managerPaths && managerPaths.length > 0) {
         // Vérifier si l'un des chemins du manager est un préfixe du nouveau chemin du projet
         const hasAccess = managerPaths.some(mp => {
-          const managerPathString = (mp.hierarchy_paths as any)?.path_string;
+          const managerPathString = (mp.hierarchy_paths as { path_string?: string })?.path_string;
           if (!managerPathString) return false;
           return targetPath.path_string.startsWith(managerPathString);
         });

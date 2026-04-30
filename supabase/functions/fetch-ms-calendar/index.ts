@@ -100,16 +100,23 @@ serve(async (req) => {
     const allEvents = await fetchAllEvents(accessToken, start, end);
 
     // Conversion des événements au format attendu par le frontend
-    const events = allEvents.map((event: any) => {
+    interface MsGraphEvent {
+      id: string;
+      subject: string;
+      body?: { content?: string };
+      start: { dateTime: string };
+      end: { dateTime: string };
+    }
+    const events = allEvents.map((event: MsGraphEvent) => {
       // Extraire le contenu du corps de l'événement
       const description = event.body?.content || '';
-      
+
       // Extraire le code projet s'il existe
       const projectCode = extractProjectCode(description);
-      
+
       // Extraire le code du type d'activité s'il existe
       const activityTypeCode = extractActivityTypeCode(description);
-      
+
       return {
         id: event.id,
         title: event.subject,
@@ -132,10 +139,11 @@ serve(async (req) => {
         status: 200,
       },
     )
-  } catch (error) {
-    console.error('❌ Erreur:', error.message)
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    console.error('❌ Erreur:', errorMessage)
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: errorMessage }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 500,

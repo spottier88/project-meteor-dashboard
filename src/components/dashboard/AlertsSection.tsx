@@ -59,7 +59,7 @@ export const AlertsSection = () => {
 
       for (const project of accessibleProjects) {
         let shouldAlert = false;
-        let alertType = "";
+        const alertType = "";
 
         // Vérifier si une revue est nécessaire (plus de 30 jours)
         if (project.last_review_date) {

@@ -6,7 +6,7 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 import { useActivityTypes } from '@/hooks/useActivityTypes';
 
 interface ActivityTypeDistributionChartProps {
-  data: any[];
+  data: Array<{ activity_type?: string | null; points: number }>;
 }
 
 export const ActivityTypeDistributionChart = ({ data }: ActivityTypeDistributionChartProps) => {

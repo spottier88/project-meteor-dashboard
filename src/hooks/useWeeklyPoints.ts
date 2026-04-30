@@ -53,7 +53,7 @@ export const useWeeklyPoints = (userId: string, weekStartDate: Date) => {
         })
       );
 
-      return enrichedData as any[];
+      return enrichedData as ActivityPoint[];
     },
     enabled: !!userId,
   });

@@ -18,8 +18,20 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
+interface TeamMemberData {
+  id: string;
+  user_id?: string;
+  role?: string;
+  profiles?: {
+    id?: string;
+    email?: string | null;
+    first_name?: string | null;
+    last_name?: string | null;
+  } | null;
+}
+
 interface TeamMemberProps {
-  member: any;
+  member: TeamMemberData;
   isProjectManager: boolean;
   isSecondaryManager: boolean;
   userRoles: string[];

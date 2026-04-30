@@ -37,7 +37,7 @@ export interface FrameworkNoteCollection {
 export interface ProjectFrameworkNote {
   id: string;
   project_id: string;
-  content: Record<string, any>; // JSON content
+  content: Record<string, unknown>; // JSON content
   version: number;
   status: FrameworkNoteStatus;
   created_by: string | null;

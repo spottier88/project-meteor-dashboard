@@ -27,7 +27,7 @@ export const logger = {
   /**
    * Log de niveau debug (uniquement en développement)
    */
-  debug: (message: string, group?: string, ...args: any[]) => {
+  debug: (message: string, group?: string, ...args: unknown[]) => {
     if (shouldLog('debug', group)) {
       console.debug(`[DEBUG]${group ? ` [${group}]` : ''} ${message}`, ...args);
     }
@@ -36,7 +36,7 @@ export const logger = {
   /**
    * Log de niveau info (uniquement en développement)
    */
-  info: (message: string, group?: string, ...args: any[]) => {
+  info: (message: string, group?: string, ...args: unknown[]) => {
     if (shouldLog('info', group)) {
       console.info(`[INFO]${group ? ` [${group}]` : ''} ${message}`, ...args);
     }
@@ -45,7 +45,7 @@ export const logger = {
   /**
    * Log de niveau warn (dev & prod)
    */
-  warn: (message: string, group?: string, ...args: any[]) => {
+  warn: (message: string, group?: string, ...args: unknown[]) => {
     if (shouldLog('warn', group)) {
       console.warn(`[WARN]${group ? ` [${group}]` : ''} ${message}`, ...args);
     }
@@ -54,7 +54,7 @@ export const logger = {
   /**
    * Log de niveau error (dev & prod)
    */
-  error: (message: string, group?: string, ...args: any[]) => {
+  error: (message: string, group?: string, ...args: unknown[]) => {
     if (shouldLog('error', group)) {
       console.error(`[ERROR]${group ? ` [${group}]` : ''} ${message}`, ...args);
     }

@@ -15,9 +15,23 @@ import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/components/ui/use-toast";
 
+interface MyTask {
+  id: string;
+  title: string;
+  status: "todo" | "in_progress" | "done";
+  due_date?: string | null;
+  start_date?: string | null;
+  document_url?: string | null;
+  completion_comment?: string | null;
+  projects?: {
+    id: string;
+    title: string;
+  } | null;
+}
+
 interface MyTasksKanbanProps {
-  tasks: any[];
-  onEdit: (task: any) => void;
+  tasks: MyTask[];
+  onEdit: (task: MyTask) => void;
 }
 
 const statusOrder: Array<"todo" | "in_progress" | "done"> = ["todo", "in_progress", "done"];
@@ -53,7 +67,7 @@ export const MyTasksKanban = ({ tasks, onEdit }: MyTasksKanbanProps) => {
   };
 
   // Vérifier si une tâche est en retard
-  const isOverdue = (task: any) => {
+  const isOverdue = (task: MyTask) => {
     if (!task.due_date || task.status === "done") return false;
     const today = new Date();
     today.setHours(0, 0, 0, 0);

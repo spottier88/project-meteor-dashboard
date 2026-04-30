@@ -65,14 +65,26 @@ export const BulkPointsEntry = ({
   const [selectedService, setSelectedService] = useState<string>("all");
 
   const { toast } = useToast();
+
+  interface UserProject {
+    id: string;
+    title: string;
+    pole_id?: string | null;
+    pole_name?: string | null;
+    direction_id?: string | null;
+    direction_name?: string | null;
+    service_id?: string | null;
+    service_name?: string | null;
+  }
+
   const { data: projects, isLoading: isLoadingProjects } = useUserProjects();
   const { data: activityTypes, isLoading: isLoadingTypes } = useActivityTypes(true, true);
 
   // Extraire les entités uniques pour les filtres
   const poles = useMemo(() => {
     if (!projects) return [];
-    const uniquePoles = new Map();
-    projects.forEach((p: any) => {
+    const uniquePoles = new Map<string, string>();
+    (projects as UserProject[]).forEach((p) => {
       if (p.pole_id && p.pole_name) {
         uniquePoles.set(p.pole_id, p.pole_name);
       }
@@ -82,8 +94,8 @@ export const BulkPointsEntry = ({
 
   const directions = useMemo(() => {
     if (!projects) return [];
-    const uniqueDirections = new Map();
-    projects.forEach((p: any) => {
+    const uniqueDirections = new Map<string, string>();
+    (projects as UserProject[]).forEach((p) => {
       if (p.direction_id && p.direction_name) {
         uniqueDirections.set(p.direction_id, p.direction_name);
       }
@@ -93,8 +105,8 @@ export const BulkPointsEntry = ({
 
   const services = useMemo(() => {
     if (!projects) return [];
-    const uniqueServices = new Map();
-    projects.forEach((p: any) => {
+    const uniqueServices = new Map<string, string>();
+    (projects as UserProject[]).forEach((p) => {
       if (p.service_id && p.service_name) {
         uniqueServices.set(p.service_id, p.service_name);
       }
@@ -106,7 +118,7 @@ export const BulkPointsEntry = ({
   const filteredProjects = useMemo(() => {
     if (!projects) return [];
 
-    return projects.filter((project: any) => {
+    return (projects as UserProject[]).filter((project) => {
       // Filtre par recherche
       if (searchTerm && !project.title.toLowerCase().includes(searchTerm.toLowerCase())) {
         return false;
@@ -134,7 +146,7 @@ export const BulkPointsEntry = ({
   // Initialiser les entrées à l'ouverture
   useEffect(() => {
     if (open && filteredProjects) {
-      const newEntries: BulkPointEntry[] = filteredProjects.map((project: any) => ({
+      const newEntries: BulkPointEntry[] = (filteredProjects as UserProject[]).map((project) => ({
         id: project.id,
         project_id: project.id,
         project_title: project.title,
@@ -167,7 +179,7 @@ export const BulkPointsEntry = ({
   }, [entries, initialEntries]);
 
   // Mettre à jour une entrée
-  const updateEntry = (id: string, field: string, value: any) => {
+  const updateEntry = (id: string, field: string, value: string | number | undefined) => {
     setEntries((prev) =>
       prev.map((entry) => (entry.id === id ? { ...entry, [field]: value } : entry))
     );
@@ -305,7 +317,7 @@ export const BulkPointsEntry = ({
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">Tous les pôles</SelectItem>
-                    {poles.map((pole: any) => (
+                    {poles.map((pole) => (
                       <SelectItem key={pole.id} value={pole.id}>
                         {pole.name}
                       </SelectItem>
@@ -320,7 +332,7 @@ export const BulkPointsEntry = ({
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">Toutes les directions</SelectItem>
-                    {directions.map((direction: any) => (
+                    {directions.map((direction) => (
                       <SelectItem key={direction.id} value={direction.id}>
                         {direction.name}
                       </SelectItem>
@@ -335,7 +347,7 @@ export const BulkPointsEntry = ({
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">Tous les services</SelectItem>
-                    {services.map((service: any) => (
+                    {services.map((service) => (
                       <SelectItem key={service.id} value={service.id}>
                         {service.name}
                       </SelectItem>

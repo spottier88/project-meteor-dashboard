@@ -38,7 +38,7 @@ interface Task {
 interface KanbanBoardProps {
   projectId: string;
   readOnly?: boolean;
-  onEditTask?: (task: any) => void;
+  onEditTask?: (task: Task) => void;
   isProjectClosed?: boolean; // Prop pour forcer le mode lecture seule si projet clôturé
 }
 
@@ -203,7 +203,7 @@ export const KanbanBoard = ({ projectId, readOnly = false, onEditTask, isProject
     }
   };
 
-  const isTaskOverdue = (task: any) => {
+  const isTaskOverdue = (task: Task) => {
     if (!task.due_date || task.status === "done") return false;
     const today = new Date();
     today.setHours(0, 0, 0, 0);

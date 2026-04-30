@@ -14,11 +14,12 @@ import { ViewMode } from "@/components/ViewToggle";
 import { ProjectGrid } from "@/components/ProjectGrid";
 import { ProjectTable } from "@/components/ProjectTable";
 import { ViewToggle } from "@/components/ViewToggle";
+import { ProjectListItem } from "@/hooks/useProjectsListView";
 
 interface ProjectListProps {
   view: ViewMode;
   onViewChange: (view: ViewMode) => void;
-  projects: any[];
+  projects: ProjectListItem[];
   onProjectEdit: (id: string) => void;
   onProjectReview: (id: string, title: string) => void;
   onViewHistory: (id: string, title: string) => void;

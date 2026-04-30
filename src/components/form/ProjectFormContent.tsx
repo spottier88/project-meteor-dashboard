@@ -5,11 +5,13 @@ import { ProjectFormStep4 } from "./ProjectFormStep4";
 import { ProjectFormStep5 } from "./ProjectFormStep5";
 import { ProjectFormState } from "./useProjectFormState";
 import { AssistedProjectWizard } from "./assisted/AssistedProjectWizard";
+import { UserProfile } from "@/types/user";
+import { ProjectRecord } from "@/types/supabase-models";
 
 interface ProjectFormContentProps {
   formState: ProjectFormState;
-  projectManagers?: any[];
-  project?: any;
+  projectManagers?: UserProfile[];
+  project?: ProjectRecord;
   isEditMode: boolean;
   canEditOrganization: boolean;
   onOpenProfile: () => void;

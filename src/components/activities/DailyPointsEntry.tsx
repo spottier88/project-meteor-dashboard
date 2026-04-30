@@ -6,7 +6,7 @@ import { useState, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { DailyPointsCalendar } from "./DailyPointsCalendar";
-import { PointsEntryForm } from "./PointsEntryForm";
+import { PointsEntryForm, PointsEntryFormValues } from "./PointsEntryForm";
 import { useActivityPointsQuota } from "@/hooks/useActivityPointsQuota";
 import { useWeeklyPoints } from "@/hooks/useWeeklyPoints";
 import { useUser } from "@/contexts/AuthContext";
@@ -55,7 +55,7 @@ export const DailyPointsEntry = ({
     setShowForm(true);
   };
 
-  const handleAddPoints = (data: any) => {
+  const handleAddPoints = (data: PointsEntryFormValues) => {
     addPoints({
       ...data,
       user_id: user?.id || "",

@@ -84,7 +84,7 @@ const mapProjectsToSvarFormat = (
       });
 
       sortedTasks.forEach(task => {
-        let taskStart = task.start_date ? new Date(task.start_date) : new Date(projectStart);
+        const taskStart = task.start_date ? new Date(task.start_date) : new Date(projectStart);
         let taskEnd = task.due_date ? new Date(task.due_date) : new Date(taskStart);
         if (taskEnd <= taskStart) {
           taskEnd = new Date(taskStart);

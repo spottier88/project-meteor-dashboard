@@ -17,6 +17,7 @@ import { useToast } from '@/hooks/use-toast';
 import { MicrosoftAuthStep } from './calendar-steps/MicrosoftAuthStep';
 import { DateSelectionStep } from './calendar-steps/DateSelectionStep';
 import { logger } from '@/utils/logger';
+import { CalendarEvent } from '@/types/activity';
 
 enum ImportStep {
   AUTH,
@@ -140,7 +141,7 @@ export const CalendarImport = () => {
     );
   };
 
-  const handleImport = (selectedEvents: any[]) => {
+  const handleImport = (selectedEvents: CalendarEvent[]) => {
     if (selectedEvents.length === 0) {
       toast({
         title: "Sélection vide",

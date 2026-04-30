@@ -63,8 +63,8 @@ export const useBulkRoleAssignment = () => {
             result.success++;
           }
         }
-      } catch (err: any) {
-        result.errors.push(`${userId}: ${err.message || "Erreur inconnue"}`);
+      } catch (err: unknown) {
+        result.errors.push(`${userId}: ${err instanceof Error ? err.message : "Erreur inconnue"}`);
       }
       setProgress(Math.round(((i + 1) / userIds.length) * 100));
     }

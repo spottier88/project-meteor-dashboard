@@ -79,7 +79,7 @@ export const useAddProjectToPortfolio = () => {
         description: "Le projet a été ajouté au portefeuille",
       });
     },
-    onError: (error: any) => {
+    onError: (error: Error & { code?: string }) => {
       console.error("Erreur lors de l'ajout au portefeuille:", error);
       // Vérifier si c'est une erreur de doublon
       if (error?.code === "23505") {

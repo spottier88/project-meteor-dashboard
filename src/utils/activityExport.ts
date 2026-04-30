@@ -8,7 +8,18 @@ import { downloadWorkbook, addJsonSheet } from './excelDownload';
 /**
  * Exporte les tâches d'un projet au format Excel
  */
-export const exportTasksToExcel = async (tasks: any[], projectTitle: string) => {
+interface ExportableTask {
+  id?: string | null;
+  title?: string | null;
+  description?: string | null;
+  status?: string | null;
+  assignee?: string | null;
+  start_date?: string | null;
+  due_date?: string | null;
+  parent_task_id?: string | null;
+}
+
+export const exportTasksToExcel = async (tasks: ExportableTask[], projectTitle: string) => {
   if (!tasks || tasks.length === 0) return;
 
   const exportData = tasks.map(task => ({

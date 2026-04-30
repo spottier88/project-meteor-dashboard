@@ -6,10 +6,11 @@ import { createTasksFromTemplate } from "../utils/templateTasks";
 import { supabase } from "@/integrations/supabase/client";
 import { saveInnovationScores, saveMonitoring, saveFraming, savePortfolios } from "@/utils/projectSubmitHelpers";
 import { syncProjectTags } from "@/hooks/useProjectTags";
+import { ProjectRecord, ProjectSubmitCallback } from "@/types/supabase-models";
 
 interface UseProjectSubmitProps {
-  project?: any;
-  onSubmit?: (projectData: any) => Promise<any>;
+  project?: ProjectRecord;
+  onSubmit?: ProjectSubmitCallback;
   onClose: () => void;
   formState: ProjectFormState;
 }
@@ -161,8 +162,9 @@ export const useProjectSubmit = ({
       });
       onClose();
       return true;
-    } catch (error: any) {
-      console.error("Erreur lors de la soumission du projet:", error);
+    } catch (err: unknown) {
+      const error = err as { message?: string };
+      console.error("Erreur lors de la soumission du projet:", err);
       toast({
         title: "Erreur",
         description: error.message || "Une erreur est survenue lors de l'enregistrement",

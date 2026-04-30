@@ -5,9 +5,17 @@
  */
 
 import pptxgen from "pptxgenjs";
-import { pptxStyles, pptxColors, pptxLayout } from "./PPTXStyles";
+import { pptxStyles, pptxColors } from "./PPTXStyles";
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
+
+interface PortfolioProject {
+  title: string;
+  project_manager?: string;
+  status?: string;
+  lifecycle_status?: string;
+  completion?: number;
+}
 
 interface PortfolioData {
   id: string;
@@ -20,7 +28,7 @@ interface PortfolioData {
   status: string | null;
   project_count: number;
   average_completion: number;
-  projects: any[];
+  projects: PortfolioProject[];
   statusStats: {
     sunny: number;
     cloudy: number;
@@ -404,7 +412,7 @@ export const generatePortfolioProjectsSlide = (pptx: pptxgen, portfolioData: Por
   const projectsToShow = portfolioData.projects.slice(0, 12);
   
   // En-têtes du tableau avec format corrigé
-  const tableData: any[][] = [
+  const tableData: pptxgen.TableRow[] = [
     [
       { text: "Projet", options: { bold: true, fill: { color: "F3F4F6" } } },
       { text: "Chef de projet", options: { bold: true, fill: { color: "F3F4F6" } } },

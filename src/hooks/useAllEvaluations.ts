@@ -51,7 +51,7 @@ export const useAllEvaluations = (filters: EvaluationFilters = {}) => {
     queryKey: ["all-evaluations", filters],
     queryFn: async (): Promise<EvaluationWithProject[]> => {
       // Construction de la requête de base avec jointure sur projects
-      let query = supabase
+      const query = supabase
         .from("project_evaluations")
         .select(`
           *,

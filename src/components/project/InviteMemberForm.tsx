@@ -124,11 +124,11 @@ export const InviteMemberForm = ({
       
       resetForm();
       onClose();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Erreur d'ajout:", error);
       toast({
         title: "Erreur",
-        description: error.message || "Une erreur est survenue lors de l'ajout de l'utilisateur",
+        description: error instanceof Error ? error.message : "Une erreur est survenue lors de l'ajout de l'utilisateur",
         variant: "destructive",
       });
     } finally {
@@ -170,11 +170,11 @@ export const InviteMemberForm = ({
 
       resetForm();
       onClose();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Erreur d'invitation:", error);
       toast({
         title: "Erreur",
-        description: error.message || "Une erreur est survenue lors de l'envoi de l'invitation",
+        description: error instanceof Error ? error.message : "Une erreur est survenue lors de l'envoi de l'invitation",
         variant: "destructive",
       });
     } finally {

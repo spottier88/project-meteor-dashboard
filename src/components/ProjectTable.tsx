@@ -54,9 +54,11 @@ export const ProjectTable = ({
   const sortedProjects = useMemo(() => {
     if (!sortKey || !sortDirection) return projects;
     
-    return [...projects].sort((a: any, b: any) => {
-      const aValue = a[sortKey];
-      const bValue = b[sortKey];
+    return [...projects].sort((a: ProjectListItem, b: ProjectListItem) => {
+      const aTyped = a as Record<string, unknown>;
+      const bTyped = b as Record<string, unknown>;
+      const aValue = aTyped[sortKey];
+      const bValue = bTyped[sortKey];
 
       if (aValue === null) return 1;
       if (bValue === null) return -1;

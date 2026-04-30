@@ -22,13 +22,14 @@ import { ProjectFormStep4 } from "../ProjectFormStep4";
 import { ProjectFormStep5 } from "../ProjectFormStep5";
 import { ProjectManagerDialog } from "../ProjectManagerDialog";
 import { UserProfile } from "@/types/user";
+import { ProjectRecord } from "@/types/supabase-models";
 import { Button } from "@/components/ui/button";
 import { ChevronsUpDown, Users } from "lucide-react";
 
 interface AssistedProjectWizardProps {
   formState: ProjectFormState;
   projectManagers?: UserProfile[];
-  project?: any;
+  project?: ProjectRecord;
   isEditMode: boolean;
   isAdmin: boolean;
   isManager: boolean;

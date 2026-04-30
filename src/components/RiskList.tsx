@@ -9,6 +9,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { RiskForm } from "./RiskForm";
 import { RiskCard } from "./risk/RiskCard";
 import { useRiskAccess } from "@/hooks/useRiskAccess";
+import { Risk } from "@/types/risk";
 
 export interface RiskListProps {
   projectId: string;
@@ -18,7 +19,7 @@ export interface RiskListProps {
   isAdmin: boolean;
   isProjectClosed?: boolean; // Prop pour forcer le mode lecture seule si projet clôturé
   onUpdate?: () => void; // Ajout de la propriété onUpdate en option
-  preloadedRisks?: any[]; // Données pré-chargées optionnelles
+  preloadedRisks?: Risk[]; // Données pré-chargées optionnelles
 }
 
 export const RiskList = ({
@@ -34,7 +35,7 @@ export const RiskList = ({
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [isFormOpen, setIsFormOpen] = useState(false);
-  const [selectedRisk, setSelectedRisk] = useState<any>(null);
+  const [selectedRisk, setSelectedRisk] = useState<Risk | null>(null);
   
   // Récupérer les permissions depuis le hook
   const { canCreateRisk: hookCanCreate, canEditRisk: hookCanEdit, canDeleteRisk: hookCanDelete } = useRiskAccess(projectId);
@@ -61,14 +62,14 @@ export const RiskList = ({
 
   const risks = preloadedRisks || queriedRisks;
 
-  const handleEdit = (risk: any) => {
+  const handleEdit = (risk: Risk) => {
     if (canEditRisk) {
       setSelectedRisk(risk);
       setIsFormOpen(true);
     }
   };
 
-  const handleDelete = async (risk: any) => {
+  const handleDelete = async (risk: Risk) => {
     if (!canDeleteRisk) return;
     
     try {

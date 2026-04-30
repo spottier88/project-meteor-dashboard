@@ -17,6 +17,9 @@ import { generateProjectPPTX } from "@/components/pptx/ProjectPPTX";
 import { ProjectData as PPTXProjectData } from "@/components/pptx/types";
 import { ProjectStatus, ProgressStatus, ProjectLifecycleStatus } from "@/types/project";
 import { RiskProbability, RiskSeverity, RiskStatus } from "@/types/risk";
+import { ProjectWithExtendedData } from "@/types/project";
+import { Risk } from "@/types/risk";
+import { TaskRecord } from "@/types/supabase-models";
 import { useDetailedProjectsData, ProjectData } from "@/hooks/useDetailedProjectsData";
 import { Presentation, FileText, Edit, Calendar, CheckCircle, FileCheck, MoreVertical, Star } from "lucide-react";
 import { useFavoriteProjects } from "@/hooks/useFavoriteProjects";
@@ -46,9 +49,9 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 interface ProjectSummaryActionsProps {
-  project: any;
-  risks?: any[];
-  tasks?: any[];
+  project: ProjectWithExtendedData;
+  risks?: Risk[];
+  tasks?: TaskRecord[];
   onEditProject?: () => void;
   onCreateReview?: () => void;
   onClosureComplete?: () => void;
@@ -126,16 +129,22 @@ const ProjectSummaryActions = ({
         `)
         .eq("project_id", projectId);
 
+      interface MemberWithProfile {
+        id: string;
+        user_id: string;
+        role: string;
+        profiles: { id: string; email: string; first_name: string; last_name: string } | null;
+      }
       // Transformer les membres pour l'export
-      const members = (membersData || [])
-        .filter((m: any) => m.profiles)
-        .map((m: any) => ({
+      const members = (membersData as MemberWithProfile[] || [])
+        .filter((m) => m.profiles)
+        .map((m) => ({
           id: m.id,
           user_id: m.user_id,
           role: m.role,
-          first_name: m.profiles.first_name,
-          last_name: m.profiles.last_name,
-          email: m.profiles.email,
+          first_name: m.profiles!.first_name,
+          last_name: m.profiles!.last_name,
+          email: m.profiles!.email,
         }));
 
       return { ...projectData, members } as ProjectData;
@@ -179,19 +188,19 @@ const ProjectSummaryActions = ({
           created_at: detailedProjectData.lastReview?.created_at,
           actions: detailedProjectData.lastReview?.actions || []
         } : undefined,
-        risks: (detailedProjectData.risks || []).map((risk: any) => ({
+        risks: (detailedProjectData.risks || []).map((risk: Risk) => ({
           description: risk.description,
           probability: risk.probability as RiskProbability,
           severity: risk.severity as RiskSeverity,
           status: risk.status as RiskStatus,
           mitigation_plan: risk.mitigation_plan
         })),
-        tasks: (detailedProjectData.tasks || []).map((task: any) => ({
+        tasks: (detailedProjectData.tasks || []).map((task: TaskRecord) => ({
           title: task.title,
-          description: task.description,
+          description: task.description ?? undefined,
           status: task.status as "todo" | "in_progress" | "done",
-          assignee: task.assignee,
-          due_date: task.due_date
+          assignee: task.assignee ?? undefined,
+          due_date: task.due_date ?? undefined
         })),
       };
 
@@ -234,8 +243,9 @@ const ProjectSummaryActions = ({
         const enrichedData = { ...detailedProjectData, framing: framingData || {} };
 
         // Récupérer le template pour connaître le file_path
-        const { data: templateData } = await supabase
-          .from("framing_export_templates" as any)
+        const fromTable = "framing_export_templates";
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const { data: templateData } = await (supabase as any).from(fromTable)
           .select("file_path, title")
           .eq("id", templateId)
           .single();
@@ -243,6 +253,7 @@ const ProjectSummaryActions = ({
         if (!templateData) throw new Error("Modèle introuvable");
 
         const fileName = `Note-cadrage-${project.title || "projet"}.docx`;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         await executeMailMerge((templateData as any).file_path, enrichedData, fileName);
       } else {
         await generateProjectFramingDOCX(detailedProjectData);

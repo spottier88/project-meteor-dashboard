@@ -7,6 +7,17 @@ import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { downloadWorkbook, addArraySheet } from './excelDownload';
 
+interface PortfolioProjectItem {
+  title?: string | null;
+  project_manager?: string | null;
+  status?: string | null;
+  lifecycle_status?: string | null;
+  priority?: string | null;
+  start_date?: string | null;
+  end_date?: string | null;
+  completion?: number | null;
+}
+
 interface PortfolioData {
   id: string;
   name: string;
@@ -18,7 +29,7 @@ interface PortfolioData {
   status: string | null;
   project_count: number;
   average_completion: number;
-  projects: any[];
+  projects: PortfolioProjectItem[];
   statusStats: { sunny: number; cloudy: number; stormy: number };
   lifecycleStats: { study: number; validated: number; in_progress: number; completed: number; suspended: number; abandoned: number };
 }
@@ -71,7 +82,7 @@ export const generatePortfolioExcel = async (portfolioData: PortfolioData) => {
   addArraySheet(wb, 'Statistiques', statusData, [25, 20, 15]);
 
   // Feuille 3 : Liste des projets
-  const projectsRows: any[][] = [
+  const projectsRows: (string | number | null | undefined)[][] = [
     ['Projet', 'Chef de projet', 'Statut', 'Cycle de vie', 'Priorité', 'Date de début', 'Date de fin', 'Avancement (%)'],
     ...portfolioData.projects.map(project => [
       project.title,

@@ -6,11 +6,81 @@ import { format } from 'date-fns';
 import { lifecycleStatusLabels } from '@/types/project';
 import { downloadWorkbook, addJsonSheet, addArraySheet } from './excelDownload';
 
+/** Forme minimale d'un projet tel qu'attendu dans les données d'export */
+interface ExportProject {
+  title?: string | null;
+  code?: string | null;
+  description?: string | null;
+  lifecycle_status: string;
+  completion?: number | null;
+  start_date?: string | null;
+  end_date?: string | null;
+  priority?: string | null;
+  pole_name?: string | null;
+  direction_name?: string | null;
+  service_name?: string | null;
+  project_manager?: string | null;
+  project_manager_name?: string | null;
+  suivi_dgs?: boolean | null;
+  for_entity_type?: string | null;
+  for_entity_name?: string | null;
+}
+
+interface ExportTask {
+  title?: string | null;
+  status?: string | null;
+  start_date?: string | null;
+  due_date?: string | null;
+  assignee?: string | null;
+}
+
+interface ExportRisk {
+  description?: string | null;
+  probability?: string | null;
+  severity?: string | null;
+  status?: string | null;
+  mitigation_plan?: string | null;
+}
+
+interface ExportLastReview {
+  created_at?: string | null;
+  weather?: string | null;
+  progress?: string | null;
+  comment?: string | null;
+}
+
+interface ExportFraming {
+  context?: string | null;
+  objectives?: string | null;
+  governance?: string | null;
+  deliverables?: string | null;
+  stakeholders?: string | null;
+  timeline?: string | null;
+}
+
+interface ExportInnovation {
+  impact?: number | null;
+  usager?: number | null;
+  novateur?: number | null;
+  agilite?: number | null;
+  ouverture?: number | null;
+}
+
+/** Structure complète d'un enregistrement de projet pour l'export */
+interface ProjectExportData {
+  project: ExportProject;
+  lastReview?: ExportLastReview | null;
+  framing?: ExportFraming | null;
+  innovation?: ExportInnovation | null;
+  tasks?: ExportTask[] | null;
+  risks?: ExportRisk[] | null;
+}
+
 /**
  * Exporte les données de projets au format Excel
  * @param projectsData Les données des projets à exporter
  */
-export const exportProjectsToExcel = async (projectsData: any[]) => {
+export const exportProjectsToExcel = async (projectsData: ProjectExportData[]) => {
   if (!projectsData || projectsData.length === 0) return;
 
   const wb = new ExcelJS.Workbook();
@@ -28,7 +98,7 @@ export const exportProjectsToExcel = async (projectsData: any[]) => {
 };
 
 /** Crée l'onglet de sommaire des projets */
-const createSummarySheet = (wb: ExcelJS.Workbook, projectsData: any[]) => {
+const createSummarySheet = (wb: ExcelJS.Workbook, projectsData: ProjectExportData[]) => {
   const summaryData = projectsData.map(data => ({
     'Code': data.project.code || '-',
     'Titre': data.project.title || '',
@@ -47,8 +117,8 @@ const createSummarySheet = (wb: ExcelJS.Workbook, projectsData: any[]) => {
 };
 
 /** Crée un onglet pour un projet spécifique */
-const createProjectSheet = (wb: ExcelJS.Workbook, data: any) => {
-  const projectData: any[][] = [
+const createProjectSheet = (wb: ExcelJS.Workbook, data: ProjectExportData) => {
+  const projectData: (string | number | null | undefined)[][] = [
     ['Informations générales', ''],
     ['Titre', data.project.title || ''],
     ['Code', data.project.code || '-'],
@@ -103,7 +173,7 @@ const createProjectSheet = (wb: ExcelJS.Workbook, data: any) => {
   if (data.tasks && data.tasks.length > 0) {
     projectData.push(['Tâches', '']);
     projectData.push(['Titre', 'Statut', 'Date début', 'Date fin', 'Assigné à']);
-    data.tasks.forEach((task: any) => {
+    data.tasks.forEach((task: ExportTask) => {
       projectData.push([
         task.title || '',
         formatTaskStatus(task.status),
@@ -118,7 +188,7 @@ const createProjectSheet = (wb: ExcelJS.Workbook, data: any) => {
   if (data.risks && data.risks.length > 0) {
     projectData.push(['Risques', '']);
     projectData.push(['Description', 'Probabilité', 'Sévérité', 'Statut', 'Plan d\'atténuation']);
-    data.risks.forEach((risk: any) => {
+    data.risks.forEach((risk: ExportRisk) => {
       projectData.push([
         risk.description || '',
         formatRiskLevel(risk.probability),
@@ -130,18 +200,18 @@ const createProjectSheet = (wb: ExcelJS.Workbook, data: any) => {
     projectData.push(['', '']);
   }
 
-  const sheetName = (data.project.title || 'Projet').replace(/[:\\\/\?\*\[\]]/g, '-').substring(0, 31);
+  const sheetName = (data.project.title || 'Projet').replace(/[:\\/?\*[\]]/g, '-').substring(0, 31); // eslint-disable-line no-useless-escape
   addArraySheet(wb, sheetName, projectData, [25, 60, 15, 15, 20]);
 };
 
 // Fonctions utilitaires de formatage
 
-const formatProjectManager = (project: any): string => {
+const formatProjectManager = (project: ExportProject): string => {
   if (!project.project_manager) return '-';
   return project.project_manager_name || project.project_manager;
 };
 
-const formatOrganization = (project: any): string => {
+const formatOrganization = (project: ExportProject): string => {
   const parts = [];
   if (project.pole_name) parts.push(project.pole_name);
   if (project.direction_name) parts.push(project.direction_name);
@@ -149,7 +219,7 @@ const formatOrganization = (project: any): string => {
   return parts.length > 0 ? parts.join(' / ') : '-';
 };
 
-const formatForEntity = (project: any): string => {
+const formatForEntity = (project: ExportProject): string => {
   if (!project.for_entity_type || !project.for_entity_name) return '-';
   const entityTypeLabels: Record<string, string> = { 'pole': 'Pôle', 'direction': 'Direction', 'service': 'Service' };
   return `${entityTypeLabels[project.for_entity_type] || project.for_entity_type} ${project.for_entity_name}`;

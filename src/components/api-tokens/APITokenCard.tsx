@@ -9,6 +9,15 @@ import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { Calendar, Clock, Key, Trash2, AlertCircle } from "lucide-react";
 
+interface TokenScopes {
+  data_types?: string[];
+  access_level?: string;
+  pole_ids?: string[];
+  direction_ids?: string[];
+  service_ids?: string[];
+  project_ids?: string[];
+}
+
 interface Token {
   id: string;
   name: string;
@@ -16,7 +25,7 @@ interface Token {
   expires_at: string | null;
   last_used_at: string | null;
   is_active: boolean;
-  scopes: any;
+  scopes: TokenScopes | null;
 }
 
 interface APITokenCardProps {
@@ -40,7 +49,7 @@ export function APITokenCard({ token, onRevoked }: APITokenCardProps) {
 
       toast.success("Token révoqué avec succès");
       onRevoked();
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error revoking token:', error);
       toast.error("Erreur lors de la révocation du token");
     } finally {

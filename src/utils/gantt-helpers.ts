@@ -70,7 +70,7 @@ export const mapTasksToSvarFormat = (tasks: RawGanttTask[]): ITask[] => {
 
   return sorted.map(task => {
     // Dates de début et fin avec fallback
-    let start = task.start_date ? new Date(task.start_date) : new Date();
+    const start = task.start_date ? new Date(task.start_date) : new Date();
     let end = task.due_date
       ? new Date(task.due_date)
       : task.end_date

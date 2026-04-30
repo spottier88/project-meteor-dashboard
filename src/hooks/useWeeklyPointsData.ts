@@ -89,15 +89,21 @@ export const useWeeklyPointsData = ({
   });
 };
 
+interface WeeklyChartDayData {
+  day: string;
+  date: string;
+  [activityType: string]: string | number;
+}
+
 /**
  * Traite les données de points pour générer les données de graphique par jour
  */
-export const processWeeklyPointsData = (points: any[], weekStartDate: Date) => {
+export const processWeeklyPointsData = (points: { week_start_date: string; activity_type?: string | null; points: number }[], weekStartDate: Date) => {
   const weekStart = startOfWeek(weekStartDate, { weekStartsOn: 1 });
   const daysInWeek = 7;
 
   // Initialiser les données pour chaque jour de la semaine
-  const chartData: any[] = [];
+  const chartData: WeeklyChartDayData[] = [];
   for (let i = 0; i < daysInWeek; i++) {
     const date = addDays(weekStart, i);
     chartData.push({

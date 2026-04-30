@@ -153,7 +153,7 @@ export const OrganizationFields = ({
   const isLoadingPoles = canAccessAllOrganizations ? isLoadingAllPoles : isLoadingOrganizations;
 
   // Filtrer les directions accessibles en fonction du pôle sélectionné
-  let directions: any[] = [];
+  let directions: { id: string; name: string; pole_id?: string | null }[] = [];
   const isLoadingDirections = canAccessAllOrganizations ? isLoadingAllDirections : isLoadingOrganizations;
   
   if (canAccessAllOrganizations) {
@@ -171,7 +171,7 @@ export const OrganizationFields = ({
   }
 
   // Filtrer les services accessibles en fonction de la direction sélectionnée
-  let services: any[] = [];
+  let services: { id: string; name: string; direction_id?: string | null }[] = [];
   const isLoadingServices = canAccessAllOrganizations ? isLoadingAllServices : isLoadingOrganizations;
   
   if (canAccessAllOrganizations) {

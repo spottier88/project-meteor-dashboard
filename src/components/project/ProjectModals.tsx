@@ -16,7 +16,7 @@ import { ProjectRecord } from "@/types/supabase-models";
 interface ProjectModalsProps {
   isProjectFormOpen: boolean;
   onProjectFormClose: () => void;
-  onProjectFormSubmit: (projectData: any) => Promise<any>;
+  onProjectFormSubmit: (projectData: Record<string, unknown>) => Promise<Record<string, unknown> | void>;
   selectedProject: ProjectListItem | ProjectRecord | Project | null;
   isProjectSelectionOpen: boolean;
   onProjectSelectionClose: () => void;

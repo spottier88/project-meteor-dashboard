@@ -2,7 +2,7 @@
  * Page unifiée de suivi des activités d'équipe (manager/admin)
  * Vue consolidée : KPIs, filtres, graphiques, export
  */
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -35,16 +35,7 @@ export const TeamActivities = () => {
   const [activityType, setActivityType] = useState<string>('all');
   const [selectedUserId, setSelectedUserId] = useState<string>('all');
 
-  // Vérification des droits
-  if (!isAdmin && !isManager && !hasRole('chef_projet')) {
-    toast({
-      title: "Accès refusé",
-      description: "Vous n'avez pas les droits nécessaires pour accéder à cette page",
-      variant: "destructive",
-    });
-    navigate('/');
-    return null;
-  }
+  const hasAccess = isAdmin || isManager || hasRole('chef_projet');
 
   // Données de points
   const { data: points, isLoading } = useWeeklyPointsData({
@@ -101,6 +92,18 @@ export const TeamActivities = () => {
     }
   });
 
+  // Vérification des droits (après tous les hooks)
+  useEffect(() => {
+    if (!hasAccess) {
+      toast({
+        title: "Accès refusé",
+        description: "Vous n'avez pas les droits nécessaires pour accéder à cette page",
+        variant: "destructive",
+      });
+      void navigate('/');
+    }
+  }, [hasAccess, navigate, toast]);
+
   // Navigation
   const handlePreviousWeek = () => setCurrentWeek(prev => subWeeks(prev, 1));
   const handleNextWeek = () => setCurrentWeek(prev => addWeeks(prev, 1));
@@ -125,6 +128,10 @@ export const TeamActivities = () => {
     if (!points || points.length === 0) return;
     exportUserPointsStats(points, currentWeek);
   };
+
+  if (!hasAccess) {
+    return null;
+  }
 
   if (isLoading || isLoadingTrend) {
     return (
@@ -186,7 +193,7 @@ export const TeamActivities = () => {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Tous les utilisateurs</SelectItem>
-                  {teamUsers?.map((u: any) => (
+                  {teamUsers?.map((u: { id: string; first_name: string | null; last_name: string | null }) => (
                     <SelectItem key={u.id} value={u.id}>
                       {u.first_name} {u.last_name}
                     </SelectItem>
@@ -200,7 +207,7 @@ export const TeamActivities = () => {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Tous les projets</SelectItem>
-                  {projects?.map((p: any) => (
+                  {projects?.map((p: { id: string; title: string }) => (
                     <SelectItem key={p.id} value={p.id}>{p.title}</SelectItem>
                   ))}
                 </SelectContent>

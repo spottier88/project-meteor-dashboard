@@ -13,7 +13,14 @@ export const ProjectTemplateDetails = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [editingTask, setEditingTask] = useState<any>(null);
+  const [editingTask, setEditingTask] = useState<{
+    id: string;
+    title: string;
+    description: string;
+    status: 'todo' | 'in_progress' | 'done';
+    durationDays: number;
+    parentTaskId?: string;
+  } | null>(null);
   
   const { 
     templates,

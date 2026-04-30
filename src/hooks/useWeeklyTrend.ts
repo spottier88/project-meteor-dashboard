@@ -79,11 +79,22 @@ export const useWeeklyTrend = ({
   });
 };
 
+interface WeekEntry {
+  weekStart: string;
+  label: string;
+}
+
+interface WeekTrendChartData {
+  week: string;
+  weekStart: string;
+  [activityType: string]: string | number;
+}
+
 /**
  * Traite les données de tendance pour générer les données de graphique par semaine
  */
-export const processWeeklyTrendData = (points: any[], weeksCount: number, latestWeekStart: Date) => {
-  const weeks: any[] = [];
+export const processWeeklyTrendData = (points: { week_start_date: string; activity_type?: string | null; points: number }[], weeksCount: number, latestWeekStart: Date) => {
+  const weeks: WeekEntry[] = [];
   
   // Générer les semaines
   for (let i = weeksCount - 1; i >= 0; i--) {
@@ -96,7 +107,7 @@ export const processWeeklyTrendData = (points: any[], weeksCount: number, latest
 
   // Agréger les points par semaine et par type d'activité
   const chartData = weeks.map(week => {
-    const weekData: any = {
+    const weekData: WeekTrendChartData = {
       week: week.label,
       weekStart: week.weekStart
     };

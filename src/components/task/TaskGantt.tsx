@@ -26,18 +26,33 @@ import { mapTasksToSvarFormat } from '@/utils/gantt-helpers';
 import type { ITask, IApi } from '@svar-ui/react-gantt';
 import { format } from "date-fns";
 
+/** Tâche telle qu'elle est manipulée dans le Gantt (sous-ensemble de TaskRecord + champs dynamiques) */
+interface GanttTask {
+  id: string;
+  title: string;
+  description?: string | null;
+  status?: string | null;
+  start_date?: string | null;
+  due_date?: string | null;
+  assignee?: string | null;
+  project_id?: string;
+  parent_task_id?: string | null;
+  type?: string;
+  [key: string]: unknown;
+}
+
 interface TaskGanttProps {
-  tasks: Array<any>;
+  tasks: GanttTask[];
   projectId: string;
   /** Callback d'édition d'une tâche (ouvre TaskForm) */
-  onEdit?: (task: any) => void;
+  onEdit?: (task: GanttTask) => void;
   /** Callback de rafraîchissement après modification */
   onUpdate?: () => void;
   /** Callback d'ajout d'une tâche (ouvre TaskForm en création) */
   onAdd?: (parentTaskId?: string | null) => void;
   /** Callback de suppression d'une tâche (ouvre la confirmation) */
-  onDelete?: (task: any) => void;
-  onExpanderClick?: (task: any) => void;
+  onDelete?: (task: GanttTask) => void;
+  onExpanderClick?: (task: GanttTask) => void;
   isProjectClosed?: boolean;
   projectTitle?: string;
   /** L'utilisateur peut-il créer des tâches ? */
@@ -94,7 +109,7 @@ export const TaskGantt = ({
   isReadOnly = false,
 }: TaskGanttProps) => {
   const [viewMode, setViewMode] = useState<ViewModeKey>('week');
-  const [localTasks, setLocalTasks] = useState<Array<any>>(tasks);
+  const [localTasks, setLocalTasks] = useState<GanttTask[]>(tasks);
   const apiRef = useRef<IApi | null>(null);
 
   /** Ref stockant les dernières dates reçues par taskId (pour le debounce) */

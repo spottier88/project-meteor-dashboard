@@ -46,8 +46,8 @@ export const LinkProjectDialog = ({
 
   // Filtrer les projets : exclure le projet actuel et appliquer le filtre de recherche
   const availableProjects = projects?.filter(
-    (p: any) => 
-      p.id !== currentProjectId && 
+    (p) =>
+      p.id !== currentProjectId &&
       p.title.toLowerCase().includes(searchTerm.toLowerCase())
   ) || [];
 
@@ -113,7 +113,7 @@ export const LinkProjectDialog = ({
                     Aucun projet trouvé
                   </div>
                 ) : (
-                  availableProjects.map((project: any) => (
+                  availableProjects.map((project) => (
                     <SelectItem key={project.id} value={project.id}>
                       {project.title}
                     </SelectItem>

@@ -91,9 +91,9 @@ export function APITokenForm({ onSuccess, onCancel }: APITokenFormProps) {
 
       // Retourner le token en clair (uniquement cette fois)
       onSuccess(plainToken);
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error creating token:', error);
-      toast.error("Erreur lors de la création du token: " + error.message);
+      toast.error("Erreur lors de la création du token: " + (error instanceof Error ? error.message : String(error)));
     } finally {
       setIsSubmitting(false);
     }

@@ -19,7 +19,7 @@ interface ActivityTypePointsChartProps {
 export const ActivityTypePointsChart = ({ points }: ActivityTypePointsChartProps) => {
   const { data: activityTypes } = useActivityTypes();
 
-  const data = points.reduce((acc: any[], point) => {
+  const data = points.reduce((acc: Array<{ name: string; value: number; color: string }>, point) => {
     if (!point.activity_type) return acc;
     
     const activityType = activityTypes?.find(type => type.code === point.activity_type);

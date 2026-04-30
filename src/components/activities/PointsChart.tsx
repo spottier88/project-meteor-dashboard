@@ -4,8 +4,13 @@
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { useActivityTypes } from '@/hooks/useActivityTypes';
 
+interface ChartDataPoint {
+  day: string;
+  [key: string]: number | string;
+}
+
 interface PointsChartProps {
-  data: any[];
+  data: ChartDataPoint[];
 }
 
 export const PointsChart = ({ data }: PointsChartProps) => {

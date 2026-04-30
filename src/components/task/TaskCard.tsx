@@ -9,24 +9,26 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Link } from "react-router";
 
-interface TaskCardProps {
-  task: {
+interface TaskCardData {
+  id: string;
+  title: string;
+  description?: string;
+  status: "todo" | "in_progress" | "done";
+  assignee?: string;
+  due_date?: string;
+  project_id: string;
+  document_url?: string;
+  completion_comment?: string;
+  projects?: {
     id: string;
     title: string;
-    description?: string;
-    status: "todo" | "in_progress" | "done";
-    assignee?: string;
-    due_date?: string;
-    project_id: string;
-    document_url?: string;
-    completion_comment?: string;
-    projects?: {
-      id: string;
-      title: string;
-    };
   };
-  onEdit: (task: any) => void;
-  onDelete: (task: any) => void;
+}
+
+interface TaskCardProps {
+  task: TaskCardData;
+  onEdit: (task: TaskCardData) => void;
+  onDelete: (task: TaskCardData) => void;
   showActions?: boolean;
 }
 

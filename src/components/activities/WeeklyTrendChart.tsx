@@ -5,8 +5,14 @@
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { useActivityTypes } from '@/hooks/useActivityTypes';
 
+interface WeeklyTrendDataPoint {
+  week: string;
+  weekStart?: string;
+  [key: string]: number | string | undefined;
+}
+
 interface WeeklyTrendChartProps {
-  data: any[];
+  data: WeeklyTrendDataPoint[];
 }
 
 export const WeeklyTrendChart = ({ data }: WeeklyTrendChartProps) => {

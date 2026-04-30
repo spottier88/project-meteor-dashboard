@@ -24,8 +24,19 @@ export const useUserProjects = () => {
       if (error) throw error;
 
       // Filtrer pour ne garder que les projets où l'utilisateur est chef de projet ou membre
-      const projectsData = (data || []) as any[];
-      
+      interface ProjectRow {
+        id: string;
+        title: string;
+        project_manager_id: string | null;
+        pole_id: string | null;
+        pole_name: string | null;
+        direction_id: string | null;
+        direction_name: string | null;
+        service_id: string | null;
+        service_name: string | null;
+      }
+      const projectsData = (data || []) as ProjectRow[];
+
       // Récupérer les projets où l'utilisateur est membre
       const { data: memberProjects, error: memberError } = await supabase
         .from("project_members")
@@ -37,7 +48,7 @@ export const useUserProjects = () => {
       const memberProjectIds = new Set(memberProjects?.map(pm => pm.project_id) || []);
 
       // Filtrer les projets
-      const userProjects = projectsData.filter((project: any) => {
+      const userProjects = projectsData.filter((project: ProjectRow) => {
         // Chef de projet
         const isProjectManager = project.project_manager_id === session.user.id;
         // Membre du projet
@@ -47,7 +58,7 @@ export const useUserProjects = () => {
       });
 
       // Mapper au format attendu
-      return userProjects.map((project: any) => ({
+      return userProjects.map((project: ProjectRow) => ({
         id: project.id,
         title: project.title,
         pole_id: project.pole_id,

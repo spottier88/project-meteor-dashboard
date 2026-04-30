@@ -8,6 +8,15 @@ import { fr } from "date-fns/locale";
 import { Mail, Loader2 } from "lucide-react";
 import { useReviewNotificationHistory } from "@/hooks/usePortfolioReviews";
 
+interface ReviewNotification {
+  id: string;
+  sent_at: string;
+  recipient_count: number;
+  message?: string | null;
+  profiles?: { first_name?: string | null; last_name?: string | null; email?: string | null } | null;
+  email_templates?: { name?: string | null } | null;
+}
+
 interface PortfolioReviewNotificationHistoryProps {
   /** ID de la revue */
   reviewId: string;
@@ -41,7 +50,7 @@ export const PortfolioReviewNotificationHistory = ({
   return (
     <div className="space-y-2 pt-2 border-t mt-2">
       <p className="text-xs font-medium text-muted-foreground">Historique des envois</p>
-      {notifications.map((notif: any) => {
+      {notifications.map((notif: ReviewNotification) => {
         const senderProfile = notif.profiles;
         const senderName = senderProfile
           ? [senderProfile.first_name, senderProfile.last_name].filter(Boolean).join(" ") || senderProfile.email

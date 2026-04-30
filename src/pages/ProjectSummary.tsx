@@ -143,9 +143,9 @@ export const ProjectSummary = () => {
   });
 
   // Utiliser le hook useProjectSubmit pour gérer l'enregistrement
-  const { submitProject } = useProjectSubmit({ 
-    project, 
-    onSubmit: async (projectData: any) => {
+  const { submitProject } = useProjectSubmit({
+    project,
+    onSubmit: async (_projectData: Record<string, unknown>) => {
       // La logique d'enregistrement est maintenant gérée par useProjectSubmit
       // Nous retournons simplement l'ID du projet pour la compatibilité
       return { id: projectId };
@@ -187,7 +187,7 @@ export const ProjectSummary = () => {
     });
   };
 
-  const handleProjectFormSubmit = async (projectData: any) => {
+  const handleProjectFormSubmit = async (_projectData: Record<string, unknown>) => {
     if (!projectId) {
       toast({
         variant: "destructive",

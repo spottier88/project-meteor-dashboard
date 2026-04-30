@@ -49,7 +49,7 @@ const createPointsEntrySchema = (maxPoints: number) => z.object({
   description: z.string().optional(),
 });
 
-type PointsEntryFormValues = {
+export type PointsEntryFormValues = {
   project_id?: string;
   activity_type?: string;
   points: number;
@@ -112,8 +112,8 @@ export const PointsEntryForm = ({
       if (error) throw error;
       
       // Extraire seulement l'id et le titre pour le select
-      const projectsData = (data || []) as any[];
-      return projectsData.map((project: any) => ({
+      const projectsData = (data || []) as { id: string; title: string }[];
+      return projectsData.map((project) => ({
         id: project.id,
         title: project.title,
       }));

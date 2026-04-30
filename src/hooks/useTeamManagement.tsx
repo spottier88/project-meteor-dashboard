@@ -77,8 +77,8 @@ export const useTeamManagement = (projectId: string, permissions: Permissions, e
             email: member.profiles.email,
             first_name: member.profiles.first_name,
             last_name: member.profiles.last_name,
-            roles: Array.isArray(member.profiles.user_roles) 
-              ? member.profiles.user_roles.map((ur: any) => ur.role) 
+            roles: Array.isArray(member.profiles.user_roles)
+              ? member.profiles.user_roles.map((ur: { role: string }) => ur.role)
               : []
           } : null
         })) || [];

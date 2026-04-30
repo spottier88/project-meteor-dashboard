@@ -113,8 +113,8 @@ export const PortfolioProjectsTable = ({
   const sortedProjects = [...filteredProjects].sort((a, b) => {
     if (!sortKey || !sortDirection) return 0;
     
-    let aValue = a[sortKey as keyof Project];
-    let bValue = b[sortKey as keyof Project];
+    const aValue = a[sortKey as keyof Project];
+    const bValue = b[sortKey as keyof Project];
     
     if (!aValue && !bValue) return 0;
     if (!aValue) return 1;

@@ -2,7 +2,7 @@
  * Page unifiée de gestion des activités utilisateur
  * Regroupe : saisie de points (hebdo/quotidienne), import calendrier et dashboard
  */
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, ChevronLeft, ChevronRight, Download, Target, BarChart3, Calendar as CalendarIcon } from "lucide-react";
@@ -62,16 +62,17 @@ export const ActivityManagement = () => {
   const [dashProjectId, setDashProjectId] = useState<string>('all');
   const [dashActivityType, setDashActivityType] = useState<string>('all');
 
-  // Vérifier les droits d'accès
-  if (!isAdmin && !isTimeTracker) {
-    toast({
-      title: "Accès refusé",
-      description: "Vous n'avez pas les droits nécessaires pour accéder à cette page",
-      variant: "destructive",
-    });
-    navigate('/');
-    return null;
-  }
+  // Rediriger si pas les droits (effet secondaire avant les autres hooks de données)
+  useEffect(() => {
+    if (!isAdmin && !isTimeTracker) {
+      toast({
+        title: "Accès refusé",
+        description: "Vous n'avez pas les droits nécessaires pour accéder à cette page",
+        variant: "destructive",
+      });
+      navigate('/');
+    }
+  }, [isAdmin, isTimeTracker, toast, navigate]);
 
   // Hooks de données
   const { quota } = useActivityPointsQuota();
@@ -138,7 +139,7 @@ export const ActivityManagement = () => {
   const weekLabel = format(currentWeek, "'Semaine du' d MMMM yyyy", { locale: fr });
 
   // Ajout de points
-  const handleAddPoints = (values: any) => {
+  const handleAddPoints = (values: { project_id?: string; activity_type?: string; points: number; description?: string }) => {
     addPoints(
       {
         user_id: session?.user?.id || "",
@@ -176,6 +177,8 @@ export const ActivityManagement = () => {
     const userName = user ? `${user.email}` : undefined;
     exportWeeklyPointsToExcel(dashPoints, currentWeek, userName);
   };
+
+  if (!isAdmin && !isTimeTracker) return null;
 
   return (
     <div className="container mx-auto py-8 space-y-6">
@@ -274,7 +277,7 @@ export const ActivityManagement = () => {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {points.map((point: any) => (
+                    {points.map((point) => (
                       <TableRow key={point.id}>
                         <TableCell>
                           {point.projects ? (

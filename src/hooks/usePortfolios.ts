@@ -118,11 +118,11 @@ export const useCreatePortfolio = () => {
         description: "Le portefeuille a été créé avec succès",
       });
     },
-    onError: (error: any) => {
+    onError: (error: Error & { code?: string }) => {
       console.error("Erreur lors de la création du portefeuille:", error);
-      
+
       let errorMessage = "Une erreur est survenue lors de la création du portefeuille";
-      
+
       // Messages d'erreur spécifiques
       if (error.code === '42501') {
         errorMessage = "Vous n'avez pas les permissions nécessaires pour créer un portefeuille";
@@ -267,7 +267,7 @@ export const useDeletePortfolio = () => {
         description: "Le portefeuille a été supprimé avec succès",
       });
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       console.error("Erreur lors de la suppression du portefeuille:", error);
       toast({
         title: "Erreur",

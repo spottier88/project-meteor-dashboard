@@ -119,7 +119,7 @@ interface TaskCellsProps {
   toggleTaskExpanded: (taskId: string) => void;
   canEditTask: (assignee?: string) => boolean;
   canDeleteTask: boolean;
-  profiles: any[];
+  profiles: Array<{ id: string; email: string; first_name: string | null; last_name: string | null }>;
   cycleTaskStatus: (taskId: string, currentStatus: string, assignee?: string) => Promise<void>;
   onEdit?: (task: Task) => void;
   onDelete?: (task: Task) => void;
@@ -352,12 +352,14 @@ export const TaskTable = ({ tasks, onEdit, onDelete, isProjectClosed = false }: 
 
   // Trier les tâches parentes : par order_index si aucun tri actif, sinon par colonne
   const computeSortedTasks = useCallback((source: Task[]) => {
-    return [...source].sort((a: any, b: any) => {
+    return [...source].sort((a: Task, b: Task) => {
       if (!sortKey || !sortDirection) {
         return (a.order_index ?? 0) - (b.order_index ?? 0);
       }
-      const aValue = a[sortKey];
-      const bValue = b[sortKey];
+      const aTyped = a as Record<string, unknown>;
+      const bTyped = b as Record<string, unknown>;
+      const aValue = aTyped[sortKey];
+      const bValue = bTyped[sortKey];
       if (aValue === null) return 1;
       if (bValue === null) return -1;
       if (sortDirection === "asc") return aValue > bValue ? 1 : -1;

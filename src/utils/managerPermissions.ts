@@ -62,7 +62,7 @@ export const canManagerAccessProject = async (
 
   // Vérifier si l'un des chemins du manager est un préfixe du chemin du projet
   return managerPaths.some(mp => {
-    const managerPathString = (mp.hierarchy_paths as any)?.path_string;
+    const managerPathString = (mp.hierarchy_paths as { path_string?: string })?.path_string;
     if (!managerPathString) return false;
     // Le chemin du projet doit commencer par le chemin du manager
     return projectPath.path_string.startsWith(managerPathString);

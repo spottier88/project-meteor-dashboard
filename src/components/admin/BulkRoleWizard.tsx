@@ -96,8 +96,8 @@ export const BulkRoleWizard = ({ isOpen, onClose, onSuccess }: BulkRoleWizardPro
         first_name: p.first_name,
         last_name: p.last_name,
         roles: (roles || [])
-          .filter((r: any) => r.user_id === p.id)
-          .map((r: any) => r.role as UserRole),
+          .filter((r) => r.user_id === p.id)
+          .map((r) => r.role as UserRole),
       })) as UserWithCurrentRoles[];
     },
     enabled: isOpen,
@@ -169,7 +169,7 @@ export const BulkRoleWizard = ({ isOpen, onClose, onSuccess }: BulkRoleWizardPro
           
           const { data: srvs } = await supabase.from("services").select("id").in("direction_id", dirIds);
           const srvIds = (srvs || []).map(s => s.id);
-          let srvUsers: any[] = [];
+          let srvUsers: { user_id: string }[] = [];
           if (srvIds.length > 0) {
             const { data: su } = await supabase
               .from("user_hierarchy_assignments")
@@ -191,7 +191,7 @@ export const BulkRoleWizard = ({ isOpen, onClose, onSuccess }: BulkRoleWizardPro
       if (entityType === "direction") {
         const { data: srvs } = await supabase.from("services").select("id").eq("direction_id", entityId);
         const srvIds = (srvs || []).map(s => s.id);
-        let srvUsers: any[] = [];
+        let srvUsers: Array<{ user_id: string | null }> = [];
         if (srvIds.length > 0) {
           const { data: su } = await supabase
             .from("user_hierarchy_assignments")

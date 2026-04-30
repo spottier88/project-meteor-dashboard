@@ -11,6 +11,32 @@ import { useToast } from "@/hooks/use-toast";
 import { generatePortfolioExcel } from "@/utils/portfolioExport";
 import { generatePortfolioPPTX } from "@/components/pptx/portfolioSlideGenerators";
 
+interface PortfolioProjectItem {
+  title?: string | null;
+  project_manager?: string | null;
+  status?: string | null;
+  lifecycle_status?: string | null;
+  priority?: string | null;
+  start_date?: string | null;
+  end_date?: string | null;
+  completion?: number | null;
+}
+
+interface PortfolioStatusStats {
+  sunny: number;
+  cloudy: number;
+  stormy: number;
+}
+
+interface PortfolioLifecycleStats {
+  study: number;
+  validated: number;
+  in_progress: number;
+  completed: number;
+  suspended: number;
+  abandoned: number;
+}
+
 interface PortfolioExportButtonsProps {
   /** Données du portefeuille pour l'export */
   portfolioData: {
@@ -24,9 +50,9 @@ interface PortfolioExportButtonsProps {
     status: string | null;
     project_count: number;
     average_completion: number;
-    projects: any[];
-    statusStats: any;
-    lifecycleStats: any;
+    projects: PortfolioProjectItem[];
+    statusStats: PortfolioStatusStats;
+    lifecycleStats: PortfolioLifecycleStats;
   };
   /** Indique si l'utilisateur peut exporter (owner ou manager) */
   canExport?: boolean;

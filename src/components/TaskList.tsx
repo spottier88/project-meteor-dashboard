@@ -12,6 +12,7 @@ import { KanbanBoard } from "@/components/KanbanBoard";
 import { TaskGantt } from "@/components/task/TaskGantt";
 import { useTaskPermissions } from "@/hooks/useTaskPermissions";
 import { usePermissionsContext } from "@/contexts/PermissionsContext";
+import { TaskRecord } from "@/types/supabase-models";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -30,7 +31,7 @@ export interface TaskListProps {
   isAdmin: boolean;
   projectTitle?: string;
   isProjectClosed?: boolean; // Prop pour forcer le mode lecture seule si projet clôturé
-  preloadedTasks?: any[]; // Données pré-chargées optionnelles
+  preloadedTasks?: TaskRecord[]; // Données pré-chargées optionnelles
 }
 
 export const TaskList = ({
@@ -45,8 +46,8 @@ export const TaskList = ({
   const { toast } = useToast();
   const { isManager } = usePermissionsContext();
   const [isTaskFormOpen, setIsTaskFormOpen] = useState(false);
-  const [selectedTask, setSelectedTask] = useState<any>(null);
-  const [taskToDelete, setTaskToDelete] = useState<any>(null);
+  const [selectedTask, setSelectedTask] = useState<TaskRecord | null>(null);
+  const [taskToDelete, setTaskToDelete] = useState<TaskRecord | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [view, setView] = useState<ViewMode>("table");
   const queryClient = useQueryClient();

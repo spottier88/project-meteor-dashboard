@@ -326,11 +326,12 @@ const handler = async (req: Request): Promise<Response> => {
       status: 200,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
-  } catch (error: any) {
-    console.error("Erreur:", error.message);
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    console.error("Erreur:", errorMessage);
     return new Response(
       JSON.stringify({
-        error: error.message || "Une erreur est survenue",
+        error: errorMessage || "Une erreur est survenue",
       }),
       {
         status: 400,

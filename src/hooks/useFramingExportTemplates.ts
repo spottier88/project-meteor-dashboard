@@ -31,8 +31,9 @@ export const useFramingExportTemplates = (activeOnly = false) => {
   return useQuery({
     queryKey: [QUERY_KEY, { activeOnly }],
     queryFn: async () => {
-      let query = supabase
-        .from("framing_export_templates" as any)
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      let query = (supabase as any)
+        .from("framing_export_templates")
         .select("*")
         .order("created_at", { ascending: false });
 
@@ -74,15 +75,16 @@ export const useCreateFramingExportTemplate = () => {
 
       // 2. Créer l'entrée en base de données
       const { data: userData } = await supabase.auth.getUser();
-      const { data, error } = await supabase
-        .from("framing_export_templates" as any)
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data, error } = await (supabase as any)
+        .from("framing_export_templates")
         .insert({
           title,
           description: description || null,
           file_path: filePath,
           file_name: file.name,
           created_by: userData.user?.id,
-        } as any)
+        })
         .select()
         .single();
 
@@ -93,7 +95,7 @@ export const useCreateFramingExportTemplate = () => {
       queryClient.invalidateQueries({ queryKey: [QUERY_KEY] });
       toast({ title: "Modèle créé", description: "Le modèle d'export a été ajouté avec succès." });
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast({ title: "Erreur", description: error.message, variant: "destructive" });
     },
   });
@@ -124,7 +126,15 @@ export const useUpdateFramingExportTemplate = () => {
       file?: File;
       oldFilePath?: string;
     }) => {
-      const updates: any = { updated_at: new Date().toISOString() };
+      const updates: {
+        updated_at: string;
+        title?: string;
+        description?: string;
+        is_active?: boolean;
+        is_default?: boolean;
+        file_path?: string;
+        file_name?: string;
+      } = { updated_at: new Date().toISOString() };
       if (title !== undefined) updates.title = title;
       if (description !== undefined) updates.description = description;
       if (is_active !== undefined) updates.is_active = is_active;
@@ -150,15 +160,17 @@ export const useUpdateFramingExportTemplate = () => {
 
       // Si on marque comme défaut, retirer le défaut des autres
       if (is_default === true) {
-        await supabase
-          .from("framing_export_templates" as any)
-          .update({ is_default: false } as any)
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        await (supabase as any)
+          .from("framing_export_templates")
+          .update({ is_default: false })
           .neq("id", id);
       }
 
-      const { data, error } = await supabase
-        .from("framing_export_templates" as any)
-        .update(updates as any)
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data, error } = await (supabase as any)
+        .from("framing_export_templates")
+        .update(updates)
         .eq("id", id)
         .select()
         .single();
@@ -170,7 +182,7 @@ export const useUpdateFramingExportTemplate = () => {
       queryClient.invalidateQueries({ queryKey: [QUERY_KEY] });
       toast({ title: "Modèle mis à jour" });
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast({ title: "Erreur", description: error.message, variant: "destructive" });
     },
   });
@@ -189,8 +201,9 @@ export const useDeleteFramingExportTemplate = () => {
       await supabase.storage.from("framing-export-templates").remove([filePath]);
 
       // Supprimer l'entrée en base
-      const { error } = await supabase
-        .from("framing_export_templates" as any)
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { error } = await (supabase as any)
+        .from("framing_export_templates")
         .delete()
         .eq("id", id);
 
@@ -200,7 +213,7 @@ export const useDeleteFramingExportTemplate = () => {
       queryClient.invalidateQueries({ queryKey: [QUERY_KEY] });
       toast({ title: "Modèle supprimé" });
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast({ title: "Erreur", description: error.message, variant: "destructive" });
     },
   });

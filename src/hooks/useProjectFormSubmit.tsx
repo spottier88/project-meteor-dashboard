@@ -6,14 +6,15 @@ import { AccessibleOrganizations } from "@/types/user";
 import { useProjectAccessValidation } from "./useProjectAccessValidation";
 import { useProjectSubmit } from "./useProjectSubmit";
 import { useUser } from "@/contexts/AuthContext";
+import { ProjectRecord, ProjectSubmitCallback } from "@/types/supabase-models";
 
 interface UseProjectFormSubmitProps {
-  project?: any;
+  project?: ProjectRecord;
   canEdit: boolean;
   canCreate: boolean;
   canEditOrganization: boolean;
   formState: ProjectFormState;
-  onSubmit: (projectData: any) => Promise<any>;
+  onSubmit: ProjectSubmitCallback;
   onClose: () => void;
   accessibleOrganizations?: AccessibleOrganizations | null;
 }

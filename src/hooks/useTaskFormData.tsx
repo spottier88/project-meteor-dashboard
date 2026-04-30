@@ -45,7 +45,7 @@ export const useTaskFormData = (projectId: string, isOpen: boolean, taskId?: str
 
       if (error) throw error;
       
-      let membersList = [...data];
+      const membersList = [...data];
       
       // Vérifier si le chef de projet est déjà dans la liste des membres
       if (project?.project_manager) {

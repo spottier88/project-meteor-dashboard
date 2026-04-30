@@ -19,8 +19,8 @@ import { supabase } from "@/integrations/supabase/client";
 interface ProjectFormProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (projectData: any) => Promise<any>;
-  project?: ProjectRecord | any | null;
+  onSubmit: (projectData: Record<string, unknown>) => Promise<Record<string, unknown> | void>;
+  project?: ProjectRecord | null;
 }
 
 export const ProjectForm = ({ isOpen, onClose, onSubmit, project }: ProjectFormProps) => {

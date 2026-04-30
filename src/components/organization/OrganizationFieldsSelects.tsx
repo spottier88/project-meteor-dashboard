@@ -9,6 +9,11 @@
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
+interface OrgItem {
+  id: string;
+  name: string;
+}
+
 interface OrganizationFieldsSelectsProps {
   poleId: string;
   setPoleId: (value: string) => void;
@@ -16,9 +21,9 @@ interface OrganizationFieldsSelectsProps {
   setDirectionId: (value: string) => void;
   serviceId: string;
   setServiceId: (value: string) => void;
-  poles: any[];
-  directions: any[];
-  services: any[];
+  poles: OrgItem[];
+  directions: OrgItem[];
+  services: OrgItem[];
   isLoadingPoles: boolean;
   isLoadingDirections: boolean;
   isLoadingServices: boolean;

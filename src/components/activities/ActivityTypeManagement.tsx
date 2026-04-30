@@ -67,7 +67,7 @@ export const ActivityTypeManagement = () => {
       const { count, error } = await supabase
         .from("activities")
         .select("id", { count: "exact", head: true })
-        .eq("activity_type", typeToDelete.code as any);
+        .eq("activity_type", typeToDelete.code);
         
       if (error) throw error;
       return { count: count || 0 };
@@ -188,11 +188,11 @@ export const ActivityTypeManagement = () => {
       queryClient.invalidateQueries({ queryKey: ["activity-types"] });
       setIsDeleteDialogOpen(false);
       setTypeToDelete(null);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Error deleting activity type:", error);
       toast({
         title: "Erreur",
-        description: error.message || "Une erreur est survenue lors de la suppression",
+        description: error instanceof Error ? error.message : "Une erreur est survenue lors de la suppression",
         variant: "destructive",
       });
     }

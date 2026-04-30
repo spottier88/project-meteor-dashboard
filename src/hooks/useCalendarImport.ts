@@ -164,7 +164,7 @@ export const useCalendarImport = () => {
         
         setEvents(sortedEvents);
         return sortedEvents;
-      } catch (error: any) {
+      } catch (error: unknown) {
         console.error('useCalendarImport: Erreur lors de la récupération des événements:', error);
         throw error;
       }
@@ -257,7 +257,7 @@ export const useCalendarImport = () => {
       });
       setEvents([]);
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       console.error('Error importing calendar:', error);
       toast({
         title: 'Erreur',

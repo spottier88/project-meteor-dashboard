@@ -12,15 +12,26 @@ import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 
+interface CalendarTask {
+  id: string;
+  title: string;
+  status: string;
+  start_date?: string | null;
+  due_date?: string | null;
+  projects?: {
+    title?: string;
+  } | null;
+}
+
 interface MyTasksCalendarProps {
-  tasks: any[];
-  onEdit: (task: any) => void;
+  tasks: CalendarTask[];
+  onEdit: (task: CalendarTask) => void;
 }
 
 type TaskScenario = "start_only" | "period" | "due_only";
 
 interface TaskWithScenario {
-  task: any;
+  task: CalendarTask;
   scenario: TaskScenario;
   isStart: boolean;
   isEnd: boolean;

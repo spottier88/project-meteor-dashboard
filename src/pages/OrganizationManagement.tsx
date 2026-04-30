@@ -36,9 +36,9 @@ export const OrganizationManagement = () => {
   const [isPoleFormOpen, setIsPoleFormOpen] = useState(false);
   const [isDirectionFormOpen, setIsDirectionFormOpen] = useState(false);
   const [isServiceFormOpen, setIsServiceFormOpen] = useState(false);
-  const [selectedPole, setSelectedPole] = useState<any>(null);
-  const [selectedDirection, setSelectedDirection] = useState<any>(null);
-  const [selectedService, setSelectedService] = useState<any>(null);
+  const [selectedPole, setSelectedPole] = useState<{ id: string; name: string } | null>(null);
+  const [selectedDirection, setSelectedDirection] = useState<{ id: string; name: string; pole_id: string } | null>(null);
+  const [selectedService, setSelectedService] = useState<{ id: string; name: string; direction_id: string } | null>(null);
   
   // États pour les dialogues de confirmation de suppression
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);

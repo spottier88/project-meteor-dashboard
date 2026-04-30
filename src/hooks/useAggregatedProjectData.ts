@@ -7,6 +7,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useProjectLinks } from "./useProjectLinks";
+import { LinkedProject } from "@/types/project-links";
 
 export const useAggregatedProjectData = (masterProjectId: string) => {
   const { linkedProjects } = useProjectLinks(masterProjectId);
@@ -14,7 +15,7 @@ export const useAggregatedProjectData = (masterProjectId: string) => {
   // Liste de tous les IDs de projets (maître + liés)
   const allProjectIds = [
     masterProjectId,
-    ...(linkedProjects?.map((p: any) => p.id) || []),
+    ...(linkedProjects?.map((p: LinkedProject) => p.id) || []),
   ];
 
   // Récupérer les tâches agrégées

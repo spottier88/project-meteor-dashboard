@@ -33,7 +33,7 @@ export const downloadWorkbook = async (workbook: ExcelJS.Workbook, filename: str
 export const addJsonSheet = (
   workbook: ExcelJS.Workbook,
   sheetName: string,
-  data: Record<string, any>[],
+  data: Record<string, string | number | boolean | null | undefined>[],
   columnWidths?: number[]
 ): ExcelJS.Worksheet => {
   const ws = workbook.addWorksheet(sheetName);
@@ -68,7 +68,7 @@ export const addJsonSheet = (
 export const addArraySheet = (
   workbook: ExcelJS.Workbook,
   sheetName: string,
-  rows: any[][],
+  rows: (string | number | null | undefined)[][],
   columnWidths?: number[]
 ): ExcelJS.Worksheet => {
   const ws = workbook.addWorksheet(sheetName);

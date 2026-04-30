@@ -79,11 +79,11 @@ export const InviteUserForm = ({ isOpen, onClose, onSuccess }: InviteUserFormPro
       resetForm();
       onSuccess();
       onClose();
-    } catch (error: any) {
+    } catch (error) {
       console.error("Erreur d'invitation:", error);
       toast({
         title: "Erreur",
-        description: error.message || "Une erreur est survenue lors de l'envoi de l'invitation",
+        description: error instanceof Error ? error.message : "Une erreur est survenue lors de l'envoi de l'invitation",
         variant: "destructive",
       });
     } finally {

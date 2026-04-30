@@ -99,7 +99,7 @@ export async function getUserAccessibleOrganizations(
       .order("name");
     
     // Pour chaque pôle accessible, récupérer toutes ses directions
-    let allAccessibleDirectionIds = new Set<string>(accessibleDirectionIds);
+    const allAccessibleDirectionIds = new Set<string>(accessibleDirectionIds);
     
     if (accessiblePoles && accessiblePoles.length > 0) {
       const { data: poleDirections } = await supabase
@@ -126,7 +126,7 @@ export async function getUserAccessibleOrganizations(
       .order("name");
       
     // Pour chaque direction accessible, récupérer tous ses services
-    let allAccessibleServiceIds = new Set<string>(accessibleServiceIds);
+    const allAccessibleServiceIds = new Set<string>(accessibleServiceIds);
     
     if (accessibleDirections && accessibleDirections.length > 0) {
       const { data: directionServices } = await supabase

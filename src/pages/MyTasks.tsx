@@ -32,6 +32,12 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { TaskRecord } from "@/types/supabase-models";
+
+/** Tâche avec relation projet telle que retournée par useMyTasks */
+interface MyTask extends TaskRecord {
+  projects?: { id: string; title: string } | null;
+}
 
 export const MyTasks = () => {
   const location = useLocation();
@@ -49,8 +55,8 @@ export const MyTasks = () => {
 
   // États pour l'édition et la suppression
   const [isTaskFormOpen, setIsTaskFormOpen] = useState(false);
-  const [selectedTask, setSelectedTask] = useState<any>(null);
-  const [taskToDelete, setTaskToDelete] = useState<any>(null);
+  const [selectedTask, setSelectedTask] = useState<MyTask | null>(null);
+  const [taskToDelete, setTaskToDelete] = useState<MyTask | null>(null);
 
   const { data: tasks, isLoading } = useMyTasks(showOverdueOnly);
 
@@ -81,7 +87,7 @@ export const MyTasks = () => {
     : [];
 
   // Handlers
-  const handleEditTask = (task: any) => {
+  const handleEditTask = (task: MyTask) => {
     setSelectedTask(task);
     setIsTaskFormOpen(true);
   };

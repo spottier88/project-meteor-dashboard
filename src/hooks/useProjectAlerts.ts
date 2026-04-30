@@ -9,6 +9,16 @@ import { useUser } from "@/contexts/AuthContext";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
+interface AccessibleProjectRow {
+  id: string;
+  title: string;
+  status: string | null;
+  weather: string | null;
+  last_review_date: string | null;
+  created_at: string | null;
+  updated_at: string | null;
+}
+
 interface AlertReason {
   type: 'no_review' | 'no_activity';
   daysSince: number;
@@ -43,7 +53,7 @@ export const useProjectAlerts = () => {
       }
 
       // S'assurer que nous avons un tableau et typer correctement les données
-      const projects = Array.isArray(projectsData) ? projectsData as any[] : [];
+      const projects = Array.isArray(projectsData) ? projectsData as AccessibleProjectRow[] : [];
       const alerts: ProjectAlert[] = [];
       const threeMonthsAgo = new Date();
       threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);

@@ -1,6 +1,6 @@
 
 import pptxgen from "pptxgenjs";
-import { ProjectData } from "./types";
+import { ProjectData, GridLayout } from "./types";
 import { weatherIcons, progressIcons } from "./constants";
 import { pptxStyles, pptxColors } from "./PPTXStyles";
 import { lifecycleStatusLabels } from "@/types/project";
@@ -119,7 +119,7 @@ const addProjectGrid = (slide: pptxgen.Slide, data: ProjectData) => {
   addDifficultiesAndActionsSection(slide, data, grid);
 };
 
-const addSituationSection = (slide: pptxgen.Slide, data: ProjectData, grid: any) => {
+const addSituationSection = (slide: pptxgen.Slide, data: ProjectData, grid: GridLayout) => {
   addSection(slide, "SITUATION", grid.x, grid.y, 1.5, 1);
   slide.addText(weatherIcons[data.lastReview?.weather || "cloudy"], {
     x: grid.x,
@@ -132,7 +132,7 @@ const addSituationSection = (slide: pptxgen.Slide, data: ProjectData, grid: any)
   });
 };
 
-const addEvolutionSection = (slide: pptxgen.Slide, data: ProjectData, grid: any) => {
+const addEvolutionSection = (slide: pptxgen.Slide, data: ProjectData, grid: GridLayout) => {
   addSection(slide, "EVOLUTION", grid.x + 1.6, grid.y, 1.5, 1);
   slide.addText(progressIcons[data.lastReview?.progress || "stable"], {
     x: grid.x + 1.6,
@@ -145,7 +145,7 @@ const addEvolutionSection = (slide: pptxgen.Slide, data: ProjectData, grid: any)
   });
 };
 
-const addGeneralSituationSection = (slide: pptxgen.Slide, data: ProjectData, grid: any) => {
+const addGeneralSituationSection = (slide: pptxgen.Slide, data: ProjectData, grid: GridLayout) => {
   addSection(slide, "SITUATION GÉNÉRALE", grid.x + 3.2, grid.y, 4.5, 1);
   slide.addText(data.lastReview?.comment || "Pas de commentaire", {
     x: grid.x + 3.2,
@@ -159,7 +159,7 @@ const addGeneralSituationSection = (slide: pptxgen.Slide, data: ProjectData, gri
   });
 };
 
-const addTargetEndSection = (slide: pptxgen.Slide, data: ProjectData, grid: any) => {
+const addTargetEndSection = (slide: pptxgen.Slide, data: ProjectData, grid: GridLayout) => {
   addSection(slide, "FIN CIBLE", grid.x + 7.8, grid.y, 1.5, 1);
   const endDate = data.project.end_date 
     ? new Date(data.project.end_date).toLocaleDateString("fr-FR", { month: "long", year: "numeric" })
@@ -177,7 +177,7 @@ const addTargetEndSection = (slide: pptxgen.Slide, data: ProjectData, grid: any)
   });
 };
 
-const addTasksSections = (slide: pptxgen.Slide, data: ProjectData, grid: any) => {
+const addTasksSections = (slide: pptxgen.Slide, data: ProjectData, grid: GridLayout) => {
   const tasksY = grid.y + 1.2;
   const taskBoxHeight = 1.6;
   const titleHeight = 0.3;
@@ -200,7 +200,7 @@ const addTasksSections = (slide: pptxgen.Slide, data: ProjectData, grid: any) =>
     grid.x + (columnWidth + spacing) * 2, tasksY, columnWidth, taskBoxHeight, titleHeight, pptxColors.taskTodo);
 };
 
-const addDifficultiesAndActionsSection = (slide: pptxgen.Slide, data: ProjectData, grid: any) => {
+const addDifficultiesAndActionsSection = (slide: pptxgen.Slide, data: ProjectData, grid: GridLayout) => {
   const sectionY = grid.y + 3.0;
   const boxHeight = 1.4;
   const titleHeight = 0.3;

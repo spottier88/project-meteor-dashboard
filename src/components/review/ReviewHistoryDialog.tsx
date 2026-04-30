@@ -161,7 +161,7 @@ export const ReviewHistoryDialog = ({ projectId, isOpen, onClose }: ReviewHistor
                         <div>
                           <h4 className="font-medium mb-1">Actions à prendre</h4>
                           <ul className="list-disc list-inside text-sm text-muted-foreground">
-                            {review.review_actions.map((action: any, index: number) => (
+                            {review.review_actions.map((action: { description: string }, index: number) => (
                               <li key={index}>{action.description}</li>
                             ))}
                           </ul>

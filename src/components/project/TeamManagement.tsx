@@ -16,6 +16,24 @@ import { InviteMemberForm } from "@/components/project/InviteMemberForm";
 import { TeamMembersTable } from "@/components/project/TeamMembersTable";
 import { useTeamManagement } from "@/hooks/useTeamManagement";
 
+interface ProjectManagerInfo {
+  project_manager?: string | null;
+}
+
+interface TeamMember {
+  id: string;
+  user_id?: string;
+  role?: string;
+  project_id?: string;
+  profiles?: {
+    id?: string;
+    email?: string | null;
+    first_name?: string | null;
+    last_name?: string | null;
+    roles?: string[];
+  } | null;
+}
+
 export interface TeamManagementProps {
   projectId: string;
   permissions: {
@@ -25,8 +43,8 @@ export interface TeamManagementProps {
     canManageTeam: boolean;
   };
   preloadedData?: {
-    project: any;
-    members: any[];
+    project: ProjectManagerInfo | null | undefined;
+    members: TeamMember[];
     handleDelete: (id: string, email?: string) => void;
     handlePromoteToSecondaryManager: (id: string, roles: string[], isAdmin: boolean) => void;
     handleDemoteToMember: (id: string) => void;

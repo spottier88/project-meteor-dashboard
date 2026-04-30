@@ -17,9 +17,27 @@ import {
 } from "@/components/ui/table";
 import { TeamMemberRow } from "@/components/project/TeamMemberRow";
 
+interface TeamMember {
+  id: string;
+  user_id?: string;
+  role?: string;
+  project_id?: string;
+  profiles?: {
+    id?: string;
+    email?: string | null;
+    first_name?: string | null;
+    last_name?: string | null;
+    roles?: string[];
+  } | null;
+}
+
+interface ProjectInfo {
+  project_manager?: string | null;
+}
+
 interface TeamMembersTableProps {
-  members: any[] | undefined;
-  project: any;
+  members: TeamMember[] | undefined;
+  project: ProjectInfo | null | undefined;
   canManageTeam: boolean;
   onDeleteMember: (id: string, email?: string) => void;
   onPromoteMember: (id: string, roles: string[]) => void;

@@ -171,7 +171,7 @@ export const TeamPointsDashboard = () => {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Tous les utilisateurs</SelectItem>
-                  {teamUsers?.map((user: any) => (
+                  {teamUsers?.map((user: { id: string; first_name: string; last_name: string }) => (
                     <SelectItem key={user.id} value={user.id}>
                       {user.first_name} {user.last_name}
                     </SelectItem>
@@ -185,7 +185,7 @@ export const TeamPointsDashboard = () => {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Tous les projets</SelectItem>
-                  {projects?.map((project: any) => (
+                  {projects?.map((project: { id: string; title: string }) => (
                     <SelectItem key={project.id} value={project.id}>
                       {project.title}
                     </SelectItem>

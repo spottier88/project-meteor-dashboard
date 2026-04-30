@@ -3,6 +3,7 @@ import { useUser } from "@/contexts/AuthContext";
 import { MonitoringLevel } from "@/types/monitoring";
 import { ForEntityType, ProjectLifecycleStatus } from "@/types/project";
 import { supabase } from "@/integrations/supabase/client";
+import { ProjectRecord } from "@/types/supabase-models";
 
 export interface ProjectFormState {
   currentStep: number;
@@ -84,7 +85,7 @@ export interface ProjectFormState {
   setIsAssistedMode: (value: boolean) => void;
 }
 
-export const useProjectFormState = (isOpen: boolean, project?: any) => {
+export const useProjectFormState = (isOpen: boolean, project?: ProjectRecord) => {
   const [currentStep, setCurrentStep] = useState(0);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");

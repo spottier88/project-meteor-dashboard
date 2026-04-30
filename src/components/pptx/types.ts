@@ -51,3 +51,12 @@ export interface ProjectData {
     due_date?: string;
   }>;
 }
+
+export interface GridLayout {
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+  columnGap: number;
+  rowGap: number;
+}

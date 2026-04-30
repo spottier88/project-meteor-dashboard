@@ -157,8 +157,8 @@ export const UserManagement = () => {
 
   if (sortKey && sortDirection) {
     filteredUsers = [...filteredUsers].sort((a, b) => {
-      let valueA: any;
-      let valueB: any;
+      let valueA: string | number;
+      let valueB: string | number;
       switch (sortKey) {
         case "email": valueA = a.email || ""; valueB = b.email || ""; break;
         case "first_name": valueA = a.first_name || ""; valueB = b.first_name || ""; break;

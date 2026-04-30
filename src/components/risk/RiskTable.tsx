@@ -65,11 +65,13 @@ export const RiskTable = ({ risks, projectId, onEdit, onDelete, isProjectClosed 
     }
   };
 
-  const sortedRisks = [...risks].sort((a: any, b: any) => {
+  const sortedRisks = [...risks].sort((a: Risk, b: Risk) => {
+    const aTyped = a as Record<string, unknown>;
+    const bTyped = b as Record<string, unknown>;
     if (!sortKey || !sortDirection) return 0;
 
-    const aValue = a[sortKey];
-    const bValue = b[sortKey];
+    const aValue = aTyped[sortKey];
+    const bValue = bTyped[sortKey];
 
     if (aValue === null) return 1;
     if (bValue === null) return -1;

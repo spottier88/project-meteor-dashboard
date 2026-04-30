@@ -49,15 +49,15 @@ export const createTasksFromTemplate = async (
     // 3. Créer d'abord les tâches principales (sans parent)
     for (const task of templateTasks.filter(t => !t.parent_task_id)) {
       // Calculer la date de début et d'échéance
-      let taskStartDate = new Date(startDateObj);
+      const taskStartDate = new Date(startDateObj);
       let taskDueDate = null;
-      
+
       // Si la tâche a une durée, calculer la date d'échéance
       if (task.duration_days) {
         taskDueDate = new Date(taskStartDate);
         taskDueDate.setDate(taskStartDate.getDate() + task.duration_days);
       }
-      
+
       const { data: newTask, error: taskError } = await supabase
         .from('tasks')
         .insert({
@@ -70,7 +70,7 @@ export const createTasksFromTemplate = async (
         })
         .select()
         .single();
-      
+
       if (taskError) {
         console.error("Erreur lors de la création d'une tâche principale:", taskError);
         continue;
@@ -91,15 +91,15 @@ export const createTasksFromTemplate = async (
       }
       
       // Calculer la date de début et d'échéance
-      let taskStartDate = new Date(startDateObj);
+      const taskStartDate = new Date(startDateObj);
       let taskDueDate = null;
-      
+
       // Si la tâche a une durée, calculer la date d'échéance
       if (task.duration_days) {
         taskDueDate = new Date(taskStartDate);
         taskDueDate.setDate(taskStartDate.getDate() + task.duration_days);
       }
-      
+
       const { data: newTask, error: taskError } = await supabase
         .from('tasks')
         .insert({

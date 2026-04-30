@@ -22,6 +22,74 @@ import { fr } from "date-fns/locale";
    TYPES
    ═══════════════════════════════════════════════════════════════ */
 
+/** Forme minimale d'un membre d'équipe attendu dans les données de cadrage */
+interface FramingMember {
+  first_name?: string | null;
+  last_name?: string | null;
+  email?: string | null;
+  role?: string | null;
+}
+
+/** Forme minimale d'un risque attendu dans les données de cadrage */
+interface FramingRisk {
+  description?: string | null;
+  probability?: string | null;
+  severity?: string | null;
+  status?: string | null;
+}
+
+/** Forme minimale d'une tâche attendue dans les données de cadrage */
+interface FramingTask {
+  title?: string | null;
+  status?: string | null;
+  assignee?: string | null;
+}
+
+/** Données brutes du projet passées en entrée du publipostage */
+interface FramingProjectInput {
+  project?: {
+    title?: string | null;
+    code?: string | null;
+    project_manager_name?: string | null;
+    project_manager?: string | null;
+    lifecycle_status?: string | null;
+    start_date?: string | null;
+    end_date?: string | null;
+    pole_name?: string | null;
+    direction_name?: string | null;
+    service_name?: string | null;
+    description?: string | null;
+    priority?: string | null;
+    completion?: number | null;
+  };
+  framing?: {
+    context?: string | null;
+    objectives?: string | null;
+    stakeholders?: string | null;
+    governance?: string | null;
+    timeline?: string | null;
+    deliverables?: string | null;
+    success_indicators?: string | null;
+  };
+  members?: FramingMember[];
+  risks?: FramingRisk[];
+  tasks?: FramingTask[];
+  // Peut aussi être passé à plat (sans clé "project")
+  title?: string | null;
+  code?: string | null;
+  project_manager_name?: string | null;
+  project_manager?: string | null;
+  lifecycle_status?: string | null;
+  start_date?: string | null;
+  end_date?: string | null;
+  pole_name?: string | null;
+  direction_name?: string | null;
+  service_name?: string | null;
+  description?: string | null;
+  priority?: string | null;
+  completion?: number | null;
+}
+
 /**
  * Données nécessaires pour le publipostage
  */
@@ -106,6 +174,7 @@ const sanitizeForDocx = (value: string): string => {
     // Espaces typographiques → espace standard
     .replace(/[\u00A0\u202F\u2007\u2008\u2009\u200A\u200B]/g, " ")
     // Caractères interdits XML 1.0
+    // eslint-disable-next-line no-control-regex
     .replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\uD800-\uDFFF\uFFFE\uFFFF]/g, "")
     // Réduire les triples sauts de ligne consécutifs
     .replace(/\n{3,}/g, "\n\n")
@@ -261,6 +330,7 @@ const logDiagnostics = (data: MailMergeData, templateName: string): void => {
 
   for (const [key, val] of Object.entries(data)) {
     if (typeof val !== "string") continue;
+    // eslint-disable-next-line no-control-regex
     const hasControlChars = /[\u0000-\u0008\u000B\u000C\u000E-\u001F]/.test(val);
     metrics[key] = {
       length: val.length,
@@ -284,7 +354,7 @@ const logDiagnostics = (data: MailMergeData, templateName: string): void => {
 /**
  * Construit l'objet de données pour le publipostage à partir des données projet
  */
-export const buildMailMergeData = (projectData: any): MailMergeData => {
+export const buildMailMergeData = (projectData: FramingProjectInput): MailMergeData => {
   const p = projectData.project || projectData;
   const framing = projectData.framing || {};
   const members = projectData.members || [];
@@ -295,22 +365,22 @@ export const buildMailMergeData = (projectData: any): MailMergeData => {
   const organisation = orgParts.length > 0 ? orgParts.join(" > ") : "Non définie";
 
   const equipe = members.length > 0
-    ? members.map((m: any) => {
+    ? members.map((m: FramingMember) => {
         const name = [m.first_name, m.last_name].filter(Boolean).join(" ") || m.email || "Inconnu";
         return `${name} (${m.role || "Membre"})`;
       }).join("\n")
     : "Aucun membre";
 
   const risquesStr = risks.length > 0
-    ? risks.map((r: any, i: number) =>
+    ? risks.map((r: FramingRisk, i: number) =>
         `${i + 1}. ${r.description || "Sans description"} - Probabilité: ${r.probability || "?"}, Sévérité: ${r.severity || "?"}, Statut: ${r.status || "?"}`
       ).join("\n")
     : "Aucun risque identifié";
 
   const tachesStr = tasks.length > 0
-    ? tasks.map((t: any, i: number) => {
+    ? tasks.map((t: FramingTask, i: number) => {
         const statusMap: Record<string, string> = { todo: "À faire", in_progress: "En cours", done: "Terminée" };
-        return `${i + 1}. ${t.title || "Sans titre"} - ${statusMap[t.status] || t.status || "?"}${t.assignee ? ` (${t.assignee})` : ""}`;
+        return `${i + 1}. ${t.title || "Sans titre"} - ${statusMap[t.status ?? ""] || t.status || "?"}${t.assignee ? ` (${t.assignee})` : ""}`;
       }).join("\n")
     : "Aucune tâche";
 
@@ -369,7 +439,7 @@ const attemptRender = (
   cleanSplitTags(zipClone);
 
   // Préparer les données selon le mode
-  let renderData = { ...data };
+  const renderData = { ...data };
   if (options.flattenNewlines) {
     for (const key of Object.keys(renderData) as (keyof MailMergeData)[]) {
       if (typeof renderData[key] === "string") {
@@ -422,7 +492,7 @@ const attemptRender = (
  */
 export const executeMailMerge = async (
   templateFilePath: string,
-  projectData: any,
+  projectData: FramingProjectInput,
   outputFileName: string = "note-de-cadrage.docx"
 ): Promise<void> => {
   // 1. Télécharger le fichier modèle depuis Supabase Storage
@@ -462,9 +532,9 @@ export const executeMailMerge = async (
         break;
       }
       lastError = result.validationError;
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error(`[framingMailMerge] ❌ Exception passe "${pass.label}":`, err);
-      lastError = { file: "N/A", error: err.message || String(err), excerpt: "" };
+      lastError = { file: "N/A", error: err instanceof Error ? err.message : String(err), excerpt: "" };
     }
   }
 

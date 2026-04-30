@@ -126,8 +126,8 @@ export const usePortfolioDetails = (portfolioId: string) => {
       // Calculer les statistiques
       let totalCompletion = 0;
       let projectsWithCompletion = 0;
-      let totalBudget = portfolio.budget_total || 0;
-      let budgetConsumed = 0; // À implémenter selon la logique métier
+      const totalBudget = portfolio.budget_total || 0;
+      const budgetConsumed = 0; // À implémenter selon la logique métier
 
       // Calculer l'avancement moyen basé sur les données de completion
       enrichedProjects.forEach(project => {

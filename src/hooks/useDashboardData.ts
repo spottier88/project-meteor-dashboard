@@ -24,6 +24,18 @@ interface DashboardSummary {
   byLifecycle: Record<string, number>;
 }
 
+// Type représentant les colonnes retournées par la RPC list_view
+interface ProjectListViewRow {
+  id: string;
+  title: string;
+  project_manager: string | null;
+  lifecycle_status: string;
+  last_review_date: string | null;
+  created_at: string | null;
+  updated_at: string | null;
+  weather: string | null;
+}
+
 // Seuls les projets "en cours" nécessitent des revues régulières
 const ACTIVE_LIFECYCLE_STATUSES = ['in_progress'];
 
@@ -83,7 +95,7 @@ export const useDashboardData = () => {
       }
 
       // S'assurer que nous avons un tableau
-      const projects = Array.isArray(projectsData) ? projectsData as any[] : [];
+      const projects = Array.isArray(projectsData) ? projectsData as ProjectListViewRow[] : [];
       
       // Calculer les statistiques
       let asProjectManager = 0;
@@ -96,7 +108,7 @@ export const useDashboardData = () => {
       const memberships = userMemberships || new Set<string>();
       const now = new Date();
 
-      projects.forEach((project: any) => {
+      projects.forEach((project: ProjectListViewRow) => {
         // Catégoriser par type d'accès
         const isProjectManager = project.project_manager === userProfile.email;
         const isExplicitMember = memberships.has(project.id);

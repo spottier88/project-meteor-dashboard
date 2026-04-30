@@ -111,9 +111,9 @@ export const useDetailedProjectsData = (projectIds: string[], enabled: boolean =
 
         // Cast des données retournées au type ProjectData, en vérifiant que les valeurs
         // des enums sont bien assignées correctement
-        const projectsData: ProjectData[] = data.map((item: any) => {
+        const projectsData: ProjectData[] = data.map((item: Record<string, unknown>) => {
           // S'assurer que les types d'enum sont correctement assignés
-          const typedItem = { ...item };
+          const typedItem = { ...item } as ProjectData;
           
           // Conversion explicite pour project.status
           if (typedItem.project && typeof typedItem.project.status === 'string') {
@@ -155,7 +155,7 @@ export const useDetailedProjectsData = (projectIds: string[], enabled: boolean =
             }));
           }
           
-          return typedItem as ProjectData;
+          return typedItem;
         });
         
         console.log(`${projectsData.length} projets récupérés avec succès`);

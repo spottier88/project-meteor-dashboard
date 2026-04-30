@@ -107,11 +107,11 @@ export const EmailTemplateManagement = () => {
         title: "Email de test envoyé",
         description: `Un email de test a été envoyé à ${data.recipient}`,
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Erreur envoi test:', error);
       toast({
         title: "Erreur d'envoi",
-        description: error.message || "Impossible d'envoyer l'email de test. Vérifiez la configuration SMTP.",
+        description: error instanceof Error ? error.message : "Impossible d'envoyer l'email de test. Vérifiez la configuration SMTP.",
         variant: "destructive",
       });
     } finally {

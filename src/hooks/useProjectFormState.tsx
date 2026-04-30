@@ -4,6 +4,25 @@ import { MonitoringLevel } from "@/types/monitoring";
 import { ForEntityType, ProjectLifecycleStatus } from "@/types/project";
 import { supabase } from "@/integrations/supabase/client";
 
+/** Représentation minimale d'un projet existant utilisé pour pré-remplir le formulaire */
+interface ProjectFormInput {
+  id?: string;
+  title?: string;
+  description?: string;
+  project_manager?: string;
+  start_date?: string | null;
+  end_date?: string | null;
+  priority?: string;
+  owner_id?: string;
+  lifecycle_status?: string;
+  for_entity_type?: string | null;
+  for_entity_id?: string | null;
+  template_id?: string;
+  portfolio_id?: string;
+  teams_url?: string;
+  closure_status?: string;
+}
+
 export interface ProjectFormState {
   currentStep: number;
   setCurrentStep: (step: number) => void;
@@ -84,7 +103,7 @@ export interface ProjectFormState {
   setIsAssistedMode: (value: boolean) => void;
 }
 
-export const useProjectFormState = (isOpen: boolean, project?: any) => {
+export const useProjectFormState = (isOpen: boolean, project?: ProjectFormInput | null) => {
   const [currentStep, setCurrentStep] = useState(0);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");

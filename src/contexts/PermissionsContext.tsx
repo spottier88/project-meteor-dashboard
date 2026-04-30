@@ -3,12 +3,12 @@ import { createContext, useContext, useEffect, useState, type ReactNode } from '
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useUser, useSession } from '@/contexts/AuthContext';
-import { UserRole, AccessibleOrganizations } from '@/types/user';
+import { UserRole, AccessibleOrganizations, UserProfile } from '@/types/user';
 import { getUserAccessibleOrganizations } from '@/utils/organizationAccess';
 
 interface PermissionsState {
   userRoles: UserRole[] | undefined;
-  userProfile: any | null;
+  userProfile: UserProfile | null | undefined;
   isAdmin: boolean;
   isManager: boolean;
   isProjectManager: boolean;

@@ -1,6 +1,15 @@
 import { APITokenCard } from "./APITokenCard";
 import { Skeleton } from "@/components/ui/skeleton";
 
+interface TokenScopes {
+  data_types?: string[];
+  access_level?: string;
+  pole_ids?: string[];
+  direction_ids?: string[];
+  service_ids?: string[];
+  project_ids?: string[];
+}
+
 interface Token {
   id: string;
   name: string;
@@ -8,7 +17,7 @@ interface Token {
   expires_at: string | null;
   last_used_at: string | null;
   is_active: boolean;
-  scopes: any;
+  scopes: TokenScopes | null;
 }
 
 interface APITokenListProps {

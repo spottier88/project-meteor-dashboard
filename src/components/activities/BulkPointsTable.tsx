@@ -38,7 +38,7 @@ export interface BulkPointEntry {
 interface BulkPointsTableProps {
   entries: BulkPointEntry[];
   activityTypes: ActivityType[];
-  updateEntry: (id: string, field: string, value: any) => void;
+  updateEntry: (id: string, field: string, value: string | number | undefined) => void;
   quotaRemaining: number;
 }
 

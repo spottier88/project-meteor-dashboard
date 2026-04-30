@@ -24,6 +24,11 @@ import { Badge } from "@/components/ui/badge";
 import { PointsVisualization } from "./PointsVisualization";
 import { useUserPreferences } from "@/hooks/useUserPreferences";
 
+interface RecentProject {
+  id: string;
+  title: string;
+}
+
 /**
  * Interface pour une ligne de saisie rapide
  */
@@ -73,7 +78,7 @@ export const QuickPointsEntry = ({
   });
 
   // Mise à jour d'une entrée
-  const updateEntry = (projectId: string, field: string, value: any) => {
+  const updateEntry = (projectId: string, field: string, value: string | number | undefined) => {
     setEntries((prev) => {
       const newEntries = new Map(prev);
       const entry = newEntries.get(projectId) || {};
@@ -163,7 +168,7 @@ export const QuickPointsEntry = ({
             </TableRow>
           </TableHeader>
           <TableBody>
-            {recentProjects.map((project: any) => {
+            {(recentProjects as RecentProject[]).map((project) => {
               const entry = entries.get(project.id) || {};
               const canSubmit = entry.points && entry.points > 0 && entry.points <= pointsRemaining;
 

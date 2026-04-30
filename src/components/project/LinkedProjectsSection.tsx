@@ -11,6 +11,7 @@ import { useProjectLinks } from "@/hooks/useProjectLinks";
 import { Badge } from "@/components/ui/badge";
 import { useNavigate } from "react-router";
 import { lifecycleStatusLabels } from "@/types/project";
+import { LinkedProject } from "@/types/project-links";
 
 interface LinkedProjectsSectionProps {
   masterProjectId: string;
@@ -38,7 +39,7 @@ export const LinkedProjectsSection = ({
       </CardHeader>
       <CardContent>
         <div className="space-y-3">
-          {linkedProjects.map((project: any) => (
+          {linkedProjects.map((project: LinkedProject) => (
             <div
               key={project.id}
               className="flex items-center justify-between p-3 bg-muted/50 rounded-lg"

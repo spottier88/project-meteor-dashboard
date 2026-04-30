@@ -86,8 +86,8 @@ export const useProjectsListView = (enabled = true) => {
 
         // Typage explicite des données et conversion du JSON en ProjectListItem[]
         const jsonData = typeof data === 'string' ? JSON.parse(data) : data;
-        const projects: ProjectListItem[] = Array.isArray(jsonData) 
-          ? jsonData.map((item: any) => ({
+        const projects: ProjectListItem[] = Array.isArray(jsonData)
+          ? jsonData.map((item: Record<string, unknown>) => ({
               ...item,
               id: item.id,
               title: item.title,

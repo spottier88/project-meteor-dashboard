@@ -5,17 +5,19 @@ import { Pencil, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useRiskAccess } from "@/hooks/useRiskAccess";
 
+interface RiskCardData {
+  id: string;
+  description: string;
+  probability: "low" | "medium" | "high";
+  severity: "low" | "medium" | "high";
+  status: "open" | "in_progress" | "resolved";
+  project_id: string;
+}
+
 interface RiskCardProps {
-  risk: {
-    id: string;
-    description: string;
-    probability: "low" | "medium" | "high";
-    severity: "low" | "medium" | "high";
-    status: "open" | "in_progress" | "resolved";
-    project_id: string;
-  };
-  onEdit: (risk: any) => void;
-  onDelete: (risk: any) => void;
+  risk: RiskCardData;
+  onEdit: (risk: RiskCardData) => void;
+  onDelete: (risk: RiskCardData) => void;
   isProjectClosed?: boolean; // Prop pour forcer le mode lecture seule si projet clôturé
 }
 
