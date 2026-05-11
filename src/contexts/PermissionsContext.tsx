@@ -161,6 +161,31 @@ export function PermissionsProvider({ children }: { children: ReactNode }) {
     );
   }
 
+  // Blocage des comptes désactivés : affichage d'un écran dédié et déconnexion.
+  // L'utilisateur reste en BDD (historique préservé) mais ne peut plus accéder à l'app.
+  if (userProfile && (userProfile as { is_active?: boolean | null }).is_active === false) {
+    return (
+      <div className="flex items-center justify-center min-h-screen p-6">
+        <div className="max-w-md text-center space-y-4">
+          <h1 className="text-xl font-semibold">Compte désactivé</h1>
+          <p className="text-sm text-muted-foreground">
+            Votre compte a été désactivé. Contactez un administrateur si vous pensez qu'il s'agit d'une erreur.
+          </p>
+          <button
+            type="button"
+            className="text-sm text-primary underline"
+            onClick={async () => {
+              await supabase.auth.signOut();
+              window.location.href = "/login";
+            }}
+          >
+            Se déconnecter
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <PermissionsContext.Provider value={{
       userRoles,
