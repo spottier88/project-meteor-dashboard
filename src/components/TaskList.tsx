@@ -158,13 +158,13 @@ export const TaskList = ({
             tasks={filteredTasks || []}
             onEdit={(task) => {
               if (canEditTask(task.assignee)) {
-                setSelectedTask(task);
+                setSelectedTask(task as unknown as TaskRecord);
                 setIsTaskFormOpen(true);
               }
             }}
             onDelete={task => {
               if (canDeleteTask) {
-                setTaskToDelete(task);
+                setTaskToDelete(task as unknown as TaskRecord);
               }
             }}
             isProjectClosed={isProjectClosed}
@@ -175,7 +175,7 @@ export const TaskList = ({
             readOnly={!canCreateTask}
             onEditTask={(task) => {
               if (canEditTask(task.assignee)) {
-                setSelectedTask(task);
+                setSelectedTask(task as unknown as TaskRecord);
                 setIsTaskFormOpen(true);
               }
             }}
@@ -187,18 +187,18 @@ export const TaskList = ({
             projectId={projectId}
             projectTitle={projectTitle}
             onEdit={(task) => {
-              if (canEditTask(task.assignee)) {
-                setSelectedTask(task);
+              if (canEditTask(task.assignee as string | undefined)) {
+                setSelectedTask(task as unknown as TaskRecord);
                 setIsTaskFormOpen(true);
               }
             }}
             onAdd={(parentTaskId) => {
-              setSelectedTask(parentTaskId ? { parent_task_id: parentTaskId } : null);
+              setSelectedTask(parentTaskId ? ({ parent_task_id: parentTaskId } as unknown as TaskRecord) : null);
               setIsTaskFormOpen(true);
             }}
             onDelete={(task) => {
               if (canDeleteTask) {
-                setTaskToDelete(task);
+                setTaskToDelete(task as unknown as TaskRecord);
               }
             }}
             onUpdate={refreshTasks}

@@ -59,6 +59,7 @@ export const DailyPointsEntry = ({
     addPoints({
       ...data,
       user_id: user?.id || "",
+      week_start_date: format(weekStartDate, 'yyyy-MM-dd'),
       activity_date: selectedDate ? format(selectedDate, 'yyyy-MM-dd') : null,
     });
     setShowForm(false);

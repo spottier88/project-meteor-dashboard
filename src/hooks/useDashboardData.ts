@@ -95,7 +95,7 @@ export const useDashboardData = () => {
       }
 
       // S'assurer que nous avons un tableau
-      const projects = Array.isArray(projectsData) ? projectsData as ProjectListViewRow[] : [];
+      const projects = Array.isArray(projectsData) ? (projectsData as unknown as ProjectListViewRow[]) : [];
       
       // Calculer les statistiques
       let asProjectManager = 0;

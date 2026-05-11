@@ -15,6 +15,7 @@ export const lifecycleStatusLabels: Record<ProjectLifecycleStatus, string> = {
 export type ForEntityType = "pole" | "direction" | "service" | null;
 
 export interface Project {
+  [key: string]: unknown;
   id: string;
   title: string;
   description?: string;
@@ -50,4 +51,7 @@ export interface ProjectWithExtendedData extends Project {
   review_progress?: ProgressStatus | null;
   last_review_date?: string | null;
   teams_url?: string | null;
+  closure_status?: string | null;
+  closed_at?: string | null;
+  closed_by?: string | null;
 }

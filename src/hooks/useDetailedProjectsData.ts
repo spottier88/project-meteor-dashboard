@@ -111,7 +111,7 @@ export const useDetailedProjectsData = (projectIds: string[], enabled: boolean =
 
         // Cast des données retournées au type ProjectData, en vérifiant que les valeurs
         // des enums sont bien assignées correctement
-        const projectsData: ProjectData[] = data.map((item: Record<string, unknown>) => {
+        const projectsData: ProjectData[] = (data as unknown as Record<string, unknown>[]).map((item: Record<string, unknown>) => {
           // S'assurer que les types d'enum sont correctement assignés
           const typedItem = { ...item } as ProjectData;
           

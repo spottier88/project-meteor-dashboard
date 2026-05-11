@@ -32,6 +32,7 @@ import {
 import { CSS } from "@dnd-kit/utilities";
 
 interface Task {
+  [key: string]: unknown;
   id: string;
   title: string;
   description?: string;

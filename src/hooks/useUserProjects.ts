@@ -35,7 +35,7 @@ export const useUserProjects = () => {
         service_id: string | null;
         service_name: string | null;
       }
-      const projectsData = (data || []) as ProjectRow[];
+      const projectsData = (data || []) as unknown as ProjectRow[];
 
       // Récupérer les projets où l'utilisateur est membre
       const { data: memberProjects, error: memberError } = await supabase

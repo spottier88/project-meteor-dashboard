@@ -7,6 +7,7 @@ import { MonitoringLevel } from "@/types/monitoring";
 import { useAdminModeAwareData } from "./useAdminModeAwareData";
 
 export interface ProjectListItem {
+  [key: string]: unknown;
   id: string;
   title: string;
   description: string | null;
@@ -89,34 +90,34 @@ export const useProjectsListView = (enabled = true) => {
         const projects: ProjectListItem[] = Array.isArray(jsonData)
           ? jsonData.map((item: Record<string, unknown>) => ({
               ...item,
-              id: item.id,
-              title: item.title,
-              description: item.description,
+              id: item.id as string,
+              title: item.title as string,
+              description: item.description as string | null,
               lifecycle_status: item.lifecycle_status as ProjectLifecycleStatus,
               status: item.status as ProjectStatus | null,
               progress: item.progress as ProgressStatus | null,
               weather: item.weather as ProjectStatus | null,
               review_progress: item.review_progress as ProgressStatus | null,
               monitoring_level: item.monitoring_level as MonitoringLevel | null,
-              completion: item.completion || 0,
-              last_review_date: item.last_review_date,
-              project_manager: item.project_manager,
-              project_manager_name: item.project_manager_name,
-              owner_id: item.owner_id,
-              pole_id: item.pole_id,
-              direction_id: item.direction_id,
-              service_id: item.service_id,
-              start_date: item.start_date,
-              end_date: item.end_date,
-              pole_name: item.pole_name,
-              direction_name: item.direction_name,
-              service_name: item.service_name,
+              completion: (item.completion as number) || 0,
+              last_review_date: item.last_review_date as string | null,
+              project_manager: item.project_manager as string | null,
+              project_manager_name: item.project_manager_name as string | null,
+              owner_id: item.owner_id as string | null,
+              pole_id: item.pole_id as string | null,
+              direction_id: item.direction_id as string | null,
+              service_id: item.service_id as string | null,
+              start_date: item.start_date as string | null,
+              end_date: item.end_date as string | null,
+              pole_name: item.pole_name as string | null,
+              direction_name: item.direction_name as string | null,
+              service_name: item.service_name as string | null,
               for_entity_type: item.for_entity_type as ForEntityType,
-              for_entity_id: item.for_entity_id,
-              suivi_dgs: item.suivi_dgs,
-              priority: item.priority,
-              monitoring_entity_id: item.monitoring_entity_id,
-              review_created_at: item.review_created_at
+              for_entity_id: item.for_entity_id as string | null,
+              suivi_dgs: item.suivi_dgs as boolean | null,
+              priority: item.priority as string | null,
+              monitoring_entity_id: item.monitoring_entity_id as string | null,
+              review_created_at: item.review_created_at as string | null
             }))
           : [];
         

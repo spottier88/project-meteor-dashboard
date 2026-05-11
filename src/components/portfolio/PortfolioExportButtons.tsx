@@ -12,7 +12,7 @@ import { generatePortfolioExcel } from "@/utils/portfolioExport";
 import { generatePortfolioPPTX } from "@/components/pptx/portfolioSlideGenerators";
 
 interface PortfolioProjectItem {
-  title?: string | null;
+  title: string;
   project_manager?: string | null;
   status?: string | null;
   lifecycle_status?: string | null;

@@ -60,7 +60,7 @@ export const QuickPointsEntry = ({
   const { data: recentProjects, isLoading } = useRecentProjects();
   const [entries, setEntries] = useState<Map<string, Partial<QuickEntry>>>(new Map());
   const { getPreference } = useUserPreferences();
-  const useCookieMode = getPreference('points_visualization_mode', 'classic') === 'cookies';
+  const useCookieMode = getPreference<'classic' | 'cookies'>('points_visualization_mode', 'classic') === 'cookies';
 
   // Récupérer les types d'activités
   const { data: activityTypes } = useQuery({

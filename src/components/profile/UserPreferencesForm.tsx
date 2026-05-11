@@ -64,7 +64,7 @@ export const UserPreferencesForm = () => {
     });
   };
 
-  const emailNotificationsEnabled = getPreference('email_notifications_enabled', true);
+  const emailNotificationsEnabled = getPreference<boolean>('email_notifications_enabled', true);
   const emailDigestFrequency = getPreference('email_digest_frequency', 24);
 
   return (

@@ -8,6 +8,7 @@ import { Pencil, Trash2 } from "lucide-react";
 import { useRiskAccess } from "@/hooks/useRiskAccess";
 
 interface Risk {
+  [key: string]: unknown;
   id: string;
   description: string;
   probability: "low" | "medium" | "high";
