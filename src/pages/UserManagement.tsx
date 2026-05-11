@@ -54,6 +54,11 @@ export const UserManagement = () => {
   const [sortKey, setSortKey] = useState<string | null>(null);
   const [sortDirection, setSortDirection] = useState<SortDirection>(null);
   const [isBulkWizardOpen, setIsBulkWizardOpen] = useState(false);
+  // Affichage des utilisateurs inactifs : masqués par défaut, préférence persistée
+  const [showInactive, setShowInactive] = useState<boolean>(() => {
+    if (typeof window === "undefined") return false;
+    return localStorage.getItem("userManagement.showInactive") === "true";
+  });
 
   const { data: lastActivities } = useQuery({
     queryKey: ["lastActivities"],
