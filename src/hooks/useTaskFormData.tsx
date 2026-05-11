@@ -62,11 +62,12 @@ export const useTaskFormData = (projectId: string, isOpen: boolean, taskId?: str
           // console.log("Adding project manager to members list");
           const { data: pmProfile, error: pmError } = await supabase
             .from("profiles")
-            .select("id, email, first_name, last_name")
+            .select("id, email, first_name, last_name, is_active")
             .eq("email", project.project_manager)
             .maybeSingle();
-            
-          if (!pmError && pmProfile) {
+
+          // On n'ajoute le chef de projet à la liste de sélection que s'il est encore actif
+          if (!pmError && pmProfile && (pmProfile as { is_active?: boolean | null }).is_active !== false) {
             membersList.push({
               user_id: pmProfile.id,
               profiles: pmProfile
