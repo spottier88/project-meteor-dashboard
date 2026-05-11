@@ -272,6 +272,25 @@ export const UserForm = ({ isOpen, onClose, onSubmit, user }: UserFormProps) => 
           onAssignmentChange={setHierarchyAssignment}
           initialAssignment={hierarchyAssignment}
         />
+        {user && (
+          <div className="flex items-start justify-between gap-4 rounded-md border p-3 mt-2">
+            <div className="space-y-0.5">
+              <Label htmlFor="user-active" className="text-sm font-medium">
+                Compte actif
+              </Label>
+              <p className="text-xs text-muted-foreground">
+                Un utilisateur inactif n'apparaît plus dans les listes de sélection
+                (tâches, projets, équipes, notifications…). Ses données existantes
+                restent conservées.
+              </p>
+            </div>
+            <Switch
+              id="user-active"
+              checked={isActive}
+              onCheckedChange={setIsActive}
+            />
+          </div>
+        )}
         <DialogFooter>
           <Button variant="outline" onClick={onClose}>
             Annuler
