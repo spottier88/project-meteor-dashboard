@@ -92,6 +92,7 @@ export const UserForm = ({ isOpen, onClose, onSubmit, user }: UserFormProps) => 
       setLastName("");
       setEmail("");
       setRoles(["chef_projet"]);
+      setIsActive(true);
       setSelectedUserId("");
       setHierarchyAssignment(null);
       fetchExistingUsers();
