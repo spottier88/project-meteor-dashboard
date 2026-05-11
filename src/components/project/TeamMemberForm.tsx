@@ -58,6 +58,7 @@ export const TeamMemberForm = ({ isOpen, onClose, projectId }: TeamMemberFormPro
       const existingUserIds = existingMembers?.map(m => m.user_id) || [];
 
       // Get users with 'membre' role who are not already team members
+      // Phase 2 désactivation utilisateurs : on exclut les profils inactifs
       const { data: users } = await supabase
         .from("profiles")
         .select(`
@@ -68,6 +69,7 @@ export const TeamMemberForm = ({ isOpen, onClose, projectId }: TeamMemberFormPro
           user_roles!inner(role)
         `)
         .eq('user_roles.role', 'membre')
+        .neq('is_active', false)
         .not('id', 'in', `(${existingUserIds.join(",") || '00000000-0000-0000-0000-000000000000'})`)
         .order('first_name');
 
