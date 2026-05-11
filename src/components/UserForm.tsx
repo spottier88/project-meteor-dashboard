@@ -118,6 +118,7 @@ export const UserForm = ({ isOpen, onClose, onSubmit, user }: UserFormProps) => 
           .update({
             first_name: firstName,
             last_name: lastName,
+            is_active: isActive,
           })
           .eq("id", user.id);
 
