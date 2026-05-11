@@ -5,6 +5,8 @@ export interface UserProfile {
   email: string | null;
   first_name: string | null;
   last_name: string | null;
+  /** Compte actif. Un utilisateur inactif n'apparaît plus dans les listes de sélection. */
+  is_active?: boolean;
   created_at?: string | null;
 }
 
