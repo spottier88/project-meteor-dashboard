@@ -53,9 +53,11 @@ export function PublishNotificationForm({
   const { data: users } = useQuery({
     queryKey: ["users"],
     queryFn: async () => {
+      // Phase 2 désactivation utilisateurs : on n'affiche que les comptes actifs comme cibles de notification
       const { data, error } = await supabase
         .from("profiles")
-        .select("id, email, first_name, last_name");
+        .select("id, email, first_name, last_name")
+        .neq("is_active", false);
       if (error) throw error;
       return data;
     },
