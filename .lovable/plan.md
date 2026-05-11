@@ -1,70 +1,74 @@
+## Contexte
 
-# Mise à jour de @xmldom/xmldom (0.9.8 → 0.9.10)
+Aujourd'hui, sur l'écran "Gestion des affectations hiérarchiques" d'un utilisateur (`/admin/users/:userId/assignments`), l'administrateur doit choisir manuellement un chemin hiérarchique dans une longue liste déroulante de tous les chemins existants — alors que dans la grande majorité des cas, le manager doit avoir des droits exactement sur sa propre affectation (et éventuellement les chemins enfants qui en dépendent).
 
-## Constat
+Les affectations propres de l'utilisateur sont déjà stockées dans `user_hierarchy_assignments` (entity_type = pole / direction / service). Cette information est sous-utilisée.
 
-La bibliothèque concernée est **`@xmldom/xmldom`** (le successeur officiel maintenu de l'ancien package `xmldom`, déprécié depuis 2021). Elle est bien présente dans le projet :
+## Objectif
 
-- **Version actuelle installée** : `0.9.8` (visible dans `bun.lock` et `package-lock.json`)
-- **Version cible** : `0.9.10` (publiée le 18 avril 2026)
-- **Présence dans le code applicatif** : aucune. `rg "xmldom"` ne renvoie aucun résultat dans `src/`.
-- **Origine** : dépendance **transitive** introduite par **`docxtemplater@3.68.3`**, qui déclare `"@xmldom/xmldom": "^0.9.8"`.
+Rendre l'écran d'affectation des droits hiérarchiques quasi "1-clic" lorsque le rôle manager et l'affectation hiérarchique de l'utilisateur sont déjà renseignés.
 
-```text
-docxtemplater 3.68.3
-└── @xmldom/xmldom ^0.9.8   ← satisfait par 0.9.10 (semver compatible)
-```
+## Évolutions proposées (UI uniquement, pas de modèle de données)
 
-## Où docxtemplater est utilisé
+### 1. Bloc "Suggestions" en haut de l'écran
 
-Une seule chaîne d'utilisation, l'export DOCX du cadrage projet :
+Au-dessus du formulaire actuel, ajouter une carte **"Affectations suggérées"** qui apparaît seulement si :
+- l'utilisateur a le rôle `manager` (lecture via `user_roles`),
+- ET il a au moins une entrée dans `user_hierarchy_assignments`.
 
-- `src/utils/framingMailMerge.ts` — moteur de fusion (mail merge) DOCX
-- `src/components/framing/ProjectFramingExportDOCX.tsx` — bouton d'export
-- `src/components/framing-export-templates/*` — gestion des modèles DOCX
-- `src/utils/templateLinter.ts` — lint des modèles uploadés (utilise `pizzip`, pas xmldom directement)
+Pour chaque affectation hiérarchique de l'utilisateur, on calcule à la volée le ou les `hierarchy_paths` correspondants :
+- entity_type = service → 1 chemin exact (pôle/direction/service),
+- entity_type = direction → chemin de la direction + (option) tous ses services,
+- entity_type = pole → chemin du pôle + (option) toutes ses directions/services.
 
-Aucun autre composant ne dépend transitivement de xmldom.
+Chaque suggestion est affichée sous forme de ligne avec :
+- le `path_string` (ex. "DSI / Études / Applicatif"),
+- un badge "Déjà affecté" si la ligne existe déjà dans `manager_path_assignments`,
+- un bouton **Ajouter** (désactivé si déjà affecté).
 
-## Impacts d'une montée de version
+Deux actions globales en haut du bloc :
+- **"Tout ajouter"** : insère en une fois toutes les suggestions non encore affectées.
+- **"Ajouter mon affectation directe uniquement"** : n'insère que le chemin strictement égal à l'affectation de l'utilisateur (cas le plus fréquent / le plus restrictif).
 
-La montée 0.9.8 → 0.9.10 est un **bump patch** dans la même branche mineure 0.9.x. D'après le changelog public de xmldom :
+### 2. Pré-sélection dans le formulaire manuel existant
 
-- **0.9.9** et **0.9.10** : corrections de bugs et durcissements de sécurité (parsing XML / XHTML), aucune rupture d'API documentée.
-- Aucun changement d'API publique consommée par docxtemplater (DOMParser, XMLSerializer).
-- Compatible Node ≥ 14.6 (déjà respecté par le projet).
+Le formulaire `HierarchyPathAssignmentForm` (sélecteur de chemin) est conservé pour les cas atypiques, mais :
+- son `Select` est pré-positionné par défaut sur le chemin correspondant à l'affectation directe de l'utilisateur (si elle existe),
+- les chemins déjà affectés sont marqués (texte grisé + suffixe "(déjà affecté)") et non sélectionnables, ce qui évite les erreurs 23505.
 
-**Risques fonctionnels attendus** : très faibles.
-- Le parsing XML peut devenir plus strict sur des modèles DOCX malformés. Or `templateLinter.ts` valide déjà les modèles en amont (révisions, balises fragmentées, text-boxes), ce qui réduit le risque.
-- L'export DOCX (cadrage projet) est la seule fonctionnalité utilisateur concernée.
+### 3. Améliorations ergonomiques complémentaires
 
-## Comment forcer la mise à jour (la version cible n'étant pas encore exigée par docxtemplater)
+- **Rappel contextuel** : afficher en en-tête de page le rôle de l'utilisateur et son affectation directe (ex. "Manager • Pôle DSI / Direction Études / Service Applicatif"), avec un lien "Modifier l'affectation" qui pointe vers la fiche utilisateur si l'admin doit la corriger avant d'attribuer les droits.
+- **Avertissement si manquant** : si l'utilisateur n'a pas le rôle manager ou pas d'affectation, afficher un message d'aide explicite ("Renseignez d'abord le rôle Manager et l'affectation hiérarchique pour bénéficier des suggestions") au lieu du bloc Suggestions.
+- **Suppression en masse** : ajouter un bouton "Tout supprimer" sur la carte "Affectations existantes" (avec confirmation), utile lorsqu'on change un manager de périmètre.
 
-`docxtemplater@3.68.3` accepte `^0.9.8` donc `0.9.10` est compatible, mais sans intervention bun/npm garderont éventuellement `0.9.8` figé par le lockfile. Deux options :
+## Détails techniques
 
-1. **Override dans `package.json`** (recommandé, déclaratif et persistant) :
-   ```json
-   "overrides": {
-     "@xmldom/xmldom": "^0.9.10"
-   },
-   "resolutions": {
-     "@xmldom/xmldom": "^0.9.10"
-   }
-   ```
-   `overrides` est lu par npm, `resolutions` par bun/yarn — on met les deux pour rester compatible avec le double lockfile présent (`bun.lock` + `package-lock.json`).
+- **Aucune migration** nécessaire. Toutes les données existent déjà :
+  - `user_roles` pour le rôle manager,
+  - `user_hierarchy_assignments` pour l'affectation directe,
+  - `hierarchy_paths` pour les chemins disponibles,
+  - `manager_path_assignments` pour les affectations existantes.
 
-2. **Réinstallation simple** : supprimer l'entrée xmldom des lockfiles puis relancer `bun install` — moins fiable car la résolution peut retomber sur 0.9.8.
+- Nouveau hook `useSuggestedManagerPaths(userId)` (`src/hooks/`) :
+  - charge en parallèle `user_roles`, `user_hierarchy_assignments`, `hierarchy_paths`, `manager_path_assignments` (déjà fait au niveau page, on factorise),
+  - retourne `{ isManager, directAssignment, suggestions: Array<{ path, isAlreadyAssigned, isDirect }> }`,
+  - logique de matching : pour chaque assignment utilisateur, filtrer `hierarchy_paths` selon entity_type :
+    - service → `service_id = entity_id`,
+    - direction → `direction_id = entity_id` (un seul chemin) + enfants (`service_id IS NULL OR direction_id = entity_id`),
+    - pole → `pole_id = entity_id` + enfants.
 
-L'option 1 sera retenue.
+- Nouveau composant `SuggestedHierarchyPathsCard` (`src/components/manager/`) consommant ce hook et utilisant la même mutation `addAssignment` que la page actuelle (mutation déplacée dans la page ou exposée via props).
 
-## Plan d'action (à exécuter en mode build)
+- Mutation d'ajout en masse : `Promise.all` sur les `insert`, gestion silencieuse de l'erreur 23505 (déjà affecté) pour ne pas bloquer le batch.
 
-1. Ajouter les blocs `overrides` et `resolutions` dans `package.json` pour forcer `@xmldom/xmldom@^0.9.10`.
-2. Relancer l'installation pour régénérer les lockfiles.
-3. Vérifier dans `bun.lock` et `package-lock.json` que la version résolue est bien `0.9.10`.
-4. Test fumée manuel à signaler à l'utilisateur : exporter un cadrage projet en DOCX (via `ProjectFramingExportDOCX`) avec un modèle existant pour valider que le rendu reste identique.
+- Mutation "Tout supprimer" : `delete` filtré sur `user_id` dans `manager_path_assignments`, avec `AlertDialog` de confirmation.
 
-## Hors périmètre
+- `HierarchyPathAssignmentForm` reçoit en plus la liste `assignedPathIds` pour griser les options déjà attribuées et un `defaultPathId` pour la pré-sélection.
 
-- Aucune modification du code applicatif (`src/`) n'est nécessaire.
-- L'erreur de build préexistante sur `src/components/task/TaskGantt.tsx` (`@svar-ui/react-core` introuvable) n'est pas liée à xmldom et sera traitée séparément si besoin.
+## Ce qui ne change pas
+
+- Le schéma de base et les RLS.
+- La logique de permission côté projets (`canManagerAccessProject`, `manager_path_assignments`).
+- La page de gestion des affectations utilisateur (`user_hierarchy_assignments`) — uniquement consommée en lecture.
+- Le reste de l'application (gestion utilisateurs, projets, portefeuilles, etc.).
