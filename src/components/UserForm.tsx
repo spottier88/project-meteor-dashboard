@@ -27,6 +27,7 @@ interface UserFormProps {
     first_name: string | null;
     last_name: string | null;
     roles: UserRole[];
+    is_active?: boolean;
   };
 }
 
