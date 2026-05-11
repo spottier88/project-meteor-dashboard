@@ -252,13 +252,22 @@ export const UserManagement = () => {
             <div>Chargement...</div>
           ) : (
             <>
-              <div className="mb-4">
+              <div className="mb-4 flex items-center gap-4 flex-wrap">
                 <Input
                   placeholder="Rechercher par nom, prénom ou email..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="max-w-sm"
                 />
+                <label className="flex items-center gap-2 text-sm text-muted-foreground cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    className="h-4 w-4 rounded border-input"
+                    checked={showInactive}
+                    onChange={(e) => toggleShowInactive(e.target.checked)}
+                  />
+                  Afficher les utilisateurs inactifs
+                </label>
               </div>
 
               <Table>
