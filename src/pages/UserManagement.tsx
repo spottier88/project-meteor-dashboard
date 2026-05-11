@@ -4,7 +4,7 @@ import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { Edit, Mail, Plus, Settings, ShieldCheck, Trash2, Users, AlertTriangle } from "lucide-react";
+import { Edit, Mail, Plus, Power, PowerOff, Settings, ShieldCheck, Trash2, Users, AlertTriangle } from "lucide-react";
 import { useNavigate } from "react-router";
 import { useState } from "react";
 import { UserForm } from "@/components/UserForm";
