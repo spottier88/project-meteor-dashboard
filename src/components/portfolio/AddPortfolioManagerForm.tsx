@@ -62,10 +62,12 @@ export const AddPortfolioManagerForm = ({ portfolioId, isOpen, onClose }: AddPor
       if (availableUserIds.length === 0) return [];
 
       // Étape 3 : Récupérer les profils des utilisateurs disponibles
+      // Phase 2 désactivation utilisateurs : on exclut les profils inactifs des suggestions
       const { data: profiles, error: profilesError } = await supabase
         .from("profiles")
         .select("id, email, first_name, last_name")
-        .in("id", availableUserIds);
+        .in("id", availableUserIds)
+        .neq("is_active", false);
 
       if (profilesError) throw profilesError;
 

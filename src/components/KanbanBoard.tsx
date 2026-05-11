@@ -86,12 +86,12 @@ export const KanbanBoard = ({ projectId, readOnly = false, onEditTask, isProject
       if (project?.project_manager) {
         const { data: pmProfile } = await supabase
           .from("profiles")
-          .select("id, email, first_name, last_name")
+          .select("id, email, first_name, last_name, is_active")
           .eq("email", project.project_manager)
           .maybeSingle();
-          
-        if (pmProfile) {
-          // Vérifier que le chef de projet n'est pas déjà dans la liste
+
+        // Phase 2 désactivation utilisateurs : on n'ajoute pas le chef de projet s'il est inactif
+        if (pmProfile && (pmProfile as { is_active?: boolean | null }).is_active !== false) {
           const isAlreadyInList = data?.some(m => m.profiles?.email === pmProfile.email);
           if (!isAlreadyInList) {
             data?.push({
