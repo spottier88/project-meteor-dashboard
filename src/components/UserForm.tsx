@@ -40,6 +40,7 @@ export const UserForm = ({ isOpen, onClose, onSubmit, user }: UserFormProps) => 
   const [lastName, setLastName] = useState(user?.last_name || "");
   const [email, setEmail] = useState(user?.email || "");
   const [roles, setRoles] = useState<UserRole[]>(user?.roles || ["chef_projet"]);
+  const [isActive, setIsActive] = useState<boolean>(user?.is_active !== false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedUserId, setSelectedUserId] = useState<string>("");
   const [hierarchyAssignment, setHierarchyAssignment] = useState<Omit<HierarchyAssignment, 'id' | 'created_at'> | null>(null);
