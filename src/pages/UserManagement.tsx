@@ -282,55 +282,83 @@ export const UserManagement = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredUsers.map((user) => (
-                    <TableRow key={user.id}>
-                      <TableCell>{user.email}</TableCell>
-                      <TableCell>{user.first_name || "-"}</TableCell>
-                      <TableCell>{user.last_name || "-"}</TableCell>
-                      <TableCell>
-                        <div className="flex gap-2 flex-wrap">
-                          {[...new Set(user.roles)].map((role) => (
-                            role === "manager" ? (
-                              <div key={role} className="flex items-center gap-1">
-                                <Badge variant="secondary">{getRoleLabel(role)}</Badge>
-                                {!user.hasManagerAssignment && (
-                                  <TooltipProvider>
-                                    <Tooltip>
-                                      <TooltipTrigger asChild>
-                                        <Badge variant="warning" className="flex items-center gap-1">
-                                          <AlertTriangle className="h-3 w-3" />
-                                          <span className="text-xs">Non affecté</span>
-                                        </Badge>
-                                      </TooltipTrigger>
-                                      <TooltipContent>
-                                        <p>Ce manager n'a pas d'affectation hiérarchique</p>
-                                      </TooltipContent>
-                                    </Tooltip>
-                                  </TooltipProvider>
-                                )}
-                              </div>
-                            ) : (
-                              <Badge key={role} variant="secondary">{getRoleLabel(role)}</Badge>
-                            )
-                          ))}
-                        </div>
-                      </TableCell>
-                      <TableCell>{formatLastActivity(user.lastActivity)}</TableCell>
-                      <TableCell className="text-right space-x-2">
-                        <Button variant="ghost" size="icon" onClick={() => handleEdit(user)}>
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        {user.roles.includes("manager") && (
-                          <Button variant="ghost" size="icon" onClick={() => void navigate(`/admin/users/${user.id}/assignments`)}>
-                            <Users className="h-4 w-4" />
+                  {filteredUsers.map((user) => {
+                    const inactive = user.is_active === false;
+                    return (
+                      <TableRow key={user.id} className={inactive ? "opacity-60" : ""}>
+                        <TableCell>
+                          <div className="flex items-center gap-2">
+                            <span>{user.email}</span>
+                            {inactive && (
+                              <Badge variant="outline" className="text-xs">Inactif</Badge>
+                            )}
+                          </div>
+                        </TableCell>
+                        <TableCell>{user.first_name || "-"}</TableCell>
+                        <TableCell>{user.last_name || "-"}</TableCell>
+                        <TableCell>
+                          <div className="flex gap-2 flex-wrap">
+                            {[...new Set(user.roles)].map((role) => (
+                              role === "manager" ? (
+                                <div key={role} className="flex items-center gap-1">
+                                  <Badge variant="secondary">{getRoleLabel(role)}</Badge>
+                                  {!user.hasManagerAssignment && (
+                                    <TooltipProvider>
+                                      <Tooltip>
+                                        <TooltipTrigger asChild>
+                                          <Badge variant="warning" className="flex items-center gap-1">
+                                            <AlertTriangle className="h-3 w-3" />
+                                            <span className="text-xs">Non affecté</span>
+                                          </Badge>
+                                        </TooltipTrigger>
+                                        <TooltipContent>
+                                          <p>Ce manager n'a pas d'affectation hiérarchique</p>
+                                        </TooltipContent>
+                                      </Tooltip>
+                                    </TooltipProvider>
+                                  )}
+                                </div>
+                              ) : (
+                                <Badge key={role} variant="secondary">{getRoleLabel(role)}</Badge>
+                              )
+                            ))}
+                          </div>
+                        </TableCell>
+                        <TableCell>{formatLastActivity(user.lastActivity)}</TableCell>
+                        <TableCell className="text-right space-x-2">
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={() => handleToggleActive(user)}
+                                >
+                                  {inactive
+                                    ? <Power className="h-4 w-4 text-muted-foreground" />
+                                    : <PowerOff className="h-4 w-4" />}
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p>{inactive ? "Réactiver l'utilisateur" : "Désactiver l'utilisateur"}</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                          <Button variant="ghost" size="icon" onClick={() => handleEdit(user)}>
+                            <Edit className="h-4 w-4" />
                           </Button>
-                        )}
-                        <Button variant="ghost" size="icon" onClick={() => setUserToDelete(user)}>
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
+                          {user.roles.includes("manager") && (
+                            <Button variant="ghost" size="icon" onClick={() => void navigate(`/admin/users/${user.id}/assignments`)}>
+                              <Users className="h-4 w-4" />
+                            </Button>
+                          )}
+                          <Button variant="ghost" size="icon" onClick={() => setUserToDelete(user)}>
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
                 </TableBody>
               </Table>
             </>
