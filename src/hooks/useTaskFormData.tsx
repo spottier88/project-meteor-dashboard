@@ -38,14 +38,18 @@ export const useTaskFormData = (projectId: string, isOpen: boolean, taskId?: str
             id,
             email,
             first_name,
-            last_name
+            last_name,
+            is_active
           )
         `)
         .eq("project_id", projectId);
 
       if (error) throw error;
-      
-      const membersList = [...data];
+
+      // Phase 2 désactivation utilisateurs : on exclut les membres inactifs des listes de sélection
+      const membersList = [...data].filter(
+        (m) => m.profiles && (m.profiles as { is_active?: boolean | null }).is_active !== false
+      );
       
       // Vérifier si le chef de projet est déjà dans la liste des membres
       if (project?.project_manager) {
