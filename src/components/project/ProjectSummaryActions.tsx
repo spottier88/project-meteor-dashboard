@@ -188,14 +188,14 @@ const ProjectSummaryActions = ({
           created_at: detailedProjectData.lastReview?.created_at,
           actions: detailedProjectData.lastReview?.actions || []
         } : undefined,
-        risks: (detailedProjectData.risks || []).map((risk: Risk) => ({
+        risks: (detailedProjectData.risks || []).map((risk) => ({
           description: risk.description,
           probability: risk.probability as RiskProbability,
           severity: risk.severity as RiskSeverity,
           status: risk.status as RiskStatus,
           mitigation_plan: risk.mitigation_plan
         })),
-        tasks: (detailedProjectData.tasks || []).map((task: TaskRecord) => ({
+        tasks: (detailedProjectData.tasks || []).map((task) => ({
           title: task.title,
           description: task.description ?? undefined,
           status: task.status as "todo" | "in_progress" | "done",

@@ -91,4 +91,4 @@ export interface TaskRecord {
 /**
  * Callback de soumission de projet utilisé dans les formulaires
  */
-export type ProjectSubmitCallback = (projectData: ProjectRecord) => Promise<ProjectRecord | void>;
+export type ProjectSubmitCallback = (projectData: Record<string, unknown>) => Promise<Record<string, unknown> | void>;

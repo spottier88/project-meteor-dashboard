@@ -15,6 +15,7 @@ export const lifecycleStatusLabels: Record<ProjectLifecycleStatus, string> = {
 export type ForEntityType = "pole" | "direction" | "service" | null;
 
 export interface Project {
+  [key: string]: unknown;
   id: string;
   title: string;
   description?: string;

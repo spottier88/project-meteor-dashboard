@@ -262,7 +262,7 @@ export const ProjectSummaryContent = ({
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <LastReview projectId={project.id} review={lastReview} previousReview={previousReview} />
+        <LastReview projectId={project.id} review={lastReview as never} previousReview={previousReview} />
 
         {/* Carte du diagramme d'innovation */}
         <Card>

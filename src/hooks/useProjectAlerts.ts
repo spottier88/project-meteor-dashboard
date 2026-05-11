@@ -53,7 +53,7 @@ export const useProjectAlerts = () => {
       }
 
       // S'assurer que nous avons un tableau et typer correctement les données
-      const projects = Array.isArray(projectsData) ? projectsData as AccessibleProjectRow[] : [];
+      const projects = Array.isArray(projectsData) ? (projectsData as unknown as AccessibleProjectRow[]) : [];
       const alerts: ProjectAlert[] = [];
       const threeMonthsAgo = new Date();
       threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);

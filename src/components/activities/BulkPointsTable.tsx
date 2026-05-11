@@ -52,7 +52,7 @@ export const BulkPointsTable = ({
   quotaRemaining,
 }: BulkPointsTableProps) => {
   const { getPreference } = useUserPreferences();
-  const useCookieMode = getPreference('points_visualization_mode', 'classic') === 'cookies';
+  const useCookieMode = getPreference<'classic' | 'cookies'>('points_visualization_mode', 'classic') === 'cookies';
 
   // Calculer le total des points saisis
   const totalPoints = entries.reduce((sum, entry) => sum + (entry.points || 0), 0);

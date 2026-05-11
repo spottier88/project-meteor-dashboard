@@ -83,7 +83,7 @@ export const PointsEntryForm = ({
   const session = useSession();
   const { quota } = useActivityPointsQuota();
   const { getPreference } = useUserPreferences();
-  const useCookieMode = getPreference('points_visualization_mode', 'classic') === 'cookies';
+  const useCookieMode = getPreference<'classic' | 'cookies'>('points_visualization_mode', 'classic') === 'cookies';
 
   // Calculer la limite de points selon le mode
   const dailyQuota = 2; // Limite quotidienne
