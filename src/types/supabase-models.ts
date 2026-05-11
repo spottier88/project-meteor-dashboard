@@ -9,6 +9,7 @@ import { ProjectLifecycleStatus, ProjectStatus, ProgressStatus, ForEntityType } 
  * Données d'un projet tel que retourné par Supabase (table projects)
  */
 export interface ProjectRecord {
+  [key: string]: unknown;
   id: string;
   title: string;
   description?: string | null;
@@ -39,6 +40,7 @@ export interface ProjectRecord {
  * Données d'une revue de projet (table reviews)
  */
 export interface ReviewRecord {
+  [key: string]: unknown;
   id: string;
   project_id: string;
   weather?: ProjectStatus | null;
@@ -55,6 +57,7 @@ export interface ReviewRecord {
  * Données d'un risque (table risks)
  */
 export interface RiskRecord {
+  [key: string]: unknown;
   id: string;
   project_id: string;
   title: string;
@@ -71,6 +74,7 @@ export interface RiskRecord {
  * Données d'une tâche (table tasks)
  */
 export interface TaskRecord {
+  [key: string]: unknown;
   id: string;
   project_id: string;
   title: string;

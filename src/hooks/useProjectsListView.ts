@@ -7,6 +7,7 @@ import { MonitoringLevel } from "@/types/monitoring";
 import { useAdminModeAwareData } from "./useAdminModeAwareData";
 
 export interface ProjectListItem {
+  [key: string]: unknown;
   id: string;
   title: string;
   description: string | null;

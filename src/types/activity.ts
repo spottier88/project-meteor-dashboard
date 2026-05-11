@@ -30,13 +30,19 @@ export interface CalendarEvent {
 export interface ActivityPoint {
   id: string;
   user_id: string;
-  project_id?: string;
-  activity_type?: string;
+  project_id?: string | null;
+  activity_type?: string | null;
   points: number;
   week_start_date: string;
-  description?: string;
+  /** Date du jour pour la saisie quotidienne (mode 'daily'). Null en mode hebdomadaire. */
+  activity_date?: string | null;
+  description?: string | null;
   created_at: string;
   updated_at: string;
+  /** Projet joint via la relation Supabase (lecture seule, optionnel) */
+  projects?: { id: string; title: string } | null;
+  /** Type d'activité enrichi via le join Supabase (lecture seule, optionnel) */
+  activity_types?: { code: string; label: string; color: string } | null;
 }
 
 export interface ActivityPointWithDetails extends ActivityPoint {
