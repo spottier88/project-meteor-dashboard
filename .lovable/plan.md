@@ -1,74 +1,111 @@
-## Contexte
-
-Aujourd'hui, sur l'écran "Gestion des affectations hiérarchiques" d'un utilisateur (`/admin/users/:userId/assignments`), l'administrateur doit choisir manuellement un chemin hiérarchique dans une longue liste déroulante de tous les chemins existants — alors que dans la grande majorité des cas, le manager doit avoir des droits exactement sur sa propre affectation (et éventuellement les chemins enfants qui en dépendent).
-
-Les affectations propres de l'utilisateur sont déjà stockées dans `user_hierarchy_assignments` (entity_type = pole / direction / service). Cette information est sous-utilisée.
+# Plan — Désactivation d'utilisateurs
 
 ## Objectif
+Permettre à un administrateur de marquer un utilisateur comme **inactif** depuis sa fiche dans l'administration. Un utilisateur inactif :
+- ne peut plus être sélectionné dans les listes (tâches, équipes, notifications, managers, portefeuilles, chef de projet…),
+- reste visible dans l'historique (données existantes préservées : tâches assignées, revues, activités…),
+- apparaît clairement comme inactif dans la gestion des utilisateurs (badge + filtre).
 
-Rendre l'écran d'affectation des droits hiérarchiques quasi "1-clic" lorsque le rôle manager et l'affectation hiérarchique de l'utilisateur sont déjà renseignés.
+Le champ `is_active` (boolean, défaut `true`) est ajouté à la table `profiles`. Aucune suppression de compte n'est effectuée.
 
-## Évolutions proposées (UI uniquement, pas de modèle de données)
+---
 
-### 1. Bloc "Suggestions" en haut de l'écran
+## Phase 1 — Socle base de données & administration
 
-Au-dessus du formulaire actuel, ajouter une carte **"Affectations suggérées"** qui apparaît seulement si :
-- l'utilisateur a le rôle `manager` (lecture via `user_roles`),
-- ET il a au moins une entrée dans `user_hierarchy_assignments`.
+### 1.1 Migration BDD
+- Ajouter `is_active boolean NOT NULL DEFAULT true` à `public.profiles`.
+- Backfill : tous les profils existants → `true`.
+- Index partiel `WHERE is_active = true` pour optimiser les listes de sélection.
+- Pas de modification des RLS existantes (la désactivation est un filtre applicatif, pas un retrait d'accès — l'utilisateur reste authentifié et peut consulter ce qu'il a déjà).
 
-Pour chaque affectation hiérarchique de l'utilisateur, on calcule à la volée le ou les `hierarchy_paths` correspondants :
-- entity_type = service → 1 chemin exact (pôle/direction/service),
-- entity_type = direction → chemin de la direction + (option) tous ses services,
-- entity_type = pole → chemin du pôle + (option) toutes ses directions/services.
+### 1.2 Fiche utilisateur (admin)
+- `UserForm.tsx` + `UserFormFields.tsx` : ajout d'un **Switch "Compte actif"** (visible uniquement en mode édition, réservé aux admins).
+- Persistance via `UPDATE profiles SET is_active = ...`.
+- `UserManagement.tsx` :
+  - Colonne / badge "Inactif" dans la liste.
+  - Filtre toggle "Afficher les inactifs" (caché par défaut, persistance localStorage).
+  - Action rapide "Désactiver / Réactiver" depuis la ligne.
 
-Chaque suggestion est affichée sous forme de ligne avec :
-- le `path_string` (ex. "DSI / Études / Applicatif"),
-- un badge "Déjà affecté" si la ligne existe déjà dans `manager_path_assignments`,
-- un bouton **Ajouter** (désactivé si déjà affecté).
+### 1.3 Type & helpers
+- Étendre `UserProfile` (`src/types/user.ts`) avec `is_active: boolean`.
+- Créer un petit utilitaire `filterActiveUsers(users)` pour usage partagé.
 
-Deux actions globales en haut du bloc :
-- **"Tout ajouter"** : insère en une fois toutes les suggestions non encore affectées.
-- **"Ajouter mon affectation directe uniquement"** : n'insère que le chemin strictement égal à l'affectation de l'utilisateur (cas le plus fréquent / le plus restrictif).
+**Livrable Phase 1 :** un admin peut activer/désactiver un compte ; la liste admin distingue les inactifs. Aucun autre écran n'est encore filtré.
 
-### 2. Pré-sélection dans le formulaire manuel existant
+---
 
-Le formulaire `HierarchyPathAssignmentForm` (sélecteur de chemin) est conservé pour les cas atypiques, mais :
-- son `Select` est pré-positionné par défaut sur le chemin correspondant à l'affectation directe de l'utilisateur (si elle existe),
-- les chemins déjà affectés sont marqués (texte grisé + suffixe "(déjà affecté)") et non sélectionnables, ce qui évite les erreurs 23505.
+## Phase 2 — Filtrage dans les listes de sélection
 
-### 3. Améliorations ergonomiques complémentaires
+Tous les endroits où l'on **propose** un utilisateur doivent exclure les inactifs. Inventaire identifié :
 
-- **Rappel contextuel** : afficher en en-tête de page le rôle de l'utilisateur et son affectation directe (ex. "Manager • Pôle DSI / Direction Études / Service Applicatif"), avec un lien "Modifier l'affectation" qui pointe vers la fiche utilisateur si l'admin doit la corriger avant d'attribuer les droits.
-- **Avertissement si manquant** : si l'utilisateur n'a pas le rôle manager ou pas d'affectation, afficher un message d'aide explicite ("Renseignez d'abord le rôle Manager et l'affectation hiérarchique pour bénéficier des suggestions") au lieu du bloc Suggestions.
-- **Suppression en masse** : ajouter un bouton "Tout supprimer" sur la carte "Affectations existantes" (avec confirmation), utile lorsqu'on change un manager de périmètre.
+| Zone | Fichier(s) |
+|---|---|
+| Assignation de tâche | `useTaskFormData.tsx`, `TaskCard.tsx`, `TaskTable.tsx` |
+| Membres de projet / équipe | `InviteMemberForm.tsx`, `TeamMemberForm.tsx`, `ProjectTeamManagement` |
+| Chef de projet (form projet) | `ProjectFormStep5.tsx`, `useProjectFormState.tsx`, `form/useProjectFormState.tsx` |
+| Notifications ciblées | `PublishNotificationForm.tsx`, `PortfolioReviewNotificationDialog.tsx` |
+| Managers (hiérarchie) | `ManagerAssignments.tsx`, `NewAssignmentForm.tsx`, `BulkRoleWizard.tsx` |
+| Portefeuille (managers) | `AddPortfolioManagerForm.tsx` |
+| Saisie d'activités tierces | `useWeeklyPointsData.ts` (sélecteur utilisateur) |
+| Création nouvel user (existing) | RPC `get_users_without_profile` — à laisser tel quel |
+
+Règle systématique : ajouter `.eq("is_active", true)` (ou filtrer côté client si la liste est déjà chargée globalement).
+
+**Cas particuliers** :
+- **Chef de projet d'un projet existant** affecté à un utilisateur devenu inactif : on conserve l'affichage du nom (lecture seule), mais la combobox de réaffectation ne le propose plus. Ajouter une indication "(inactif)" si rencontré.
+- **Tâches déjà assignées** à un inactif : l'assignation reste, badge "(inactif)" dans `TaskCard`/`TaskTable`.
+- **Managers d'un portefeuille** : idem, le manager reste listé mais marqué inactif.
+
+**Livrable Phase 2 :** un utilisateur inactif n'apparaît plus dans aucun sélecteur, mais les données historiques restent cohérentes.
+
+---
+
+## Phase 3 — Effets de bord & accès
+
+- **Login** : un utilisateur inactif peut techniquement encore se connecter (RLS inchangée). Décision à valider : 
+  - Option A (recommandée) : le laisser se connecter mais afficher un écran "Compte désactivé" sur tout `ProtectedRoute` quand `profile.is_active === false`.
+  - Option B : ne rien faire côté front, considérer l'admin Supabase pour bloquer l'auth si besoin.
+- **PermissionsContext** : charger `is_active` avec le profil, exposer un flag `isAccountActive`. `ProtectedRoute` redirige vers `/login` + message si `false`.
+- **Hooks de listes globales** (`useTeamManagement`, `useVisibleProjects` côté chef de projet) : ne pas filtrer les **projets** d'un utilisateur inactif (l'historique reste accessible aux autres), seulement son apparition dans les sélecteurs.
+
+---
 
 ## Détails techniques
 
-- **Aucune migration** nécessaire. Toutes les données existent déjà :
-  - `user_roles` pour le rôle manager,
-  - `user_hierarchy_assignments` pour l'affectation directe,
-  - `hierarchy_paths` pour les chemins disponibles,
-  - `manager_path_assignments` pour les affectations existantes.
+### Schéma
+```sql
+ALTER TABLE public.profiles
+  ADD COLUMN is_active boolean NOT NULL DEFAULT true;
 
-- Nouveau hook `useSuggestedManagerPaths(userId)` (`src/hooks/`) :
-  - charge en parallèle `user_roles`, `user_hierarchy_assignments`, `hierarchy_paths`, `manager_path_assignments` (déjà fait au niveau page, on factorise),
-  - retourne `{ isManager, directAssignment, suggestions: Array<{ path, isAlreadyAssigned, isDirect }> }`,
-  - logique de matching : pour chaque assignment utilisateur, filtrer `hierarchy_paths` selon entity_type :
-    - service → `service_id = entity_id`,
-    - direction → `direction_id = entity_id` (un seul chemin) + enfants (`service_id IS NULL OR direction_id = entity_id`),
-    - pole → `pole_id = entity_id` + enfants.
+CREATE INDEX idx_profiles_active ON public.profiles (is_active) WHERE is_active = true;
+```
 
-- Nouveau composant `SuggestedHierarchyPathsCard` (`src/components/manager/`) consommant ce hook et utilisant la même mutation `addAssignment` que la page actuelle (mutation déplacée dans la page ou exposée via props).
+### Pattern de filtrage côté requête
+```ts
+supabase.from("profiles")
+  .select("id, first_name, last_name, email")
+  .eq("is_active", true)
+  .order("last_name");
+```
 
-- Mutation d'ajout en masse : `Promise.all` sur les `insert`, gestion silencieuse de l'erreur 23505 (déjà affecté) pour ne pas bloquer le batch.
+### Pattern d'affichage historique
+```tsx
+{user && !user.is_active && <Badge variant="outline">Inactif</Badge>}
+```
 
-- Mutation "Tout supprimer" : `delete` filtré sur `user_id` dans `manager_path_assignments`, avec `AlertDialog` de confirmation.
+### Composant Switch dans la fiche
+- Réutilise `@/components/ui/switch`.
+- Label "Compte actif" + description courte ("Un utilisateur inactif n'apparaît plus dans les listes de sélection").
+- Confirmation `AlertDialog` lors de la désactivation.
 
-- `HierarchyPathAssignmentForm` reçoit en plus la liste `assignedPathIds` pour griser les options déjà attribuées et un `defaultPathId` pour la pré-sélection.
+---
 
-## Ce qui ne change pas
+## Découpage de livraison recommandé
+1. **PR 1 (Phase 1)** : migration + fiche admin + liste admin. Faible risque, déployable seul.
+2. **PR 2 (Phase 2)** : filtrage propagé aux sélecteurs. Plus large mais purement additif.
+3. **PR 3 (Phase 3)** : blocage d'accès des comptes inactifs + badges historiques.
 
-- Le schéma de base et les RLS.
-- La logique de permission côté projets (`canManagerAccessProject`, `manager_path_assignments`).
-- La page de gestion des affectations utilisateur (`user_hierarchy_assignments`) — uniquement consommée en lecture.
-- Le reste de l'application (gestion utilisateurs, projets, portefeuilles, etc.).
+## Points à confirmer avant implémentation
+1. **Blocage de connexion** : doit-on empêcher un utilisateur inactif de se connecter (Phase 3 option A) ou seulement le retirer des listes ?
+2. **Tâches/projets dont il est responsable** au moment de la désactivation : faut-il forcer une réaffectation ou simplement signaler ?
+3. **Activités** : doit-on aussi cacher un utilisateur inactif des écrans de reporting (`TeamActivities`) ou seulement des saisies ?

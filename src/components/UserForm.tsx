@@ -9,6 +9,8 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { UserFormFields } from "./form/UserFormFields";
@@ -27,6 +29,7 @@ interface UserFormProps {
     first_name: string | null;
     last_name: string | null;
     roles: UserRole[];
+    is_active?: boolean;
   };
 }
 
@@ -37,6 +40,7 @@ export const UserForm = ({ isOpen, onClose, onSubmit, user }: UserFormProps) => 
   const [lastName, setLastName] = useState(user?.last_name || "");
   const [email, setEmail] = useState(user?.email || "");
   const [roles, setRoles] = useState<UserRole[]>(user?.roles || ["chef_projet"]);
+  const [isActive, setIsActive] = useState<boolean>(user?.is_active !== false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedUserId, setSelectedUserId] = useState<string>("");
   const [hierarchyAssignment, setHierarchyAssignment] = useState<Omit<HierarchyAssignment, 'id' | 'created_at'> | null>(null);
@@ -63,6 +67,7 @@ export const UserForm = ({ isOpen, onClose, onSubmit, user }: UserFormProps) => 
       setLastName(user.last_name || "");
       setEmail(user.email || "");
       setRoles(user.roles);
+      setIsActive(user.is_active !== false);
       setSelectedUserId("");
       
       const loadHierarchyAssignment = async () => {
@@ -87,6 +92,7 @@ export const UserForm = ({ isOpen, onClose, onSubmit, user }: UserFormProps) => 
       setLastName("");
       setEmail("");
       setRoles(["chef_projet"]);
+      setIsActive(true);
       setSelectedUserId("");
       setHierarchyAssignment(null);
       fetchExistingUsers();
@@ -112,6 +118,7 @@ export const UserForm = ({ isOpen, onClose, onSubmit, user }: UserFormProps) => 
           .update({
             first_name: firstName,
             last_name: lastName,
+            is_active: isActive,
           })
           .eq("id", user.id);
 
@@ -265,6 +272,25 @@ export const UserForm = ({ isOpen, onClose, onSubmit, user }: UserFormProps) => 
           onAssignmentChange={setHierarchyAssignment}
           initialAssignment={hierarchyAssignment}
         />
+        {user && (
+          <div className="flex items-start justify-between gap-4 rounded-md border p-3 mt-2">
+            <div className="space-y-0.5">
+              <Label htmlFor="user-active" className="text-sm font-medium">
+                Compte actif
+              </Label>
+              <p className="text-xs text-muted-foreground">
+                Un utilisateur inactif n'apparaît plus dans les listes de sélection
+                (tâches, projets, équipes, notifications…). Ses données existantes
+                restent conservées.
+              </p>
+            </div>
+            <Switch
+              id="user-active"
+              checked={isActive}
+              onCheckedChange={setIsActive}
+            />
+          </div>
+        )}
         <DialogFooter>
           <Button variant="outline" onClick={onClose}>
             Annuler
