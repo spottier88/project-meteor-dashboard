@@ -153,6 +153,8 @@ export const UserManagement = () => {
   };
 
   let filteredUsers = users?.filter(user => {
+    // Filtre actif/inactif (les profils sans is_active sont considérés actifs)
+    if (!showInactive && user.is_active === false) return false;
     const searchLower = searchTerm.toLowerCase();
     const firstName = user.first_name?.toLowerCase() || "";
     const lastName = user.last_name?.toLowerCase() || "";
@@ -173,14 +175,45 @@ export const UserManagement = () => {
           valueA = a.lastActivity ? a.lastActivity.getTime() : 0;
           valueB = b.lastActivity ? b.lastActivity.getTime() : 0; break;
         default:
-          valueA = a[sortKey as keyof typeof a] || "";
-          valueB = b[sortKey as keyof typeof b] || "";
+          valueA = String(a[sortKey as keyof typeof a] ?? "");
+          valueB = String(b[sortKey as keyof typeof b] ?? "");
       }
       return sortDirection === "asc"
         ? (valueA > valueB ? 1 : valueA < valueB ? -1 : 0)
         : (valueA < valueB ? 1 : valueA > valueB ? -1 : 0);
     });
   }
+
+  // Bascule active/inactive d'un utilisateur depuis la liste
+  const handleToggleActive = async (user: UserWithRoles) => {
+    const newValue = user.is_active === false;
+    try {
+      const { error } = await supabase
+        .from("profiles")
+        .update({ is_active: newValue })
+        .eq("id", user.id);
+      if (error) throw error;
+      toast({
+        title: "Succès",
+        description: newValue ? "Utilisateur réactivé" : "Utilisateur désactivé",
+      });
+      queryClient.invalidateQueries({ queryKey: ["users"] });
+    } catch (error) {
+      console.error("Error:", error);
+      toast({
+        title: "Erreur",
+        description: "Impossible de modifier le statut de l'utilisateur",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const toggleShowInactive = (value: boolean) => {
+    setShowInactive(value);
+    if (typeof window !== "undefined") {
+      localStorage.setItem("userManagement.showInactive", String(value));
+    }
+  };
 
   return (
     <div className="container mx-auto py-8 px-4">
