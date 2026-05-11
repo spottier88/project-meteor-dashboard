@@ -53,6 +53,7 @@ export const useTeamManagement = (projectId: string, permissions: Permissions, e
             email,
             first_name,
             last_name,
+            is_active,
             user_roles (
               role
             )
@@ -77,6 +78,7 @@ export const useTeamManagement = (projectId: string, permissions: Permissions, e
             email: member.profiles.email,
             first_name: member.profiles.first_name,
             last_name: member.profiles.last_name,
+            is_active: (member.profiles as { is_active?: boolean | null }).is_active,
             roles: Array.isArray(member.profiles.user_roles)
               ? member.profiles.user_roles.map((ur: { role: string }) => ur.role)
               : []
