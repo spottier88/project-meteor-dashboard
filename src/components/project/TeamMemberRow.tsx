@@ -27,6 +27,7 @@ interface TeamMemberData {
     email?: string | null;
     first_name?: string | null;
     last_name?: string | null;
+    is_active?: boolean | null;
   } | null;
 }
 
@@ -58,12 +59,17 @@ export const TeamMemberRow = ({
                     member.id !== 'undefined' && 
                     member.id !== 'null';
 
+  const isInactive = member.profiles?.is_active === false;
+
   return (
-    <TableRow>
+    <TableRow className={isInactive ? "opacity-60" : ""}>
       <TableCell>
-        {member.profiles && (member.profiles.first_name || member.profiles.last_name) 
-          ? `${member.profiles.first_name || ''} ${member.profiles.last_name || ''}`.trim()
-          : member.profiles?.email || 'Utilisateur inconnu'}
+        <span className="inline-flex items-center gap-2">
+          {member.profiles && (member.profiles.first_name || member.profiles.last_name) 
+            ? `${member.profiles.first_name || ''} ${member.profiles.last_name || ''}`.trim()
+            : member.profiles?.email || 'Utilisateur inconnu'}
+          {isInactive && <Badge variant="outline" className="text-xs">Inactif</Badge>}
+        </span>
       </TableCell>
       <TableCell>{member.profiles?.email || 'Email non disponible'}</TableCell>
       <TableCell>
