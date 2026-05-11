@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { ChevronDown, ChevronRight, Pencil, Trash2, FileText, ClipboardCheck, GripVertical } from "lucide-react";
 import { useTaskPermissions } from "@/hooks/useTaskPermissions";
 import { formatUserName } from "@/utils/formatUserName";
+import { UserNameWithStatus } from "@/components/user/UserNameWithStatus";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
@@ -179,7 +180,7 @@ const TaskCells = ({ task, isChild = false, childTasksByParent, expandedTasks, t
         </Tooltip>
       </TooltipProvider>
     </TableCell>
-    <TableCell>{formatUserName(task.assignee, profiles)}</TableCell>
+    <TableCell><UserNameWithStatus email={task.assignee} profiles={profiles} /></TableCell>
     <TableCell>
       {task.start_date ? new Date(task.start_date).toLocaleDateString("fr-FR") : "-"}
     </TableCell>
@@ -281,7 +282,8 @@ export const TaskTable = ({ tasks, onEdit, onDelete, isProjectClosed = false }: 
             id,
             email,
             first_name,
-            last_name
+            last_name,
+            is_active
           )
         `)
         .eq("project_id", tasks[0].project_id);
@@ -297,7 +299,7 @@ export const TaskTable = ({ tasks, onEdit, onDelete, isProjectClosed = false }: 
       if (project?.project_manager) {
         const { data: pmProfile } = await supabase
           .from("profiles")
-          .select("id, email, first_name, last_name")
+          .select("id, email, first_name, last_name, is_active")
           .eq("email", project.project_manager)
           .maybeSingle();
           
