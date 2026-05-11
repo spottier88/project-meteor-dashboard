@@ -67,6 +67,7 @@ export const UserForm = ({ isOpen, onClose, onSubmit, user }: UserFormProps) => 
       setLastName(user.last_name || "");
       setEmail(user.email || "");
       setRoles(user.roles);
+      setIsActive(user.is_active !== false);
       setSelectedUserId("");
       
       const loadHierarchyAssignment = async () => {
