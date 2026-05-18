@@ -9,7 +9,7 @@ import { useParams, Link } from "react-router";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowLeft, Calendar, Euro, Users, TrendingUp, Settings, ClipboardList } from "lucide-react";
+import { ArrowLeft, Calendar, Euro, Users, TrendingUp, Settings, ClipboardList, Map } from "lucide-react";
 import { usePortfolioDetails } from "@/hooks/usePortfolioDetails";
 import { usePortfolioRole } from "@/hooks/usePortfolioRole";
 import { PortfolioCharts } from "@/components/portfolio/PortfolioCharts";
@@ -17,6 +17,7 @@ import { PortfolioProjectsTable } from "@/components/portfolio/PortfolioProjects
 import { PortfolioManagersTable } from "@/components/portfolio/PortfolioManagersTable";
 import { PortfolioExportButtons } from "@/components/portfolio/PortfolioExportButtons";
 import { PortfolioReviewsTab } from "@/components/portfolio/PortfolioReviewsTab";
+import { PortfolioCartographyTab } from "@/components/portfolio/cartography/PortfolioCartographyTab";
 import { AddProjectsModal } from "@/components/portfolio/AddProjectsModal";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
@@ -199,10 +200,14 @@ const PortfolioDetails = () => {
 
       {/* Contenu principal avec onglets */}
       <Tabs defaultValue="overview" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="overview" className="gap-2">
             <TrendingUp className="h-4 w-4" />
             Vue d'ensemble
+          </TabsTrigger>
+          <TabsTrigger value="cartography" className="gap-2">
+            <Map className="h-4 w-4" />
+            Cartographie
           </TabsTrigger>
           <TabsTrigger value="projects" className="gap-2">
             <Users className="h-4 w-4" />
