@@ -235,6 +235,14 @@ const PortfolioDetails = () => {
           </div>
         </TabsContent>
 
+        <TabsContent value="cartography" className="space-y-6">
+          <PortfolioCartographyTab
+            portfolioId={portfolio.id}
+            portfolioName={portfolio.name}
+            projects={portfolio.projects}
+          />
+        </TabsContent>
+
         <TabsContent value="projects" className="space-y-6">
           <PortfolioProjectsTable
             projects={portfolio.projects}
