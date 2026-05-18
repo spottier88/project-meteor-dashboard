@@ -128,9 +128,10 @@ export const CartographyTreemap = ({ projects }: CartographyTreemapProps) => {
           dataKey="size"
           stroke="hsl(var(--background))"
           content={<TreemapContent />}
-          onClick={(node: { projectId?: string }) => {
-            if (node?.projectId) navigate(`/projects/${node.projectId}`);
-          }}
+          onClick={((node: unknown) => {
+            const leaf = node as { projectId?: string } | undefined;
+            if (leaf?.projectId) navigate(`/projects/${leaf.projectId}`);
+          }) as never}
         >
           <Tooltip
             content={({ active, payload }: { active?: boolean; payload?: Array<{ payload: TreemapLeaf }> }) => {
