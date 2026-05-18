@@ -1,111 +1,107 @@
-# Plan — Désactivation d'utilisateurs
 
-## Objectif
-Permettre à un administrateur de marquer un utilisateur comme **inactif** depuis sa fiche dans l'administration. Un utilisateur inactif :
-- ne peut plus être sélectionné dans les listes (tâches, équipes, notifications, managers, portefeuilles, chef de projet…),
-- reste visible dans l'historique (données existantes préservées : tâches assignées, revues, activités…),
-- apparaît clairement comme inactif dans la gestion des utilisateurs (badge + filtre).
+# Cartographie des projets dans la vue portefeuille
 
-Le champ `is_active` (boolean, défaut `true`) est ajouté à la table `profiles`. Aucune suppression de compte n'est effectuée.
+Ajout d'un nouvel onglet **"Cartographie"** dans `PortfolioDetails.tsx`, dédié à la visualisation synthétique des projets du portefeuille. La fonctionnalité s'appuie **uniquement sur les données déjà disponibles** (table `projects`, dernière revue via `latest_reviews`, `project_innovation_scores`, `directions`, `poles`).
 
----
+## Vue d'ensemble
 
-## Phase 1 — Socle base de données & administration
+L'onglet contient **3 visualisations complémentaires** affichées dans des sous-onglets (couvre les 3 objectifs : pilotage, analyse, communication), avec une **barre de filtres commune** en haut et un **bouton d'export PNG** (via `html-to-image` déjà utilisé dans le projet).
 
-### 1.1 Migration BDD
-- Ajouter `is_active boolean NOT NULL DEFAULT true` à `public.profiles`.
-- Backfill : tous les profils existants → `true`.
-- Index partiel `WHERE is_active = true` pour optimiser les listes de sélection.
-- Pas de modification des RLS existantes (la désactivation est un filtre applicatif, pas un retrait d'accès — l'utilisateur reste authentifié et peut consulter ce qu'il a déjà).
-
-### 1.2 Fiche utilisateur (admin)
-- `UserForm.tsx` + `UserFormFields.tsx` : ajout d'un **Switch "Compte actif"** (visible uniquement en mode édition, réservé aux admins).
-- Persistance via `UPDATE profiles SET is_active = ...`.
-- `UserManagement.tsx` :
-  - Colonne / badge "Inactif" dans la liste.
-  - Filtre toggle "Afficher les inactifs" (caché par défaut, persistance localStorage).
-  - Action rapide "Désactiver / Réactiver" depuis la ligne.
-
-### 1.3 Type & helpers
-- Étendre `UserProfile` (`src/types/user.ts`) avec `is_active: boolean`.
-- Créer un petit utilitaire `filterActiveUsers(users)` pour usage partagé.
-
-**Livrable Phase 1 :** un admin peut activer/désactiver un compte ; la liste admin distingue les inactifs. Aucun autre écran n'est encore filtré.
-
----
-
-## Phase 2 — Filtrage dans les listes de sélection
-
-Tous les endroits où l'on **propose** un utilisateur doivent exclure les inactifs. Inventaire identifié :
-
-| Zone | Fichier(s) |
-|---|---|
-| Assignation de tâche | `useTaskFormData.tsx`, `TaskCard.tsx`, `TaskTable.tsx` |
-| Membres de projet / équipe | `InviteMemberForm.tsx`, `TeamMemberForm.tsx`, `ProjectTeamManagement` |
-| Chef de projet (form projet) | `ProjectFormStep5.tsx`, `useProjectFormState.tsx`, `form/useProjectFormState.tsx` |
-| Notifications ciblées | `PublishNotificationForm.tsx`, `PortfolioReviewNotificationDialog.tsx` |
-| Managers (hiérarchie) | `ManagerAssignments.tsx`, `NewAssignmentForm.tsx`, `BulkRoleWizard.tsx` |
-| Portefeuille (managers) | `AddPortfolioManagerForm.tsx` |
-| Saisie d'activités tierces | `useWeeklyPointsData.ts` (sélecteur utilisateur) |
-| Création nouvel user (existing) | RPC `get_users_without_profile` — à laisser tel quel |
-
-Règle systématique : ajouter `.eq("is_active", true)` (ou filtrer côté client si la liste est déjà chargée globalement).
-
-**Cas particuliers** :
-- **Chef de projet d'un projet existant** affecté à un utilisateur devenu inactif : on conserve l'affichage du nom (lecture seule), mais la combobox de réaffectation ne le propose plus. Ajouter une indication "(inactif)" si rencontré.
-- **Tâches déjà assignées** à un inactif : l'assignation reste, badge "(inactif)" dans `TaskCard`/`TaskTable`.
-- **Managers d'un portefeuille** : idem, le manager reste listé mais marqué inactif.
-
-**Livrable Phase 2 :** un utilisateur inactif n'apparaît plus dans aucun sélecteur, mais les données historiques restent cohérentes.
-
----
-
-## Phase 3 — Effets de bord & accès
-
-- **Login** : un utilisateur inactif peut techniquement encore se connecter (RLS inchangée). Décision à valider : 
-  - Option A (recommandée) : le laisser se connecter mais afficher un écran "Compte désactivé" sur tout `ProtectedRoute` quand `profile.is_active === false`.
-  - Option B : ne rien faire côté front, considérer l'admin Supabase pour bloquer l'auth si besoin.
-- **PermissionsContext** : charger `is_active` avec le profil, exposer un flag `isAccountActive`. `ProtectedRoute` redirige vers `/login` + message si `false`.
-- **Hooks de listes globales** (`useTeamManagement`, `useVisibleProjects` côté chef de projet) : ne pas filtrer les **projets** d'un utilisateur inactif (l'historique reste accessible aux autres), seulement son apparition dans les sélecteurs.
-
----
-
-## Détails techniques
-
-### Schéma
-```sql
-ALTER TABLE public.profiles
-  ADD COLUMN is_active boolean NOT NULL DEFAULT true;
-
-CREATE INDEX idx_profiles_active ON public.profiles (is_active) WHERE is_active = true;
+```text
+┌─ Onglet Cartographie ─────────────────────────────────────┐
+│ [Filtres: Direction ▾ Météo ▾ Cycle de vie ▾ Innovation ▾]│
+│                                          [⬇ Export PNG]   │
+│ ┌─ Sous-onglets ─────────────────────────────────────────┐│
+│ │ [Matrice]  [Heatmap directions]  [Treemap]            ││
+│ └────────────────────────────────────────────────────────┘│
+│                                                            │
+│   ▸ Visualisation sélectionnée (plein largeur)            │
+│                                                            │
+│ Légende : ☀ Ensoleillé · ☁ Nuageux · ⛈ Orageux · ✨ Inno  │
+└────────────────────────────────────────────────────────────┘
 ```
 
-### Pattern de filtrage côté requête
-```ts
-supabase.from("profiles")
-  .select("id, first_name, last_name, email")
-  .eq("is_active", true)
-  .order("last_name");
+## Scénario 1 — Matrice bubble (vue principale, pilotage)
+
+Inspirée d'une matrice BCG. Une bulle = un projet.
+
+- **Axe X** : avancement (`completion` 0–100 %)
+- **Axe Y** : météo (`weather` — Orageux en haut, Nuageux milieu, Ensoleillé en bas) — perception inversée pour que le risque attire l'œil
+- **Couleur** : cycle de vie (`lifecycle_status` — étude, validé, en cours, terminé, suspendu, abandonné)
+- **Taille** : nombre de jours depuis la dernière revue (gros = revue ancienne ⇒ attention)
+- **Indicateur secondaire innovation** : étoile/halo `✨` autour de la bulle si le projet a un score innovation moyen ≥ seuil (3/5)
+- **Tooltip** : titre, chef de projet, direction, avancement, dernière revue, score innovation
+- **Clic** : navigation vers `/projects/:id`
+
+Quadrants visuels (lignes pointillées) :
+- Haut-gauche : projets en difficulté + peu avancés ⇒ **à risque**
+- Haut-droite : difficultés en fin de course ⇒ **à sécuriser**
+- Bas-gauche : sereins mais peu avancés ⇒ **à lancer**
+- Bas-droite : sereins et avancés ⇒ **à finaliser**
+
+## Scénario 2 — Heatmap directions × statut
+
+Grille pour la **vue analytique**.
+- **Lignes** : directions présentes dans le portefeuille
+- **Colonnes** : cycle de vie (étude, validé, en cours, terminé, suspendu)
+- **Cellule** : nombre de projets + couleur d'intensité selon la météo dominante
+- **Clic cellule** : affiche la liste des projets dans un Dialog
+
+Utile pour repérer rapidement les concentrations de projets par entité.
+
+## Scénario 3 — Treemap par direction
+
+Rectangles imbriqués pour la **vue communication**.
+- **Groupe** : direction (ou pôle si aucune direction)
+- **Taille** : nombre de projets dans la direction
+- **Couleur du rectangle projet** : météo
+- **Bordure** : épaisse si innovant
+
+Idéal pour présentations : montre l'équilibre du portefeuille en un coup d'œil.
+
+## Filtres communs
+
+Appliqués aux 3 visualisations en temps réel (état React local) :
+- Direction (multi-select)
+- Météo (multi-select)
+- Cycle de vie (multi-select)
+- Innovation : tous / innovants seulement / non innovants
+
+## Section technique
+
+### Données
+Tout est déjà disponible. Aucune migration nécessaire.
+- `portfolio.projects` (déjà chargé par `usePortfolioDetails`) fournit `id`, `title`, `completion`, `weather`, `lifecycle_status`, `direction_id`, `project_manager`, `last_review_date`
+- Nouveau hook `usePortfolioInnovationScores(projectIds)` qui interroge `project_innovation_scores` pour calculer un score moyen par projet
+- Lookup des noms de directions via `directions` (déjà accessible)
+
+### Composants à créer
+```
+src/components/portfolio/cartography/
+  PortfolioCartographyTab.tsx        // conteneur + filtres + sous-onglets + export
+  CartographyFilters.tsx             // barre de filtres
+  CartographyBubbleMatrix.tsx        // scénario 1 (Recharts ScatterChart)
+  CartographyDirectionHeatmap.tsx    // scénario 2 (grille CSS)
+  CartographyTreemap.tsx             // scénario 3 (Recharts Treemap)
+  CartographyLegend.tsx              // légende partagée
+  useCartographyData.ts              // hook qui agrège projets + scores innovation + filtres
 ```
 
-### Pattern d'affichage historique
-```tsx
-{user && !user.is_active && <Badge variant="outline">Inactif</Badge>}
-```
+### Intégration
+- Ajout d'un onglet `<TabsTrigger value="cartography">` dans `PortfolioDetails.tsx` (entre "Vue d'ensemble" et "Projets")
+- Recharts est déjà installé (utilisé pour `InnovationRadarChart`) — pas de nouvelle dépendance
+- Export PNG via `html-to-image` (déjà présent — mémoire `export-and-screenshot-libraries`)
+- Visible pour tous les rôles ayant accès au portefeuille (lecture seule), pas de permission spécifique
 
-### Composant Switch dans la fiche
-- Réutilise `@/components/ui/switch`.
-- Label "Compte actif" + description courte ("Un utilisateur inactif n'apparaît plus dans les listes de sélection").
-- Confirmation `AlertDialog` lors de la désactivation.
+### Performance
+- Données chargées une seule fois via `usePortfolioDetails` existant + un seul appel scores innovation
+- Filtres appliqués côté client (volume limité aux projets du portefeuille)
+
+## Hors scope (pourra venir plus tard)
+- Network graph (liens entre projets / managers)
+- Timeline / roadmap (déjà couvert par le Gantt consolidé)
+- Sauvegarde des filtres en localStorage
 
 ---
 
-## Découpage de livraison recommandé
-1. **PR 1 (Phase 1)** : migration + fiche admin + liste admin. Faible risque, déployable seul.
-2. **PR 2 (Phase 2)** : filtrage propagé aux sélecteurs. Plus large mais purement additif.
-3. **PR 3 (Phase 3)** : blocage d'accès des comptes inactifs + badges historiques.
-
-## Points à confirmer avant implémentation
-1. **Blocage de connexion** : doit-on empêcher un utilisateur inactif de se connecter (Phase 3 option A) ou seulement le retirer des listes ?
-2. **Tâches/projets dont il est responsable** au moment de la désactivation : faut-il forcer une réaffectation ou simplement signaler ?
-3. **Activités** : doit-on aussi cacher un utilisateur inactif des écrans de reporting (`TeamActivities`) ou seulement des saisies ?
+**Question complémentaire** avant implémentation : préfères-tu que je livre les **3 visualisations d'un coup** (plus complet mais plus lourd), ou un **MVP avec uniquement la matrice bubble** (scénario 1) puis on ajoute les autres ensuite selon retour utilisateur ?
