@@ -55,7 +55,7 @@ export const PortfolioCartographyTab = ({
 
   const cartographyProjects = useMemo(() => {
     if (!data) return [];
-    return buildCartographyProjects(projects, data.enrichmentByProject, data.directionMap);
+    return buildCartographyProjects(projects, data.enrichmentByProject, data.directionMap, data.poleMap);
   }, [projects, data]);
 
   const directionsList = useMemo(() => {

@@ -17,9 +17,11 @@ export interface CartographyProject {
   direction_id: string | null;
   direction_name: string | null;
   pole_id: string | null;
+  pole_name: string | null;
   innovation_score: number; // moyenne 0-5
   is_innovative: boolean;   // score >= seuil
 }
+
 
 const INNOVATION_THRESHOLD = 3;
 
@@ -29,10 +31,11 @@ export const useCartographyData = (portfolioId: string, projectIds: string[]) =>
     queryFn: async (): Promise<{
       directionIds: string[];
       directionMap: Map<string, { name: string; pole_id: string | null }>;
+      poleMap: Map<string, string>;
       enrichmentByProject: Map<string, { direction_id: string | null; pole_id: string | null; innovation_score: number }>;
     }> => {
       if (projectIds.length === 0) {
-        return { directionIds: [], directionMap: new Map(), enrichmentByProject: new Map() };
+        return { directionIds: [], directionMap: new Map(), poleMap: new Map(), enrichmentByProject: new Map() };
       }
 
       // Récupération des directions / pôles des projets
@@ -71,6 +74,19 @@ export const useCartographyData = (portfolioId: string, projectIds: string[]) =>
         );
       }
 
+      // Récupération des noms de pôles (depuis directions + projects.pole_id directs)
+      const poleIds = Array.from(
+        new Set([
+          ...Array.from(directionMap.values()).map((d) => d.pole_id),
+          ...(projectsExtra || []).map((p) => p.pole_id),
+        ].filter(Boolean) as string[])
+      );
+      let poleMap = new Map<string, string>();
+      if (poleIds.length > 0) {
+        const { data: poles } = await supabase.from("poles").select("id, name").in("id", poleIds);
+        poleMap = new Map((poles || []).map((p) => [p.id, p.name]));
+      }
+
       const enrichmentByProject = new Map<
         string,
         { direction_id: string | null; pole_id: string | null; innovation_score: number }
@@ -83,12 +99,13 @@ export const useCartographyData = (portfolioId: string, projectIds: string[]) =>
         });
       });
 
-      return { directionIds, directionMap, enrichmentByProject };
+      return { directionIds, directionMap, poleMap, enrichmentByProject };
     },
     enabled: projectIds.length > 0,
     staleTime: 5 * 60 * 1000,
   });
 };
+
 
 /**
  * Combine les projets du portefeuille avec les enrichissements (direction + innovation).
@@ -104,13 +121,15 @@ export const buildCartographyProjects = (
     last_review_date: string | null;
   }>,
   enrichment: Map<string, { direction_id: string | null; pole_id: string | null; innovation_score: number }>,
-  directionMap: Map<string, { name: string; pole_id: string | null }>
+  directionMap: Map<string, { name: string; pole_id: string | null }>,
+  poleMap: Map<string, string> = new Map()
 ): CartographyProject[] => {
   return portfolioProjects.map((p) => {
     const extra = enrichment.get(p.id);
     const direction_id = extra?.direction_id || null;
     const direction_name = direction_id ? directionMap.get(direction_id)?.name || null : null;
     const innovation_score = extra?.innovation_score || 0;
+    const pole_id = extra?.pole_id || (direction_id ? directionMap.get(direction_id)?.pole_id || null : null);
     return {
       id: p.id,
       title: p.title,
@@ -121,9 +140,11 @@ export const buildCartographyProjects = (
       last_review_date: p.last_review_date,
       direction_id,
       direction_name,
-      pole_id: extra?.pole_id || null,
+      pole_id,
+      pole_name: pole_id ? poleMap.get(pole_id) || null : null,
       innovation_score,
       is_innovative: innovation_score >= INNOVATION_THRESHOLD,
     };
   });
 };
+
