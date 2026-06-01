@@ -43,6 +43,8 @@ import { EmailTemplateManagement } from "./pages/EmailTemplateManagement";
 import AppRatingsManagement from "./pages/AppRatingsManagement";
 import EvaluationsManagement from "./pages/EvaluationsManagement";
 import { FramingExportTemplateManagement } from "./pages/FramingExportTemplateManagement";
+import { StatsContent } from "./pages/admin/StatsContent";
+import { StatsUsage } from "./pages/admin/StatsUsage";
 
 export const AppRoutes = () => {
   const session = useSession();
@@ -249,6 +251,22 @@ export const AppRoutes = () => {
               element={
                 <ProtectedRoute>
                   <FramingExportTemplateManagement />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/stats-content"
+              element={
+                <ProtectedRoute>
+                  <StatsContent />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/stats-usage"
+              element={
+                <ProtectedRoute>
+                  <StatsUsage />
                 </ProtectedRoute>
               }
             />

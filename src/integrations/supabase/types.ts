@@ -2265,6 +2265,20 @@ export type Database = {
           isSetofReturn: true
         }
       }
+      get_admin_content_stats: {
+        Args: { p_direction?: string; p_pole?: string; p_service?: string }
+        Returns: Json
+      }
+      get_admin_usage_stats: {
+        Args: {
+          p_direction?: string
+          p_end: string
+          p_pole?: string
+          p_service?: string
+          p_start: string
+        }
+        Returns: Json
+      }
       get_detailed_projects: {
         Args: { p_project_ids: string[] }
         Returns: Json

@@ -1,53 +1,83 @@
+# Statistiques administrateur
 
-# Refonte de la matrice cartographique
+Deux nouvelles pages réservées au rôle `admin`, accessibles depuis le tableau de bord d'administration, dans une nouvelle catégorie "Statistiques".
 
-## Constat
-La matrice actuelle affiche **un point par projet**. Les bulles se superposent sur les mêmes coordonnées (météo discrète + avancements proches) et la vue ne fait pas ressortir de tendance.
+## Pages & routes
 
-## Proposition principale : matrice agrégée par groupe
+- `/admin/stats-content` — **Statistiques de contenu** (état du patrimoine de données)
+- `/admin/stats-usage` — **Statistiques d'usage** (activité des utilisateurs dans le temps)
 
-Chaque bulle représente **un groupe de projets** au lieu d'un projet individuel.
+Ajout dans `AdminDashboard.tsx` d'une nouvelle catégorie "Statistiques" (icône `BarChart3`) avec ces 2 entrées. Protection par `ProtectedRoute` + check `isAdmin`.
 
-- **Axe X** : avancement moyen du groupe (0–100%)
-- **Axe Y** : météo dominante du groupe (Orageux / Nuageux / Ensoleillé)
-- **Taille de bulle** : nombre de projets du groupe (échelle racine carrée pour rester lisible)
-- **Couleur** : selon la dimension de regroupement
-- **Bordure violette** : épaisseur proportionnelle au % de projets innovants du groupe
-- **Label dans la bulle** : nombre de projets (ex. « 12 »)
+## Filtres communs (barre supérieure)
 
-### Sélecteur « Regrouper par » au-dessus du graphique
-1. **Direction** (par défaut)
-2. **Cycle de vie** (étude, validé, en cours, terminé, suspendu, abandonné)
-3. **Pôle**
-4. **Aucun** (mode actuel, un point par projet — conservé en option)
+- Sélecteur de période : `7j / 30j / 90j / Année / Personnalisé` (Popover + Calendar shadcn, `pointer-events-auto`)
+- Filtre cascade Pôle → Direction → Service (réutilise `OrganizationFieldsSelects`)
+- Bouton **Exporter** : XLSX (via `exceljs`) + PDF (via `html-to-image` + impression) du tableau de bord courant
+- Filtres persistés en `localStorage` (clés `admin-stats-content-filters`, `admin-stats-usage-filters`)
 
-### Interactions
-- **Hover** : tooltip — nom du groupe, nb projets, avancement moyen, mini-répartition météo, nb projets innovants
-- **Clic sur une bulle** : ouvre un panneau latéral (Sheet) listant les projets du groupe avec lien vers chaque fiche projet
-- Filtres existants (direction / météo / cycle de vie / innovation) appliqués **avant** agrégation
+## Page 1 — Statistiques de contenu
 
-## Vues complémentaires proposées (à choisir)
+KPI cards en haut + sections détaillées dessous.
 
-### A. Quadrants stratégiques (BCG-like)
-Matrice 2×2 sur la même base, avec 4 zones colorées et nommées : **À sécuriser**, **À accélérer**, **À surveiller**, **À finaliser**. Lecture immédiate pour un comité de pilotage.
+**Bloc Projets**
+- KPI : total projets, % en cours, % terminés, % innovants, avancement moyen
+- Donut : répartition par statut (lifecycle_status)
+- Donut : répartition par météo (sunny/cloudy/stormy)
+- Barres horizontales : projets par pôle / direction (selon filtre actif)
+- Indicateur : projets sans revue depuis 30j
 
-### B. Barres empilées par direction
-Une barre horizontale par direction, segmentée par météo (vert/orange/rouge), longueur = nb projets, avancement moyen affiché à droite. Très lisible en synthèse.
+**Bloc Tâches / Risques / Revues**
+- KPI tâches : total, % terminées, % en retard
+- KPI risques : ouverts, critiques (probabilité × sévérité élevée)
+- KPI revues : total sur période, fréquence moyenne par projet, projets sans revue
 
-### C. Bubble matrix Direction × Cycle de vie
-Grille lignes (directions) × colonnes (cycles de vie), bulle à chaque croisement (taille = nb projets, couleur = météo dominante). Plus dense, idéal pour les portefeuilles riches.
+**Bloc Organisation & utilisateurs**
+- KPI : nb pôles/directions/services, nb utilisateurs actifs/inactifs
+- Barres : utilisateurs par rôle (depuis `user_roles`)
+- Table : top 10 chefs de projet par nombre de projets gérés
 
-## Recommandation
-Remplacer la matrice actuelle par la **matrice agrégée** (avec sélecteur « Regrouper par » + option « Aucun » pour garder le mode détaillé). Garder Heatmap et Treemap intacts. Ajouter éventuellement **A. Quadrants stratégiques** comme deuxième sous-vue dans le bloc « Matrice ».
+## Page 2 — Statistiques d'usage
+
+**Bloc Connexions & utilisateurs actifs**
+- KPI : DAU / WAU / MAU (utilisateurs distincts ayant agi sur la période)
+- Courbe : utilisateurs actifs par jour
+- Table : top 20 utilisateurs (dernière connexion, nb actions)
+- Indicateur : comptes jamais connectés / inactifs >30j
+
+**Bloc Activité fonctionnelle**
+- KPI sur la période : projets créés, revues saisies, tâches créées/terminées, notes ajoutées, risques déclarés
+- Courbe d'évolution multi-séries (1 série par type d'événement, agrégation jour/semaine selon période)
+- Barres : activité par pôle/direction
+- Top 10 projets les plus actifs (somme événements)
 
 ## Détails techniques
-- **Fichier modifié** : `src/components/portfolio/cartography/CartographyBubbleMatrix.tsx`
-- **Agrégation** (interne) : `groupBy(projects, key)` → `{ count, avgCompletion, dominantWeather, weatherBreakdown, innovativePct }`
-- **Recharts** : `ScatterChart` + `ZAxis` (`range=[400, 4000]`) pour la taille variable
-- **Drill-down** : nouveau `CartographyGroupDetailsSheet.tsx` (Sheet shadcn, `overflow-y-auto`, `resetInteractionLocks` sur close)
-- **Sélecteur** : `Select` shadcn local au composant, valeur par défaut `direction`
-- **Quadrants (option A)** : `ReferenceArea` Recharts + labels
 
-## Questions à valider
-1. **Vues complémentaires** : on garde uniquement la matrice agrégée, ou on ajoute aussi A (quadrants), B (barres empilées) et/ou C (Direction × Cycle de vie) ?
-2. **Mode « 1 bulle = 1 projet »** : on le conserve en option « Regrouper par : Aucun » ou on le supprime totalement ?
+**Hooks data (nouveaux dans `src/hooks/admin-stats/`)**
+- `useContentStats(filters)` — agrège `projects`, `tasks`, `risks`, `reviews`, `profiles`, `user_roles`, `poles/directions/services`
+- `useUsageStats(filters)` — agrège DAU/WAU/MAU + séries temporelles d'événements
+
+**Source des données d'usage**
+- Connexions : on **n'utilise pas** `auth_logs` (non requêtable côté client). À la place, on s'appuie sur les `created_at`/`updated_at` des tables métier comme proxy d'activité, **et** on ajoute une fonction RPC `get_user_activity_stats(start, end)` côté Postgres qui agrège depuis `projects.created_at`, `reviews.created_at`, `tasks.created_at/updated_at`, `project_notes.created_at`, `risks.created_at`, `activities.created_at`.
+- Création d'une **vue matérialisée** `admin_daily_activity` (jour, user_id, event_type, count) rafraîchie par cron quotidien — évite des agrégations lourdes côté client.
+
+**Composants**
+- `src/pages/admin/StatsContent.tsx`, `src/pages/admin/StatsUsage.tsx`
+- `src/components/admin/stats/StatsFiltersBar.tsx` (période + org + export)
+- `src/components/admin/stats/KpiCard.tsx`, `StatsBarChart.tsx`, `StatsLineChart.tsx`, `StatsDonutChart.tsx` (Recharts)
+- `src/utils/adminStatsExport.ts` — export XLSX (exceljs) et PDF (html-to-image + window.print fallback)
+
+**Migrations Supabase**
+1. Vue matérialisée `admin_daily_activity` + index sur `(day, user_id, event_type)`
+2. Fonction RPC `get_admin_content_stats(p_pole, p_direction, p_service)` `SECURITY DEFINER` réservée admin (check `has_role(auth.uid(),'admin')`)
+3. Fonction RPC `get_admin_usage_stats(p_start, p_end, p_pole, p_direction, p_service)` même restriction
+4. GRANT EXECUTE aux `authenticated` (le filtre admin est dans la fonction)
+5. Cron `pg_cron` (si dispo) ou refresh à la demande au chargement de la page si dernière maj > 1h
+
+**Routing**
+- Ajout dans `src/routes.tsx` des 2 routes sous garde admin
+
+## Hors périmètre (volontairement)
+- Stats sur exports/IA/portefeuilles/cadrages (non sélectionnés)
+- Suivi d'activités hebdo (non sélectionné)
+- Drill-down vers fiche projet (peut être ajouté en V2)

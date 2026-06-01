@@ -69,6 +69,15 @@ const adminCategories: AdminCategory[] = [
       { icon: Bell, label: "Gestion des notifications", route: "/admin/notifications" },
     ],
   },
+  {
+    title: "Statistiques",
+    description: "Vue d'ensemble du contenu et de l'usage de l'application",
+    icon: BarChart3,
+    items: [
+      { icon: FileText, label: "Statistiques de contenu", route: "/admin/stats-content" },
+      { icon: Activity, label: "Statistiques d'usage", route: "/admin/stats-usage" },
+    ],
+  },
 ];
 
 export const AdminDashboard = () => {
