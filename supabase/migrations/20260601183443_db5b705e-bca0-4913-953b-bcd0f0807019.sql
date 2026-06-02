@@ -202,8 +202,9 @@ BEGIN
     WHERE t.created_at BETWEEN p_start AND p_end
       AND t.project_id IN (SELECT id FROM filtered_projects)
     UNION ALL
-    SELECT t.assignee::uuid AS user_id, t.updated_at AS ts, 'task_updated' AS event_type, t.project_id
+    SELECT pr.id AS user_id, t.updated_at AS ts, 'task_updated' AS event_type, t.project_id
     FROM tasks t
+    LEFT JOIN profiles pr ON pr.email = t.assignee
     WHERE t.updated_at BETWEEN p_start AND p_end
       AND t.updated_at <> t.created_at
       AND t.project_id IN (SELECT id FROM filtered_projects)
