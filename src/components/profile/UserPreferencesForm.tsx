@@ -11,7 +11,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useUserPreferences } from "@/hooks/useUserPreferences";
-import { Loader2, Cookie, BookOpen, Mail } from "lucide-react";
+import { useRatingPrompt } from "@/hooks/useRatingPrompt";
+import { Loader2, Cookie, BookOpen, Mail, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 
@@ -26,6 +27,7 @@ const FREQUENCY_OPTIONS = [
 
 export const UserPreferencesForm = () => {
   const { preferences, isLoading, updatePreferences, getPreference } = useUserPreferences();
+  const { reset: resetRatingPrompt, isUpdating: isResettingPrompt } = useRatingPrompt();
   const { toast } = useToast();
 
   if (isLoading) {
@@ -195,14 +197,29 @@ export const UserPreferencesForm = () => {
             Révisez le tutoriel de prise en main de l'application
           </CardDescription>
         </CardHeader>
-        <CardContent>
-          <Button 
-            variant="outline" 
+        <CardContent className="space-y-3">
+          <Button
+            variant="outline"
             onClick={handleResetOnboarding}
             className="w-full"
           >
             <BookOpen className="mr-2 h-4 w-4" />
             Revoir le tutoriel de prise en main
+          </Button>
+          <Button
+            variant="outline"
+            onClick={() => {
+              resetRatingPrompt();
+              toast({
+                title: "Relance d'évaluation réactivée",
+                description: "La proposition d'évaluation de l'application vous sera de nouveau présentée.",
+              });
+            }}
+            disabled={isResettingPrompt}
+            className="w-full"
+          >
+            <Star className="mr-2 h-4 w-4" />
+            Réactiver les relances d'évaluation
           </Button>
           <p className="text-sm text-muted-foreground mt-2">
             Le tutoriel s'affichera automatiquement lors de votre prochaine visite du tableau de bord.
