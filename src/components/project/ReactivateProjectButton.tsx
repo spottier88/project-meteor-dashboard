@@ -70,6 +70,8 @@ export const ReactivateProjectButton = ({
       await queryClient.invalidateQueries({ queryKey: ["project", projectId] });
       await queryClient.invalidateQueries({ queryKey: ["projectAccess", projectId] });
       await queryClient.invalidateQueries({ queryKey: ["projects"] });
+      await queryClient.invalidateQueries({ queryKey: ["projectsListView"] });
+      await queryClient.invalidateQueries({ queryKey: ["dashboardSummary"] });
 
       toast({
         title: "Projet réactivé",
