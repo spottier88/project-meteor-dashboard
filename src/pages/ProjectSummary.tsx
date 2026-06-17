@@ -197,39 +197,22 @@ export const ProjectSummary = () => {
       return { id: projectId };
     }
 
-    try {
-      // Utiliser le hook useProjectSubmit qui gère correctement tous les éléments connexes
-      await submitProject();
-
-      toast({
-        title: "Succès",
-        description: "Le projet a été mis à jour avec succès",
-      });
-
-      // Rafraîchir les données après sauvegarde réussie
-      await refetchProject();
-      
-      return { id: projectId };
-
-    } catch (error) {
-      toast({
-        variant: "destructive",
-        title: "Erreur",
-        description: "Une erreur est survenue lors de la mise à jour",
-      });
-      throw error;
-    }
+    // F-01 : useProjectSubmit gère déjà toast (succès/erreur), invalidations de cache
+    // et fermeture de la modale. On rafraîchit juste la query locale du projet pour
+    // refléter immédiatement les changements dans l'écran de résumé.
+    await submitProject();
+    await refetchProject();
+    return { id: projectId };
   };
 
   const handleBackNavigation = () => {
-    // Si nous avons un état de navigation avec une page précédente
     if (location.state?.from) {
       navigate(location.state.from);
     } else {
-      // Sinon, utiliser l'historique du navigateur pour revenir en arrière
       navigate(-1);
     }
   };
+
 
   const getBackButtonText = () => {
     // Déterminer le texte basé sur l'état de navigation ou l'URL actuelle

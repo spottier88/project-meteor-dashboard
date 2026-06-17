@@ -137,8 +137,17 @@ export function PermissionsProvider({ children }: { children: ReactNode }) {
   }, [user?.id, hasAdminRole, adminRoleDisabled, isManager]); // eslint-disable-line react-hooks/exhaustive-deps
 
 
+  // F-04 : ne pas démonter brutalement le sous-arbre sans message.
+  // Si la session est absente (expirée ou déconnexion), rediriger vers /login.
   if (!session) {
-    return null;
+    if (typeof window !== "undefined" && window.location.pathname !== "/login") {
+      window.location.replace("/login");
+    }
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <p className="text-sm text-muted-foreground">Redirection vers la page de connexion…</p>
+      </div>
+    );
   }
 
   if (isLoading) {

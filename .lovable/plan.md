@@ -1,83 +1,46 @@
-# Statistiques administrateur
+# Implémentation des lots 1 & 2 (10 findings)
 
-Deux nouvelles pages réservées au rôle `admin`, accessibles depuis le tableau de bord d'administration, dans une nouvelle catégorie "Statistiques".
+Plan prêt à exécuter. Approuvez pour basculer en mode build et lancer les corrections.
 
-## Pages & routes
+## Lot 1 — Critiques
 
-- `/admin/stats-content` — **Statistiques de contenu** (état du patrimoine de données)
-- `/admin/stats-usage` — **Statistiques d'usage** (activité des utilisateurs dans le temps)
+**F-01 · Double toast à la sauvegarde projet** — `src/pages/ProjectSummary.tsx`
+Retirer le toast et le try/catch redondants dans `handleProjectFormSubmit`. `useProjectSubmit` affiche déjà les toasts succès/erreur et invalide les caches. On conserve seulement `refetchProject()` pour rafraîchir la query locale.
 
-Ajout dans `AdminDashboard.tsx` d'une nouvelle catégorie "Statistiques" (icône `BarChart3`) avec ces 2 entrées. Protection par `ProtectedRoute` + check `isAdmin`.
+**F-02 · Bypass d'accès après "Continuer quand même"** — `src/hooks/useProjectFormSubmit.tsx`
+Wrapper `handleCancelSubmit` pour remettre `isProceedingAnyway = false` quand l'utilisateur annule, en plus de la réinitialisation déjà présente après soumission.
 
-## Filtres communs (barre supérieure)
+**F-03 · Cache obsolète après création de revue** — `src/components/review/ReviewSheet.tsx`
+Ajouter dans l'`onSubmit` l'invalidation parallèle de : `["project", projectId]`, `["lastReview", projectId]`, `["lastReviews", projectId]`, `["projectsListView"]`, `["dashboardSummary"]` (en plus de `["projects"]`).
 
-- Sélecteur de période : `7j / 30j / 90j / Année / Personnalisé` (Popover + Calendar shadcn, `pointer-events-auto`)
-- Filtre cascade Pôle → Direction → Service (réutilise `OrganizationFieldsSelects`)
-- Bouton **Exporter** : XLSX (via `exceljs`) + PDF (via `html-to-image` + impression) du tableau de bord courant
-- Filtres persistés en `localStorage` (clés `admin-stats-content-filters`, `admin-stats-usage-filters`)
+**F-04 · Page blanche à l'expiration de session** — `src/contexts/PermissionsContext.tsx`
+Remplacer `return null` par une redirection `window.location.replace("/login")` + écran transitoire « Redirection… ».
 
-## Page 1 — Statistiques de contenu
+## Lot 2 — Majeurs
 
-KPI cards en haut + sections détaillées dessous.
+**F-05 · `window.confirm` dans suppression de membre** — `src/components/project/TeamMembersTable.tsx` + `src/hooks/useTeamManagement.tsx`
+Retirer `window.confirm` de `handleDelete`. Ajouter dans le composant appelant un `AlertDialog` Radix piloté par un état `memberToDelete` (modèle MyTasks.tsx). Le hook expose désormais directement `deleteMember(memberId)`.
 
-**Bloc Projets**
-- KPI : total projets, % en cours, % terminés, % innovants, avancement moyen
-- Donut : répartition par statut (lifecycle_status)
-- Donut : répartition par météo (sunny/cloudy/stormy)
-- Barres horizontales : projets par pôle / direction (selon filtre actif)
-- Indicateur : projets sans revue depuis 30j
+**F-06 · Double chargement de `user_roles`** — `src/hooks/useProjectPermissions.tsx`
+Supprimer la `useQuery` locale `["userRoles", userProfile?.id]`. Récupérer `userRoles` depuis `usePermissionsContext()` et calculer `isProjectManager`/`isManager` à partir de cette source unique.
 
-**Bloc Tâches / Risques / Revues**
-- KPI tâches : total, % terminées, % en retard
-- KPI risques : ouverts, critiques (probabilité × sévérité élevée)
-- KPI revues : total sur période, fréquence moyenne par projet, projets sans revue
+**F-07 · Filtre MyTasks non re-synchronisé depuis l'URL** — `src/pages/MyTasks.tsx`
+Ajouter un `useEffect` qui écoute `location.search` et met à jour `showOverdueOnly` quand le paramètre `?filter=overdue` change (afin que les liens du dashboard fonctionnent même si la page est montée).
 
-**Bloc Organisation & utilisateurs**
-- KPI : nb pôles/directions/services, nb utilisateurs actifs/inactifs
-- Barres : utilisateurs par rôle (depuis `user_roles`)
-- Table : top 10 chefs de projet par nombre de projets gérés
+**F-08 · `useProjectSubmit` n'invalide pas les permissions** — `src/hooks/useProjectSubmit.tsx`
+Ajouter dans le bloc « mise à jour » et à la fin du flow : `["projectAccess", project.id]` et `["dashboardSummary"]`.
 
-## Page 2 — Statistiques d'usage
+**F-09 · Mutations membres n'invalident pas `projectAccess`** — `src/hooks/useTeamManagement.tsx`
+Dans les `onSuccess` de `deleteMutation` et `updateRoleMutation`, ajouter l'invalidation de `["projectAccess", projectId]` (en plus de `["projectMembers", projectId]`).
 
-**Bloc Connexions & utilisateurs actifs**
-- KPI : DAU / WAU / MAU (utilisateurs distincts ayant agi sur la période)
-- Courbe : utilisateurs actifs par jour
-- Table : top 20 utilisateurs (dernière connexion, nb actions)
-- Indicateur : comptes jamais connectés / inactifs >30j
+**F-10 · Fuites `sessionStorage` ouverture nouvel onglet** — `src/hooks/useProjectNavigation.ts`
+Ajouter un TTL de 60 s sur les entrées `project_navigation_*` et un nettoyage des clés expirées avant chaque écriture.
 
-**Bloc Activité fonctionnelle**
-- KPI sur la période : projets créés, revues saisies, tâches créées/terminées, notes ajoutées, risques déclarés
-- Courbe d'évolution multi-séries (1 série par type d'événement, agrégation jour/semaine selon période)
-- Barres : activité par pôle/direction
-- Top 10 projets les plus actifs (somme événements)
+## Validation
 
-## Détails techniques
+- Vérification que le build TypeScript passe (le harness le fait automatiquement après chaque édition).
+- Tests manuels suggérés : sauvegarde de projet (un seul toast), création de revue (météo dashboard à jour), expiration de session (redirection au lieu de page blanche), suppression d'un membre (AlertDialog), clic « Tâches en retard » depuis le dashboard.
 
-**Hooks data (nouveaux dans `src/hooks/admin-stats/`)**
-- `useContentStats(filters)` — agrège `projects`, `tasks`, `risks`, `reviews`, `profiles`, `user_roles`, `poles/directions/services`
-- `useUsageStats(filters)` — agrège DAU/WAU/MAU + séries temporelles d'événements
+## Hors périmètre (lot 3, à traiter ensuite)
 
-**Source des données d'usage**
-- Connexions : on **n'utilise pas** `auth_logs` (non requêtable côté client). À la place, on s'appuie sur les `created_at`/`updated_at` des tables métier comme proxy d'activité, **et** on ajoute une fonction RPC `get_user_activity_stats(start, end)` côté Postgres qui agrège depuis `projects.created_at`, `reviews.created_at`, `tasks.created_at/updated_at`, `project_notes.created_at`, `risks.created_at`, `activities.created_at`.
-- Création d'une **vue matérialisée** `admin_daily_activity` (jour, user_id, event_type, count) rafraîchie par cron quotidien — évite des agrégations lourdes côté client.
-
-**Composants**
-- `src/pages/admin/StatsContent.tsx`, `src/pages/admin/StatsUsage.tsx`
-- `src/components/admin/stats/StatsFiltersBar.tsx` (période + org + export)
-- `src/components/admin/stats/KpiCard.tsx`, `StatsBarChart.tsx`, `StatsLineChart.tsx`, `StatsDonutChart.tsx` (Recharts)
-- `src/utils/adminStatsExport.ts` — export XLSX (exceljs) et PDF (html-to-image + window.print fallback)
-
-**Migrations Supabase**
-1. Vue matérialisée `admin_daily_activity` + index sur `(day, user_id, event_type)`
-2. Fonction RPC `get_admin_content_stats(p_pole, p_direction, p_service)` `SECURITY DEFINER` réservée admin (check `has_role(auth.uid(),'admin')`)
-3. Fonction RPC `get_admin_usage_stats(p_start, p_end, p_pole, p_direction, p_service)` même restriction
-4. GRANT EXECUTE aux `authenticated` (le filtre admin est dans la fonction)
-5. Cron `pg_cron` (si dispo) ou refresh à la demande au chargement de la page si dernière maj > 1h
-
-**Routing**
-- Ajout dans `src/routes.tsx` des 2 routes sous garde admin
-
-## Hors périmètre (volontairement)
-- Stats sur exports/IA/portefeuilles/cadrages (non sélectionnés)
-- Suivi d'activités hebdo (non sélectionné)
-- Drill-down vers fiche projet (peut être ajouté en V2)
+F-11 (roleHierarchy), F-12 (ReviewSheet completion à 0), F-13 (navigate(-1)), F-14 (tri localeCompare), F-15 (queryKey déterministe).

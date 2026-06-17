@@ -170,8 +170,18 @@ export const ReviewSheet = ({
 
       if (projectError) throw projectError;
 
-      // Invalider toutes les requêtes liées aux projets
-      await queryClient.invalidateQueries({ queryKey: ["projects"] });
+      // F-03 : invalider toutes les clés impactées par la création d'une revue
+      // (clé spécifique + clés agrégées du dashboard et des listes)
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["projects"] }),
+        queryClient.invalidateQueries({ queryKey: ["projectsListView"] }),
+        queryClient.invalidateQueries({ queryKey: ["project", projectId] }),
+        queryClient.invalidateQueries({ queryKey: ["lastReview", projectId] }),
+        queryClient.invalidateQueries({ queryKey: ["lastReviews", projectId] }),
+        queryClient.invalidateQueries({ queryKey: ["dashboardSummary"] }),
+      ]);
+
+
       
       toast({
         title: "Revue enregistrée",

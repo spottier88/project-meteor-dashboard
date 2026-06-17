@@ -37,7 +37,7 @@ export const useProjectFormSubmit = ({
     setIsProceedingAnyway,
     willUserStillHaveAccess,
     handleProceedAnyway,
-    handleCancelSubmit
+    handleCancelSubmit: baseHandleCancelSubmit
   } = useProjectAccessValidation({ userId: user?.id });
 
   const { submitProject } = useProjectSubmit({ 
@@ -46,6 +46,13 @@ export const useProjectFormSubmit = ({
     onClose, 
     formState 
   });
+
+  // F-02 : garantir que l'indicateur "Continuer quand même" est réinitialisé
+  // lorsqu'on annule, afin d'éviter qu'une future soumission saute le contrôle d'accès.
+  const handleCancelSubmit = () => {
+    setIsProceedingAnyway(false);
+    baseHandleCancelSubmit();
+  };
 
   const checkAccessAndSubmit = async () => {
     if (!formState.validateStep3()) {
@@ -77,7 +84,6 @@ export const useProjectFormSubmit = ({
 
     // Vérifier si le chef de projet a changé
     if (project?.id && project.project_manager !== formState.projectManager) {
-      // Vérifier si l'utilisateur aura toujours accès après la modification
       const willHaveAccess = await willUserStillHaveAccess(
         user?.id,
         project.id,
@@ -90,12 +96,12 @@ export const useProjectFormSubmit = ({
       }
     }
 
-    // Réinitialiser l'indicateur pour les futures soumissions
+    // Réinitialiser systématiquement l'indicateur après usage (F-02)
     setIsProceedingAnyway(false);
-    
-    // Continuer avec la soumission
+
     await submitProject();
   };
+
 
   return { 
     handleSubmit: checkAccessAndSubmit, 
