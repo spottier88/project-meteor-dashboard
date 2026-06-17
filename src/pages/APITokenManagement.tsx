@@ -69,7 +69,7 @@ export default function APITokenManagement() {
       </div>
 
         <APITokenList 
-          tokens={tokens || []} 
+          tokens={(tokens as unknown as import("@/components/api-tokens/APITokenList").Token[]) || []} 
           isLoading={isLoading} 
           onTokenRevoked={refetch}
         />

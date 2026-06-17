@@ -122,7 +122,7 @@ export const processWeeklyTrendData = (points: { week_start_date: string; activi
         if (!weekData[code]) {
           weekData[code] = 0;
         }
-        weekData[code] += point.points;
+        weekData[code] = (Number(weekData[code]) || 0) + point.points;
       }
     });
 

@@ -284,7 +284,7 @@ const Index = () => {
   };
 
   // Fonction de soumission du projet (callback simple après création)
-  const handleProjectFormSubmit = async (projectData: unknown) => {
+  const handleProjectFormSubmit = async (projectData: Record<string, unknown>): Promise<Record<string, unknown> | void> => {
     return projectData;
   };
 
