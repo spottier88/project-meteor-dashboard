@@ -97,7 +97,7 @@ export const MyTasksKanban = ({ tasks, onEdit }: MyTasksKanbanProps) => {
                   {/* Nom du projet (lien) */}
                   {task.projects?.id && (
                     <Link
-                      to={`/project/${task.projects.id}`}
+                      to={`/projects/${task.projects.id}`}
                       className="text-xs text-primary hover:underline font-medium"
                       onClick={(e) => e.stopPropagation()}
                     >
