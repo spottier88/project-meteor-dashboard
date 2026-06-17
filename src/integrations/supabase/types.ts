@@ -2025,6 +2025,8 @@ export type Database = {
           open_projects_in_new_tab: boolean
           points_visualization_mode: string
           profile_reminder_dismissed_until: string | null
+          rating_prompt_dismissed_until: string | null
+          rating_prompt_opted_out: boolean
           updated_at: string
           user_id: string
         }
@@ -2039,6 +2041,8 @@ export type Database = {
           open_projects_in_new_tab?: boolean
           points_visualization_mode?: string
           profile_reminder_dismissed_until?: string | null
+          rating_prompt_dismissed_until?: string | null
+          rating_prompt_opted_out?: boolean
           updated_at?: string
           user_id: string
         }
@@ -2053,6 +2057,8 @@ export type Database = {
           open_projects_in_new_tab?: boolean
           points_visualization_mode?: string
           profile_reminder_dismissed_until?: string | null
+          rating_prompt_dismissed_until?: string | null
+          rating_prompt_opted_out?: boolean
           updated_at?: string
           user_id?: string
         }
@@ -2398,7 +2404,12 @@ export type Database = {
       risk_probability: "low" | "medium" | "high"
       risk_severity: "low" | "medium" | "high"
       risk_status: "open" | "in_progress" | "resolved"
-      setting_type: "microsoft_graph" | "openai" | "documentation" | "activity"
+      setting_type:
+        | "microsoft_graph"
+        | "openai"
+        | "documentation"
+        | "activity"
+        | "rating"
       task_status: "todo" | "in_progress" | "done"
       user_hierarchy_level: "pole" | "direction" | "service"
       user_role:
@@ -2560,7 +2571,13 @@ export const Constants = {
       risk_probability: ["low", "medium", "high"],
       risk_severity: ["low", "medium", "high"],
       risk_status: ["open", "in_progress", "resolved"],
-      setting_type: ["microsoft_graph", "openai", "documentation", "activity"],
+      setting_type: [
+        "microsoft_graph",
+        "openai",
+        "documentation",
+        "activity",
+        "rating",
+      ],
       task_status: ["todo", "in_progress", "done"],
       user_hierarchy_level: ["pole", "direction", "service"],
       user_role: [
