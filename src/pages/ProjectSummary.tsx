@@ -299,7 +299,7 @@ export const ProjectSummary = () => {
         
         return (
           <ProjectSummaryContent
-            project={project}
+            project={project as unknown as import("@/types/project").ProjectWithExtendedData}
             lastReview={reviewsData?.current}
             previousReview={reviewsData?.previous}
             risks={aggregatedRisks || risks || []}
@@ -317,7 +317,7 @@ export const ProjectSummary = () => {
               canReactivateProject: syncCanReactivateProject,
               canCompleteEvaluation: syncCanCompleteEvaluation
             }}
-            teamManagement={teamManagement}
+            teamManagement={teamManagement as unknown as React.ComponentProps<typeof ProjectSummaryContent>["teamManagement"]}
           />
         );
       })()}
