@@ -113,7 +113,7 @@ export const TaskCard = ({ task, onEdit, onDelete, showActions = true }: TaskCar
       <TableCell className="font-medium">
         {task.projects?.id ? (
           <Link
-            to={`/project/${task.projects.id}`}
+            to={`/projects/${task.projects.id}`}
             className="text-primary hover:underline"
             onClick={(e) => e.stopPropagation()}
           >
