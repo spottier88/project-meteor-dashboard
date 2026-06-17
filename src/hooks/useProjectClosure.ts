@@ -143,6 +143,8 @@ export const useProjectClosure = ({ projectId, onClosureComplete }: UseProjectCl
       // Invalider les caches
       queryClient.invalidateQueries({ queryKey: ["project", projectId] });
       queryClient.invalidateQueries({ queryKey: ["projects"] });
+      queryClient.invalidateQueries({ queryKey: ["projectsListView"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboardSummary"] });
       queryClient.invalidateQueries({ queryKey: ["lastReviews", projectId] });
       queryClient.invalidateQueries({ queryKey: ["projectAccess", projectId] });
 
@@ -243,6 +245,8 @@ export const useProjectClosure = ({ projectId, onClosureComplete }: UseProjectCl
       // Invalider les caches
       queryClient.invalidateQueries({ queryKey: ["project", projectId] });
       queryClient.invalidateQueries({ queryKey: ["projects"] });
+      queryClient.invalidateQueries({ queryKey: ["projectsListView"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboardSummary"] });
       queryClient.invalidateQueries({ queryKey: ["lastReviews", projectId] });
       queryClient.invalidateQueries({ queryKey: ["projectEvaluation", projectId] });
       queryClient.invalidateQueries({ queryKey: ["projectAccess", projectId] });
@@ -304,6 +308,8 @@ export const useProjectClosure = ({ projectId, onClosureComplete }: UseProjectCl
       // Invalider les caches
       queryClient.invalidateQueries({ queryKey: ["project", projectId] });
       queryClient.invalidateQueries({ queryKey: ["projects"] });
+      queryClient.invalidateQueries({ queryKey: ["projectsListView"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboardSummary"] });
       queryClient.invalidateQueries({ queryKey: ["projectEvaluation", projectId] });
       queryClient.invalidateQueries({ queryKey: ["projectAccess", projectId] });
 
@@ -416,6 +422,9 @@ export const useProjectClosure = ({ projectId, onClosureComplete }: UseProjectCl
 
       // Invalider les caches
       queryClient.invalidateQueries({ queryKey: ["project", projectId] });
+      queryClient.invalidateQueries({ queryKey: ["projects"] });
+      queryClient.invalidateQueries({ queryKey: ["projectsListView"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboardSummary"] });
       queryClient.invalidateQueries({ queryKey: ["projectEvaluation", projectId] });
       queryClient.invalidateQueries({ queryKey: ["lastReviews", projectId] });
       queryClient.invalidateQueries({ queryKey: ["projectAccess", projectId] });

@@ -204,6 +204,8 @@ export const useRemoveProjectFromPortfolio = () => {
       queryClient.invalidateQueries({ queryKey: ["portfolios"] });
       queryClient.invalidateQueries({ queryKey: ["portfolio"] });
       queryClient.invalidateQueries({ queryKey: ["projects"] });
+      queryClient.invalidateQueries({ queryKey: ["projectsListView"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboardSummary"] });
       queryClient.invalidateQueries({ queryKey: ["project-portfolios", projectId] });
       
       toast({
@@ -242,6 +244,8 @@ export const useAddProjectsToPortfolio = () => {
       queryClient.invalidateQueries({ queryKey: ["portfolios"] });
       queryClient.invalidateQueries({ queryKey: ["portfolio"] });
       queryClient.invalidateQueries({ queryKey: ["projects"] });
+      queryClient.invalidateQueries({ queryKey: ["projectsListView"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboardSummary"] });
       // Invalider les caches de portefeuilles pour chaque projet
       projectIds.forEach(projectId => {
         queryClient.invalidateQueries({ queryKey: ["project-portfolios", projectId] });

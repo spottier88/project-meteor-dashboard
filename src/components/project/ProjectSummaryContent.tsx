@@ -134,6 +134,8 @@ export const ProjectSummaryContent = ({
     queryClient.invalidateQueries({ queryKey: ["project", projectId] });
     queryClient.invalidateQueries({ queryKey: ["projectAccess", projectId] });
     queryClient.invalidateQueries({ queryKey: ["projects"] });
+    queryClient.invalidateQueries({ queryKey: ["projectsListView"] });
+    queryClient.invalidateQueries({ queryKey: ["dashboardSummary"] });
   };
 
   // Utilisation de l'avancement provenant de la dernière revue si disponible, sinon utiliser l'avancement du projet
