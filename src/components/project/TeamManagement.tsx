@@ -15,6 +15,16 @@ import { TeamMemberForm } from "@/components/project/TeamMemberForm";
 import { InviteMemberForm } from "@/components/project/InviteMemberForm";
 import { TeamMembersTable } from "@/components/project/TeamMembersTable";
 import { useTeamManagement } from "@/hooks/useTeamManagement";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface ProjectManagerInfo {
   project_manager?: string | null;
@@ -58,6 +68,8 @@ export const TeamManagement = ({
 }: TeamManagementProps) => {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isInviteFormOpen, setIsInviteFormOpen] = useState(false);
+  // F-05 : confirmation via AlertDialog Radix plutôt que window.confirm
+  const [memberToDelete, setMemberToDelete] = useState<{ id: string; email?: string } | null>(null);
   
   // Utiliser les données préchargées si disponibles, sinon charger via le hook
   const hookData = useTeamManagement(projectId, permissions, !preloadedData);
@@ -74,6 +86,23 @@ export const TeamManagement = ({
   // Wrapper pour passer les paramètres nécessaires
   const onPromoteMember = (memberId: string, roles: string[]) => {
     handlePromoteToSecondaryManager(memberId, roles, permissions.isAdmin);
+  };
+
+  // Ouverture de la confirmation : on bloque déjà côté UI si c'est le chef de projet.
+  const onRequestDeleteMember = (memberId: string, email?: string) => {
+    if (email && project?.project_manager === email) {
+      // On laisse handleDelete gérer le toast d'erreur (logique métier centralisée)
+      handleDelete(memberId, email);
+      return;
+    }
+    setMemberToDelete({ id: memberId, email });
+  };
+
+  const onConfirmDeleteMember = () => {
+    if (memberToDelete) {
+      handleDelete(memberToDelete.id, memberToDelete.email);
+    }
+    setMemberToDelete(null);
   };
 
   return (
@@ -100,7 +129,7 @@ export const TeamManagement = ({
             members={members}
             project={project}
             canManageTeam={permissions.canManageTeam}
-            onDeleteMember={handleDelete}
+            onDeleteMember={onRequestDeleteMember}
             onPromoteMember={onPromoteMember}
             onDemoteMember={handleDemoteToMember}
           />
@@ -120,6 +149,22 @@ export const TeamManagement = ({
         isProjectManager={permissions.isProjectManager}
         isAdmin={permissions.isAdmin}
       />
+
+      <AlertDialog open={!!memberToDelete} onOpenChange={(open) => !open && setMemberToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Retirer ce membre ?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Cette action retire le membre de l'équipe du projet. Elle peut être annulée
+              en l'ajoutant à nouveau ultérieurement.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Annuler</AlertDialogCancel>
+            <AlertDialogAction onClick={onConfirmDeleteMember}>Retirer</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

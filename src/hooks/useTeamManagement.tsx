@@ -106,7 +106,10 @@ export const useTeamManagement = (projectId: string, permissions: Permissions, e
       if (error) throw error;
     },
     onSuccess: () => {
+      // F-09 : invalider aussi le cache des permissions de projet pour refléter
+      // immédiatement le changement de composition de l'équipe.
       queryClient.invalidateQueries({ queryKey: ["projectMembers", projectId] });
+      queryClient.invalidateQueries({ queryKey: ["projectAccess", projectId] });
       toast({
         title: "Membre supprimé",
         description: "Le membre a été retiré de l'équipe avec succès.",
@@ -163,7 +166,10 @@ export const useTeamManagement = (projectId: string, permissions: Permissions, e
       return data;
     },
     onSuccess: () => {
+      // F-09 : un changement de rôle (promotion / rétrogradation) impacte
+      // également les permissions calculées pour le projet.
       queryClient.invalidateQueries({ queryKey: ["projectMembers", projectId] });
+      queryClient.invalidateQueries({ queryKey: ["projectAccess", projectId] });
       toast({
         title: "Rôle mis à jour",
         description: "Le rôle du membre a été mis à jour avec succès.",
@@ -179,6 +185,8 @@ export const useTeamManagement = (projectId: string, permissions: Permissions, e
   });
 
   // Fonction pour supprimer un membre avec validation stricte
+  // F-05 : la confirmation utilisateur est désormais gérée par un AlertDialog
+  // au niveau du composant appelant ; le hook ne fait que la validation et l'appel mutation.
   const handleDelete = (memberId: string, email?: string) => {
     if (!memberId || typeof memberId !== 'string' || memberId.length === 0) {
       toast({
@@ -198,9 +206,7 @@ export const useTeamManagement = (projectId: string, permissions: Permissions, e
       return;
     }
 
-    if (window.confirm("Êtes-vous sûr de vouloir retirer ce membre de l'équipe ?")) {
-      deleteMutation.mutate(memberId);
-    }
+    deleteMutation.mutate(memberId);
   };
 
   // Fonction pour promouvoir un membre en chef de projet secondaire

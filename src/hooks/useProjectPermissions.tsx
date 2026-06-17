@@ -7,7 +7,9 @@ import { useAdminModeAwareData } from "./useAdminModeAwareData";
 import { usePortfolioProjectAccess } from "./usePortfolioProjectAccess";
 
 export const useProjectPermissions = (projectId: string) => {
-  const { userProfile, accessibleOrganizations } = usePermissionsContext();
+  // F-06 : utiliser la source unique de vérité pour userRoles (contexte) afin
+  // d'éviter une seconde query Supabase redondante et un cache dupliqué.
+  const { userProfile, accessibleOrganizations, userRoles } = usePermissionsContext();
   const { effectiveAdminStatus: isAdmin } = useAdminModeAwareData();
   
   // Vérifier l'accès via portefeuille
@@ -120,21 +122,9 @@ const { data: project, error: projectError } = await supabase
   // Déterminer si le projet a une évaluation en attente
   const hasPendingEvaluation = isProjectClosed && projectAccess?.closureStatus === 'pending_evaluation';
 
-  const { data: userRoles } = useQuery({
-    queryKey: ["userRoles", userProfile?.id],
-    queryFn: async () => {
-      if (!userProfile?.id) return [];
-      const { data } = await supabase
-        .from("user_roles")
-        .select("role")
-        .eq("user_id", userProfile.id);
-      return data || [];
-    },
-    enabled: !!userProfile?.id,
-  });
-
-  const isProjectManager = userRoles?.some(ur => ur.role === 'chef_projet') || false;
-  const isManager = userRoles?.some(ur => ur.role === 'manager') || false;
+  // F-06 : userRoles vient désormais directement du PermissionsContext (cf. plus haut)
+  const isProjectManager = userRoles?.some((role) => role === 'chef_projet') || false;
+  const isManager = userRoles?.some((role) => role === 'manager') || false;
 
   // Updated canEditOrganization logic to include project managers
   const canEditOrganization = useMemo(() => {

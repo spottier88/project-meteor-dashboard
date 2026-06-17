@@ -85,9 +85,13 @@ export const useProjectSubmit = ({
         if (tagsResult.warning) warnings.push(tagsResult.warning);
 
         // Invalider les caches spécifiques au projet
+        // F-08 : inclure projectAccess (permissions calculées) et dashboardSummary
         await queryClient.invalidateQueries({ queryKey: ["project", project.id] });
+        await queryClient.invalidateQueries({ queryKey: ["projectAccess", project.id] });
         await queryClient.invalidateQueries({ queryKey: ["projectInnovationScores", project.id] });
         await queryClient.invalidateQueries({ queryKey: ["project-monitoring", project.id] });
+        
+
         
       } else {
         // --- Création d'un nouveau projet ---
@@ -135,8 +139,10 @@ export const useProjectSubmit = ({
       }
       
       // Invalider les caches globaux
+      // F-08 : ajouter dashboardSummary pour mettre à jour les compteurs du tableau de bord
       await queryClient.invalidateQueries({ queryKey: ["projects"] });
       await queryClient.invalidateQueries({ queryKey: ["projectsListView"] });
+      await queryClient.invalidateQueries({ queryKey: ["dashboardSummary"] });
       await queryClient.invalidateQueries({ queryKey: ["project-portfolios"] });
       await queryClient.invalidateQueries({ queryKey: ["portfolios"] });
       await queryClient.invalidateQueries({ queryKey: ["portfolio"] });
