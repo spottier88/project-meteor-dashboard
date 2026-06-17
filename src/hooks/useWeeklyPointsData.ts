@@ -119,7 +119,7 @@ export const processWeeklyPointsData = (points: { week_start_date: string; activ
       if (!dayData[point.activity_type]) {
         dayData[point.activity_type] = 0;
       }
-      dayData[point.activity_type] += point.points;
+      dayData[point.activity_type] = (Number(dayData[point.activity_type]) || 0) + point.points;
     }
   });
 
