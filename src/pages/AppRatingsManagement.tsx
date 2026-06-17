@@ -20,6 +20,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { RatingsStats } from "@/components/rating/RatingsStats";
 import { RatingsList } from "@/components/rating/RatingsList";
+import { RatingPromptSettingsCard } from "@/components/rating/RatingPromptSettingsCard";
 import type { AppRatingWithUser, RatingsStats as RatingsStatsType } from "@/types/rating";
 
 export const AppRatingsManagement = () => {
@@ -107,6 +108,11 @@ export const AppRatingsManagement = () => {
       {/* Statistiques */}
       <div className="mb-8">
         <RatingsStats stats={stats} />
+      </div>
+
+      {/* Paramétrage de la relance d'évaluation */}
+      <div className="mb-8">
+        <RatingPromptSettingsCard />
       </div>
 
       {/* Liste des évaluations */}

@@ -8,6 +8,7 @@ import { ProjectLifecycleStatus } from "@/types/project";
 import { ProjectFilters } from "@/components/project/ProjectFilters";
 import { ProjectList } from "@/components/project/ProjectList";
 import { ProjectModals } from "@/components/project/ProjectModals";
+import { RatingPromptDialog } from "@/components/rating/RatingPromptDialog";
 import { usePermissionsContext } from "@/contexts/PermissionsContext";
 import { useProjectsListView } from "@/hooks/useProjectsListView";
 import { useUserProjectMemberships } from "@/hooks/useUserProjectMemberships";
@@ -389,6 +390,8 @@ const Index = () => {
         selectedProjectForReview={selectedProjectForReview}
         onReviewSubmitted={handleReviewSubmitted}
       />
+
+      <RatingPromptDialog />
     </div>
   );
 };
