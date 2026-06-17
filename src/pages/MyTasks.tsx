@@ -60,7 +60,7 @@ export const MyTasks = () => {
 
   const { data: tasks, isLoading } = useMyTasks(showOverdueOnly);
 
-  // Synchroniser le filtre overdue avec l'URL
+  // Synchroniser le filtre overdue avec l'URL (état → URL)
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     if (showOverdueOnly) {
@@ -70,6 +70,14 @@ export const MyTasks = () => {
     }
     navigate({ pathname: location.pathname, search: params.toString() }, { replace: true });
   }, [showOverdueOnly, location.pathname, navigate]);
+
+  // F-07 : synchroniser également URL → état pour réagir aux liens directs
+  // (par ex. depuis le dashboard "X tâches en retard") même si la page MyTasks
+  // est déjà montée et reçoit juste un changement de query string.
+  useEffect(() => {
+    const fromUrl = new URLSearchParams(location.search).get("filter") === "overdue";
+    setShowOverdueOnly((prev) => (prev === fromUrl ? prev : fromUrl));
+  }, [location.search]);
 
   // Projets uniques pour le filtre
   const uniqueProjects = tasks

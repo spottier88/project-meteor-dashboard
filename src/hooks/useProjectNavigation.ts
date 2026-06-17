@@ -9,6 +9,37 @@ import { useCallback } from "react";
 import { useNavigate } from "react-router";
 import { useUserPreferences } from "./useUserPreferences";
 
+// F-10 : TTL (60 s) appliqué aux entrées sessionStorage liées à l'ouverture
+// d'un projet dans un nouvel onglet, pour éviter l'accumulation de clés orphelines
+// si le nouvel onglet est fermé immédiatement ou ne consomme jamais la clé.
+const NAV_KEY_PREFIX = "project_navigation_";
+const NAV_KEY_TTL_MS = 60_000;
+
+const cleanupExpiredNavKeys = () => {
+  try {
+    const now = Date.now();
+    for (let i = sessionStorage.length - 1; i >= 0; i--) {
+      const key = sessionStorage.key(i);
+      if (!key || !key.startsWith(NAV_KEY_PREFIX)) continue;
+      const raw = sessionStorage.getItem(key);
+      if (!raw) {
+        sessionStorage.removeItem(key);
+        continue;
+      }
+      try {
+        const parsed = JSON.parse(raw) as { timestamp?: number };
+        if (!parsed.timestamp || now - parsed.timestamp > NAV_KEY_TTL_MS) {
+          sessionStorage.removeItem(key);
+        }
+      } catch {
+        sessionStorage.removeItem(key);
+      }
+    }
+  } catch {
+    // sessionStorage indisponible (mode privé strict) — ignorer silencieusement
+  }
+};
+
 export const useProjectNavigation = () => {
   const navigate = useNavigate();
   const { getPreference } = useUserPreferences();
@@ -19,42 +50,34 @@ export const useProjectNavigation = () => {
       const projectUrl = `/projects/${projectId}`;
 
       if (openInNewTab) {
-        // Créer une clé unique pour cette navigation
-        const newTabKey = `project_navigation_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-        
-        // Stocker les données de navigation dans sessionStorage
+        // F-10 : purger les clés expirées avant d'en écrire une nouvelle
+        cleanupExpiredNavKeys();
+
+        const newTabKey = `${NAV_KEY_PREFIX}${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+
         const navigationData = {
           projectId,
           targetUrl: projectUrl,
           timestamp: Date.now()
         };
-        
+
         sessionStorage.setItem(newTabKey, JSON.stringify(navigationData));
-        
-        // Construire l'URL complète avec le paramètre pour identifier la navigation en nouvel onglet
+
         const fullUrl = `${window.location.origin}${projectUrl}?newTab=${newTabKey}`;
-        
-        // Ouverture du projet dans un nouvel onglet
-        
-        // Ouvrir dans un nouvel onglet avec l'URL complète
         const newWindow = window.open(fullUrl, '_blank');
-        
-        // Vérifier si le nouvel onglet s'est ouvert correctement
+
         if (!newWindow) {
           console.warn('Le navigateur a bloqué l\'ouverture du nouvel onglet');
-          // Fallback : navigation normale
-        void navigate(projectUrl);
-          // Nettoyer les données stockées
+          // Fallback : navigation normale + nettoyage de la clé inutilisée
           sessionStorage.removeItem(newTabKey);
+          void navigate(projectUrl);
         }
-        
-        // Empêcher la navigation par défaut si c'est un clic
+
         if (event) {
           event.preventDefault();
           event.stopPropagation();
         }
       } else {
-        // Navigation normale dans l'onglet actuel
         navigate(projectUrl);
       }
     },
@@ -66,3 +89,4 @@ export const useProjectNavigation = () => {
     openInNewTab: getPreference('open_projects_in_new_tab', false),
   };
 };
+
