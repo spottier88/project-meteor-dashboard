@@ -20,6 +20,7 @@ export interface CartographyProject {
   pole_name: string | null;
   innovation_score: number; // moyenne 0-5
   is_innovative: boolean;   // score >= seuil
+  priority: string | null;  // 'high' | 'medium' | 'low' | null
 }
 
 
@@ -32,16 +33,16 @@ export const useCartographyData = (portfolioId: string, projectIds: string[]) =>
       directionIds: string[];
       directionMap: Map<string, { name: string; pole_id: string | null }>;
       poleMap: Map<string, string>;
-      enrichmentByProject: Map<string, { direction_id: string | null; pole_id: string | null; innovation_score: number }>;
+      enrichmentByProject: Map<string, { direction_id: string | null; pole_id: string | null; innovation_score: number; priority: string | null }>;
     }> => {
       if (projectIds.length === 0) {
         return { directionIds: [], directionMap: new Map(), poleMap: new Map(), enrichmentByProject: new Map() };
       }
 
-      // Récupération des directions / pôles des projets
+      // Récupération des directions / pôles / priorité des projets
       const { data: projectsExtra, error: projectsErr } = await supabase
         .from("projects")
-        .select("id, direction_id, pole_id")
+        .select("id, direction_id, pole_id, priority")
         .in("id", projectIds);
       if (projectsErr) throw projectsErr;
 
@@ -89,13 +90,14 @@ export const useCartographyData = (portfolioId: string, projectIds: string[]) =>
 
       const enrichmentByProject = new Map<
         string,
-        { direction_id: string | null; pole_id: string | null; innovation_score: number }
+        { direction_id: string | null; pole_id: string | null; innovation_score: number; priority: string | null }
       >();
       (projectsExtra || []).forEach((p) => {
         enrichmentByProject.set(p.id, {
           direction_id: p.direction_id,
           pole_id: p.pole_id,
           innovation_score: scoreMap.get(p.id) || 0,
+          priority: (p as { priority?: string | null }).priority ?? null,
         });
       });
 
@@ -108,7 +110,7 @@ export const useCartographyData = (portfolioId: string, projectIds: string[]) =>
 
 
 /**
- * Combine les projets du portefeuille avec les enrichissements (direction + innovation).
+ * Combine les projets du portefeuille avec les enrichissements (direction + innovation + priorité).
  */
 export const buildCartographyProjects = (
   portfolioProjects: Array<{
@@ -120,7 +122,7 @@ export const buildCartographyProjects = (
     completion: number;
     last_review_date: string | null;
   }>,
-  enrichment: Map<string, { direction_id: string | null; pole_id: string | null; innovation_score: number }>,
+  enrichment: Map<string, { direction_id: string | null; pole_id: string | null; innovation_score: number; priority: string | null }>,
   directionMap: Map<string, { name: string; pole_id: string | null }>,
   poleMap: Map<string, string> = new Map()
 ): CartographyProject[] => {
@@ -144,7 +146,9 @@ export const buildCartographyProjects = (
       pole_name: pole_id ? poleMap.get(pole_id) || null : null,
       innovation_score,
       is_innovative: innovation_score >= INNOVATION_THRESHOLD,
+      priority: extra?.priority ?? null,
     };
   });
 };
+
 

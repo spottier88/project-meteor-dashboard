@@ -21,7 +21,7 @@ import {
   defaultCartographyFilters,
 } from "./CartographyFilters";
 import { CartographyLegend } from "./CartographyLegend";
-import { CartographyBubbleMatrix } from "./CartographyBubbleMatrix";
+import { CartographyProjectRose } from "./CartographyProjectRose";
 import { CartographyDirectionHeatmap } from "./CartographyDirectionHeatmap";
 import { CartographyTreemap } from "./CartographyTreemap";
 
@@ -132,13 +132,13 @@ export const PortfolioCartographyTab = ({
         <CardContent className="p-4" ref={exportRef}>
           <Tabs value={view} onValueChange={(v) => setView(v as typeof view)}>
             <TabsList className="grid w-full grid-cols-3 max-w-md">
-              <TabsTrigger value="matrix">Matrice</TabsTrigger>
+              <TabsTrigger value="matrix">Rose des projets</TabsTrigger>
               <TabsTrigger value="heatmap">Heatmap directions</TabsTrigger>
               <TabsTrigger value="treemap">Treemap</TabsTrigger>
             </TabsList>
 
             <TabsContent value="matrix" className="mt-4">
-              <CartographyBubbleMatrix projects={filtered} />
+              <CartographyProjectRose projects={filtered} />
             </TabsContent>
             <TabsContent value="heatmap" className="mt-4">
               <CartographyDirectionHeatmap projects={filtered} />
