@@ -21,7 +21,7 @@ import {
   defaultCartographyFilters,
 } from "./CartographyFilters";
 import { CartographyLegend } from "./CartographyLegend";
-import { CartographyBubbleMatrix } from "./CartographyBubbleMatrix";
+import { CartographyProjectRose } from "./CartographyProjectRose";
 import { CartographyDirectionHeatmap } from "./CartographyDirectionHeatmap";
 import { CartographyTreemap } from "./CartographyTreemap";
 
