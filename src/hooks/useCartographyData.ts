@@ -33,16 +33,16 @@ export const useCartographyData = (portfolioId: string, projectIds: string[]) =>
       directionIds: string[];
       directionMap: Map<string, { name: string; pole_id: string | null }>;
       poleMap: Map<string, string>;
-      enrichmentByProject: Map<string, { direction_id: string | null; pole_id: string | null; innovation_score: number }>;
+      enrichmentByProject: Map<string, { direction_id: string | null; pole_id: string | null; innovation_score: number; priority: string | null }>;
     }> => {
       if (projectIds.length === 0) {
         return { directionIds: [], directionMap: new Map(), poleMap: new Map(), enrichmentByProject: new Map() };
       }
 
-      // Récupération des directions / pôles des projets
+      // Récupération des directions / pôles / priorité des projets
       const { data: projectsExtra, error: projectsErr } = await supabase
         .from("projects")
-        .select("id, direction_id, pole_id")
+        .select("id, direction_id, pole_id, priority")
         .in("id", projectIds);
       if (projectsErr) throw projectsErr;
 
