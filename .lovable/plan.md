@@ -1,36 +1,66 @@
-# Création d'un document de synthèse des droits
 
-Créer un nouveau fichier `documentation/Matrice-Droits-Utilisateurs.md` rassemblant la matrice des permissions par profil, basée sur l'analyse de :
+# Rose des projets — nouvelle cartographie du portefeuille
 
-- `src/contexts/PermissionsContext.tsx` (rôles, `hasRole`, mode admin OFF)
-- Hooks `use*Permissions` / `use*Access` (projet, risque, tâche, revue, portefeuille, manager)
-- `src/utils/organizationAccess.ts`, `managerPermissions.ts`, `portfolioPermissions.ts`
-- Fonctions RPC Postgres : `can_access_project`, `can_manage_project`, `can_manage_project_team`, `can_view_portfolio`, `can_manage_portfolio_simple`, `can_assign_to_portfolio`, `can_access_project_via_portfolio`, `is_quality_manager`, `get_accessible_projects_list_view_with_admin_mode`, `get_accessible_project_managers`, `get_reviewable_projects`
-- Politiques RLS des tables `projects`, `project_members`, `portfolio_managers`, `project_evaluations`, `tasks`, `risks`, `reviews`, etc.
+Inspiration : graphe "Faire de la vie étudiante…" (rose polaire à 4 quadrants).
+Objectif : remplacer la matrice bubble jugée insatisfaisante par une visualisation polaire dense et lisible.
 
-## Contenu du document
+## Concept visuel
 
-1. **Introduction** — Objet du document, rappel des 7 rôles (`admin`, `chef_projet`, `manager`, `membre`, `time_tracker`, `portfolio_manager`, `quality_manager`), principe du cumul de rôles, mode admin désactivable.
-2. **Matrice fonctionnelle — Projets** (création, modification, clôture, suppression, équipe, revues, risques, tâches, notes, cadrage, IA, innovation, tags, liens, panier, présentation, favoris).
-3. **Matrice fonctionnelle — Portefeuilles** (CRUD, ajout projets, revues, rôles owner/manager/viewer).
-4. **Matrice fonctionnelle — Activités & profil** (saisie hebdo, import calendrier, types d'activités, préférences).
-5. **Matrice — Administration** (utilisateurs, organisation, modèles projet/email/export, IA, tokens API, statistiques, configuration SMTP).
-6. **Règles transverses** :
-   - Périmètre Manager via `manager_path_assignments` + héritage hiérarchique
-   - Chef de projet secondaire (`project_members.role = 'secondary_manager'`)
-   - Accès lecture seule via portefeuille (`can_access_project_via_portfolio`)
-   - Blocage des comptes désactivés (`profiles.is_active = false`)
-   - Mode admin OFF (RPC `..._with_admin_mode`)
-7. **Annexe** — Correspondance rôle ⇄ principales fonctions du code (utile pour audit futur).
+```text
+                  PRIORITÉ HAUTE
+        ┌──────────────────┬──────────────────┐
+        │  Haute / Sain    │  Haute / À risque│
+        │  (sunny+cloudy)  │  (stormy)        │
+ MÉTÉO  │      ◖◗◖◗        │      ◖◗◖◗        │ MÉTÉO
+ SAINE  ├──────────────────┼──────────────────┤ À RISQUE
+        │ Standard / Sain  │ Standard / Risque│
+        │      ◖◗◖◗        │      ◖◗◖◗        │
+        └──────────────────┴──────────────────┘
+                PRIORITÉ STANDARD
+```
+
+- 4 quadrants délimités par 2 axes en pointillés : **Priorité (haute/standard)** verticalement, **Météo (saine = sunny+cloudy / à risque = stormy)** horizontalement.
+- Chaque **pétale = 1 projet** :
+  - **Angle** : réparti uniformément entre les projets du même quadrant (largeur ∝ 1/n du quadrant).
+  - **Rayon** : proportionnel à l'**avancement (0–100 %)**.
+  - **Remplissage** : couleur du **statut cycle de vie** (study/validated/in_progress/completed/suspended/abandoned), tokens design system.
+  - **Anneau extérieur (bordure épaisse)** : couleur de la **météo** (sunny=vert, cloudy=ambre, stormy=rouge).
+  - **Numéro** centré dans le pétale (≥1 pétale).
+- Cercles concentriques discrets à 25 / 50 / 75 / 100 % (grille polaire).
+- Labels d'axes : « Priorité haute », « Priorité standard », « Sain », « À risque ».
+- **Tooltip** au survol : titre, chef de projet, direction, avancement %, météo, statut cycle de vie, dernière revue.
+- Légende sous le graphe (statuts cycle de vie + anneaux météo).
+- Légende numérotée latérale (n° ⇄ titre projet) pour lecture rapide.
 
 ## Détails techniques
 
-- Format : Markdown pur (tableaux GFM), aucune dépendance ajoutée.
-- Emplacement : `documentation/Matrice-Droits-Utilisateurs.md` (cohérent avec les autres docs : `METEOR-Documentation-Complete.md`, `Guide-Utilisateur-V3-Ajouts.md`).
-- Aucun changement de code applicatif, aucune migration SQL.
-- Document destiné à l'audit et à la documentation interne ; pourra être mis à jour à la main lors d'évolutions des rôles.
+- **Nouveau composant** `src/components/portfolio/cartography/CartographyProjectRose.tsx` :
+  - SVG natif (viewBox carré, responsive), pas de dépendance Recharts (Recharts ne gère pas proprement ce type d'angle/rayon mixte).
+  - Pure fonction `buildPetals(projects)` qui :
+    1. Classe les projets dans 4 buckets via `priority` (high → "haute", autres → "standard") et `weather` (sunny|cloudy → "saine", stormy|null → "à risque" — `null` traité comme à risque, configurable).
+    2. Pour chaque bucket, calcule angle de départ, largeur angulaire = quadrant / n.
+    3. Calcule rayon = `(completion/100) * R_max` (R_min = 8 % pour rester visible si 0 %).
+  - Génère chaque pétale comme `path` SVG (arc + lignes radiales) avec `fill` = token cycle de vie, `stroke` = token météo, `strokeWidth` = 4.
+  - Tokens couleurs définis dans le composant à partir des classes existantes (`PortfolioCharts.tsx` LIFECYCLE_COLORS + STATUS_COLORS) — pas de hardcode hors palette.
+- **Modification** `PortfolioCartographyTab.tsx` :
+  - L'onglet `matrix` rend désormais `CartographyProjectRose` (renommé l'intitulé en « Rose des projets »).
+  - Retire l'import `CartographyBubbleMatrix` (fichier conservé sur disque pour rollback éventuel mais plus utilisé).
+- **Données** : `CartographyProject` expose déjà `weather`, `lifecycle_status`, `completion`. Ajout d'une lecture `priority` :
+  - Étendre `useCartographyData` pour récupérer `projects.priority` (champ existant côté DB), et l'ajouter à l'enrichissement + à `buildCartographyProjects`.
+- **Légende** : mise à jour `CartographyLegend.tsx` pour inclure l'explication "rayon = avancement / couleur = cycle de vie / anneau = météo".
+- **Filtres** : inchangés (direction / météo / cycle / innovation). Si filtres réduisent un quadrant à 0 projet, message « Aucun projet » dans le secteur.
+- **Tooltip** : Radix `Tooltip` ou composant `recharts/Tooltip`-like maison via `onMouseEnter` sur chaque `path`, panneau flottant positionné via state.
+- **Export PNG** : déjà géré par `html-to-image` sur `exportRef` parent — fonctionne nativement avec SVG.
 
 ## Hors périmètre
 
-- Pas de page d'administration affichant la matrice (option non retenue).
-- Pas d'export Excel automatique (option non retenue ; un export existe déjà pour la *revue des droits utilisateurs réels* via `permissionsExport.ts`).
+- Aucune modification des autres onglets (Heatmap, Treemap) ni des données serveur.
+- Pas de migration SQL.
+- Pas de clic-vers-projet ni d'étiquettes permanentes (peuvent être ajoutés ensuite).
+
+## Livrables
+
+1. `src/components/portfolio/cartography/CartographyProjectRose.tsx` (nouveau, ~250 l., commenté FR).
+2. `src/hooks/useCartographyData.ts` — ajout du champ `priority`.
+3. `src/components/portfolio/cartography/PortfolioCartographyTab.tsx` — bascule onglet « Matrice » → « Rose des projets ».
+4. `src/components/portfolio/cartography/CartographyLegend.tsx` — légende enrichie.
