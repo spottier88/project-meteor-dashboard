@@ -20,6 +20,7 @@ export interface CartographyProject {
   pole_name: string | null;
   innovation_score: number; // moyenne 0-5
   is_innovative: boolean;   // score >= seuil
+  priority: string | null;  // 'high' | 'medium' | 'low' | null
 }
 
 
