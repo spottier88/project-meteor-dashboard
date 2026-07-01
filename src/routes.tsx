@@ -23,6 +23,7 @@ import { ManagerAssignments } from "./pages/ManagerAssignments";
 import { ProjectTeamManagement } from "./pages/ProjectTeamManagement";
 import { PermissionsProvider } from "@/contexts/PermissionsContext";
 import { FeedbackButton } from "@/components/feedback/FeedbackButton";
+import { RatingPromptDialog } from "@/components/rating/RatingPromptDialog";
 import { VersionBadge } from "@/components/VersionBadge";
 import { useEffect } from "react";
 import { useToast } from "./components/ui/use-toast";
