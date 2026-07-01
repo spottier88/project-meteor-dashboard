@@ -50,7 +50,7 @@ export const RatingPromptSettingsCard = () => {
     if (data) {
       setInitial(data.initial);
       setFrequency(data.frequency);
-      setLaunchedAt(data.launchedAt.slice(0, 10));
+      setLaunchedAt((data.launchedAt ?? todayIso()).slice(0, 10));
     }
   }, [data]);
 
