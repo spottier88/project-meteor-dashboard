@@ -1,8 +1,10 @@
 /**
  * @component RatingPromptSettingsCard
  * @description Carte d'administration pour configurer la relance d'évaluation :
- * - délai initial après création du compte avant la 1ère relance,
- * - fréquence entre 2 relances.
+ * - délai initial après création du compte (ou lancement de la fonctionnalité),
+ * - fréquence entre 2 relances,
+ * - date de mise en service de la fonctionnalité (référence commune pour
+ *   les utilisateurs pré-existants).
  * Persiste dans `application_settings` (type 'rating').
  */
 
@@ -12,17 +14,19 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Save, Bell } from "lucide-react";
+import { Save, Bell, RotateCcw } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
 
 const DEFAULTS = { initial: 7, frequency: 30 };
+const todayIso = () => new Date().toISOString().slice(0, 10);
 
 export const RatingPromptSettingsCard = () => {
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const [initial, setInitial] = useState<number>(DEFAULTS.initial);
   const [frequency, setFrequency] = useState<number>(DEFAULTS.frequency);
+  const [launchedAt, setLaunchedAt] = useState<string>(todayIso());
 
   const { data, isLoading } = useQuery({
     queryKey: ["ratingPromptSettings"],
@@ -37,6 +41,7 @@ export const RatingPromptSettingsCard = () => {
       return {
         initial: parseInt(map.get("rating_prompt_initial_delay_days") ?? `${DEFAULTS.initial}`, 10),
         frequency: parseInt(map.get("rating_prompt_frequency_days") ?? `${DEFAULTS.frequency}`, 10),
+        launchedAt: map.get("rating_prompt_feature_launched_at") ?? todayIso(),
       };
     },
   });
@@ -45,6 +50,7 @@ export const RatingPromptSettingsCard = () => {
     if (data) {
       setInitial(data.initial);
       setFrequency(data.frequency);
+      setLaunchedAt(data.launchedAt.slice(0, 10));
     }
   }, [data]);
 
@@ -53,6 +59,7 @@ export const RatingPromptSettingsCard = () => {
       const rows = [
         { type: "rating" as const, key: "rating_prompt_initial_delay_days", value: String(initial) },
         { type: "rating" as const, key: "rating_prompt_frequency_days", value: String(frequency) },
+        { type: "rating" as const, key: "rating_prompt_feature_launched_at", value: launchedAt },
       ];
       for (const row of rows) {
         const { error } = await supabase
@@ -95,7 +102,7 @@ export const RatingPromptSettingsCard = () => {
               disabled={isLoading}
             />
             <p className="text-xs text-muted-foreground">
-              Délai après la création du compte avant la première proposition.
+              Délai après la création du compte (ou la mise en service ci-dessous) avant la 1ère proposition.
             </p>
           </div>
           <div className="space-y-2">
@@ -110,6 +117,33 @@ export const RatingPromptSettingsCard = () => {
             />
             <p className="text-xs text-muted-foreground">
               Temps d'attente après un report avant de proposer à nouveau.
+            </p>
+          </div>
+          <div className="space-y-2 sm:col-span-2">
+            <Label htmlFor="launched-at">Date de mise en service de la relance</Label>
+            <div className="flex gap-2">
+              <Input
+                id="launched-at"
+                type="date"
+                value={launchedAt}
+                onChange={(e) => setLaunchedAt(e.target.value)}
+                disabled={isLoading}
+                className="max-w-xs"
+              />
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setLaunchedAt(todayIso())}
+                disabled={isLoading}
+              >
+                <RotateCcw className="h-4 w-4 mr-2" />
+                Aujourd'hui
+              </Button>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Sert de date de référence pour les utilisateurs créés avant la mise en place de la fonctionnalité.
+              Le délai initial est calculé à partir de la plus récente entre cette date et la création du compte.
             </p>
           </div>
         </div>

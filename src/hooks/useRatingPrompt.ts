@@ -42,6 +42,8 @@ export const useRatingPrompt = () => {
       if (error) throw error;
       const map = new Map<string, string>();
       (data || []).forEach((row) => map.set(row.key, row.value));
+      const launchedRaw = map.get("rating_prompt_feature_launched_at");
+      const launchedMs = launchedRaw ? new Date(launchedRaw).getTime() : null;
       return {
         initialDelayDays: parseInt(
           map.get("rating_prompt_initial_delay_days") ?? `${DEFAULT_INITIAL_DELAY_DAYS}`,
@@ -51,6 +53,7 @@ export const useRatingPrompt = () => {
           map.get("rating_prompt_frequency_days") ?? `${DEFAULT_FREQUENCY_DAYS}`,
           10
         ),
+        featureLaunchedAtMs: Number.isFinite(launchedMs) ? launchedMs : null,
       };
     },
     staleTime: 10 * 60 * 1000,
@@ -103,17 +106,38 @@ export const useRatingPrompt = () => {
 
     const now = Date.now();
 
-    // Délai initial après création du compte
-    const accountCreatedAt = user.created_at ? new Date(user.created_at).getTime() : null;
+    // Point de départ = max(création du compte, mise en service de la fonctionnalité).
+    // Ainsi, les utilisateurs pré-existants sont sollicités après un délai depuis
+    // le lancement plutôt qu'immédiatement (évite un pic de sollicitations).
+    const accountCreatedMs = user.created_at ? new Date(user.created_at).getTime() : null;
+    const launchedMs = settings?.featureLaunchedAtMs ?? null;
+    const referenceMs = Math.max(accountCreatedMs ?? 0, launchedMs ?? 0) || null;
+
     const initialDelayMs = (settings?.initialDelayDays ?? DEFAULT_INITIAL_DELAY_DAYS) * 86_400_000;
-    if (accountCreatedAt && now < accountCreatedAt + initialDelayMs) return false;
+    if (referenceMs && now < referenceMs + initialDelayMs) {
+      if (import.meta.env.DEV) {
+        console.debug("[useRatingPrompt] En attente du délai initial", {
+          referenceDate: new Date(referenceMs).toISOString(),
+          eligibleAt: new Date(referenceMs + initialDelayMs).toISOString(),
+        });
+      }
+      return false;
+    }
 
     // Report
     if (prefs?.rating_prompt_dismissed_until) {
       const until = new Date(prefs.rating_prompt_dismissed_until).getTime();
-      if (now < until) return false;
+      if (now < until) {
+        if (import.meta.env.DEV) {
+          console.debug("[useRatingPrompt] Reporté jusqu'à", new Date(until).toISOString());
+        }
+        return false;
+      }
     }
 
+    if (import.meta.env.DEV) {
+      console.debug("[useRatingPrompt] Affichage de la relance d'évaluation");
+    }
     return true;
   }, [isLoading, user, hasRated, prefs, settings]);
 

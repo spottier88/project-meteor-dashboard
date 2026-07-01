@@ -1,66 +1,58 @@
+# Analyse
 
-# Rose des projets — nouvelle cartographie du portefeuille
+## Fonctionnement actuel
+`useRatingPrompt` déclenche la modale si :
+1. `hasRated === false` (aucune ligne dans `app_ratings`)
+2. `rating_prompt_opted_out !== true`
+3. `rating_prompt_dismissed_until` absent ou dépassé
+4. `now >= user.created_at + initial_delay_days`
 
-Inspiration : graphe "Faire de la vie étudiante…" (rose polaire à 4 quadrants).
-Objectif : remplacer la matrice bubble jugée insatisfaisante par une visualisation polaire dense et lisible.
+La modale `RatingPromptDialog` n'est montée que dans **`src/pages/Index.tsx`** (route `/`).
 
-## Concept visuel
+## Causes probables pour les utilisateurs pré-existants
 
-```text
-                  PRIORITÉ HAUTE
-        ┌──────────────────┬──────────────────┐
-        │  Haute / Sain    │  Haute / À risque│
-        │  (sunny+cloudy)  │  (stormy)        │
- MÉTÉO  │      ◖◗◖◗        │      ◖◗◖◗        │ MÉTÉO
- SAINE  ├──────────────────┼──────────────────┤ À RISQUE
-        │ Standard / Sain  │ Standard / Risque│
-        │      ◖◗◖◗        │      ◖◗◖◗        │
-        └──────────────────┴──────────────────┘
-                PRIORITÉ STANDARD
+1. **Route de landing** : après login, beaucoup d'utilisateurs anciens ont une URL sauvegardée (`redirectionUtils`) qui les envoie sur `/projects`, `/dashboard`, `/my-tasks`… La modale n'est jamais montée → jamais affichée. C'est la cause la plus probable.
+2. **Ambiguïté de la date de référence** : la règle « attendre `initial_delay_days` après création du compte » n'a plus de sens pour un compte créé il y a 12 mois — le délai initial existait pour laisser à un **nouvel** utilisateur le temps de tester l'app. Pour un compte pré-existant, le vrai point de départ devrait être la **date de mise en service de la fonctionnalité** (ou la première connexion post-déploiement).
+3. **Absence de traçabilité** : aucun log ne permet aujourd'hui de savoir pourquoi le hook renvoie `false`.
+
+# Plan de correction
+
+## 1. Monter la modale au niveau global (root layout)
+Déplacer `<RatingPromptDialog />` de `src/pages/Index.tsx` vers `src/App.tsx` (à l'intérieur du `PermissionsProvider`, en dehors du `<Routes>` ou dans un layout parent), afin qu'elle puisse s'afficher quelle que soit la page de destination après login. La modale reste inactive tant que `useUser()` renvoie `null` (garde déjà en place).
+
+## 2. Introduire un point de départ commun « feature launch »
+Ajouter un réglage global dans `application_settings` :
+- clé `rating_prompt_feature_launched_at` (type `rating`, valeur ISO date, à initialiser à la date du jour)
+
+Dans `useRatingPrompt`, remplacer la référence de délai initial par :
 ```
+referenceDate = max(user.created_at, feature_launched_at)
+eligibleAt    = referenceDate + initial_delay_days
+```
+Comportement :
+- **Nouvel utilisateur** (créé après le lancement) : inchangé (attend `initial_delay_days` après création).
+- **Utilisateur pré-existant** : attend `initial_delay_days` après la date de lancement, puis la relance apparaît (respect du délai initial pour éviter un pic brutal de sollicitations le jour du déploiement).
 
-- 4 quadrants délimités par 2 axes en pointillés : **Priorité (haute/standard)** verticalement, **Météo (saine = sunny+cloudy / à risque = stormy)** horizontalement.
-- Chaque **pétale = 1 projet** :
-  - **Angle** : réparti uniformément entre les projets du même quadrant (largeur ∝ 1/n du quadrant).
-  - **Rayon** : proportionnel à l'**avancement (0–100 %)**.
-  - **Remplissage** : couleur du **statut cycle de vie** (study/validated/in_progress/completed/suspended/abandoned), tokens design system.
-  - **Anneau extérieur (bordure épaisse)** : couleur de la **météo** (sunny=vert, cloudy=ambre, stormy=rouge).
-  - **Numéro** centré dans le pétale (≥1 pétale).
-- Cercles concentriques discrets à 25 / 50 / 75 / 100 % (grille polaire).
-- Labels d'axes : « Priorité haute », « Priorité standard », « Sain », « À risque ».
-- **Tooltip** au survol : titre, chef de projet, direction, avancement %, météo, statut cycle de vie, dernière revue.
-- Légende sous le graphe (statuts cycle de vie + anneaux météo).
-- Légende numérotée latérale (n° ⇄ titre projet) pour lecture rapide.
+Exposer le champ dans `RatingPromptSettingsCard` (input date) pour que l'admin puisse ajuster/réinitialiser cette date.
+
+## 3. Diagnostic non intrusif
+Ajouter dans `useRatingPrompt` un `logger.debug` conditionnel (via `import.meta.env.DEV`) listant les raisons pour lesquelles la modale n'est pas affichée (`hasRated`, `optedOut`, `dismissedUntil`, `waitingInitialDelay`), afin de faciliter les vérifications futures sans polluer la console en production.
+
+## 4. Non-régression
+- Aucune modification des tables `app_ratings` ni des flux d'envoi d'avis.
+- Les préférences utilisateurs existantes (`rating_prompt_opted_out`, `rating_prompt_dismissed_until`) restent prioritaires : un utilisateur ayant snoozé ou opt-out n'est pas re-sollicité.
+- Le bouton « Réactiver les relances » dans `UserPreferencesForm` continue de fonctionner (reset des deux champs).
+- Aucune migration destructive : uniquement un `INSERT` idempotent dans `application_settings`.
 
 ## Détails techniques
+- **Migration** : `INSERT INTO application_settings (key, value, type) VALUES ('rating_prompt_feature_launched_at', <today>, 'rating') ON CONFLICT (key) DO NOTHING;`
+- **Hook** : lire la 3ᵉ clé dans le même `useQuery` existant, parser en ms, calculer `referenceDate = Math.max(accountCreatedMs, featureLaunchedMs)`.
+- **UI admin** : ajouter un champ « Date de mise en service de la relance » dans `RatingPromptSettingsCard` avec bouton « Réinitialiser à aujourd'hui » (utile si un admin veut « repartir de zéro » après une évolution majeure de l'app).
+- **App.tsx** : monter `<RatingPromptDialog />` juste après `<Toaster />`, protégé par `useUser()` implicitement via le hook.
 
-- **Nouveau composant** `src/components/portfolio/cartography/CartographyProjectRose.tsx` :
-  - SVG natif (viewBox carré, responsive), pas de dépendance Recharts (Recharts ne gère pas proprement ce type d'angle/rayon mixte).
-  - Pure fonction `buildPetals(projects)` qui :
-    1. Classe les projets dans 4 buckets via `priority` (high → "haute", autres → "standard") et `weather` (sunny|cloudy → "saine", stormy|null → "à risque" — `null` traité comme à risque, configurable).
-    2. Pour chaque bucket, calcule angle de départ, largeur angulaire = quadrant / n.
-    3. Calcule rayon = `(completion/100) * R_max` (R_min = 8 % pour rester visible si 0 %).
-  - Génère chaque pétale comme `path` SVG (arc + lignes radiales) avec `fill` = token cycle de vie, `stroke` = token météo, `strokeWidth` = 4.
-  - Tokens couleurs définis dans le composant à partir des classes existantes (`PortfolioCharts.tsx` LIFECYCLE_COLORS + STATUS_COLORS) — pas de hardcode hors palette.
-- **Modification** `PortfolioCartographyTab.tsx` :
-  - L'onglet `matrix` rend désormais `CartographyProjectRose` (renommé l'intitulé en « Rose des projets »).
-  - Retire l'import `CartographyBubbleMatrix` (fichier conservé sur disque pour rollback éventuel mais plus utilisé).
-- **Données** : `CartographyProject` expose déjà `weather`, `lifecycle_status`, `completion`. Ajout d'une lecture `priority` :
-  - Étendre `useCartographyData` pour récupérer `projects.priority` (champ existant côté DB), et l'ajouter à l'enrichissement + à `buildCartographyProjects`.
-- **Légende** : mise à jour `CartographyLegend.tsx` pour inclure l'explication "rayon = avancement / couleur = cycle de vie / anneau = météo".
-- **Filtres** : inchangés (direction / météo / cycle / innovation). Si filtres réduisent un quadrant à 0 projet, message « Aucun projet » dans le secteur.
-- **Tooltip** : Radix `Tooltip` ou composant `recharts/Tooltip`-like maison via `onMouseEnter` sur chaque `path`, panneau flottant positionné via state.
-- **Export PNG** : déjà géré par `html-to-image` sur `exportRef` parent — fonctionne nativement avec SVG.
-
-## Hors périmètre
-
-- Aucune modification des autres onglets (Heatmap, Treemap) ni des données serveur.
-- Pas de migration SQL.
-- Pas de clic-vers-projet ni d'étiquettes permanentes (peuvent être ajoutés ensuite).
-
-## Livrables
-
-1. `src/components/portfolio/cartography/CartographyProjectRose.tsx` (nouveau, ~250 l., commenté FR).
-2. `src/hooks/useCartographyData.ts` — ajout du champ `priority`.
-3. `src/components/portfolio/cartography/PortfolioCartographyTab.tsx` — bascule onglet « Matrice » → « Rose des projets ».
-4. `src/components/portfolio/cartography/CartographyLegend.tsx` — légende enrichie.
+## Fichiers impactés
+- `supabase/migrations/*` (via l'outil migration) — 1 INSERT idempotent
+- `src/hooks/useRatingPrompt.ts` — lecture 3ᵉ clé, calcul `referenceDate`, logs DEV
+- `src/components/rating/RatingPromptSettingsCard.tsx` — champ date + save
+- `src/App.tsx` — montage global de `<RatingPromptDialog />`
+- `src/pages/Index.tsx` — retirer le montage local (évite double montage)
