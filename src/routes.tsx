@@ -346,6 +346,7 @@ export const AppRoutes = () => {
           </Routes>
           <FeedbackButton />
           <VersionBadge />
+          <RatingPromptDialog />
         </PermissionsProvider>
       )}
       <Toaster />
