@@ -390,8 +390,6 @@ const Index = () => {
         selectedProjectForReview={selectedProjectForReview}
         onReviewSubmitted={handleReviewSubmitted}
       />
-
-      <RatingPromptDialog />
     </div>
   );
 };
