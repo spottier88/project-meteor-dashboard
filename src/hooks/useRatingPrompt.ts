@@ -42,6 +42,8 @@ export const useRatingPrompt = () => {
       if (error) throw error;
       const map = new Map<string, string>();
       (data || []).forEach((row) => map.set(row.key, row.value));
+      const launchedRaw = map.get("rating_prompt_feature_launched_at");
+      const launchedMs = launchedRaw ? new Date(launchedRaw).getTime() : null;
       return {
         initialDelayDays: parseInt(
           map.get("rating_prompt_initial_delay_days") ?? `${DEFAULT_INITIAL_DELAY_DAYS}`,
@@ -51,6 +53,7 @@ export const useRatingPrompt = () => {
           map.get("rating_prompt_frequency_days") ?? `${DEFAULT_FREQUENCY_DAYS}`,
           10
         ),
+        featureLaunchedAtMs: Number.isFinite(launchedMs) ? launchedMs : null,
       };
     },
     staleTime: 10 * 60 * 1000,
